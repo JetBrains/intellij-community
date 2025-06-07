@@ -99,7 +99,7 @@ public class DetectedRootsChooser {
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
       ComboBox<DetectedProjectRoot> comboBox =
-        new ComboBox<>(new CollectionComboBoxModel<>(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
+        new ComboBox<>(new CollectionComboBoxModel<>(new ArrayList<>(Arrays.asList(o.getAllRoots())), o.getSelectedRoot()));
       comboBox.setRenderer(SimpleListCellRenderer.create("", DetectedProjectRoot::getRootTypeName));
       return new DefaultCellEditor(comboBox);
     }

@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.vcs.log.graph.GraphCommit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
-
+@ApiStatus.Internal
+public final class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
   public @NotNull List<Commit> join(@NotNull Collection<? extends List<Commit>> logsFromRepos) {
     if (logsFromRepos.size() == 1) {
       return logsFromRepos.iterator().next();

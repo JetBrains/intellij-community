@@ -5,17 +5,51 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScriptBuilder<BSB>>(
-  gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
+abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScriptBuilder<Self>>(
+  gradleVersion: GradleVersion,
+) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
 
-  override fun generate() = KotlinScriptBuilder().generate(generateTree())
+  private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
 
-  override fun withKotlinJvmPlugin(version: String?) = apply {
+  override fun registerTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      if (isTaskConfigurationAvoidanceSupported(gradleVersion)) {
+        val arguments = listOfNotNull(
+          argument(name),
+          tree(configure).takeUnless { it.isEmpty() }?.let { argument(it) }
+        )
+        val typeArgument = type?.let { "<$it>" } ?: ""
+        call("tasks.register$typeArgument", arguments)
+      }
+      else {
+        val arguments = listOfNotNull(
+          argument(name),
+          type?.let { argument(code("$it::class.java")) },
+          tree(configure).takeUnless { it.isEmpty() }?.let { argument(it) }
+        )
+        call("tasks.create", arguments)
+      }
+    }
+
+  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      val block = tree(configure)
+      if (!block.isEmpty()) {
+        if (name in PREDEFINED_TASKS) {
+          call("tasks.$name", argument(block))
+        }
+        else {
+          call("tasks.named<$type>", argument(name), argument(block))
+        }
+      }
+    }
+
+  override fun withKotlinJvmPlugin(version: String?): Self = apply {
     withMavenCentral()
     withPlugin {
       if (version != null) {
@@ -26,7 +60,7 @@ abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScrip
     }
   }
 
-  override fun withKotlinTest() = apply {
+  override fun withKotlinTest(): Self = apply {
     withMavenCentral()
     addTestImplementationDependency(call("kotlin", "test"))
     configureTestTask {
@@ -34,13 +68,18 @@ abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScrip
     }
   }
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
-    withPostfix {
-      callIfNotEmpty("tasks.test", configure)
-    }
-
-  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
     call("maven", "url" to url)
+  }
+
+  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = applyKt {
+    call("mavenLocal") {
+      assign("url", call("uri", url))
+    }
+  }
+
+  override fun generate(): String {
+    return KotlinScriptBuilder().generate(generateTree())
   }
 
   internal class Impl(gradleVersion: GradleVersion) : KotlinDslGradleBuildScriptBuilder<Impl>(gradleVersion) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -14,14 +14,12 @@ import org.jetbrains.annotations.Nullable;
 public interface PyTypeParameter extends PyAstTypeParameter, PyElement, PsiNameIdentifierOwner, PyTypedElement, PyQualifiedNameOwner, StubBasedPsiElement<PyTypeParameterStub> {
 
   @Override
-  @Nullable
-  default PyExpression getBoundExpression() {
+  default @Nullable PyExpression getBoundExpression() {
     return (PyExpression)PyAstTypeParameter.super.getBoundExpression();
   }
 
   @Override
-  @Nullable
-  default PyExpression getDefaultExpression() {
+  default @Nullable PyExpression getDefaultExpression() {
     return (PyExpression)PyAstTypeParameter.super.getDefaultExpression();
   }
 }

@@ -1,36 +1,77 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.images` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "images_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "images",
   module_name = "intellij.platform.images",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/lang-impl",
-    "@community//platform/platform-impl:ide-impl",
-    "@libraries//:commons-imaging",
-    "@community//platform/core-ui",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:jcef",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//xml/xml-frontback",
-    "@community//platform/ui.jcef:ui-jcef",
-    "@libraries//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:commons-imaging",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "@lib//:jcef",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//xml/xml-parser:parser",
+    "//platform/ui.jcef",
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics",
+    "//platform/util/coroutines",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":images_resources"]
 )
-### auto-generated section `build` end
+
+jvm_library(
+  name = "images_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":images"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:commons-imaging",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "@lib//:jcef",
+    "@lib//:junit4",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//xml/xml-parser:parser",
+    "//platform/ui.jcef",
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":images_resources"]
+)
+
+jvm_test(
+  name = "images_test",
+  runtime_deps = [":images_test_lib"]
+)
+### auto-generated section `build intellij.platform.images` end

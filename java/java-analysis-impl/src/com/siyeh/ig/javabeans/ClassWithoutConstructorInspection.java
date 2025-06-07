@@ -30,8 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ClassWithoutConstructorInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.without.constructor.problem.descriptor");
   }
@@ -45,8 +44,7 @@ public final class ClassWithoutConstructorInspection extends BaseInspection {
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "class.without.constructor.create.quickfix");
     }

@@ -96,7 +96,7 @@ class AnalysisConfig(
   )
 
   class DominatorTreeOptions(
-    val includeDominatorTree: Boolean = true,
+    val includeDominatorTree: Boolean = false,
     val maxDominatorIterations: Int = 2_000,
     val minNodeSize: Int = 100_000,
     val maxDepth: Int = 30,

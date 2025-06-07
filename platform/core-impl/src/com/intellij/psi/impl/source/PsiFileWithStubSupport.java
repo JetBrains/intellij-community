@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiFileWithStubSupport extends PsiFile {
   /**
    * @return the stub tree for this file, if it's stub-based at all. Will be null after the AST has been loaded
-   * (e.g. by calling {@link PsiElement#getNode()} or {@link PsiElement#getText()}.
+   * (e.g. by calling {@link PsiElement#getNode()} or {@link PsiElement#getText()}).
    */
   @Nullable
   StubTree getStubTree();

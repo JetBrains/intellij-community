@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -48,8 +48,7 @@ public final class MavenServerUtil {
     return mySystemPropertiesCache;
   }
 
-  @NotNull
-  public static File findMavenBasedir(@NotNull File workingDir) {
+  public static @NotNull File findMavenBasedir(@NotNull File workingDir) {
     File baseDir = workingDir;
     File dir = workingDir;
     while ((dir = dir.getParentFile()) != null) {

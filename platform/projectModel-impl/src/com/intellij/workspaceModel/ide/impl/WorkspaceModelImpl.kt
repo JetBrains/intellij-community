@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -43,10 +43,15 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
+private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
+
 @ApiStatus.Internal
-open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal {
+open class WorkspaceModelImpl : WorkspaceModelInternal {
+  private val project: Project
+  private val coroutineScope: CoroutineScope
+
   @Volatile
-  var loadedFromCache = false
+  var loadedFromCache: Boolean = false
     protected set
 
   private val reactive = WmReactive(this)
@@ -66,21 +71,33 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+  val virtualFileManager: VirtualFileUrlManager
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
-  var userWarningLoggingLevel = false
+  var userWarningLoggingLevel: Boolean = false
     @TestOnly set
 
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
+  
+  constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
+    this.project = project
+    this.coroutineScope = cs
+    this.virtualFileManager = virtualFileUrlManager
+    entityStorage = VersionedEntityStorageImpl(storage)
+    unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
+    this.loadedFromCache = true
+  }
 
-  init {
+  constructor(project: Project, cs: CoroutineScope) {
+    this.project = project
+    this.coroutineScope = cs
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -139,7 +156,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Used only in Rider IDE
    */
   @ApiStatus.Internal
-  open fun prepareModel(project: Project, storage: MutableEntityStorage) = Unit
+  open fun prepareModel(project: Project, storage: MutableEntityStorage): Unit = Unit
 
   fun ignoreCache() {
     loadedFromCache = false
@@ -209,7 +226,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   override suspend fun update(description: String, updater: (MutableEntityStorage) -> Unit) {
     // TODO:: Has to be migrated to the implementation without WA. See IDEA-336937
-    writeAction { updateProjectModel(description, updater) }
+    edtWriteAction { updateProjectModel(description, updater) }
   }
 
   /**
@@ -354,7 +371,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   @Synchronized
-  final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
+  final override fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean {
     ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != replacement.version) return false
@@ -363,6 +380,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+      log.info("Project model updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
   }
@@ -371,8 +389,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   fun replaceProjectModel(mainStorageReplacement: StorageReplacement, unloadStorageReplacement: StorageReplacement): Boolean {
     ThreadingAssertions.assertWriteAccess()
 
-    if (entityStorage.version != mainStorageReplacement.version ||
-        unloadedEntitiesStorage.version != unloadStorageReplacement.version) return false
+    if (entityStorage.version != mainStorageReplacement.version || unloadedEntitiesStorage.version != unloadStorageReplacement.version) {
+      return false
+    }
 
     fullReplaceProjectModelTimeMs.addMeasuredTime {
       val builder = mainStorageReplacement.builder
@@ -381,6 +400,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       val unloadBuilder = unloadStorageReplacement.builder
       unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, {}, ::onUnloadedEntitiesChanged)
+      log.info("Project model updated to version ${entityStorage.pointer.version}")
     }
     return true
   }
@@ -395,7 +415,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
 
     initializeBridgesTimeMs.addMeasuredTime {
-      for (bridgeInitializer in BridgeInitializer.EP_NAME.extensionList) {
+      for (bridgeInitializer in EP_NAME.extensionList) {
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
             bridgeInitializer.initializeBridges(project, change, builder)
@@ -429,7 +449,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
 
     // We emit async changes before running other listeners under write action
-    cs.launch { updatesFlow.emit(change) }
+    coroutineScope.launch { updatesFlow.emit(change) }
 
     onChangedTimeMs.addMeasuredTime { // Measure only the time of WorkspaceModelChangeListener
       logErrorOnEventHandling {
@@ -491,8 +511,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   companion object {
     private val log = logger<WorkspaceModelImpl>()
 
-    private val PRE_UPDATE_HANDLERS = ExtensionPointName.create<WorkspaceModelPreUpdateHandler>(
-      "com.intellij.workspaceModel.preUpdateHandler")
+    private val PRE_UPDATE_HANDLERS = ExtensionPointName<WorkspaceModelPreUpdateHandler>("com.intellij.workspaceModel.preUpdateHandler")
     private const val PRE_UPDATE_LOOP_BLOCK = 100
 
     private val loadingTotalTimeMs = MillisecondsMeasurer()

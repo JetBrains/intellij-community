@@ -21,12 +21,12 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     RestPythonUtil.updateSphinxQuickStartRequiredAction(event);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Presentation presentation = RestPythonUtil.updateSphinxQuickStartRequiredAction(e);
     assert presentation.isEnabled() && presentation.isVisible() : "Sphinx requirements for action are not satisfied";
 

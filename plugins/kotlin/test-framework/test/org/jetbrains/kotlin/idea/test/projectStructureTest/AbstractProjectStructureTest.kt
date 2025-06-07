@@ -173,7 +173,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         }
 
         val contentRoots =
-            testModule.contentRoots.takeIf { it.isNotEmpty() }
+            testModule.contentRoots
                 ?: listOf(TestContentRoot(null, TestContentRootKind.PRODUCTION))
 
         contentRoots.forEach { testContentRoot ->
@@ -192,6 +192,8 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
             when (testContentRoot.kind) {
                 TestContentRootKind.PRODUCTION -> PsiTestUtil.addSourceRoot(module, contentRoot)
                 TestContentRootKind.TESTS -> PsiTestUtil.addSourceRoot(module, contentRoot, true)
+                TestContentRootKind.RESOURCES -> PsiTestUtil.addResourceContentToRoots(module, contentRoot, false)
+                TestContentRootKind.TEST_RESOURCES -> PsiTestUtil.addResourceContentToRoots(module, contentRoot, true)
             }
 
             contentRootVirtualFiles.add(contentRoot)
@@ -227,9 +229,20 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     ) {
         dependencies.forEach { dependency ->
             check(dependency.kind == DependencyKind.REGULAR)
+            val scope = when (dependency.scope) {
+                DependencyScope.COMPILE -> com.intellij.openapi.roots.DependencyScope.COMPILE
+                DependencyScope.RUNTIME -> com.intellij.openapi.roots.DependencyScope.RUNTIME
+                DependencyScope.TEST -> com.intellij.openapi.roots.DependencyScope.TEST
+                DependencyScope.PROVIDED -> com.intellij.openapi.roots.DependencyScope.PROVIDED
+            }
             librariesByName[dependency.name]
-                ?.let { library -> module.addDependency(library, exported = dependency.isExported) }
-                ?: module.addDependency(modulesByName.getValue(dependency.name), exported = dependency.isExported)
+                ?.let { library -> module.addDependency(library, exported = dependency.isExported, dependencyScope = scope) }
+                ?: module.addDependency(
+                    modulesByName.getValue(dependency.name),
+                    exported = dependency.isExported,
+                    dependencyScope = scope,
+                    productionOnTest = dependency.productionOnTest,
+                )
         }
     }
 
@@ -277,6 +290,26 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     protected fun getCaretPosition(ktFile: KtFile): Int = getCaretPositionOrNull(ktFile) ?: error("Expected `<caret>` in file: $ktFile")
 
     protected fun getCaretPositionOrNull(ktFile: KtFile): Int? = caretProvider.getCaretPosition(ktFile.virtualFile)
+
+    protected fun TestProjectModule.toModule(): Module = modulesByName.getValue(name)
+
+    /**
+     * Returns all content root virtual files in the [TestProjectModule] of the given [kind] while preserving their original order.
+     */
+    protected fun TestProjectModule.contentRootVirtualFilesByKind(vararg kinds: TestContentRootKind): List<VirtualFile> {
+        val module = toModule()
+        val contentRoots = contentRoots ?: return emptyList()
+        return contentRoots
+            .zip(moduleContentRoots.getValue(module))
+            .mapNotNull { (testContentRoot, contentRootFile) ->
+                if (testContentRoot.kind in kinds) contentRootFile else null
+            }
+    }
+
+    protected fun List<TestProjectModule>.filterByContentRootKind(kind: TestContentRootKind): List<TestProjectModule> =
+        filter { it.contentRoots?.any { root -> root.kind == kind } == true }
+
+    protected fun TestProjectLibrary.toLibrary(): Library = projectLibrariesByName.getValue(name)
 }
 
 private const val CARET_TEXT = "<caret>"

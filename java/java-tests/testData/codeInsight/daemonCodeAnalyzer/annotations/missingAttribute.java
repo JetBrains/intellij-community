@@ -2,5 +2,5 @@
     int i ();
 }
 
-@<error descr="'i' missing though required">Ann</error>() class D {
+@<error descr="'i' missing but required">Ann</error>() class D {
 }

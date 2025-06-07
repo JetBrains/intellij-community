@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.folding;
 
@@ -154,6 +154,11 @@ public abstract class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTe
         @TestMetadata("imports.kt")
         public void testImports() throws Exception {
             runTest("testData/folding/checkCollapse/imports.kt");
+        }
+
+        @TestMetadata("multilineCall.kt")
+        public void testMultilineCall() throws Exception {
+            runTest("testData/folding/checkCollapse/multilineCall.kt");
         }
 
         @TestMetadata("multilineStrings.kt")

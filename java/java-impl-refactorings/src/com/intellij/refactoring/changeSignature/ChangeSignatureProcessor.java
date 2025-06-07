@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -82,8 +82,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }
 
@@ -115,7 +114,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
        if (oldVisibility.equals(VisibilityUtil.getHighestVisibility(visibility, oldVisibility)) &&
            (!ApplicationManager.getApplication().isUnitTestMode() && 
             Messages.showYesNoDialog(myProject, JavaRefactoringBundle.message("dialog.message.overriding.methods.with.weaken.visibility", visibility), RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon()) == Messages.YES)) {
-         ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility = true;
+         ((JavaChangeInfoImpl)myChangeInfo).setPropagateVisibility(true);
        }
      }
     MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<>();
@@ -195,8 +194,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     PsiUtil.setModifierProperty(delegate, PsiModifier.ABSTRACT, false);
   }
 
-  @Nullable
-  public static PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
+  public static @Nullable PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock body = delegate.getBody();
@@ -225,8 +223,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return callExpression;
   }
 
-  @NotNull
-  static PsiSubstitutor calculateSubstitutor(@NotNull PsiMethod derivedMethod, @NotNull PsiMethod baseMethod) {
+  static @NotNull PsiSubstitutor calculateSubstitutor(@NotNull PsiMethod derivedMethod, @NotNull PsiMethod baseMethod) {
     PsiSubstitutor substitutor;
     if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
       substitutor = PsiSubstitutor.EMPTY;

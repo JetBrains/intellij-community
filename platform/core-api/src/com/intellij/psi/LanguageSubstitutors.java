@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -122,7 +122,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
             files.add(f);
           }
         }
-        if (files.size() > 0) {
+        if (!files.isEmpty()) {
           FileContentUtilCore.reparseFiles(files);
         }
       });

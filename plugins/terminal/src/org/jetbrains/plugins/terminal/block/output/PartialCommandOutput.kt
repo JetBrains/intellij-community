@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
-import org.jetbrains.plugins.terminal.block.session.StyleRange
+import com.intellij.terminal.session.StyleRange
 
 /**
  * @param styles ranges inside the [text] bounds.

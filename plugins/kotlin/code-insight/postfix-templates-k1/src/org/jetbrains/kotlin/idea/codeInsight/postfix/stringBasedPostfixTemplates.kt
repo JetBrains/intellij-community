@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.IterableTypesDetection
 import org.jetbrains.kotlin.idea.liveTemplates.k1.macro.Fe10SuggestVariableNameMacro
@@ -119,7 +118,7 @@ internal abstract class AbstractKtForLoopNumbersPostfixTemplate(
     desc = desc,
     template = template,
     selector = createExpressionSelectorWithComplexFilter(statementsOnly = true) { expression, bindingContext ->
-        expression.elementType == KtNodeTypes.INTEGER_CONSTANT || expression.kotlinType(bindingContext)?.isInt() == true
+        expression.elementType == KtNodeTypes.INTEGER_CONSTANT || bindingContext.getType(expression)?.isInt() == true
     },
     provider = provider
 ) {

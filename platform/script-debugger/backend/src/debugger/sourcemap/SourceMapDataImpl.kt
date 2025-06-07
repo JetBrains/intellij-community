@@ -4,8 +4,11 @@ package org.jetbrains.debugger.sourcemap
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class SourceMapDataImpl(override val file: String?,
-                             override val sources: List<String>,
-                             override val sourcesContent: List<String?>?,
-                             override val hasNameMappings: Boolean,
-                             override val mappings: List<MappingEntry>) : SourceMapData
+data class SourceMapDataImpl(
+  override val file: String?,
+  override val sources: List<String>,
+  override val sourcesContent: List<String?>?,
+  override val hasNameMappings: Boolean,
+  override val mappings: List<MappingEntry>,
+  override val ignoreList: List<Int> = emptyList(),
+) : SourceMapData

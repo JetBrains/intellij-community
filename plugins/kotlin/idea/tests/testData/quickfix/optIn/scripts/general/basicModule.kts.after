@@ -7,7 +7,7 @@
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Bar'
 // COMPILER_ARGUMENTS_AFTER:-opt-in=test.BasicModule.MyExperimentalAPI
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // RUNTIME_WITH_SCRIPT_RUNTIME
 
 package test

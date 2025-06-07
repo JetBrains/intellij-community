@@ -5,7 +5,10 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.impl.ModuleRootEventImpl
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -14,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -68,6 +72,106 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         trackerA.assertNotModified()
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test module invalidation in code fragments`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """fun main() {
+                        val a = 0
+                        <caret>a
+                    }""".trimIndent()
+                )
+            )
+        }
+
+        val referenceExpression =
+            moduleA.configureEditorForFile("main.kt").findElementAt(editor.caretModel.offset)!!.parentOfType<KtNameReferenceExpression>()!!
+
+        val factory = KtPsiFactory.contextual(referenceExpression)
+        val contentElement = factory.createExpressionCodeFragment("2", referenceExpression).getContentElement() as KtExpression
+
+        allowAnalysisOnEdt {
+            // build fir for context and code fragment
+            analyze(referenceExpression) {
+                referenceExpression.expressionType
+            }
+            analyze(contentElement) {
+                contentElement.expressionType
+            }
+        }
+
+        //invalidate code fragment context
+        project.executeWriteCommand("replace", null) {
+            referenceExpression.parentOfType<KtFunction>()!!.replace(factory.createFunction("fun foo() {}"))
+        }
+
+        //ensure to drop all cached values,
+        //especially for [org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImplKt.cachedKtModule]
+        project.executeWriteCommand("roots changed", null) {
+            val publisher = project.messageBus.syncPublisher(ModuleRootListener.TOPIC)
+            val rootChangedEvent = ModuleRootEventImpl(project, false)
+            publisher.beforeRootsChange(rootChangedEvent)
+            publisher.rootsChanged(rootChangedEvent)
+        }
+
+        //on finish writeAction `FirIdeOutOfBlockPsiTreeChangePreprocessor.treeChanged` will collect data
+        project.executeWriteCommand("doc change", null) {
+            contentElement.replace(factory.createExpression("42"))
+        }
+        //as listener on finish of write action, LLFirDeclarationModificationService.processQueue will proceed with fragment with invalid context
+
+        assertFalse(contentElement.isValid)
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test module invalidation in code fragments, first fragment modification`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """fun main() {
+                        val a = 0
+                        <caret>a
+                    }""".trimIndent()
+                )
+            )
+        }
+
+        val referenceExpression =
+            moduleA.configureEditorForFile("main.kt").findElementAt(editor.caretModel.offset)!!.parentOfType<KtNameReferenceExpression>()!!
+
+        val factory = KtPsiFactory.contextual(referenceExpression)
+        val contentElement = factory.createExpressionCodeFragment("2", referenceExpression).getContentElement() as KtExpression
+
+        allowAnalysisOnEdt {
+            // build fir for context and code fragment
+            analyze(referenceExpression) {
+                referenceExpression.expressionType
+            }
+            analyze(contentElement) {
+                contentElement.expressionType
+            }
+        }
+
+        project.executeWriteCommand("replace", null) {
+            // ensure special module is not cached
+            val publisher = project.messageBus.syncPublisher(ModuleRootListener.TOPIC)
+            val rootChangedEvent = ModuleRootEventImpl(project, false)
+            publisher.beforeRootsChange(rootChangedEvent)
+            publisher.rootsChanged(rootChangedEvent)
+
+            //perform in block modification in code fragment, sync treeChanged stores owner in the queue
+            contentElement.replace(factory.createExpression("42"))
+            //invalidate context
+            referenceExpression.parentOfType<KtFunction>()!!.replace(factory.createFunction("fun foo() {}"))
+        }
+        //as listener on finish of write action, LLFirDeclarationModificationService.processQueue will proceed with fragment with invalid context
+
+        assertFalse(contentElement.isValid)
     }
 
     fun `test that source module out-of-block modification does not occur after deleting whitespace`() {

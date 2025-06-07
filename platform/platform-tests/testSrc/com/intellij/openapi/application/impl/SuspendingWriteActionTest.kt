@@ -2,11 +2,10 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
@@ -20,7 +19,7 @@ private const val repetitions: Int = 100
 class SuspendingWriteActionTest {
 
   @RepeatedTest(repetitions)
-  fun context() = runWithImplicitBlockingContextEnabled {
+  fun context() {
     timeoutRunBlocking {
       val application = ApplicationManager.getApplication()
       val rootJob = coroutineContext.job
@@ -48,7 +47,7 @@ class SuspendingWriteActionTest {
 
       assertEmptyContext(rootJob)
 
-      val result = writeAction {
+      val result = edtWriteAction {
         assertWriteActionWithCurrentJob()
         runBlockingCancellable {
           val writeJob = coroutineContext.job
@@ -71,7 +70,7 @@ class SuspendingWriteActionTest {
   fun cancellation(): Unit = timeoutRunBlocking {
     launch {
       assertThrows<CancellationException> {
-        writeAction {
+        edtWriteAction {
           testNoExceptions()
           this.coroutineContext.job.cancel()
           testExceptions()
@@ -83,7 +82,7 @@ class SuspendingWriteActionTest {
   @RepeatedTest(repetitions)
   fun rethrow(): Unit = timeoutRunBlocking {
     testRwRethrow {
-      writeAction(it)
+      edtWriteAction(it)
     }
   }
 
@@ -91,8 +90,8 @@ class SuspendingWriteActionTest {
   @Test
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
-    writeAction {
-      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
+    edtWriteAction {
+      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent)
     }
   }
 }

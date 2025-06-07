@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.EnvFilesOptions;
@@ -37,7 +37,7 @@ import java.util.*;
 @ApiStatus.Internal
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 17);
+  private static final EventLogGroup GROUP = new EventLogGroup(RunConfigurationTypeDefs.TYPE_USAGES_GROUP_ID, 17);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
@@ -161,10 +161,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             featureUsed = StringUtil.isNotEmpty((String)value);
           }
           else if (value instanceof Collection) {
-            featureUsed = ((Collection<?>)value).size() > 0;
+            featureUsed = !((Collection<?>)value).isEmpty();
           }
           else if (value instanceof Map) {
-            featureUsed = ((Map<?, ?>)value).size() > 0;
+            featureUsed = !((Map<?, ?>)value).isEmpty();
           }
           else {
             continue;

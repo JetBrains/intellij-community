@@ -9,8 +9,8 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,9 +34,9 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                          @NotNull SearchScope searchScope,
-                                                          boolean searchInCommentsAndStrings) {
+  public @Unmodifiable @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                                        @NotNull SearchScope searchScope,
+                                                                        boolean searchInCommentsAndStrings) {
     if (!getSearchForReferences(element)) {
       return Collections.emptyList();
     }

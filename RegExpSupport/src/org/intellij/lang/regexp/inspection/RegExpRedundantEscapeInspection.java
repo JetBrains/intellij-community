@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -20,11 +17,9 @@ import org.intellij.lang.regexp.psi.RegExpClass;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -39,9 +34,8 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
       checkbox("ignoreEscapedMetaCharacters", RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets")));
   }
 
-  @NotNull
   @Override
-  public RegExpElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull RegExpElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new RedundantEscapeVisitor(holder);
   }
 
@@ -76,10 +70,8 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
 
   private static class RemoveRedundantEscapeFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.remove.redundant.escape");
     }
 
@@ -91,8 +83,7 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
       RegExpReplacementUtil.replaceInContext(element, replacement(regExpChar));
     }
 
-    @NotNull
-    private static String replacement(RegExpChar aChar) {
+    private static @NotNull String replacement(RegExpChar aChar) {
       final int codePoint = aChar.getValue();
       return Character.isSupplementaryCodePoint(codePoint)
              ? Character.toString(Character.highSurrogate(codePoint)) + Character.lowSurrogate(codePoint)

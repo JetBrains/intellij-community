@@ -6,7 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import org.jetbrains.annotations.Nullable;
 
 public class ReturnEvaluator implements Evaluator {
-  @Nullable private final Evaluator myReturnValueEvaluator;
+  private final @Nullable Evaluator myReturnValueEvaluator;
 
   public ReturnEvaluator(@Nullable Evaluator returnValueEvaluator) {
     myReturnValueEvaluator = returnValueEvaluator;

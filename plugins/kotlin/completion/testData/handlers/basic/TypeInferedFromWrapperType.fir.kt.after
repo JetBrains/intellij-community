@@ -7,7 +7,7 @@ fun <T, C : Cn<T>> C.some(arg: (type: T) -> Unit): C {
 
 fun main(args: Array<String>) {
     val x = Cn<String>()
-    x.some { type -> <caret> }
+    x.some { <caret> }
 }
 
 //ELEMENT: some

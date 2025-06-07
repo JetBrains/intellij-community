@@ -30,7 +30,7 @@ import java.util.Collection;
 public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  public void execute(@NotNull final Project project,
+  public void execute(final @NotNull Project project,
                       @NotNull Collection<HgRepository> repositories,
                       @Nullable HgRepository selectedRepo,
                       @NotNull DataContext dataContext) {
@@ -48,9 +48,8 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoActio
     }
   }
 
-  @Nullable
-  private static HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
-                                                      @Nullable HgRepository selectedRepo) {
+  private static @Nullable HgRepository letUserSelectRepository(@NotNull Project project, @NotNull Collection<HgRepository> repositories,
+                                                                @Nullable HgRepository selectedRepo) {
     HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project, repositories, selectedRepo);
     return dialog.showAndGet() ? dialog.getRepository() : null;
   }

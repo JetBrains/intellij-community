@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
@@ -11,7 +11,6 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +22,12 @@ class AnchorElementInfo extends SelfElementInfo {
     super(ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
     myStubElementTypeAndId = pack(-1, null);
   }
+
   // will restore by stub index until file tree get loaded
   AnchorElementInfo(@NotNull PsiElement anchor,
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
-                    @NotNull IStubElementType<?,?> stubElementType) {
+                    @NotNull IElementType stubElementType) {
     super(null,
           Identikit.fromTypes(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
           containingFile, false);
@@ -35,7 +35,7 @@ class AnchorElementInfo extends SelfElementInfo {
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
-  private static long pack(int stubId, @Nullable IStubElementType<?,?> stubElementType) {
+  private static long pack(int stubId, @Nullable IElementType stubElementType) {
     short index = stubElementType == null ? 0 : stubElementType.getIndex();
     assert index >= 0 : "Unregistered token types not allowed here: " + stubElementType;
     return ((long)stubId) | ((long)index << 32);
@@ -53,7 +53,7 @@ class AnchorElementInfo extends SelfElementInfo {
       PsiFile file = restoreFile(manager);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       short index = (short)(typeAndId >> 32);
-      IStubElementType<?,?> stubElementType = (IStubElementType<?,?>)IElementType.find(index);
+      IElementType stubElementType = IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
 

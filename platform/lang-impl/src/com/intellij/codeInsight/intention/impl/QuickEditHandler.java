@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
@@ -117,8 +116,10 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
 
     // suppress possible errors as in injected mode
-    myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
-                          injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
+    myNewFile.putUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION,
+                          injectedFile.getUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION));
+    myNewFile.putUserData(InjectedLanguageManager.LENIENT_INSPECTIONS,
+                          injectedFile.getUserData(InjectedLanguageManager.LENIENT_INSPECTIONS));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
     myNewDocument =

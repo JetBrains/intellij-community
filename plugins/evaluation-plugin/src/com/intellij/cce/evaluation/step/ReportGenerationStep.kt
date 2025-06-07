@@ -13,6 +13,7 @@ import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.CompareSessionsStorage
 import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.FileErrorsStorage
@@ -42,8 +43,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     val workspaces = inputWorkspaces ?: listOf(workspace)
     val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
-    val featuresStorages = workspaces.map { it.featuresStorage }
-    val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
     val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
@@ -64,8 +63,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           HtmlReportGenerator(
             dirs,
             defaultMetrics,
-            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, featuresStorages, fullLineStorages,
-                                           dirs)
+            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, workspaces, dirs)
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),
@@ -76,6 +74,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
+            configs.firstOrNull()?.reports?.openTelemetrySpanFilter
           ),
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(
@@ -84,9 +83,9 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           reportGenerators,
           sessionFiles,
           sessionStorages,
-          workspaces.map { it.errorsStorage },
           evaluationTitles,
-          comparisonStorage
+          comparisonStorage,
+          workspaces
         )
         for (report in reports) {
           workspace.addReport(report.type, filter.name, comparisonStorage.reportName, report.path)
@@ -117,14 +116,24 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     reportGenerators: List<FullReportGenerator>,
     sessionFiles: Map<String, List<SessionsInfo>>,
     sessionStorages: List<SessionsStorage>,
-    errorStorages: List<FileErrorsStorage>,
     evaluationTitles: List<String>,
     comparisonStorage: CompareSessionsStorage,
+    workspaces: List<EvaluationWorkspace>
   ): List<ReportInfo> {
+    val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }
+
+    val sessions = filteredSessionFiles
+      .flatMap { it.value }
+      .map { sessionStorages[evaluationTitles.indexOf(it.evaluationType)].getSessions(it.path) }
+      .flatMap { it.sessions }
+
+    val numberOfSessions = sessions.sumOf { it.lookups.size }
+
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
+      title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions))
     }.toMap()
-    for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
+
+    for (sessionFile in filteredSessionFiles) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
       var sessionsInfo: FileSessionsInfo? = null
       for (file in sessionFile.value) {
@@ -136,21 +145,41 @@ class ReportGenerationStep<T : EvaluationStrategy>(
         val sessionsEvaluation = sessionsInfo.copy(
           sessions = comparisonStorage.get(file.evaluationType)
         )
-        val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
-          sessionsEvaluation.sessions)
-        fileEvaluations.add(FileEvaluationInfo(sessionsEvaluation, metricsEvaluation, file.evaluationType))
+        val evaluator = title2evaluator.getValue(file.evaluationType)
+        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions, numberOfSessions)
+
+        val sessionIndividualEvaluationMap = metricsEvaluation
+          .flatMap { it.individualScores?.entries ?: emptySet() }
+          .associate { it.key to it.value }
+
+        val workspace = workspaces[evaluationTitles.indexOf(file.evaluationType)]
+        val fileEvaluationData = FileEvaluationDataInfo(
+          projectName = sessionsEvaluation.projectName,
+          filePath = sessionsEvaluation.filePath,
+          sessionIndividualScores = sessionIndividualEvaluationMap.values.toList()
+        )
+
+        workspace.individualScoresStorage.saveIndividiualScores(fileEvaluationData)
+        workspace.individualScoresStorage.saveMetadata()
+
+        fileEvaluations.add(
+          FileEvaluationInfo(
+            sessionsInfo = sessionsEvaluation,
+            metrics = metricsEvaluation,
+            evaluationType = file.evaluationType
+          )
+        )
       }
       comparisonStorage.clear()
       reportGenerators.forEach { it.generateFileReport(fileEvaluations) }
     }
-    for (errorsStorage in errorStorages) {
+    for (errorsStorage in workspaces.map { it.errorsStorage }) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
     }
-
-    val metrics = title2evaluator.values.map(MetricsEvaluator::result).flatten()
+    val globalMetricInfos = title2evaluator.values.flatMap { it.globalMetricInfos(numberOfSessions) }
 
     return reportGenerators.map {
-      ReportInfo(it.type, it.generateGlobalReport(metrics))
+      ReportInfo(it.type, it.generateGlobalReport(globalMetricInfos))
     }
   }
 }

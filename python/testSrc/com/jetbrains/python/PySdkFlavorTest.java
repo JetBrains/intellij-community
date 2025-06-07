@@ -22,11 +22,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PyPySdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -48,54 +45,15 @@ public class PySdkFlavorTest extends PyTestCase {
     assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
   }
 
-  public void testJythonVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
-    final String versionOutput = "Jython 2.6.3\n";
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Jython 2.6.3", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON26, flavor.getLanguageLevel(mockSdk));
-  }
 
-  public void testJythonWithWarningsVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
-    final String versionOutput = """
-      "my" variable $jythonHome masks earlier declaration in same scope at /usr/bin/jython line 15.
-      Jython 2.6.3
-      """;
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Jython 2.6.3", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON26, flavor.getLanguageLevel(mockSdk));
-  }
 
-  public void testPyPy23VersionString() {
-    final PythonSdkFlavor flavor = PyPySdkFlavor.getInstance();
-    final String versionOutput = """
-      Python 2.7.6 (32f35069a16d819b58c1b6efb17c44e3e53397b2, Jun 10 2014, 00:42:27)
-      [PyPy 2.3.1 with GCC 4.8.2]
-      """;
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("PyPy 2.3.1 [Python 2.7.6]", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON27, flavor.getLanguageLevel(mockSdk));
-    assertEquals("__builtin__.py", PySdkUtil.getBuiltinsFileName(mockSdk));
-  }
 
-  public void testPyPy323VersionString() {
-    final PythonSdkFlavor flavor = PyPySdkFlavor.getInstance();
-    final String versionOutput = """
-      Python 3.4.5 (986752d005bb6c65ce418113e4c3cd115f61a9b4, Jun 23 2014, 00:23:34)
-      [PyPy 2.3.1 with GCC 4.8.2]
-      """;
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("PyPy 2.3.1 [Python 3.4.5]", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
-    assertEquals("builtins.py", PySdkUtil.getBuiltinsFileName(mockSdk));
-  }
 
   // TODO: Add tests for MayaPy and IronPython SDK flavors
 
   @NotNull
   private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
-    final String versionString = flavor.getVersionStringFromOutput(versionOutput);
+    final String versionString = PythonSdkFlavor.getVersionStringFromOutput(versionOutput);
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk("Test", PythonSdkType.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath("/path/to/sdk");

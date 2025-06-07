@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -327,8 +327,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     return box;
   }
 
-  @Nullable
-  private PsiType inferClosureReturnType() {
+  private @Nullable PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
       new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new IntArrayList(), false,
                                    IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
@@ -405,16 +404,14 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
-  private ParameterInfo findParamByOldName(String name) {
+  private @Nullable ParameterInfo findParamByOldName(String name) {
     for (ParameterInfo info : myInfo.getParameterInfos()) {
       if (name.equals(info.getOriginalName())) return info;
     }
     return null;
   }
 
-  @Nullable
-  private PsiClass getContainingClass() {
+  private @Nullable PsiClass getContainingClass() {
     final GrParameterListOwner toReplaceIn = myInfo.getToReplaceIn();
     if (toReplaceIn instanceof GrMethod) {
       return ((GrMethod)toReplaceIn).getContainingClass();
@@ -501,8 +498,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     processor.run();
   }
 
-  @NotNull
-  public LinkedHashSet<String> suggestNames() {
+  public @NotNull LinkedHashSet<String> suggestNames() {
     GrVariable var = GroovyIntroduceParameterUtil.findVar(myInfo);
     GrExpression expr = GroovyIntroduceParameterUtil.findExpr(myInfo);
     StringPartInfo stringPart = findStringPart();

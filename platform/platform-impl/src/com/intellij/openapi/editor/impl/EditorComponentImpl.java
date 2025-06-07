@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CaretStop;
 import com.intellij.openapi.editor.actions.CaretStopPolicy;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -62,7 +63,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.*;
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
@@ -81,6 +81,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl editor;
+
+  private @Nullable Runnable myRepaintCallback;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
@@ -111,9 +113,22 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
 
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
+
+        var strategy = EditorComponentImpl.this.editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+        if (strategy != null) {
+          strategy.setFontSize(size);
+          var zoomPoint = strategy.preferredZoomPointRelative(EditorComponentImpl.this.editor);
+          var area = EditorComponentImpl.this.editor.getScrollingModel().getVisibleArea();
+          return new Point(area.x + zoomPoint.x, area.y + zoomPoint.y);
+        }
+
         EditorComponentImpl.this.editor.setFontSize(size);
         if (isChangePersistent) {
-          EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+          // Has to be performed with the correct modality because there's an
+          // EditorColorsManagerImpl.dropPsiCaches call inside, and it requires a write-safe context.
+          ApplicationManager.getApplication().invokeLater(() -> {
+            EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+          }, ModalityState.stateForComponent(EditorComponentImpl.this));
         }
 
         return EditorComponentImpl.this.editor.visualPositionToXY(magnificationPosition);
@@ -135,6 +150,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
 
     setupEditorSwingCaretUpdatesCourierIfRequired();
+  }
+
+  void setRepaintCallback(@Nullable Runnable repaintCallback) {
+    myRepaintCallback = repaintCallback;
   }
 
   @Override
@@ -203,26 +222,28 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
       EditorImpl.EVENT_LOG.debug(e.toString());
     }
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
-    // this would have the side effect of invoking Swing document machinery which relies
-    // on creating Document positions etc (and won't update the document in an IntelliJ
-    // safe way, such as running through all the carets etc.).
-    // First try to handle the event using the default editor logic, then dispatch to
-    // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
-    // if still not consumed, handle the event by the default JTextComponent logic.
-    //    super.processInputMethodEvent(e);
+    WriteIntentReadAction.run((Runnable)() -> {
+      // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+      // this would have the side effect of invoking Swing document machinery which relies
+      // on creating Document positions etc (and won't update the document in an IntelliJ
+      // safe way, such as running through all the carets etc.).
+      // First try to handle the event using the default editor logic, then dispatch to
+      // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
+      // if still not consumed, handle the event by the default JTextComponent logic.
+      //    super.processInputMethodEvent(e);
 
-    if (!e.isConsumed() && !editor.isDisposed()) {
-      InputMethodListener listener = editor.getInputMethodSupport().getListener();
-      switch (e.getID()) {
-        case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-          listener.inputMethodTextChanged(e);
-          break;
-        case InputMethodEvent.CARET_POSITION_CHANGED:
-          listener.caretPositionChanged(e);
-          break;
+      if (!e.isConsumed() && !editor.isDisposed()) {
+        InputMethodListener listener = editor.getInputMethodSupport().getListener();
+        switch (e.getID()) {
+          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
+            listener.inputMethodTextChanged(e);
+            break;
+          case InputMethodEvent.CARET_POSITION_CHANGED:
+            listener.caretPositionChanged(e);
+            break;
+        }
       }
-    }
+    });
 
     super.processInputMethodEvent(e);
   }
@@ -281,6 +302,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
+    if (myRepaintCallback != null && isShowing() && width > 0 && height > 0) {
+      myRepaintCallback.run();
+    }
   }
 
   //--implementation of Scrollable interface--------------------------------------
@@ -293,7 +317,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       if (orientation == SwingConstants.VERTICAL) {
         return editor.getLineHeight();
       }
@@ -421,8 +445,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       final @NotNull var primaryCaret = caretModel.getPrimaryCaret();
 
       myLastKnownPrimaryCaret = new WeakReference<>(primaryCaret);
-      myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
-      myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+      EditorThreading.run(() -> {
+        myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
+        myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+      });
 
       caretModel.addCaretActionListener(this, editor.getDisposable());
       caretModel.addCaretListener(this, editor.getDisposable());
@@ -628,7 +654,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   private void setupJTextComponentContext() {
     setDocument(new EditorAccessibilityDocument());
-    setCaret(new EditorAccessibilityCaret());
+    setCaret(new EditorAccessibilityCaret(editor));
   }
 
   /**
@@ -644,13 +670,13 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return ReadAction.compute(() -> editor.getCaretModel().getOffset());
+    return EditorThreading.compute(() -> editor.getCaretModel().getOffset());
   }
 
   @DirtyUI
   @Override
   public void updateUI() {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       // Don't use the default TextUI, BaseTextUI, which does a lot of unnecessary
       // work. We do however need to provide a TextUI implementation since some
       // screen reader support code will invoke it
@@ -778,8 +804,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public String getText(final int offset, final int length) {
-      return ReadAction
-        .compute(() -> editor.getDocument().getText(new TextRange(offset, offset + length)));
+      return EditorThreading.compute(() -> editor.getDocument().getText(new TextRange(offset, offset + length)));
     }
 
     @Override
@@ -1009,90 +1034,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
       }), "", document, UndoConfirmationPolicy.DEFAULT, document);
     });
-  }
-
-  /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
-   * for focus events etc). This exists simply to be able to send caret events to the screen reader. */
-  private final class EditorAccessibilityCaret implements javax.swing.text.Caret {
-    @Override
-    public void install(JTextComponent jTextComponent) {
-    }
-
-    @Override
-    public void deinstall(JTextComponent jTextComponent) {
-    }
-
-    @Override
-    public void paint(Graphics graphics) {
-    }
-
-    @Override
-    public void addChangeListener(ChangeListener changeListener) {
-    }
-
-    @Override
-    public void removeChangeListener(ChangeListener changeListener) {
-    }
-
-    @Override
-    public boolean isVisible() {
-      return true;
-    }
-
-    @Override
-    public void setVisible(boolean visible) {
-    }
-
-    @Override
-    public boolean isSelectionVisible() {
-      return true;
-    }
-
-    @Override
-    public void setSelectionVisible(boolean visible) {
-    }
-
-    @Override
-    public void setMagicCaretPosition(Point point) {
-    }
-
-    @Override
-    public @Nullable Point getMagicCaretPosition() {
-      return null;
-    }
-
-    @Override
-    public void setBlinkRate(int rate) {
-    }
-
-    @Override
-    public int getBlinkRate() {
-      return 250;
-    }
-
-    @Override
-    public int getDot() {
-      return ReadAction.compute(() -> editor.getCaretModel().getOffset());
-    }
-
-    @Override
-    public int getMark() {
-      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
-    }
-
-    @Override
-    public void setDot(int offset) {
-      if (!editor.isDisposed()) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    }
-
-    @Override
-    public void moveDot(int offset) {
-      if (!editor.isDisposed()) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    }
   }
 
   @Override
@@ -1351,7 +1292,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getCaretPosition() {
-      return editor.getCaretModel().getOffset();
+      return EditorThreading.compute(() -> editor.getCaretModel().getOffset());
     }
 
     @Override
@@ -1388,17 +1329,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
+      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
     public int getSelectionEnd() {
-      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionEnd());
+      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectionEnd());
     }
 
     @Override
     public @Nullable String getSelectedText() {
-      return ReadAction.compute(() -> editor.getSelectionModel().getSelectedText());
+      return EditorThreading.compute(() -> editor.getSelectionModel().getSelectedText());
     }
 
     // ---- Implements AccessibleEditableText ----
@@ -1450,8 +1391,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public void selectText(int startIndex, int endIndex) {
-      editor.getSelectionModel().setSelection(startIndex, endIndex);
-      editor.getCaretModel().moveToOffset(endIndex);
+      EditorThreading.run(() -> {
+        editor.getSelectionModel().setSelection(startIndex, endIndex);
+        editor.getCaretModel().moveToOffset(endIndex);
+      });
     }
 
     @Override

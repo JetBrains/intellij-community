@@ -110,8 +110,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
     return lambdaSupplier;
   }
 
-  @Unmodifiable
-  private static @NotNull List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
+  private static @Unmodifiable @NotNull List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
     if (psiLambdaExpression == null) {
       return List.of();
     }
@@ -153,7 +152,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
       }
 
       List<PsiThrowStatement> all = getThrowStatements(lambdaSupplier);
-      if (all.size() == 0) {
+      if (all.isEmpty()) {
         return;
       }
       PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(expression.getMethodExpression(), PsiIdentifier.class);

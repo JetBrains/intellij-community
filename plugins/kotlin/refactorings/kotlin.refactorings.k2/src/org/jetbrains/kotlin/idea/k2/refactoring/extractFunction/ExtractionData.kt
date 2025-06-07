@@ -30,7 +30,7 @@ data class ExtractionData(
 
     override val project: Project = originalFile.project
     override val originalElements: List<PsiElement> = originalRange.elements
-    override val physicalElements = originalElements.map { it.substringContextOrThis }
+    override val physicalElements: List<PsiElement> = originalElements.map { it.substringContextOrThis }
 
     override val substringInfo: ExtractableSubstringInfo?
         get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
@@ -40,7 +40,7 @@ data class ExtractionData(
         it is KtDeclarationWithBody || it is KtAnonymousInitializer
     } ?: false
 
-    override val expressions = originalElements.filterIsInstance<KtExpression>()
+    override val expressions: List<KtExpression> = originalElements.filterIsInstance<KtExpression>()
 
     override val codeFragmentText: String by lazy {
         val originalElements = originalElements

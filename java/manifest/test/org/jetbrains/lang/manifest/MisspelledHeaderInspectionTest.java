@@ -3,14 +3,11 @@ package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection;
 
-import java.util.Collections;
 import java.util.List;
 
 public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureTestCase {

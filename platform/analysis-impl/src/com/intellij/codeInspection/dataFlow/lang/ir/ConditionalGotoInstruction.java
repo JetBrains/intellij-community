@@ -78,6 +78,7 @@ public class ConditionalGotoInstruction extends Instruction {
     return offset == getIndex() + 1 ? new int[] {offset} : new int[] {getIndex() + 1, offset};
   }
 
+  @Override
   public String toString() {
     return "IF_EQ " + myCompareTo + " " + myOffset;
   }

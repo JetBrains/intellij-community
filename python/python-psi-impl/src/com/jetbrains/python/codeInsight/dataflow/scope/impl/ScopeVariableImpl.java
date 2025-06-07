@@ -24,14 +24,12 @@ public class ScopeVariableImpl implements ScopeVariable {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public Collection<PsiElement> getDeclarations() {
+  public @NotNull Collection<PsiElement> getDeclarations() {
     return myDeclarations;
   }
 

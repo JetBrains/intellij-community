@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
@@ -40,7 +39,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
         val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
         val templateKey = templateName ?: run {
-            val text = this.editor.getDocument().getText(TextRange(0, this.editor.getCaretModel().getOffset()))
+            val text = this.editor.getDocument().getText(TextRange(0, this.editor.getCaretModel().offset))
             text.substringAfterLast(".")
         }
         val projectInDumbMode = project.isInDumbMode
@@ -100,7 +99,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             .contains("oldTestData")
 
     companion object {
-        const val ALLOW_MULTIPLE_EXPRESSIONS = "ALLOW_MULTIPLE_EXPRESSIONS"
-        const val TEMPLATE_DIRECTIVE = "TEMPLATE:"
+        const val ALLOW_MULTIPLE_EXPRESSIONS: String = "ALLOW_MULTIPLE_EXPRESSIONS"
+        const val TEMPLATE_DIRECTIVE: String = "TEMPLATE:"
     }
 }

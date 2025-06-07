@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.generateLongString
-import com.intellij.ui.layout.*
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals

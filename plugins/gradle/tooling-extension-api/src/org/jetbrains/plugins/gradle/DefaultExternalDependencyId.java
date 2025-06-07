@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
@@ -16,10 +16,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
   private String group;
   private String name;
   private String version;
-  @NotNull
-  private String packaging = "jar";
-  @Nullable
-  private String classifier;
+  private @NotNull String packaging = "jar";
+  private @Nullable String classifier;
 
   public DefaultExternalDependencyId() {
   }
@@ -63,9 +61,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
     this.version = version;
   }
 
-  @NotNull
   @Override
-  public String getPackaging() {
+  public @NotNull String getPackaging() {
     return packaging;
   }
 
@@ -73,9 +70,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
     this.packaging = packaging;
   }
 
-  @Nullable
   @Override
-  public String getClassifier() {
+  public @Nullable String getClassifier() {
     return classifier;
   }
 
@@ -84,8 +80,7 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     final StringBuilder buf = new StringBuilder();
     if (group != null) {
       buf.append(group).append(':');

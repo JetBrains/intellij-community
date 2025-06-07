@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
-  static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
+  @ApiStatus.Internal
+  public static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
@@ -68,13 +70,13 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getDelegate().isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getDelegate().isAvailable(project, editor, psiFile);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    getDelegate().invoke(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    getDelegate().invoke(project, editor, psiFile);
   }
 
   @Override
@@ -83,8 +85,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return getDelegate().generatePreview(project, editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return getDelegate().generatePreview(project, editor, psiFile);
   }
 
   @Override
@@ -116,7 +118,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return extension.className;
   }
 
-  @NotNull ClassLoader getImplementationClassLoader() {
+  @ApiStatus.Internal
+  public @NotNull ClassLoader getImplementationClassLoader() {
     return extension.getLoaderForClass();
   }
 
@@ -142,14 +145,14 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   public @Nullable ShortcutSet getShortcut() {
     IntentionAction delegate = getDelegate();
-    return delegate instanceof ShortcutProvider ? ((ShortcutProvider)delegate).getShortcut() : null;
+    return delegate instanceof ShortcutProvider shortcut ? shortcut.getShortcut() : null;
   }
 
   @Override
   public int compareTo(@NotNull IntentionAction other) {
-    if (other instanceof IntentionActionWrapper) {
+    if (other instanceof IntentionActionWrapper wrapper) {
       IntentionAction action1 = getDelegate();
-      IntentionAction action2 = ((IntentionActionWrapper)other).getDelegate();
+      IntentionAction action2 = wrapper.getDelegate();
       if (action1 instanceof Comparable && action2 instanceof Comparable) {
         //noinspection rawtypes,unchecked
         return ((Comparable)action1).compareTo(action2);

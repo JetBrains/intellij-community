@@ -17,6 +17,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest.Companion.configureOptions
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.runAll
@@ -48,7 +49,7 @@ abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase(),
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
         val scratchFileEditor = getScratchEditorForSelectedFile(FileEditorManager.getInstance(project), myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch panel")
+                                ?: error("Couldn't find scratch panel")
 
         configureOptions(scratchFileEditor, fileText, null)
 

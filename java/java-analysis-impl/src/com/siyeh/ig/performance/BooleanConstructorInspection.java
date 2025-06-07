@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -36,8 +37,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BooleanConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "BooleanConstructorCall";
   }
 
@@ -47,8 +47,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.constructor.problem.descriptor");
   }
 
@@ -64,12 +63,11 @@ public final class BooleanConstructorInspection extends BaseInspection implement
 
   private static class BooleanConstructorFix extends PsiUpdateModCommandQuickFix {
 
-    private static final String TRUE = '\"' + PsiKeyword.TRUE + '\"';
-    private static final String FALSE = '\"' + PsiKeyword.FALSE + '\"';
+    private static final String TRUE = '\"' + JavaKeywords.TRUE + '\"';
+    private static final String FALSE = '\"' + JavaKeywords.FALSE + '\"';
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
     }
 
@@ -91,11 +89,11 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       final String text = argument.getText();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
       CommentTracker tracker = new CommentTracker();
-      @NonNls final String newExpression;
-      if (PsiKeyword.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
+      final @NonNls String newExpression;
+      if (JavaKeywords.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.TRUE";
       }
-      else if (PsiKeyword.FALSE.equals(text) || FALSE.equalsIgnoreCase(text)) {
+      else if (JavaKeywords.FALSE.equals(text) || FALSE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.FALSE";
       }
       else if (languageLevel.equals(LanguageLevel.JDK_1_3)) {
@@ -125,8 +123,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       PsiReplacementUtil.replaceExpression(expression, newExpression, tracker);
     }
 
-    @NonNls
-    private static String buildText(PsiExpression argument, boolean useValueOf) {
+    private static @NonNls String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
       if (!useValueOf && PsiTypes.booleanType().equals(argumentType)) {

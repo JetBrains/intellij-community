@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.langInjection;
 
 import com.intellij.lang.Language;
@@ -6,7 +6,6 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.psi.PyElement;
@@ -25,15 +24,11 @@ public final class PyTemporaryInjector extends PyInjectorBase {
     if (result.isInjected()) {
       final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(context.getProject());
       InjectorUtils.registerSupport(registry.getLanguageInjectionSupport(), false, context, getInjectedLanguage(context));
-      if (!result.isStrict()) {
-        InjectorUtils.putInjectedFileUserData(context, getInjectedLanguage(context), InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-      }
     }
   }
 
-  @Nullable
   @Override
-  public Language getInjectedLanguage(@NotNull PsiElement context) {
+  public @Nullable Language getInjectedLanguage(@NotNull PsiElement context) {
     if (context instanceof PsiLanguageInjectionHost && context instanceof PyElement) {
       PsiFile file = context.getContainingFile();
       InjectedLanguage injectedLanguage = TemporaryPlacesRegistry.getInstance(file.getProject())

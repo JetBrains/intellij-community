@@ -1,14 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.execution.KillableProcess
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XDebugProcess
-import org.jetbrains.rpc.LOG
 import java.io.OutputStream
 
 @Deprecated("Please consider implementing own wrapper")
@@ -18,7 +17,7 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
       super.startNotify()
     }
 
-    handler.addProcessListener(object : ProcessAdapter() {
+    handler.addProcessListener(object : ProcessListener {
       override fun startNotified(event: ProcessEvent) {
         super@ProcessHandlerWrapper.startNotify()
       }
@@ -69,7 +68,7 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
       .onSuccess { stopProcess(destroy) }
       .onError {
         try {
-          LOG.error(it)
+          thisLogger().error(it)
         }
         finally {
           stopProcess(destroy)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
@@ -43,9 +43,8 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     }
   }
 
-  @NotNull
   @Override
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ExtractedDirectoryPresentation(this);
   }
 
@@ -117,8 +116,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     return getBuilder(diff, addedEntity);
   }
 
-  @Nullable
-  private String getMyPathInJar() {
+  private @Nullable String getMyPathInJar() {
     if (myStorage == null) {
       return myPathInJar;
     } else {

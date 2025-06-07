@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages
 
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
@@ -67,7 +66,7 @@ class KotlinAwareDelegatingMoveDestination(
             progressIndicator.text = KotlinBundle.message("text.looking.for.usages")
             for ((index, element) in extraElementsForReferenceSearch.withIndex()) {
                 progressIndicator.fraction = (index + 1) / extraElementsForReferenceSearch.size.toDouble()
-                ReferencesSearch.search(element, projectScope).mapNotNullTo(extraUsages) { ref ->
+                ReferencesSearch.search(element, projectScope).asIterable().mapNotNullTo(extraUsages) { ref ->
                     KotlinMoveRenameUsage.createIfPossible(ref, element, addImportToOriginalFile = true, isInternal = false)
                 }
             }

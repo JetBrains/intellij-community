@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,7 +35,7 @@ public class UpdateEventHandler implements ProgressTracker {
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
   private final SvnVcs myVCS;
-  @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
+  private final @Nullable SvnUpdateContext mySequentialUpdatesContext;
   private final Map<File, Url> myUrlToCheckForSwitch;
   // pair.first - group id, pair.second - file path
   // Stack is used to correctly handle cases when updates of externals occur during ordinary update, because these inner updates could have
@@ -46,7 +46,7 @@ public class UpdateEventHandler implements ProgressTracker {
   protected @NlsContexts.ProgressDetails @Nullable String myText2;
 
   public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator,
-                            @Nullable final SvnUpdateContext sequentialUpdatesContext) {
+                            final @Nullable SvnUpdateContext sequentialUpdatesContext) {
     myProgressIndicator = progressIndicator;
     myVCS = vcs;
     mySequentialUpdatesContext = sequentialUpdatesContext;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -38,9 +38,8 @@ public abstract class GrStubElementBase<T extends StubElement> extends StubBased
     GroovyPsiElementImpl.acceptGroovyChildren(this, visitor);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     final PsiFile containingFile = getContainingFile();
     final GlobalSearchScope elementScope = super.getResolveScope();
     return GrFileIndexUtil.isGroovySourceFile(containingFile)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -39,6 +39,8 @@ import com.jediterm.terminal.ui.TerminalActionMenuBuilder;
 import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.pty4j.windows.conpty.WinConPtyProcess;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +55,10 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener, Disposable {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalUiSettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
+
+  @Language("devkit-action-id")
   private static final @NonNls String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
     "ActivateProjectToolWindow",
@@ -102,14 +106,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "ShowSettings",
     "RecentFiles",
     "Switcher",
+    "RecentFilesFallback",
+    "SwitcherFallback",
 
     "ResizeToolWindowLeft",
     "ResizeToolWindowRight",
     "ResizeToolWindowUp",
     "ResizeToolWindowDown",
     "MaximizeToolWindow",
-    
-    "MaintenanceAction",
 
     "TerminalIncreaseFontSize",
     "TerminalDecreaseFontSize",
@@ -132,7 +136,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
     addFocusListener(this);
 
-    mySettingsProvider.getUiSettingsManager().addListener(this);
+    mySettingsProvider.addUiSettingsListener(this, this);
     setDefaultCursorShape(settingsProvider.getCursorShape());
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
@@ -330,11 +334,19 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
     FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(
       text, start, end, fontStyle,
-      mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
+      mySettingsProvider.getFontPreferences(),
       null);
-    return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
+    return fontInfo.getFont().deriveFont(mySettingsProvider.getTerminalFontSize());
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void cursorChanged() {
+    setCursorShape(mySettingsProvider.getCursorShape());
+    repaint();
+  }
+
+  @Override
   public void fontChanged() {
     reinitFontAndResize();
   }
@@ -344,7 +356,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
-        mySettingsProvider.getUiSettingsManager().setFontSize(newFontSize);
+        mySettingsProvider.setTerminalFontSize(newFontSize);
       }
       return;
     }

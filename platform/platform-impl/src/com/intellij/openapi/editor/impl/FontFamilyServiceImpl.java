@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -17,8 +17,8 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 final class FontFamilyServiceImpl extends FontFamilyService {
@@ -93,7 +93,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     }
     catch (Throwable e) {
       LOG.error(e);
-      myFamilies.clear(); // fallback to old behaviour in case of any errors
+      myFamilies.clear(); // fallback to old behavior in case of any errors
     }
   }
 

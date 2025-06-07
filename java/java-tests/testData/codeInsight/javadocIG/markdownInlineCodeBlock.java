@@ -8,8 +8,11 @@
 /// No markdown markup is interpreted inside them
 /// `_Hello_ <code>`
 ///
-/// This is a broken inline link
-/// `Start of broken link
+/// Code span inside a link
+/// [my text with `a code span`!][java.lang.String]
 ///
-/// end of broken link`
+/// This is a broken inline code span
+/// `Start of broken code span
+///
+/// end of broken code span`
 class MarkdownCodeBlock {}

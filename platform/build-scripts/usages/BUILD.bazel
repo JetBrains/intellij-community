@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.buildScripts.usages` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "usages",
+  module_name = "intellij.platform.buildScripts.usages",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/util/jdom",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kaml",
+    "@rules_jvm//zip",
+    "@lib//:hash4j",
+    "@lib//:kotlinx-coroutines-core",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+  ],
+  runtime_deps = ["//jps/model-impl"]
+)
+### auto-generated section `build intellij.platform.buildScripts.usages` end

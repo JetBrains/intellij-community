@@ -3,9 +3,7 @@ package com.intellij.openapi.project.configuration
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.configuration.HeadlessLogging.Message.Plain
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
-import javax.print.attribute.standard.Severity
 
 /**
  * A sink for information that may be useful during command-line execution of the IDE.

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -20,17 +20,13 @@ public class SurroundWithRequireNonNullFix extends PsiUpdateModCommandQuickFix {
       SmartPointerManager.getInstance(expressionToSurround.getProject()).createSmartPsiElementPointer(expressionToSurround);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return JavaAnalysisBundle.message("inspection.surround.requirenonnull.quickfix", myText);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("inspection.surround.requirenonnull.quickfix", "");
   }
 

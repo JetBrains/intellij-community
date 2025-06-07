@@ -1,0 +1,13 @@
+fragment actor on Actor {
+  ...actorInfo
+
+  ... on User {
+    ...userInfo
+  }
+  ... on EnterpriseUserAccount {
+    ...enterpriseUserAccountInfo
+  }
+  ... on Organization {
+    ...organizationInfo
+  }
+}

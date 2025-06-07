@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -11,6 +11,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtilKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -121,7 +122,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     ks.load(null, null);
     for (X509Certificate certificate : certificates) {
@@ -155,12 +158,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   }
 
   @VisibleForTesting
-  void addSystemTrustManager(X509TrustManager manager) {
+  @ApiStatus.Internal
+  public void addSystemTrustManager(X509TrustManager manager) {
     mySystemManagers.add(manager);
   }
 
   @VisibleForTesting
-  void removeSystemTrustManager(X509TrustManager manager) {
+  @ApiStatus.Internal
+  public void removeSystemTrustManager(X509TrustManager manager) {
     if (!mySystemManagers.remove(manager)) {
       throw new IllegalArgumentException("trust manager was not in the list of system trust managers: " + manager);
     }
@@ -286,7 +291,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     boolean accepted = false;
-    Set<X509Certificate> selectedCerts = new HashSet<>();
+    CertificateProvider certificateProvider = new CertificateProvider();
     if (parameters.myAskUser) {
       String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
                        ", issuer: " + endPoint.getIssuerX500Principal().toString();
@@ -300,7 +305,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       } else {
         accepted = CertificateManager.Companion.showAcceptDialog(() -> {
           // TODO may be another kind of warning, if default trust store is missing
-          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, selectedCerts);
+          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
         });
       }
     }
@@ -315,13 +320,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (parameters.myAddToKeyStore) {
-        selectedCerts.forEach(myCustomManager::addCertificate);
+        if (certificateProvider.getSelectedCertificate() == null) {
+          LOG.warn("Certificate wasn't selected, but accepted");
+          accepted = false;
+        } else {
+          myCustomManager.addCertificate(certificateProvider.getSelectedCertificate());
+        }
+      }
+      if (certificateProvider.isChainRemainUnsafe()) {
+        LOG.info("The certificate chain remains untrusted. The request execution will not proceed");
+        accepted = false;
       }
       if (parameters.myOnUserAcceptCallback != null) {
         parameters.myOnUserAcceptCallback.run();
-      }
-      if (!selectedCerts.contains(endPoint)) {
-        accepted = false;
       }
     }
     return accepted;
@@ -586,7 +597,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
     }
 
-    boolean removeAllCertificates() {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public boolean removeAllCertificates() {
       for (X509Certificate certificate : getCertificates()) {
         if (!removeCertificate(certificate)) {
           return false;

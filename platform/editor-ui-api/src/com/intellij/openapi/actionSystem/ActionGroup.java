@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -27,6 +28,9 @@ public abstract class ActionGroup extends AnAction {
       return EMPTY_ARRAY;
     }
   };
+
+  @ApiStatus.Internal
+  public static final DataKey<ActionGroup> CONTEXT_ACTION_GROUP_KEY = DataKey.create("context.action.group");
 
   private boolean mySearchable = true;
   private Set<AnAction> mySecondaryActions;
@@ -120,13 +124,8 @@ public abstract class ActionGroup extends AnAction {
   @ApiStatus.OverrideOnly
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
-  /** @deprecated Use {@link DefaultActionGroup#getChildren(ActionManager)} instead or avoid altogether */
-  @Deprecated(forRemoval = true)
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
-    return getChildren(null);
-  }
-
-  final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {
+  @ApiStatus.Internal
+  public final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {
     if (isPrimary) {
       if (mySecondaryActions != null) {
         mySecondaryActions.remove(action);
@@ -144,7 +143,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded visible children.
    */
-  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
+  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
     @NotNull AnActionEvent e,
     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     return Collections.unmodifiableList(visibleChildren);

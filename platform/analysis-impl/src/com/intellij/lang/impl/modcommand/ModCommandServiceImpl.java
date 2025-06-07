@@ -82,8 +82,7 @@ public final class ModCommandServiceImpl implements ModCommandService {
     return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateSystemOptions(modifiedOptions);
   }
 
-  @NotNull
-  private static <T extends InspectionProfileEntry> InspectionProfileEntry getToolCopy(@NotNull PsiElement context, @NotNull T inspection) {
+  private static @NotNull <T extends InspectionProfileEntry> InspectionProfileEntry getToolCopy(@NotNull PsiElement context, @NotNull T inspection) {
     InspectionToolWrapper<?, ?> tool = InspectionProfileManager.getInstance(context.getProject())
       .getCurrentProfile().getInspectionTool(inspection.getShortName(), context);
     if (tool == null) {
@@ -126,12 +125,11 @@ public final class ModCommandServiceImpl implements ModCommandService {
       runProcessWithProgressSynchronously(computable, commandAction.getFamilyName(), true, project);
   }
 
-  @Nullable
   @RequiresBackgroundThread
-  private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
-                                                      @Nullable Editor hostEditor,
-                                                      @NotNull ModCommandAction commandAction,
-                                                      int fixOffset) {
+  private static @Nullable ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
+                                                                @Nullable Editor hostEditor,
+                                                                @NotNull ModCommandAction commandAction,
+                                                                int fixOffset) {
     if (hostEditor == null) {
       return ActionContext.from(null, hostFile);
     }

@@ -33,13 +33,13 @@ public final class PriorityIntentionActionWrapper implements IntentionAction, Pr
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myAction.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return myAction.isAvailable(project, editor, psiFile);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myAction.invoke(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    myAction.invoke(project, editor, psiFile);
   }
   @Override
   public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
@@ -57,8 +57,8 @@ public final class PriorityIntentionActionWrapper implements IntentionAction, Pr
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myAction.generatePreview(project, editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return myAction.generatePreview(project, editor, psiFile);
   }
 
   @Override

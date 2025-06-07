@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
 
   <actions resource-bundle="messages.LocalHistoryBundle">
@@ -53,19 +54,19 @@
     <action id="ActivityView.CreatePatch" class="com.intellij.platform.lvcs.impl.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
 
     <group id="ActivityView.Toolbar">
-      <reference id="ActivityView.Revert"/>
-      <reference id="ActivityView.CreatePatch"/>
+      <reference ref="ActivityView.Revert"/>
+      <reference ref="ActivityView.CreatePatch"/>
     </group>
     <group id="ActivityView.Popup">
-      <reference id="ActivityView.Revert"/>
-      <reference id="ActivityView.CreatePatch"/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="ActivityView.Revert"/>
+      <reference ref="ActivityView.CreatePatch"/>
+      <reference ref="Diff.ShowDiff"/>
     </group>
     <group id="ActivityView.ChangesBrowser.Toolbar">
-      <reference id="ActivityView.RevertDifferences"/>
+      <reference ref="ActivityView.RevertDifferences"/>
     </group>
     <group id="ActivityView.ChangesBrowser.Popup">
-      <reference id="ActivityView.RevertDifferences"/>
+      <reference ref="ActivityView.RevertDifferences"/>
     </group>
   </actions>
 

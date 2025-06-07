@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.vfs.VfsUtil;
@@ -19,8 +20,7 @@ public class XsltSourcePosition extends XSourcePositionWrapper {
     myLocation = location;
   }
 
-  @Nullable
-  public static XSourcePosition create(Debugger.Locatable location) {
+  public static @Nullable XSourcePosition create(Debugger.Locatable location) {
     final VirtualFile file;
     try {
       file = VfsUtil.findFileByURL(new URI(location.getURI()).toURL());

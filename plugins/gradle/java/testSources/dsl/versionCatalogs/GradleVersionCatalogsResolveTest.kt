@@ -156,6 +156,17 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNavigationFromIncludedBuildToItsCustomToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("includedBuild/build.gradle", "libsCustom.for.inc<caret>luded.build.custom") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "for_included-build-custom",
+                               endOfTomlPath = "includedBuild/libsCustom.toml")
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testNavigationFromIncludedBuildWithoutSettingsToItsDefaultToml(gradleVersion: GradleVersion) =
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("includedBuildWithoutSettings/build.gradle", "libs.for.build.with<caret>out.settings") { psiElement ->
@@ -184,8 +195,8 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
       assertTrue(tomlPath.endsWith(endOfTomlPath))
     }
 
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
-      withSettingsFile {
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-completion")
         addCode("""
           includeBuild("includedBuild")
@@ -235,12 +246,26 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         """.trimIndent()
       )
       // included build with settings
-      withSettingsFile("includedBuild") {
+      withSettingsFile(gradleVersion, "includedBuild") {
         setProjectName("includedBuild")
+        addCode("""
+          dependencyResolutionManagement {
+              versionCatalogs {
+                  libsCustom {
+                      from(files("libsCustom.toml"))
+                  }
+              }
+          }
+        """.trimIndent())
       }
       withFile("includedBuild/gradle/libs.versions.toml", /* language=TOML */ """
         [libraries]
         for_included-build = { module = "org.junit.jupiter:junit-jupiter" }
+        """.trimIndent()
+      )
+      withFile("includedBuild/libsCustom.toml", /* language=TOML */ """
+        [libraries]
+        for_included-build-custom = { module = "org.junit.jupiter:junit-jupiter" }
         """.trimIndent()
       )
     }

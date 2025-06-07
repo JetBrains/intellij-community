@@ -33,7 +33,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   /**
    * @deprecated Please pass parent disposable explicitly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GotoSymbolModel2(@NotNull Project project) {
     this(project, project);
   }

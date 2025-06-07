@@ -22,7 +22,7 @@ public final class AutoIndentLinesHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(AutoIndentLinesHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     Document document = editor.getDocument();
     int startOffset;
     int endOffset;
@@ -38,7 +38,7 @@ public final class AutoIndentLinesHandler implements CodeInsightActionHandler {
     int col = editor.getCaretModel().getLogicalPosition().column;
 
     try{
-      adjustLineIndent(file, document, startOffset, endOffset, line1, project);
+      adjustLineIndent(psiFile, document, startOffset, endOffset, line1, project);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

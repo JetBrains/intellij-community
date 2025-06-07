@@ -156,8 +156,9 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils
 - s:isRegexp(java.lang.String):Z
 - s:putInjectedFileUserData(com.intellij.psi.PsiElement,com.intellij.lang.Language,com.intellij.openapi.util.Key,java.lang.Object):V
 - s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar):V
-- s:registerInjection(com.intellij.lang.Language,java.util.List,com.intellij.psi.PsiFile,com.intellij.lang.injection.MultiHostRegistrar):V
+- s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar,java.util.function.Consumer):V
 - s:registerInjectionSimple(com.intellij.psi.PsiLanguageInjectionHost,org.intellij.plugins.intelliLang.inject.config.BaseInjection,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,com.intellij.lang.injection.MultiHostRegistrar):Z
+- s:registerSupport(com.intellij.lang.injection.MultiHostRegistrar,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z):V
 - s:registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z,com.intellij.psi.PsiElement,com.intellij.lang.Language):V
 c:org.intellij.plugins.intelliLang.inject.InjectorUtils$CommentInjectionData
 - getDisplayName():java.lang.String
@@ -173,6 +174,8 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils$InjectionInfo
 - host():com.intellij.psi.PsiLanguageInjectionHost
 - language():org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - range():com.intellij.openapi.util.TextRange
+f:org.intellij.plugins.intelliLang.inject.InjectorUtilsKt
+- sf:registerSupport(com.intellij.lang.injection.MultiHostRegistrar,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z):com.intellij.lang.injection.MultiHostRegistrar
 a:org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 - sf:INJECTOR_SUPPORT:com.intellij.openapi.util.Key
 - sf:SETTINGS_EDITOR:com.intellij.openapi.util.Key
@@ -326,22 +329,6 @@ f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
 - sf:KEY:com.intellij.openapi.util.Key
 - <init>():V
 - annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
-f:org.intellij.plugins.intelliLang.references.FileReferenceInjector
-- com.intellij.psi.injection.ReferenceInjector
-- <init>():V
-- getDisplayName():java.lang.String
-- getId():java.lang.String
-- getReferences(com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
-f:org.intellij.plugins.intelliLang.references.InjectedReferencesContributor
-- com.intellij.psi.PsiReferenceContributor
-- <init>():V
-- s:getInjectedReferences(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
-- s:isInjected(com.intellij.psi.PsiReference):Z
-- registerReferenceProviders(com.intellij.psi.PsiReferenceRegistrar):V
-f:org.intellij.plugins.intelliLang.references.InjectedReferencesInspection
-- com.intellij.codeInspection.LocalInspectionTool
-- <init>():V
-- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z):com.intellij.psi.PsiElementVisitor
 a:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY_PATTERN:org.intellij.plugins.intelliLang.util.StringMatcher

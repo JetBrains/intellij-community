@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +28,7 @@ import java.util.List;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements PropertyRevision {
-  private final static String ourPropertiesDelimiter = "\n";
+  private static final String ourPropertiesDelimiter = "\n";
 
   private final @NotNull VcsRevisionNumber myNumber;
   private final @NotNull Target myTarget;
@@ -43,9 +43,8 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     myTarget = target;
   }
 
-  @Nullable
   @Override
-  public List<PropertyData> getProperties() throws VcsException {
+  public @Nullable List<PropertyData> getProperties() throws VcsException {
     if (myContent == null) {
       myContent = loadContent();
     }
@@ -83,14 +82,12 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     return ref.get();
   }
 
-  @NotNull
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myNumber;
   }
 
-  @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable Revision revision)
+  public static @NotNull List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable Revision revision)
     throws SvnBindException {
     List<PropertyData> lines = new ArrayList<>();
     PropertyConsumer propertyHandler = createHandler(revision, lines);
@@ -100,8 +97,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     return lines;
   }
 
-  @NotNull
-  private static PropertyConsumer createHandler(Revision revision, @NotNull List<? super PropertyData> lines) {
+  private static @NotNull PropertyConsumer createHandler(Revision revision, @NotNull List<? super PropertyData> lines) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -129,8 +125,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     };
   }
 
-  @NotNull
-  public static String toSortedStringPresentation(@NotNull List<? extends PropertyData> lines) {
+  public static @NotNull String toSortedStringPresentation(@NotNull List<? extends PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
     lines.sort(Comparator.comparing(PropertyData::getName));
@@ -143,7 +138,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
   }
 
   private static void addPropertyPresentation(@NotNull PropertyData property, @NotNull StringBuilder sb) {
-    if (sb.length() != 0) {
+    if (!sb.isEmpty()) {
       sb.append(ourPropertiesDelimiter);
     }
     sb.append(property.getName()).append("=").append(property.getValue());

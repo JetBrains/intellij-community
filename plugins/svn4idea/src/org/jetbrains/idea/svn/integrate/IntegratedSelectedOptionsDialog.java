@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -49,7 +49,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JCheckBox myIgnoreWhitespacesCheckBox;
 
   private final Project myProject;
-  @NotNull private final Url mySelectedBranchUrl;
+  private final @NotNull Url mySelectedBranchUrl;
   private final SvnVcs myVcs;
   private final String mySelectedRepositoryUUID;
 
@@ -106,7 +106,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
           final File file = virtualToIoFile(vFile);
@@ -145,14 +145,14 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         final int idx = myWorkingCopiesList.getSelectedIndex();
         presentation.setEnabled(idx != -1);
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final int idx = myWorkingCopiesList.getSelectedIndex();
         if (idx != -1) {
           final WorkingCopyInfo info = myWorkingCopyInfoModel.get(idx);
@@ -245,21 +245,19 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private static Url realTargetUrl(@NotNull SvnVcs vcs, @NotNull WorkingCopyInfo info, @NotNull Url targetBranchUrl) {
+  private static @Nullable Url realTargetUrl(@NotNull SvnVcs vcs, @NotNull WorkingCopyInfo info, @NotNull Url targetBranchUrl) {
     Info svnInfo = vcs.getInfo(info.getLocalPath());
     Url url = svnInfo != null ? svnInfo.getUrl() : null;
 
     return url != null && isAncestor(targetBranchUrl, url) ? url : null;
   }
 
-  @Nullable
-  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project,
-                                                             final Url currentBranch,
-                                                             @NotNull Url targetBranch,
-                                                             final boolean showIntegrationParameters,
-                                                             final String selectedLocalBranchPath,
-                                                             @DialogTitle @Nullable String dialogTitle) {
+  public static @Nullable Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project,
+                                                                       final Url currentBranch,
+                                                                       @NotNull Url targetBranch,
+                                                                       final boolean showIntegrationParameters,
+                                                                       final String selectedLocalBranchPath,
+                                                                       @DialogTitle @Nullable String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
     if (!showIntegrationParameters) {
       dialog.selectWcopyRootOnly();

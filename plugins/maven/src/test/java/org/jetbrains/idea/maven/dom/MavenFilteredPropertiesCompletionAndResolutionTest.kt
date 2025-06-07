@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -325,7 +326,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                         foo=${"$"}{xxx}
                                         foo2=@xxx@
                                         """.trimIndent())
-    val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
+    val filter = updateProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
     val foo = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
     assertNotNull(foo)
@@ -384,8 +385,6 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
   @Test
   fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() = runBlocking {
-    if (ignore()) return@runBlocking
-
     createProjectSubDir("res")
 
     importProjectAsync("""
@@ -476,9 +475,9 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                 </resources>
                               </build>
                               """.trimIndent()),
-                 findPsiFile(projectPom).getText())
+                 findPsiFileAndGetText(projectPom))
 
-    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
+    assertEquals("foo=abc\${bar}abc", findPsiFileAndGetText(f))
   }
 
   @Test
@@ -514,8 +513,8 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     doInlineRename(f, "bar")
 
-    assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
-    assertEquals("bar=1", findPsiFile(filter).getText())
+    assertEquals("foo=abc\${bar}abc", findPsiFileAndGetText(f))
+    assertEquals("bar=1", findPsiFileAndGetText(filter))
   }
 
   @Test

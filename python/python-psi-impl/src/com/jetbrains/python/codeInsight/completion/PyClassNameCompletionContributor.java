@@ -19,7 +19,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -29,6 +32,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
@@ -64,10 +68,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     result.restartCompletionWhenNothingMatches();
     var remainingResults = result.runRemainingContributors(parameters, true);
 
-    for (var completionResult : remainingResults) {
-      result.passResult(completionResult);
-    }
-
     if (parameters.isExtendedCompletion() || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
       fillCompletionVariantsImpl(parameters, result);
     }
@@ -77,7 +77,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                           @NotNull CompletionParameters parameters) {
     PsiElement position = parameters.getOriginalPosition();
     if (remainingResults.size() == 1 && position != null) {
-      var lookup = remainingResults.iterator().next();
+      var lookup = ContainerUtil.getFirstItem(remainingResults);
       return lookup.getLookupElement().getLookupString().equals(position.getText());
     }
     return false;
@@ -205,7 +205,11 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                         @NotNull TypeEvalContext context) {
     if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
       // Not all names from typing.py are defined as classes
-      return definition instanceof PyClass || ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions");
+      return (
+        definition instanceof PyClass ||
+        definition instanceof PyTypeAliasStatement ||
+        ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions")
+      );
     }
     if (PsiTreeUtil.getParentOfType(position, PyPattern.class, false) != null) {
       return definition instanceof PyClass;
@@ -240,8 +244,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return ContainerUtil.exists(fqn.getComponents(), c -> c.startsWith("_"));
   }
 
-  @NotNull
-  private static GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
+  private static @NotNull GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
     class HavingLegalImportPathScope extends QualifiedNameFinder.QualifiedNameBasedScope {
       private HavingLegalImportPathScope(@NotNull Project project) {
         super(project);
@@ -258,13 +261,27 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return PySearchUtilBase.defaultSuggestionScope(originalFile)
       .intersectWith(GlobalSearchScope.notScope(pyiStubsScope))
       .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(originalFile)))
+      // Some types in typing.py are defined as functions, causing inserting them with parentheses. It's better to rely on typing.pyi.
+      .intersectWith(GlobalSearchScope.notScope(fileScope("typing", originalFile, false)))
+      .uniteWith(fileScope("typing", originalFile, true))
       .intersectWith(new HavingLegalImportPathScope(project));
+  }
+
+  private static @NotNull GlobalSearchScope fileScope(@NotNull String fqn, @NotNull PsiFile anchor, boolean pyiStub) {
+    var context = pyiStub ? PyResolveImportUtil.fromFoothold(anchor) : PyResolveImportUtil.fromFoothold(anchor).copyWithoutStubs();
+    var files = ContainerUtil.filterIsInstance(PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(fqn), context),
+                                               PsiFile.class);
+    if (files.isEmpty()) return GlobalSearchScope.EMPTY_SCOPE;
+    return GlobalSearchScope.filesWithLibrariesScope(anchor.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
   }
 
   private @NotNull InsertHandler<LookupElement> getInsertHandler(@NotNull PyElement exported,
                                                                  @NotNull PsiElement position,
                                                                  @NotNull TypeEvalContext typeEvalContext) {
     if (position.getParent() instanceof PyStringLiteralExpression) {
+      if (isInsideAllInInitPy(position)) {
+        return getImportingInsertHandler();
+      }
       return getStringLiteralInsertHandler();
     }
     // Some names in typing are defined as functions, this rule needs to have priority
@@ -275,6 +292,35 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       return getFunctionInsertHandler();
     }
     return getImportingInsertHandler();
+  }
+
+  private static boolean isInsideAllInInitPy(@NotNull PsiElement position) {
+    PsiFile originalFile = position.getContainingFile();
+    if (originalFile == null) {
+      return false;
+    }
+
+    if (!PyNames.INIT_DOT_PY.equals(originalFile.getName())) {
+      return false;
+    }
+
+    PyAssignmentStatement assignment =
+      PsiTreeUtil.getParentOfType(position, PyAssignmentStatement.class);
+    if (assignment == null) {
+      return false;
+    }
+
+    PyExpression[] targets = assignment.getTargets();
+    if (targets.length != 1) {
+      return false;
+    }
+
+    PyExpression target = targets[0];
+    if (!(target instanceof PyTargetExpression firstTarget)) {
+      return false;
+    }
+
+    return PyNames.ALL.equals(firstTarget.getName());
   }
 
   private static class Counters {

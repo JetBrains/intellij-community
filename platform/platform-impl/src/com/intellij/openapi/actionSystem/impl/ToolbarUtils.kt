@@ -1,11 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.ComponentUtil
 import org.jetbrains.annotations.ApiStatus
@@ -31,12 +27,15 @@ object ToolbarUtils {
           onUpdated.invoke(this)
         }
       }
+
+      init {
+        this.targetComponent = targetComponent
+        putClientProperty(SUPPRESS_FAST_TRACK, true)
+        isReservePlaceAutoPopupIcon = false
+        ComponentUtil.markAsShowing(this, true)
+        updateActionsImmediately(true)
+      }
     }
-    toolbar.targetComponent = targetComponent
-    toolbar.putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
-    toolbar.setReservePlaceAutoPopupIcon(false)
-    ComponentUtil.markAsShowing(toolbar, true)
-    toolbar.updateActionsImmediately(true)
     return toolbar
   }
 

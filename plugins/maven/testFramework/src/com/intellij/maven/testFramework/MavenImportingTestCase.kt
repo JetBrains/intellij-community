@@ -2,18 +2,23 @@
 package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -25,10 +30,13 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.CodeStyleSettingsTracker
@@ -53,14 +61,35 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * This test case uses the NIO API for handling file operations.
+ *
+ * **Background**:
+ * The test framework is transitioning from the `IO` API to the`NIO` API
+ *
+ * **Implementation Notes**:
+ * - `<TestCase>` represents the updated implementation using the `NIO` API.
+ * - `<TestCaseLegacy>` represents the legacy implementation using the `IO` API.
+ * - For now, both implementations coexist to allow for a smooth transition and backward compatibility.
+ * - Eventually, `<TestCaseLegacy>` will be removed from the codebase.
+ *
+ * **Action Items**:
+ * - Prefer using `<TestCase>` for new test cases.
+ * - Update existing tests to use `<TestCase>` where possible.
+ *
+ * **Future Direction**:
+ * Once the transition is complete, all test cases relying on the `IO` API will be retired,
+ * and the codebase will exclusively use the `NIO` implementation.
+ */
 abstract class MavenImportingTestCase : MavenTestCase() {
+
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
@@ -88,7 +117,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
-      ThrowableRunnable<Throwable> { CompilerTestUtil.deleteBuildSystemDirectory(project) },
+      ThrowableRunnable<Throwable> {
+        ProgressManager.getInstance().runProcess({
+                                                   CompilerTestUtil.deleteBuildSystemDirectory(project)
+                                                 }, EmptyProgressIndicator())
+
+         },
       ThrowableRunnable<Throwable> { myProjectsManager = null },
       ThrowableRunnable<Throwable> { super.tearDown() },
       ThrowableRunnable<Throwable> {
@@ -103,7 +137,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return true
   }
 
-  @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
     myProjectsManager = MavenProjectsManager.getInstance(project)
@@ -119,11 +152,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun assertModules(vararg expectedNames: String) {
-    val actual = ModuleManager.getInstance(project).modules
-    val actualNames: MutableList<String> = ArrayList()
-    for (m in actual) {
-      actualNames.add(m.getName())
-    }
+    val actualNames = project.modules.map { it.name }
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
@@ -136,11 +165,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected val projectsTree: MavenProjectsTree
     get() = projectsManager.getProjectsTree()
 
-  protected fun assertModuleOutput(moduleName: String, output: String?, testOutput: String?) {
+  protected fun assertModuleOutput(moduleName: String, output: String, testOutput: String) {
     val e = getCompilerExtension(moduleName)
     assertFalse(e!!.isCompilerOutputPathInherited())
-    assertEquals(output, getAbsolutePath(e.getCompilerOutputUrl()))
-    assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()))
+    assertEquals(getAbsolutePath(output), getAbsolutePath(e.getCompilerOutputUrl()))
+    assertEquals(getAbsolutePath(testOutput), getAbsolutePath(e.getCompilerOutputUrlForTests()))
+  }
+
+  protected fun assertModuleOutput(moduleName: String, output: Path, testOutput: Path) {
+    assertModuleOutput(moduleName, output.toString(), testOutput.toString())
   }
 
   protected val projectsManager: MavenProjectsManager
@@ -382,7 +415,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -402,7 +435,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
   }
@@ -512,7 +545,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
-    FileUtil.delete(File(repositoryPath, relativePath))
+    FileUtil.delete(repositoryPath.resolve(relativePath))
   }
 
   protected fun setupJdkForModules(vararg moduleNames: String) {
@@ -548,7 +581,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     catch (e: ModuleWithNameAlreadyExists) {
       throw RuntimeException(e)
     }
-    writeAction {
+    edtWriteAction {
       modifiableModel.commit()
       project.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(project, listOf(module)) { oldName }
     }
@@ -684,5 +717,27 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       Messages.NO
     }
     return counter
+  }
+
+  protected fun getSourceLanguageLevel(): LanguageLevel? {
+    return getSourceLanguageLevelForModule("project")
+  }
+
+  protected fun getTargetLanguageLevel(): LanguageLevel? {
+    return getTargetLanguageLevelForModule("project")
+  }
+
+  protected fun getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
+    return LanguageLevelUtil.getCustomLanguageLevel(getModule(moduleName))
+  }
+
+  protected fun getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val targetLevel = compilerConfiguration.getBytecodeTargetLevel(getModule(moduleName)) ?: return null
+    return LanguageLevel.parse(targetLevel)
+  }
+
+  protected fun runWithoutStaticSync() {
+    Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
 }

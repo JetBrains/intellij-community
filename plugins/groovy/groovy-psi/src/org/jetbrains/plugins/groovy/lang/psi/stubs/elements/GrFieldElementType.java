@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -32,9 +32,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     return new GrFieldImpl(stub);
   }
 
-  @NotNull
   @Override
-  public GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
+  public @NotNull GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
     Set<String> namedParameters = Collections.emptySet();
@@ -54,8 +53,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   @Override
-  @NotNull
-  public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return deserializeFieldStub(dataStream, parentStub);
   }
 

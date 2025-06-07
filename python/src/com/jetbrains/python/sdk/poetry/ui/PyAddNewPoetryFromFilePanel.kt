@@ -4,14 +4,15 @@ package com.jetbrains.python.sdk.poetry.ui
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.validatePoetryExecutable
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.nio.file.Path
@@ -40,7 +41,7 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
     }
   }
 
-  fun validateAll(): List<ValidationInfo> = runBlockingCancellable {
+  fun validateAll(): List<ValidationInfo> = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.sdk.validating.environment")) {
     listOfNotNull(validatePoetryExecutable(Path.of(poetryPathField.text)))
   }
 

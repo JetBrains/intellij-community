@@ -205,7 +205,8 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
         builder.append(outputName);
       }
     }
-    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
+    myOutputVariablesTextArea.setText(
+      !builder.isEmpty() ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
   }
 
   private void updateSignature() {

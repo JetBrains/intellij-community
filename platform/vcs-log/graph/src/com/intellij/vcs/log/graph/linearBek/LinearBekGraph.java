@@ -19,7 +19,7 @@ public class LinearBekGraph extends LinearGraphWrapper {
     super(graph);
   }
 
-  public Collection<GraphEdge> expandEdge(@NotNull final GraphEdge edge) {
+  public Collection<GraphEdge> expandEdge(final @NotNull GraphEdge edge) {
     Set<GraphEdge> result = new HashSet<>();
 
     assert edge.getType() == GraphEdgeType.DOTTED;

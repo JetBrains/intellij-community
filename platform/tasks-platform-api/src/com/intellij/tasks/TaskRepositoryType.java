@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -28,40 +26,35 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return EP_NAME.getExtensionList();
   }
 
-  public static @NotNull List<Class<?>> getRepositoryClasses() {
+  public static @Unmodifiable @NotNull List<Class<?>> getRepositoryClasses() {
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }
 
-  public static <T> void addEPListChangeListener(@NotNull Disposable disposable, @NotNull Runnable listener) {
-    EP_NAME.addChangeListener(listener, disposable);
+  @ApiStatus.Internal
+  public static void addEPListChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener) {
+    EP_NAME.addChangeListener(coroutineScope, listener);
   }
 
   @Override
-  @NotNull
-  public abstract String getName();
+  public abstract @NotNull String getName();
 
   @Override
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @Nullable
-  public @Nls String getAdvertiser() { return null; }
+  public @Nullable @Nls String getAdvertiser() { return null; }
 
-  @NotNull
-  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
+  public abstract @NotNull TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
     return Collections.singletonList(this);
   }
 
-  @NotNull
-  public TaskRepository createRepository(TaskRepositorySubtype subtype) {
+  public @NotNull TaskRepository createRepository(TaskRepositorySubtype subtype) {
     return subtype.createRepository();
   }
 
   @Override
-  @NotNull
-  public abstract TaskRepository createRepository();
+  public abstract @NotNull TaskRepository createRepository();
 
   public abstract Class<T> getRepositoryClass();
 

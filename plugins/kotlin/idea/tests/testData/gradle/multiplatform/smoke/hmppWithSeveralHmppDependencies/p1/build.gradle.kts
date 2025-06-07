@@ -46,14 +46,10 @@ kotlin {
         runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     }
 
-    targets.all {
-        compilations.all {
-            kotlinOptions {
-                this.freeCompilerArgs += "-Xskip-prerelease-check"
-                this.freeCompilerArgs += "-Xskip-metadata-version-check"
-                this.freeCompilerArgs += "-Xskip-runtime-version-check"
-                this.freeCompilerArgs += "-Xsuppress-version-warnings"
-            }
-        }
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-prerelease-check")
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
+        freeCompilerArgs.add("-Xskip-runtime-version-check")
+        freeCompilerArgs.add("-Xsuppress-version-warnings")
     }
 }

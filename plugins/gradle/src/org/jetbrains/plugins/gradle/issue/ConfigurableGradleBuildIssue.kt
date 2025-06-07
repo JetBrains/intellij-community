@@ -5,6 +5,10 @@ import com.intellij.build.issue.ConfigurableBuildIssue
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleAddDaemonToolchainCriteriaQuickFix
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleDownloadToolchainQuickFix
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleOpenDaemonJvmSettingsQuickFix
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleRecreateToolchainDownloadUrlsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -28,5 +32,29 @@ abstract class ConfigurableGradleBuildIssue : ConfigurableBuildIssue() {
     )
     val hyperlinkReference = addQuickFix(quickFix)
     addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", hyperlinkReference, javaVersion))
+  }
+
+  fun addDaemonToolchainCriteriaQuickFix(projectPath: String) {
+    val quickFix = GradleAddDaemonToolchainCriteriaQuickFix(projectPath)
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.add.toolchain.criteria", hyperlinkReference))
+  }
+
+  fun addDownloadToolchainQuickFix(projectPath: String) {
+    val quickFix = GradleDownloadToolchainQuickFix(projectPath)
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.install.missing.toolchain", hyperlinkReference))
+  }
+
+  fun addRecreateToolchainDownloadUrlsQuickFix(projectPath: String) {
+    val quickFix = GradleRecreateToolchainDownloadUrlsQuickFix(projectPath)
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.recreate.download.urls", hyperlinkReference))
+  }
+
+  fun addOpenDaemonJvmSettingsQuickFix() {
+    val quickFix = GradleOpenDaemonJvmSettingsQuickFix
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.modify.gradle.jvm.criteria", hyperlinkReference))
   }
 }

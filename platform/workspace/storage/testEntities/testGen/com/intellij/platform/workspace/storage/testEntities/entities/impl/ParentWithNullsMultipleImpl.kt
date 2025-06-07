@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -27,13 +26,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithN
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNullsMultipleData) : ParentWithNullsMultiple, WorkspaceEntityBase(
-  dataSource) {
+internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNullsMultipleData) : ParentWithNullsMultiple,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsMultiple::class.java,
-                                                                            ChildWithNullsMultiple::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentWithNullsMultiple::class.java, ChildWithNullsMultiple::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -61,8 +60,8 @@ internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNul
   }
 
 
-  internal class Builder(result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple, ParentWithNullsMultipleData>(
-    result), ParentWithNullsMultiple.Builder {
+  internal class Builder(result: ParentWithNullsMultipleData?) :
+    ModifiableWorkspaceEntityBase<ParentWithNullsMultiple, ParentWithNullsMultipleData>(result), ParentWithNullsMultiple.Builder {
     internal constructor() : this(ParentWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,8 +146,8 @@ internal class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNul
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ChildWithNullsMultiple.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<ChildWithNullsMultiple.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWithNullsMultiple.Builder> ?: emptyList())
         }
         else {
@@ -216,7 +215,8 @@ internal class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNulls
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsMultiple") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsMultiple"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

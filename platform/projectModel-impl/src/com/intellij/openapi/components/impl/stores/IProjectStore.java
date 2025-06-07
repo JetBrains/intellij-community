@@ -51,7 +51,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable Path getDirectoryStorePath();
 
   @ApiStatus.Internal
-  void setPath(@NotNull Path path, boolean isRefreshVfsNeeded, @Nullable Project template);
+  void setPath(@NotNull Path path, @Nullable Project template);
 
   @Nullable String getProjectWorkspaceId();
 }

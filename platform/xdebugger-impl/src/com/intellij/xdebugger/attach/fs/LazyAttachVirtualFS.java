@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ import java.util.Map;
 public final class LazyAttachVirtualFS extends VirtualFileSystem {
   private static final Logger LOG = Logger.getInstance(LazyAttachVirtualFS.class);
 
-  @NonNls private static final String PROTOCOL = "lazyAttachVfs";
+  private static final @NonNls String PROTOCOL = "lazyAttachVfs";
 
   private final Map<String, LazyAttachVirtualFile> myFileCache = new HashMap<>();
 
@@ -34,14 +34,12 @@ public final class LazyAttachVirtualFS extends VirtualFileSystem {
     return (LazyAttachVirtualFS)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
-  @Nullable
-  public VirtualFile findFileByPath(@NotNull String path, @NotNull EnvironmentAwareHost hostInfo) {
+  public @Nullable VirtualFile findFileByPath(@NotNull String path, @NotNull EnvironmentAwareHost hostInfo) {
     final String fullFilePath = hostInfo.getFileSystemHostId() + path;
 
     return myFileCache.computeIfAbsent(fullFilePath, s -> {
@@ -100,24 +98,21 @@ public final class LazyAttachVirtualFS extends VirtualFileSystem {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) {
+  protected @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
+  protected @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile copyFile(Object requestor,
-                                 @NotNull VirtualFile virtualFile,
-                                 @NotNull VirtualFile newParent,
-                                 @NotNull String copyName) {
+  protected @NotNull VirtualFile copyFile(Object requestor,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull VirtualFile newParent,
+                                          @NotNull String copyName) {
     throw new IncorrectOperationException();
   }
 
@@ -126,8 +121,7 @@ public final class LazyAttachVirtualFS extends VirtualFileSystem {
     return true;
   }
 
-  @Nullable
-  private static String getFileContent(@NotNull EnvironmentAwareHost host, @NotNull String path) throws IOException {
+  private static @Nullable String getFileContent(@NotNull EnvironmentAwareHost host, @NotNull String path) throws IOException {
     InputStream stream = host.getFileContent(path);
     if (stream == null) {
       return null;

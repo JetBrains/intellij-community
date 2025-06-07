@@ -60,7 +60,7 @@ final class HidpiInfo extends AnAction implements DumbAware {
 
   private JBPopup popup;
 
-  private final int myCopyIconSize = AllIcons.General.CopyHovered.getIconWidth();
+  private final int myCopyIconSize = AllIcons.General.Copy.getIconWidth();
   private final int myCopyIconPlateSize = myCopyIconSize * 2;
   private Rectangle myCopyIconRect;
   private boolean myDrawCopyIcon;
@@ -153,7 +153,7 @@ final class HidpiInfo extends AnAction implements DumbAware {
           g.fillRect(rect.width - myCopyIconPlateSize, rect.height - myCopyIconPlateSize,
                      myCopyIconPlateSize, myCopyIconPlateSize);
           int offset = (myCopyIconPlateSize + myCopyIconSize) / 2;
-          AllIcons.General.CopyHovered.paintIcon(this, g, rect.width - offset, rect.height - offset);
+          AllIcons.General.Copy.paintIcon(this, g, rect.width - offset, rect.height - offset);
         }
       }
     };

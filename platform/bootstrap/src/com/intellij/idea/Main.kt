@@ -102,7 +102,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       }
     }
 
-    if (AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost() || java.lang.Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
       span("cwm host init") {
         initRemoteDev(args)
       }
@@ -195,16 +195,22 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+  val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
+  if (isSplitMode) {
+    System.setProperty("jb.privacy.policy.text", "<!--999.999-->")
+    System.setProperty("jb.consents.confirmation.enabled", "false")
     System.setProperty("idea.initially.ask.config", "never")
   }
 
   // avoid an icon jumping in dock for the backend process
   if (SystemInfoRt.isMac) {
-    // this makes sure that the following call doesn't create an icon in Dock
-    System.setProperty("apple.awt.BackgroundOnly", "true")
-    // this tells the OS that app initialization is finished
-    Toolkit.getDefaultToolkit()
+    val shouldInitDefaultToolkit = isSplitMode || isInAquaSession()
+    if (System.getProperty("REMOTE_DEV_INIT_MAC_DEFAULT_TOOLKIT", shouldInitDefaultToolkit.toString()).toBoolean()) {
+      // this makes sure that the following call doesn't create an icon in Dock
+      System.setProperty("apple.awt.BackgroundOnly", "true")
+      // this tells the OS that app initialization is finished
+      Toolkit.getDefaultToolkit()
+    }
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
@@ -223,8 +229,29 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
   handle.invoke(value)
 }
 
+private fun isInAquaSession(): Boolean {
+  if (!SystemInfoRt.isMac) return false
+
+  if ("true" == System.getenv("AWT_FORCE_HEADFUL")) {
+    return false // the value is forcefully set, assume the worst case
+  }
+
+  try {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("sun.awt.PlatformGraphicsInfo")
+    val handle = MethodHandles.lookup().findStatic(aClass, "isInAquaSession", MethodType.methodType(Boolean::class.javaPrimitiveType))
+    return handle.invoke() as Boolean
+  }
+  catch (e: Throwable) {
+    e.printStackTrace()
+    return false
+  }
+}
+
 private fun initLux() {
+  // See also 'AWT_FORCE_HEADFUL'
+  setStaticField(java.awt.GraphicsEnvironment::class.java, "headless", false) // ensure cached value is overridden
   System.setProperty("java.awt.headless", false.toString())
+
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())

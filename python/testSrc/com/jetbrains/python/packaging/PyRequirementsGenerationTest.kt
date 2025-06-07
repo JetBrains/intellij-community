@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import org.easymock.EasyMock
 
 class PyRequirementsGenerationTest : PyTestCase() {
@@ -19,7 +21,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
   private val installedPackages = mapOf("Django" to "3.0.0",
                                         "requests" to "2.22.0",
                                         "Jinja2" to "2.11.1",
-                                        "pandas" to "1.0.1" ,
+                                        "pandas" to "1.0.1",
                                         "cookiecutter" to "1.7.0",
                                         "numpy" to "1.18.1",
                                         "tox" to "3.14.4",
@@ -46,10 +48,12 @@ class PyRequirementsGenerationTest : PyTestCase() {
   fun testBaseFileUpdate() = doTest(modifyBaseFiles = true)
   fun testBaseFileCleanup() = doTest(modifyBaseFiles = true, removeUnused = true)
 
-  private fun doTest(versionSpecifier: PyRequirementsVersionSpecifierType = PyRequirementsVersionSpecifierType.STRONG_EQ,
-                     removeUnused: Boolean = false,
-                     modifyBaseFiles: Boolean = false,
-                     packages: Map<String, String> = installedPackages) {
+  private fun doTest(
+    versionSpecifier: PyRequirementsVersionSpecifierType = PyRequirementsVersionSpecifierType.STRONG_EQ,
+    removeUnused: Boolean = false,
+    modifyBaseFiles: Boolean = false,
+    packages: Map<String, String> = installedPackages,
+  ) {
     val settings = PyPackageRequirementsSettings.getInstance(myFixture.module)
     val oldRequirementsPath = settings.requirementsPath
     val oldVersionSpecifier = settings.versionSpecifier
@@ -107,6 +111,9 @@ class PyRequirementsGenerationTest : PyTestCase() {
 
   private fun overrideInstalledPackages(packages: Map<String, String>) {
     ApplicationManager.getApplication().registerServiceInstance(PyPackageManagers::class.java, MockPyPackageManagers(packages))
+
+    val packages = packages.map { PythonPackage(it.key, it.value, false) }
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(project = myFixture.project, packages)
   }
 
   private class MockPyPackageManagers(val packages: Map<String, String>) : PyPackageManagers() {

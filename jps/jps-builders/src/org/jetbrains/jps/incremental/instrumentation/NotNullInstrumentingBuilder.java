@@ -15,10 +15,12 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.JvmClassFileInstrumenter;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -27,12 +29,28 @@ import java.io.File;
 import java.util.Collection;
 
 @ApiStatus.Internal
-public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
+public final class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder implements JvmClassFileInstrumenter {
   private static final Logger LOG = Logger.getInstance(NotNullInstrumentingBuilder.class);
   private boolean myIsEnabled;
   private String[] myNotNulls;
 
   public NotNullInstrumentingBuilder() {
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return "not-null-assertions";
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ProjectDescriptor projectDescriptor, @NotNull JpsModule module) {
+    JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
+    return config.isAddNotNullAssertions();
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 
   @Override

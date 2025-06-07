@@ -60,11 +60,11 @@ package org.jdom.input;
  * This way there isles confusion about what a Document or Element is....
  */
 
+import org.jdom.*;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.*;
-import org.w3c.dom.Text;
 import org.w3c.dom.*;
+import org.w3c.dom.Text;
 
 import java.util.HashMap;
 
@@ -333,7 +333,7 @@ public final class DOMBuilder {
               // validation. In that case, there may not be a prefix
               // There's also the possibility the DOM contains
               // garbage.
-              if (attPrefix.length() > 0) {
+              if (!attPrefix.isEmpty()) {
                 // If the att has a prefix, we can assume that
                 // the DOM is valid, and we can just use the prefix.
                 // if this prefix conflicts with some other namespace
@@ -360,7 +360,7 @@ public final class DOMBuilder {
                 // element's ancestry, and use the prefix from that.
                 HashMap<String, Namespace> tmpmap = new HashMap<>();
                 for (Namespace nss : element.getNamespacesInScope()) {
-                  if (nss.getPrefix().length() > 0 && nss.getURI().equals(attURI)) {
+                  if (!nss.getPrefix().isEmpty() && nss.getURI().equals(attURI)) {
                     attNS = nss;
                     break;
                   }

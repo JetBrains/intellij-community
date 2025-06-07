@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -12,19 +12,21 @@ import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
@@ -59,6 +61,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -67,7 +70,6 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.codeinsight.utils.getInlineArgumentSymbol
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
@@ -104,6 +106,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         if (descriptor.location?.isInKotlinSources() != true) {
             return null
         }
@@ -125,23 +128,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return listOf(KotlinStackFrame(descriptor, visibleVariables))
     }
 
-    override fun getSourcePositionAsync(location: Location?): CompletableFuture<SourcePosition?> =
-        invokeCommandAsCompletableFuture {
-            getSourcePositionInternal(location)
-        }
-
-    override fun getSourcePosition(location: Location?): SourcePosition? {
-        if (ApplicationManager.getApplication().isInternal
-            && ApplicationManager.getApplication().isReadAccessAllowed
-            && !ProgressManager.getInstance().hasProgressIndicator()) {
-            LOG.error("Call runBlocking from read action without indicator")
-        }
-        return runBlockingMaybeCancellable {
-            getSourcePositionInternal(location)
-        }
-    }
-
-    private suspend fun getSourcePositionInternal(location: Location?): SourcePosition? {
+    override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (location == null) throw NoDataException.INSTANCE
 
@@ -307,11 +294,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     // Returns a property or a constructor if debugger stops at class declaration
     private suspend fun getElementForDeclarationLine(location: Location, file: KtFile, lineNumber: Int): KtElement? {
-        val contextElement = readAction {
+        val (locationElement, contextElement) = readAction {
             val lineStartOffset = file.getLineStartOffset(lineNumber) ?: return@readAction null
             val elementAt = file.findElementAt(lineStartOffset)
-            CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
+            elementAt to CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
         } ?: return null
+        
+        if (locationElement == null || contextElement == null) return null
 
         if (contextElement !is KtClass) return null
         val methodName = location.method().name()
@@ -323,7 +312,16 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     valueParameters.find { it.hasValOrVar() && it.name != null && JvmAbi.getterName(it.name!!) == methodName }
                 }
 
-                methodName == "<init>" -> contextElement.primaryConstructor
+                methodName == "<init>" -> {
+                    val locationParent = locationElement.parent
+                    if (locationParent is KtParameter && locationElement == locationParent.valOrVarKeyword) {
+                        // if location points to the val parameter from the primary constructor,
+                        // use this val parameter as a declaration in debugger
+                        locationParent
+                    } else {
+                        contextElement.primaryConstructor
+                    }
+                }
                 else -> null
             }
         }
@@ -432,7 +430,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
         val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
-        symbol.getByteCodeMethodName()
+        getByteCodeMethodName(symbol)
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
@@ -606,27 +604,25 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getClassesWithInlinedCode(candidatesWithInline: List<String>, line: Int): List<ReferenceType> {
         val candidatesWithInlineInternalNames = candidatesWithInline.map { it.fqnToInternalName() }
         val futures = debugProcess.virtualMachineProxy.allClasses().map { type ->
-            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames).thenApply { hasInlinedLines ->
-                type.takeIf { hasInlinedLines }
-            }
+            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames)
+                .thenApply { hasInlinedLines -> type.takeIf { hasInlinedLines } }
+                .exceptionally { e ->
+                    val exception = DebuggerUtilsAsync.unwrap(e)
+                    if (exception is ObjectCollectedException) null else throw e
+                }
         }.toTypedArray()
         CompletableFuture.allOf(*futures).join()
         return futures.mapNotNull { it.get() }
     }
 
     @RequiresReadLockAbsence
-    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> {
-        try {
+    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
+        wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
                 .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, sourcePosition.line) }
 
-            return matchingCandidates.ifEmpty { candidates }
-        } catch (e: IncompatibleThreadStateException) {
-            return emptyList()
-        } catch (e: VMDisconnectedException) {
-            return emptyList()
-        }
-    }
+            matchingCandidates.ifEmpty { candidates }
+        } ?: emptyList()
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
         if (position.file !is KtFile) {
@@ -638,7 +634,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 // If we cannot get source debug extension information, we approximate information for inline functions.
                 // This allows us to stop on some breakpoints in inline functions, but does not work very well.
                 // Source debug extensions are not available on Android devices before Android O.
-                val inlineLocations = runReadAction { DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope) }
+                val inlineLocations = ReadAction.nonBlocking<List<Location>> {
+                    DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope)
+                }.executeSynchronously()
                 if (inlineLocations.isNotEmpty()) {
                     return inlineLocations
                 }
@@ -808,12 +806,16 @@ private suspend fun findFileCandidatesWithBackgroundProcess(
         project, KotlinDebuggerCoreBundle.message("progress.title.kt.file.search"),
         cancellable = false
     ) {
-        val files = readAction {
-            FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
-                val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
-                if (files.isNotEmpty()) return@ThrowableComputable files
-                DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
-            })
+        val files = try {
+            readAction {
+                FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
+                    val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+                    if (files.isNotEmpty()) return@ThrowableComputable files
+                    DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
+                })
+            }
+        } catch (_: IndexNotReadyException) {
+            emptyList()
         }
         if (files.isNotEmpty()) return@withBackgroundProgress files
 

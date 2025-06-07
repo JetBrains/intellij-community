@@ -12,6 +12,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -202,6 +203,13 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     TextComponentAccessor<? super Comp> accessor
   ) {
     addActionListener(new BrowseFolderActionListener<>(this, project, fileChooserDescriptor, accessor));
+  }
+
+  public void addFileSaverDialog(@Nullable Project project,
+                                 @NotNull FileSaverDescriptor descriptor,
+                                 TextComponentAccessor<? super Comp> accessor)
+  {
+    addActionListener(new FileSaverRunnable<>(project, descriptor, getChildComponent(), accessor));
   }
 
   /**

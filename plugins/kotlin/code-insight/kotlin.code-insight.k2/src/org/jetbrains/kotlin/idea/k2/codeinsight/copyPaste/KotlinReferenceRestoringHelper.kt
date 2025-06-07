@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -18,17 +19,13 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
-import kotlin.collections.flatMap
 
 internal object KotlinReferenceRestoringHelper {
     @OptIn(KaImplementationDetail::class)
@@ -97,6 +94,8 @@ internal object KotlinReferenceRestoringHelper {
         // - ambiguity errors (if the source has an ambiguity error and candidates have the same `fqName`, import the `fqName` in question)
         val sourceSymbolsGroupedByFqName = sourceReference.getResolvedSymbolsGroupedByImportableFqName()
         if (sourceSymbolsGroupedByFqName.size > 1 && sourceReference !is KtMultiReference<*>) return@mapNotNull null
+
+        if (sourceElement is KtLabelReferenceExpression) return@mapNotNull null
 
         val isReferenceQualifiable = sourceSymbolsGroupedByFqName.values.singleOrNull()?.any { !it.isExtension } == true
 
@@ -194,16 +193,18 @@ internal object KotlinReferenceRestoringHelper {
         else -> null
     }
 
-    context(KaSession)
     private fun isAccessible(
         targetReference: KtReference,
         sourceFqName: FqName
     ): Boolean {
-        val project = targetReference.element.project
         val importedReference =
-            org.jetbrains.kotlin.psi.KtPsiFactory(project).createImportDirective(ImportPath(sourceFqName, false)).importedReference
+            KtPsiFactory.contextual(targetReference.element.containingFile, markGenerated = false)
+                .createImportDirective(ImportPath(sourceFqName, false))
+                .importedReference
         val reference = importedReference?.getQualifiedElementSelector()?.mainReference ?: return false
-        val symbols = reference.resolveToSymbols()
-        return symbols.isNotEmpty()
+        analyze(reference.element) {
+            val symbols = reference.resolveToSymbols()
+            return symbols.isNotEmpty()
+        }
     }
 }

@@ -15,10 +15,15 @@ class SetupCloudStep : UndoableEvaluationStep {
   private var stagingOriginalValue: Boolean = false
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
-    Registry.get(TOKEN_FROM_ENV).also { tokenFromEnvOriginalValue = it.asBoolean() }.setValue(true)
-    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = "Service"
-    Registry.get(USE_STAGING_URL).also { stagingOriginalValue = it.asBoolean() }.setValue(true)
+    start()
     return workspace
+  }
+
+  fun start() {
+    Registry.get(TOKEN_FROM_ENV).also { tokenFromEnvOriginalValue = it.asBoolean() }.setValue(true)
+    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = System.getenv(EVAL_ENDPOINT_TYPE) ?: "Application"
+    Registry.get(USE_STAGING_URL).also { stagingOriginalValue = it.asBoolean() }.setValue(true)
+    println("Cloud Authentication is set up. \n $ENDPOINT_TYPE = ${Registry.stringValue(ENDPOINT_TYPE)} \n $USE_STAGING_URL = ${Registry.stringValue(USE_STAGING_URL)}")
   }
 
   override fun undoStep(): UndoableEvaluationStep.UndoStep {
@@ -40,6 +45,7 @@ class SetupCloudStep : UndoableEvaluationStep {
   companion object {
     private const val TOKEN_FROM_ENV = "llm.enable.grazie.token.from.environment.variable.or.file"
     private const val ENDPOINT_TYPE = "llm.endpoint.type"
+    private const val EVAL_ENDPOINT_TYPE = "eval_llm_endpoint_type"
     private const val USE_STAGING_URL = "llm.use.grazie.staging.url"
   }
 }

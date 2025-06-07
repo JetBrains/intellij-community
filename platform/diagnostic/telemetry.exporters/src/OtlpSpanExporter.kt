@@ -6,7 +6,6 @@ package com.intellij.platform.diagnostic.telemetry.exporters
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.util.http.ContentType
 import com.intellij.platform.util.http.httpPost
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler
@@ -18,11 +17,6 @@ import java.net.ConnectException
 @Internal
 class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
   override suspend fun export(spans: Collection<SpanData>) {
-    // checking whether the spans are exported from rem dev backend
-    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) {
-      return
-    }
-
     try {
       val item = TraceRequestMarshaler.create(spans)
       httpPost(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf) {
@@ -40,9 +34,11 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
     }
   }
 
-  suspend fun exportBackendData(receivedBytes: ByteArray) {
-    runCatching {
-      httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
-    }.getOrLogException(thisLogger())
+  companion object {
+    suspend fun exportBackendData(traceUrl: String, receivedBytes: ByteArray) {
+      runCatching {
+        httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
+      }.getOrLogException(thisLogger())
+    }
   }
 }

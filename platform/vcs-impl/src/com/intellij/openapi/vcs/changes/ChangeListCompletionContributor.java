@@ -21,7 +21,7 @@ public final class ChangeListCompletionContributor extends CompletionContributor
   public static final Key<ComboBox<ChangeList>> COMBO_BOX_KEY = Key.create("CHANGELIST_COMBO_BOX");
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     final PsiFile file = parameters.getOriginalFile();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
     if (document == null) return;

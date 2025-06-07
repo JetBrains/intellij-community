@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -21,14 +21,14 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return JavaFileType.INSTANCE;
   }
 
@@ -40,24 +40,21 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     return JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, context, null, isPhysical);
   }
 
-  @NotNull
   @Override
-  public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
+  public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
     return ContainerUtil.map(DebuggerUtilsEx.getCodeFragmentFactories(context), factory -> factory.getFileType().getLanguage());
   }
 
-  @NotNull
   @Override
-  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+  public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       return getSupportedLanguages(getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project));
     }
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
+  public @NotNull XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
     PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
     if (psiFile instanceof JavaCodeFragment) {
       return new XExpressionImpl(document.getText(), language, StringUtil.nullize(((JavaCodeFragment)psiFile).importsToString()), mode);

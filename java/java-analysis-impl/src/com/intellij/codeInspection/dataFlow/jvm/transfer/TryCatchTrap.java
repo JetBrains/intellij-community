@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -32,6 +33,7 @@ public class TryCatchTrap implements Trap {
   }
 
   public interface CatchClauseDescriptor {
+    @Unmodifiable
     @NotNull List<TypeConstraint> constraints();
     @Nullable VariableDescriptor parameter();
   }
@@ -44,7 +46,7 @@ public class TryCatchTrap implements Trap {
     }
 
     @Override
-    public @NotNull List<TypeConstraint> constraints() {
+    public @Unmodifiable @NotNull List<TypeConstraint> constraints() {
       PsiParameter parameter = mySection.getParameter();
       if (parameter == null) return Collections.emptyList();
       PsiType type = parameter.getType();
@@ -60,10 +62,10 @@ public class TryCatchTrap implements Trap {
   }
 
   @Override
-  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                                     @NotNull DataFlowInterpreter interpreter,
-                                                     DfaControlTransferValue.@NotNull TransferTarget target,
-                                                     @NotNull FList<Trap> nextTraps) {
+  public @Unmodifiable @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                                   @NotNull DataFlowInterpreter interpreter,
+                                                                   DfaControlTransferValue.@NotNull TransferTarget target,
+                                                                   @NotNull FList<Trap> nextTraps) {
     if (!(target instanceof ExceptionTransfer)) {
       return DfaControlTransferValue.dispatch(state, interpreter, target, nextTraps);
     }

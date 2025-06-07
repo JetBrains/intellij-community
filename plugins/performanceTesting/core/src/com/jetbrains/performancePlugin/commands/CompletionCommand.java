@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -147,8 +148,7 @@ public class CompletionCommand extends PerformanceCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @Nullable
-  public static Path getCompletionItemsDir() {
+  public static @Nullable Path getCompletionItemsDir() {
     String property = System.getProperty(DUMP_COMPLETION_ITEMS_DIR);
     if (property != null) {
       return Paths.get(property);
@@ -164,8 +164,7 @@ public class CompletionCommand extends PerformanceCommand {
     DataDumper.dump(report, file.toPath());
   }
 
-  @NotNull
-  private String createTestReportFilename() {
+  private @NotNull String createTestReportFilename() {
     return "completion-" + getCompletionType() + "-" + System.currentTimeMillis() + (isWarmupMode() ? "_warmup" : "") + ".txt";
   }
 

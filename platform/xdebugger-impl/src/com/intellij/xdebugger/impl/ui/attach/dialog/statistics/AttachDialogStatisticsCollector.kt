@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.ui.attach.dialog.statistics
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachViewType
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
@@ -32,7 +32,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupElement> 
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
     final PsiClassType.ClassResolveResult resolveResult = myClassType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || !psiClass.isValid()) {
@@ -83,8 +83,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupElement> 
     }
   }
 
-  @Nullable
-  private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
+  private static @Nullable Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

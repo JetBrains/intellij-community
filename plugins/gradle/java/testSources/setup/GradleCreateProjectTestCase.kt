@@ -21,12 +21,10 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.getDirectory
@@ -35,13 +33,14 @@ import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
@@ -63,12 +62,8 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     return createProjectByWizard(JAVA) {
       configureWizardStepSettings(this, rootModuleInfo, null)
     }.withProjectAsync { project ->
-      val projectRoot = testRoot.getDirectory(projectInfo.relativePath)
-      val parentData = ExternalSystemApiUtil.findProjectNode(
-        project,
-        GradleConstants.SYSTEM_ID,
-        projectRoot.path
-      )!!
+      val parentPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
+      val parentData = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, parentPath)!!
       for (moduleInfo in projectInfo.modules) {
         if (moduleInfo != rootModuleInfo) {
           createModuleByWizard(project, JAVA) {
@@ -81,12 +76,9 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
     step.baseData!!.name = moduleInfo.name
-    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
+    step.baseData!!.path = testPath.resolve(moduleInfo.relativePath).normalize().parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
-    step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
-      true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
-      else -> GradleNewProjectWizardStep.GradleDsl.GROOVY
-    }
+    step.javaGradleData!!.gradleDsl = moduleInfo.gradleDsl
     step.javaGradleData!!.parentData = parentData
     step.javaGradleData!!.groupId = moduleInfo.groupId
     step.javaGradleData!!.artifactId = moduleInfo.artifactId
@@ -117,12 +109,10 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
     return awaitProjectConfiguration(project, numProjectSyncs) {
-      blockingContext {
-        invokeAndWaitIfNeeded {
-          val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
-          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-          module
-        }
+      invokeAndWaitIfNeeded {
+        val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        module
       }
     }
   }
@@ -132,23 +122,21 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     project: Project?,
     configure: NewProjectWizardStep.() -> Unit
   ): AbstractProjectWizard {
-    return blockingContext {
-      invokeAndWaitIfNeeded {
-        val modulesProvider = DefaultModulesProvider.createForProject(project)
-        val wizard = NewProjectWizard(project, modulesProvider, null)
-        try {
-          wizard.runWizard {
-            this as ProjectTypeStep
-            Assertions.assertTrue(setSelectedTemplate(group, null))
-            val step = customStep as NewProjectWizardStep
-            step.configure()
-          }
+    return invokeAndWaitIfNeeded {
+      val modulesProvider = DefaultModulesProvider.createForProject(project)
+      val wizard = NewProjectWizard(project, modulesProvider, null)
+      try {
+        wizard.runWizard {
+          this as ProjectTypeStep
+          Assertions.assertTrue(setSelectedTemplate(group, null))
+          val step = customStep as NewProjectWizardStep
+          step.configure()
         }
-        finally {
-          Disposer.dispose(wizard.disposable)
-        }
-        wizard
       }
+      finally {
+        Disposer.dispose(wizard.disposable)
+      }
+      wizard
     }
   }
 
@@ -178,10 +166,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   override fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withBuildFile(
-      useKotlinDsl = useKotlinDsl,
-      content = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl).apply(configure).generate()
-    )
+    filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
   fun assertBuildFiles(projectInfo: ProjectInfo) {
@@ -192,6 +177,12 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
       val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
       moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
     }
+  }
+
+  fun assertDaemonJvmProperties(project: Project) {
+    val externalProjectPath = Path.of(project.basePath!!)
+    val properties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
+    Assertions.assertEquals(gradleJvmInfo.toJvmCriteria(), properties.criteria)
   }
 
   companion object {

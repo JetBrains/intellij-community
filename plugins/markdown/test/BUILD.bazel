@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.markdown.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["data/**/*"]),
+  strip_prefix = "data"
+)
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/fenceInjection",
+    "//plugins/markdown/frontmatter",
+    "//plugins/markdown/frontmatter/toml",
+    "//plugins/markdown/frontmatter/yaml",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/markdown/images",
+    "//plugins/markdown/model",
+    "//plugins/markdown/spellchecker",
+    "//plugins/markdown/xml",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/usageView",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/tests:tests_test_lib",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//platform/platform-tests:tests_test_lib",
+    "@lib//:jsoup",
+    "@lib//:jcef",
+    "@lib//:assert_j",
+    "//platform/util-ex",
+    "@lib//:jetbrains-markdown",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/yaml/backend",
+    "//plugins/yaml/backend:backend_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//xml/testFramework",
+  ],
+  runtime_deps = [":tests_test_resources"]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `build intellij.markdown.tests` end

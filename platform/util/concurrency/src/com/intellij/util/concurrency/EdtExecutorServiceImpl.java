@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.List;
@@ -56,7 +57,7 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
   }
 
   @Override
-  public @NotNull List<Runnable> shutdownNow() {
+  public @NotNull @Unmodifiable List<Runnable> shutdownNow() {
     return AppScheduledExecutorService.notAllowedMethodCall();
   }
 

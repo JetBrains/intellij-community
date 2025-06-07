@@ -8,4 +8,4 @@ def calc(a: T, b: T):
     pass
 
 
-calc('a', <warning descr="Expected type 'str' (matched generic type 'T ≤: int | Any'), got 'int' instead">0</warning>)
+calc('a', 0) # OK: 'unresolved' is treated as 'Any'

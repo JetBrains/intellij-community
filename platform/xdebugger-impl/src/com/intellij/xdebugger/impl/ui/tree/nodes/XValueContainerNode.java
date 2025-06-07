@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,9 +13,7 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -68,7 +66,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
+  public void addChildren(final @NotNull XValueChildrenList children, final boolean last) {
     if (myObsolete) return;
     invokeNodeUpdate(() -> {
       if (myObsolete) return;
@@ -134,11 +132,10 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return !tree.isUnderRemoteDebug();
   }
 
-  @Nullable
-  private static <T extends XValueContainer> List<XValueContainerNode<?>> createNodes(List<T> groups,
-                                                                                      Function<T, XValueContainerNode<?>> createNode,
-                                                                                      @Nullable List<XValueContainerNode<?>> prevNodes,
-                                                                                      List<? super XValueContainerNode<?>> newChildren) {
+  private static @Nullable <T extends XValueContainer> List<XValueContainerNode<?>> createNodes(List<T> groups,
+                                                                                                Function<T, XValueContainerNode<?>> createNode,
+                                                                                                @Nullable List<XValueContainerNode<?>> prevNodes,
+                                                                                                List<? super XValueContainerNode<?>> newChildren) {
     if (groups.isEmpty()) return prevNodes;
 
     List<XValueContainerNode<?>> nodes = prevNodes != null ? prevNodes : new SmartList<>();
@@ -196,16 +193,16 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  public void setErrorMessage(@NotNull final String errorMessage, @Nullable final XDebuggerTreeNodeHyperlink link) {
+  public void setErrorMessage(final @NotNull String errorMessage, final @Nullable XDebuggerTreeNodeHyperlink link) {
     setMessage(errorMessage, XDebuggerUIConstants.ERROR_MESSAGE_ICON, XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES, link);
     invokeNodeUpdate(() -> setMessageNodes(Collections.emptyList(), true)); // clear temporary nodes
   }
 
   @Override
-  public void setMessage(@NotNull final String message,
+  public void setMessage(final @NotNull String message,
                          final Icon icon,
-                         @NotNull final SimpleTextAttributes attributes,
-                         @Nullable final XDebuggerTreeNodeHyperlink link) {
+                         final @NotNull SimpleTextAttributes attributes,
+                         final @Nullable XDebuggerTreeNodeHyperlink link) {
     invokeNodeUpdate(() -> setMessageNodes(MessageTreeNode.createMessages(myTree, this, message, link, icon, attributes), false));
   }
 
@@ -242,8 +239,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     fireNodesInserted(messages);
   }
 
-  @NotNull
-  public XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable @Nls String text) {
+  public @NotNull XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable @Nls String text) {
     if (isLeaf()) {
       setLeaf(false);
     }
@@ -277,9 +273,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return index;
   }
 
-  @NotNull
   @Override
-  public List<? extends TreeNode> getChildren() {
+  public @NotNull @Unmodifiable List<? extends TreeNode> getChildren() {
     loadChildren();
 
     if (myCachedAllChildren == null) {
@@ -306,14 +301,18 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return myCachedAllChildren;
   }
 
-  @NotNull
-  public ValueContainer getValueContainer() {
+  @ApiStatus.Internal
+  public List<TreeNode> getCachedChildren() {
+    if (myCachedAllChildren == null) return Collections.emptyList();
+    return ContainerUtil.copyList(myCachedAllChildren);
+  }
+
+  public @NotNull ValueContainer getValueContainer() {
     return myValueContainer;
   }
 
   @Override
-  @NotNull
-  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+  public @NotNull @Unmodifiable List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
     return ContainerUtil.concat(ObjectUtils.notNull(myTopNodes, empty),
                                 ObjectUtils.notNull(myValueChildren, empty),

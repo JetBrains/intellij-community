@@ -7,7 +7,7 @@ package com.intellij.openapi.editor;
  * The properties should be provided when the inlay is created, see:
  * <ul>
  * <li>{@link InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addInlineElement},
- * <li>{@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.adAfterLineEndElement},
+ * <li>{@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addAfterLineEndElement},
  * <li>{@link InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addBlockElement}.
  * </ul>
  * <p>

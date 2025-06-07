@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.ide.ui.UISettingsUtils;
@@ -12,16 +12,12 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 
 public final class FontUtil {
-  @NotNull
-  @Nls
-  public static String getHtmlWithFonts(@NotNull @Nls String input) {
+  public static @NotNull @Nls String getHtmlWithFonts(@NotNull @Nls String input) {
     Font font = StartupUiUtil.getLabelFont();
     return getHtmlWithFonts(input, font.getStyle(), font);
   }
 
-  @NotNull
-  @Nls
-  public static String getHtmlWithFonts(@NotNull @Nls String input, int style, @NotNull Font baseFont) {
+  public static @NotNull @Nls String getHtmlWithFonts(@NotNull @Nls String input, int style, @NotNull Font baseFont) {
     int start = baseFont.canDisplayUpTo(input);
     if (start == -1) return input;
 
@@ -52,13 +48,11 @@ public final class FontUtil {
     return result.toString();
   }
 
-  @NotNull
-  public static Font getEditorFont() {
+  public static @NotNull Font getEditorFont() {
     return EditorFontType.getGlobalPlainFont().deriveFont(UISettingsUtils.getInstance().getScaledEditorFontSize());
   }
 
-  @NotNull
-  public static Font getCommitMessageFont() {
+  public static @NotNull Font getCommitMessageFont() {
     return getEditorFont();
   }
 

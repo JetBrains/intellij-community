@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -8,7 +8,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -92,7 +92,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
-    myFileTypeManager = new FileTypeManagerImpl(((ComponentManagerEx)myProject).getCoroutineScope());
+    myFileTypeManager = new FileTypeManagerImpl(((ComponentManagerEx)ApplicationManager.getApplication()).getCoroutineScope());
     myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
@@ -119,8 +119,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.reDetectAsync(false);
       assertNull(myFileTypeManager.findFileTypeByName("x." + MyTestFileType.EXTENSION));
       assertNull(myFileTypeManager.getExtensionMap().findByExtension(MyTestFileType.EXTENSION));
+      myFileTypeManager.detectionService.drainReDetectQueue();
       Disposer.dispose(myFileTypeManager);
-      Element globalStateAfter = ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).getState();
+      FileTypeManagerImpl globalFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+      Element globalStateAfter = globalFileTypeManager.getState();
+      globalFileTypeManager.drainReDetectQueue();
       assertEquals(JDOMUtil.writeElement(myGlobalStateBefore), JDOMUtil.writeElement(globalStateAfter));
     }
     catch (Throwable e) {
@@ -679,7 +682,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.implementationClass = MyTestFileType.class.getName();
     bean.extensions = MyTestFileType.EXTENSION;
     IdeaPluginDescriptorImpl pluginDescriptor =
-      PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), false, "<idea-plugin/>".getBytes(StandardCharsets.UTF_8), PluginId.getId("myPlugin"));
+      PluginDescriptorLoadUtilsKt.readAndInitDescriptorFromBytesForTest(Path.of(""), false, "<idea-plugin/>".getBytes(StandardCharsets.UTF_8), PluginId.getId("myPlugin"));
     Disposable disposable = registerFileType(bean, pluginDescriptor);
     try {
       reInitFileTypeManagerComponent(element);
@@ -899,7 +902,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
           if (random.nextInt(3) == 0) {
             WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-              byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+              byte[] bytes = new byte[PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE + (isText ? 1 : 0)];
               Arrays.fill(bytes, (byte)' ');
               virtualFile.setBinaryContent(bytes);
             });
@@ -928,7 +931,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FrequentEventDetector.disableUntil(getTestRootDisposable());
 
     File f = createTempFile("xx.asd_kjf_hlk_asj_dhf",
-                            StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));
+                            StringUtil.repeatSymbol(' ', PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE - 100));
     VirtualFile virtualFile = getVirtualFile(f);
     assertEquals(PlainTextFileType.INSTANCE, getFileType(virtualFile));
     PsiFile psiFile = getPsiManager().findFile(virtualFile);
@@ -1158,7 +1161,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       bean.implementationClass = MyFileTypeWithStaticField.class.getName();
       bean.fieldName = "INSTANCE518";
       try {
-        assertThrows(NoSuchFieldException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+        assertThrows(PluginException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
       }
       finally {
         FileTypeManagerImpl.EP_NAME.getPoint().unregisterExtension(bean);
@@ -1664,6 +1667,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile vFile = createChildData(vDir, "X.html");
     setFileText(vFile, "<c></c>");
     assertEquals("HTML", getFileType(vFile).getName());
-    assertFalse(myFileTypeManager.myDetectionService.wasAutoDetectedBefore(vFile));
+    assertFalse(myFileTypeManager.detectionService.wasAutoDetectedBefore(vFile));
   }
 }

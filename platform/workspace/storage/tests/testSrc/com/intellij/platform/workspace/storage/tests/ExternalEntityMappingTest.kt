@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
@@ -442,7 +442,7 @@ class ExternalEntityMappingTest {
 
     barEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "bar" }
     assertEquals(2, initialBuilder.getExternalMapping(ANOTHER_INDEX_ID).getDataByEntity(barEntity))
-    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as ExternalEntityMappingImpl
+    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as AbstractExternalEntityMappingImpl
     assertEquals(0, mapping.size())
   }
 
@@ -463,7 +463,7 @@ class ExternalEntityMappingTest {
 
     barEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "bar" }
 
-    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as ExternalEntityMappingImpl
+    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as AbstractExternalEntityMappingImpl
     assertEquals(1, mapping.size())
     assertEquals(2, mapping.getDataByEntity(barEntity))
   }
@@ -485,7 +485,7 @@ class ExternalEntityMappingTest {
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
     fooEntity = initialBuilder.entities(SampleEntity::class.java).first { it.stringProperty == "foo" }
-    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as ExternalEntityMappingImpl
+    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as AbstractExternalEntityMappingImpl
     assertEquals(1, mapping.size())
     assertEquals("test", mapping.getDataByEntity(fooEntity))
   }
@@ -501,7 +501,7 @@ class ExternalEntityMappingTest {
     val replacement = createEmptyBuilder()
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
-    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as ExternalEntityMappingImpl
+    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as AbstractExternalEntityMappingImpl
     assertEquals(0, mapping.size())
   }
 
@@ -525,7 +525,7 @@ class ExternalEntityMappingTest {
     externalMapping.addMapping(barEntity1, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
-    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as ExternalEntityMappingImpl
+    val mapping = initialBuilder.getExternalMapping(INDEX_ID) as AbstractExternalEntityMappingImpl
     assertEquals(2, mapping.size())
     Assertions.assertEquals(1, mapping.getDataByEntity(fooEntity))
     Assertions.assertEquals(2, mapping.getDataByEntity(barEntity))

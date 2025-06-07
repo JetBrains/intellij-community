@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.google.common.base.Ascii;
@@ -34,25 +34,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private static final Logger LOG = Logger.getInstance(KillableProcessHandler.class);
 
   private boolean myShouldKillProcessSoftly = true;
-  private final boolean myMediatedProcess;
   private boolean myShouldKillProcessSoftlyWithWinP = SystemInfo.isWin10OrNewer && Registry.is("use.winp.for.graceful.process.termination");
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
   }
 
   protected KillableProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString(), commandLine.getCharset());
-    myMediatedProcess = WinRunnerMediator.isRunnerCommandInjected(commandLine);
-  }
-
-  /**
-   * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
-   */
-  @Deprecated(forRemoval = true)
-  public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    this(mediate(commandLine, withMediator, false));
   }
 
   /**
@@ -60,7 +49,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
-    myMediatedProcess = false;
   }
 
   /**
@@ -75,19 +63,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   public KillableProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
-    myMediatedProcess = false;
-  }
-
-  /**
-   * @deprecated just don't use this method
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
-    if (withMediator && SystemInfo.isWindows) {
-      WinRunnerMediator.injectRunnerCommand(commandLine, showConsole);
-    }
-    return commandLine;
   }
 
   /**
@@ -113,7 +88,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   protected final boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        return hasPty() || myMediatedProcess || canTerminateGracefullyWithWinP();
+        return hasPty() || canTerminateGracefullyWithWinP();
       }
       if (SystemInfo.isUnix) {
         return true;
@@ -191,14 +166,11 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
-    ProcessService processService = getProcessService();
+    LocalProcessService processService = getProcessService();
     if (SystemInfo.isWindows) {
       if (processService.hasControllingTerminal(myProcess) &&
           WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
         return true;
-      }
-      if (myMediatedProcess) {
-        return WinRunnerMediator.destroyProcess(myProcess, true);
       }
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
@@ -245,9 +217,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     return false;
   }
 
-  private static @NotNull ProcessService getProcessService() {
+  private static @NotNull LocalProcessService getProcessService() {
     // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
-    return ProgressManager.getInstance().computeInNonCancelableSection(ProcessService::getInstance);
+    return ProgressManager.getInstance().computeInNonCancelableSection(LocalProcessService::getInstance);
   }
 
   /**

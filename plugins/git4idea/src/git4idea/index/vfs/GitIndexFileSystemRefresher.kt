@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.progress.util.PotemkinProgress
@@ -24,7 +23,6 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtil
@@ -36,11 +34,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsFileUtil
-import com.intellij.vcsUtil.VcsUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -53,7 +51,6 @@ import org.jetbrains.annotations.NonNls
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
@@ -65,7 +62,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
   private val cache = Caffeine.newBuilder()
     .weakValues()
-    .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
+    .build(CacheLoader<Key, GitIndexVirtualFile?> { key ->
       createIndexVirtualFile(key)
     })
 
@@ -90,44 +87,57 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     connection.subscribe(EncodingManagerListener.ENCODING_MANAGER_CHANGES, MyEncodingManagerListener())
   }
 
-  fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
-    try {
-      return cache.get(Key(root, filePath))
-    }
-    catch (e: Exception) {
-      val cause = e.cause
-      if (cause is ProcessCanceledException) {
-        throw cause
-      }
-      throw e
-    }
+  fun findFile(
+    root: VirtualFile, filePath: FilePath,
+  ): GitIndexVirtualFile? {
+    return cache.get(Key(root, filePath))?.takeIf { it.isValid }
   }
 
-  private fun createIndexVirtualFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
-    if (isShutDown) return null
+  @RequiresBackgroundThread
+  fun createFile(
+    root: VirtualFile, filePath: FilePath,
+  ): GitIndexVirtualFile? {
+    val indexFile = cache.get(Key(root, filePath)) ?: return null
+    if (indexFile.data != null) {
+      return indexFile
+    }
 
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
-    val indexFile = GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
-    OutsidersPsiFileSupport.markFile(indexFile, filePath.path)
+
+    indexFile.setInitialData(stagedFile.hash(), length, stagedFile.isExecutable)
+
     return indexFile
   }
 
   private fun createIndexVirtualFile(key: Key): GitIndexVirtualFile? {
-    if (!ApplicationManager.getApplication().isDispatchThread) return createIndexVirtualFile(key.root, key.filePath)
+    if (isShutDown) {
+      return null
+    }
 
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      createIndexVirtualFile(key.root, key.filePath)
-    }, GitBundle.message("stage.vfs.read.process", key.filePath.name), false, project)
+    val indexFile = GitIndexVirtualFile(project, key.root, key.filePath)
+    OutsidersPsiFileSupport.markFile(indexFile, key.filePath)
+    return indexFile
   }
 
   fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
-    val filesToRefresh = cache.asMap().values.filter(condition)
-    if (filesToRefresh.isEmpty()) return
-    refresh(filesToRefresh)
+    val filesToRefresh = cache.asMap().values
+      .asSequence()
+      .filterNotNull()
+      .filter { it.data != null }
+      .filter(condition)
+      .toList()
+    if (filesToRefresh.isEmpty()) {
+      return
+    }
+    refreshImpl(filesToRefresh)
   }
 
-  private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
+  fun initialRefresh(filesToRefresh: List<GitIndexVirtualFile>) {
+    refreshImpl(filesToRefresh)
+  }
+
+  private fun refreshImpl(filesToRefresh: List<GitIndexVirtualFile>) {
     if (isShutDown) return
 
     LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
@@ -151,19 +161,21 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun readFromGit(file: GitIndexVirtualFile): IndexFileData? {
-    val (oldHash, oldModificationStamp) = runReadAction { Pair(file.hash, file.modificationStamp) }
-    return readFromGit(file, oldHash, oldModificationStamp)
+    val (oldData, oldModificationStamp) = runReadAction { Pair(file.data, file.modificationStamp) }
+    return readFromGit(file, oldData, oldModificationStamp)
   }
 
-  private fun readFromGit(file: GitIndexVirtualFile,
-                          oldHash: Hash?,
-                          oldModificationStamp: Long): IndexFileData? {
+  private fun readFromGit(
+    file: GitIndexVirtualFile,
+    oldData: GitIndexVirtualFile.CachedData?,
+    oldModificationStamp: Long,
+  ): IndexFileData? {
     val stagedFile = readMetadataFromGit(file.root, file.filePath)
     val newHash = stagedFile?.hash()
-    if (oldHash != newHash) {
+    if (oldData == null || oldData.hash != newHash) {
       val newLength = if (stagedFile != null) readLengthFromGit(file.root, stagedFile.blobHash) else 0
       LOG.debug("Preparing refresh for $file")
-      return IndexFileData(file, oldHash, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, oldModificationStamp)
+      return IndexFileData(file, oldData, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, oldModificationStamp)
     }
     return null
   }
@@ -181,11 +193,11 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, newModStamp)
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
 
-      val oldHash = file.hash
+      val oldData = file.data
       val oldModificationStamp = file.modificationStamp
 
       val applyChanges = computeUnderPotemkinProgress(project, GitBundle.message("stage.vfs.write.process", file.name)) {
-        val indexFileData = readFromGit(file, oldHash, oldModificationStamp)
+        val indexFileData = readFromGit(file, oldData, oldModificationStamp)
         if (indexFileData != null) {
           LOG.info("Detected memory-disk conflict in $file")
           return@computeUnderPotemkinProgress {
@@ -225,6 +237,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private fun readLengthFromGit(root: VirtualFile, hash: String): Long {
     try {
       val h = GitLineHandler(project, root, GitCommand.CAT_FILE)
+      h.isEnableInteractiveCallbacks = false
       h.setSilent(true)
       h.addParameters("-s")
       h.addParameters(hash)
@@ -263,7 +276,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     @JvmStatic
     fun refreshVirtualFiles(project: Project, paths: Collection<VirtualFile>) {
-      refreshFilePaths(project, paths.map(VcsUtil::getFilePath))
+      refreshFilePaths(project, paths.map { it.filePath() })
     }
 
     @JvmStatic
@@ -292,16 +305,18 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
   }
 
-  private inner class IndexFileData(private val file: GitIndexVirtualFile,
-                                    private val oldHash: Hash?,
-                                    private val newHash: Hash?,
-                                    oldLength: Long,
-                                    private val newLength: Long,
-                                    private val newExecutable: Boolean,
-                                    oldModificationStamp: Long) {
-    val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, -1, 0, 0, oldLength, newLength)
+  private inner class IndexFileData(
+    private val file: GitIndexVirtualFile,
+    private val oldData: GitIndexVirtualFile.CachedData?,
+    private val newHash: Hash?,
+    oldLength: Long,
+    private val newLength: Long,
+    private val newExecutable: Boolean,
+    oldModificationStamp: Long,
+  ) {
+    val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH.toLong(), 0, 0, oldLength, newLength)
 
-    fun isOutdated() = file.hash != oldHash
+    fun isOutdated() = file.data != null && file.data?.hash != oldData?.hash
 
     fun apply() {
       LOG.debug("Refreshing $file")
@@ -331,9 +346,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     private fun reloadCachedPropertiesFiles() {
-      val virtualFiles = cache.asMap().values.filter { FileTypeRegistry.getInstance().isFileOfType(it, StdFileTypes.PROPERTIES) }
+      val virtualFiles = cache.asMap().values.filter { it != null && FileTypeRegistry.getInstance().isFileOfType(it, StdFileTypes.PROPERTIES) }
       for (file in virtualFiles) {
-        val document = FileDocumentManager.getInstance().getCachedDocument(file)
+        val document = FileDocumentManager.getInstance().getCachedDocument(file!!)
         if (document != null) FileDocumentManager.getInstance().saveDocument(document)
 
         file.setCharset(null)

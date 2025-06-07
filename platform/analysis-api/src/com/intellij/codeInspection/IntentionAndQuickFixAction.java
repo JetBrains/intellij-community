@@ -31,7 +31,7 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   @Override
   public abstract @IntentionFamilyName @NotNull String getFamilyName();
 
-  public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
+  public abstract void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor);
 
   @Override
   public @IntentionName @NotNull String getText() {
@@ -44,15 +44,15 @@ public abstract class IntentionAndQuickFixAction implements LocalQuickFix, Inten
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    applyFix(project, file, editor);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    applyFix(project, psiFile, editor);
   }
 
   /**
    * In general case will be called if invoked as IntentionAction.
    */
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
     return true;
   }
 

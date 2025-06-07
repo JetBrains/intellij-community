@@ -18,10 +18,8 @@ public class NavigateToDuplicateExpressionFix extends ModCommandQuickFix {
     myPointer = SmartPointerManager.getInstance(arg.getProject()).createSmartPsiElementPointer(arg);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("navigate.to.duplicate.fix");
   }
 

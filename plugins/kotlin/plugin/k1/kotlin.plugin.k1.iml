@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />
@@ -83,6 +84,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
@@ -101,7 +103,8 @@
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.jvm" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="RUNTIME" />
@@ -161,5 +164,7 @@
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="kotlin.ide" />
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" />
   </component>
 </module>

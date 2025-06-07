@@ -13,6 +13,8 @@ import java.io.IOException;
 
 /**
  * Storage of inverted index data
+ * Thread-safety is up to implementation
+ *
  * @author Eugene Zhuravlev
  */
 public interface IndexStorage<Key, Value> extends Flushable, Closeable {
@@ -22,15 +24,61 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
   //RC: why remove_All_Values? Shouldn't it be <=1 value for a (inputId, key)
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;
 
-  default void updateValue(Key key, int inputId, Value newValue) throws StorageException {
-    removeAllValues(key, inputId);
-    addValue(key, inputId, newValue);
-  }
+  void updateValue(Key key, int inputId, Value newValue) throws StorageException;
 
   void clear() throws StorageException;
 
-  @NotNull
-  ValueContainer<Value> read(Key key) throws StorageException;
+
+  /**
+   * @deprecated use {@linkplain #read(Object, ValueContainerProcessor)} version instead.
+   * This method forces to return a copy of underlying container, otherwise it is impossible to guarantee thread-safety -- which is
+   * why it was deprecated.
+   */
+  @Deprecated
+  default @NotNull ValueContainer<Value> read(Key key) throws StorageException {
+    //it is ineffective, which is one of the reasons why this method is deprecated
+    //MAYBE RC: non-sharded implementation could implement container copy faster (just clone it), but I don't think it makes
+    //          a difference since this read(key) method shouldn't be used at all, yet alone in performance-critical code.
+    ValueContainerImpl<Value> defensiveCopy = ValueContainerImpl.createNewValueContainer();
+    read(
+      key,
+      shardContainer -> {
+        shardContainer.forEach(
+          (id, value) -> {
+            defensiveCopy.addValue(id, value);
+            return true;
+          }
+        );
+        //copy a .needsCompacting value from the original container(s):
+        if (shardContainer instanceof UpdatableValueContainer) {
+          UpdatableValueContainer<Value> container = (UpdatableValueContainer<Value>)shardContainer;
+          if(container.needsCompacting()){
+            defensiveCopy.setNeedsCompacting(true);
+          }
+        }
+        return true;
+      }
+    );
+
+    return defensiveCopy;
+  }
+
+
+  /**
+   * The processor will be invoked on {@link ValueContainer}s corresponding to the given key.
+   * <b>NOTE</b>: it could be more than one container associated with a single key, e.g. if an
+   * actual storage is sharded, hence the processor could be invoked <b>more than once</b>
+   * so the processor code must be ready to aggregate results of >1 container passed in.
+   * <p>
+   * The processing should be as fast, as possible, because the storage may hold some locks
+   * during the processing to ensure data consistency, which may delay concurrent index update,
+   * if any
+   *
+   * @return true if all data was processed, false if processing was stopped prematurely because
+   * processor returns false at some point
+   */
+  <E extends Exception> boolean read(Key key,
+                                     @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E;
 
   /**
    * Drops (some of) cached data, without touching data that is modified and needs to be persisted.

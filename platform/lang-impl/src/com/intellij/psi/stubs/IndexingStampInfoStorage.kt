@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
-import com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.FastFileAttributes
 import com.intellij.util.BitUtil
 import com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
 import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute

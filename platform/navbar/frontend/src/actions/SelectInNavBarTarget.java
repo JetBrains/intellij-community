@@ -35,8 +35,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   @Override
-  @NonNls
-  public String getToolWindowId() {
+  public @NonNls String getToolWindowId() {
     return NAV_BAR_ID;
   }
 
@@ -95,6 +94,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
     return null;
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("navigation.bar");
   }

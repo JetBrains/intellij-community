@@ -3,10 +3,8 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
@@ -22,9 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,50 +29,52 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@ApiStatus.Internal
-public final class VirtualFileArrayRule implements GetDataRule {
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.*;
+import static com.intellij.usages.UsageView.USAGES_KEY;
+import static com.intellij.usages.UsageView.USAGE_TARGETS_KEY;
+
+final class VirtualFileArrayRule {
 
   private static final Logger LOG = Logger.getInstance(VirtualFileArrayRule.class);
 
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
+  static VirtualFile @Nullable [] getData(@NotNull DataMap dataProvider) {
     Set<VirtualFile> result = null;
 
-    FileSystemTree fileSystemTree = FileSystemTree.DATA_KEY.getData(dataProvider);
+    FileSystemTree fileSystemTree = dataProvider.get(FileSystemTree.DATA_KEY);
     if (fileSystemTree != null) {
       LOG.error("VirtualFileArrayRule must not be called when FileSystemTree.DATA_KEY data is present." +
                 "FileSystemTree.DATA_KEY data provider must also provide FileSystemTree#getSelectedFiles() as VIRTUAL_FILE_ARRAY");
       return null;
     }
     else {
-      Project project = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataProvider);
+      Project project = dataProvider.get(PROJECT_CONTEXT);
       if (project != null && !project.isDisposed()) {
         result = addFiles(null, ProjectRootManager.getInstance(project).getContentRoots());
       }
 
-      Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
+      Module[] selectedModules = dataProvider.get(LangDataKeys.MODULE_CONTEXT_ARRAY);
       if (selectedModules != null) {
         for (Module selectedModule : selectedModules) {
           result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
         }
       }
 
-      Module selectedModule = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
+      Module selectedModule = dataProvider.get(LangDataKeys.MODULE_CONTEXT);
       if (selectedModule != null && !selectedModule.isDisposed()) {
         result = addFiles(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
       }
     }
 
-    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
+    PsiElement[] psiElements = dataProvider.get(PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (PsiElement element : psiElements) {
         result = addFilesFromPsiElement(result, element);
       }
     }
 
-    result = addFile(result, CommonDataKeys.VIRTUAL_FILE.getData(dataProvider));
+    result = addFile(result, dataProvider.get(VIRTUAL_FILE));
 
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataProvider);
+    PsiFile psiFile = dataProvider.get(PSI_FILE);
     if (psiFile != null) {
       result = addFile(result, psiFile.getVirtualFile());
     }
@@ -85,13 +83,13 @@ public final class VirtualFileArrayRule implements GetDataRule {
       return VfsUtilCore.toVirtualFileArray(result);
     }
 
-    PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement elem = dataProvider.get(PSI_ELEMENT);
     if (elem != null) {
       result = addFilesFromPsiElement(null, elem);
     }
 
-    Usage[] usages = UsageView.USAGES_KEY.getData(dataProvider);
-    UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataProvider);
+    Usage[] usages = dataProvider.get(USAGES_KEY);
+    UsageTarget[] usageTargets = dataProvider.get(USAGE_TARGETS_KEY);
     if (usages != null || usageTargets != null) {
       for (VirtualFile file : Objects.requireNonNull(UsageDataUtil.provideVirtualFileArray(usages, usageTargets))) {
         result = addFile(result, file);
@@ -99,7 +97,7 @@ public final class VirtualFileArrayRule implements GetDataRule {
     }
 
     if (result == null) {
-      Object[] objects = (Object[])dataProvider.getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
+      Object[] objects = dataProvider.get(SELECTED_ITEMS);
       if (objects != null && objects.length != 0) {
         Object[] unwrapped = ContainerUtil.map2Array(objects, o -> AbstractProjectViewPane.extractValueFromNode(o));
         if (ContainerUtil.all(unwrapped, o -> o instanceof VirtualFile)) {

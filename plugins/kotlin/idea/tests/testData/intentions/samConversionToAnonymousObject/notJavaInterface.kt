@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface I {
     fun test()
 }

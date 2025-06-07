@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -18,7 +18,9 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -273,7 +275,7 @@ public abstract class Invoker implements Disposable {
    * This data class is intended to combine a developer's task
    * with the corresponding object used to control its processing.
    */
-  static abstract class Task<T, R> implements Runnable {
+  abstract static class Task<T, R> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends R> supplier;
     private volatile R result;
@@ -460,22 +462,47 @@ public abstract class Invoker implements Disposable {
 
     @Override
     void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
-      delegate.offer(() -> {
-        Thread thread = Thread.currentThread();
-        if (!threads.add(thread)) {
-          LOG.error("current thread is already used");
+      delegate.offer(new ThreadTrackingRunnable(runnable, threads), delay, promise);
+    }
+  }
+
+  /**
+   * As this runnable appears in coroutine names, we need to be more careful about the naming choice here.
+   * Default lambda names are of the form `com.intellij.util.concurrency.Invoker$Background$$Lambda/0x0000000801862a58@14dca55c`,
+   * which results in a ton of duplicate-but-not-identical entries in coroutine dumps.
+   * See IJPL-179848
+   */
+  private static class ThreadTrackingRunnable implements Runnable {
+    final Runnable myRunnable;
+    final Set<Thread> myThreads;
+
+    private ThreadTrackingRunnable(Runnable runnable, Set<Thread> threads) {
+      myRunnable = runnable;
+      myThreads = threads;
+    }
+
+
+    @Override
+    public void run() {
+      Thread thread = Thread.currentThread();
+      if (!myThreads.add(thread)) {
+        LOG.error("current thread is already used");
+      }
+      else {
+        try {
+          myRunnable.run(); // may throw an assertion error
         }
-        else {
-          try {
-            runnable.run(); // may throw an assertion error
-          }
-          finally {
-            if (!threads.remove(thread)) {
-              LOG.error("current thread is already removed");
-            }
+        finally {
+          if (!myThreads.remove(thread)) {
+            LOG.error("current thread is already removed");
           }
         }
-      }, delay, promise);
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "ThreadTrackingRunnable";
     }
   }
 

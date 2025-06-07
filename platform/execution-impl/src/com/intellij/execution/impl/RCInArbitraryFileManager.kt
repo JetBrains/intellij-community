@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -7,7 +7,7 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -15,12 +15,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.writeWithEnsureWritable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
+import java.nio.file.AccessDeniedException
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -154,7 +156,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     for (configElement in element.getChildren("configuration")) {
       try {
         val runConfig = RunnerAndConfigurationSettingsImpl(runManager)
-        runConfig.readExternal(configElement, true)
+        runConfig.readExternal(configElement, true, filePath)
         runConfig.storeInArbitraryFileInProject(filePath)
         loadedRunConfigs.add(runConfig)
         rootElementForLoadedDigest.addContent(runConfig.writeScheme())
@@ -234,56 +236,65 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     var error: Throwable? = null
 
     val filePaths = lock.read { filePathToRunConfigs.keys.sorted() }
-    for (filePath in filePaths) {
-      val rootElement = lock.read {
-        val rootElement = createRootElement()
-        for (runConfig in (filePathToRunConfigs.get(filePath) ?: return@read null)) {
-          rootElement.addContent(runConfig.writeScheme())
-        }
-        rootElement
-      } ?: continue
 
-      saveInProgress = true
-      try {
-        val previouslyLoadedDigest = filePathToDigest.get(filePath)
-        val data = rootElement.toBufferExposingByteArray()
-        val newDigest = computeDigest(data)
-        if (previouslyLoadedDigest == null || !newDigest.contentEquals(previouslyLoadedDigest)) {
-          saveToFile(filePath = filePath, data = data)
-          filePathToDigest.put(filePath, newDigest)
-        }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        val wrappedException = RuntimeException("Cannot save run configuration in $filePath", e)
-        if (error == null) {
-          error = wrappedException
-        }
-        else {
-          error.addSuppressed(wrappedException)
-        }
-      }
-      finally {
-        saveInProgress = false
-      }
-    }
+    writeWithEnsureWritable(project, filePaths,
+                            { filePath -> saveRunConfig(lock, filePath) },
+                            { _, e ->
+                                    if (error == null) {
+                                      error = e
+                                    }
+                                    else {
+                                      error.addSuppressed(e)
+                                    }
+                                  })
 
     error?.let {
       throw it
     }
   }
 
+  private suspend fun saveRunConfig(lock: ReentrantReadWriteLock, filePath: String) {
+    val rootElement = lock.read {
+      val rootElement = createRootElement()
+      for (runConfig in (filePathToRunConfigs.get(filePath) ?: return@read null)) {
+        rootElement.addContent(runConfig.writeScheme())
+      }
+      rootElement
+    } ?: return
+
+    saveInProgress = true
+    try {
+      val previouslyLoadedDigest = filePathToDigest.get(filePath)
+      val data = rootElement.toBufferExposingByteArray()
+      val newDigest = computeDigest(data)
+      if (previouslyLoadedDigest == null || !newDigest.contentEquals(previouslyLoadedDigest)) {
+        saveToFile(filePath = filePath, data = data)
+        filePathToDigest.put(filePath, newDigest)
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: AccessDeniedException) {
+      throw e
+    }
+    catch (e: Exception) {
+      throw RuntimeException("Cannot save run configuration in $filePath", e)
+    }
+    finally {
+      saveInProgress = false
+    }
+  }
+
   private suspend fun saveToFile(filePath: String, data: BufferExposingByteArrayOutputStream) {
-    writeAction {
+    edtWriteAction {
       var file = LocalFileSystem.getInstance().findFileByPath(filePath)
       if (file == null) {
         val parentPath = PathUtil.getParentPath(filePath)
         val dir = VfsUtil.createDirectoryIfMissing(parentPath)
         if (dir == null) {
           LOG.error("Failed to create directory $parentPath")
-          return@writeAction
+          return@edtWriteAction
         }
 
         file = dir.createChildData(this@RCInArbitraryFileManager, PathUtil.getFileName(filePath))

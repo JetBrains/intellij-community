@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -163,8 +163,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     }
   }
 
-  @NotNull
-  private SettingsEditorFragment<ApplicationConfiguration, MainClassPanel> createMainClass(ModuleClasspathCombo classpathCombo) {
+  private @NotNull SettingsEditorFragment<ApplicationConfiguration, MainClassPanel> createMainClass(ModuleClasspathCombo classpathCombo) {
     final var mainClassPanel = new MainClassPanel(classpathCombo);
     myMainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClassPanel, 20,

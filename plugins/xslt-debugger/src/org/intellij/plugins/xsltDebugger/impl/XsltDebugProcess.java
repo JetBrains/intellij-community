@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.execution.ExecutionResult;
@@ -99,14 +99,12 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     }
   }
 
-  @Nullable
-  public static XsltDebugProcess getInstance(ProcessHandler handler) {
+  public static @Nullable XsltDebugProcess getInstance(ProcessHandler handler) {
     return handler.getUserData(KEY);
   }
 
-  @NotNull
   @Override
-  public ExecutionConsole createConsole() {
+  public @NotNull ExecutionConsole createConsole() {
     return myExecutionConsole;
   }
 
@@ -115,9 +113,8 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     return myProcessHandler;
   }
 
-  @NotNull
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }
 

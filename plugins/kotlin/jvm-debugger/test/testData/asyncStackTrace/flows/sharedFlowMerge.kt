@@ -25,17 +25,17 @@ fun main(): Unit = runBlocking {
 
     launch {
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 1 !!!~~~`(f1, 1)
-        delay(50)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 2 !!!~~~`(f2, 2)
-        delay(50)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 3 !!!~~~`(f3, 3)
-        delay(50)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 4 !!!~~~`(f1, 4)
-        delay(50)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 5 !!!~~~`(f2, 5)
-        delay(50)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 6 !!!~~~`(f3, 6)
-        delay(50)
+        delay(100)
         job.cancel()
     }
 }

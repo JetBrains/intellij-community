@@ -28,10 +28,12 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 public class ProjectViewDirectoryHelper {
@@ -82,11 +84,11 @@ public class ProjectViewDirectoryHelper {
     }
 
     if (includeUrl) {
-      if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
+      if (!result.isEmpty()) result.append(",").append(FontUtil.spaceAndThinSpace());
       result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
     }
 
-    return result.length() == 0 ? null : result.toString();
+    return result.isEmpty() ? null : result.toString();
   }
 
 
@@ -101,7 +103,8 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public @Nullable String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
+  @NotNull
+  public String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
     return directory.getName();
   }
 
@@ -247,6 +250,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
     return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
       if (!shouldBeShown(root, settings)) return false;
@@ -267,7 +271,7 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
+   boolean isFileUnderContentRoot(@Nullable VirtualFile file) {
     return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) != null;
   }
 
@@ -275,15 +279,23 @@ public class ProjectViewDirectoryHelper {
     final VirtualFile dir = psiDirectory.getVirtualFile();
     if (shouldBeShown(dir, settings)) {
       final List<PsiElement> children = new ArrayList<>();
-      psiDirectory.processChildren(new PsiElementProcessor<>() {
-        @Override
-        public boolean execute(@NotNull PsiFileSystemItem element) {
-          if (shouldBeShown(element.getVirtualFile(), settings)) {
-            children.add(element);
+      try {
+        psiDirectory.processChildren(new PsiElementProcessor<>() {
+          @Override
+          public boolean execute(@NotNull PsiFileSystemItem element) {
+            if (shouldBeShown(element.getVirtualFile(), settings)) {
+              children.add(element);
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("Showing only " + children.size() + " children of the directory " + psiDirectory + " because of an exception", e);
+      }
       return PsiUtilCore.toPsiElementArray(children);
     }
 

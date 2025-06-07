@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
@@ -42,9 +43,8 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String extractCommandList = extractCommandArgument(PREFIX);
     String[] commandList = extractCommandList.split("\\|");

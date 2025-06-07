@@ -3,7 +3,10 @@ package com.intellij.codeInsight.inline.completion.suggestion
 
 import com.intellij.codeInsight.highlighting.BraceMatcher
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
-import com.intellij.codeInsight.inline.completion.elements.*
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionSkipElementUtils.insertOffsetsAndAdditionalLines
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -295,37 +298,26 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
         finalElements.removeFirst()
         continue
       }
-      when (element) {
-        is InlineCompletionSkipTextElement -> {
-          if (prefixLeft >= element.text.length) {
-            prefixDone += element.text.length
-            finalElements.removeFirst()
-          }
-          else {
-            prefixDone = prefix.length
-            finalElements[0] = InlineCompletionSkipTextElement(element.text.substring(prefixLeft))
-          }
-        }
-        else -> {
-          val toTruncate = minOf(prefixLeft, element.text.length)
-          originalEditor.document.insertString(offset + prefixDone, element.text.substring(0, toTruncate))
-          var manipulator = InlineCompletionElementManipulator.getApplicable(element)
-          if (manipulator == null) {
-            // Fallback to a regular completion element
-            element = InlineCompletionGrayTextElement(element.text)
-            manipulator = InlineCompletionGrayTextElementManipulator()
-            LOG.error("No inline completion manipulator was found for ${element::class.qualifiedName}.")
-          }
-          val firstElement = manipulator.substring(element, toTruncate, element.text.length)
-          if (firstElement == null) {
-            finalElements.removeFirst()
-          }
-          else {
-            finalElements[0] = firstElement
-          }
-          prefixDone += toTruncate
-        }
+
+      val toTruncate = minOf(prefixLeft, element.text.length)
+      if (element !is InlineCompletionSkipTextElement) {
+        originalEditor.document.insertString(offset + prefixDone, element.text.substring(0, toTruncate))
       }
+      var manipulator = InlineCompletionElementManipulator.getApplicable(element)
+      if (manipulator == null) {
+        // Fallback to a regular completion element
+        element = InlineCompletionGrayTextElement(element.text)
+        manipulator = InlineCompletionElementManipulator.getApplicable(element)!!
+        LOG.error("No inline completion manipulator was found for ${element::class.qualifiedName}.")
+      }
+      val firstElement = manipulator.substring(element, toTruncate, element.text.length)
+      if (firstElement == null) {
+        finalElements.removeFirst()
+      }
+      else {
+        finalElements[0] = firstElement
+      }
+      prefixDone += toTruncate
     }
     originalEditor.caretModel.moveToOffset(offset + prefix.length)
     return finalElements.toMutableList()

@@ -21,6 +21,7 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.CheckReturnValue
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
@@ -159,7 +160,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = currentThreadClientId?.value?.let(::ClientId)
+      get() = currentThreadClientId
 
     /**
      * Overrides the ID of the owner of CWM/RD session.
@@ -267,6 +268,7 @@ data class ClientId(val value: String) {
     @Internal
     @JvmStatic
     @RequiresBlockingContext
+    @CheckReturnValue
     fun withClientId(clientId: ClientId?): AccessToken {
       return withClientId(clientId, errorOnMismatch = true)
     }
@@ -328,8 +330,8 @@ data class ClientId(val value: String) {
     }
 
     private fun withClientIdImpl(clientIdValue: String, errorOnMismatch: Boolean): AccessToken {
-      val oldClientId = currentThreadClientId ?: localId
-      if (clientIdValue == oldClientId.value) {
+      val oldClientId = currentThreadClientId
+      if (clientIdValue == oldClientId?.value) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
 
@@ -358,13 +360,14 @@ data class ClientId(val value: String) {
     }
 
     @Internal
-    @ApiStatus.Obsolete
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(message = "Resolve ClientSessionsManager via Application in client code", level = DeprecationLevel.ERROR,
                 replaceWith = ReplaceWith("ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()"))
     fun getCachedService(): ClientSessionsManager<*>? {
       return ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
@@ -390,6 +393,7 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> = biConsumer
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
@@ -425,3 +429,12 @@ val CoroutineContext.clientIdContextElement: ClientIdContextElement?
 val currentThreadClientId: ClientId?
   @Internal
   get() = currentThreadContext().clientIdContextElement?.clientId
+
+@Internal
+fun ClientId?.assertClientIdConsistency(message: String, fallbackToLocal: Boolean = true) {
+  val currentClientIdToCompare = if (fallbackToLocal) ClientId.current else ClientId.currentOrNull
+  if (this != currentClientIdToCompare) {
+    logger<ClientId>().error("$message ClientId=${this} doesn't match Current=${currentClientIdToCompare}. " +
+                             "Current thread context is ${currentThreadContextOrNull()}")
+  }
+}

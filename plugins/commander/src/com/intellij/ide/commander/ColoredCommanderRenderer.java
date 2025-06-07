@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -21,7 +21,7 @@ import java.awt.*;
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;
 
-  ColoredCommanderRenderer(@NotNull final CommanderPanel commanderPanel) {
+  ColoredCommanderRenderer(final @NotNull CommanderPanel commanderPanel) {
     myCommanderPanel = commanderPanel;
   }
 
@@ -37,7 +37,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+  protected void customizeCellRenderer(final @NotNull JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
     Color color = UIUtil.getListForeground();
     SimpleTextAttributes attributes = null;
     String locationString = null;
@@ -84,7 +84,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
       append(text != null ? text : "", attributes);
     }
 
-    if (locationString != null && locationString.length() > 0) {
+    if (locationString != null && !locationString.isEmpty()) {
       append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

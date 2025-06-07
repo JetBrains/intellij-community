@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -65,7 +66,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
       type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     }
     else {
-      return PsiKeyword.NULL; // normally shouldn't happen
+      return JavaKeywords.NULL; // normally shouldn't happen
     }
 
     // first try to find suitable local variable

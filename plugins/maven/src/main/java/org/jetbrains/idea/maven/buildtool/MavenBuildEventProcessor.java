@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
@@ -23,26 +23,27 @@ import java.util.function.Function;
 
 @ApiStatus.Experimental
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
-  @NotNull private final BuildProgressListener myBuildProgressListener;
-  @NotNull private final BuildOutputInstantReaderImpl myInstantReader;
-  @NotNull private final MavenLogOutputParser myParser;
+  private final @NotNull BuildProgressListener myBuildProgressListener;
+  private final @NotNull BuildOutputInstantReaderImpl myInstantReader;
+  private final @NotNull MavenLogOutputParser myParser;
   private boolean closed = false;
   private final BuildDescriptor myDescriptor;
-  @NotNull private final Function<MavenParsingContext, StartBuildEvent> myStartBuildEventSupplier;
+  private final @NotNull Function<MavenParsingContext, StartBuildEvent> myStartBuildEventSupplier;
 
   public MavenBuildEventProcessor(@NotNull MavenRunConfiguration runConfiguration,
                                   @NotNull BuildProgressListener buildProgressListener,
                                   @NotNull BuildDescriptor descriptor,
                                   @NotNull ExternalSystemTaskId taskId,
                                   @NotNull Function<String, String> targetFileMapper,
-                                  @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier) {
+                                  @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier,
+                                  boolean useWrapperedLogging) {
 
     myBuildProgressListener = buildProgressListener;
     myDescriptor = descriptor;
     myStartBuildEventSupplier = startBuildEventSupplier != null
                                 ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "");
 
-    myParser = MavenOutputParserProvider.createMavenOutputParser(runConfiguration, taskId, targetFileMapper);
+    myParser = MavenOutputParserProvider.createMavenOutputParser(runConfiguration, taskId, targetFileMapper, useWrapperedLogging);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       taskId, taskId,

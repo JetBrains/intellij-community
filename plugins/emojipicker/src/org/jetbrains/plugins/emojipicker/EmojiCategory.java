@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public final class EmojiCategory implements Serializable {
-  @NonNls private final String myId;
+  private final @NonNls String myId;
   private final List<Emoji> myEmoji;
   private transient Icon myIcon;
 
@@ -18,8 +18,7 @@ public final class EmojiCategory implements Serializable {
     myEmoji = emojiList;
   }
 
-  @NonNls
-  public String getId() {
+  public @NonNls String getId() {
     return myId;
   }
 
@@ -27,10 +26,14 @@ public final class EmojiCategory implements Serializable {
     return myEmoji;
   }
 
+  /**
+   * Uses {@link com.intellij.emojipicker.icons.EmojipickerIcons}
+   */
   public Icon getIcon() {
     Icon icon = myIcon;
     if (icon == null) {
-      myIcon = icon = IconLoader.getIcon("/icons/categories/" + myId + ".svg", EmojiCategory.class.getClassLoader());
+      myIcon = icon = IconLoader.getIcon("/org/jetbrains/plugins/emojipicker/icons/categories/" + myId + ".svg",
+                                         EmojiCategory.class.getClassLoader());
     }
     return icon;
   }

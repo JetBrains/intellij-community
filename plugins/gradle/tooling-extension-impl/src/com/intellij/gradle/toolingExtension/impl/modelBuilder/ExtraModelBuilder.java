@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import org.gradle.api.Project;
@@ -131,8 +131,7 @@ public class ExtraModelBuilder implements ParameterizedToolingModelBuilder<Model
     project.getLogger().error(msg);
   }
 
-  @NotNull
-  private static Gradle getRootGradle(@NotNull Gradle gradle) {
+  private static @NotNull Gradle getRootGradle(@NotNull Gradle gradle) {
     Gradle root = gradle;
     while (root.getParent() != null) {
       root = root.getParent();

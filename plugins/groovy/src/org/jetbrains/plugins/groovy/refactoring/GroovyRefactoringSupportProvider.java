@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
@@ -45,14 +45,12 @@ public final class GroovyRefactoringSupportProvider extends RefactoringSupportPr
    * @return handler for introducing local variables in Groovy
    */
   @Override
-  @Nullable
-  public RefactoringActionHandler getIntroduceVariableHandler() {
+  public @Nullable RefactoringActionHandler getIntroduceVariableHandler() {
     return new GrIntroduceVariableHandler();
   }
 
   @Override
-  @Nullable
-  public RefactoringActionHandler getExtractMethodHandler() {
+  public @Nullable RefactoringActionHandler getExtractMethodHandler() {
     return new GroovyExtractMethodHandler();
   }
 
@@ -118,9 +116,8 @@ public final class GroovyRefactoringSupportProvider extends RefactoringSupportPr
     return new GrIntroduceConstantHandler();
   }
 
-  @Nullable
   @Override
-  public RefactoringActionHandler getPullUpHandler() {
+  public @Nullable RefactoringActionHandler getPullUpHandler() {
     return new JavaPullUpHandler();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog;
@@ -65,7 +66,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     super(sourceMethod);
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         validateButtons();
       }
     };
@@ -128,7 +129,8 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
 
   @Override
   protected String getSourceMethodPresentation() {
-    return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+    return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                            PsiFormatUtilBase.SHOW_NAME, 0);
   }
 
   @Override
@@ -210,20 +212,20 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
         JavaRefactoringBundle.message("introduce.parameter.object.error.inner.class.already.exist", innerClassName));
     } else if (!useExistingClass()) {
       final String className = getClassName();
-      if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
+      if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.name", className));
       }
       final String packageName = getPackageName();
 
-      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
+      if (packageName.isEmpty() || !nameHelper.isQualifiedName(packageName)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.package.name", packageName));
       }
     }
     else {
       final String className = getExistingClassName();
-      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
+      if (className.isEmpty() || !nameHelper.isQualifiedName(className)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.qualified.parameter.class.name", className));
       }
@@ -233,23 +235,19 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     }
   }
 
-  @NotNull
-  private String getInnerClassName() {
+  private @NotNull String getInnerClassName() {
     return  myInnerClassNameTextField.getText().trim();
   }
 
-  @NotNull
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return packageTextField.getText().trim();
   }
 
-  @NotNull
-  public String getExistingClassName() {
+  public @NotNull String getExistingClassName() {
     return existingClassField.getText().trim();
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return classNameField.getText().trim();
   }
 

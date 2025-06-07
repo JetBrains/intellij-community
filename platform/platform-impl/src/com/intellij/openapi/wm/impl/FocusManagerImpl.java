@@ -2,15 +2,12 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -25,6 +22,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +43,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
-  private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakValueMap();
-  private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
+  private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakKeyWeakValueMap();
+  private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakKeyWeakValueMap();
 
   private DataContext myRunContext;
 
@@ -170,12 +168,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     // Immediate check is buggy.
     // JVM can run "postponed" code on other thread before this thread set `immediate` to `false`
     AtomicBoolean immediate = new AtomicBoolean(true);
-    IdeEventQueue.getInstance().executeWhenAllFocusEventsLeftTheQueue((ContextAwareRunnable) () -> {
+    EdtInvocationManager.invokeLaterIfNeeded((ContextAwareRunnable) () -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
           // Even immediate code need explicit write-safe context, not implicit one
-          WriteIntentReadAction.run(runnable);
+          AppImplKt.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+            runnable.run();
+            return null;
+          });
         }
       }
       else {

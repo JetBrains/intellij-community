@@ -1,5 +1,6 @@
 // "Create class 'B'" "true"
 // ERROR: Unresolved reference: C
+// K2_AFTER_ERROR: Unresolved reference 'C'.
 package p
 
 fun foo() = A.B.C

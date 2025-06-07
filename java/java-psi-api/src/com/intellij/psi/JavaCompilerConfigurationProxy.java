@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.JavaModuleSystem.PATCH_MODULE_OPTION;
-
 /**
  * Provides additional compiler options for a given module.
  * <p>
@@ -23,18 +21,19 @@ import static com.intellij.psi.JavaModuleSystem.PATCH_MODULE_OPTION;
  */
 public abstract class JavaCompilerConfigurationProxy {
   private static final ExtensionPointName<JavaCompilerConfigurationProxy> EP_NAME = new ExtensionPointName<>("com.intellij.javaCompilerConfigurationProxy");
+  private static final String PATCH_MODULE_OPTION = "--patch-module";
 
   /**
    * Returns additional compiler options applicable to the given module, if any.
    * @see JavaCompilerConfigurationProxy#setAdditionalOptions(Project, Module, List)
    */
-  abstract protected List<String> getAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module);
+  protected abstract List<String> getAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module);
 
   /**
    * Sets additional compiler options applicable to the given module.
    * @see JavaCompilerConfigurationProxy#getAdditionalOptions(Project, Module)
    */
-  abstract protected void setAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module, @NotNull List<String> options);
+  protected abstract void setAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module, @NotNull List<String> options);
 
   public static List<String> getAdditionalOptions(@NotNull Project project, @NotNull Module module) {
     List<JavaCompilerConfigurationProxy> extensions = EP_NAME.getExtensionList();

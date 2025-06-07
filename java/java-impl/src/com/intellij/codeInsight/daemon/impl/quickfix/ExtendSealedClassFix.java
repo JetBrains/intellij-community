@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ExtendSealedClassFix extends PsiBasedModCommandAction<PsiClass> {
-  @FileModifier.SafeFieldForPreview private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
+  private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
 
   private ExtendSealedClassFix(@NotNull PsiClass parentClass, @NotNull PsiClass subclass) {
     super(subclass);

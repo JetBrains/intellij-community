@@ -1,5 +1,6 @@
 // "Move to constructor parameters" "true"
 // SHOULD_FAIL_WITH: Duplicating parameter 'n'
+// K2_AFTER_ERROR: Property must be initialized or be abstract.
 open class A(n: Int) {
     <caret>val n: Int
 }

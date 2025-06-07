@@ -46,16 +46,16 @@ public class GroovyNamedArgumentTest extends LightJavaCodeInsightFixtureTestCase
       if (e.getObject() instanceof NamedArgumentDescriptor na) {
         DefaultGroovyMethods.leftShift(allLookupStrings, e.getLookupString());
         if (e.getLookupString().equals("intField")) {
-          assert na.checkType(PsiTypes.intType(), context);
-          assert na.checkType(PsiTypes.longType(), context);
-          assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_INTEGER, context), context);
+          assertTrue(na.checkType(PsiTypes.intType(), context));
+          assertTrue(na.checkType(PsiTypes.longType(), context));
+          assertTrue(na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_INTEGER, context), context));
 
-          assert !na.checkType(PsiTypes.booleanType(), context);
-          assert !na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, context), context);
+          assertFalse(na.checkType(PsiTypes.booleanType(), context));
+          assertFalse(na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, context), context));
         }
         else if (e.getLookupString().equals("boolProperty")) {
-          assert na.checkType(PsiTypes.booleanType(), context);
-          assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_BOOLEAN, context), context);
+          assertTrue(na.checkType(PsiTypes.booleanType(), context));
+          assertTrue(na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_BOOLEAN, context), context));
 
           // todo unkoment this
           //assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, context), context)
@@ -63,10 +63,10 @@ public class GroovyNamedArgumentTest extends LightJavaCodeInsightFixtureTestCase
           //assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_OBJECT, context), (GroovyPsiElement)context)
         }
         else if (e.getLookupString().equals("stringField")) {
-          assert na.checkType(PsiTypes.intType(), context);
-          assert na.checkType(PsiTypes.booleanType(), context);
-          assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, context), context);
-          assert na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_OBJECT, context), context);
+          assertTrue(na.checkType(PsiTypes.intType(), context));
+          assertTrue(na.checkType(PsiTypes.booleanType(), context));
+          assertTrue(na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, context), context));
+          assertTrue(na.checkType(TypesUtil.createType(CommonClassNames.JAVA_LANG_OBJECT, context), context));
         }
       }
     }

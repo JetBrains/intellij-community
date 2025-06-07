@@ -10,4 +10,3 @@ interface H
 fun f(h: H?) {
     h <caret>+ "other"
 }
-/* IGNORE_K2 */

@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import operator 'Some.get'" "true"
 // ERROR: 'operator' modifier is required on 'get' in 'some.Some'
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 
@@ -29,7 +29,7 @@ operator fun Some.get(s: String) {}
 // FILE: first.after.kt
 // "Import operator 'Some.get'" "true"
 // ERROR: 'operator' modifier is required on 'get' in 'some.Some'
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 

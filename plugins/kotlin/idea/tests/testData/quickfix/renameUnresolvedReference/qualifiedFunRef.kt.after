@@ -5,6 +5,12 @@
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: x
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
+// K2_AFTER_ERROR: Unresolved reference 'x'.
 class A {
     fun f() = 1
     fun g() = ""
@@ -32,3 +38,4 @@ fun foo(a: A, b: B) {
     bar(b.x())
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameUnresolvedReferenceFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.RenameUnresolvedReferenceFix

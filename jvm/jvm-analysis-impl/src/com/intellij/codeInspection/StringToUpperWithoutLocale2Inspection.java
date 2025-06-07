@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -22,9 +22,8 @@ public class StringToUpperWithoutLocale2Inspection extends AbstractBaseUastLocal
     CommonClassNames.JAVA_LANG_STRING, HardcodedMethodConstants.TO_UPPER_CASE, HardcodedMethodConstants.TO_LOWER_CASE
   ).parameterCount(0);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -65,9 +64,7 @@ public class StringToUpperWithoutLocale2Inspection extends AbstractBaseUastLocal
     holder.registerProblem(identifier, getErrorDescription(expression.getCallableName()));
   }
 
-  @InspectionMessage
-  @NotNull
-  private static String getErrorDescription(@NotNull String methodName) {
+  private static @InspectionMessage @NotNull String getErrorDescription(@NotNull String methodName) {
     return JvmAnalysisBundle.message("jvm.inspections.string.touppercase.tolowercase.without.locale.description", methodName);
   }
 }

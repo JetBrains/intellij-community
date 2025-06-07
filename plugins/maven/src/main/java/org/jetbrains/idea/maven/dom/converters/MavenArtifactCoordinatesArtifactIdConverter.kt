@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchService
 
-class MavenArtifactCoordinatesArtifactIdConverter : MavenArtifactCoordinatesConverter() {
+open class MavenArtifactCoordinatesArtifactIdConverter : MavenArtifactCoordinatesConverter() {
   override fun doIsValid(id: MavenId, manager: MavenIndicesManager, context: ConvertContext): Boolean {
     if (StringUtil.isEmpty(id.groupId) || StringUtil.isEmpty(id.artifactId)) return false
 

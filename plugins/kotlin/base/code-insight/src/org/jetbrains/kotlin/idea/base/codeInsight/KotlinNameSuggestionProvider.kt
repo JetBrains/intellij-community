@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
@@ -50,7 +51,7 @@ abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
             result += names
 
             if (element is KtProperty && element.isLocal) {
-                for (ref in ReferencesSearch.search(element, LocalSearchScope(element.parent))) {
+                for (ref in ReferencesSearch.search(element, LocalSearchScope(element.parent)).asIterable()) {
                     val refExpr = ref.element as? KtSimpleNameExpression ?: continue
                     val argument = refExpr.parent as? KtValueArgument ?: continue
                     result += getNameForArgument(argument) ?: continue
@@ -68,6 +69,8 @@ abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
                     )
                 }
             }
+        } else if (element is KtNamedDeclaration ) {
+            result.addIfNotNull(element.name)
         }
 
         return null

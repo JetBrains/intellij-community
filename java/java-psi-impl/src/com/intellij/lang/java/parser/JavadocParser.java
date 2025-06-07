@@ -3,8 +3,15 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.impl.source.tree.JavaDocElementTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public final class JavadocParser {
 
   private JavadocParser() { }

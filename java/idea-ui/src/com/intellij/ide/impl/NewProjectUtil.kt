@@ -3,17 +3,14 @@ package com.intellij.ide.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
+import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
@@ -30,6 +27,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -39,6 +38,7 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
+import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -66,6 +66,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
 
   try {
     val projectFile = Path.of(wizard.newProjectFilePath)
+    WslUsagesCollector.beforeProjectCreated(projectFile)
     val newProject = createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = null)
     NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
   }
@@ -252,14 +253,15 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
 
     if (newProject !== projectToClose) {
       updateLastProjectLocation(projectFile)
-      val moduleConfigurator = projectBuilder.createModuleConfigurator()
       val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
         callback = ProjectOpenedCallback { openedProject, module ->
-          if (openedProject != newProject && module != null) { // project attached
-            ApplicationManager.getApplication().invokeLater {
-              moduleConfigurator?.accept(module)
+          if (openedProject != newProject) { // project attached to workspace
+            LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)?.let { dir ->
+              ApplicationManager.getApplication().invokeLater {
+                projectBuilder.postCommit(openedProject, dir)
+              }
             }
           }
         }
@@ -272,6 +274,9 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
       SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
     }
 
+    if (Registry.`is`("ide.create.project.root.entity")) {
+      registerProjectRoot(newProject, projectDir)
+    }
     return newProject
   }
   finally {

@@ -552,8 +552,7 @@ public final class TryHelper
     }
   }
 
-  @Nullable
-  private static FunctionExprent unwrapNegations(@NotNull FunctionExprent func) {
+  private static @Nullable FunctionExprent unwrapNegations(@NotNull FunctionExprent func) {
     int count = 0;
     while (func.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
       Exprent expr = func.getLstOperands().get(0);

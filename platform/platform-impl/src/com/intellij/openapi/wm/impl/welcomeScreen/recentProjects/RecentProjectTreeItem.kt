@@ -19,14 +19,19 @@ import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
+import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 /**
@@ -38,8 +43,9 @@ import javax.swing.SwingUtilities
  * @see com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.createWelcomeTab
  * @see com.intellij.ide.ManageRecentProjectsAction
  */
-internal sealed interface RecentProjectTreeItem {
-  fun displayName(): String
+@ApiStatus.Internal
+sealed interface RecentProjectTreeItem {
+  fun displayName(): @NlsSafe String
 
   fun children(): List<RecentProjectTreeItem>
 
@@ -53,7 +59,8 @@ internal data class RecentProjectItem(
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   @NlsSafe val branchName: String? = null,
-  val projectGroup: ProjectGroup?
+  val projectGroup: ProjectGroup?,
+  val activationTimestamp: Long?,
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
 
@@ -73,6 +80,10 @@ internal data class RecentProjectItem(
   fun openProject(event: AnActionEvent) {
     // Force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
+
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
+      EelInitialization.runEelInitialization(projectPath)
+    }
 
     val file = Path.of(projectPath).normalize()
     if (!Files.exists(file)) {
@@ -100,8 +111,10 @@ internal data class RecentProjectItem(
                               BitUtil.isSet(event.modifiers, ActionEvent.SHIFT_MASK) ||
                               event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
+    val forceReuseFrame = event.place == ActionPlaces.WELCOME_SCREEN_NON_MODAL
     openProjectAndLogRecent(file, OpenProjectTask {
       this.forceOpenInNewFrame = forceOpenInNewFrame
+      this.forceReuseFrame = forceReuseFrame
       runConfigurators = true
     }, projectGroup)
   }
@@ -126,7 +139,37 @@ internal data class ProjectsGroupItem(
   override fun children(): List<RecentProjectTreeItem> = children
 }
 
-internal data class CloneableProjectItem(
+internal data class ProviderRecentProjectItem(
+  val projectId: String,
+  private val recentProject: RecentProject,
+) : RecentProjectTreeItem {
+  override fun displayName(): @NlsSafe String = recentProject.displayName
+
+  override fun children(): List<RecentProjectTreeItem> = emptyList()
+
+  val projectPath: @NlsSafe String? get() = recentProject.projectPath
+  val branchName: @NlsSafe String? get() = recentProject.branchName
+  val providerPath: @NlsSafe String? get() = recentProject.providerPath
+  val icon: Icon? get() = recentProject.icon
+  val providerIcon: Icon? get() = recentProject.providerIcon
+  val activationTimestamp: Long? get() = recentProject.activationTimestamp
+  val isProjectOpening: Boolean get() = recentProject.projectOpenState == OpenRecentProjectStatus.Progress
+
+  fun openProject(actionEvent: AnActionEvent) {
+    recentProject.openProject(actionEvent)
+  }
+
+  fun removeFromRecent() {
+    recentProject.removeFromRecent()
+  }
+
+  fun searchName(): String {
+    return "${recentProject.projectPath.orEmpty()} ${recentProject.displayName} ${recentProject.providerPath.orEmpty()}"
+  }
+}
+
+@ApiStatus.Internal
+data class CloneableProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
@@ -144,7 +187,8 @@ internal class RootItem(private val collectors: List<() -> List<RecentProjectTre
   override fun children(): List<RecentProjectTreeItem> = collectors.flatMap { collector -> collector() }
 }
 
-internal object ProjectCollectors {
+@ApiStatus.Internal
+object ProjectCollectors {
   @JvmField
   val recentProjectsCollector: () -> List<RecentProjectTreeItem> = {
     RecentProjectListActionProvider.getInstance().collectProjects()

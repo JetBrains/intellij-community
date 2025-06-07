@@ -21,6 +21,9 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 /**
@@ -35,11 +38,11 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
-                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context) }
+                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context) }
   for (entry in entries) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
-    val pathInDist = rootPath.relativize(entry.path).pathString
+    val pathInDist = rootPath.relativize(entry.path).invariantSeparatorsPathString
     repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution = distribution, relativePath = pathInDist, origin = entry))
   }
 
@@ -53,7 +56,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
   }
   else {
     for (distribution in SUPPORTED_DISTRIBUTIONS) {
-      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, context = context)
+      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, libc = distribution.libcImpl, context = context)
       val actualEntries = repositoryEntries.filter { it.distribution == null || it.distribution == distribution }
       generateRepositoryForDistribution(
         targetDirectory = targetDirectory,
@@ -76,7 +79,7 @@ suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<Distrib
     if (entry.path.startsWith(targetDirectory)) {
       RuntimeModuleRepositoryEntry(
         distribution = null,
-        relativePath = targetDirectory.relativize(entry.path).pathString,
+        relativePath = targetDirectory.relativize(entry.path).invariantSeparatorsPathString,
         origin = entry,
       )
     }
@@ -130,6 +133,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
 
 private data class RuntimeModuleRepositoryEntry(
   @JvmField val distribution: SupportedDistribution?,
+  /** Relative path from the distribution root ('Contents' directory on macOS) with '/' as a separator */
   @JvmField val relativePath: String,
   @JvmField val origin: DistributionFileEntry,
 )
@@ -244,7 +248,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
   }
   
-  val pathToEntries = entries.groupBy { it.relativePath }
+  val pathToEntries = entries.groupBy { Path(it.relativePath) }
 
   //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
   //and all resource roots should be kept
@@ -252,21 +256,21 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     .filter { entry -> entry.origin is ProjectLibraryEntry && isPackedIntoSingleJar(entry.origin)
                        || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()
                        || entry.origin is ModuleOutputEntry }
-    .groupBy({ it.origin.getRuntimeModuleId()!! }, { it.relativePath })
+    .groupBy({ it.origin.getRuntimeModuleId()!! }, { Path(it.relativePath) })
 
-  suspend fun isIncludedInJetBrainsClient(entry: DistributionFileEntry): Boolean {
-    return entry is ModuleOutputEntry && context.getJetBrainsClientModuleFilter().isModuleIncluded(entry.moduleName)
+  suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
+    return entry is ModuleOutputEntry && context.getFrontendModuleFilter().isModuleIncluded(entry.moduleName)
   }
   
-  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
-    val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
+  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<Path>): String {
+    val mainLocation = paths.singleOrNull { it.parent?.pathString == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInJetBrainsClient(entry.origin) } == true } ?:
-                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend") }
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInEmbeddedFrontend(entry.origin) } == true } ?:
+                       paths.singleOrNull { it.parent?.name in setOf("client", "frontend", "frontend-split") }
     if (mainLocation != null) {
-      return mainLocation
+      return mainLocation.invariantSeparatorsPathString
     }
-    val sorted = paths.sorted()
+    val sorted = paths.map { it.invariantSeparatorsPathString }.sorted()
     Span.current().addEvent("cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
     return sorted.first()
   }
@@ -334,7 +338,6 @@ private fun DistributionFileEntry.getRuntimeModuleId(): RuntimeModuleId? {
 }
 
 private const val MODULES_DIR_NAME = "modules"
-@VisibleForTesting
 const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
 
 private val dependenciesToSkip = mapOf(

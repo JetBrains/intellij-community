@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
@@ -16,13 +17,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -46,9 +45,8 @@ public final class JavaDfaValueFactory {
   private JavaDfaValueFactory() {
   }
 
-  @Nullable
   @Contract("_, null -> null")
-  public static DfaValue getExpressionDfaValue(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
+  public static @Nullable DfaValue getExpressionDfaValue(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
     if (expression == null) return null;
 
     if (expression instanceof PsiParenthesizedExpression) {
@@ -145,8 +143,7 @@ public final class JavaDfaValueFactory {
    * @param refExpr reference to create a qualifier variable for
    * @return a qualifier variable or null if qualifier is unnecessary or cannot be represented as a variable
    */
-  @Nullable
-  public static DfaValue getQualifierOrThisValue(DfaValueFactory factory, PsiReferenceExpression refExpr) {
+  public static @Nullable DfaValue getQualifierOrThisValue(DfaValueFactory factory, PsiReferenceExpression refExpr) {
     PsiExpression qualifierExpression = refExpr.getQualifierExpression();
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
@@ -173,8 +170,7 @@ public final class JavaDfaValueFactory {
     return getQualifierValue(factory, qualifierExpression);
   }
 
-  @Nullable
-  private static DfaValue getQualifierValue(DfaValueFactory factory, PsiExpression qualifierExpression) {
+  private static @Nullable DfaValue getQualifierValue(DfaValueFactory factory, PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(factory, qualifierExpression);
     if (qualifierValue == null) return null;
     PsiVariable constVar = qualifierValue.getDfType().getConstantOfType(PsiVariable.class);
@@ -184,9 +180,9 @@ public final class JavaDfaValueFactory {
     return qualifierValue;
   }
 
-  private static boolean maybeUninitializedConstant(DfaValue constValue,
-                                                    @NotNull PsiReferenceExpression refExpr,
-                                                    PsiModifierListOwner var) {
+  static boolean maybeUninitializedConstant(DfaValue constValue,
+                                            @NotNull PsiReferenceExpression refExpr,
+                                            PsiModifierListOwner var) {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
@@ -196,19 +192,36 @@ public final class JavaDfaValueFactory {
   }
 
   @Contract("null -> null")
-  @Nullable
-  public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
+  public static @Nullable VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
+    return getAccessedVariableOrGetter(target, false);
+  }
+
+  /**
+   * @param target target element (variable or method)
+   * @param stable if true, it's known externally that the access to the element is stable, 
+   *               i.e., if the target element is a virtual method, we are definitely accessing the specified one,
+   *               and not overridden one.
+   * @return the variable descriptor, describing the specified access; null if given element cannot be described as a dataflow variable
+   */
+  @Contract("null, _ -> null")
+  public static @Nullable VariableDescriptor getAccessedVariableOrGetter(@Nullable PsiElement target, boolean stable) {
     SpecialField sf = SpecialField.findSpecialField(target);
     if (sf != null) {
       return sf;
     }
-    if (target instanceof PsiVariable) {
-      return new PlainDescriptor((PsiVariable)target);
+    if (target instanceof PsiVariable variable) {
+      return new PlainDescriptor(variable);
     }
     if (target instanceof PsiMethod method) {
       // Assume that methods returning stream always return a new one
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
-      if (method.getParameterList().isEmpty() &&
+
+      PsiField targetField = getFieldForGetter(method, stable);
+      if (targetField != null) {
+        return new PlainDescriptor(targetField);
+      }
+
+      if (!method.isConstructor() && method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
           isContractAllowedForGetter(method) &&
           !UNSTABLE_METHODS.methodMatches(method)) {
@@ -216,6 +229,20 @@ public final class JavaDfaValueFactory {
       }
     }
     return null;
+  }
+  
+  private static @Nullable PsiField getFieldForGetter(@NotNull PsiMethod method, boolean stable) {
+    if (!stable && PsiUtil.canBeOverridden(method)) return null;
+    if (GetterDescriptor.isKnownStableMethod(method)) return null;
+    PsiField field = PropertyUtil.getFieldOfGetter(method);
+    if (field == null) return null;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
+    if (manager.isNullable(method, true) && !manager.isNullable(field, true)) {
+      // Avoid inlining if getter is marked as nullable, while the field is not.
+      // In this rare case, we cannot preserve the nullability warning on the callsite.
+      return null;
+    }
+    return field;
   }
 
   private static boolean isClassAnnotatedImmutable(PsiMethod method) {
@@ -232,8 +259,7 @@ public final class JavaDfaValueFactory {
     return contracts.isEmpty();
   }
 
-  @NotNull
-  public static DfaValue createCommonValue(DfaValueFactory factory, PsiExpression @NotNull [] expressions, PsiType targetType) {
+  public static @NotNull DfaValue createCommonValue(DfaValueFactory factory, PsiExpression @NotNull [] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = getExpressionDfaValue(factory, expression);
@@ -251,8 +277,7 @@ public final class JavaDfaValueFactory {
    * @param variable variable to create a constant based on its value
    * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
    */
-  @Nullable
-  private static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
+  static @Nullable DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
     if (!variable.hasModifierProperty(PsiModifier.FINAL) || ignoreInitializer(variable)) return null;
     Object value = variable.computeConstantValue();
     PsiType type = variable.getType();
@@ -267,7 +292,7 @@ public final class JavaDfaValueFactory {
       }
       PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(JavaKeywords.NULL)) {
         return factory.fromDfType(DfTypes.NULL);
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
@@ -278,8 +303,7 @@ public final class JavaDfaValueFactory {
     return factory.fromDfType(DfTypes.constant(value, type));
   }
 
-  @Nullable
-  private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+  private static @Nullable Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
     if (!(variable instanceof PsiField)) return null;
     PsiClass psiClass = ((PsiField)variable).getContainingClass();
     if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
@@ -82,8 +82,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return myStructureConfigurable.getModulesConfig();
   }
 
-  @Nullable
-  private static MasterDetailsComponent.MyNode findFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
+  private static @Nullable MasterDetailsComponent.MyNode findFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
     for (int i = 0; i < moduleNode.getChildCount(); i++) {
       final TreeNode node = moduleNode.getChildAt(i);
       if (node instanceof MasterDetailsComponent.MyNode configNode &&
@@ -137,8 +136,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   }
 
   @Override
-  @Nullable
-  public FacetInfo getParent(final FacetInfo facetInfo) {
+  public @Nullable FacetInfo getParent(final FacetInfo facetInfo) {
     final Module module = getFacetConfigurator().getFacet(facetInfo).getModule();
     return getFacetConfigurator().getTreeModel(module).getParent(facetInfo);
   }
@@ -147,8 +145,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return getModuleStructureConfigurable().getFacetConfigurator();
   }
 
-  @Nullable
-  private Facet getSelectedFacet() {
+  private @Nullable Facet getSelectedFacet() {
     final Object selectedObject = getModuleStructureConfigurable().getSelectedObject();
     if (selectedObject instanceof Facet) {
       return (Facet)selectedObject;
@@ -156,8 +153,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return null;
   }
 
-  @Nullable
-  private Module getSelectedModule() {
+  private @Nullable Module getSelectedModule() {
     final Object selected = getModuleStructureConfigurable().getSelectedObject();
     if (selected instanceof Module) {
       return (Module)selected;
@@ -169,15 +165,13 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   }
 
   @Override
-  @Nullable
-  public ModuleType getSelectedModuleType() {
+  public @Nullable ModuleType getSelectedModuleType() {
     final Module module = getSelectedModule();
     return module != null ? ModuleType.get(module) : null;
   }
 
   @Override
-  @Nullable
-  public FacetInfo getSelectedFacetInfo() {
+  public @Nullable FacetInfo getSelectedFacetInfo() {
     final Facet facet = getSelectedFacet();
     return facet != null ? getFacetConfigurator().getFacetInfo(facet) : null;
   }

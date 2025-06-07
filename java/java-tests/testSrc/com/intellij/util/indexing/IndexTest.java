@@ -5,12 +5,10 @@ import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.ide.scratch.ScratchesSearchScope;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.java.index.StringIndex;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -29,9 +27,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -42,17 +37,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
@@ -67,7 +57,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.IsFileChangedResult;
@@ -99,7 +88,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -377,7 +365,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", scope));
 
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(psiFile.getVirtualFile().getParent()));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(psiFile.getVirtualFile().getParent()));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       assertEquals(psiFile.setName("Foo1.java"), psiFile);
     });
@@ -400,7 +388,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("pkg.Foo", scope));
 
     final VirtualFile dir = psiFile.getVirtualFile().getParent();
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(dir));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(dir));
     WriteAction.run(() -> dir.rename(this, "bar"));
 
     assertTrue(FileDocumentManager.getInstance().getUnsavedDocuments().length > 0);
@@ -528,7 +516,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    //noinspection GroovyUnusedAssignment
+    //Let's help GC, even in interpreter mode
+    //noinspection UnusedAssignment
     psiFile = null;
     GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile))
       .ensureCollected(() -> UIUtil.dispatchAllInvocationEvents());
@@ -955,39 +944,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void test_Vfs_Event_Processing_Performance() {
-    final String filename = "A.java";
-    myFixture.addFileToProject("foo/bar/" + filename, "class A {}");
-
-    Benchmark.newBenchmark("Vfs Event Processing By Index", () -> {
-      PsiFile[] files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
-      assertEquals(1, files.length);
-
-      VirtualFile file = files[0].getVirtualFile();
-
-      String filename2 = "B.java";
-      int max = 100000;
-      List<VFileEvent> eventList = new ArrayList<>(max);
-      int len = max / 2;
-
-      for (int i = 0; i < len; ++i) {
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2));
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename));
-        eventList.add(new VFileDeleteEvent(null, file));
-        eventList.add(new VFileCreateEvent(null, file.getParent(), filename, false, null, null, null));
-      }
-
-
-      AsyncFileListener.ChangeApplier applier =
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().prepareChange(eventList);
-      applier.beforeVfsChange();
-      applier.afterVfsChange();
-
-      files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
-      assertEquals(1, files.length);
-    }).start();
-  }
-
   public void test_class_file_in_src_content_isn_t_returned_from_index() throws IOException {
     PsiClass runnable =
       JavaPsiFacade.getInstance(getProject()).findClass(Runnable.class.getName(), GlobalSearchScope.allScope(getProject()));
@@ -1004,47 +960,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(runnable.getMethods()[0], projectScope,
                                                                           unused -> true).findFirst().isEmpty());
     assertTrue(StubIndex.getElements(JavaStubIndexKeys.METHODS, "run", getProject(), projectScope, PsiMethod.class).isEmpty());
-  }
-
-  public void test_text_todo_indexing_checks_for_cancellation() {
-    TodoPattern pattern = new TodoPattern("(x+x+)+y", TodoAttributesUtil.createDefault(), true);
-
-    TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
-    TodoPattern[] newPatterns = new TodoPattern[]{pattern};
-    TodoConfiguration.getInstance().setTodoPatterns(newPatterns);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
-    myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-
-    try {
-      final CountDownLatch progressStarted = new CountDownLatch(1);
-      final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-      final AtomicBoolean canceled = new AtomicBoolean(false);
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          progressStarted.await();
-          TimeoutUtil.sleep(1000);
-          progressIndicatorBase.cancel();
-          TimeoutUtil.sleep(500);
-          assertTrue(canceled.get());
-        } catch (Exception e) {
-          throw new AssertionError("Should not throw exceptions", e);
-        }
-      });
-      ProgressManager.getInstance().runProcess(() ->  {
-          try {
-            progressStarted.countDown();
-            FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
-          }
-          catch (ProcessCanceledException ignore) {
-            canceled.set(true);
-          }
-        }, progressIndicatorBase
-      );
-    }
-    finally {
-      TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
-    }
   }
 
   public void test_stub_updating_index_problem_during_processAllKeys() {
@@ -1344,7 +1259,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static void assertStubLanguage(@NotNull com.intellij.lang.Language expectedLanguage, @NotNull ObjectStubTree<?> stub) {
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(expectedLanguage);
     PsiFileStub fileStub = assertInstanceOf(stub.getPlainList().get(0), PsiFileStub.class);
-    assertEquals(parserDefinition.getFileNodeType(), fileStub.getType());
+    assertEquals(parserDefinition.getFileNodeType(), fileStub.getFileElementType());
   }
 
   @NotNull
@@ -1623,5 +1538,43 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(scratchJavaEnum.contains(((VirtualFileWithId)scratch).getId()));
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src).getId()));
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src2).getId()));
+  }
+
+  public void test_traceKeyHashToVirtualFileMapping() {
+    TracingFileBasedIndexExtension extension =
+      TracingFileBasedIndexExtension.registerTracingFileBasedIndex(myFixture.getTestRootDisposable());
+
+    myFixture.addFileToProject("src/TestFoo.java", "class TestFoo { }").getVirtualFile();
+
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+
+    var processor = new Processor<String>() {
+      final AtomicInteger processed = new AtomicInteger(0);
+      @Override
+      public boolean process(String i) {
+        processed.incrementAndGet();
+        return true;
+      }
+
+      void reset() {
+        processed.set(0);
+      }
+    };
+
+    // process without a filter that should ignore a file, so we get 1 in the filter
+    fileBasedIndex.processAllKeys(extension.getName(), processor, getProject());
+    assertEquals(1, processor.processed.get());
+
+    processor.reset();
+
+    // process with a filter that should ignore a file, so we get 0 in the filter
+    TracingIdFilter filter = TracingFileBasedIndexExtension.Companion.getIdFilter();
+    fileBasedIndex.processAllKeys(extension.getName(),
+                                  processor,
+                                  GlobalSearchScope.everythingScope(getProject()),
+                                  filter
+    );
+
+    assertEquals(0, processor.processed.get());
   }
 }

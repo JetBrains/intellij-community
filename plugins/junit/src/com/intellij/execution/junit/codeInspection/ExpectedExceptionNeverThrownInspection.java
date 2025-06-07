@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -15,9 +15,8 @@ import java.util.List;
 
 public final class ExpectedExceptionNeverThrownInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return JUnitBundle.message("expected.exception.never.thrown.problem.descriptor", method.getName());
   }

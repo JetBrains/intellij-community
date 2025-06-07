@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.java.execution.impl.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.java.execution.impl.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/execution/shared",
+    "//java/execution/impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/kernel/backend",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/lang-impl",
+    "//platform/smRunner",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.java.execution.impl.backend` end

@@ -12,12 +12,15 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
+import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.WrapElementMeasuringIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
@@ -45,6 +48,7 @@ public final class SoftWrapEngine {
                         @NotNull SoftWrapsStorage storage,
                         @NotNull CachingSoftWrapDataMapper dataMapper,
                         @NotNull IncrementalCacheUpdateEvent event,
+                        @Nullable LineWrapPositionStrategy lineWrapStrategy,
                         int visibleWidth,
                         int relativeIndent) {
     myEditor = editor;
@@ -58,12 +62,23 @@ public final class SoftWrapEngine {
     mySoftWrapWidth = painter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     myEvent = event;
     myRelativeIndent = relativeIndent;
+    myLineWrapPositionStrategy = lineWrapStrategy;
   }
 
   public void generate() {
     int startOffset = myEvent.getStartOffset();
     int minEndOffset = myEvent.getMandatoryEndOffset();
     int maxEndOffset = getEndOffsetUpperEstimate();
+    var inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset);
+    var afterLineEndInlays = ContainerUtil.filter(
+      myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), maxEndOffset),
+      inlay -> !inlay.getProperties().isSoftWrappingDisabled()
+    );
+    var grid = myEditor.getCharacterGrid();
+    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty()) {
+      generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
+      return;
+    }
 
     SoftWrap lastSoftWrap = null;
     boolean minWrapOffsetAtFolding = false;
@@ -81,7 +96,7 @@ public final class SoftWrapEngine {
       x = lastSoftWrap == null ? 0 : lastSoftWrap.getIndentInPixels();
     }
 
-    WrapElementMeasuringIterator it = new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset);
+    WrapElementMeasuringIterator it = new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset, inlineInlays, afterLineEndInlays);
     while (!it.atEnd()) {
       if (it.isLineBreak()) {
         minWrapOffset = -1;
@@ -162,20 +177,15 @@ public final class SoftWrapEngine {
   }
 
   private int calcSoftWrapOffset(int minOffset, int maxOffset, boolean preferMinOffset) {
-    if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, maxOffset))) return maxOffset;
-    for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
-      int prevOffset = Character.offsetByCodePoints(myText, offset, -1);
-      if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, prevOffset))) return offset;
-      //noinspection AssignmentToForLoopParameter
-      offset = prevOffset;
-    }
-
     if (myLineWrapPositionStrategy == null) {
       myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
     }
+    if (!myEditor.getState().getDisableDefaultSoftWrapsCalculation()) {
+      int position = findWrapPosition(myText, maxOffset, minOffset, myLineWrapPositionStrategy);
+      if (position != -1) return position;
+    }
 
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(),
-                                                                      minOffset - 1, maxOffset + 1, maxOffset + 1,
+    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(), minOffset - 1, maxOffset + 1, maxOffset + 1,
                                                                       false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
@@ -184,8 +194,23 @@ public final class SoftWrapEngine {
     return wrapOffset;
   }
 
-  private static boolean canBreakBeforeOrAfterCodePoint(int codePoint) {
-    return codePoint == ' ' || codePoint == '\t' || (codePoint >= 0x2f00 && codePoint < 0x10000 /* eastern languages unicode ranges */);
+  /**
+   * Finds the most appropriate position for wrapping text within the specified range.
+   * This method iterates backward from the maximum offset to the minimum offset
+   * while checking each character's suitability for line wrapping based on the provided strategy.
+   *
+   * @return the offset at which the wrap can occur, or {@code -1} if no suitable wrap position is found
+   */
+  @ApiStatus.Internal
+  public static int findWrapPosition(CharSequence text, int maxOffset, int minOffset, LineWrapPositionStrategy strategy) {
+    if (strategy.canWrapLineAtOffset(text, maxOffset))  return maxOffset;
+    for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
+      int prevOffset = Character.offsetByCodePoints(text, offset, -1);
+      if (strategy.canWrapLineAtOffset(text, prevOffset)) return offset;
+      //noinspection AssignmentToForLoopParameter
+      offset = prevOffset;
+    }
+    return -1;
   }
 
   private int getEndOffsetUpperEstimate() {
@@ -195,5 +220,39 @@ public final class SoftWrapEngine {
       endOffsetUpperEstimate = myDocument.getLineStartOffset(line + 1);
     }
     return endOffsetUpperEstimate;
+  }
+
+  private void generateGridSoftWraps(CharacterGrid grid, int startOffset, int minEndOffset, int maxEndOffset) {
+    int widthInColumns = grid.getColumns();
+    int endOffset = maxEndOffset;
+    var wrappedSoFar = 0;
+    for (var it = grid.iterator(startOffset, maxEndOffset); !it.isAtEnd(); it.advance()) {
+      var cellStartOffset = it.getCellStartOffset();
+      var cellEndOffset = it.getCellEndOffset();
+      var cellStartColumn = it.getCellStartColumn() - wrappedSoFar;
+      var cellEndColumn = it.getCellEndColumn() - wrappedSoFar;
+      if (it.isLineBreak()) {
+        wrappedSoFar = 0;
+        if (cellEndOffset > minEndOffset) {
+          endOffset = cellEndOffset;
+          break;
+        }
+      }
+      else if (cellEndColumn > widthInColumns) {
+        wrappedSoFar += cellStartColumn;
+        var softWrap = createGridSoftWrap(cellStartOffset);
+        if (cellStartOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(softWrap, myEvent.getLengthDiff())) {
+          endOffset = cellStartOffset;
+          break;
+        }
+      }
+    }
+    myEvent.setActualEndOffset(endOffset);
+  }
+
+  private @NotNull SoftWrapImpl createGridSoftWrap(int offset) {
+    var result = new SoftWrapImpl(new TextChangeImpl("\n", offset), 1, mySoftWrapWidth);
+    myStorage.storeOrReplace(result);
+    return result;
   }
 }

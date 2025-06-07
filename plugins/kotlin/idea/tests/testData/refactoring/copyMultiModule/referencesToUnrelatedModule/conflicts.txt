@@ -1,1 +1,2 @@
 Class foo.B, referenced in property A.b, will not be accessible in module B
+Class foo.B, referenced in property A.b, will not be accessible in module B

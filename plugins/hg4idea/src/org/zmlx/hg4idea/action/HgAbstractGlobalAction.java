@@ -82,9 +82,8 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
     return true;
   }
 
-  @NotNull
   @CalledInAny
-  protected List<HgRepository> getSelectedRepositoriesFromEvent(@NotNull DataContext dataContext) {
+  protected @NotNull List<HgRepository> getSelectedRepositoriesFromEvent(@NotNull DataContext dataContext) {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) return Collections.emptyList();
 

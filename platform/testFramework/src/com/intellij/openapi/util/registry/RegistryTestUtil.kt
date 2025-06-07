@@ -12,3 +12,14 @@ inline fun RegistryValue.withValue(tempValue: Boolean, crossinline block: () -> 
     setValue(currentValue)
   }
 }
+
+inline fun RegistryValue.withValue(tempValue: String, crossinline block: () -> Unit) {
+  val currentValue = asString()
+  try {
+    setValue(tempValue)
+    block()
+  }
+  finally {
+    setValue(currentValue)
+  }
+}

@@ -1,0 +1,443 @@
+com.intellij.execution.TaskExecutor
+- a:executeTask(java.lang.Runnable):java.util.concurrent.Future
+com.intellij.execution.process.ProcessListener
+- java.util.EventListener
+- onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
+- processNotStarted():V
+- processTerminated(com.intellij.execution.process.ProcessEvent):V
+- processWillTerminate(com.intellij.execution.process.ProcessEvent,Z):V
+- startNotified(com.intellij.execution.process.ProcessEvent):V
+com.intellij.execution.process.ProcessOutputTypes
+- sf:STDERR:com.intellij.openapi.util.Key
+- sf:STDOUT:com.intellij.openapi.util.Key
+- sf:SYSTEM:com.intellij.openapi.util.Key
+com.intellij.openapi.Disposable
+- a:dispose():V
+com.intellij.openapi.Disposable$Default
+- com.intellij.openapi.Disposable
+- dispose():V
+com.intellij.openapi.Disposable$Parent
+- com.intellij.openapi.Disposable
+- a:beforeTreeDispose():V
+com.intellij.openapi.diagnostic.ExceptionWithAttachments
+- a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
+com.intellij.openapi.diagnostic.Logger$Factory
+- a:getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
+com.intellij.openapi.diagnostic.UntraceableException
+com.intellij.openapi.util.BooleanGetter
+- java.util.function.BooleanSupplier
+- sf:FALSE:com.intellij.openapi.util.BooleanGetter
+- sf:TRUE:com.intellij.openapi.util.BooleanGetter
+- a:get():Z
+- getAsBoolean():Z
+com.intellij.openapi.util.CheckedDisposable
+- com.intellij.openapi.Disposable
+- a:isDisposed():Z
+com.intellij.openapi.util.Cloner
+- a:cloneOf(java.lang.Object):java.lang.Object
+- a:copyOf(java.lang.Object):java.lang.Object
+com.intellij.openapi.util.ColoredItem
+- a:getColor():java.awt.Color
+com.intellij.openapi.util.Computable
+- java.util.function.Supplier
+- a:compute():java.lang.Object
+- get():java.lang.Object
+com.intellij.openapi.util.Condition
+- java.util.function.Predicate
+- sf:FALSE:com.intellij.openapi.util.Condition
+- sf:NOT_NULL:com.intellij.openapi.util.Condition
+- sf:TRUE:com.intellij.openapi.util.Condition
+- test(java.lang.Object):Z
+- a:value(java.lang.Object):Z
+com.intellij.openapi.util.Factory
+- java.util.function.Supplier
+- a:create():java.lang.Object
+- get():java.lang.Object
+com.intellij.openapi.util.Getter
+- java.util.function.Supplier
+com.intellij.openapi.util.Iconable
+- sf:ICON_FLAG_READ_STATUS:I
+- sf:ICON_FLAG_VISIBILITY:I
+- a:getIcon(I):javax.swing.Icon
+com.intellij.openapi.util.JDOMExternalizable
+- a:readExternal(org.jdom.Element):V
+- a:writeExternal(org.jdom.Element):V
+com.intellij.openapi.util.ModificationTracker
+- sf:EVER_CHANGED:com.intellij.openapi.util.ModificationTracker
+- sf:NEVER_CHANGED:com.intellij.openapi.util.ModificationTracker
+- a:getModificationCount():J
+com.intellij.openapi.util.NotNullComputable
+- com.intellij.openapi.util.Computable
+- sf:TRUE:com.intellij.openapi.util.NotNullComputable
+- a:compute():java.lang.Object
+com.intellij.openapi.util.NotNullFactory
+- com.intellij.openapi.util.Factory
+- a:create():java.lang.Object
+com.intellij.openapi.util.NullableComputable
+- com.intellij.openapi.util.Computable
+- a:compute():java.lang.Object
+com.intellij.openapi.util.RecursionGuard$StackStamp
+- a:mayCacheNow():Z
+com.intellij.openapi.util.ScalableIcon
+- javax.swing.Icon
+- a:getScale():F
+- a:scale(F):javax.swing.Icon
+com.intellij.openapi.util.Throwable2Computable
+- a:compute():java.lang.Object
+com.intellij.openapi.util.ThrowableNotNullFunction
+- a:fun(java.lang.Object):java.lang.Object
+com.intellij.openapi.util.UserDataHolder
+- a:getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- a:putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+com.intellij.openapi.util.UserDataHolderEx
+- com.intellij.openapi.util.UserDataHolder
+- a:putUserDataIfAbsent(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
+- a:replace(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Object):Z
+com.intellij.openapi.util.ValueKey
+- sf:Companion:com.intellij.openapi.util.ValueKey$Companion
+- a:getName():java.lang.String
+- match():com.intellij.openapi.util.ValueKey$BeforeIf
+- s:match(java.lang.String):com.intellij.openapi.util.ValueKey$BeforeIf
+com.intellij.openapi.util.ValueKey$BeforeIf
+- a:get():java.lang.Object
+- a:getKeyName():java.lang.String
+- a:ifEq(com.intellij.openapi.util.ValueKey):com.intellij.openapi.util.ValueKey$BeforeThen
+- a:orNull():java.lang.Object
+com.intellij.openapi.util.ValueKey$BeforeThen
+- a:or(com.intellij.openapi.util.ValueKey):com.intellij.openapi.util.ValueKey$BeforeThen
+- a:then(java.lang.Object):com.intellij.openapi.util.ValueKey$BeforeIf
+- a:thenGet(java.util.function.Supplier):com.intellij.openapi.util.ValueKey$BeforeIf
+com.intellij.openapi.util.io.ByteSequence
+- a:byteAt(I):B
+- a:length():I
+- a:subSequence(I,I):com.intellij.openapi.util.io.ByteSequence
+- a:toBytes():B[]
+com.intellij.openapi.util.registry.RegistryValueListener
+- afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
+- beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
+com.intellij.openapi.util.text.CharFilter
+- sf:NOT_WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
+- sf:WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
+- a:accept(C):Z
+com.intellij.ui.IconManager
+- sf:Companion:com.intellij.ui.IconManager$Companion
+- colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
+- a:createDeferredIcon(javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):javax.swing.Icon
+- createEmptyIcon(javax.swing.Icon):javax.swing.Icon
+- a:createLayered(javax.swing.Icon[]):javax.swing.Icon
+- a:createLayeredIcon(com.intellij.openapi.util.Iconable,javax.swing.Icon,I):com.intellij.ui.icons.RowIcon
+- createOffsetIcon(javax.swing.Icon):javax.swing.Icon
+- createRowIcon(I):com.intellij.ui.icons.RowIcon
+- a:createRowIcon(I,com.intellij.ui.icons.RowIcon$Alignment):com.intellij.ui.icons.RowIcon
+- a:createRowIcon(javax.swing.Icon[]):com.intellij.ui.icons.RowIcon
+- getClassLoader(java.lang.String,java.lang.String):java.lang.ClassLoader
+- a:getIcon(java.lang.String,java.lang.Class):javax.swing.Icon
+- a:getIcon(java.lang.String,java.lang.ClassLoader):javax.swing.Icon
+- s:getInstance():com.intellij.ui.IconManager
+- getPluginAndModuleId(java.lang.ClassLoader):kotlin.Pair
+- a:registerIconLayer(I,javax.swing.Icon):V
+- a:tooltipOnlyIfComposite(javax.swing.Icon):javax.swing.Icon
+- withIconBadge(javax.swing.Icon,java.awt.Paint):javax.swing.Icon
+com.intellij.ui.icons.CompositeIcon
+- com.intellij.ui.icons.ReplaceableIcon
+- javax.swing.Icon
+- a:getIcon(I):javax.swing.Icon
+- a:getIconCount():I
+com.intellij.ui.icons.DarkIconProvider
+- a:getDarkIcon(Z):javax.swing.Icon
+com.intellij.ui.icons.IconPathProvider
+- a:getExpUIPath():java.lang.String
+- a:getOriginalPath():java.lang.String
+com.intellij.ui.icons.IconReplacer
+- replaceIcon(javax.swing.Icon):javax.swing.Icon
+com.intellij.ui.icons.RowIcon
+- com.intellij.ui.icons.CompositeIcon
+- com.intellij.ui.icons.DarkIconProvider
+- a:getAllIcons():java.util.List
+- a:setIcon(javax.swing.Icon,I):V
+com.intellij.util.BooleanFunction
+- java.util.function.Predicate
+- a:fun(java.lang.Object):Z
+- test(java.lang.Object):Z
+com.intellij.util.CatchingConsumer
+- com.intellij.util.Consumer
+- a:consume(java.lang.Throwable):V
+com.intellij.util.Consumer
+- java.util.function.Consumer
+- accept(java.lang.Object):V
+- a:consume(java.lang.Object):V
+com.intellij.util.JavaContinuation
+- a:cancel():V
+- a:getContext():kotlin.coroutines.CoroutineContext
+- a:resume(java.lang.Object):V
+- a:resumeWithException(java.lang.Throwable):V
+com.intellij.util.NotNullFunction
+- com.intellij.util.NullableFunction
+- java.util.function.Function
+- a:fun(java.lang.Object):java.lang.Object
+com.intellij.util.NotNullProducer
+- com.intellij.util.Producer
+- a:produce():java.lang.Object
+com.intellij.util.NullableFunction
+- com.intellij.util.Function
+- java.util.function.Function
+- apply(java.lang.Object):java.lang.Object
+- a:fun(java.lang.Object):java.lang.Object
+com.intellij.util.PairConsumer
+- java.util.function.BiConsumer
+- accept(java.lang.Object,java.lang.Object):V
+- a:consume(java.lang.Object,java.lang.Object):V
+com.intellij.util.PairFunction
+- java.util.function.BiFunction
+- apply(java.lang.Object,java.lang.Object):java.lang.Object
+- a:fun(java.lang.Object,java.lang.Object):java.lang.Object
+com.intellij.util.PairProcessor
+- s:alwaysFalse():com.intellij.util.PairProcessor
+- s:alwaysTrue():com.intellij.util.PairProcessor
+- a:process(java.lang.Object,java.lang.Object):Z
+com.intellij.util.ParameterizedRunnable
+- java.util.function.Consumer
+- accept(java.lang.Object):V
+- a:run(java.lang.Object):V
+com.intellij.util.PathMapper
+- a:canReplaceLocal(java.lang.String):Z
+- a:canReplaceRemote(java.lang.String):Z
+- a:convertToLocal(java.lang.String):java.lang.String
+- a:convertToRemote(java.lang.String):java.lang.String
+- a:convertToRemote(java.util.Collection):java.util.List
+- a:isEmpty():Z
+com.intellij.util.Producer
+- java.util.function.Supplier
+- get():java.lang.Object
+- a:produce():java.lang.Object
+com.intellij.util.ThrowableConvertor
+- a:convert(java.lang.Object):java.lang.Object
+com.intellij.util.ThrowablePairConsumer
+- a:consume(java.lang.Object,java.lang.Object):V
+com.intellij.util.TriConsumer
+- a:accept(java.lang.Object,java.lang.Object,java.lang.Object):V
+com.intellij.util.TripleFunction
+- a:fun(java.lang.Object,java.lang.Object,java.lang.Object):java.lang.Object
+com.intellij.util.containers.ConcurrentIntObjectMap
+- com.intellij.util.containers.IntObjectMap
+- a:cacheOrGet(I,java.lang.Object):java.lang.Object
+- a:elements():java.util.Enumeration
+- a:getOrDefault(I,java.lang.Object):java.lang.Object
+- a:putIfAbsent(I,java.lang.Object):java.lang.Object
+- a:remove(I,java.lang.Object):Z
+- a:replace(I,java.lang.Object):java.lang.Object
+- a:replace(I,java.lang.Object,java.lang.Object):Z
+- a:size():I
+com.intellij.util.containers.ConcurrentList
+- java.util.List
+- a:addAllAbsent(java.util.Collection):I
+- a:addIfAbsent(java.lang.Object):Z
+com.intellij.util.containers.ConcurrentLongObjectMap
+- a:cacheOrGet(J,java.lang.Object):java.lang.Object
+- a:clear():V
+- a:containsKey(J):Z
+- a:containsValue(java.lang.Object):Z
+- a:elements():java.util.Iterator
+- a:entries():java.lang.Iterable
+- a:entrySet():java.util.Set
+- a:get(J):java.lang.Object
+- a:getOrDefault(J,java.lang.Object):java.lang.Object
+- a:isEmpty():Z
+- a:keys():J[]
+- a:put(J,java.lang.Object):java.lang.Object
+- a:putIfAbsent(J,java.lang.Object):java.lang.Object
+- a:remove(J):java.lang.Object
+- a:remove(J,java.lang.Object):Z
+- a:replace(J,java.lang.Object):java.lang.Object
+- a:replace(J,java.lang.Object,java.lang.Object):Z
+- a:size():I
+- a:values():java.util.Collection
+com.intellij.util.containers.Convertor
+- java.util.function.Function
+- sf:SELF:com.intellij.util.containers.Convertor$IntoSelf
+- apply(java.lang.Object):java.lang.Object
+- asFunction():java.util.function.Function
+- a:convert(java.lang.Object):java.lang.Object
+- s:self():com.intellij.util.containers.Convertor
+com.intellij.util.containers.IntObjectMap
+- a:clear():V
+- a:containsKey(I):Z
+- a:containsValue(java.lang.Object):Z
+- a:entrySet():java.util.Set
+- a:get(I):java.lang.Object
+- a:isEmpty():Z
+- a:keys():I[]
+- a:put(I,java.lang.Object):java.lang.Object
+- a:remove(I):java.lang.Object
+- a:size():I
+- a:values():java.util.Collection
+com.intellij.util.containers.IntObjectMap$Entry
+- a:getKey():I
+- a:getValue():java.lang.Object
+com.intellij.util.containers.ObjectIntMap
+- a:clear():V
+- a:containsKey(java.lang.Object):Z
+- a:containsValue(I):Z
+- a:entries():java.lang.Iterable
+- a:get(java.lang.Object):I
+- a:getOrDefault(java.lang.Object,I):I
+- a:isEmpty():Z
+- a:keySet():java.util.Set
+- a:put(java.lang.Object,I):I
+- a:remove(java.lang.Object):I
+- a:size():I
+- a:values():I[]
+com.intellij.util.containers.Predicate
+- java.util.function.Predicate
+- a:apply(java.lang.Object):Z
+- test(java.lang.Object):Z
+com.intellij.util.containers.hash.EqualityPolicy
+- sf:CANONICAL:com.intellij.util.containers.hash.EqualityPolicy
+- sf:IDENTITY:com.intellij.util.containers.hash.EqualityPolicy
+- a:getHashCode(java.lang.Object):I
+- a:isEqual(java.lang.Object,java.lang.Object):Z
+com.intellij.util.diff.FlyweightCapableTreeStructure
+- a:disposeChildren(java.lang.Object[],I):V
+- a:getChildren(java.lang.Object,com.intellij.openapi.util.Ref):I
+- a:getEndOffset(java.lang.Object):I
+- a:getParent(java.lang.Object):java.lang.Object
+- a:getRoot():java.lang.Object
+- a:getStartOffset(java.lang.Object):I
+- a:toString(java.lang.Object):java.lang.CharSequence
+com.intellij.util.graph.Graph
+- com.intellij.util.graph.InboundSemiGraph
+- com.intellij.util.graph.OutboundSemiGraph
+- a:getIn(java.lang.Object):java.util.Iterator
+- a:getNodes():java.util.Collection
+- a:getOut(java.lang.Object):java.util.Iterator
+com.intellij.util.graph.InboundSemiGraph
+- a:getIn(java.lang.Object):java.util.Iterator
+- a:getNodes():java.util.Collection
+com.intellij.util.graph.MutableNetwork
+- com.intellij.util.graph.Network
+- a:addEdge(com.intellij.util.graph.EndpointPair,java.lang.Object):Z
+- a:addEdge(java.lang.Object,java.lang.Object,java.lang.Object):Z
+- a:addNode(java.lang.Object):Z
+- a:removeEdge(java.lang.Object):Z
+- a:removeNode(java.lang.Object):Z
+com.intellij.util.graph.Network
+- a:adjacentEdges(java.lang.Object):java.util.Set
+- a:adjacentNodes(java.lang.Object):java.util.Set
+- a:allowsParallelEdges():Z
+- a:allowsSelfLoops():Z
+- a:asGraph():com.intellij.util.graph.Graph
+- a:degree(java.lang.Object):I
+- a:edgeConnecting(com.intellij.util.graph.EndpointPair):java.util.Optional
+- a:edgeConnecting(java.lang.Object,java.lang.Object):java.util.Optional
+- a:edgeConnectingOrNull(com.intellij.util.graph.EndpointPair):java.lang.Object
+- a:edgeConnectingOrNull(java.lang.Object,java.lang.Object):java.lang.Object
+- a:edgeOrder():com.intellij.util.graph.ElementOrder
+- a:edges():java.util.Set
+- a:edgesConnecting(com.intellij.util.graph.EndpointPair):java.util.Set
+- a:edgesConnecting(java.lang.Object,java.lang.Object):java.util.Set
+- a:equals(java.lang.Object):Z
+- a:hasEdgeConnecting(com.intellij.util.graph.EndpointPair):Z
+- a:hasEdgeConnecting(java.lang.Object,java.lang.Object):Z
+- a:hashCode():I
+- a:inDegree(java.lang.Object):I
+- a:inEdges(java.lang.Object):java.util.Set
+- a:incidentEdges(java.lang.Object):java.util.Set
+- a:incidentNodes(java.lang.Object):com.intellij.util.graph.EndpointPair
+- a:isDirected():Z
+- a:nodeOrder():com.intellij.util.graph.ElementOrder
+- a:nodes():java.util.Set
+- a:outDegree(java.lang.Object):I
+- a:outEdges(java.lang.Object):java.util.Set
+- a:predecessors(java.lang.Object):java.util.Set
+- a:successors(java.lang.Object):java.util.Set
+com.intellij.util.graph.OutboundSemiGraph
+- a:getNodes():java.util.Collection
+- a:getOut(java.lang.Object):java.util.Iterator
+com.intellij.util.indexing.DataIndexer
+- a:map(java.lang.Object):java.util.Map
+com.intellij.util.indexing.InvertedIndex
+- a:clear():V
+- a:dispose():V
+- a:flush():V
+- getData(java.lang.Object):com.intellij.util.indexing.ValueContainer
+- a:mapInputAndPrepareUpdate(I,java.lang.Object):com.intellij.util.indexing.StorageUpdate
+- a:prepareUpdate(I,com.intellij.util.indexing.impl.InputData):com.intellij.util.indexing.StorageUpdate
+- a:withData(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
+com.intellij.util.indexing.ValueContainer$ContainerAction
+- a:perform(I,java.lang.Object):Z
+com.intellij.util.indexing.ValueContainer$IntIterator
+- a:hasNext():Z
+- a:next():I
+- a:size():I
+com.intellij.util.indexing.ValueContainer$ValueIterator
+- java.util.Iterator
+- a:getInputIdsIterator():com.intellij.util.indexing.ValueContainer$IntIterator
+- a:getValueAssociationPredicate():java.util.function.IntPredicate
+com.intellij.util.indexing.impl.IndexStorage
+- java.io.Closeable
+- java.io.Flushable
+- a:addValue(java.lang.Object,I,java.lang.Object):V
+- a:clear():V
+- a:clearCaches():V
+- a:close():V
+- a:flush():V
+- a:isDirty():Z
+- read(java.lang.Object):com.intellij.util.indexing.ValueContainer
+- a:read(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
+- a:removeAllValues(java.lang.Object,I):V
+- a:updateValue(java.lang.Object,I,java.lang.Object):V
+com.intellij.util.io.AppendablePersistentMap$ValueDataAppender
+- a:append(java.io.DataOutput):V
+com.intellij.util.io.BaseDataReader$SleepingPolicy
+- sf:BLOCKING:com.intellij.util.io.BaseDataReader$SleepingPolicy
+- sf:NON_BLOCKING:com.intellij.util.io.BaseDataReader$SleepingPolicy
+- sf:SIMPLE:com.intellij.util.io.BaseDataReader$SleepingPolicy
+- sf:sleepTimeWhenIdle:I
+- sf:sleepTimeWhenWasActive:I
+- a:getTimeToSleep(Z):I
+com.intellij.util.io.DataExternalizer
+- a:read(java.io.DataInput):java.lang.Object
+- a:save(java.io.DataOutput,java.lang.Object):V
+com.intellij.util.io.KeyDescriptor
+- com.intellij.util.containers.hash.EqualityPolicy
+- com.intellij.util.io.DataExternalizer
+- a:getHashCode(java.lang.Object):I
+- a:save(java.io.DataOutput,java.lang.Object):V
+com.intellij.util.io.storage.RecordIdIterator
+- a:hasNextId():Z
+- a:nextId():I
+- a:validId():Z
+com.intellij.util.keyFMap.KeyFMap
+- sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
+- a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z
+- a:get(com.intellij.openapi.util.Key):java.lang.Object
+- a:getKeys():com.intellij.openapi.util.Key[]
+- a:getValueIdentityHashCode():I
+- a:isEmpty():Z
+- a:minus(com.intellij.openapi.util.Key):com.intellij.util.keyFMap.KeyFMap
+- a:plus(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.util.keyFMap.KeyFMap
+- a:size():I
+com.intellij.util.xmlb.Accessor
+- a:getAnnotation(java.lang.Class):java.lang.annotation.Annotation
+- a:getGenericType():java.lang.reflect.Type
+- a:getName():java.lang.String
+- a:getValueClass():java.lang.Class
+- a:isAnnotationPresent(java.lang.Class):Z
+- a:isWritable():Z
+- a:read(java.lang.Object):java.lang.Object
+- a:readBoolean(java.lang.Object):Z
+- a:readDouble(java.lang.Object):D
+- a:readFloat(java.lang.Object):F
+- a:readInt(java.lang.Object):I
+- a:readLong(java.lang.Object):J
+- a:readUnsafe(java.lang.Object):java.lang.Object
+com.intellij.util.xmlb.Binding
+- init(java.lang.reflect.Type,com.intellij.util.xmlb.Serializer):V
+- a:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
+- a:toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement
+com.intellij.util.xmlb.SerializationFilter
+- a:accepts(com.intellij.util.xmlb.Accessor,java.lang.Object):Z
+com.intellij.util.xmlb.Serializer
+- a:getBinding(java.lang.Class,java.lang.reflect.Type):com.intellij.util.xmlb.Binding
+- getRootBinding(java.lang.Class):com.intellij.util.xmlb.Binding
+- a:getRootBinding(java.lang.Class,java.lang.reflect.Type):com.intellij.util.xmlb.Binding

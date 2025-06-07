@@ -7,7 +7,8 @@ PsiJavaFile:ReferenceLinkMarkdown09.java
       PsiWhiteSpace(' ')
       PsiReferenceLink:
         PsiDocToken:DOC_LBRACKET('[')
-        PsiDocToken:DOC_COMMENT_DATA('label for empty link')
+        PsiReferenceLabel:
+          PsiDocToken:DOC_COMMENT_DATA('label for empty link')
         PsiDocToken:DOC_RBRACKET(']')
         PsiDocToken:DOC_LBRACKET('[')
         PsiDocToken:DOC_RBRACKET(']')

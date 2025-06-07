@@ -325,6 +325,7 @@ internal object OpenLessonActivities {
     TextEditorWithPreview.openPreviewForFile(project, readme)
   }
 
+  @RequiresEdt
   fun openOnboardingFromWelcomeScreen(onboarding: Lesson, selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.ONBOARDING_PROMOTER)
     initLearnProject(null, selectedSdk) { project ->
@@ -343,6 +344,7 @@ internal object OpenLessonActivities {
     }
   }
 
+  @RequiresEdt
   fun openLearnProjectFromWelcomeScreen(selectedSdk: Sdk?) {
     StatisticBase.logLearnProjectOpenedForTheFirstTime(StatisticBase.LearnProjectOpeningWay.LEARN_IDE)
     initLearnProject(null, selectedSdk) { project ->
@@ -458,6 +460,7 @@ internal object OpenLessonActivities {
     return vf
   }
 
+  @RequiresEdt
   private fun initLearnProject(projectToClose: Project?, selectedSdk: Sdk?, postInitCallback: (learnProject: Project) -> Unit) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: throw Exception("Language for learning plugin is not defined")
     //if projectToClose is open

@@ -26,8 +26,7 @@ public final class PyForStatementNavigator {
   private PyForStatementNavigator() {
   }
 
-  @Nullable
-  public static PyForStatement getPyForStatementByIterable(final PsiElement element){
+  public static @Nullable PyForStatement getPyForStatementByIterable(final PsiElement element){
     final PyForStatement forStatement = PsiTreeUtil.getParentOfType(element, PyForStatement.class, false);
     if (forStatement == null){
       return null;
@@ -39,8 +38,7 @@ public final class PyForStatementNavigator {
     return null;
   }
 
-  @Nullable
-  public static Object getPyForStatementByBody(final PsiElement element) {
+  public static @Nullable Object getPyForStatementByBody(final PsiElement element) {
     final PyForStatement forStatement = PsiTreeUtil.getParentOfType(element, PyForStatement.class, false);
     if (forStatement == null){
       return null;

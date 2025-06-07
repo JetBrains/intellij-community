@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
 import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorBase() {
@@ -36,6 +38,12 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
+
+    override fun getTargetProperty(ktProperty: KtProperty): KtProperty {
+        // For completion property is not physical and the whole file was copied.
+        // The references in that file are resolved to the original file's members
+        return if (ktProperty.isPhysical) ktProperty else try { PsiTreeUtil.findSameElementInCopy(ktProperty, ktProperty.containingFile.originalFile) } catch (_: IllegalStateException) { ktProperty }
+    }
 
     override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? =
         if (callableDeclaration.annotationEntries.isEmpty()) {

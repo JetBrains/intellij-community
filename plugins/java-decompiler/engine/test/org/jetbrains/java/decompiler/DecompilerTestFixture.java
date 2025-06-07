@@ -33,11 +33,11 @@ public class DecompilerTestFixture {
   private TestConsoleDecompiler decompiler;
   private boolean cleanup = true;
 
-  public void setUp(Map<String, String> customOptions) throws IOException {
+  public void setUp(Map<String, Object> customOptions) throws IOException {
     setUp(customOptions, null);
   }
 
-  public void setUp(@NotNull Map<String, String> customOptions,
+  public void setUp(@NotNull Map<String, Object> customOptions,
                     @Nullable CancellationManager cancellationManager) throws IOException {
     testDataDir = Path.of("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("community/plugins/java-decompiler/engine/testData");

@@ -1,28 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.CannotUnloadPluginException;
-import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.DynamicPluginVetoer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -30,25 +25,25 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -57,12 +52,11 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
@@ -76,8 +70,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
@@ -152,51 +148,24 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
-    messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
-      @Override
-      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
-          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
-          if (session != null) {
-            session.activateSession(true);
-          }
-          else {
-            setCurrentSession(null);
-          }
-        }
-      }
-
-      @Override
-      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
-          mySessions.remove(descriptor.getProcessHandler());
-        }
-      }
-    });
-
-    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        XDebugSession[] sessions = getDebugSessions();
-        for (XDebugSession session : sessions) {
-          XDebugProcess process = session.getDebugProcess();
-          if (process.dependsOnPlugin(pluginDescriptor)) {
-            throw new CannotUnloadPluginException("Plugin is not unload-safe because of the started debug session");
-          }
-        }
-      }
-    });
-
     GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
-    EditorMouseMotionListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
-    eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
     if (ExperimentalUI.isNewUI()) {
       myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void onSessionSelected(@Nullable XDebugSessionImpl session) {
+    if (session != null) {
+      session.activateSession(true);
+    }
+    else {
+      setCurrentSession(null);
     }
   }
 
@@ -286,7 +255,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     XDebugSessionImpl session = startSession(contentToReuse, starter,
       new XDebugSessionImpl(environment, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
 
-    if (!showToolWindowOnSuspendOnly) {
+    if (!showToolWindowOnSuspendOnly && !XDebugSessionProxy.useFeProxy()) {
       session.showSessionTab();
     }
     ProcessHandler handler = session.getDebugProcess().getProcessHandler();
@@ -302,11 +271,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
-      session.activateSession(false);
       ((XDebugProcessConfiguratorStarter)processStarter).configure(session.getSessionData());
     }
 
     session.init(process, contentToReuse);
+
+    // TODO: may be this session activation is not needed?
+    if (processStarter instanceof XDebugProcessConfiguratorStarter) {
+      session.activateSession(false);
+    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       session.addSessionListener(new XDebugSessionListener() {
@@ -329,18 +302,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   void removeSession(final @NotNull XDebugSessionImpl session) {
-    XDebugSessionTab sessionTab = session.getSessionTab();
-    mySessions.remove(session.getDebugProcess().getProcessHandler());
-    if (sessionTab != null &&
-        !myProject.isDisposed() &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
-        XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
-      RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
-                                                              sessionTab.getRunContentDescriptor());
-    }
+    removeSessionNoNotify(session);
     if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged(session, null);
     }
+  }
+
+  @ApiStatus.Internal
+  public void removeSessionNoNotify(@NotNull XDebugSessionImpl session) {
+    mySessions.remove(session.getDebugProcess().getProcessHandler());
   }
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
@@ -365,17 +335,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   @Override
   public @Nullable XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
     synchronized (mySessions) {
-      for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
-        XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
-        if (sessionTab != null) {
-          RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
-          if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
-            return debuggerSession;
-          }
-        }
-      }
+      return ContainerUtil.find(mySessions.values(), session -> session.getConsoleView() == executionConsole);
     }
-    return null;
   }
 
   @Override
@@ -402,10 +363,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
       if (session != null) {
-        XDebugSessionTab tab = session.getSessionTab();
-        if (tab != null) {
-          tab.select();
-        }
         myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
       }
       else {
@@ -442,80 +399,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
-  }
-
-  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener {
-    private XSourcePositionImpl myLastPosition = null;
-    private Icon myLastIcon = null;
-
-    private final XDebuggerLineChangeHandler lineChangeHandler;
-
-    BreakpointPromoterEditorListener(CoroutineScope coroutineScope) {
-      lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, icon) -> {
-        myLastIcon = icon;
-        if (myLastIcon != null) {
-          updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
-        }
-        return Unit.INSTANCE;
-      });
-    }
-
-    @Override
-    public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!ExperimentalUI.isNewUI() || !ShowBreakpointsOverLineNumbersAction.isSelected()) return;
-      Editor editor = e.getEditor();
-      if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
-      EditorGutter editorGutter = editor.getGutter();
-      if (editorGutter instanceof EditorGutterComponentEx gutter) {
-        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
-          int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
-          Document document = editor.getDocument();
-          if (DocumentUtil.isValidLine(line, document)) {
-            XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
-            if (position != null) {
-              if (myLastPosition == null || !myLastPosition.getFile().equals(position.getFile()) || myLastPosition.getLine() != line) {
-                // drop an icon first and schedule the available types calculation
-                clear(gutter);
-                myLastPosition = position;
-                lineChangeHandler.lineChanged(editor, position);
-              }
-              return;
-            }
-          }
-        }
-        if (myLastIcon != null) {
-          clear(gutter);
-          myLastPosition = null;
-          lineChangeHandler.exitedGutter();
-        }
-      }
-    }
-
-    private void clear(EditorGutterComponentEx gutter) {
-      updateActiveLineNumberIcon(gutter, null, null);
-      myLastIcon = null;
-    }
-
-    private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
-      if (gutter.getClientProperty("editor.gutter.context.menu") != null) return;
-      boolean requireRepaint = false;
-      if (gutter.getClientProperty("line.number.hover.icon") != icon) {
-        gutter.putClientProperty("line.number.hover.icon", icon);
-        gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
-                                                                                     : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
-        if (icon != null) {
-          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Editor updates cursor on MouseMoved, set it explicitly
-        }
-        requireRepaint = true;
-      }
-      if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {
-        gutter.putClientProperty("active.line.number", line);
-        requireRepaint = true;
-      }
-      if (requireRepaint) {
-        gutter.repaint();
-      }
-    }
   }
 
   private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
@@ -590,11 +473,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
           XSourcePositionImpl position = XSourcePositionImpl.create(e.getEditor().getVirtualFile(), lineNumber);
           if (position != null) {
             e.consume();
-            AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR);
+            ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+            AnAction action = actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR);
             if (action == null) throw new AssertionError("'" + IdeActions.ACTION_RUN_TO_CURSOR + "' action not found");
             DataContext dataContext = DataManager.getInstance().getDataContext(e.getMouseEvent().getComponent());
             AnActionEvent event = AnActionEvent.createFromAnAction(action, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER, dataContext);
-            ActionUtil.performDumbAwareWithCallbacks(action, event, () -> session.runToPosition(position, false));
+            actionManager.performWithActionCallbacks(action, event, () -> session.runToPosition(position, false));
           }
         }
       }
@@ -609,6 +493,25 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
     int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
     return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
+  }
+
+  static class XDebuggerPluginVetoer implements DynamicPluginVetoer {
+    @Override
+    public @Nls @Nullable String vetoPluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        XDebuggerManager manager = project.getServiceIfCreated(XDebuggerManager.class);
+        if (manager == null) continue;
+
+        XDebugSession[] sessions = manager.getDebugSessions();
+        for (XDebugSession session : sessions) {
+          XDebugProcess process = session.getDebugProcess();
+          if (process.dependsOnPlugin(pluginDescriptor)) {
+            return XDebuggerBundle.message("plugin.is.not.unload.safe.because.of.the.started.debug.session");
+          }
+        }
+      }
+      return null;
+    }
   }
 
   @ApiStatus.Internal

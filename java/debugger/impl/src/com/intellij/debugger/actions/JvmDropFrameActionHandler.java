@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
@@ -46,11 +49,23 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   public JvmDropFrameActionHandler(@NotNull DebuggerSession process) { myDebugSession = process; }
 
   @Override
-  public boolean canDrop(@NotNull XStackFrame frame) {
+  public ThreeState canDropFrame(@NotNull XStackFrame frame) {
     if (frame instanceof JavaStackFrame javaStackFrame) {
-        return javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames() && javaStackFrame.getDescriptor().canDrop();
+      if (javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) {
+        return javaStackFrame.getDescriptor().canDrop();
+      }
     }
-    return false;
+    return ThreeState.NO;
+  }
+
+  @Override
+  public CompletableFuture<Boolean> canDropFrameAsync(@NotNull XStackFrame frame) {
+    if (frame instanceof JavaStackFrame javaStackFrame) {
+      if (javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames()) {
+        return javaStackFrame.getDescriptor().canDropAsync();
+      }
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override
@@ -71,7 +86,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                                     }
 
                                     @Override
-                                    public void errorOccurred(@NotNull final String errorMessage) {
+                                    public void errorOccurred(final @NotNull String errorMessage) {
                                       showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
                                                 XDebuggerBundle.message("xdebugger.reset.frame.title"));
                                     }
@@ -136,9 +151,8 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                 return false;
               }
 
-              @NotNull
               @Override
-              public String getDoNotShowMessage() {
+              public @NotNull String getDoNotShowMessage() {
                 return UIBundle.message("dialog.options.do.not.show");
               }
             })
@@ -161,7 +175,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   }
 
   private static void popFrame(DebugProcessImpl debugProcess, DebuggerContextImpl debuggerContext, JavaStackFrame stackFrame) {
-    debugProcess.getManagerThread()
+    Objects.requireNonNull(debuggerContext.getManagerThread())
       .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
   }
 

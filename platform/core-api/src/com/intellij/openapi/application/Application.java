@@ -10,11 +10,10 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
+import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
@@ -160,7 +159,7 @@ public interface Application extends ComponentManager {
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @RequiresBlockingContext
   void runWriteAction(@NotNull Runnable action);
@@ -174,7 +173,7 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @RequiresBlockingContext
@@ -190,7 +189,7 @@ public interface Application extends ComponentManager {
    * @param computation the computation to run
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
-   * @see CoroutinesKt#writeAction
+   * @see CoroutinesKt#edtWriteAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @RequiresBlockingContext
@@ -225,13 +224,17 @@ public interface Application extends ComponentManager {
    * <h3>Obsolescence notice</h3>
    * <p>
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
-   * Annotate the function with {@link RequiresReadLock} (in Java),
-   * or use {@link ThreadingAssertions#assertReadAccess()},
-   * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * The equivalent {@link ThreadingAssertions#softAssertReadAccess} should be used when migrating existing code.
+   * <br>
+   * However, in new code it's better to use {@link RequiresReadLock @RequiresReadLock} (in Java) or 
+   * {@link ThreadingAssertions#assertReadAccess()},
+   * which throw an exception instead of just logging an error if the assertion is violated.
+   * In existing code it also makes sense to migrate to one of these variants after fixing all reports of the assertion violation from that
+   * place.
    * </p>
    * <hr>
    *
-   * Asserts that read access is allowed.
+   * Asserts that read access is allowed. If it isn't, <strong>logs an error but continues execution</strong>.
    */
   @ApiStatus.Obsolete
   void assertReadAccessAllowed();
@@ -328,6 +331,12 @@ public interface Application extends ComponentManager {
    * 5 minutes ago, see {@link com.intellij.openapi.components.Storage#useSaveThreshold() useSaveThreshold} for details.
    */
   void saveSettings();
+
+  /**
+   * @return true if this thread is inside read action.
+   * @see #runReadAction(Runnable)
+   */
+  boolean holdsReadLock();
 
   /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
@@ -677,13 +686,27 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext() {
-    return EmptyCoroutineContext.INSTANCE;
+  default Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
+    return new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default boolean hasLockStateInContext(CoroutineContext context) {
+  default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
+  }
+
+  /**
+   * TODO: IJPL-177760 We need to revoke read access from a runnable properly
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default boolean isTopmostReadAccessAllowed() {
+    return isReadAccessAllowed();
+  }
+
+  @ApiStatus.Internal
+  default @NonNls @Nullable String isLockingProhibited() {
+    return null;
   }
 }

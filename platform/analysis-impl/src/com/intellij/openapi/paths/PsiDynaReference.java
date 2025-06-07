@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -6,7 +6,6 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
@@ -16,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -37,10 +37,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public @NotNull List<PsiReference> getReferences() {
+  public @Unmodifiable @NotNull List<PsiReference> getReferences() {
     return ContainerUtil.concat(myReferences,
-                                it -> it instanceof PsiReferencesWrapper ?
-                                      ((PsiReferencesWrapper)it).getReferences() :
+                                it -> it instanceof PsiReferencesWrapper wrapper ?
+                                      wrapper.getReferences() :
                                       Collections.singleton(it)
     );
   }
@@ -105,8 +105,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
     LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
-      if (reference instanceof PsiPolyVariantReference) {
-        for (ResolveResult rr : ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {
+      if (reference instanceof PsiPolyVariantReference poly) {
+        for (ResolveResult rr : poly.multiResolve(incompleteCode)) {
           if (rr.isValidResult()) {
             result.add(rr);
           }
@@ -140,7 +140,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   private static double getPriority(@NotNull PsiReference o1) {
-    if (o1 instanceof PriorityReference) return ((PriorityReference)o1).getPriority();
+    if (o1 instanceof PriorityReference priority) return priority.getPriority();
     return PsiReferenceRegistrar.DEFAULT_PRIORITY;
   }
 
@@ -149,8 +149,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public @NotNull String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
-    return reference instanceof EmptyResolveMessageProvider ?
-           ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
+    return reference instanceof EmptyResolveMessageProvider empty ?
+           empty.getUnresolvedMessagePattern() :
            AnalysisBundle.message("cannot.resolve.symbol");
   }
 
@@ -158,13 +158,14 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     final ArrayList<LocalQuickFix> list = new ArrayList<>();
     for (Object ref : myReferences) {
-      if (ref instanceof LocalQuickFixProvider) {
-        ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
+      if (ref instanceof LocalQuickFixProvider provider) {
+        ContainerUtil.addAll(list, provider.getQuickFixes());
       }
     }
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "PsiDynaReference containing " + myReferences;
@@ -173,8 +174,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @Override
   public PsiFileReference getLastFileReference() {
     for (PsiReference reference : myReferences) {
-      if (reference instanceof FileReferenceOwner) {
-        return ((FileReferenceOwner)reference).getLastFileReference();
+      if (reference instanceof FileReferenceOwner owner) {
+        return owner.getLastFileReference();
       }
     }
     return null;
@@ -183,8 +184,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public static PsiReference[] filterByOffset(PsiReference[] references, int offset) {
     return StreamEx.of(references)
       .flatMap(ref ->
-                 ref instanceof PsiDynaReference<?>
-                 ? StreamEx.of(((PsiDynaReference<?>)ref).myReferences).filter(it -> it.getRangeInElement().contains(offset))
+                 ref instanceof PsiDynaReference<?> dyna
+                 ? StreamEx.of(dyna.myReferences).filter(it -> it.getRangeInElement().contains(offset))
                  : StreamEx.of(ref)
       ).toArray(PsiReference.EMPTY_ARRAY);
   }

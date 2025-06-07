@@ -170,7 +170,7 @@ public class InvokeCompletion extends ActionOnFile {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
     int caretOffset = hostEditor.getCaretModel().getOffset();
-    boolean hasErrors = ContainerUtil.exists(infos, i -> i.getStartOffset() <= caretOffset && caretOffset <= i.getEndOffset());
+    boolean hasErrors = ContainerUtil.exists(infos, i -> i.containsInclusive(caretOffset));
     if (hasErrors) {
       env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
       return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
@@ -53,8 +53,7 @@ public class IdeaPluginPackageConverter extends PsiPackageConverter {
     }.getPsiReferences();
   }
 
-  @Nullable
-  private static GlobalSearchScope getResolveScope(DomElement genericDomValue) {
+  private static @Nullable GlobalSearchScope getResolveScope(DomElement genericDomValue) {
     final IdeaPlugin ideaPlugin = genericDomValue.getParentOfType(IdeaPlugin.class, true);
     assert ideaPlugin != null;
 

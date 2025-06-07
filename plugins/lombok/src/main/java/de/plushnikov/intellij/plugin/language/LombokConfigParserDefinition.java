@@ -23,27 +23,23 @@ public final class LombokConfigParserDefinition implements ParserDefinition {
 
   private static final IFileElementType FILE = new IFileElementType(LombokConfigLanguage.INSTANCE);
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new LombokConfigLexerAdapter();
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return LombokConfigParserTokenSets.COMMENTS;
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public PsiParser createParser(final Project project) {
+  public @NotNull PsiParser createParser(final Project project) {
     return new LombokConfigParser();
   }
 
@@ -58,8 +54,7 @@ public final class LombokConfigParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return LombokConfigTypes.Factory.createElement(node);
   }
 }

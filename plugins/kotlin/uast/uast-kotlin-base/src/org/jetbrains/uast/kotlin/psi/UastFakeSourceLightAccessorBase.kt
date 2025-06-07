@@ -32,14 +32,11 @@ internal open class UastFakeSourceLightAccessorBase<T: KtDeclaration>(
         return super.getReturnType()
     }
 
-    override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
-        // Annotations on property accessor
-        super.computeAnnotations(annotations)
+    protected fun annotationFromProperty(annotations: SmartSet<PsiAnnotation>) {
         // Annotations on property, along with use-site target
         val useSiteTarget = if (isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
         property.annotationEntries
             .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget }
             .mapTo(annotations) { it.toPsiAnnotation() }
     }
-
 }

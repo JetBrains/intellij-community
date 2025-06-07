@@ -1,0 +1,14 @@
+// "Simplify expression" "true"
+// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+
+fun test(a: Int) {
+    if (a > 5) {
+        println("a")
+    } else if (a > 7<caret>) {
+        println("b")
+    } else {
+        println("c")
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix

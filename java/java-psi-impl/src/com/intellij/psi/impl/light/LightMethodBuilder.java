@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -14,6 +14,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -25,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -403,7 +405,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return getParameterList().getParametersCount();
   }
 
-  private @NotNull List<PsiType> getParameterTypes() {
+  private @Unmodifiable @NotNull List<PsiType> getParameterTypes() {
     return ContainerUtil.map(getParameterList().getParameters(), PsiParameter::getType);
   }
 
@@ -421,4 +423,8 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     myOriginInfo = originInfo;
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    return PsiImplUtil.processDeclarationsInMethod(this, processor, state, lastParent, place);
+  }
 }

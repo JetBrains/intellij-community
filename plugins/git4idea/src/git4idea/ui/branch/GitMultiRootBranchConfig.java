@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsMultiRootBranchConfig;
@@ -11,6 +11,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +64,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
    * <p>If the remote branch is being tracked not in all repositories, or if its local tracking branches have different names
    * in different repositories, it means that there is no common tracking branches, so an empty list is returned.</p>
    */
-  public @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
+  public @Unmodifiable @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
     Collection<String> trackingBranches = null;
     for (GitRepository repository : myRepositories) {
       Collection<String> tb = getTrackingBranches(repository, remoteBranch);

@@ -32,11 +32,11 @@ class StartRenameQuickFix(target: RenameTarget) : LocalQuickFix, IntentionAction
   override fun startInWriteAction(): Boolean = false
   override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement = currentFile
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
     return targetPointer.dereference() != null
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     val target = targetPointer.dereference() ?: return
     startRename(project, editor, target)
   }

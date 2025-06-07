@@ -15,13 +15,13 @@ import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.extensions.afterDefInMethod
 import com.jetbrains.python.extensions.inParameterList
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PySubscriptionExpression
-import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.types.PyClassType
 
 class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
 
@@ -44,22 +44,19 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
       if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
-        cls.processClassLevelDeclarations { element, _ ->
-          if (element is PyTargetExpression && element.annotationValue != null) {
-            val name = element.name
-            val annotationValue = element.annotation?.value as? PySubscriptionExpression
-
-            if (name != null && annotationValue != null) {
-              val type = typeEvalContext.getType(element)
-
-              if (type is PyClassType && type.classQName == Dataclasses.DATACLASSES_INITVAR) {
-                val typeHint = annotationValue.indexExpression.let { if (it == null) "" else ": ${it.text}" }
-                postInitParameters.add(name + typeHint)
-              }
+        PyDataclassTypeProvider.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
+          val name = it.targetExpression.name
+          val typeHint = PyTypingTypeProvider.getAnnotationValue(it.targetExpression, typeEvalContext)
+          if (name != null && typeHint is PySubscriptionExpression) {
+            val indexExpression = typeHint.indexExpression
+            val parameterString = if (indexExpression != null) {
+              "${name}: ${indexExpression.text}"
             }
+            else {
+              name
+            }
+            postInitParameters.add(parameterString)
           }
-
-          true
         }
 
         addMethodToResult(result, cls, typeEvalContext,

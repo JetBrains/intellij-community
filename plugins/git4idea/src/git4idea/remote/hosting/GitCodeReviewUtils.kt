@@ -27,24 +27,20 @@ object GitCodeReviewUtils {
 
   suspend fun testRevisionsExist(repository: GitRepository, revisions: List<String>) =
     withContext(Dispatchers.IO) {
-      blockingContext {
-        val h = GitLineHandler(repository.project, repository.root, GitCommand.CAT_FILE)
-        h.setSilent(true)
-        h.addParameters("--batch-check=%(objecttype)")
-        h.endOptions()
-        h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(revisions, StandardCharsets.UTF_8))
+      val h = GitLineHandler(repository.project, repository.root, GitCommand.CAT_FILE)
+      h.setSilent(true)
+      h.addParameters("--batch-check=%(objecttype)")
+      h.endOptions()
+      h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(revisions, StandardCharsets.UTF_8))
 
-        !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
-      }
+      !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
     }
 
   suspend fun testIsAncestor(repository: GitRepository, potentialAncestorRev: String, rev: String): Boolean =
     withContext(Dispatchers.IO) {
-      blockingContext {
-        val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
-        h.setSilent(true)
-        h.addParameters("--is-ancestor", potentialAncestorRev, rev)
-        Git.getInstance().runCommand(h).success()
-      }
+      val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
+      h.setSilent(true)
+      h.addParameters("--is-ancestor", potentialAncestorRev, rev)
+      Git.getInstance().runCommand(h).success()
     }
 }

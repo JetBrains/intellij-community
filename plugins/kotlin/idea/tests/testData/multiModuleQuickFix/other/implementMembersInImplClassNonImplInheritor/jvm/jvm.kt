@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 abstract actual class Bar {
     abstract actual fun foo()

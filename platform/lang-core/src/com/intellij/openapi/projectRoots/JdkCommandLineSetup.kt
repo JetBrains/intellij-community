@@ -82,10 +82,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
    *   * false: [uploadPathString] points to a directory, the volume should be created for the path.
    *   * null: Determine whether [uploadPathString] is a file or a directory. If [uploadPathString] does not exist, it is treated as file.
    */
-  private fun requestUploadIntoTarget(volumeDescriptor: VolumeDescriptor,
-                                      uploadPathString: String,
-                                      uploadPathIsFile: Boolean? = null,
-                                      afterUploadResolved: (String) -> Unit = {}): TargetValue<String> {
+  private fun requestUploadIntoTarget(
+    volumeDescriptor: VolumeDescriptor,
+    uploadPathString: String,
+    uploadPathIsFile: Boolean? = null,
+    afterUploadResolved: (String) -> Unit = {},
+  ): TargetValue<String> {
 
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
     val isDir = uploadPathIsFile?.not() ?: uploadPath.isDirectory()
@@ -120,9 +122,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   @Suppress("SameParameterValue")
-  private fun requestDownloadFromTarget(downloadPathString: String,
-                                        downloadPathIsFile: Boolean? = null,
-                                        afterDownloadResolved: (String) -> Unit = {}): TargetValue<String> {
+  private fun requestDownloadFromTarget(
+    downloadPathString: String,
+    downloadPathIsFile: Boolean? = null,
+    afterDownloadResolved: (String) -> Unit = {},
+  ): TargetValue<String> {
     val downloadPath = Paths.get(FileUtil.toSystemDependentName(downloadPathString))
     val isDir = downloadPathIsFile?.not() ?: downloadPath.isDirectory()
     val localRootPath =
@@ -160,6 +164,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
    * @param localPort the local port that is listening for the incoming connections
    * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
    */
+  @Deprecated("Use `TargetEnvironment.getLocalPortBindings` after constructing `TargetEnvironment` instead")
   fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
     val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
     request.localPortBindings.add(binding)
@@ -186,8 +191,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
   }
 
-  private fun provideEnvironment(environment: TargetEnvironment,
-                                 targetProgressIndicator: TargetProgressIndicator) {
+  private fun provideEnvironment(
+    environment: TargetEnvironment,
+    targetProgressIndicator: TargetProgressIndicator,
+  ) {
     environmentPromise.setResult(environment to targetProgressIndicator)
     if (environment is TargetEnvironment.BatchUploader) {
       environment.runBatchUpload(uploads = ContainerUtil.map(uploads) {
@@ -329,9 +336,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   @Throws(CantRunException::class)
-  private fun setArgFileParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
-                               dynamicVMOptions: Boolean, dynamicParameters: Boolean,
-                               cs: Charset) {
+  private fun setArgFileParams(
+    javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+    dynamicVMOptions: Boolean, dynamicParameters: Boolean,
+    cs: Charset,
+  ) {
 
     try {
       val argFile = ArgFile(dynamicVMOptions, cs, platform)
@@ -380,10 +389,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   @Throws(CantRunException::class)
-  private fun setClasspathJarParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
-                                    commandLineWrapper: Class<*>,
-                                    dynamicVMOptions: Boolean,
-                                    dynamicParameters: Boolean) {
+  private fun setClasspathJarParams(
+    javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+    commandLineWrapper: Class<*>,
+    dynamicVMOptions: Boolean,
+    dynamicParameters: Boolean,
+  ) {
 
     try {
       val jarFile = ClasspathJar(this, vmParameters.hasParameter(JdkUtil.PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL))
@@ -440,11 +451,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   @Throws(CantRunException::class)
-  private fun setCommandLineWrapperParams(javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
-                                          commandLineWrapper: Class<*>,
-                                          dynamicVMOptions: Boolean,
-                                          dynamicParameters: Boolean,
-                                          cs: Charset) {
+  private fun setCommandLineWrapperParams(
+    javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
+    commandLineWrapper: Class<*>,
+    dynamicVMOptions: Boolean,
+    dynamicParameters: Boolean,
+    cs: Charset,
+  ) {
     try {
       val pseudoUniquePrefix = Random().nextInt(Int.MAX_VALUE)
 
@@ -745,9 +758,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
   }
 
-  private class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
-                                                                private val charset: Charset,
-                                                                private val platform: Platform) {
+  private class ArgFile @Throws(IOException::class) constructor(
+    private val dynamicVMOptions: Boolean,
+    private val charset: Charset,
+    private val platform: Platform,
+  ) {
 
     val file = FileUtil.createTempFile("idea_arg_file" + Random().nextInt(Int.MAX_VALUE), null)
 
@@ -805,8 +820,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
   }
 
-  internal class ClasspathJar @Throws(IOException::class) constructor(private val setup: JdkCommandLineSetup,
-                                                                      private val notEscapeClassPathUrl: Boolean) {
+  internal class ClasspathJar @Throws(IOException::class) constructor(
+    private val setup: JdkCommandLineSetup,
+    private val notEscapeClassPathUrl: Boolean,
+  ) {
 
     private val manifest = Manifest()
     private val manifestText = StringBuilder()

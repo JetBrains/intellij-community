@@ -14,7 +14,6 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.util.GraphOptionsUtil.optionKindNames
 import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.FilterKind
-import org.jetbrains.annotations.ApiStatus
 
 internal object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("vcs.log.performance", 6)

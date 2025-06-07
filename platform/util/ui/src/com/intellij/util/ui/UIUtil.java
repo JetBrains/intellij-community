@@ -28,6 +28,7 @@ import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
+import sun.swing.SwingUtilities2;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -38,6 +39,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
@@ -69,7 +71,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -208,16 +209,6 @@ public final class UIUtil {
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
-  /**
-   * Prevent component DataContext from returning parent editor
-   * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   * <p>
-   * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
-   *
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#EXPLICIT_NULL} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
   public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
@@ -311,17 +302,6 @@ public final class UIUtil {
   @Deprecated
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
     return component instanceof Component && ClientProperty.isTrue((Component)component, key);
-  }
-
-  /**
-   * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
-   * @return the property value from the specified component or {@code null}
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
   /**
@@ -424,6 +404,20 @@ public final class UIUtil {
     FontRenderContext frc = g.getFontRenderContext();
     Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static int computeStringWidth(@NotNull JComponent c, @Nullable String string) {
+    Font font = c.getFont();
+    if (font == null) font = getLabelFont();
+    return computeStringWidth(c, c.getFontMetrics(font), string);
+  }
+
+  /**
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   */
+  public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
+    return SwingUtilities2.stringWidth(c, fontMetrics, string);
   }
 
   public static void drawLabelDottedRectangle(final @NotNull JLabel label, final @NotNull Graphics g) {
@@ -560,12 +554,12 @@ public final class UIUtil {
 
   /**
    * Computes the minimum size the component must have to keep the given number of characters
-   *
+   * <p>
    * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
    *
-   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
-   * @param text              the currently set text
-   * @param fontMetrics       the current font metrics
+   * @param preferredSize the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text          the currently set text
+   * @param fontMetrics   the current font metrics
    * @return the minimum size the component has to have to keep the given number of characters
    */
   public static int computeTextComponentMinimumSize(
@@ -579,18 +573,19 @@ public final class UIUtil {
   /**
    * Computes the minimum size the component must have to keep the given number of characters
    * <p>
-   *   Intended to be used for simple {@code JLabel}-like text components.
-   *   Often they provide the preferred size, but not the minimum size.
-   *   This function can be used to roughly compute the minimum size based on the preferred one.
-   *   The returned size will be reduced by the difference between the full text width and
-   *   the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
-   *   that's usually added by such components when the text doesn't fit.
+   * Intended to be used for simple {@code JLabel}-like text components.
+   * Often they provide the preferred size, but not the minimum size.
+   * This function can be used to roughly compute the minimum size based on the preferred one.
+   * The returned size will be reduced by the difference between the full text width and
+   * the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
+   * that's usually added by such components when the text doesn't fit.
    * </p>
    * <p>
-   *   Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
-   *   Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
-   *   it's hard to make strict guarantees here.
+   * Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
+   * Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
+   * it's hard to make strict guarantees here.
    * </p>
+   *
    * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
    * @param text              the currently set text
    * @param fontMetrics       the current font metrics
@@ -787,15 +782,15 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getToolTipBackground() {
-    return JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
+    return JBUI.CurrentTheme.Tooltip.background();
   }
 
   public static @NotNull Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.Actions.background", new JBColor(Gray.xEB, new Color(0x43474a)));
+    return JBUI.CurrentTheme.Tooltip.Actions.background();
   }
 
   public static @NotNull Color getToolTipForeground() {
-    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
+    return JBUI.CurrentTheme.Tooltip.foreground();
   }
 
   public static Color getComboBoxDisabledForeground() {
@@ -859,7 +854,7 @@ public final class UIUtil {
   }
 
   public static Font getToolTipFont() {
-    return UIManager.getFont("ToolTip.font");
+    return JBUI.CurrentTheme.Tooltip.font();
   }
 
   public static void setSliderIsFilled(final @NotNull JSlider slider, final boolean value) {
@@ -876,15 +871,6 @@ public final class UIUtil {
 
   public static Font getOptionPaneMessageFont() {
     return UIManager.getFont("OptionPane.messageFont");
-  }
-
-  /**
-   * @deprecated Use {@link FontUtil#getMenuFont()}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public static Font getMenuFont() {
-    return FontUtil.getMenuFont();
   }
 
   /**
@@ -994,14 +980,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Aqua Look-n-Feel is not supported anymore
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
-  }
-
-  /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated(forRemoval = true)
@@ -1040,11 +1018,6 @@ public final class UIUtil {
 
   public static boolean isUnderIntelliJLaF() {
     return StartupUiUtil.isUnderIntelliJLaF();
-  }
-
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
@@ -2606,7 +2579,7 @@ public final class UIUtil {
       if (!builder.isEmpty()) {
         builder.append(' ');
       }
-      builder.append(StringUtil.removeHtmlTags(candidate).trim());
+      builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
@@ -3149,7 +3122,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getTooltipSeparatorColor() {
-    return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+    return JBUI.CurrentTheme.Tooltip.separatorColor();
   }
 
   /**
@@ -3368,6 +3341,16 @@ public final class UIUtil {
     String s = Integer.toHexString(i);
     if (s.length() < 2) s = "0" + s;
     return s;
+  }
+
+  @ApiStatus.Experimental
+  public static boolean equalColors(@Nullable Color color1, @Nullable Color color2) {
+    return ComparableColor.equalColors(color1, color2);
+  }
+
+  @ApiStatus.Experimental
+  public static int colorHashCode(@Nullable Color color) {
+    return ComparableColor.colorHashCode(color);
   }
 
   public static boolean isXServerOnWindows() {

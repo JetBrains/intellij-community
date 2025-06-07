@@ -1,13 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -25,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
+public final class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
   private final ModuleGrouper myModuleGrouper;
   private final ModulesConfigurator myConfigurator;
@@ -82,8 +79,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
   @Override
-  @NotNull
-  public Module getEditableObject() {
+  public @NotNull Module getEditableObject() {
     return myModule;
   }
 
@@ -102,19 +98,15 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
-  @NotNull
-  public Module getModule() {
+  public @NotNull Module getModule() {
     return myModule;
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     ModuleEditor editor = getModuleEditor();
     return editor == null ? null : editor.getHelpTopic();
   }
-
 
   @Override
   public JComponent createOptionsPanel() {

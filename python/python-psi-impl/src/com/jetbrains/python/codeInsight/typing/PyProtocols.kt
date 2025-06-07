@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.resolveImplicitlyInvokedMethods
+import com.jetbrains.python.psi.impl.resolveImplicitlyInvokedMethods
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -51,7 +51,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         val name = e.name ?: return@visitMembers true
         when (name) {
           PyNames.CLASS_GETITEM -> return@visitMembers true
-          PyNames.CALL -> result.add(Pair(e, resolveImplicitlyInvokedMethods(subclass, null, resolveContext)))
+          PyNames.CALL -> result.add(Pair(e, subclass.resolveImplicitlyInvokedMethods(null, resolveContext)))
           else -> result.add(Pair(e, subclass.resolveMember(name, null, AccessDirection.READ, resolveContext)))
         }
       }

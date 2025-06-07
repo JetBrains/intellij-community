@@ -45,8 +45,7 @@ import java.util.*;
 public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.rename.unresolved.reference");
   }
 
@@ -91,8 +90,8 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   }
 
 
-  private static List<PyReferenceExpression> collectExpressionsToRename(@NotNull final PyReferenceExpression expression,
-                                                                        @NotNull final ScopeOwner parentScope) {
+  private static List<PyReferenceExpression> collectExpressionsToRename(final @NotNull PyReferenceExpression expression,
+                                                                        final @NotNull ScopeOwner parentScope) {
 
     final List<PyReferenceExpression> result = new ArrayList<>();
     PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
@@ -109,7 +108,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
     return result;
   }
 
-  private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {
+  private static LookupElement[] collectLookupItems(final @NotNull ScopeOwner parentScope) {
     Set<LookupElement> items = new LinkedHashSet<>();
 
     final Collection<String> usedNames = PyUtil.collectUsedNames(parentScope);

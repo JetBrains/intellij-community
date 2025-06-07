@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.slicer
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.slicer.SliceLanguageSupportProvider
 import com.intellij.slicer.SliceRootNode
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 

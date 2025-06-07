@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
+import com.intellij.cce.core.Session
 import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
-import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.FullLineLogsStorage
+import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
@@ -26,21 +26,23 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   /**
    * @return initialized environment which will be used during evaluation
    */
-  fun prepareEnvironment(config: Config): EvaluationEnvironment
+  fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment
 
   /**
    * how to render the results of evaluation
    */
   fun getFileReportGenerator(filterName: String,
                              comparisonFilterName: String,
-                             featuresStorages: List<FeaturesStorage>,
-                             fullLineStorages: List<FullLineLogsStorage>,
+                             inputWorkspaces: List<EvaluationWorkspace>,
                              dirs: GeneratorDirectories): FileReportGenerator
 
   /**
    * which metrics to calculate and show in reports
    */
-  fun getMetrics(): List<Metric>
+  fun getMetrics(sessions: List<Session>): List<Metric> = getMetrics()
+
+  fun getMetrics(): List<Metric> = emptyList()
+
 
   /**
    * additional steps to set up evaluation

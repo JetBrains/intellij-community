@@ -22,7 +22,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
   }
 
   @Override
-  public final void hash(@NotNull final PsiElement root, @NotNull final NodeSpecificHasher hasher) {
+  public final void hash(final @NotNull PsiElement root, final @NotNull NodeSpecificHasher hasher) {
     hash(root, null, hasher);
   }
 
@@ -32,7 +32,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
    * Computes element hash using children hashes.
    * Creates only single PsiFragment.
    */
-  protected TreeHashResult computeElementHash(@NotNull final PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
+  protected TreeHashResult computeElementHash(final @NotNull PsiElement root, final PsiFragment upper, final NodeSpecificHasher hasher) {
     if (myForIndexing) {
       return TreeHashingUtils.computeElementHashForIndexing(this, myCallBack, root, upper, hasher);
     }

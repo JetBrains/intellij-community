@@ -69,16 +69,16 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private final FocusWatcher myFocusWatcher;
   private final CommanderHistory myHistory;
   private boolean myAutoScrollMode;
-  @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
-  @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
-  @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
-  @NonNls private static final String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
-  @NonNls private static final String ELEMENT_OPTION = "OPTION";
-  @NonNls private static final String ATTRIBUTE_PROPORTION = "proportion";
-  @NonNls private static final String ELEMENT_SPLITTER = "splitter";
-  @NonNls private static final String ELEMENT_RIGHTPANEL = "rightPanel";
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ACTION_BACKCOMMAND = "backCommand";
+  private static final @NonNls String ACTION_FORWARDCOMMAND = "forwardCommand";
+  private static final @NonNls String ELEMENT_LEFTPANEL = "leftPanel";
+  private static final @NonNls String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
+  private static final @NonNls String ELEMENT_OPTION = "OPTION";
+  private static final @NonNls String ATTRIBUTE_PROPORTION = "proportion";
+  private static final @NonNls String ELEMENT_SPLITTER = "splitter";
+  private static final @NonNls String ELEMENT_RIGHTPANEL = "rightPanel";
+  private static final @NonNls String ATTRIBUTE_URL = "url";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
 
 
   public Commander(Project project) {
@@ -555,8 +555,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private static class CommanderPluginPanel extends CommanderPanel {
-    @NotNull
-    private final CopyPasteDelegator myCopyPasteDelegator;
+    private final @NotNull CopyPasteDelegator myCopyPasteDelegator;
 
     CommanderPluginPanel(Project project, boolean enablePopupMenu, boolean enableSearchHighlighting) {
       super(project, enableSearchHighlighting);

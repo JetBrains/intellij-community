@@ -27,6 +27,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,7 +107,7 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers);
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers, null);
       return true;
     }
 
@@ -269,7 +270,8 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return o instanceof OptionDescription;
   }
 
-  private static @Nls String getSettingText(OptionDescription value) {
+  @ApiStatus.Internal
+  public static @Nls String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {
       hit = value.getOption();
@@ -291,7 +293,10 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
       Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       Consumer<? super String> setter = str -> {
         SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
-        if (manager.isShown()) manager.getCurrentlyShownUI().getSearchField().setText(str);
+        if (manager.isShown()) {
+          SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+          if (popupInstance != null) popupInstance.setSearchText(str);
+        }
       };
       return new TopHitSEContributor(project, contextComponent, setter);
     }

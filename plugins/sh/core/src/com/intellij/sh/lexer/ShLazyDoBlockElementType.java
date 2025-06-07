@@ -18,15 +18,13 @@ public class ShLazyDoBlockElementType extends IReparseableElementType implements
     super(debugName, ShLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return createNode(null);
   }
 
-  @NotNull
   @Override
-  public ASTNode createNode(CharSequence text) {
+  public @NotNull ASTNode createNode(CharSequence text) {
     return new ShDoBlockImpl(this, text);
   }
 

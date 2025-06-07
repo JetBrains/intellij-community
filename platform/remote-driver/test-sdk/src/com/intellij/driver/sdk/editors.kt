@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
 import java.awt.Point
 import java.awt.Rectangle
@@ -19,11 +20,13 @@ interface Editor {
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
   fun visualPositionToXY(visualPosition: VisualPosition): Point
+  fun offsetToXY(offset: Int): Point
   fun getInlayModel(): InlayModel
   fun getColorsScheme(): EditorColorsScheme
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
   fun getSelectionModel(): SelectionModel
   fun getSoftWrapModel(): SoftWrapModel
+  fun visualLineToY(visualLine: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
@@ -92,8 +95,8 @@ interface LogicalPosition {
   fun getColumn(): Int
 }
 
-fun Driver.logicalPosition(line: Int, column: Int): LogicalPosition {
-  return new(LogicalPosition::class, line, column)
+fun Driver.logicalPosition(line: Int, column: Int, rdTarget: RdTarget = RdTarget.DEFAULT): LogicalPosition {
+  return new(LogicalPosition::class, line, column, rdTarget = rdTarget)
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")
@@ -113,6 +116,8 @@ interface EditorColorsScheme {
 @Remote("com.intellij.openapi.editor.SelectionModel")
 interface SelectionModel {
   fun setSelection(startOffset: Int, endOffset: Int)
+  fun getSelectedText(): String?
+  fun removeSelection()
 }
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
@@ -121,30 +126,32 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = withContext {
-  val openedFile = if (!isRemoteIdeMode) {
-    val fileToOpen = findFile(relativePath = relativePath, project = project)
-    if (fileToOpen == null) {
-      throw IllegalArgumentException("Fail to find file $relativePath")
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
+  withContext {
+    val openedFile = if (!isRemDevMode) {
+      val fileToOpen = findFile(relativePath = relativePath, project = project)
+      if (fileToOpen == null) {
+        throw IllegalArgumentException("Fail to find file $relativePath")
+      }
+      openEditor(fileToOpen, project)
+      fileToOpen
     }
-    openEditor(fileToOpen, project)
-    fileToOpen
-  }
-  else {
-    val service = service(GuestNavigationService::class, project)
-    withContext(OnDispatcher.EDT) {
-      service.navigateViaBackend(relativePath, 0)
-      waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
-              getter = {
-                service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-              },
-              checker = { virtualFile ->
-                virtualFile != null &&
-                virtualFile.getPath().contains(relativePath)
-              })!!
+    else {
+      val service = service(GuestNavigationService::class, project)
+      withContext(OnDispatcher.EDT) {
+        service.navigateViaBackend(relativePath, 0)
+        waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
+                getter = {
+                  service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                },
+                checker = { virtualFile ->
+                  virtualFile != null &&
+                  virtualFile.getPath().contains(relativePath)
+                })!!
+      }
     }
-  }
-  if (waitForCodeAnalysis) {
-    waitForCodeAnalysis(project, openedFile)
+    if (waitForCodeAnalysis) {
+      waitForCodeAnalysis(project, openedFile)
+    }
   }
 }

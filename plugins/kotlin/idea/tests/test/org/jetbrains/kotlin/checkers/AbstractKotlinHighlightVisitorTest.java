@@ -43,7 +43,10 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
 
     public void doTest(@NotNull String filePath) throws Exception {
         PsiFile file = myFixture.configureByFile(fileName());
-        ScriptConfigurationManager.getInstance(getProject()).getConfiguration((KtFile) file); // if it's a script, enable its highlighting (see KotlinProblemHighlightFilter)
+        ScriptConfigurationManager manager = ScriptConfigurationManager.getInstanceSafe(getProject());
+        if (manager != null) {
+            manager.getConfiguration((KtFile) file); // if it's a script, enable its highlighting (see KotlinProblemHighlightFilter)
+        }
         checkHighlighting(true, false, false, false);
         checkResolveToDescriptor();
     }

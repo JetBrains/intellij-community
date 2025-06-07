@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -37,8 +37,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
   /**
    * Returns function that increases or decreases level by 1
    */
-  @NotNull
-  protected abstract Function<Integer, Integer> getLevelFunction();
+  protected abstract @NotNull Function<Integer, Integer> getLevelFunction();
 
   protected abstract boolean isEnabledForCaret(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd);
 
@@ -94,8 +93,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
     }, psiFile);
   }
 
-  @Nullable
-  protected static PsiElement findParent(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
+  protected static @Nullable PsiElement findParent(@NotNull PsiFile psiFile, int selectionStart, int selectionEnd) {
     final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, selectionStart, selectionEnd);
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
@@ -139,15 +137,13 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
     return Math.min(Math.max(level, 0), 6);
   }
 
-  @NotNull
-  public MarkdownPsiElement createHeaderForText(@NotNull PsiElement textElement) {
+  public @NotNull MarkdownPsiElement createHeaderForText(@NotNull PsiElement textElement) {
     int level = sanitizeHeaderLevel(getLevelFunction().fun(0));
 
     return MarkdownPsiElementFactory.createHeader(textElement.getProject(), textElement.getText(), level);
   }
 
-  @NotNull
-  public MarkdownPsiElement createNewLevelHeader(@NotNull MarkdownHeader header) {
+  public @NotNull MarkdownPsiElement createNewLevelHeader(@NotNull MarkdownHeader header) {
     int level = sanitizeHeaderLevel(getLevelFunction().fun(Objects.requireNonNull(header).getLevel()));
 
     MarkdownPsiElement newElement;

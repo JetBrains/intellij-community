@@ -25,7 +25,7 @@ class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     assertEquals(1, projectsTree.projects.size)
-    val errors = projectsTree.projects.first().problems.filter { !it.isRecoverable }
+    val errors = projectsTree.projects.first().problems.filter { it.isError }
     assertEmpty(errors)
   }
 }

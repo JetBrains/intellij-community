@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -71,8 +71,7 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   }
 
   @Override
-  @Nullable
-  protected VirtualFile getBaseDir() {
+  protected @Nullable VirtualFile getBaseDir() {
     if (isConvertingToModuleLibrary()) {
       final VirtualFile[] roots = myPanel.getRootModel().getContentRoots();
       if (roots.length > 0) {

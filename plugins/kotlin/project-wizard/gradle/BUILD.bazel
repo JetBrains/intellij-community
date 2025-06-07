@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.project-wizard.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "gradle_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle",
+  module_name = "kotlin.project-wizard.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/project-wizard/core",
+    "//platform/observable",
+    "//plugins/kotlin/project-wizard/idea",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/gradle:gradle-common",
+    "//platform/lang-core",
+    "//plugins/gradle/java",
+    "//java/idea-ui:ui",
+    "//platform/lang-impl",
+    "//plugins/kotlin/base/plugin",
+    "//java/openapi:java",
+    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-dataformat-toml",
+    "@lib//:jackson",
+  ],
+  runtime_deps = [":gradle_resources"]
+)
+### auto-generated section `build kotlin.project-wizard.gradle` end

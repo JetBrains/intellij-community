@@ -17,7 +17,6 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -55,19 +54,19 @@ public final class HardcodedFileSeparatorsInspection extends BaseInspection {
    * be date formats. <code>Pattern</font></b> instances are immutable, so
    * caching the pattern like this is still thread-safe.
    */
-  @NonNls private static final Pattern DATE_FORMAT_PATTERN =
+  private static final @NonNls Pattern DATE_FORMAT_PATTERN =
     Pattern.compile("\\b[dDmM]+/[dDmM]+(/[yY]+)?");
   /**
    * A regular expression that matches strings which represent example MIME
    * media types.
    */
-  @NonNls private static final String EXAMPLE_MIME_MEDIA_TYPE_PATTERN =
+  private static final @NonNls String EXAMPLE_MIME_MEDIA_TYPE_PATTERN =
     "example/\\p{Alnum}+(?:[.\\-\\\\+]\\p{Alnum}+)*";
   /**
    * A regular expression pattern that matches strings which start with a URL
    * protocol, as they're likely to actually be URLs.
    */
-  @NonNls private static final Pattern URL_PATTERN =
+  private static final @NonNls Pattern URL_PATTERN =
     Pattern.compile("^[a-z][a-z0-9+\\-:]+://.*$");
 
   /**
@@ -147,14 +146,12 @@ public final class HardcodedFileSeparatorsInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "HardcodedFileSeparator";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "hardcoded.file.separator.problem.descriptor");
   }

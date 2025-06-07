@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.uiDesigner.GuiDesignerConfigurable.MyGeneralUI">
-  <grid id="4a770" binding="myPanel" layout-manager="GridLayoutManager" row-count="8" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="4a770" binding="myPanel" layout-manager="GridLayoutManager" row-count="7" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="62" y="47" width="493" height="278"/>
+      <xy x="62" y="47" width="493" height="295"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <vspacer id="d5f77">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="b77c5" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+      <grid id="b77c5" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="4" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -21,13 +21,13 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="2add1" class="javax.swing.JRadioButton" binding="myRbInstrumentSources">
+          <component id="2add1" class="javax.swing.JRadioButton" binding="myRbInstrumentSourcesOnCompilation">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
-              <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.java"/>
+              <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.java.on.compilation"/>
             </properties>
           </component>
           <component id="e8471" class="javax.swing.JRadioButton" binding="myRbInstrumentClasses">
@@ -37,6 +37,15 @@
             <properties>
               <margin top="2" left="0" bottom="2" right="2"/>
               <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.class"/>
+            </properties>
+          </component>
+          <component id="e8472" class="javax.swing.JRadioButton" binding="myRbInstrumentSourcesOnSave">
+            <constraints>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <margin top="2" left="0" bottom="2" right="2"/>
+              <text resource-bundle="messages/UIDesignerBundle" key="radio.generate.into.java.on.save"/>
             </properties>
           </component>
           <component id="2eed8" class="javax.swing.JLabel">
@@ -117,20 +126,12 @@
           <text resource-bundle="messages/UIDesignerBundle" key="ui.designer.general.settings.use.dynamic.bundles"/>
         </properties>
       </component>
-      <component id="12841" class="javax.swing.JCheckBox" binding="myChkGenerateSourceCodeOnFormSave">
-        <constraints>
-          <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <margin top="10" left="0" bottom="2" right="2"/>
-          <text resource-bundle="messages/UIDesignerBundle" key="ui.designer.general.settings.generate.source.code.on.form.save"/>
-        </properties>
-      </component>
     </children>
   </grid>
   <buttonGroups>
     <group name="buttonGroup1">
       <member id="e8471"/>
+      <member id="e8472"/>
       <member id="2add1"/>
     </group>
   </buttonGroups>

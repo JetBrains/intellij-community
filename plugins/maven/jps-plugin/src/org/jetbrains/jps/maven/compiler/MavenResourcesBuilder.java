@@ -1,18 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.StopBuildException;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -28,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
+public final class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(MavenResourcesBuilder.class);
 
   public MavenResourcesBuilder() {
@@ -36,7 +34,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
   @Override
-  public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public void build(final @NotNull MavenResourcesTarget target, final @NotNull DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, final @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) {
@@ -49,6 +47,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     if (config == null) {
       return;
     }
+
+    final List<MavenFilteredJarConfiguration> jarConfigurations = MavenFilteredJarModuleBuilder.getJarsConfig(context, target);
 
     final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<>();
 
@@ -106,9 +106,11 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         }
         File outputFile = new File(outputDir, relPath);
         String sourcePath = file.getPath();
+
         try {
           fileProcessor.copyFile(file, outputFile, rd.getConfiguration(), context, FileFilters.EVERYTHING);
           outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
+          copyToAdditionalJars(jarConfigurations, outputDir, relPath, context, outputConsumer);
         }
         catch (UnsupportedEncodingException e) {
           context.processMessage(
@@ -121,7 +123,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           LOG.info(e);
         }
 
-        if (context.getCancelStatus().isCanceled()) {
+        if (context.isCanceled()) {
           return;
         }
       }
@@ -132,9 +134,26 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     context.processMessage(new ProgressMessage(""));
   }
 
+  private void copyToAdditionalJars(List<MavenFilteredJarConfiguration> configurations,
+                                    File outputDir,
+                                    String relPath,
+                                    @NotNull CompileContext context,
+                                    @NotNull BuildOutputConsumer consumer) throws IOException {
+    if (configurations.isEmpty()) return;
+    var applicableConfigurations = ContainerUtil.filter(configurations,
+                                                        it -> FileUtil.filesEqual(outputDir, new File(it.originalOutput)));
+    for (MavenFilteredJarConfiguration config : applicableConfigurations) {
+      var filter = new MavenPatternFileFilter(config.includes, config.excludes);
+      if (filter.accept(relPath)) {
+        var from = new File(outputDir, relPath);
+        var to = new File(new File(config.jarOutput), relPath);
+        FSOperations.copy(from, to);
+      }
+    }
+  }
+
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return MavenJpsBundle.message("maven.resources.compiler");
   }
 }

@@ -94,13 +94,17 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
 /**
  * Represents an actual set of files registered in [WorkspaceFileIndexData].
  */
-internal class WorkspaceFileSetImpl(override val root: VirtualFile,
-                                    override val kind: WorkspaceFileKind,
-                                    override val entityPointer: EntityPointer<WorkspaceEntity>,
-                                    override val entityStorageKind: EntityStorageKind,
-                                    override val data: WorkspaceFileSetData,
-                                    val recursive: Boolean = true)
-  : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+internal class WorkspaceFileSetImpl(
+  override val root: VirtualFile,
+  override val kind: WorkspaceFileKind,
+  override val entityPointer: EntityPointer<WorkspaceEntity>,
+  override val entityStorageKind: EntityStorageKind,
+  override val data: WorkspaceFileSetData,
+  override val recursive: Boolean = true,
+) : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
+
   fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }
@@ -111,7 +115,7 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
     val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
-    val update = if (acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)) {
+    val update = if (accepts(acceptedKindMask, project, file)) {
       StoredFileSetKindMask.ACCEPTED_FILE_SET
     }
     else {
@@ -120,8 +124,16 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
     return currentMasks or update
   }
 
+  fun accepts(acceptedKindMask: Int, project: Project, file: VirtualFile?): Boolean {
+    return acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)
+  }
+
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return this.takeIf(condition)
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    return listOfNotNull(findFileSet(condition))
   }
 
   override fun toString(): String {
@@ -172,6 +184,19 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return first.takeIf(condition) ?: second.takeIf(condition)
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    val firstChecked = first.takeIf(condition)
+    val secondChecked = second.takeIf(condition)
+
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    return when {
+      firstChecked != null && secondChecked != null -> java.util.List.of(firstChecked, secondChecked)
+      firstChecked != null -> listOf(firstChecked)
+      secondChecked != null -> listOf(secondChecked)
+      else -> emptyList()
+    }
   }
 
   override fun toString(): String {
@@ -225,8 +250,8 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
     get() = storedFileSets as List<WorkspaceFileSetImpl>
 
   override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetImpl? {
-    return storedFileSets.find { 
-      it is WorkspaceFileSetImpl && (acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data)) 
+    return storedFileSets.find {
+      it is WorkspaceFileSetImpl && (acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data))
     } as? WorkspaceFileSetImpl
   }
 
@@ -236,12 +261,19 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
     } as? WorkspaceFileSetWithCustomData<*>
   }
 
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    @Suppress("UNCHECKED_CAST")
+    return storedFileSets.filter {
+      it is WorkspaceFileSetImpl && condition(it)
+    } as List<WorkspaceFileSetWithCustomData<*>>
+  }
+
   override fun toString(): String {
     return "MultipleStoredWorkspaceFileSets{${storedFileSets.joinToString()}}"
   }
 }
 
-internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<WorkspaceFileSetImpl>): MultipleWorkspaceFileSets {
+internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<WorkspaceFileSetImpl>) : MultipleWorkspaceFileSets {
   override fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetImpl? {
     return fileSets.find { acceptedCustomDataClass == null || acceptedCustomDataClass.isInstance(it.data) }
   }
@@ -252,6 +284,10 @@ internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<Workspa
 
   override fun toString(): String {
     return "MultipleWorkspaceFileSets{${fileSets.joinToString()}}"
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    return fileSets.filter(condition)
   }
 }
 
@@ -266,7 +302,8 @@ internal object WorkspaceFileKindMask {
   const val EXTERNAL_SOURCE = 4
   const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
   const val CUSTOM = 8
-  const val ALL = CONTENT or EXTERNAL or CUSTOM
+  const val CONTENT_NON_INDEXABLE = 16
+  const val ALL = CONTENT or EXTERNAL or CUSTOM or CONTENT_NON_INDEXABLE
 }
 
 internal sealed interface ExcludedFileSet : StoredFileSet {

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.getSmartRe
 class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
 
   override fun getType(expression: GrMethodCall): PsiType? {
-    val results = expression.multiResolve(false)
+    val results = expression.multiResolveGroovy(false)
     if (results.isEmpty()) {
       return null
     }

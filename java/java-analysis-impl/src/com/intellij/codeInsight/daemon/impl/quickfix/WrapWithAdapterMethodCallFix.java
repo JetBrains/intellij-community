@@ -1,19 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,20 +31,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.pom.java.LanguageLevel.JDK_11;
 import static com.intellij.pom.java.LanguageLevel.JDK_1_9;
+import static java.util.Objects.requireNonNull;
 
-public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  static abstract class AbstractWrapper extends ArgumentFixerActionFactory {
+public final class WrapWithAdapterMethodCallFix extends PsiUpdateModCommandAction<PsiExpression> {
+  abstract static class AbstractWrapper extends ArgumentFixerActionFactory {
     abstract boolean isApplicable(PsiElement context, PsiType inType, PsiType outType);
 
     @Override
-    public boolean areTypesConvertible(@NotNull final PsiType exprType,
-                                       @NotNull final PsiType parameterType,
-                                       @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(final @NotNull PsiType exprType,
+                                       final @NotNull PsiType parameterType,
+                                       final @NotNull PsiElement context) {
       return parameterType.isConvertibleFrom(exprType) || isApplicable(context, exprType, parameterType);
     }
 
@@ -68,12 +65,11 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       if (targetMethod == null) return null;
       var replacement = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(expression.getProject())
         .createExpressionFromText("x." + targetMethod.getName() + "()", expression);
-      Objects.requireNonNull(replacement.getMethodExpression().getQualifierExpression()).replace(expression);
+      requireNonNull(replacement.getMethodExpression().getQualifierExpression()).replace(expression);
       return replacement;
     }
 
-    @Nullable
-    private static PsiMethod findOnlyMethod(@Nullable PsiType inType, @NotNull PsiType outType) {
+    private static @Nullable PsiMethod findOnlyMethod(@Nullable PsiType inType, @NotNull PsiType outType) {
       if (!(inType instanceof PsiClassType)) return null;
       PsiClassType.ClassResolveResult result = ((PsiClassType)inType).resolveGenerics();
       PsiClass psiClass = result.getElement();
@@ -89,7 +85,10 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
           if (type instanceof PsiClassType) {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) return false;
-            type = TypeConversionUtil.getSuperClassSubstitutor(containingClass, (PsiClassType)inType).substitute(type);
+            var substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, psiClass, result.getSubstitutor());
+            if (substitutor != null) {
+              type = substitutor.substitute(type);
+            }
           }
           return outType.isAssignableFrom(type);
         })).orElse(null);
@@ -170,8 +169,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       return resultType != null && outType.isAssignableFrom(resultType);
     }
 
-    @NotNull
-    private static String getExceptionMessage(PsiType variableType, PsiClass aClass) {
+    private static @NotNull String getExceptionMessage(PsiType variableType, PsiClass aClass) {
       String message = "Cannot create expression for type " + variableType.getClass() + "\n"
                        + "Canonical text: " + variableType.getCanonicalText() + "\n"
                        + "Internal text: " + variableType.getInternalCanonicalText() + "\n";
@@ -195,15 +193,13 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       return toString();
     }
 
-    @NotNull
-    private PsiExpression createReplacement(PsiElement context, @NonNls String replacement) {
+    private @NotNull PsiExpression createReplacement(PsiElement context, @NonNls String replacement) {
       return JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(
         myTemplate.replace("{0}", replacement), context);
     }
 
-    @Nullable
     @Override
-    protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
+    protected @Nullable PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
       if (isApplicable(expression, expression.getType(), toType)) {
         return (PsiExpression)JavaCodeStyleManager.getInstance(expression.getProject())
           .shortenClassReferences(createReplacement(expression, expression.getText()));
@@ -211,6 +207,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       return null;
     }
 
+    @Override
     public String toString() {
       return myTemplate.replace("{0}", "").replaceAll("\\b[a-z.]+\\.", "");
     }
@@ -257,9 +254,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     return level.test(((PsiClassType)psiType).getLanguageLevel());
   }
 
-  @SafeFieldForPreview
   private final @Nullable PsiType myType;
-  @SafeFieldForPreview
   private final @Nullable AbstractWrapper myWrapper;
   private final @Nullable String myRole;
 
@@ -277,48 +272,30 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     myRole = role;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
-    String wrapperText = myWrapper == null ? null : myWrapper.getText((PsiExpression)getStartElement(), myType);
-    if (wrapperText == null) {
-      return getFamilyName();
-    }
-    return myRole == null ?
-           QuickFixBundle.message("wrap.with.adapter.text", wrapperText) :
-           QuickFixBundle.message("wrap.with.adapter.text.role", wrapperText, myRole);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+    if (myType == null || myWrapper == null || !myType.isValid() || getModifiedExpression(expression) == null) return null;
+    String wrapperText = myWrapper.getText(expression, myType);
+    String text = wrapperText == null ? getFamilyName() :
+                  myRole == null ?
+                  QuickFixBundle.message("wrap.with.adapter.text", wrapperText) :
+                  QuickFixBundle.message("wrap.with.adapter.text.role", wrapperText, myRole);
+    return Presentation.of(text).withPriority(PriorityAction.Priority.HIGH);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("wrap.with.adapter.call.family.name");
   }
 
-
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement) &&
-           getModifiedExpression(startElement) != null;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
+    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(expression.replace(getModifiedExpression(expression)));
   }
 
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(getModifiedExpression(startElement)));
-  }
-
-  private PsiExpression getModifiedExpression(@NotNull PsiElement expression) {
+  private PsiExpression getModifiedExpression(@NotNull PsiExpression expression) {
     assert myWrapper != null;
-    return myWrapper.getModifiedArgument((PsiExpression)expression, myType);
+    return myWrapper.getModifiedArgument(expression, myType);
   }
 
   private static class MyMethodArgumentFix extends MethodArgumentFix {
@@ -336,10 +313,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       return presentation != null ? presentation.withPriority(PriorityAction.Priority.HIGH) : null;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getText(@NotNull PsiExpressionList list) {
+    public @Nls @NotNull String getText(@NotNull PsiExpressionList list) {
       AbstractWrapper wrapper = (AbstractWrapper)myArgumentFixerActionFactory;
       String wrapperText = wrapper.getText(list.getExpressions()[myIndex], myToType);
       if (wrapperText == null) return getFamilyName();
@@ -352,10 +327,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
   public static void registerCastActions(CandidateInfo @NotNull [] candidates,
                                          @NotNull PsiCall call,
-                                         @NotNull HighlightInfo.Builder highlightInfo,
-                                         final TextRange fixRange) {
+                                         @NotNull Consumer<? super CommonIntentionAction> info) {
     for (AbstractWrapper wrapper : WRAPPERS) {
-      wrapper.registerCastActions(candidates, call, highlightInfo, fixRange);
+      wrapper.registerCastActions(candidates, call, info);
     }
   }
 }

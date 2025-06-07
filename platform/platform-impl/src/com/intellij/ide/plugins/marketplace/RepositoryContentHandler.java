@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins.marketplace;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelBuilder;
+import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
@@ -47,13 +49,18 @@ final class RepositoryContentHandler extends DefaultHandler {
   private static final @NonNls String PRODUCT_CODE = "productCode";
 
   private final StringBuilder currentValue = new StringBuilder();
-  private PluginNode currentPlugin;
-  private List<PluginNode> plugins;
+  private final PluginUiModelBuilderFactory factory;
+  private PluginUiModelBuilder builder = null;
+  private List<PluginUiModel> plugins;
   private Stack<String> categories;
   private String categoryName;
 
+  RepositoryContentHandler(PluginUiModelBuilderFactory factory) {
+    this.factory = factory;
+  }
+
   @NotNull
-  List<PluginNode> getPluginsList() {
+  List<PluginUiModel> getPluginsList() {
     return plugins == null ? Collections.emptyList() : plugins;
   }
 
@@ -73,31 +80,32 @@ final class RepositoryContentHandler extends DefaultHandler {
       }
     }
     else if (qName.equals(IDEA_PLUGIN)) {
-      currentPlugin = new PluginNode(PluginId.getId("unknown"));
-      currentPlugin.setCategory(buildCategoryName());
-      currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
-      currentPlugin.setSize(attributes.getValue(SIZE));
-      currentPlugin.setUrl(attributes.getValue(URL));
-      String dateString = attributes.getValue(PLUGIN_UPDATED_DATE) != null ? attributes.getValue(PLUGIN_UPDATED_DATE) : attributes.getValue(DATE);
+      builder = factory.createBuilder(PluginId.getId("unknown"))
+        .setCategory(buildCategoryName())
+        .setDownloads(attributes.getValue(DOWNLOADS))
+        .setSize(attributes.getValue(SIZE))
+        .setUrl(attributes.getValue(URL));
+      String dateString =
+        attributes.getValue(PLUGIN_UPDATED_DATE) != null ? attributes.getValue(PLUGIN_UPDATED_DATE) : attributes.getValue(DATE);
       if (dateString != null) {
-        currentPlugin.setDate(dateString);
+        builder.setDate(dateString);
       }
-      currentPlugin.setIncomplete(false);
+      builder.setIncomplete(false);
     }
     else if (qName.equals(IDEA_VERSION)) {
-      currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
-      currentPlugin.setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
+      builder.setSinceBuild(attributes.getValue(SINCE_BUILD))
+        .setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
     }
     else if (qName.equals(VENDOR)) {
-      currentPlugin.setVendorEmail(attributes.getValue(EMAIL));
-      currentPlugin.setVendorUrl(attributes.getValue(URL));
+      builder.setVendorEmail(attributes.getValue(EMAIL))
+        .setVendorUrl(attributes.getValue(URL));
     }
     else if (qName.equals(PLUGIN)) {
       String id = attributes.getValue(ID);
-      currentPlugin = id == null ? new PluginNode(PluginId.getId("unknown")) : new PluginNode(PluginId.getId(id));
-      currentPlugin.setDownloadUrl(attributes.getValue(URL));
-      currentPlugin.setVersion(attributes.getValue(VERSION));
-      currentPlugin.setIncomplete(true);
+      builder = id == null ? factory.createBuilder(PluginId.getId("unknown")) : factory.createBuilder(PluginId.getId(id));
+      builder.setDownloadUrl(attributes.getValue(URL))
+        .setVersion(attributes.getValue(VERSION))
+        .setIncomplete(true);
     }
     currentValue.setLength(0);
   }
@@ -108,27 +116,27 @@ final class RepositoryContentHandler extends DefaultHandler {
     currentValue.setLength(0);
 
     switch (qName) {
-      case ID -> currentPlugin.setId(currentValueString);
-      case NAME -> currentPlugin.setName(currentValueString);
-      case DESCRIPTION -> currentPlugin.setDescription(currentValueString);
-      case VERSION -> currentPlugin.setVersion(currentValueString);
-      case VENDOR -> currentPlugin.setVendor(currentValueString);
-      case DEPENDS -> currentPlugin.addDepends(currentValueString, false);
-      case CHANGE_NOTES -> currentPlugin.setChangeNotes(currentValueString);
+      case ID -> builder.setId(currentValueString);
+      case NAME -> builder.setName(currentValueString);
+      case DESCRIPTION -> builder.setDescription(currentValueString);
+      case VERSION -> builder.setVersion(currentValueString);
+      case VENDOR -> builder.setVendor(currentValueString);
+      case DEPENDS -> builder.addDependency(currentValueString, false);
+      case CHANGE_NOTES -> builder.setChangeNotes(currentValueString);
       case CATEGORY -> {
         categories.pop();
         categoryName = null;
       }
-      case RATING -> currentPlugin.setRating(currentValueString);
-      case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> currentPlugin.setDownloadUrl(currentValueString);
+      case RATING -> builder.setRating(currentValueString);
+      case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> builder.setDownloadUrl(currentValueString);
       case IDEA_PLUGIN, PLUGIN -> {
-        if (currentPlugin != null) {
-          plugins.add(currentPlugin);
+        if (builder != null) {
+          plugins.add(builder.build());
         }
-        currentPlugin = null;
+        builder = null;
       }
-      case TAGS -> currentPlugin.addTags(currentValueString);
-      case PRODUCT_CODE -> currentPlugin.setProductCode(currentValueString);
+      case TAGS -> builder.addTag(currentValueString);
+      case PRODUCT_CODE -> builder.setProductCode(currentValueString);
     }
   }
 

@@ -3,14 +3,9 @@
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.refactoring.HelpID
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import kotlin.reflect.KMutableProperty1
 
 class KotlinInlineNamedFunctionDialog(
     function: KtNamedFunction,

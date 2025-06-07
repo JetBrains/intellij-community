@@ -6,10 +6,10 @@ import com.intellij.util.ui.GraphicsUtil
 import java.awt.Color
 import java.awt.Graphics2D
 
-class RoundWithBackgroundPresentation(
+open class RoundWithBackgroundPresentation(
   presentation: InlayPresentation,
-  val arcWidth: Int,
-  val arcHeight: Int,
+  open val arcWidth: Int,
+  open val arcHeight: Int,
   val color: Color? = null,
   val backgroundAlpha : Float = 0.55f
 ) : StaticDelegatePresentation(presentation) {

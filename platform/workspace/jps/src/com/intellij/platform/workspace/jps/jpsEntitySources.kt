@@ -88,7 +88,7 @@ sealed class JpsProjectFileEntitySource : JpsFileEntitySource() {
 /**
  * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
  */
-data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource()
+data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource(), GlobalStorageEntitySource
 
 /**
  * Represents entities which configuration is loaded from an JPS format configuration file (e.g. *.iml, stored in [originalSource]) and some additional configuration

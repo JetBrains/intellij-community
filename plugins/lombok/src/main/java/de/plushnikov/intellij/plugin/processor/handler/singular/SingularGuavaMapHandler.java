@@ -34,8 +34,7 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+  protected @NotNull PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType keyType = getKeyType(psiFieldType, psiManager);
     final PsiType valueType = getValueType(psiFieldType, psiManager);

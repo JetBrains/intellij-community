@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.CachedTreePresentation;
@@ -20,10 +20,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -256,7 +253,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
       return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
         @Override
-        protected @Nullable Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
+        protected @Unmodifiable @Nullable Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }
       };
@@ -264,14 +261,14 @@ public final class AsyncTreeModel extends AbstractTreeModel
     else {
       return new AbstractTreeWalker<>(visitor, node -> node.object) {
         @Override
-        protected @Nullable Collection<Node> getChildren(@NotNull Node node) {
+        protected @Unmodifiable @Nullable Collection<Node> getChildren(@NotNull Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }
       };
     }
   }
 
-  private @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
+  private @Unmodifiable @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
     if (node.leafState == LeafState.ALWAYS || !allowLoading) return ContainerUtil.filter(node.getChildren(), Node::isLoaded);
     promiseChildren(node)
       .onSuccess(parent -> walker.setChildren(parent.getChildren()))
@@ -297,8 +294,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     computeTreeDataOnBgt(command).thenAsync(value -> applyToUiTree(command, value));
   }
 
-  @NotNull
-  private CancellablePromise<Node> computeTreeDataOnBgt(@NotNull Command command) {
+  private @NotNull CancellablePromise<Node> computeTreeDataOnBgt(@NotNull Command command) {
     if (command.canRunAsync()) {
       return background.computeAsync(command::computeAsync);
     }
@@ -348,7 +344,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     });
   }
 
-  private @Nullable List<Node> getChildrenFromCachedPresentation(@NotNull AsyncTreeModel.Node parent) {
+  private @Unmodifiable @Nullable List<Node> getChildrenFromCachedPresentation(@NotNull AsyncTreeModel.Node parent) {
     var cachedPresentation = tree.cachedPresentation;
     if (cachedPresentation == null) return null;
     for (TreePath parentPath : parent.paths) {
@@ -673,8 +669,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
       return loaded;
     }
 
-    @Nullable
-    private List<Node> load(@Nullable List<?> children) {
+    private @Nullable List<Node> load(@Nullable List<?> children) {
       if (children == null) throw new ProcessCanceledException(); // cancel this command
       return load(children.size(), index -> children.get(index));
     }

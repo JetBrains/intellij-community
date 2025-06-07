@@ -13,17 +13,15 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 
 internal class PyDependencyCollector : DependencyCollector {
   override suspend fun collectDependencies(project: Project): Collection<String> {
-    return readAction {
-      ModuleManager.getInstance(project).modules.asSequence()
-        .flatMap { module ->
-          val pythonSdk = PythonSdkUtil.findPythonSdk(module) ?: return@flatMap emptySequence()
-
-          val pyPackageManager = PythonPackageManager.forSdk(project, pythonSdk)
-          pyPackageManager.installedPackages.asSequence()
-            .map { it.name }
-        }
-        .toSet()
+    val modules = readAction {
+      ModuleManager.getInstance(project).modules
     }
+    return modules.flatMap { module ->
+      val pythonSdk = readAction { PythonSdkUtil.findPythonSdk(module) } ?: return@flatMap emptySequence()
+
+      val pyPackageManager = PythonPackageManager.forSdk(project, pythonSdk)
+      pyPackageManager.listInstalledPackages().asSequence().map { it.name }
+    }.toSet()
   }
 }
 

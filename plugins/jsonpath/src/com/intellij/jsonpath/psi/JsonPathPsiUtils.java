@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.psi;
 
 import com.intellij.openapi.util.Key;
@@ -19,8 +19,7 @@ public final class JsonPathPsiUtils {
   private JsonPathPsiUtils() {
   }
 
-  @NotNull
-  public static List<Pair<TextRange, String>> getTextFragments(@NotNull JsonPathStringLiteral literal) {
+  public static @NotNull List<Pair<TextRange, String>> getTextFragments(@NotNull JsonPathStringLiteral literal) {
     List<Pair<TextRange, String>> cached = literal.getUserData(STRING_FRAGMENTS);
     if (cached != null) return cached;
 

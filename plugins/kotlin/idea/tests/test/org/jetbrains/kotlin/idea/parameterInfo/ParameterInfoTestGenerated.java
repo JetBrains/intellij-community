@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo;
 
@@ -116,9 +116,24 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenLambdaArgument.kt")
+        public void testBrokenLambdaArgument() throws Exception {
+            runTest("testData/parameterInfo/functionCall/brokenLambdaArgument.kt");
+        }
+
+        @TestMetadata("brokenLambdaArgument2.kt")
+        public void testBrokenLambdaArgument2() throws Exception {
+            runTest("testData/parameterInfo/functionCall/brokenLambdaArgument2.kt");
+        }
+
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
+        }
+
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
         }
 
         @TestMetadata("DataClassComponentFunction.kt")
@@ -314,6 +329,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
         }
 
         @TestMetadata("NoShadowedDeclarations.kt")
@@ -524,6 +544,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("UnresolvedCurrent.kt")
         public void testUnresolvedCurrent() throws Exception {
             runTest("testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiver.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiver.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiverWithOverloads() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt");
         }
 
         @TestMetadata("UpdateOnTyping.kt")
@@ -750,6 +780,25 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("useJavaSAMFromLib.kt")
         public void testUseJavaSAMFromLib() throws Exception {
             runTest("testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
         }
     }
 }

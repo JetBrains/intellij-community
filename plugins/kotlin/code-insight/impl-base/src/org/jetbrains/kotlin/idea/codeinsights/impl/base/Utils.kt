@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandService
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -45,7 +48,7 @@ fun KtCallableDeclaration.hasUsages(inElement: KtElement): Boolean {
 
 fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean {
     assert(this.isPhysical)
-    return ReferencesSearch.search(this, LocalSearchScope(inElements.toTypedArray())).any()
+    return ReferencesSearch.search(this, LocalSearchScope(inElements.toTypedArray())).asIterable().any()
 }
 
 fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): PsiSearchHelper.SearchCostResult {
@@ -203,3 +206,10 @@ tailrec fun KtExpression.replaceVariableCallsWithExplicitInvokeCalls(variableCal
 
     return qualified.replaceVariableCallsWithExplicitInvokeCalls(variableCalls)
 }
+
+fun ModCommandAction.asQuickFix(): LocalQuickFix {
+    return ModCommandService.getInstance().wrapToQuickFix(this)
+}
+
+fun KtNamedDeclaration.isExplicitlyIgnoredByName(): Boolean =
+    name?.let { it == "_" } != false

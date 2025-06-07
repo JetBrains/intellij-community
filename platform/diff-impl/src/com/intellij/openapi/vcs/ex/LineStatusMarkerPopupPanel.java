@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -45,8 +45,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   private static final JBColor TOOLBAR_BACKGROUND_COLOR =
     JBColor.namedColor("VersionControl.MarkerPopup.Toolbar.background", UIUtil.getPanelBackground());
 
-  @Nullable private final JComponent myEditorComponent;
-  @NotNull private final Editor myEditor;
+  private final @Nullable JComponent myEditorComponent;
+  private final @NotNull Editor myEditor;
 
   private LineStatusMarkerPopupPanel(@NotNull Editor editor,
                                      @NotNull ActionToolbar toolbar,
@@ -60,10 +60,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     boolean isEditorVisible = myEditorComponent != null;
 
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 0));
+    toolbarComponent.setBorder(JBUI.Borders.empty(3, 0));
     toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
-    JComponent toolbarPanel = JBUI.Panels.simplePanel().addToLeft(new BorderLayoutPanel().addToTop(toolbarComponent));
+    BorderLayoutPanel toolbarPanel = JBUI.Panels.simplePanel().addToLeft(JBUI.Panels.simplePanel().addToTop(toolbarComponent));
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets",
                                   ExperimentalUI.isNewUI() ? JBUI.insets(3, 8, 3, 10) : JBInsets.create(1, 5));
@@ -72,7 +72,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
     if (additionalInfo != null) {
-      toolbarPanel.add(additionalInfo, BorderLayout.EAST);
+      toolbarPanel.addToRight(additionalInfo);
     }
 
     // 'empty space' to the right of toolbar
@@ -80,10 +80,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     emptyPanel.setOpaque(false);
     emptyPanel.setPreferredSize(new Dimension());
 
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.setOpaque(false);
-    topPanel.add(toolbarPanel, BorderLayout.WEST);
-    topPanel.add(emptyPanel, BorderLayout.CENTER);
+    JPanel topPanel = JBUI.Panels.simplePanel()
+      .andTransparent()
+      .addToLeft(toolbarPanel)
+      .addToCenter(emptyPanel);
 
     add(topPanel, BorderLayout.NORTH);
     if (myEditorComponent != null) add(myEditorComponent, BorderLayout.CENTER);
@@ -108,8 +108,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     emptyPanel.addMouseListener(listener);
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -123,6 +122,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
+    if (myEditorComponent == null) {
+      return super.getPreferredSize();
+    }
+
     Window window = UIUtil.getWindow(myEditor.getComponent());
     Dimension windowSize;
     if (window != null) {
@@ -145,23 +148,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     Rectangle panelRect = new Rectangle(new Point(0, 0), size);
     Rectangle rectangle = SwingUtilities.convertRectangle(this, panelRect, window);
 
-    if (rectangle.y + size.height > maxSize.height) {
+    if (rectangle.y + size.height > maxSize.height && maxSize.height - rectangle.y > 0) {
       size.height = maxSize.height - rectangle.y;
     }
 
     return size;
   }
 
-
-  public static void showPopupAt(@NotNull Editor editor,
-                                 @NotNull LineStatusMarkerPopupPanel panel,
-                                 @Nullable Point mousePosition,
-                                 @NotNull Disposable popupDisposable) {
-    LineStatusMarkerPopupService.getInstance().showPopupAt(editor, panel, mousePosition, popupDisposable);
-  }
-
-  @NotNull
-  public static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
+  public static @NotNull EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
     EditorTextField field = new EditorTextField(content);
     field.setBorder(null);
     field.setOneLineMode(false);
@@ -187,16 +181,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return field;
   }
 
-  @NotNull
-  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
+  public static @NotNull JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
     JPanel editorComponent = JBUI.Panels.simplePanel(popupEditor);
     editorComponent.setBorder(createEditorFragmentBorder());
     editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
   }
 
-  @NotNull
-  private static Border createEditorFragmentBorder() {
+  private static @NotNull Border createEditorFragmentBorder() {
     Border outsideEditorBorder = JBUI.Borders.customLine(getBorderColor(), 1);
     Border insideEditorBorder = JBUI.Borders.empty(2);
     return BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder);
@@ -207,15 +199,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return color != null ? color : EditorFragmentComponent.getBackgroundColor(editor);
   }
 
-  @NotNull
-  public static Color getBorderColor() {
+  public static @NotNull Color getBorderColor() {
     return JBColor.namedColor("VersionControl.MarkerPopup.borderColor", new JBColor(Gray._206, Gray._75));
   }
 
-  @NotNull
-  public static ActionToolbar buildToolbar(@NotNull Editor editor,
-                                           @NotNull List<? extends AnAction> actions,
-                                           @NotNull Disposable parentDisposable) {
+  public static @NotNull ActionToolbar buildToolbar(@NotNull Editor editor,
+                                                    @NotNull List<? extends AnAction> actions,
+                                                    @NotNull Disposable parentDisposable) {
     JComponent editorComponent = editor.getComponent();
     for (AnAction action : actions) {
       DiffUtil.registerAction(action, editorComponent);

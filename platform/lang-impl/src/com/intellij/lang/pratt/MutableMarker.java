@@ -15,22 +15,12 @@ public class MutableMarker {
   private IElementType myResultType;
   private final int myInitialPathLength;
   private final LinkedList<IElementType> myPath;
-  private Mode myMode;
+  private Mode myMode = Mode.READY;
 
   public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;
-    myMode = startMarker != null && startMarker.getTokenType() != null ? Mode.COMMITTED : Mode.READY;
-  }
-
-  // for easier transition only
-  public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder builder) {
-    myPath = path;
-    myStartMarker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
-    myInitialPathLength = path.size();
-    myResultType = myStartMarker != null ? myStartMarker.getTokenType() : null;
-    myMode = myResultType != null ? Mode.COMMITTED : Mode.READY;
   }
 
   public boolean isCommitted() {

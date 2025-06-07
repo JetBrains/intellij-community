@@ -1,6 +1,6 @@
 // "Create object 'RED'" "false"
 // ERROR: Unresolved reference: RED
-/* IGNORE_K2 */
+// IGNORE_K2
 enum class SampleEnum {}
 
 fun usage(sample: SampleEnum) {

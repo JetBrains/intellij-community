@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * User : ktisha
  */
 public class RestFieldList extends RestElement {
-  public RestFieldList(@NotNull final ASTNode node) {
+  public RestFieldList(final @NotNull ASTNode node) {
     super(node);
   }
 

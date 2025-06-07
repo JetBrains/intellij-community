@@ -117,6 +117,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testVarDoubleInitialization() { doTest(false); }
   public void testFieldDoubleInitialization() { doTest(false); }
   public void testFinalFieldInitialization() { doTest(false); }
+  public void testFinalFieldInitializationInAnonymousClass() { doTest(false); }
   public void testFinalFieldUsedInAnonymousArgumentListInsideInner() { doTest(false); }
   public void testAssignToFinal() { doTest(false); }
   public void testUnhandledExceptionsInSuperclass() { doTest(false); }
@@ -468,4 +469,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReferenceToImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false));
   }
+  
+  public void testUninitializedFields() { doTest(false); }
 }

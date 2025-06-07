@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.tools.holders.EditorHolder;
@@ -20,9 +20,9 @@ import java.util.List;
 import static com.intellij.diff.tools.util.DiffSplitter.redispatchWheelEventsToDivider;
 
 public class ThreeDiffSplitter extends JPanel {
-  @NotNull private final List<? extends JComponent> myContents;
-  @NotNull private final Divider myDivider1;
-  @NotNull private final Divider myDivider2;
+  private final @NotNull List<? extends JComponent> myContents;
+  private final @NotNull Divider myDivider1;
+  private final @NotNull Divider myDivider2;
 
   private float myProportion1; // first size divided by (first + second + third)
   private float myProportion2; // third size divided by (first + second + third)
@@ -51,8 +51,7 @@ public class ThreeDiffSplitter extends JPanel {
     getDivider(side).repaint();
   }
 
-  @NotNull
-  private Divider getDivider(@NotNull Side side) {
+  private @NotNull Divider getDivider(@NotNull Side side) {
     return side.select(myDivider1, myDivider2);
   }
 
@@ -139,8 +138,8 @@ public class ThreeDiffSplitter extends JPanel {
   }
 
   private class Divider extends JPanel {
-    @NotNull private final Side mySide;
-    @Nullable private Painter myPainter;
+    private final @NotNull Side mySide;
+    private @Nullable Painter myPainter;
 
     Divider(@NotNull Side side) {
       mySide = side;

@@ -17,7 +17,7 @@ import java.util.List;
  * @see <a href="https://peps.python.org/pep-0646/#unpacking-tuple-types">PEP 646 – Variadic Generics</a>
  * @see PyTypeVarTupleType
  */
-public interface PyUnpackedTupleType extends PyVariadicType {
+public non-sealed interface PyUnpackedTupleType extends PyPositionalVariadicType {
   /**
    * Returns types contained inside this unpacked tuple type.
    * <p>

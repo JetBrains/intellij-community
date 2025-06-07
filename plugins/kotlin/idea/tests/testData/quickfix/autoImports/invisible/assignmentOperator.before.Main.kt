@@ -3,7 +3,7 @@
 // ERROR: Type mismatch: inferred type is String but Property<String> was expected
 // ERROR: Val cannot be reassigned
 // COMPILER_PLUGIN_OPTIONS: plugin:org.jetbrains.kotlin.assignment:annotation=test.assignment.SupportsKotlinAssignmentOverloading
-/* IGNORE_K2 */
+// IGNORE_K2
 
 import test.assignment.Property
 

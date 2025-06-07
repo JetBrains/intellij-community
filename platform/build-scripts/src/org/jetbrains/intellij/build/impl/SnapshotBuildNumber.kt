@@ -10,15 +10,23 @@ object SnapshotBuildNumber {
     BuildPaths.COMMUNITY_ROOT.communityRoot.resolve("build.txt")
   }
 
+  const val SNAPSHOT_SUFFIX: String = ".SNAPSHOT"
+
   /**
-   * `${CURRENT_MAJOR_VERSION}.SNAPSHOT`, specified in [PATH]
+   * `${BASE}.SNAPSHOT`, specified in [PATH]
    */
   val VALUE: String by lazy {
     val snapshotBuildNumber = Files.readString(PATH).trim()
-    val snapshotSuffix = ".SNAPSHOT"
-    check(snapshotBuildNumber.endsWith(snapshotSuffix)) {
-      "$snapshotBuildNumber is expected to have a '$snapshotSuffix' suffix"
+    check(snapshotBuildNumber.endsWith(SNAPSHOT_SUFFIX)) {
+      "$PATH: '$snapshotBuildNumber' is expected to have a '$SNAPSHOT_SUFFIX' suffix"
     }
     snapshotBuildNumber
+  }
+
+  /**
+   * [VALUE] without [SNAPSHOT_SUFFIX]
+   */
+  val BASE: String by lazy {
+    VALUE.removeSuffix(SNAPSHOT_SUFFIX)
   }
 }

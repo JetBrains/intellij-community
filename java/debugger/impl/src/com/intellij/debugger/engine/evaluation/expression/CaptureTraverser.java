@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.psi.PsiClass;
@@ -46,8 +46,7 @@ public final class CaptureTraverser {
    * Direct traverser simply return the argument.
    */
   @Contract("null -> null")
-  @Nullable
-  public ObjectReference traverse(@Nullable ObjectReference objRef) {
+  public @Nullable ObjectReference traverse(@Nullable ObjectReference objRef) {
     if (objRef == null || !isValid()) return null;
     if (myIterationCount <= 0) return objRef;
     ObjectReference thisRef = objRef;
@@ -60,8 +59,7 @@ public final class CaptureTraverser {
   /**
    * @return a direct traverser that does nothing
    */
-  @NotNull
-  public static CaptureTraverser direct() {
+  public static @NotNull CaptureTraverser direct() {
     return DIRECT;
   }
 
@@ -73,8 +71,7 @@ public final class CaptureTraverser {
    * @param checkInheritance if true, inheritors of target class are also acceptable
    * @return a traverser capable to find an instance of the targetClass
    */
-  @NotNull
-  public static CaptureTraverser create(@Nullable PsiClass targetClass, @Nullable PsiClass fromClass, boolean checkInheritance) {
+  public static @NotNull CaptureTraverser create(@Nullable PsiClass targetClass, @Nullable PsiClass fromClass, boolean checkInheritance) {
     if (targetClass == null || fromClass == null) return INVALID;
     int iterationCount = 0;
     while (fromClass != null &&
@@ -86,13 +83,11 @@ public final class CaptureTraverser {
     return fromClass == null ? INVALID : new CaptureTraverser(iterationCount);
   }
 
-  @Nullable
-  private static PsiClass getOuterClass(PsiClass aClass) {
+  private static @Nullable PsiClass getOuterClass(PsiClass aClass) {
     return aClass == null ? null : PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
   }
 
-  @Nullable
-  private static ObjectReference getOuterObject(ObjectReference objRef) {
+  private static @Nullable ObjectReference getOuterObject(ObjectReference objRef) {
     if (objRef == null) {
       return null;
     }

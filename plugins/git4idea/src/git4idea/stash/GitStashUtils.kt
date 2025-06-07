@@ -6,6 +6,7 @@ package git4idea.stash
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -20,7 +21,9 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
@@ -53,18 +56,14 @@ import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
-import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashTabAvailable
-import git4idea.stash.ui.showStashes
-import git4idea.stash.ui.stashToolWindowRegistryOption
+import git4idea.stash.ui.GitStashUIHandler
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.awt.Component
-import java.nio.charset.Charset
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 
@@ -290,17 +289,7 @@ object GitStashOperations {
   }
 
   fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
-    val actions = buildList {
-      if (isStashTabAvailable()) {
-        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project, successfulRoots.firstOrNull()) })
-      }
-      else if (isStagingAreaAvailable(project)) {
-        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link")) {
-          stashToolWindowRegistryOption().setValue(true)
-          showStashes(project, successfulRoots.firstOrNull())
-        })
-      }
-    }
+    val actions = project.service<GitStashUIHandler>().showStashesNotificationActions(successfulRoots)
     val message = getSuccessMessage(project, successfulRoots, hasErrors)
     VcsNotifier.getInstance(project).notifyMinorInfo(GitNotificationIdsHolder.STASH_SUCCESSFUL, "", message, *actions.toTypedArray())
   }
@@ -371,7 +360,7 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.AUTHOR_TIME, GitLogOption.SHORT_REF_LOG_SELECTOR,
                         GitLogOption.SUBJECT) // subject should be the last
   val indexedOptions = options.withIndex().associate { Pair(it.value, it.index) }
-  val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
+  val charset = GitConfigUtil.getLogEncodingCharset(project, root)
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.cacheBuilder;
 
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +26,7 @@ public final class WordOccurrence {
    * @param kind The type of text where the word was encountered (code, comments or literals).
    */
 
-  public WordOccurrence(final CharSequence text, int start, int end, @Nullable final Kind kind) {
+  public WordOccurrence(final CharSequence text, int start, int end, final @Nullable Kind kind) {
     myKind = kind;
     myText = text;
     myStart = start;
@@ -40,7 +40,7 @@ public final class WordOccurrence {
    * @param end end offset in initial char sequence.
    * @param kind The type of text where the word was encountered (code, comments or literals).
    */
-  public void init(final CharSequence text, int start, int end, @Nullable final Kind kind) {
+  public void init(final CharSequence text, int start, int end, final @Nullable Kind kind) {
     myKind = kind;
     myText = text;
     myStart = start;
@@ -52,8 +52,7 @@ public final class WordOccurrence {
    * @return the kind of the occurrence.
    */
 
-  @Nullable
-  public Kind getKind() {
+  public @Nullable Kind getKind() {
     return myKind;
   }
 
@@ -92,8 +91,8 @@ public final class WordOccurrence {
       myName = name;
     }
 
-    @NonNls
-    public String toString() {
+    @Override
+    public @NonNls String toString() {
       return "WordOccurrence.Kind(" + myName + ")";
     }
 

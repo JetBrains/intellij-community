@@ -2,8 +2,8 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -42,7 +41,7 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
     return "UsageGrouping.Package";
   }
 
-  private final class PackageGroup implements UsageGroup, DataProvider {
+  private final class PackageGroup implements UsageGroup, UiDataProvider {
     private final PsiPackage myPackage;
     private Icon myIcon;
 
@@ -95,6 +94,7 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PackageGroup)) return false;
@@ -102,23 +102,16 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.equals(((PackageGroup)o).myPackage);
     }
 
+    @Override
     public int hashCode() {
       return myPackage.hashCode();
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return myPackage;
-      }
-      return null;
+      });
     }
   }
 }

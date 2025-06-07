@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class A
 
 fun foo(a: A, other: A) {

@@ -1,0 +1,4 @@
+infix fun AuxFaceA.<caret>funModifierM(p: AuxFaceB) {}
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">infix</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span><span style="">.</span><span style="color:#000000;">funModifierM</span>(
+//INFO:     <span style="color:#000000;">p</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceB">AuxFaceB</a></span>
+//INFO: )<span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.Unit">Unit</a></span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;funModifierM.kt<br/></div>

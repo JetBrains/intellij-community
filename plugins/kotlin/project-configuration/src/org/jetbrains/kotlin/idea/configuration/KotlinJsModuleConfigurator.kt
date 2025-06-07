@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
-import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 
@@ -53,7 +52,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
         get() = KotlinJavaScriptStdlibDetectorFacility
 
     companion object {
-        const val NAME = JavaScript.LOWER_NAME
+        const val NAME = "js"
     }
 
     /**

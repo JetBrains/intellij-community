@@ -31,8 +31,7 @@ import java.util.Map;
  */
 public class CompatibilityPrintCallQuickFix extends ModCommandBatchQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.statement.effect");
   }
 

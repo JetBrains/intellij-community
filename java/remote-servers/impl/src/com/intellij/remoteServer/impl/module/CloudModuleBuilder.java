@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.module;
 
 import com.intellij.icons.AllIcons;
@@ -43,7 +43,7 @@ public final class CloudModuleBuilder extends JavaModuleBuilder {
     ModuleConfigurationUpdater configurationUpdater = new ModuleConfigurationUpdater() {
 
       @Override
-      public void update(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel) {
+      public void update(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
         preConfigureModule(module, rootModel);
       }
     };
@@ -98,9 +98,8 @@ public final class CloudModuleBuilder extends JavaModuleBuilder {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
+  public @Nullable ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
     myProject = context.getProject();
     return new CloudModuleWizardStep(this, myProject, parentDisposable);
   }
@@ -147,9 +146,8 @@ public final class CloudModuleBuilder extends JavaModuleBuilder {
       final LibrariesContainer librariesContainer = LibrariesContainerFactory.createContainer(myProject);
       myFrameworkSupportModel = new FrameworkSupportModelBase(myProject, this, librariesContainer) {
 
-        @NotNull
         @Override
-        public String getBaseDirectoryForLibrariesPath() {
+        public @NotNull String getBaseDirectoryForLibrariesPath() {
           return StringUtil.notNullize(getContentEntryPath());
         }
       };

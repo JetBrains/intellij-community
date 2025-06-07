@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents editable sorted list of unique strings
  *
- * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<String>}.
+ * @param bindId identifier of binding variable used by an option controller; the corresponding variable is expected to be a mutable {@code List<String>}.
  * @param label label above the control
  * @param validator optional validator for content; can validate max-length or be something more complicated
  *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public record OptStringList(@Language("jvm-field-name") @NotNull String bindId,
                             @NotNull LocMessage label, @Nullable StringValidator validator,
                             @Nullable HtmlChunk description) implements OptControl, OptDescribedComponent, OptRegularComponent {
+  @SuppressWarnings("InjectedReferences")
   @Override
   public @NotNull OptStringList prefix(@NotNull String bindPrefix) {
     return new OptStringList(bindPrefix + "." + bindId, label, validator, description);

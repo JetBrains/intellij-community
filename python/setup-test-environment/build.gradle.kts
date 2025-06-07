@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.net.URL
@@ -42,6 +42,7 @@ val pythonVersionMapping = mapOf(
   "3.10" to "3.10.8",
   "3.11" to "3.11.0",
   "3.12" to "3.12.0",
+  "3.13" to "3.13.0"
 )
 
 val defaultPackages = listOf("virtualenv")
@@ -55,6 +56,16 @@ envs {
   zipRepository = URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY",
                                                    "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
   shouldUseZipsFromRepository = isWindows
+}
+
+tasks.register("copy_buildserver_win_fix") {
+  // these files are required to fix paths on Windows, see their readme
+  doLast {
+    copy {
+      from("buildserver_win_fix")
+      into(pythonsDirectory)
+    }
+  }
 }
 
 tasks.register<Exec>("kill_python_processes") {
@@ -73,8 +84,10 @@ tasks.register<Delete>("clean") {
 }
 
 tasks.register("build") {
-  dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
+  dependsOn(tasks.matching { it.name.startsWith("setup_") || it.name == "updateConda" }, "clean", "copy_buildserver_win_fix")
 }
+
+
 
 fun createPython(
   id: String,
@@ -89,9 +102,19 @@ fun createPython(
   envs {
     when (type) {
       PythonType.PYTHON -> python(id, pythonVersionMapping[version], packages)
-      PythonType.CONDA -> conda(id, version, packages)
+      PythonType.CONDA -> {
+        conda(id, version, packages)
+        tasks.register<Exec>("updateConda") {
+          val cmd = pythonHome.resolve("condabin").resolve(if (isWindows) "conda.bat" else "conda").toPath().toString()
+          // Update manifests as old soon might become unusable
+          commandLine(cmd, "update", "conda", "-y")
+          commandLine(cmd, "update", "--all", "-y")
+        }
+      }
     }
   }
+
+
 
   project.tasks.create("populate_tags_$id") {
     dependsOn(tasks.matching { it.name.matches("Bootstrap_[A-Z]*_'$id'.*".toRegex()) })
@@ -124,7 +147,7 @@ fun createPython(
   // the task serves as aggregator so that one could just execute `./gradlew setup_python_123`
   // to build some specific environment
   project.tasks.create("setup_$id") {
-    setDependsOn(listOf("clean", "populate_links_$id"))
+    setDependsOn(listOf("clean", "populate_links_$id", "copy_buildserver_win_fix"))
   }
 }
 
@@ -139,11 +162,11 @@ if (isUnix && !isMacOs) { //qt is for Linux only
   qtTags.add("qt")
 }
 
-createPython("py27", "2.7",
+createPython("python2.7", "2.7",
              listOf(),
              listOf("python2.7"))
 
-createPython("py38", "3.8",
+createPython("python3.8", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                     "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
              listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
@@ -157,15 +180,19 @@ createPython("python3.10", "3.10",
              listOf("untangle"), listOf("python3.10", "untangle"))
 
 createPython("python3.11", "3.11",
-             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry"),
-             listOf("python3.11", "black", "poetry", "joblib", "tensorflow"))
+             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry", "uv"),
+             listOf("python3.11", "black", "poetry", "uv", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-             listOf("teamcity-messages", "Twisted", "pytest", "poetry")
+             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "hatch", "black>=23.11.0")
              // TODO: maybe switch to optional dependency Twisted[windows-platform]
              // https://docs.twisted.org/en/stable/installation/howto/optional.html
              + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-             listOf("python3", "poetry", "python3.12", "messages", "twisted", "pytest"))
+             listOf("python3", "poetry", "uv", "hatch", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
-createPython("conda", "Miniconda3-py312_24.5.0-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+
+createPython("python3.13", "3.13",
+             listOf(),
+             listOf("python3.13", "python3"))

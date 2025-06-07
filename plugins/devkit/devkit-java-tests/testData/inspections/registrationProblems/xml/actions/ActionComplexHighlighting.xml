@@ -55,11 +55,11 @@
       <<error descr="'<synonym>' must not specify both 'key' or 'text' attributes">synonym</error> text="Syn Text" key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
     </action>
 
-    <reference id="myGroup"/>
-    <reference id="myAction"/>
-    <reference id="myRecursiveGroup"/>
-    <reference id="myRecursiveAction"/>
-    <reference id="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+    <reference <error descr="Use 'ref' instead">id="myGroup"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myAction"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myRecursiveGroup"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myRecursiveAction"</error>/>
+    <reference <error descr="Use 'ref' instead">id="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"</error>/>
 
     <reference ref="myGroup"/>
     <reference ref="myAction"/>
@@ -104,4 +104,30 @@
 
   <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
+
+  <!-- Executor -->
+  <actions>
+    <action class="foo.bar.BarAction" use-shortcut-of="MyExecutorId"/>
+    <action class="foo.bar.BarAction" use-shortcut-of="MyExecutorContextActionId"/>
+
+    <action class="foo.bar.BarAction">
+      <add-to-group group-id="<error descr="Cannot resolve group 'MyExecutorId'">MyExecutorId</error>"/>
+    </action>
+  </actions>
+
+  <!-- ToolWindow -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.toolWindow" beanClass="java.lang.String"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="ToolWindowId"/>
+  </extensions>
+  <actions>
+    <action class="foo.bar.BarAction" use-shortcut-of="ActivateToolWindowIdToolWindow"/>
+    <action class="foo.bar.BarAction" use-shortcut-of="ActivateToolWindowIdFromConstantsToolWindow"/>
+
+    <action class="foo.bar.BarAction">
+      <add-to-group group-id="<error descr="Cannot resolve group 'ActivateToolWindowIdToolWindow'">ActivateToolWindowIdToolWindow</error>"/>
+    </action>
+  </actions>
 </idea-plugin>

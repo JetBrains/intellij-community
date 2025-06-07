@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
@@ -21,7 +21,7 @@ public class BeforeTestEventProcessor extends AbstractBeforeTestEventProcessor {
   }
 
   @Override
-  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+  public void process(final @NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     var testId = eventXml.getTestId();
     var parentTestId = eventXml.getTestParentId();
     var suiteName = eventXml.getTestClassName();

@@ -3,7 +3,6 @@ package com.jetbrains.python.defaultProjectAwareService;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,11 +16,9 @@ public final class PyDefaultProjectAwareServiceClasses<
   APP_SERVICE extends SERVICE,
   MODULE_SERVICE extends SERVICE> {
 
-  @NotNull
-  private final Class<APP_SERVICE> myAppServiceClass;
+  private final @NotNull Class<APP_SERVICE> myAppServiceClass;
 
-  @NotNull
-  private final Class<MODULE_SERVICE> myModuleServiceClass;
+  private final @NotNull Class<MODULE_SERVICE> myModuleServiceClass;
 
   public PyDefaultProjectAwareServiceClasses(@NotNull Class<APP_SERVICE> appServiceClass, @NotNull Class<MODULE_SERVICE> moduleServiceClass) {
     myAppServiceClass = appServiceClass;
@@ -31,13 +28,13 @@ public final class PyDefaultProjectAwareServiceClasses<
    * Use it for "getInstance" function. Returns module-level if module is set, app level otherwise
    */
   public SERVICE getService(@Nullable Module module) {
-    if (module == null) return getAppService();
-    if (module instanceof ModuleEx && !((ModuleEx)module).canStoreSettings()) return getAppService();
+    if (module == null || !module.canStoreSettings()) {
+      return getAppService();
+    }
     return getModuleService(module);
   }
 
-  @NotNull
-  public APP_SERVICE getAppService() {
+  public @NotNull APP_SERVICE getAppService() {
     return ApplicationManager.getApplication().getService(myAppServiceClass);
   }
 

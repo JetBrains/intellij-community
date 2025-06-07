@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class RestRole extends RestElement {
-  public RestRole(@NotNull final ASTNode node) {
+  public RestRole(final @NotNull ASTNode node) {
     super(node);
   }
 

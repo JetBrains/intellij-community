@@ -28,7 +28,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.time.Duration
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty0
@@ -115,6 +115,10 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
       "#" + NewMappings::class.java.name,
       "#" + VcsInitialization::class.java.name
     )
+  }
+
+  override fun getIndexingTimeout(): Duration {
+    return Duration.ofMinutes(1)
   }
 
   override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {

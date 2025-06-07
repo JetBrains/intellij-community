@@ -84,8 +84,7 @@ public abstract class LanguageInjectionSupport {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  @Nullable
-  public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef);
+  public abstract @Nullable BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef);
 
   public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 

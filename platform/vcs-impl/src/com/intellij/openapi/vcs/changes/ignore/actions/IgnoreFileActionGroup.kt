@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -28,24 +28,25 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     { ignoreFileType.icon }
   ), DumbAware {
 
-  private var actions: Collection<AnAction> = emptyList()
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  protected open fun createAdditionalActions(
+    project: Project,
+    selectedFiles: List<VirtualFile>,
+    unversionedFiles: List<VirtualFile>,
+  ): List<AnAction> = emptyList()
 
-  override fun update(e: AnActionEvent) {
+  private fun createActionsFor(e: AnActionEvent): List<AnAction> {
     val selectedFiles = getSelectedFiles(e)
-    val presentation = e.presentation
 
     val project = e.getData(CommonDataKeys.PROJECT)
     if (project == null) {
-      presentation.isVisible = false
-      return
+      return emptyList()
     }
 
     val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project).toList()
     if (unversionedFiles.isEmpty()) {
-      presentation.isVisible = false
-      return
+      return emptyList()
     }
 
     val ignoreFiles =
@@ -56,33 +57,41 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       resultedIgnoreFiles.retainAll(files) //only take ignore files which is suitable for all selected files
     }
 
+    val actions = mutableListOf<AnAction>()
     val additionalActions = createAdditionalActions(project, selectedFiles, unversionedFiles)
     if (resultedIgnoreFiles.isNotEmpty()) {
-      actions = resultedIgnoreFiles.toActions(project, additionalActions.size)
+      actions += resultedIgnoreFiles.toActions(project, additionalActions.size)
     }
     else {
-      actions = listOfNotNull(createNewIgnoreFileAction(project, selectedFiles))
+      actions += listOfNotNull(createNewIgnoreFileAction(project, selectedFiles))
     }
 
     if (additionalActions.isNotEmpty()) {
       actions += additionalActions
     }
 
+    return actions
+  }
+
+  override fun update(e: AnActionEvent) {
+    val presentation = e.presentation
+    val actions = createActionsFor(e)
+
     presentation.isPopupGroup = actions.size > 1
     presentation.isPerformGroup = actions.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
-    presentation.isVisible = actions.isNotEmpty()
+    e.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
+    presentation.isEnabledAndVisible = actions.isNotEmpty()
   }
-
-  protected open fun createAdditionalActions(project: Project,
-                                             selectedFiles: List<VirtualFile>,
-                                             unversionedFiles: List<VirtualFile>): List<AnAction> = emptyList()
 
   override fun actionPerformed(e: AnActionEvent) {
-    actions.firstOrNull()?.actionPerformed(e)
+    val action = createActionsFor(e).singleOrNull() ?: return
+    action.actionPerformed(e)
   }
 
-  override fun getChildren(e: AnActionEvent?) = actions.toTypedArray()
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (e == null) return EMPTY_ARRAY
+    return createActionsFor(e).toTypedArray()
+  }
 
   private fun filterSelectedFiles(project: Project, files: List<VirtualFile>): List<VirtualFile> {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)

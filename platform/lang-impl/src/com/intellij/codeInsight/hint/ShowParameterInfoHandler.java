@@ -38,8 +38,8 @@ public final class ShowParameterInfoHandler implements CodeInsightActionHandler 
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null, myRequestFocus);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    invoke(project, editor, psiFile, -1, null, myRequestFocus);
   }
 
   @Override

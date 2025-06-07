@@ -92,7 +92,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  override var enabled: Boolean = true
+  private var enabled: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -429,12 +429,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
     builder.isModifiedCallbacks.getOrPut(component, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun enableIf(predicate: ComponentPredicate): CellBuilder<T> {
-    viewComponent.isEnabled = predicate()
-    predicate.addListener { viewComponent.isEnabled = it }
     return this
   }
 

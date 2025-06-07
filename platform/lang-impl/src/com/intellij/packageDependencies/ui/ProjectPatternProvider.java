@@ -82,7 +82,7 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof DirectoryNode) {
       String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
-        if (pattern.length() > 0) {
+        if (!pattern.isEmpty()) {
           pattern += recursively ? "//*" : "/*";
         }
         else {

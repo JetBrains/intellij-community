@@ -4,7 +4,9 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -39,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,6 +159,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
   }
 
   @NotNull
+  @Unmodifiable
   private static List<HighlightInfo> filterMy(@NotNull List<? extends HighlightInfo> infos) {
     return ContainerUtil.filter(infos, h -> MyHighlightCommentsSubstringVisitor.isMy(h));
   }
@@ -170,7 +174,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -190,7 +194,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {
@@ -242,7 +246,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -258,7 +262,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {
@@ -349,7 +353,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     private HighlightInfoHolder myHolder;
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -365,7 +369,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {
@@ -456,7 +460,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     public abstract @NotNull HighlightVisitor clone();
 
     @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
       return true;
     }
 
@@ -481,7 +485,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     @Override
-    public boolean analyze(@NotNull PsiFile file,
+    public boolean analyze(@NotNull PsiFile psiFile,
                            boolean updateWholeFile,
                            @NotNull HighlightInfoHolder holder,
                            @NotNull Runnable action) {
@@ -603,5 +607,61 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     });
     myDaemonCodeAnalyzer.restart(getTestName(false));
     assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+  }
+
+
+  private static class MyCheckingCallsVisitor implements HighlightVisitor {
+    private static volatile boolean ANALYZE_CALLED;
+    private static volatile boolean VISIT_CALLED;
+
+    @Override
+    public boolean suitableForFile(@NotNull PsiFile psiFile) {
+      return true;
+    }
+
+    @Override
+    public void visit(@NotNull PsiElement element) {
+      VISIT_CALLED = true;
+    }
+
+    @Override
+    public boolean analyze(@NotNull PsiFile psiFile,
+                           boolean updateWholeFile,
+                           @NotNull HighlightInfoHolder holder,
+                           @NotNull Runnable action) {
+      ANALYZE_CALLED = true;
+      action.run();
+      return true;
+    }
+
+    @Override
+    public @NotNull HighlightVisitor clone() {
+      return new MyCheckingCallsVisitor();
+    }
+  }
+  public void testHighlightingVisitorAnalyzeMethodMustNotBeCalledIfTheHighlightingIsDisabledForThisFile() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo(int wwwwwwwwwwwwwwwww) {
+        }
+      }
+      """;
+    HighlightVisitor visitor = new MyCheckingCallsVisitor();
+    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
+    configureByText(JavaFileType.INSTANCE, text);
+    MyCheckingCallsVisitor.VISIT_CALLED = false;
+    MyCheckingCallsVisitor.ANALYZE_CALLED = false;
+    doHighlighting();
+    assertTrue(MyCheckingCallsVisitor.ANALYZE_CALLED);
+    assertTrue(MyCheckingCallsVisitor.VISIT_CALLED);
+
+    HighlightingSettingsPerFile.getInstance(myProject).setHighlightingSettingForRoot(myFile, FileHighlightingSetting.SKIP_HIGHLIGHTING);
+    MyCheckingCallsVisitor.VISIT_CALLED = false;
+    MyCheckingCallsVisitor.ANALYZE_CALLED = false;
+    myDaemonCodeAnalyzer.restart();
+    doHighlighting();
+    assertFalse(MyCheckingCallsVisitor.VISIT_CALLED);
+    assertFalse(MyCheckingCallsVisitor.ANALYZE_CALLED);
   }
 }

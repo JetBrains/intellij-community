@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
@@ -20,16 +20,14 @@ public final class ClassUtil {
    * @param aClass  the class to find abstract methods in.
    * @return null, if no abstract methods were found, an abstract method otherwise.
    */
-  @Nullable
-  public static PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
+  public static @Nullable PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
     for (PsiMethod method : aClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return method;
     }
     return getAnyMethodToImplement(aClass);
   }
 
-  @Nullable
-  public static PsiMethod getAnyMethodToImplement(@NotNull PsiClass aClass) {
+  public static @Nullable PsiMethod getAnyMethodToImplement(@NotNull PsiClass aClass) {
     final PsiClass superClass = aClass instanceof PsiAnonymousClass ? PsiUtil.resolveClassInClassTypeOnly(((PsiAnonymousClass)aClass).getBaseClassType()) : aClass.getSuperClass();
     if (superClass != null && !superClass.hasModifierProperty(PsiModifier.ABSTRACT) && !superClass.isEnum() && aClass.getImplementsListTypes().length == 0) {
       return null;

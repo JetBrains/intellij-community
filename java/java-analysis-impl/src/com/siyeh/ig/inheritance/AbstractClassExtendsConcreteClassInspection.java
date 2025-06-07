@@ -27,8 +27,7 @@ public final class AbstractClassExtendsConcreteClassInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.extends.concrete.class.problem.descriptor");
   }

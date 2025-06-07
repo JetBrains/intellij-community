@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.editor.Editor;
@@ -24,11 +24,13 @@ public final class TemplateManagerUtilBase {
     return templateState;
   }
 
-  static void setTemplateState(UserDataHolder stateHolder, @Nullable TemplateStateBase value) {
+  @ApiStatus.Internal
+  public static void setTemplateState(@NotNull UserDataHolder stateHolder, @Nullable TemplateStateBase value) {
     stateHolder.putUserData(TEMPLATE_STATE_KEY, value);
   }
 
-  static TemplateStateBase clearTemplateState(@NotNull Editor editor) {
+  @ApiStatus.Internal
+  public static TemplateStateBase clearTemplateState(@NotNull Editor editor) {
     TemplateStateBase prevState = getTemplateState(editor);
     if (prevState != null) {
       Editor stateEditor = prevState.getEditor();

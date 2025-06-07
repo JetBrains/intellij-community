@@ -5,8 +5,10 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
@@ -388,7 +390,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                              "   Cannot get property 'foo' on null object")
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
+    assertSyncViewSelectedNode("Cannot get property 'foo' on null object") {
       val trySuggestion = when {
         isGradleAtLeast("8.2") ->
           """|> Run with --debug option to get more log output.
@@ -428,14 +430,39 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         assertNodeWithDeprecatedGradleWarning()
       }
     }
-    assertSyncViewSelectedNode("finished", false) {
-      val text = it!!.lineSequence()
+    assertSyncViewNode("finished") {
+      val text = it.lineSequence()
         .dropWhile { s -> s == "Starting Gradle Daemon..."
                           || s.startsWith("Gradle Daemon started in")
                           || s.startsWith("Download ") }
         .joinToString(separator = "\n")
 
       assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
+    }
+  }
+
+  @Test
+  @TargetVersions("8.8+")
+  fun `test build output project using Daemon Jvm criteria`() {
+    val jdkHome = requireJdkHome()
+    val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)!!.version.feature
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkHome")
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=$jdkVersion")
+
+    overrideGradleUserHome(".gradle")
+
+    importProject()
+    assertSyncViewNode("finished") {
+      assertThat(it)
+        .containsOnlyOnce("Starting Gradle Daemon...")
+        .containsOnlyOnce("Gradle Daemon started in")
+    }
+
+    importProject()
+    assertSyncViewNode("finished") {
+      assertThat(it)
+        .doesNotContain("Starting Gradle Daemon...")
+        .doesNotContain("Gradle Daemon started in")
     }
   }
 
@@ -456,7 +483,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       }
     }
 
-    assertSyncViewSelectedNode("finished", false) {
+    assertSyncViewNode("finished") {
       assertThat(it)
         .contains("Message with level DEBUG",
                   "Message with level INFO",

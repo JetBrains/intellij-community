@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -84,17 +84,20 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
     LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
     library = librariesModel.createLibrary(libraryName, getLibraryKind(toImport), source);
-    Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    prepareNewLibrary(toImport, libraryName, libraryModel);
+    prepareNewLibrary(modelsProvider, library, libraryName, toImport);
   }
 
-  private static void prepareNewLibrary(@NotNull LibraryData libraryData,
-                                 @NotNull String libraryName,
-                                 @NotNull Library.ModifiableModel libraryModel) {
+  private static void prepareNewLibrary(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull Library library,
+    @NotNull String libraryName,
+    @NotNull LibraryData libraryData
+  ) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(libraryData);
     Set<String> excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
+    Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
-    EP_NAME.forEachExtensionSafe(extension -> extension.prepareNewLibrary(libraryData, libraryModel));
+    EP_NAME.forEachExtensionSafe(extension -> extension.prepareNewLibrary(modelsProvider, library, libraryData));
   }
 
   private static PersistentLibraryKind<?> getLibraryKind(LibraryData anImport) {
@@ -231,8 +234,8 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    for (Library lib: potentialOrphans) {
-      if (!modelsProvider.isSubstituted(lib.getName())) {
+    for (Library lib : potentialOrphans) {
+      if (!modelsProvider.isLibrarySubstituted(lib)) {
         orphanIdeLibraries.add(lib);
       }
     }
@@ -296,8 +299,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  @NotNull
-  private static String getLocalPath(@NotNull String url) {
+  private static @NotNull String getLocalPath(@NotNull String url) {
     if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
       url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
     }

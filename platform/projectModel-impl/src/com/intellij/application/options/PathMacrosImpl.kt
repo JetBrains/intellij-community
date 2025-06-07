@@ -45,6 +45,9 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     private val LOG = logger<PathMacrosImpl>()
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
+
+    @Deprecated("to be removed")
+    @ApiStatus.ScheduledForRemoval
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")

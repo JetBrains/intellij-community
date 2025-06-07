@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.dvcs.commit.DvcsCommitModeProvider;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.commit.CommitMode;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
@@ -331,6 +333,11 @@ public final class HgVcs extends AbstractVcs {
   }
 
   @Override
+  public @Nullable CommitMode getForcedCommitMode() {
+    return DvcsCommitModeProvider.compute();
+  }
+
+  @Override
   @RequiresEdt
   public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
@@ -339,11 +346,6 @@ public final class HgVcs extends AbstractVcs {
         new HgIntegrationEnabler(HgVcs.this, targetDirectory).detectAndEnable();
       }
     }.queue();
-  }
-
-  @Override
-  public CheckoutProvider getCheckoutProvider() {
-    return new HgCheckoutProvider();
   }
 
   /**

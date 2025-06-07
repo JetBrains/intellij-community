@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ThreadGroupReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     return myParentThreadGroupProxy;
   }
 
+  @Override
   public @NonNls String toString() {
     return "ThreadGroupReferenceProxy: " + getThreadGroupReference().toString();
   }
@@ -58,11 +60,11 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     getThreadGroupReference().resume();
   }
 
-  public List<ThreadReferenceProxyImpl> threads() {
+  public @Unmodifiable List<ThreadReferenceProxyImpl> threads() {
     return ContainerUtil.map(getThreadGroupReference().threads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
-  public List<ThreadGroupReferenceProxyImpl> threadGroups() {
+  public @Unmodifiable List<ThreadGroupReferenceProxyImpl> threadGroups() {
     return ContainerUtil.map(getThreadGroupReference().threadGroups(), getVirtualMachineProxy()::getThreadGroupReferenceProxy);
   }
 

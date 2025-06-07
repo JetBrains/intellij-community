@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -91,7 +91,7 @@ class PyDataView(private val project: Project) : DumbAware {
     window.contentManager.getReady(this).doWhenDone {
       val selectedInfo = addTab(value.frameAccessor)
       val dataViewerPanel = selectedInfo.component as PyDataViewerPanel
-      dataViewerPanel.apply(value, false)
+      dataViewerPanel.component.apply(value, false)
       window.show {
         window.component.requestFocusInWindow()
         dataViewerPanel.requestFocusInWindow()
@@ -103,7 +103,7 @@ class PyDataView(private val project: Project) : DumbAware {
     val tabsToRemove: MutableList<Content> = ArrayList()
 
     contentManager.contents.forEach {
-      if (ifClose.test(getPanel(it.component).frameAccessor)) {
+      if (ifClose.test(getPanel(it.component).component.dataViewerModel.frameAccessor)) {
         tabsToRemove.add(it)
       }
     }
@@ -111,7 +111,6 @@ class PyDataView(private val project: Project) : DumbAware {
     ApplicationManager.getApplication().invokeLater {
       tabsToRemove.forEach {
         contentManager.removeContent(it, true)
-        getPanel(it.component).closeEditorTabs()
       }
     }
   }
@@ -119,8 +118,8 @@ class PyDataView(private val project: Project) : DumbAware {
   fun updateTabs(handler: ProcessHandler) {
     saveSelectedInfo()
     contentManager.contents.forEach { content ->
-      val panel: PyDataViewerPanel = getPanel(content.component)
-      val accessor = panel.frameAccessor
+      val panel: PyDataViewerCommunityPanel = getPanel(content.component).component as PyDataViewerCommunityPanel
+      val accessor = panel.dataViewerModel.frameAccessor
       if (accessor !is PyDebugProcess) {
         return@forEach
       }
@@ -145,7 +144,7 @@ class PyDataView(private val project: Project) : DumbAware {
   private fun saveSelectedInfo() {
     val selectedInfo = contentManager.selectedContent
     if (!hasOnlyEmptyTab() && selectedInfo != null) {
-      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).frameAccessor
+      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).component.dataViewerModel.frameAccessor
       if (accessor is PyDebugProcess) {
         selectedInfos[accessor.processHandler] = selectedInfo
       }
@@ -173,17 +172,11 @@ class PyDataView(private val project: Project) : DumbAware {
       contentManager.removeAllContents(true)
     }
 
-    var panel: PyDataViewerPanel? = null
-    for (factory in PyDataViewPanelFactory.EP_NAME.extensionList) {
-      panel = factory.createDataViewPanel(project, frameAccessor)
-      if (panel != null) break
-    }
-    if (panel == null) {
-      panel = PyDataViewerPanel(project, frameAccessor)
-    }
+    val panel = PyDataViewerPanel(project, frameAccessor)
 
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.isCloseable = true
+    content.displayName = PyBundle.message("debugger.data.view.empty.tab")
     if (frameAccessor is PydevConsoleCommunication) {
       content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
@@ -193,8 +186,11 @@ class PyDataView(private val project: Project) : DumbAware {
       content.description = PyBundle.message("debugger.data.view.connected.to.debug.session", frameAccessor.session.sessionName)
     }
 
-    content.setActions(DefaultActionGroup(NewViewerAction(frameAccessor)), "DataView", panel)
-    panel.addListener(PyDataViewerPanel.Listener {
+    val window: ToolWindow? = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID)
+    if (window is ToolWindowEx) {
+      window.setTabActions(NewViewerAction(frameAccessor))
+    }
+    panel.addListener( PyDataViewerAbstractPanel.OnNameChangedListener {
       content.displayName = it
     })
     Disposer.register(content, panel)
@@ -225,7 +221,7 @@ class PyDataView(private val project: Project) : DumbAware {
 
   fun changeAutoResize(autoResize: Boolean) {
     contentManager.contents.forEach {
-      getPanel(it.component).resize(autoResize)
+      (getPanel(it.component).component as PyDataViewerCommunityPanel).resize(autoResize)
     }
   }
 
@@ -236,8 +232,8 @@ class PyDataView(private val project: Project) : DumbAware {
   companion object {
     private const val DATA_VIEWER_ID = "SciView"
 
-    const val COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault"
-    const val AUTO_RESIZE = "python.debugger.dataview.autoresize"
+    const val COLORED_BY_DEFAULT: String = "python.debugger.dataView.coloredByDefault"
+    const val AUTO_RESIZE: String = "python.debugger.dataView.autoresize"
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
     @JvmStatic

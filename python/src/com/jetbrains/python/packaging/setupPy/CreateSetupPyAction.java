@@ -129,7 +129,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
     final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final Collection<VirtualFile> sourceRoots = PyUtil.getSourceRoots(module);
-      if (sourceRoots.size() > 0) {
+      if (!sourceRoots.isEmpty()) {
         return PsiManager.getInstance(module.getProject()).findDirectory(sourceRoots.iterator().next());
       }
     }

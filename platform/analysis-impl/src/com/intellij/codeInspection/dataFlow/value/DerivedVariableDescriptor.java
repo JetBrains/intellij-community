@@ -48,8 +48,8 @@ public interface DerivedVariableDescriptor extends VariableDescriptor {
     if (qualifier instanceof DfaWrappedValue wrappedValue && wrappedValue.getSpecialField() == this) {
       return wrappedValue.getWrappedValue();
     }
-    if (qualifier instanceof DfaVariableValue) {
-      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
+    if (qualifier instanceof DfaVariableValue dfaVariableValue) {
+      return factory.getVarFactory().createVariableValue(this, dfaVariableValue);
     }
     return factory.fromDfType(getFromQualifier(qualifier.getDfType()).meet(getDefaultValue()));
   }

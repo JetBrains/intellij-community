@@ -42,7 +42,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
     return null
   }
 
-  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
+  val modifiedPath = "${path.substring(0, path.length - 4)}@${width}x${height}.svg"
   val foundIcon = findIconUsingNewImplementation(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) &&
@@ -81,7 +81,7 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
 }
 
 @ApiStatus.Internal
-fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null): Icon {
+fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null, isDarkForScale: Boolean? = null): Icon {
   if (icon.iconWidth == JBUIScale.scale(size)) {
     return if (isDark == null) icon else icon.getDarkIcon(isDark)
   }
@@ -89,5 +89,5 @@ fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boole
   loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
     return it
   }
-  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark)
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDarkForScale)
 }

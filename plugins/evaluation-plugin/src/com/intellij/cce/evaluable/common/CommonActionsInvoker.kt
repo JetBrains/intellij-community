@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable.common
 
+import com.intellij.cce.actions.ImportOptimiser
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -36,6 +38,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
 
   override fun moveCaret(offset: Int) = onEdt {
     val editor = getEditorSafe(project)
+    editor.selectionModel.removeSelection()
     editor.caretModel.moveToOffset(offset)
     editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
@@ -51,7 +54,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
       LOG.warn("Psi identifier wasn't found")
       return@runWriteCommandAction
     }
-    for (ref in ReferencesSearch.search(psiElement)) {
+    for (ref in ReferencesSearch.search(psiElement).asIterable()) {
       if (!isThisReference(ref.canonicalText) ) {
         ref.handleElementRename(text)
       }
@@ -105,7 +108,10 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
   override fun openFile(file: String): String = readActionInSmartMode(project) {
     LOG.info("Open file: $file")
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))
-    val descriptor = OpenFileDescriptor(project, virtualFile!!)
+    if (virtualFile == null) {
+      throw NullPointerException("Virtual file not found for path: ${fullPath(file)}")
+    }
+    val descriptor = OpenFileDescriptor(project, virtualFile)
     spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(virtualFile)
     TrailingSpacesStripper.setEnabled(virtualFile, false)
     val fileEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
@@ -118,6 +124,12 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))!!
     TrailingSpacesStripper.setEnabled(virtualFile, spaceStrippingEnabled)
     FileEditorManager.getInstance(project).closeFile(virtualFile)
+  }
+
+  override fun optimiseImports(file: String) {
+    LOG.info("Optimise imports in file: $file")
+    val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))!!
+    return runBlockingCancellable { ImportOptimiser.optimiseImports(project, virtualFile) }
   }
 
   override fun isOpen(file: String): Boolean = readActionInSmartMode(project) {

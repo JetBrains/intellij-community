@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
-  static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
+  @ApiStatus.Internal
+  public static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
   private static final AtomicInteger debug = new AtomicInteger(); // if >0 then it's in the debug mode
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug.get()>0);
   private volatile Throwable myCancellationCause;
@@ -93,16 +94,16 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   // true if canceled successfully
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("doCancel(" + this +
-                (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
-                (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
-    }
     boolean wasCanceled;
     synchronized (getLock()) {
       wasCanceled = tryCancel(cause);
     }
     if (wasCanceled) { // call outside synchronized to avoid deadlock
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("doCancel(" + this +
+                  (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
+                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
+      }
       ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
     }
   }
@@ -118,7 +119,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   @Override
-  protected @Nullable Throwable getCancellationTrace() {
+  @ApiStatus.Internal
+  public @Nullable Throwable getCancellationTrace() {
     Throwable cause = myCancellationCause;
     return cause != null ? cause : super.getCancellationTrace();
   }
@@ -141,13 +143,14 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     DaemonProgressIndicator.debug.set(debug ? 1 : 0);
   }
   @TestOnly
-  static <E extends Throwable> void runInDebugMode(@NotNull ThrowableRunnable<E> runnable) throws E {
+  @ApiStatus.Internal
+  public static <E extends Throwable> void runInDebugMode(@NotNull ThrowableRunnable<E> runnable) throws E {
     try {
-      DaemonProgressIndicator.debug.incrementAndGet();
+      debug.incrementAndGet();
       runnable.run();
     }
     finally {
-      DaemonProgressIndicator.debug.decrementAndGet();
+      debug.decrementAndGet();
     }
   }
 
@@ -163,7 +166,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public String toString() {
-    return System.identityHashCode(this) + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + (isCanceled() ? "X" : "V");
+    return System.identityHashCode(this) + (isCanceled() ? (isRunning() ? "X" : "S") : "V");
   }
 
   @Override

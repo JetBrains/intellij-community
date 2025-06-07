@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
@@ -19,18 +20,18 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Maxim Mossienko
- */
-public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
+public final class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
+
+  public CheckTagEmptyBodyInspection() {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (XmlHighlightVisitor.isInjectedWithoutValidation(holder.getFile())) {
+      // not inside injected code
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final @NotNull XmlTag tag) {
         if (tag instanceof HtmlTag) {
@@ -42,7 +43,8 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
         }
         final ASTNode node = child.getTreeNext();
 
-        if (node != null && node.getElementType() == XmlTokenType.XML_END_TAG_START) {
+        if (node != null
+            && node.getElementType() == XmlTokenType.XML_END_TAG_START) {
           holder.registerProblem(
             tag,
             XmlAnalysisBundle.message("xml.inspections.tag.empty.body"),
@@ -61,9 +63,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "CheckTagEmptyBody";
   }
 }

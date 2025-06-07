@@ -41,7 +41,7 @@ enum class TooManyUsagesUserAction {
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("usage.view", 21)
+  val GROUP: EventLogGroup = EventLogGroup("usage.view", 22)
   val USAGE_VIEW: PrimitiveEventField<UsageView?> = object : PrimitiveEventField<UsageView?>() {
     override val name: String = "usage_view"
 

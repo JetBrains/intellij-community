@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -80,6 +80,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ConstructorReferenceNotImported/");
     }
 
+    @TestMetadata("CovarianceExtensionFunction")
+    public void testCovarianceExtensionFunction() throws Exception {
+        runTest("../../completion/testData/basic/multifile/CovarianceExtensionFunction/");
+    }
+
     @TestMetadata("DoNotCompleteWithConstraints")
     public void testDoNotCompleteWithConstraints() throws Exception {
         runTest("../../completion/testData/basic/multifile/DoNotCompleteWithConstraints/");
@@ -105,6 +110,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/EnumEntry/");
     }
 
+    @TestMetadata("EnumEntryExpectedPreferredJava")
+    public void testEnumEntryExpectedPreferredJava() throws Exception {
+        runTest("../../completion/testData/basic/multifile/EnumEntryExpectedPreferredJava/");
+    }
+
     @TestMetadata("EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled")
     public void testEnumValuesMethodJavaUsualPriorityWhenFeatureDisabled() throws Exception {
         runTest("../../completion/testData/basic/multifile/EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled/");
@@ -128,6 +138,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("ExcludedJavaClass")
     public void testExcludedJavaClass() throws Exception {
         runTest("../../completion/testData/basic/multifile/ExcludedJavaClass/");
+    }
+
+    @TestMetadata("ExpectedJavaEnumEntryCompletion")
+    public void testExpectedJavaEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExpectedJavaEnumEntryCompletion/");
     }
 
     @TestMetadata("ExtensionFunction")
@@ -265,6 +280,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/IncorrectGetters/");
     }
 
+    @TestMetadata("InvisibleEnumEntryCompletion")
+    public void testInvisibleEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/InvisibleEnumEntryCompletion/");
+    }
+
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../../completion/testData/basic/multifile/JavaCallableReference/");
@@ -273,6 +293,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("JavaClassQualifierWithTypeArguments")
     public void testJavaClassQualifierWithTypeArguments() throws Exception {
         runTest("../../completion/testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
+    }
+
+    @TestMetadata("JavaConstructor")
+    public void testJavaConstructor() throws Exception {
+        runTest("../../completion/testData/basic/multifile/JavaConstructor/");
     }
 
     @TestMetadata("JavaEnum")
@@ -295,6 +320,26 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/KT9835/");
     }
 
+    @TestMetadata("KTIJ_27276")
+    public void testKTIJ_27276() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_27276/");
+    }
+
+    @TestMetadata("KTIJ_32378")
+    public void testKTIJ_32378() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32378/");
+    }
+
+    @TestMetadata("KTIJ_32792")
+    public void testKTIJ_32792() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32792/");
+    }
+
+    @TestMetadata("KTIJ_32930")
+    public void testKTIJ_32930() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32930/");
+    }
+
     @TestMetadata("MoreSpecificExtensionGeneric")
     public void testMoreSpecificExtensionGeneric() throws Exception {
         runTest("../../completion/testData/basic/multifile/MoreSpecificExtensionGeneric/");
@@ -315,6 +360,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/NoAutoInsertionOfNotImported/");
     }
 
+    @TestMetadata("NoExpectedEnumEntryCompletion")
+    public void testNoExpectedEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NoExpectedEnumEntryCompletion/");
+    }
+
     @TestMetadata("NoExtForOuterFromNested")
     public void testNoExtForOuterFromNested() throws Exception {
         runTest("../../completion/testData/basic/multifile/NoExtForOuterFromNested/");
@@ -333,6 +383,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("NotImportedClass")
     public void testNotImportedClass() throws Exception {
         runTest("../../completion/testData/basic/multifile/NotImportedClass/");
+    }
+
+    @TestMetadata("NotImportedExtensionForDefinitelyNotNullableType")
+    public void testNotImportedExtensionForDefinitelyNotNullableType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NotImportedExtensionForDefinitelyNotNullableType/");
     }
 
     @TestMetadata("NotImportedExtensionForFlexibleType")
@@ -373,6 +428,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("NotImportedFunction")
     public void testNotImportedFunction() throws Exception {
         runTest("../../completion/testData/basic/multifile/NotImportedFunction/");
+    }
+
+    @TestMetadata("NotImportedGenericReceiverExtension")
+    public void testNotImportedGenericReceiverExtension() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NotImportedGenericReceiverExtension/");
     }
 
     @TestMetadata("NotImportedInfixExtension")
@@ -528,6 +588,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("SyntheticPrimitiveJavaProperty")
     public void testSyntheticPrimitiveJavaProperty() throws Exception {
         runTest("../../completion/testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
+    }
+
+    @TestMetadata("SyntheticPropertyWithoutJavaOrigin")
+    public void testSyntheticPropertyWithoutJavaOrigin() throws Exception {
+        runTest("../../completion/testData/basic/multifile/SyntheticPropertyWithoutJavaOrigin/");
     }
 
     @TestMetadata("TopLevelFunction")

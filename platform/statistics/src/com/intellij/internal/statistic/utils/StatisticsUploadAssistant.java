@@ -83,8 +83,7 @@ public final class StatisticsUploadAssistant {
     return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
 
-  @NlsContexts.DetailedDescription
-  public static @Nullable String getConsentWarning() {
+  public static @NlsContexts.DetailedDescription @Nullable String getConsentWarning() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings == null ? null : externalEventLogSettings.getConsentWarning();
   }

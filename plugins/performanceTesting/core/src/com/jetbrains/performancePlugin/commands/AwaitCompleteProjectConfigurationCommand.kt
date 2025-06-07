@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.configuration.ConfigurationResult
 import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
 import com.intellij.openapi.ui.playback.PlaybackContext
-import kotlinx.coroutines.runBlocking
 
 
 private val LOG: Logger

@@ -9,6 +9,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -47,6 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 final class TrafficLightPopup {
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionPopupLevelChangePolicy");
@@ -348,6 +351,11 @@ final class TrafficLightPopup {
       protected @NotNull String itemToString(@NotNull InspectionsLevel item) {
         return prefix + item;
       }
+
+      @Override
+      public @NotNull ListCellRenderer<? super InspectionsLevel> createRenderer() {
+        return textListCellRenderer(level -> level.toString());
+      }
     };
   }
 
@@ -361,7 +369,7 @@ final class TrafficLightPopup {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {
       getTemplatePresentation().setPopupGroup(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.More);
-      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
       addAll(actions);
       add(compactViewAction);
     }

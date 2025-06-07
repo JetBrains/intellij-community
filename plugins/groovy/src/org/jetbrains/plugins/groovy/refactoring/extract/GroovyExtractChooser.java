@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,14 +83,13 @@ public final class GroovyExtractChooser {
     return buildInfo(project, file, start, end, forceStatements, selectionModel, null);
   }
 
-  @NotNull
-  private static InitialInfo buildInfo(@NotNull Project project,
-                                       @NotNull PsiFile file,
-                                       int start,
-                                       int end,
-                                       boolean forceStatements,
-                                       @NotNull SelectionModel selectionModel,
-                                       @Nullable GrVariable variable) throws GrRefactoringError {
+  private static @NotNull InitialInfo buildInfo(@NotNull Project project,
+                                                @NotNull PsiFile file,
+                                                int start,
+                                                int end,
+                                                boolean forceStatements,
+                                                @NotNull SelectionModel selectionModel,
+                                                @Nullable GrVariable variable) throws GrRefactoringError {
     PsiElement[] elements = getElementsInOffset(file, start, end, forceStatements);
     //if (elements.length == 1 && elements[0] instanceof GrExpression) {
     //  selectionModel.setSelection(start, elements[0].getTextRange().getEndOffset());

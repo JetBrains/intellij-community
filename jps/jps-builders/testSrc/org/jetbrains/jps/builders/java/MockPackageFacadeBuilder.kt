@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java
 
 import com.intellij.openapi.util.io.FileUtil
@@ -16,7 +16,6 @@ import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.dependencyView.Mappings
 import org.jetbrains.jps.builders.storage.StorageProvider
 import org.jetbrains.jps.dependency.GraphConfiguration
-import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -50,7 +49,7 @@ internal class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.S
     }
 
     val allFilesToCompile = ArrayList(filesToCompile.values())
-    if (allFilesToCompile.isEmpty() && chunk.targets.all { dirtyFilesHolder.getRemovedFiles(it).all { !isCompilable(File(it)) } }) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
+    if (allFilesToCompile.isEmpty() && chunk.targets.all { dirtyFilesHolder.getRemoved(it).all { !isCompilable(it.toFile()) } }) return ModuleLevelBuilder.ExitCode.NOTHING_DONE
 
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       val logger = context.loggingManager.projectBuilderLogger
@@ -72,7 +71,7 @@ internal class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.S
         val graphConfig: GraphConfiguration? = context.projectDescriptor.dataManager.dependencyGraph
         if (graphConfig != null) {
           val mapper = graphConfig.pathMapper
-          graphConfig.graph.getSources(JvmNodeReferenceID(qName)).forEach { files.add(mapper.toPath(it).toFile()) }
+          graphConfig.graph.getSources(org.jetbrains.jps.dependency.java.JvmNodeReferenceID(qName)).forEach { files.add(mapper.toPath(it).toFile()) }
         }
         files
       }
@@ -113,7 +112,11 @@ internal class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.S
           packagesToGenerate[oldName] = ArrayList()
         }
       }
-      val packagesFromDeletedFiles = dirtyFilesHolder.getRemovedFiles(target).filter { isCompilable(File(it)) }.map { packagesStorage.getState(it) }.filterNotNull()
+      val packagesFromDeletedFiles = dirtyFilesHolder.getRemoved(target)
+        .asSequence()
+        .filter { isCompilable(it.toFile()) }
+        .map { packagesStorage.getState(it.toString()) }
+        .filterNotNull()
       packagesFromDeletedFiles.forEach {
         if (it !in packagesToGenerate) {
           packagesToGenerate[it] = ArrayList()

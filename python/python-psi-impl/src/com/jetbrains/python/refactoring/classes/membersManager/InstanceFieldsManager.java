@@ -27,13 +27,13 @@ class InstanceFieldsManager extends FieldsManager {
   }
 
   @Override
-  public boolean hasConflict(@NotNull final PyTargetExpression member, @NotNull final PyClass aClass) {
+  public boolean hasConflict(final @NotNull PyTargetExpression member, final @NotNull PyClass aClass) {
     return NamePredicate.hasElementWithSameName(member, aClass.getInstanceAttributes());
   }
 
   @Override
-  protected Collection<PyElement> moveAssignments(@NotNull final PyClass from,
-                                                  @NotNull final Collection<PyAssignmentStatement> statements,
+  protected Collection<PyElement> moveAssignments(final @NotNull PyClass from,
+                                                  final @NotNull Collection<PyAssignmentStatement> statements,
                                                   final PyClass @NotNull ... to) {
     //TODO: Copy/paste with ClassFieldsManager. Move to parent?
 
@@ -58,9 +58,8 @@ class InstanceFieldsManager extends FieldsManager {
    * @param to      destination
    * @return newly created fields
    */
-  @NotNull
-  private static List<PyAssignmentStatement> copyInstanceFields(@NotNull final Collection<PyAssignmentStatement> members,
-                                                                @NotNull final PyClass to) {
+  private static @NotNull List<PyAssignmentStatement> copyInstanceFields(final @NotNull Collection<PyAssignmentStatement> members,
+                                                                final @NotNull PyClass to) {
     //We need __init__ method, and if there is no any -- we need to create it
     PyFunction toInitMethod = PyUtil.getInitMethod(to);
     if (toInitMethod == null) {
@@ -77,8 +76,7 @@ class InstanceFieldsManager extends FieldsManager {
    * @return newly created method
    */
   //TODO: Move to utils?
-  @NotNull
-  private static PyFunction createInitMethod(@NotNull final PyClass to) {
+  private static @NotNull PyFunction createInitMethod(final @NotNull PyClass to) {
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder(PyNames.INIT, to);
     functionBuilder.parameter(PyNames.CANONICAL_SELF); //TODO: Take param from codestyle?
     final PyFunction function = functionBuilder.buildFunction();
@@ -86,26 +84,24 @@ class InstanceFieldsManager extends FieldsManager {
   }
 
   @Override
-  protected boolean classHasField(@NotNull final PyClass pyClass, @NotNull final String fieldName) {
+  protected boolean classHasField(final @NotNull PyClass pyClass, final @NotNull String fieldName) {
     return pyClass.findInstanceAttribute(fieldName, true) != null;
   }
 
-  @NotNull
   @Override
-  protected Collection<PyTargetExpression> getFieldsByClass(@NotNull final PyClass pyClass) {
+  protected @NotNull Collection<PyTargetExpression> getFieldsByClass(final @NotNull PyClass pyClass) {
     return Collections2.filter(pyClass.getInstanceAttributes(), FIELDS_ONLY);
   }
 
   private static final class InitsOnly extends NotNullPredicate<PyAssignmentStatement> {
-    @NotNull
-    private final PyFunction myInitMethod;
+    private final @NotNull PyFunction myInitMethod;
 
-    private InitsOnly(@NotNull final PyFunction initMethod) {
+    private InitsOnly(final @NotNull PyFunction initMethod) {
       myInitMethod = initMethod;
     }
 
     @Override
-    protected boolean applyNotNull(@NotNull final PyAssignmentStatement input) {
+    protected boolean applyNotNull(final @NotNull PyAssignmentStatement input) {
       final PyExpression expression = input.getLeftHandSideExpression();
       if (expression == null) {
         return false;
@@ -118,7 +114,7 @@ class InstanceFieldsManager extends FieldsManager {
 
   private static class FieldsOnly extends NotNullPredicate<PyTargetExpression> {
     @Override
-    protected boolean applyNotNull(@NotNull final PyTargetExpression input) {
+    protected boolean applyNotNull(final @NotNull PyTargetExpression input) {
       return input.getReference().resolve() instanceof PyTargetExpression;
     }
   }

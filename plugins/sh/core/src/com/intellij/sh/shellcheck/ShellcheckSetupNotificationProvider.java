@@ -27,7 +27,7 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
-    if (!(file.getFileType() instanceof ShFileType) || isValidPath(ShSettings.getShellcheckPath())) return null;
+    if (!(file.getFileType() instanceof ShFileType) || isValidPath(ShSettings.getShellcheckPath(project))) return null;
 
     return fileEditor -> {
       EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
@@ -45,7 +45,7 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
                                                                        NotificationType.ERROR).notify(project);
       panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(project, onSuccess, onFailure));
       panel.createActionLabel(message("sh.no.thanks"), () -> {
-        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
+        ShSettings.setShellcheckPath(project, ShSettings.I_DO_MIND_SUPPLIER.get());
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;

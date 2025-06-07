@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -22,9 +22,9 @@ public class CleanupIntentionMenuContributor implements IntentionMenuContributor
     }
   }
 
-  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
+  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile psiFile) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
-      if (descriptor.canCleanup(file)) {
+      if (descriptor.canCleanup(psiFile)) {
         IntentionManager manager = IntentionManager.getInstance();
         actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(manager.createCleanupAllIntention(),
                                                                           manager.getCleanupIntentionOptions(),

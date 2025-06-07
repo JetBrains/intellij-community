@@ -31,21 +31,18 @@ import java.util.function.Supplier;
 
 public final class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "ConfusingArgumentToVarargsMethod";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "NullArgumentToVariableArgMethod"; // old suppressions should keep working
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.problem.descriptor");
   }
 

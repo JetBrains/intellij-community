@@ -38,9 +38,8 @@ public class NumpyDocStringUpdater extends SectionBasedDocStringUpdater {
     return getSectionStartLine(section) + 1;
   }
 
-  @NotNull
   @Override
-  protected SectionBasedDocStringBuilder createBuilder() {
+  protected @NotNull SectionBasedDocStringBuilder createBuilder() {
     return new NumpyDocStringBuilder();
   }
 }

@@ -23,7 +23,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private val registeringSink = object : RemoteApiProvider.Sink {
     override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
-      remoteApis[descriptor.getApiFqn()] = ServiceImplementation(descriptor, implementation())
+      remoteApis[descriptor.getApiFqn()] = ServiceImplementation(descriptor, implementation(), null)
     }
   }
 

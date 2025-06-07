@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -37,7 +37,7 @@ import java.util.Set;
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public final class GradleNativeProjectResolver extends AbstractProjectResolverExtension {
-  @NotNull public static final Key<CppProject> CPP_PROJECT = Key.create(CppProject.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
+  public static final @NotNull Key<CppProject> CPP_PROJECT = Key.create(CppProject.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
 
   @Override
   public void populateModuleContentRoots(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
@@ -63,15 +63,13 @@ public final class GradleNativeProjectResolver extends AbstractProjectResolverEx
     nextResolver.populateModuleContentRoots(gradleModule, ideModule);
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getExtraProjectModelClasses() {
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return Set.of(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getToolingExtensionsClasses() {
+  public @NotNull Set<Class<?>> getToolingExtensionsClasses() {
     return Set.of(
       // native-gradle-tooling jar
       CppModelBuilder.class
@@ -87,9 +85,8 @@ public final class GradleNativeProjectResolver extends AbstractProjectResolverEx
     );
   }
 
-  @Nullable
-  private CppProjectImpl appendCppProject(@NotNull IdeaModule gradleModule,
-                                          @NotNull DataNode<ModuleData> ideModule) {
+  private @Nullable CppProjectImpl appendCppProject(@NotNull IdeaModule gradleModule,
+                                                    @NotNull DataNode<ModuleData> ideModule) {
     CppProjectImpl cppProject = null;
     org.gradle.tooling.model.cpp.CppProject gradleCppProject =
       resolverCtx.getExtraProject(gradleModule, org.gradle.tooling.model.cpp.CppProject.class);
@@ -132,8 +129,7 @@ public final class GradleNativeProjectResolver extends AbstractProjectResolverEx
     return cppComponent;
   }
 
-  @Nullable
-  private static CppBinaryImpl convert(@Nullable org.gradle.tooling.model.cpp.CppBinary binary) {
+  private static @Nullable CppBinaryImpl convert(@Nullable org.gradle.tooling.model.cpp.CppBinary binary) {
     CppBinaryImpl cppBinary;
     if (binary instanceof CppExecutable) {
       cppBinary = new CppExecutableImpl(binary.getName(), binary.getBaseName(), binary.getVariantName());

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import java.nio.file.Path
@@ -10,7 +11,7 @@ data class ModuleInfo(
   val name: String,
   val ideName: String,
   val relativePath: String,
-  val useKotlinDsl: Boolean,
+  val gradleDsl: GradleDsl,
   val groupId: String,
   val artifactId: String,
   val version: String,
@@ -25,7 +26,7 @@ data class ModuleInfo(
         builder.name,
         builder.ideName,
         builder.moduleRelativePath,
-        builder.useKotlinDsl,
+        builder.gradleDsl,
         builder.groupId,
         builder.artifactId,
         builder.version,
@@ -37,14 +38,14 @@ data class ModuleInfo(
     fun createBuilder(
       ideName: String,
       relativePath: String,
-      useKotlinDsl: Boolean,
+      gradleDsl: GradleDsl,
       configure: Builder.() -> Unit = {}
     ): Builder {
       val builder = BuilderImpl(
         Path.of(relativePath).normalize().name,
         ideName,
         relativePath,
-        useKotlinDsl
+        gradleDsl
       )
       builder.configure()
       return builder
@@ -55,7 +56,7 @@ data class ModuleInfo(
     val name: String
     val ideName: String
     val moduleRelativePath: String
-    var useKotlinDsl: Boolean
+    var gradleDsl: GradleDsl
     var groupId: String
     var artifactId: String
     var version: String
@@ -67,7 +68,7 @@ data class ModuleInfo(
     override val name: String,
     override val ideName: String,
     override val moduleRelativePath: String,
-    override var useKotlinDsl: Boolean
+    override var gradleDsl: GradleDsl
   ) : Builder {
 
     override var groupId: String = "org.example"

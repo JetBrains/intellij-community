@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContext;
@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnPropertiesDiffTool implements FrameDiffTool {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return message("svn.properties.viewer");
   }
 
@@ -20,9 +19,8 @@ public class SvnPropertiesDiffTool implements FrameDiffTool {
     return request instanceof SvnPropertiesDiffRequest;
   }
 
-  @NotNull
   @Override
-  public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+  public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return SvnPropertiesDiffViewer.create(context, (SvnPropertiesDiffRequest)request);
   }
 }

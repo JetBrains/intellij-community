@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -68,8 +68,7 @@ public final class XDebuggerTreeState {
     }
   }
 
-  @Nullable
-  private static NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
+  private static @Nullable NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
     if (node instanceof RestorableStateNode valueNode) {
       if (valueNode.isComputed()) {
         return new NodeInfo(valueNode.getName(), valueNode.getRawValue(), selected);
@@ -110,8 +109,7 @@ public final class XDebuggerTreeState {
       return myValue;
     }
 
-    @Nullable
-    public NodeInfo getChild(XNamedTreeNode node) {
+    public @Nullable NodeInfo getChild(XNamedTreeNode node) {
       String name = node.getName();
       if (myChildren == null) {
         return null;

@@ -1,0 +1,42 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.scriptingSupport"
+            interface="org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
+            interface="org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"/>
+
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
+                         instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
+                         parentId="preferences.language.Kotlin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource
+            id="StandardScriptDefinitionContributor"
+            order="last"
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
+
+    <scriptDefinitionsSource id="ConsoleScriptDefinitionContributor"
+                                 implementation="org.jetbrains.kotlin.console.ConsoleScriptDefinitionSource"/>
+  </extensions>
+</idea-plugin>

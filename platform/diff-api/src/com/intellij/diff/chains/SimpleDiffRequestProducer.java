@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -16,21 +16,19 @@ import org.jetbrains.annotations.Nullable;
 public final class SimpleDiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(SimpleDiffRequestProducer.class);
 
-  @NotNull
-  public static DiffRequestProducer create(@NotNull FilePath filePath,
-                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
+  public static @NotNull DiffRequestProducer create(@NotNull FilePath filePath,
+                                                    @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
     return new MyDiffRequestProducer(filePath.getPath(), filePath.getFileType(), producer);
   }
 
-  @NotNull
-  public static DiffRequestProducer create(@NotNull @Nls String name,
-                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
+  public static @NotNull DiffRequestProducer create(@NotNull @Nls String name,
+                                                    @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
     return new MyDiffRequestProducer(name, null, producer);
   }
 
   private static class MyDiffRequestProducer implements DiffRequestProducer {
-    @NotNull private final @Nls String myName;
-    @Nullable private final FileType myFileType;
+    private final @NotNull @Nls String myName;
+    private final @Nullable FileType myFileType;
     private final @NotNull ThrowableComputable<? extends DiffRequest, Throwable> myProducer;
 
     private MyDiffRequestProducer(@NotNull @Nls String name,
@@ -41,10 +39,8 @@ public final class SimpleDiffRequestProducer {
       myProducer = producer;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myName;
     }
 
@@ -53,9 +49,8 @@ public final class SimpleDiffRequestProducer {
       return myFileType;
     }
 
-    @NotNull
     @Override
-    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+    public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       try {
         return myProducer.compute();

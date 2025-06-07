@@ -60,7 +60,7 @@ class ReadWriteLockStatusManualTest : HeavyPlatformTestCase() {
   fun testCoroutinesWriteAction() {
     AppExecutorUtil.getAppExecutorService().submit {
       runBlocking {
-        writeAction {
+        edtWriteAction {
           val x = 1
         }
       }

@@ -7,19 +7,16 @@ import org.jetbrains.annotations.Nullable;
 
 
 @ApiStatus.Experimental
-public interface PyAstSliceItem extends PyAstElement {
-  @Nullable
-  default PyAstExpression getLowerBound() {
+public interface PyAstSliceItem extends PyAstExpression {
+  default @Nullable PyAstExpression getLowerBound() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  @Nullable
-  default PyAstExpression getUpperBound() {
+  default @Nullable PyAstExpression getUpperBound() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
-  @Nullable
-  default PyAstExpression getStride() {
+  default @Nullable PyAstExpression getStride() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 2);
   }
 }

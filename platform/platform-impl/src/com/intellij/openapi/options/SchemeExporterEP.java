@@ -22,12 +22,16 @@ import java.util.List;
  * </pre>
  * {@code ExporterClass} must extend {@link SchemeExporter}
  */
-@ApiStatus.Internal
 public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPBase<SchemeExporter<S>> {
+  @ApiStatus.Internal
   public static final ExtensionPointName<SchemeExporterEP<?>> EP_NAME = ExtensionPointName.create("com.intellij.schemeExporter");
 
   @Attribute("schemeClass")
   public String schemeClass;
+
+  @ApiStatus.Internal
+  public SchemeExporterEP() {
+  }
 
   /**
    * Finds extensions supporting the given {@code schemeClass}
@@ -35,6 +39,7 @@ public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPB
    * @return A collection of exporters capable of exporting schemes of the given class. An empty collection is returned if there are
    *         no matching exporters.
    */
+  @ApiStatus.Internal
   public static @NotNull <S extends Scheme> Collection<SchemeExporterEP<S>> getExtensions(Class<S> schemeClass) {
     List<SchemeExporterEP<S>> exporters = new ArrayList<>();
     for (SchemeExporterEP<?> exporterEP : EP_NAME.getExtensions()) {
@@ -52,6 +57,7 @@ public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPB
    * @param schemeClass The scheme class the exporter has to support.
    * @return The found exporter or null if there are no exporters for the given name and scheme class.
    */
+  @ApiStatus.Internal
   public static @Nullable <S extends Scheme> SchemeExporter<S> getExporter(@NotNull String name, Class<S> schemeClass) {
     for (SchemeExporterEP<S> exporterEP : getExtensions(schemeClass)) {
       if (name.equals(exporterEP.getLocalizedName())) {

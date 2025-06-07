@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +29,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
   private final EditMemorySettingsPanel content;
   private Action mySaveAndExitAction, mySaveAction;
 
-  public EditMemorySettingsDialog() {
+  EditMemorySettingsDialog() {
     this(VMOptions.MemoryKind.HEAP, false);
   }
 

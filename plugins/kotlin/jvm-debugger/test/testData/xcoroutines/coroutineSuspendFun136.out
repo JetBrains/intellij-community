@@ -7,7 +7,6 @@ Thread stack trace:
 		($completion, c, paramB)
 	CoroutinePreflightFrame b:!LINE_NUMBER!, CoroutineSuspendFun136Kt (continuation)
 		($completion, $continuation, $result, b, paramA)
-CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame a:!LINE_NUMBER!, CoroutineSuspendFun136Kt (continuation)
 		(a)
 	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, CoroutineSuspendFun136Kt$main$1 (continuation)

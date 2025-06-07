@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PyExecuteInConsole")
 
 package com.jetbrains.python.actions
@@ -22,6 +22,25 @@ import com.jetbrains.python.console.*
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.util.function.Consumer
 import java.util.function.Function
+
+fun executeCodeInConsole(project: Project,
+                         commandText: List<String>,
+                         editor: Editor?,
+                         canUseExistingConsole: Boolean,
+                         canUseDebugConsole: Boolean,
+                         requestFocusToConsole: Boolean,
+                         config: PythonRunConfiguration?) {
+  val executeCodeInConsole = commandText.foldRight(null) { commandText: String, acc: Consumer<ExecutionConsole>? ->
+    var consumer = Consumer<ExecutionConsole> { (it as PyCodeExecutor).executeCode(commandText, editor) }
+    if (acc != null) {
+      consumer = consumer.andThen(acc)
+    }
+    consumer
+  }
+  val executeInStartingConsole = Function<VirtualFile?, Boolean> { PyExecuteConsoleCustomizer.instance.isConsoleStarting(it, null) }
+  executeCodeInConsole(project, executeCodeInConsole, executeInStartingConsole, editor, canUseExistingConsole, canUseDebugConsole,
+                       requestFocusToConsole, config)
+}
 
 fun executeCodeInConsole(project: Project,
                          commandText: String?,
@@ -215,7 +234,13 @@ private fun showConsole(project: Project,
         }
       }
       // Select "Console" tab in case of Debug console
-      selectConsoleTab(descriptor, currentSession.ui.contentManager, isDebug=true)
+      val sessionUi = currentSession.ui
+      if (sessionUi != null) {
+        selectConsoleTab(descriptor, sessionUi.contentManager, isDebug = true)
+      }
+      else {
+        // TODO [Debugger.RunnerLayoutUi]
+      }
       return (console as PythonDebugLanguageConsoleView).pydevConsoleView
     }
   }

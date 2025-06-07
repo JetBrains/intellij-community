@@ -9,8 +9,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.monolith" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

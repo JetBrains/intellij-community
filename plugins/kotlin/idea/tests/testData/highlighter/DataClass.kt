@@ -1,0 +1,1 @@
+<symbolName descr="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">data</symbolName> class <symbolName descr="null" textAttributesKey="KOTLIN_DATA_CLASS">MyDataClass</symbolName>(val <symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">name</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>)

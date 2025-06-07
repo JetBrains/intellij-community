@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.trace.Span
@@ -13,7 +13,7 @@ import java.util.*
 private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.com/files/brokenPlugins.json"
 
 /**
- * Generate brokenPlugins.txt file using JetBrains Marketplace.
+ * Generate the 'brokenPlugins.txt' file using JetBrains Marketplace.
  */
 suspend fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: Boolean): ByteArray? {
   val span = Span.current()
@@ -25,8 +25,10 @@ suspend fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: 
   }
   catch (e: Exception) {
     if (isInDevelopmentMode) {
-      span.recordException(RuntimeException("Not able to get broken plugins info from JetBrains Marketplace. " +
-                                            "Assuming empty broken plugins list", e))
+      span.recordException(RuntimeException(
+        "Not able to get broken plugins info from JetBrains Marketplace. Assuming empty broken plugins list",
+        e
+      ))
       return null
     }
     else {
@@ -35,28 +37,24 @@ suspend fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: 
   }
 
   val currentBuild = BuildNumber.fromString(currentBuildString, currentBuildString)!!
-  val result = TreeMap<String, MutableSet<String>>()
+  val brokenPlugins = TreeMap<String, MutableSet<String>>()
   for (plugin in allBrokenPlugins) {
     val originalUntil = BuildNumber.fromString(plugin.originalUntil, currentBuildString) ?: currentBuild
     val originalSince = BuildNumber.fromString(plugin.originalSince, currentBuildString) ?: currentBuild
     val until = BuildNumber.fromString(plugin.until, currentBuildString) ?: currentBuild
     val since = BuildNumber.fromString(plugin.since, currentBuildString) ?: currentBuild
     if ((currentBuild in originalSince..originalUntil) && (currentBuild > until || currentBuild < since)) {
-      result.computeIfAbsent(plugin.id) { TreeSet<String>() }.add(plugin.version)
+      brokenPlugins.computeIfAbsent(plugin.id) { TreeSet<String>() }.add(plugin.version)
     }
   }
 
-  span.setAttribute("pluginCount", result.size.toLong())
-  return storeBrokenPlugin(brokenPlugin = result, build = currentBuildString)
-}
-
-private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String): ByteArray {
+  span.setAttribute("pluginCount", brokenPlugins.size.toLong())
   val byteOut = ByteArrayOutputStream()
   DataOutputStream(byteOut).use { out ->
     out.write(2)
-    out.writeUTF(build)
-    out.writeInt(brokenPlugin.size)
-    for (entry in brokenPlugin.entries) {
+    out.writeUTF(currentBuildString)
+    out.writeInt(brokenPlugins.size)
+    for (entry in brokenPlugins.entries) {
       out.writeUTF(entry.key)
       out.writeShort(entry.value.size)
       entry.value.forEach(out::writeUTF)
@@ -81,17 +79,8 @@ private class BuildNumber(private val productCode: String, private val component
     private const val SNAPSHOT = "SNAPSHOT"
     private const val SNAPSHOT_VALUE = Integer.MAX_VALUE
 
-    private fun isPlaceholder(value: String) = "__BUILD_NUMBER__" == value || "__BUILD__" == value
-
-    fun fromString(version: String?, current: String): BuildNumber? {
-      if (version == null) {
-        return null
-      }
-      val v = version.trim { it <= ' ' }
-      return if (v.isEmpty()) null else fromString(version = v, pluginName = null, productCodeIfAbsentInVersion = null, current = current)
-    }
-
-    fun fromString(version: String, pluginName: String?, productCodeIfAbsentInVersion: String?, current: String?): BuildNumber? {
+    fun fromString(versionString: String?, current: String): BuildNumber? {
+      val version = versionString?.trim { it <= ' ' }?.takeIf { it.isNotEmpty() } ?: return null
       var code = version
       val productSeparator = code.indexOf('-')
       val productCode: String
@@ -100,11 +89,11 @@ private class BuildNumber(private val productCode: String, private val component
         code = code.substring(productSeparator + 1)
       }
       else {
-        productCode = productCodeIfAbsentInVersion ?: ""
+        productCode = ""
       }
 
       if (SNAPSHOT === code || isPlaceholder(code)) {
-        return BuildNumber(productCode, fromString(current, current!!)!!.components)
+        return BuildNumber(productCode, fromString(current, current)!!.components)
       }
 
       val baselineVersionSeparator = code.indexOf('.')
@@ -119,7 +108,7 @@ private class BuildNumber(private val productCode: String, private val component
         val n = stringComponents.size
         for (i in 0 until n) {
           val stringComponent = stringComponents[i]
-          val comp = parseBuildNumber(version, stringComponent, pluginName)
+          val comp = parseBuildNumber(version, stringComponent)
           intComponentsList[i] = comp
           if (comp == SNAPSHOT_VALUE && (i + 1) != n) {
             intComponentsList = intComponentsList.copyOf(i + 1)
@@ -129,7 +118,7 @@ private class BuildNumber(private val productCode: String, private val component
         return BuildNumber(productCode, intComponentsList)
       }
       else {
-        val buildNumber = parseBuildNumber(version, code, pluginName)
+        val buildNumber = parseBuildNumber(version, code)
         if (buildNumber <= 2000) {
           // it's probably a baseline, not a build number
           return BuildNumber(productCode, intArrayOf(buildNumber, 0))
@@ -140,27 +129,26 @@ private class BuildNumber(private val productCode: String, private val component
       }
     }
 
-    private fun parseBuildNumber(version: String, code: String, pluginName: String?): Int {
-      if (SNAPSHOT == code || isPlaceholder(code) || STAR == code) {
-        return SNAPSHOT_VALUE
-      }
-      return code.toIntOrNull() ?: throw RuntimeException("Invalid version number: $version; plugin name: $pluginName")
-    }
+    private fun isPlaceholder(value: String) = "__BUILD_NUMBER__" == value || "__BUILD__" == value
+
+    private fun parseBuildNumber(version: String, code: String): Int =
+      if (SNAPSHOT == code || isPlaceholder(code) || STAR == code) SNAPSHOT_VALUE
+      else code.toIntOrNull() ?: throw RuntimeException("Invalid version number: $version")
 
     // https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
-    private fun getBaseLineForHistoricBuilds(bn: Int): Int {
-      if (bn >= 10000) return 88 // Maia, 9x builds
-      if (bn >= 9500) return 85 // 8.1 builds
-      if (bn >= 9100) return 81 // 8.0.x builds
-      if (bn >= 8000) return 80 // 8.0, including pre-release builds
-      if (bn >= 7500) return 75 // 7.0.2+
-      if (bn >= 7200) return 72 // 7.0 final
-      if (bn >= 6900) return 69 // 7.0 pre-M2
-      if (bn >= 6500) return 65 // 7.0 pre-M1
-      if (bn >= 6000) return 60 // 6.0.2+
-      if (bn >= 5000) return 55 // 6.0 branch, including all 6.0 EAP builds
-      if (bn >= 4000) return 50 // 5.1 branch
-      return 40
+    private fun getBaseLineForHistoricBuilds(bn: Int): Int = when {
+      bn >= 10000 -> 88 // Maia, 9x builds
+      bn >= 9500 -> 85 // 8.1 builds
+      bn >= 9100 -> 81 // 8.0.x builds
+      bn >= 8000 -> 80 // 8.0, including pre-release builds
+      bn >= 7500 -> 75 // 7.0.2+
+      bn >= 7200 -> 72 // 7.0 final
+      bn >= 6900 -> 69 // 7.0 pre-M2
+      bn >= 6500 -> 65 // 7.0 pre-M1
+      bn >= 6000 -> 60 // 6.0.2+
+      bn >= 5000 -> 55 // 6.0 branch, including all 6.0 EAP builds
+      bn >= 4000 -> 50 // 5.1 branch
+      else -> 40
     }
   }
 
@@ -185,19 +173,8 @@ private class BuildNumber(private val productCode: String, private val component
     return c1.size - c2.size
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    if (other == null || javaClass != other.javaClass) {
-      return false
-    }
-    val that = other as BuildNumber
-    if (productCode != that.productCode) {
-      return false
-    }
-    return components.contentEquals(that.components)
-  }
+  override fun equals(other: Any?): Boolean =
+    this === other || other is BuildNumber && productCode == other.productCode && components.contentEquals(other.components)
 
   override fun hashCode() = 31 * productCode.hashCode() + components.contentHashCode()
 }

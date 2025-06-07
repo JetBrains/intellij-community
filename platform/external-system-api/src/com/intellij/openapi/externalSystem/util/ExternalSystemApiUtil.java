@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -50,10 +50,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -148,6 +145,7 @@ public final class ExternalSystemApiUtil {
     return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
+  @Contract(mutates = "param1")
   public static void orderAwareSort(@NotNull List<?> data) {
     data.sort(ORDER_AWARE_COMPARATOR);
   }
@@ -206,8 +204,7 @@ public final class ExternalSystemApiUtil {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
-  @SuppressWarnings("unchecked")
-  public static @NotNull <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+  public static @NotNull @Unmodifiable <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     Collection<DataNode<T>> result = null;
     for (DataNode<?> child : node.getChildren()) {
       if (!key.equals(child.getKey())) {
@@ -282,7 +279,7 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
+  public static @NotNull @Unmodifiable <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
 
@@ -715,7 +712,7 @@ public final class ExternalSystemApiUtil {
     getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
-  public static @NotNull Collection<TaskData> findProjectTasks(
+  public static @Unmodifiable @NotNull Collection<TaskData> findProjectTasks(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId,
     @NotNull String projectPath

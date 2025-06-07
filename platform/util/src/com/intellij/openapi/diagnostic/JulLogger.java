@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,10 +11,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.IdentityHashMap;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
+import java.util.List;
+import java.util.logging.*;
 
 import static com.intellij.openapi.diagnostic.AsyncLogKt.log;
 import static com.intellij.openapi.diagnostic.AsyncLogKt.shutdownLogProcessing;
@@ -22,6 +21,8 @@ import static com.intellij.openapi.diagnostic.AsyncLogKt.shutdownLogProcessing;
 public class JulLogger extends Logger {
 
   private static final boolean CLEANER_DELAYED;
+  public static final long LOG_FILE_SIZE_LIMIT = Long.getLong("idea.log.limit", 10_000_000);
+  public static final int LOG_FILE_COUNT = Integer.getInteger("idea.log.count", 12);
 
   static {
     boolean delayed = false;
@@ -111,30 +112,66 @@ public class JulLogger extends Logger {
   }
 
   @ApiStatus.Internal
-  public static void configureLogFileAndConsole(
-    @NotNull Path logFilePath,
-    boolean appendToFile,
-    boolean enableConsoleLogger,
-    boolean showDateInConsole,
-    @Nullable Runnable onRotate
-  ) {
-    long limit = Long.getLong("idea.log.limit", 10_000_000);
-    int count = Integer.getInteger("idea.log.count", 12);
-
+  public static void configureLogFileAndConsole(@NotNull Path logFilePath,
+                                                boolean appendToFile,
+                                                boolean enableConsoleLogger,
+                                                boolean showDateInConsole,
+                                                @Nullable Runnable onRotate,
+                                                @Nullable Filter filter,
+                                                @Nullable Path inMemoryLogPath) {
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
 
-    Handler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
-    fileHandler.setFormatter(layout);
-    fileHandler.setLevel(Level.FINEST);
-    rootLogger.addHandler(fileHandler);
+    rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout, filter));
+
+    if (inMemoryLogPath != null) {
+      rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath));
+    }
 
     if (enableConsoleLogger) {
-      Handler consoleHandler = new OptimizedConsoleHandler();
-      consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
-      consoleHandler.setLevel(Level.WARNING);
-      rootLogger.addHandler(consoleHandler);
+      rootLogger.addHandler(configureConsoleHandler(showDateInConsole, layout, filter));
     }
+  }
+
+  private static Handler configureConsoleHandler(boolean showDateInConsole, IdeaLogRecordFormatter layout, @Nullable Filter filter) {
+    OptimizedConsoleHandler consoleHandler = new OptimizedConsoleHandler();
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
+    consoleHandler.setLevel(Level.WARNING);
+    if (filter != null) {
+      consoleHandler.setFilter(filter);
+    }
+    return consoleHandler;
+  }
+
+  private static InMemoryHandler configureInMemoryHandler(Path logFilePath) {
+    InMemoryHandler inMemoryHandler = new InMemoryHandler(logFilePath);
+    inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
+    inMemoryHandler.setLevel(Level.FINEST);
+    return inMemoryHandler;
+  }
+
+  private static RollingFileHandler configureFileHandler(@NotNull Path logFilePath,
+                                                         boolean appendToFile,
+                                                         @Nullable Runnable onRotate,
+                                                         long limit,
+                                                         int count,
+                                                         IdeaLogRecordFormatter layout,
+                                                         @Nullable Filter filter) {
+    RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
+    fileHandler.setFormatter(layout);
+    fileHandler.setLevel(Level.FINEST);
+    if (filter != null) {
+      fileHandler.setFilter(filter);
+    }
+    return fileHandler;
+  }
+
+  public static Filter createFilter(@NotNull List<String> classesToFilter) {
+    return record -> {
+      String loggerName = record.getLoggerName();
+      boolean isFiltered = ContainerUtil.exists(classesToFilter, loggerName::startsWith);
+      return !isFiltered || record.getLevel().intValue() > Level.FINE.intValue();
+    };
   }
 
   private static final class OptimizedConsoleHandler extends ConsoleHandler {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity;
@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
@@ -37,9 +38,8 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     return "module-tests:" + getModuleName();
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
     Module module = findModule(context);
     if (module == null) return Collections.emptyList();
 
@@ -47,8 +47,7 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, TestModuleOutputElementType.ELEMENT_TYPE));
   }
 

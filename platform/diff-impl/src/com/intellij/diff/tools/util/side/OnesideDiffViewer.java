@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
@@ -40,12 +26,11 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class OnesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
-  @NotNull protected final SimpleDiffPanel myPanel;
-  @ApiStatus.Internal
-  @NotNull protected final OnesideContentPanel myContentPanel;
+  protected final @NotNull SimpleDiffPanel myPanel;
+  @ApiStatus.Internal protected final @NotNull OnesideContentPanel myContentPanel;
 
-  @NotNull private final Side mySide;
-  @NotNull private final T myHolder;
+  private final @NotNull Side mySide;
+  private final @NotNull T myHolder;
 
   public OnesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -82,8 +67,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   // Editors
   //
 
-  @NotNull
-  protected T createEditorHolder(@NotNull EditorHolderFactory<T> factory) {
+  protected @NotNull T createEditorHolder(@NotNull EditorHolderFactory<T> factory) {
     DiffContent content = mySide.select(myRequest.getContents());
     return factory.create(content, myContext);
   }
@@ -92,8 +76,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     Disposer.dispose(myHolder);
   }
 
-  @Nullable
-  protected JComponent createTitle() {
+  protected @Nullable JComponent createTitle() {
     List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(this, myRequest);
     return getSide().select(simpleTitles);
   }
@@ -102,31 +85,26 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   // Getters
   //
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
     return getEditorHolder().getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public Side getSide() {
+  public @NotNull Side getSide() {
     return mySide;
   }
 
-  @NotNull
-  protected DiffContent getContent() {
+  protected @NotNull DiffContent getContent() {
     return mySide.select(myRequest.getContents());
   }
 
-  @NotNull
-  protected T getEditorHolder() {
+  protected @NotNull T getEditorHolder() {
     return myHolder;
   }
 
@@ -140,9 +118,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   // Misc
   //
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getContent().getNavigatable();
   }
 

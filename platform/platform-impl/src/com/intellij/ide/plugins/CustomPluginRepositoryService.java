@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthListener;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,27 +30,27 @@ public final class CustomPluginRepositoryService implements PluginRepositoryAuth
       .subscribe(PLUGIN_REPO_AUTH_CHANGED_TOPIC, this);
   }
 
-  private Collection<PluginNode> myCustomRepositoryPluginsList;
-  private Map<String, List<PluginNode>> myCustomRepositoryPluginsMap;
+  private Collection<PluginUiModel> myCustomRepositoryPluginsList;
+  private Map<String, List<PluginUiModel>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
 
   private static final Logger LOG = Logger.getInstance(CustomPluginRepositoryService.class);
 
-  public @NotNull Map<String, List<PluginNode>> getCustomRepositoryPluginMap() {
+  public @NotNull Map<String, List<PluginUiModel>> getCustomRepositoryPluginMap() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap != null) {
         return myCustomRepositoryPluginsMap;
       }
     }
 
-    Map<PluginId, PluginNode> latestCustomPluginsAsMap = new HashMap<>();
-    Map<String, List<PluginNode>> customRepositoryPluginsMap = new HashMap<>();
+    Map<PluginId, PluginUiModel> latestCustomPluginsAsMap = new HashMap<>();
+    Map<String, List<PluginUiModel>> customRepositoryPluginsMap = new HashMap<>();
     for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
       try {
-        List<PluginNode> descriptors = RepositoryHelper.loadPlugins(host, null, null);
-        for (PluginNode descriptor : descriptors) {
+        List<PluginUiModel> descriptors = RepositoryHelper.loadPluginModels(host, null, null);
+        for (PluginUiModel descriptor : descriptors) {
           PluginId pluginId = descriptor.getPluginId();
-          IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
+          PluginUiModel savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
           if (savedDescriptor == null || VersionComparatorUtil.compare(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
             latestCustomPluginsAsMap.put(pluginId, descriptor);
           }
@@ -78,7 +79,7 @@ public final class CustomPluginRepositoryService implements PluginRepositoryAuth
     clearCache();
   }
 
-  public @NotNull Collection<PluginNode> getCustomRepositoryPlugins() {
+  public @NotNull Collection<PluginUiModel> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsList != null) {
         return myCustomRepositoryPluginsList;

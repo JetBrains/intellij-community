@@ -6,6 +6,7 @@
 // ACTION: Surround with null check
 // ACTION: Wrap with '?.let { ... }' call
 // ERROR: Type mismatch: inferred type is Nothing? but Int was expected
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Nothing?', but 'Int' was expected.
 fun test(i: Int?) {
     if (i == null) {
         other(<caret>i)

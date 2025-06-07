@@ -311,7 +311,6 @@
   <action id="LocalHistory.PutLabel">
     <keyboard-shortcut first-keystroke="control meta S"/>
   </action>
-  <action id="MaintenanceAction"/>
   <action id="Move">
     <keyboard-shortcut first-keystroke="alt F6"/>
   </action>

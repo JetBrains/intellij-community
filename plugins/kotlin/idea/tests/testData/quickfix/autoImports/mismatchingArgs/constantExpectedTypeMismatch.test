@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import extension function 'X.foo'" "true"
 // ERROR: The integer literal does not conform to the expected type String
-/* IGNORE_K2 */
 
 package main
 
@@ -25,7 +24,6 @@ fun X.foo(p: Int) {
 // FILE: first.after.kt
 // "Import extension function 'X.foo'" "true"
 // ERROR: The integer literal does not conform to the expected type String
-/* IGNORE_K2 */
 
 package main
 

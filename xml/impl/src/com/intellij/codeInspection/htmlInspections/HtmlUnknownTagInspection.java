@@ -64,10 +64,10 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
 
         @Override
         public void invoke(@NotNull Project project,
-                           @NotNull PsiFile file,
+                           @NotNull PsiFile psiFile,
                            @NotNull PsiElement startElement,
                            @NotNull PsiElement endElement) {
-          editSettings(project, file.getVirtualFile());
+          editSettings(project, psiFile.getVirtualFile());
         }
 
         @Override

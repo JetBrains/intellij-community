@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 import java.util.function.Function;
 
-public final class BindFieldsFromParametersAction implements ModCommandAction {
+public final class BindFieldsFromParametersAction implements ModCommandAction, DumbAware {
   private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
 
   @Override
@@ -68,12 +69,13 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     return null;
   }
 
-  private static @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
+  private static @Unmodifiable @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
     return ContainerUtil.filter(method.getParameterList().getParameters(), BindFieldsFromParametersAction::isAvailable);
   }
 
   private static boolean isAvailable(@NotNull PsiParameter psiParameter) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
+    if (type != null && !type.isAssignableFrom(psiParameter.getType())) return false;
     PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
            psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
@@ -132,8 +134,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   /**
    * Exclude parameters passed to super() or this() calls from initial selection
    */
-  @Unmodifiable
-  private static List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
+  private static @Unmodifiable List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
                                                                 List<@NotNull ParameterClassMember> members) {
     Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
     PsiCodeBlock body = method.getBody();
@@ -209,7 +210,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   }
 
   private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method))) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method)).asIterable()) {
       if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
         return true;
       }

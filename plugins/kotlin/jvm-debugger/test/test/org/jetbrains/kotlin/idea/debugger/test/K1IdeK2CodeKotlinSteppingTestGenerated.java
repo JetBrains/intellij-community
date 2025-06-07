@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -283,6 +283,16 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
         @TestMetadata("interfaces.kt")
         public void testInterfaces() throws Exception {
             runTest("testData/stepping/stepInto/interfaces.kt");
+        }
+
+        @TestMetadata("interfacesJvmDefaultDisable.kt")
+        public void testInterfacesJvmDefaultDisable() throws Exception {
+            runTest("testData/stepping/stepInto/interfacesJvmDefaultDisable.kt");
+        }
+
+        @TestMetadata("localDelegatedPropertyAndClinit.kt")
+        public void testLocalDelegatedPropertyAndClinit() throws Exception {
+            runTest("testData/stepping/stepInto/localDelegatedPropertyAndClinit.kt");
         }
 
         @TestMetadata("localFun.kt")
@@ -617,6 +627,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             @TestMetadata("inlineInObject.kt")
             public void testInlineInObject() throws Exception {
                 runTest("testData/stepping/stepOver/inlineInObject.kt");
+            }
+
+            @TestMetadata("inplaceArgumentLineNum.kt")
+            public void testInplaceArgumentLineNum() throws Exception {
+                runTest("testData/stepping/stepOver/inplaceArgumentLineNum.kt");
             }
 
             @TestMetadata("kt14869.kt")
@@ -1358,6 +1373,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/defaultLambdaParameterInConstructor.kt");
         }
 
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("testData/stepping/custom/equals.kt");
+        }
+
         @TestMetadata("filterChainedFunctionCalls.kt")
         public void testFilterChainedFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");
@@ -1521,6 +1541,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
         @TestMetadata("idea335263.kt")
         public void testIdea335263() throws Exception {
             runTest("testData/stepping/custom/idea335263.kt");
+        }
+
+        @TestMetadata("idea362864.kt")
+        public void testIdea362864() throws Exception {
+            runTest("testData/stepping/custom/idea362864.kt");
         }
 
         @TestMetadata("initBlocks.kt")
@@ -1976,6 +2001,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
         @TestMetadata("smartStepWithInlineClass.kt")
         public void testSmartStepWithInlineClass() throws Exception {
             runTest("testData/stepping/custom/smartStepWithInlineClass.kt");
+        }
+
+        @TestMetadata("ssiJavaProperty.kt")
+        public void testSsiJavaProperty() throws Exception {
+            runTest("testData/stepping/custom/ssiJavaProperty.kt");
         }
 
         @TestMetadata("stepIntoLibWithSources.kt")

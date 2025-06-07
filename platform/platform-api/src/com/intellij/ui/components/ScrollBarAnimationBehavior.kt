@@ -6,6 +6,7 @@ package com.intellij.ui.components
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceOrNull
 import kotlinx.coroutines.*
@@ -58,23 +59,23 @@ internal open class DefaultScrollBarAnimationBehavior(
 
   override fun onReset() {
     trackAnimator.rewind(false)
-    trackAnimator.rewind(false)
+    thumbAnimator.rewind(false)
   }
 }
 
 internal class MacScrollBarAnimationBehavior(
+  coroutineScope : CoroutineScope,
   private val scrollBarComputable: () -> JScrollBar?,
   trackAnimator: TwoWayAnimator,
   thumbAnimator: TwoWayAnimator,
 ) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
-  @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
   private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     // Can be called early in the lifecycle when there is no application yet.
-    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
     if (context == null) {
       context = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {

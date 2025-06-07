@@ -28,13 +28,21 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class ActionAsyncProvider(private val model: GotoActionModel) {
+@ApiStatus.Internal
+class ActionAsyncProvider(private val model: GotoActionModel) {
   private val actionManager: ActionManager = ActionManager.getInstance()
   private val intentions = ConcurrentHashMap<String, ApplyIntentionAction>()
   private val MATCHED_VALUE_COMPARATOR = Comparator<MatchedValue> { o1, o2 -> o1.compareWeights(o2) }
@@ -66,16 +74,39 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     val actionIds = (actionManager as ActionManagerImpl).actionIds
 
     scope.launch {
-      val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
-
-      val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
-      val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
-      val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
-
-      val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
-      val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
-      processOptions(pattern, presentationProvider, consumer, intentionsJob)
+      runFilterJobs(presentationProvider, pattern, consumer, actionIds)
     }
+  }
+
+  suspend fun filterElementsSuspend(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    if (pattern.isEmpty()) return
+
+    LOG.debug { "Start actions searching ($pattern) from suspend function" }
+
+    val actionIds = (actionManager as ActionManagerImpl).actionIds
+
+    runFilterJobs(presentationProvider, pattern, consumer, actionIds)
+  }
+
+  private suspend fun runFilterJobs(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+    actionIds: Set<String>
+  ) = coroutineScope {
+    val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
+
+    val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
+    val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
+    val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
+
+    val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
+    val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
+    processOptions(pattern, presentationProvider, consumer, intentionsJob)
   }
 
   private fun CoroutineScope.processAbbreviations(pattern: String,
@@ -107,30 +138,84 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     val list = collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
     LOG.debug { "Matched actions list is collected" }
 
-    awaitJob?.join() //wait until all items from previous step are processed
+    awaitJob?.join() // wait until all items from the previous step are processed
     LOG.debug { "Process matched actions for \"$pattern\"" }
-    list.forEachConcurrentOrdered { matchedActionOrStub, awaitMyTurn ->
+    list.forEachConcurrentOrdered ({ matchedActionOrStub ->
       val action = matchedActionOrStub.action
       val matchedAction = if (action is ActionStubBase) loadAction(action.id)?.let { MatchedAction(it, matchedActionOrStub.mode, matchedActionOrStub.weight) } else matchedActionOrStub
-      if (matchedAction == null) return@forEachConcurrentOrdered
+      if (matchedAction == null) return@forEachConcurrentOrdered null
       val matchedValue = matchItem(
         item = wrapAnAction(action = matchedAction.action, presentationProvider = presentationProvider, matchMode = matchedAction.mode),
         matcher = weightMatcher,
         pattern = pattern,
         matchType = MatchedValueType.ACTION,
       )
-      awaitMyTurn()
+
+        return@forEachConcurrentOrdered matchedValue
+    }, { matchedValue ->
       if (!consumer(matchedValue)) cancel()
+    })
+  }
+
+  /**
+   * Executes concurrent actions on the elements of the collection and applies a sequentially ordered action on the results.
+   * The concurrent actions run in parallel, but their results are processed in the same order as the collection elements.
+   *
+   * This implementation considers priorities of elements (what is good for delivering first results asap)
+   * but still runs many more concurrent actions at once than the approach with standard forEachConcurrent
+   * (what is good for performance in case of client-server communication)
+   */
+  private suspend fun <TIn, TOut : Any> Collection<TIn>.forEachConcurrentOrdered(concurrentAction: suspend (TIn) -> TOut?, orderedAction: suspend (TOut) -> Unit) {
+    coroutineScope {
+      // PriorityDispatcher runs tasks with associated with contexts indexes
+      // The smaller index - the higher priority of the task
+      val dispatcher = PriorityDispatcher(this, size)
+
+      withContext(dispatcher.priorityDispatcher + IntElement(-1)) {
+        this@forEachConcurrentOrdered.asFlow().withIndex().map { (index, value) ->
+          async(dispatcher.priorityDispatcher + IntElement(index)) { concurrentAction(value) }
+        }.buffer(
+          // We limit the number of concurrently processing actions
+          // because in real life the original list contains up to 3000, but the consumer needs only the first 100-200 elements
+          // Without this limitation we may run approximately 500 unnecessary concurrent actions.
+          capacity = 100
+        ).collect {
+          orderedAction(it.await() ?: return@collect)
+        }
+      }
     }
   }
 
-  private suspend fun <T> Collection<T>.forEachConcurrentOrdered(action: suspend (T, suspend () -> Unit) -> Unit) {
-    suspend fun runConcurrent(item: T, jobToAwait: Job?): Job = coroutineScope {
-      launch { action(item) { jobToAwait?.join() } }
+  private class IntElement(val value: Int) : CoroutineContext.Element {
+    companion object Key : CoroutineContext.Key<IntElement> // Unique key for this element
+    override val key: CoroutineContext.Key<*> get() = Key
+  }
+
+  private data class PriorityRunnable(val priority: Int, val runnable: Runnable)
+
+  @OptIn(ExperimentalStdlibApi::class)
+  private class PriorityDispatcher(scope: CoroutineScope, size: Int) {
+    private val context = scope.coroutineContext
+    private val dispatcher = context[CoroutineDispatcher]!!
+    private val priorityQueue = PriorityBlockingQueue<PriorityRunnable>(maxOf(1, size), compareBy { it.priority })
+
+    private val executeNext = Runnable {
+      val action = priorityQueue.poll()
+      action.runnable.run()
     }
 
-    var prevItemJob: Job? = null
-    forEach { prevItemJob = runConcurrent(it, prevItemJob) }
+    val priorityDispatcher: CoroutineDispatcher = object : CoroutineDispatcher() {
+      override fun dispatch(context: CoroutineContext, block: Runnable) {
+        val index = context[IntElement.Key]?.value ?: Int.MAX_VALUE
+        priorityQueue.add(PriorityRunnable(index, block))
+
+        dispatchNext()
+      }
+    }
+
+    private fun dispatchNext() {
+      dispatcher.dispatch(context, executeNext)
+    }
   }
 
   private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher, unmatchedIdsChannel: SendChannel<String>): List<MatchedAction> = coroutineScope {

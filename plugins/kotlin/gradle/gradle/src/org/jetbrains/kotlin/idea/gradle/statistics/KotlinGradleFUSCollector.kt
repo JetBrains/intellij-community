@@ -12,13 +12,15 @@ import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
 private const val BASE_FUS_VERSION = 11
 
-internal object KotlinGradleFUSCollector : CounterUsagesCollector() {
+object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
     private val GROUP = EventLogGroup(
         "kotlin.gradle.performance",
-        BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION
+        BASE_FUS_VERSION + StringMetrics.VERSION + BooleanMetrics.VERSION + NumericalMetrics.VERSION,
+        recorder = "FUS",
+        description = "Kotlin build performance statistics collected from Kotlin Gradle plugin"
     )
 
     private fun listOfAllMetrics(): Array<Any> {

@@ -26,6 +26,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
 const val KEYMAPS_DIR_PATH: String = "keymaps"
@@ -224,7 +225,8 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 }
 
-internal val keymapComparator: Comparator<Keymap?> by lazy {
+@get:ApiStatus.Internal
+val keymapComparator: Comparator<Keymap?> by lazy {
   val defaultKeymapName = DefaultKeymap.getInstance().defaultKeymapName
   Comparator { keymap1, keymap2 ->
     if (keymap1 === keymap2) return@Comparator 0

@@ -76,7 +76,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var hideToolStripes: Boolean
-    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
+    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe || notRoamableOptions.xNextStripe
     set(value) {
       state.hideToolStripes = value
       if (!value) notRoamableOptions.experimentalSingleStripe = false
@@ -121,11 +121,15 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.dndWithPressedAltOnly = value
     }
 
-  var separateMainMenu: Boolean
-    get() = !SystemInfoRt.isMac && state.separateMainMenu
+  var mainMenuDisplayMode: MainMenuDisplayMode
+    get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
     set(value) {
-      state.separateMainMenu = value
+      mainMenuDisplayModePrev = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
+      state.mainMenuDisplayMode = value.name
     }
+
+  @Internal
+  var mainMenuDisplayModePrev: MainMenuDisplayMode = mainMenuDisplayMode
 
   var useSmallLabelsOnTabs: Boolean
     get() = state.useSmallLabelsOnTabs
@@ -209,7 +213,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showStatusBar: Boolean
-    get() = state.showStatusBar
+    get() = state.showStatusBar && !notRoamableOptions.xNextStripe
     set(value) {
       state.showStatusBar = value
     }
@@ -260,7 +264,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showMainToolbar: Boolean
-    get() = if (NewUiValue.isEnabled()) separateMainMenu else state.showMainToolbar
+    get() = if (NewUiValue.isEnabled()) mainMenuDisplayMode == MainMenuDisplayMode.SEPARATE_TOOLBAR else state.showMainToolbar
     set(value) {
       state.showMainToolbar = value
 
@@ -319,7 +323,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   var wideScreenSupport: Boolean
     get() = state.wideScreenSupport
-    set(value) {
+            set(value) {
       state.wideScreenSupport = value
     }
 
@@ -540,6 +544,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showBreakpointsOverLineNumbers
     set(value) {
       state.showBreakpointsOverLineNumbers = value
+    }
+
+  @get:Internal
+  @set:Internal
+  var showProgressesInEditor: Boolean
+    get() = state.showProgressesInEditor && notRoamableOptions.xNextStripe
+    set(value) {
+      state.showProgressesInEditor = value
     }
 
   var currentIdeScale: Float
@@ -827,6 +839,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
+    }
+    if (state.separateMainMenu) {
+      state.mainMenuDisplayMode = MainMenuDisplayMode.SEPARATE_TOOLBAR.name
+      state.separateMainMenu = false
     }
   }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.logger
@@ -40,61 +41,37 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
       expectedDirectory: Path,
       actualDirectory: Path,
       failureDiagnosticDirectory: Path,
-      indicator: ProgressIndicator
+      indicator: ProgressIndicator,
     ) {
       val expectedContentDiagnostic = IndexContentDiagnosticDumper.readFrom(StoreIndices.getFileForDiagnostic(expectedDirectory))
       val actualContentDiagnostic = IndexContentDiagnosticDumper.readFrom(StoreIndices.getFileForDiagnostic(actualDirectory))
 
-      val (expectedIteratorNames, expectedUnstableNames) = expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.partition { name ->
+      val expectedStableIteratorNames = expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.filter { name ->
         meaningfulDebugNames.any { name.startsWith(it) }
       }
-      val (actualIteratorNames, actualUnstableNames) = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.partition { name ->
+      val actualStableIteratorNames  = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.filter { name ->
         meaningfulDebugNames.any { name.startsWith(it) }
       }
 
       val errorCollectors = arrayListOf<ErrorCollector>()
 
-      val collector = ToDirectoryWritingErrorCollector(
-        "set-of-iterators",
-        failureDiagnosticDirectory.resolve("errors-for-set-of-iterators"),
-        100
-      )
-      errorCollectors.add(collector)
-      collector.runCatchingError { compareSetsOfIndexableIterators(expectedIteratorNames, actualIteratorNames) }
+      val setOfIteratorsErrorCollector = ToDirectoryWritingErrorCollector("set-of-iterators", failureDiagnosticDirectory.resolve("errors-for-set-of-iterators"), 100)
+      errorCollectors.add(setOfIteratorsErrorCollector)
+      setOfIteratorsErrorCollector.runCatchingError { compareSetsOfIndexableIterators(expectedStableIteratorNames, actualStableIteratorNames) }
+
 
       val expectedFileIdToFile = expectedContentDiagnostic.allIndexedFilePaths.associateBy { it.originalFileSystemId }
       val actualFileIdToFile = actualContentDiagnostic.allIndexedFilePaths.associateBy { it.originalFileSystemId }
 
-      for (iteratorName in expectedIteratorNames) {
-        val errorCollector = ToDirectoryWritingErrorCollector(
-          iteratorName,
-          failureDiagnosticDirectory.resolve("errors-for-${FileUtil.sanitizeFileName(iteratorName)}"),
-          100
-        )
-        errorCollectors += errorCollector
+      val expectedFileIdToIterName = expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.flatMap { (name, ids) -> ids.map { it to name } }.toMap()
+      val actualFileIdToIterName = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.flatMap { (name, ids) -> ids.map { it to name } }.toMap()
 
-        indicator.text = PerformanceTestingBundle.message("comparing.project.files.for.0", iteratorName)
-        val expectedIds = expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds[iteratorName].orEmpty()
-        val actualIds = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds[iteratorName].orEmpty()
-        compareSetsOfFiles(expectedIds, expectedFileIdToFile, actualIds, actualFileIdToFile, errorCollector, iteratorName)
-      }
+      val allFiles = "all-files"
+      val allFilesErrorCollector = ToDirectoryWritingErrorCollector(allFiles, failureDiagnosticDirectory.resolve("errors-for-${FileUtil.sanitizeFileName(allFiles)}"), 100)
+      errorCollectors.add(allFilesErrorCollector)
 
-      // Compare files from iterators with unstable names.
-      val expectedUnstableIds = expectedUnstableNames.flatMap {
-        expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.getValue(it)
-      }
-      val actualUnstableIds = actualUnstableNames.flatMap {
-        actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.getValue(it)
-      }
-      val unstableIteratorsName = "iterators-with-unstable-names"
-      val errorCollector = ToDirectoryWritingErrorCollector(
-        unstableIteratorsName,
-        failureDiagnosticDirectory.resolve("errors-for-$unstableIteratorsName"),
-        100
-      )
-      errorCollectors += errorCollector
-      compareSetsOfFiles(expectedUnstableIds, expectedFileIdToFile, actualUnstableIds, actualFileIdToFile, errorCollector,
-                         unstableIteratorsName)
+      indicator.text = PerformanceTestingBundle.message("comparing.project.files.for.0", allFiles)
+      compareSetsOfFiles(expectedFileIdToFile.keys, expectedFileIdToFile, expectedFileIdToIterName, actualFileIdToFile.keys, actualFileIdToFile, actualFileIdToIterName, allFilesErrorCollector)
 
       if (errorCollectors.any { it.numberOfErrors > 0 }) {
         throw RuntimeException("Some errors during files comparison have been collected. See details in $failureDiagnosticDirectory")
@@ -110,53 +87,48 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
     private fun compareSetsOfFiles(
       expectedIds: Iterable<Int>,
       expectedFileIdToFile: Map<Int, IndexedFilePath>,
+      expectedFileIdToIterName: Map<Int, String>,
       actualIds: Iterable<Int>,
       actualFileIdToFile: Map<Int, IndexedFilePath>,
+      actualFileIdToIterName: Map<Int, String>,
       errorCollector: ToDirectoryWritingErrorCollector,
-      iteratorName: String
     ) {
-      val expectedFiles = expectedIds
-        .mapNotNull { expectedFileIdToFile[it] }
-        .associateBy { it.portableFilePath }
-        .filterKeys { file -> ignoredFilesPatterns.none { file.hasPresentablePathMatching(it) } }
+      val expectedFiles = expectedIds.mapNotNull { expectedFileIdToFile[it] }.associateBy { it.portableFilePath }.filterKeys { file -> ignoredFilesPatterns.none { file.hasPresentablePathMatching(it) } }
 
-      val actualFiles = actualIds
-        .mapNotNull { actualFileIdToFile[it] }
-        .associateBy { it.portableFilePath }
-        .filterKeys { file -> ignoredFilesPatterns.none { file.hasPresentablePathMatching(it) } }
+      val actualFiles = actualIds.mapNotNull { actualFileIdToFile[it] }.associateBy { it.portableFilePath }.filterKeys { file -> ignoredFilesPatterns.none { file.hasPresentablePathMatching(it) } }
 
       val missingFilePaths = expectedFiles.keys - actualFiles.keys
       val redundantFilePaths = actualFiles.keys - expectedFiles.keys
       if (missingFilePaths.isNotEmpty() || redundantFilePaths.isNotEmpty()) {
-        errorCollector.addError(RuntimeException(
-          buildString {
-            appendLine("The sets of indexed files for $iteratorName do not match")
-            appendLine("  Missing file paths:")
-            missingFilePaths.forEach { appendLine("    ${it.presentablePath}") }
-            appendLine("  Redundant file paths:")
-            redundantFilePaths.forEach { appendLine("    ${it.presentablePath}") }
-          }
-        ))
+        errorCollector.addError(RuntimeException(buildString {
+          appendLine("The sets of indexed files do not match")
+          appendLine("  Missing file paths:")
+          missingFilePaths.forEach { appendLine("    ${it.presentablePath} ; first-run iterator: ${expectedFiles[it]?.originalFileSystemId?.let { expectedFileIdToIterName[it] }}") }
+          appendLine("  Redundant file paths:")
+          redundantFilePaths.forEach { appendLine("    ${it.presentablePath} ; second-run iterator: ${actualFiles[it]?.originalFileSystemId?.let { actualFileIdToIterName[it] }}") }
+        }))
       }
 
       if (errorCollector.numberOfErrors > 0) return
 
       for (filePath in expectedFiles.keys) {
         val expectedIndexedFile = expectedFiles.getValue(filePath)
-        val actualIndexedFile = actualFiles.getValue(filePath)
-        // Ignore "originalFileSystemId" field. It is expected that original VFS IDs mismatch between IDE restarts.
+        val actualIndexedFile = actualFiles.getValue(filePath) // Ignore "originalFileSystemId" field. It is expected that original VFS IDs mismatch between IDE restarts.
         val expectedData = expectedIndexedFile.copy(originalFileSystemId = 0, originalFileUrl = "")
         val actualData = actualIndexedFile.copy(originalFileSystemId = 0, originalFileUrl = "")
+        expectedData
         if (expectedData != actualData) {
-          errorCollector.addError(RuntimeException(
-            buildString {
-              appendLine("Indexed file ${filePath.presentablePath} data mismatch")
-              appendLine("  Expected:")
-              appendLine(expectedIndexedFile.toString().lineSequence().joinToString("\n") { "    $it" })
-              appendLine("  Actual:")
-              appendLine(actualIndexedFile.toString().lineSequence().joinToString("\n") { "    $it" })
-            })
-          )
+          errorCollector.addError(RuntimeException(buildString {
+            appendLine("Indexed file ${filePath.presentablePath} data mismatch")
+
+            appendLine("  Expected:")
+            append(expectedIndexedFile.toString().lineSequence().joinToString("\n") { "    $it" })
+            appendLine("iterator: ${expectedFileIdToIterName[expectedIndexedFile.originalFileSystemId]}")
+
+            appendLine("  Actual:")
+            append(actualIndexedFile.toString().lineSequence().joinToString("\n") { "    $it" })
+            appendLine("iterator: ${actualFileIdToIterName[actualIndexedFile.originalFileSystemId]}")
+          }))
         }
         if (errorCollector.numberOfErrors > 100) break
       }
@@ -164,7 +136,7 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
 
     private fun compareSetsOfIndexableIterators(
       expectedIteratorNames: List<String>,
-      actualIteratorNames: List<String>
+      actualIteratorNames: List<String>,
     ) {
       val missingIteratorNames = expectedIteratorNames - actualIteratorNames
       val redundantIteratorNames = actualIteratorNames - expectedIteratorNames
@@ -191,8 +163,9 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
     val input = text.substring(PREFIX.length).trim()
 
     val index = input.split(" ")
-    val property  = System.getProperty("dump.project.files.directory")
-    val expectedDirectory = if(property != null) Paths.get(property) else {
+    val property = System.getProperty("dump.project.files.directory")
+    val expectedDirectory = if (property != null) Paths.get(property)
+    else {
       actionCallback.reject("dump.project.files.directory property must be specified")
       return actionCallback.toPromise()
     }

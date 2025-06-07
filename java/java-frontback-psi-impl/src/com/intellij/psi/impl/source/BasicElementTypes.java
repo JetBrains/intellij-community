@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.SyntaxElementTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
@@ -14,6 +15,7 @@ import com.intellij.psi.tree.TokenSet;
  * It's checked with {@link com.intellij.java.parser.FrontBackElementTypeTest#testJavaTokenSet()}
  *
  * @see ParentAwareTokenSet
+ * @see SyntaxElementTypes
  */
 @SuppressWarnings("unused")
 public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, BasicJavaElementType, BasicJavaDocElementType {
@@ -33,7 +35,7 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     VOLATILE_KEYWORD, WHILE_KEYWORD,
     OPEN_KEYWORD, MODULE_KEYWORD, REQUIRES_KEYWORD, EXPORTS_KEYWORD, OPENS_KEYWORD, USES_KEYWORD, PROVIDES_KEYWORD,
     TRANSITIVE_KEYWORD, TO_KEYWORD, WITH_KEYWORD, VAR_KEYWORD, YIELD_KEYWORD, RECORD_KEYWORD, SEALED_KEYWORD, PERMITS_KEYWORD,
-    NON_SEALED_KEYWORD, WHEN_KEYWORD
+    NON_SEALED_KEYWORD, WHEN_KEYWORD, VALUE_KEYWORD
   );
 
   TokenSet BASIC_LITERAL_BIT_SET = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
@@ -45,7 +47,8 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
 
   TokenSet BASIC_MODIFIER_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD, ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD,
-    SYNCHRONIZED_KEYWORD, STRICTFP_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD, DEFAULT_KEYWORD, SEALED_KEYWORD, NON_SEALED_KEYWORD);
+    SYNCHRONIZED_KEYWORD, STRICTFP_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD, DEFAULT_KEYWORD, SEALED_KEYWORD, NON_SEALED_KEYWORD,
+    VALUE_KEYWORD);
 
   TokenSet BASIC_PRIMITIVE_TYPE_BIT_SET = TokenSet.create(
     BOOLEAN_KEYWORD, BYTE_KEYWORD, SHORT_KEYWORD, INT_KEYWORD, LONG_KEYWORD, CHAR_KEYWORD, FLOAT_KEYWORD, DOUBLE_KEYWORD, VOID_KEYWORD);

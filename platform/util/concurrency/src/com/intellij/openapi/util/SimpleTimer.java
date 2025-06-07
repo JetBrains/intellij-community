@@ -17,7 +17,7 @@ public final class SimpleTimer {
   // restrict threads running tasks to one since same-delay-tasks must be executed sequentially
   private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService(
     "SimpleTimer Pool", 1);
-  @NotNull private final String myName;
+  private final @NotNull String myName;
 
   private SimpleTimer(@NotNull String name) {
     myName = name;
@@ -31,8 +31,7 @@ public final class SimpleTimer {
     return new SimpleTimer(name);
   }
 
-  @NotNull
-  public SimpleTimerTask setUp(@NotNull final Runnable runnable, final long delay) {
+  public @NotNull SimpleTimerTask setUp(final @NotNull Runnable runnable, final long delay) {
     final ScheduledFuture<?> future = myScheduledExecutorService.schedule(runnable, delay, TimeUnit.MILLISECONDS);
     return new SimpleTimerTask() {
       @Override

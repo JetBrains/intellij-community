@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -57,10 +58,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final List<PatternContext> PATTERN_CONTEXTS = List.of(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = Set.of(
-    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
-    PsiKeyword.DOUBLE, PsiKeyword.LONG,
-    PsiKeyword.INT, PsiKeyword.FLOAT,
-    PsiKeyword.CHAR, PsiKeyword.BYTE
+    JavaKeywords.SHORT, JavaKeywords.BOOLEAN,
+    JavaKeywords.DOUBLE, JavaKeywords.LONG,
+    JavaKeywords.INT, JavaKeywords.FLOAT,
+    JavaKeywords.CHAR, JavaKeywords.BYTE
   );
 
   private static final Set<String> RESERVED_WORDS =
@@ -89,8 +90,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public String getTypedVarString(@NotNull PsiElement element) {
+  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
     String text;
 
     if (element instanceof PsiReceiverParameter) {
@@ -141,8 +141,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @Nullable
-  public String getAlternativeText(@NotNull PsiElement node, @NotNull String previousText) {
+  public @Nullable String getAlternativeText(@NotNull PsiElement node, @NotNull String previousText) {
     // Short class name is matched with fully qualified name
     if (node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
       final PsiElement element = (node instanceof PsiJavaCodeReferenceElement)
@@ -191,9 +190,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return targetNode;
   }
 
-  @NotNull
   @Override
-  public PsiElement getPresentableElement(@NotNull PsiElement element) {
+  public @NotNull PsiElement getPresentableElement(@NotNull PsiElement element) {
     element = super.getPresentableElement(element);
     if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
@@ -217,8 +215,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new JavaMatchingVisitor(globalVisitor);
   }
 
@@ -237,14 +234,12 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public CompiledPattern createCompiledPattern() {
+  public @NotNull CompiledPattern createCompiledPattern() {
     return new JavaCompiledPattern();
   }
 
-  @NotNull
   @Override
-  public List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
+  public @NotNull List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
     final List<MatchPredicate> result = new SmartList<>();
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
@@ -357,7 +352,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean shouldTryExpressionPattern(@NotNull List<? extends PsiElement> elements) {
-    if (elements.size() >= 1 && elements.size() <= 3) {
+    if (!elements.isEmpty() && elements.size() <= 3) {
       final PsiElement firstElement = elements.get(0);
       if (firstElement instanceof PsiDeclarationStatement) {
         final PsiElement lastChild = firstElement.getLastChild();
@@ -413,22 +408,19 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return false;
   }
 
-  @NotNull
   @Override
-  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return JavaCodeContextType.Generic.class;
   }
 
-  @NotNull
   @Override
-  public List<PatternContext> getPatternContexts() {
+  public @NotNull List<PatternContext> getPatternContexts() {
     if (!Registry.is("ssr.in.editor.problem.highlighting")) return super.getPatternContexts();
     return PATTERN_CONTEXTS;
   }
 
-  @NotNull
   @Override
-  public PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
+  public @NotNull PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
     final PsiCodeFragmentImpl fragment =
       MEMBER_CONTEXT.getId().equals(contextId)
       ? (PsiCodeFragmentImpl)JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
@@ -650,7 +642,13 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         setParameterContext(parameter, parameter.getNameIdentifier(), parameter.getTypeElement());
       }
 
-      private void setParameterContext(@NotNull PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
+      @Override
+      public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
+        super.visitRecordComponent(recordComponent);
+        setParameterContext(recordComponent, recordComponent.getNameIdentifier(), recordComponent.getTypeElement());
+      }
+
+      private void setParameterContext(@NotNull PsiElement element, PsiIdentifier nameIdentifier, @Nullable PsiElement scopeElement) {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
@@ -692,7 +690,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       final PsiElement element = info.getElement();
       final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
       if (typeInfos != null) {
-        if (element instanceof PsiParameter) {
+        if (element instanceof PsiParameter || element instanceof PsiRecordComponent) {
           final int parameterEnd = info.getStartIndex();
           final Integer length = info.getUserData(PARAMETER_LENGTH);
           assert length != null;
@@ -734,10 +732,11 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
               addSeparatorTextMatchedInAnyOrder(currentElement,
                                                 parent instanceof PsiClass ? PsiMember.class : PsiJavaCodeReferenceElement.class, buf);
             }
-            else if (info.isStatementContext() ||
-                     info.isArgumentContext() ||
-                     parent instanceof PsiPolyadicExpression ||
-                     parent instanceof PsiArrayInitializerExpression) {
+            else if (info.isStatementContext()
+                     || info.isArgumentContext()
+                     || parent instanceof PsiPolyadicExpression
+                     || parent instanceof PsiArrayInitializerExpression
+                     || parent instanceof PsiExpressionList) {
               addSeparatorText(previous, currentElement, buf);
             }
             else {
@@ -842,9 +841,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof PsiIdentifier;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getReservedWords() {
+  public @NotNull Collection<String> getReservedWords() {
     return RESERVED_WORDS;
   }
 
@@ -1069,7 +1067,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (aClass == null) {
       return false;
     }
-    @NonNls final String name = aClass.getName();
+    final @NonNls String name = aClass.getName();
     return name != null && !"_Dummy_".equals(name);
   }
 

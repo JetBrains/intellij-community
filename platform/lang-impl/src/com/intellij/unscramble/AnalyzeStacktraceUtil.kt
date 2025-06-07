@@ -105,6 +105,7 @@ class AnalyzeStacktraceUtil private constructor(){
         EP_CONTENT_PROVIDER.getExtensions(project).forEach { provider ->
           runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
             provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
+              Disposer.register(descriptor, contentDescriptor)
               withContext(Dispatchers.EDT) {
                 runContentManager.showRunContent(executor, contentDescriptor)
               }
@@ -145,7 +146,7 @@ class AnalyzeStacktraceUtil private constructor(){
     fun createConsoleComponent(consoleView: ConsoleView?, toolbarActions: DefaultActionGroup?): JComponent?
   }
 
-  private class MyConsolePanel(consoleView: ExecutionConsole, toolbarActions: ActionGroup) : JPanel(BorderLayout()) {
+  private class MyConsolePanel(consoleView: ExecutionConsole, toolbarActions: ActionGroup) : JPanel(BorderLayout()), NoStackTraceFoldingPanel {
     init {
       val toolbarPanel = JPanel(BorderLayout())
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false)

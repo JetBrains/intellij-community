@@ -15,12 +15,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class GradleSettingsCollector : ProjectUsagesCollector() {
@@ -87,6 +89,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     }
 
     usages.add(DELEGATE_BUILD_RUN.metric(GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath)))
+    usages.add(DELEGATE_RUN.metric(GradleProjectSettings.isDelegatedRunEnabled(project, projectPath)))
     usages.add(PREFERRED_TEST_RUNNER.metric(GradleProjectSettings.getTestRunner(project, projectPath)))
 
     val hasNonEmptyIntellijConfig = ProjectDataManager
@@ -100,6 +103,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
                                       ?.let { it.jsonString.length > 2 } ?: false
 
     usages.add(IDEA_SPECIFIC_CONFIGURATION_USED.metric(hasNonEmptyIntellijConfig))
+    usages.add(GRADLE_DAEMON_JVM_CRITERIA_DEFINED.metric(GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(Path.of(projectPath), gradleVersion)))
   }
 
   private fun collectGradlePropertiesMetrics(usages: MutableSet<MetricEvent>, project: Project, externalProjectPath: String) {
@@ -120,7 +124,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  private val GROUP = EventLogGroup("build.gradle.state", 8)
+  private val GROUP = EventLogGroup("build.gradle.state", 10)
   private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
   private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
   private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -134,6 +138,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
   private val DISABLE_WRAPPER_SOURCE_DISTRIBUTION_NOTIFICATION = GROUP.registerEvent("disableWrapperSourceDistributionNotification",
                                                                                      EventFields.Enabled)
   private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
+  private val DELEGATE_RUN = GROUP.registerEvent("delegateRun", EventFields.Enabled)
   private val IDEA_SPECIFIC_CONFIGURATION_USED = GROUP.registerEvent("ideaSpecificConfigurationUsed", EventFields.Enabled)
 
   private val DISTRIBUTION_TYPE = GROUP.registerEvent("distributionType",
@@ -144,6 +149,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
                                                           EventFields.Enum("value", TestRunner::class.java) { it.name.lowercase() })
   private val GRADLE_JVM_TYPE = GROUP.registerEvent("gradleJvmType", JRE_TYPE_FIELD)
   private val GRADLE_JVM_VERSION = GROUP.registerEvent("gradleJvmVersion", VERSION_FIELD)
+  private val GRADLE_DAEMON_JVM_CRITERIA_DEFINED = GROUP.registerEvent("gradleDaemonJvmCriteriaDefined", EventFields.Enabled)
   private val GRADLE_DOWNLOAD_DEPENDENCY_SOURCES = GROUP.registerEvent("gradleDownloadDependencySources", EventFields.Enabled)
   private val GRADLE_PARALLEL_MODEL_FETCH = GROUP.registerEvent("gradleParallelModelFetch", EventFields.Enabled)
 

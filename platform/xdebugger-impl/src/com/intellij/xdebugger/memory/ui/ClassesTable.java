@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -41,8 +41,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements UiDataProvider, Disposable {
@@ -123,8 +123,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
     };
   }
 
-  @NotNull
-  protected DiffViewTableModel getTableModel() {
+  protected @NotNull DiffViewTableModel getTableModel() {
     return new DiffViewTableModel();
   }
 
@@ -161,8 +160,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
     setRowSorter(sorter);
   }
 
-  @NotNull
-  protected List<RowSorter.SortKey> getTableSortingKeys() {
+  protected @NotNull List<RowSorter.SortKey> getTableSortingKeys() {
     return Arrays.asList(
       new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
       new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
@@ -179,8 +177,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
     int getNewInstancesCount(@NotNull TypeInfo ref);
   }
 
-  @Nullable
-  public TypeInfo getSelectedClass() {
+  public @Nullable TypeInfo getSelectedClass() {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
@@ -190,8 +187,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
     return null;
   }
 
-  @Nullable
-  public TypeInfo getClassByName(@NotNull String name) {
+  public @Nullable TypeInfo getClassByName(@NotNull String name) {
     for (TypeInfo ref : myItems) {
       if (name.equals(ref.name())) {
         return ref;
@@ -409,8 +405,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
     }
   }
 
-  @Nullable
-  private TrackingType getTrackingType(int row) {
+  private @Nullable TrackingType getTrackingType(int row) {
     TypeInfo ref = (TypeInfo)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
@@ -420,9 +415,9 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
   }
 
   public class DiffViewTableModel extends AbstractTableModelWithColumns {
-    public final static int CLASSNAME_COLUMN_INDEX = 0;
-    final static int COUNT_COLUMN_INDEX = 1;
-    public final static int DIFF_COLUMN_INDEX = 2;
+    public static final int CLASSNAME_COLUMN_INDEX = 0;
+    static final int COUNT_COLUMN_INDEX = 1;
+    public static final int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
     private TypeInfo mySelectedClassWhenHidden = null;

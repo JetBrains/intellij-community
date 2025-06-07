@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class StringBufferFieldInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final String typeName = type.getPresentableText();
     return InspectionGadgetsBundle.message(

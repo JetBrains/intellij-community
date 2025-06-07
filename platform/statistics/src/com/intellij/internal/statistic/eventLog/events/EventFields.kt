@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Version
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -37,18 +36,6 @@ internal object EventFieldIds {
 
 @Suppress("FunctionName")
 object EventFields {
-  /**
-   * Creates a field that will be validated by global regexp rule
-   * @param name  name of the field
-   * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
-   */
-  @Deprecated("Confusing API - users may pass regex directly and assume it can work",
-              ReplaceWith("StringEventField.StringValidatedByRegexpReference(name, regexpRef)"))
-  @ScheduledForRemoval
-  @JvmStatic
-  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringEventField {
-    return StringEventField.ValidatedByRegexp(name, regexpRef, null)
-  }
 
   /**
    * Creates a field that will be validated by global regexp rule.
@@ -470,6 +457,22 @@ object EventFields {
       value: PluginInfo?,
     ) {
       fuData.addPluginInfo(value)
+    }
+  }
+
+  @JvmField
+  val AutomatedPluginVersion = object : PrimitiveEventField<PluginInfo?>() {
+    override val name: String
+      get() = "automated_plugin_version"
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#version}")
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: PluginInfo?,
+    ) {
+      fuData.addAutomatedPluginVersion(value)
     }
   }
 

@@ -1,0 +1,8 @@
+LineBreakpoint created at call.kt:8
+Run Java
+Connected to the target VM
+call.kt:8
+Compile bytecode for Clazz().square()
+Disconnected from the target VM
+
+Process finished with exit code 0

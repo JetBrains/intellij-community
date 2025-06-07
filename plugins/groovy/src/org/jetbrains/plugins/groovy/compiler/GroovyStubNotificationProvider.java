@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,9 +35,8 @@ public final class GroovyStubNotificationProvider implements EditorNotificationP
     return fileEditor -> decorateStubFile(file, project, fileEditor);
   }
 
-  @Nullable
   @VisibleForTesting
-  public static PsiClass findClassByStub(Project project, VirtualFile stubFile) {
+  public static @Nullable PsiClass findClassByStub(Project project, VirtualFile stubFile) {
     final String[] components = StringUtil.trimEnd(stubFile.getPath(), ".java").split("[\\\\/]");
     final int stubs = Arrays.asList(components).indexOf(GROOVY_STUBS);
     if (stubs < 0 || stubs >= components.length - 3) {

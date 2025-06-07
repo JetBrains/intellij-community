@@ -1,22 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandAction
-import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.modcommand.*
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -30,16 +26,18 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
+import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.ExecutionException
-import kotlin.Throws
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -96,7 +94,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
                 val newInstance = Class.forName(className).getDeclaredConstructor().newInstance()
-                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
+                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction
+                ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
             }
 
             else -> throw AssertionError(
@@ -132,7 +131,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
 
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
-            if ((myFixture.file as? KtFile)?.isScript() == true) {
+            val ktFile = myFixture.file as KtFile
+            if (ktFile.isScript()) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
             }
 
@@ -142,14 +142,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
                         InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.let { minJavaVersion ->
-                            if (!SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
+                            if (Runtime.version().feature() < minJavaVersion.toInt()) return@configureRegistryAndRun
                         }
 
-                        checkForErrorsBefore(fileText)
+                        checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
 
                         doTestFor(mainFile, pathToFiles, intentionAction, fileText)
 
-                        checkForErrorsAfter(fileText)
+                        checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = false)
 
                         PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
                     } finally {
@@ -160,37 +160,46 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    protected open fun checkForErrorsAfter(fileText: String) {
-        val file = this.file
+    protected open val skipErrorsBeforeCheckDirectives: List<String> =
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
-        if (file is KtFile &&
-            isApplicableDirective(fileText) &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER") &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
-        ) {
-            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
-                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
-                    file,
-                    disabledByDefault = false,
-                    directiveName = "AFTER-WARNING"
-                )
+    protected open val skipErrorsAfterCheckDirectives: List<String> =
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+
+    private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
+        if (beforeCheck) {
+            val skipErrorsBeforeCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsBeforeCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsBeforeCheck) {
+                checkForErrorsBefore(mainFile, ktFile, fileText)
             }
-
-            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        } else {
+            val skipErrorsAfterCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsAfterCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsAfterCheck && isApplicableDirective(fileText)) {
+                checkForErrorsAfter(mainFile, ktFile, fileText)
+            }
         }
     }
 
-    protected open fun checkForErrorsBefore(fileText: String) {
-        val file = this.file
+    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+    }
 
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
-        if (file is KtFile &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE") &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
-        ) {
-            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
+            DirectiveBasedActionUtils.checkForUnexpectedWarnings(
+                ktFile,
+                disabledByDefault = false,
+                directiveName = "AFTER-WARNING"
+            )
         }
+
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
@@ -198,7 +207,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val isApplicableExpected: Boolean = isApplicableDirective(fileText)
 
         val isApplicableOnPooled: Boolean = project.computeOnBackground {
-            runReadAction{ intentionAction.isAvailable(project, editor, file) }
+            runReadAction { intentionAction.isAvailable(project, editor, file) }
         }
         Assert.assertTrue(
             "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
@@ -227,7 +236,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
         try {
             if (isApplicableExpected) {
-                KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+                registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable).ifFalse {
+                    KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+                }
 
                 val action = { intentionAction.invoke(project, editor, file) }
                 if (intentionAction.startInWriteAction()) {
@@ -242,12 +253,30 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                                 modCommandAction.perform(actionContext)
                             }
                         }
-                        project.executeCommand(intentionAction.text, null) {
-                            ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+
+                        if (command is ModDisplayMessage) {
+                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, command.messageText().replace('\n', ' '))
+                            return
+                        } else if (command is ModCompositeCommand && command.commands().first() is ModShowConflicts) {
+                            val showConflictsCommand = command.commands().first() as ModShowConflicts
+                            val actualFailString = showConflictsCommand
+                                .conflicts
+                                .values
+                                .flatMap { it.messages }
+                                .joinToString(separator = ", ") {
+                                    it.replace(Regex("<[^>]+>"), "")
+                                }
+                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, actualFailString)
+                            return
+                        } else {
+                            project.executeCommand(intentionAction.text, null) {
+                                ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+                            }
                         }
                     }
                 }
                 UIUtil.dispatchAllInvocationEvents()
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
@@ -255,18 +284,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
                         val afterFile = dataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
-                            try {
-                                myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (_: FileComparisonFailedError) {
-                                KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
-                            }
+                            myFixture.checkResultByFile(canonicalPathToExpectedFile)
                         } else {
                             KotlinTestUtils.assertEqualsToFile(afterFile, value.text)
                         }
                     }
                 }
             }
-            TestCase.assertEquals("Expected test to fail.", "", shouldFailString)
+            TestCase.assertEquals("Expected test to fail.", shouldFailString, "")
         } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, StringUtil.join(e.messages.sorted(), ", "))
         } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {

@@ -19,9 +19,8 @@ import com.intellij.sh.psi.ShFileElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ShParserDefinition implements ParserDefinition, ShTokenTypes {
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new ShLexer();
   }
 
@@ -35,27 +34,23 @@ public class ShParserDefinition implements ParserDefinition, ShTokenTypes {
     return ShFileElementType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return whitespaceTokens;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return commentTokens;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return stringLiterals;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode astNode) {
+  public @NotNull PsiElement createElement(ASTNode astNode) {
     return ShTypes.Factory.createElement(astNode);
   }
 

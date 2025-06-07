@@ -55,8 +55,7 @@ internal class ImportAllMembersIntention :
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): Context? {
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
         val target = actualReference?.resolveToSymbol() as? KaNamedClassSymbol ?: return null
         val classId = target.classId ?: return null

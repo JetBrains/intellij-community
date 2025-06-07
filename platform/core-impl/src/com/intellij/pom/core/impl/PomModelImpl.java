@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
@@ -25,6 +25,7 @@ import com.intellij.pom.wrappers.PsiEventWrapperAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -38,10 +39,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -205,7 +203,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void reparseParallelTrees(PsiFile changedFile, PsiToDocumentSynchronizer synchronizer) {
-    List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
+    List<PsiFile> allFiles = getAllFiles(changedFile);
     if (allFiles.size() <= 1) {
       return;
     }
@@ -224,6 +222,16 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         synchronizer.setIgnorePsiEvents(false);
       }
     }
+  }
+
+  private static @NotNull @Unmodifiable List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
+    VirtualFile file = changedFile.getVirtualFile();
+    if (file == null) {
+      return changedFile.getViewProvider().getAllFiles();
+    }
+    FileManager fileManager = ((PsiManagerEx)changedFile.getManager()).getFileManager();
+    List<FileViewProvider> providers = fileManager.findCachedViewProviders(file);
+    return ContainerUtil.flatMap(providers, p -> p.getAllFiles());
   }
 
   /**
@@ -336,7 +344,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
     event.setParent(scope);
-    event.setFile(scope.getContainingFile());
+    PsiFile containingFile = scope.getContainingFile();
+    if (containingFile != null) {
+      event.setFile(containingFile);
+    }
     TextRange range = scope.getTextRange();
     event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
@@ -365,7 +376,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     getPsiManager().childrenChanged(event);
   }
 
-  private @NotNull PsiManagerImpl getPsiManager() {
-    return (PsiManagerImpl)PsiManager.getInstance(myProject);
+  private @NotNull PsiManagerEx getPsiManager() {
+    return PsiManagerEx.getInstanceEx(myProject);
   }
 }

@@ -28,30 +28,27 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
   }
 
   @Override
-  public PyParameterList createPsi(@NotNull final PyParameterListStub stub) {
+  public PyParameterList createPsi(final @NotNull PyParameterListStub stub) {
     return new PyParameterListImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyParameterListStub createStub(@NotNull final PyParameterList psi, final StubElement parentStub) {
+  public @NotNull PyParameterListStub createStub(final @NotNull PyParameterList psi, final StubElement parentStub) {
     return new PyParameterListStubImpl(parentStub, getStubElementType());
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyParameterListImpl(node);
   }
 
   @Override
-  public void serialize(@NotNull final PyParameterListStub stub, @NotNull final StubOutputStream dataStream)
+  public void serialize(final @NotNull PyParameterListStub stub, final @NotNull StubOutputStream dataStream)
       throws IOException {
   }
 
   @Override
-  @NotNull
-  public PyParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub)
+  public @NotNull PyParameterListStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PyParameterListStubImpl(parentStub, getStubElementType());
   }

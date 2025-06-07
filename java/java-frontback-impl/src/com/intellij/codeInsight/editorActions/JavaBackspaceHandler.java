@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService;
@@ -27,7 +27,7 @@ public final class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   }
 
   @Override
-  public boolean charDeleted(final char c, @NotNull final PsiFile file, @NotNull final Editor editor) {
+  public boolean charDeleted(final char c, final @NotNull PsiFile file, final @NotNull Editor editor) {
     if (c == '<' && myToDeleteGt) {
       int offset = editor.getCaretModel().getOffset();
       final CharSequence chars = editor.getDocument().getCharsSequence();

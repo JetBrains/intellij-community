@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public class ChangeAnnotationParameterQuickFix extends PsiUpdateModCommandAction<PsiAnnotation> {
   private final String myName;
   private final String myNewValue;
-  @IntentionName private final String myMessage;
+  private final @IntentionName String myMessage;
 
   public ChangeAnnotationParameterQuickFix(@NotNull PsiAnnotation annotation, @NotNull String name, @Nullable String newValue,
                                            @IntentionName @NotNull String message) {
@@ -39,8 +39,7 @@ public class ChangeAnnotationParameterQuickFix extends PsiUpdateModCommandAction
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myMessage;
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -19,6 +18,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ final class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
 
   @Override
   public Data getFileData(@NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertReadAccess();
 
     if (shouldUseMemoryStorage(file)) {
       return CachedValuesManager.getManager(file.getProject()).getCachedValue(
@@ -79,7 +79,13 @@ final class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
     FileType fileType = file.getFileType();
     if (!(fileType instanceof LanguageFileType)) return null;
 
-    return FileContentImpl.createFileFromText(project, psi.getViewProvider().getContents(), (LanguageFileType)fileType, file, file.getName());
-  }
+    PsiFile recreatedFile =
+      FileContentImpl.createFileFromText(project, psi.getViewProvider().getContents(), (LanguageFileType)fileType, file, file.getName());
 
+    if (recreatedFile instanceof PsiFileImpl psiFile) {
+      psiFile.setOriginalFile(psi); // let clients know that this file is recreated from another
+    }
+
+    return recreatedFile;
+  }
 }

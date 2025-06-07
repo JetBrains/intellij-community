@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListConfig
 import com.intellij.codeInsight.hints.settings.Diff
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.LangBundle
-import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
@@ -29,7 +29,7 @@ import javax.swing.JPanel
 
 
 @ApiStatus.Internal
-class ExcludeListDialog(val language: Language, private val patternToAdd: String? = null) : DialogWrapper(null) {
+class ExcludeListDialog(val config: ParameterHintsExcludeListConfig, private val patternToAdd: String? = null) : DialogWrapper(null) {
   lateinit var myEditor: EditorTextField
   private var myPatternsAreValid = true
 
@@ -39,20 +39,19 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
   }
 
   override fun createCenterPanel(): JComponent? {
-    return createExcludePanel(language)
+    return createExcludePanel(config)
   }
 
 
-  private fun createExcludePanel(language: Language): JPanel? {
-    val provider = InlayParameterHintsExtension.forLanguage(language)
-    if (!provider.isBlackListSupported) return null
+  private fun createExcludePanel(config: ParameterHintsExcludeListConfig): JPanel? {
+    if (!config.isExcludeListSupported) return null
 
-    val blackList = getLanguageExcludeList(language)
+    val excludeList = getLanguageExcludeList(config)
     val finalText = if (patternToAdd != null) {
-      blackList + "\n" + patternToAdd
+      excludeList + "\n" + patternToAdd
     }
     else {
-      blackList
+      excludeList
     }
     val editorTextField = createExcludeListEditorField(finalText)
     editorTextField.alignmentX = Component.LEFT_ALIGNMENT
@@ -69,33 +68,31 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
     return panel {
       row {
         link(LangBundle.message("action.link.reset")) {
-          setLanguageExcludelistToDefault(language)
+          setLanguageExcludeListToDefault(config)
         }.align(AlignX.RIGHT)
       }
       row {
         cell(editorTextField)
           .align(AlignX.FILL)
       }.bottomGap(BottomGap.SMALL)
-      baseLanguageComment(provider)?.let {
+      baseLanguageComment(config)?.let {
         row {
           comment(it)
         }
       }
       row {
-        comment(getExcludeListExplanationHTML(language))
+        comment(getExcludeListExplanationHTML(config))
       }
     }
   }
 
-  private fun baseLanguageComment(provider: InlayParameterHintsProvider): @Nls String? {
-    return provider.blackListDependencyLanguage
+  private fun baseLanguageComment(config: ParameterHintsExcludeListConfig): @Nls String? {
+    return config.excludeListDependencyLanguage
       ?.let { CodeInsightBundle.message("inlay.hints.base.exclude.list.description", it.displayName) }
   }
 
-  private fun setLanguageExcludelistToDefault(language: Language) {
-    val provider = InlayParameterHintsExtension.forLanguage(language)
-    val defaultExcludeList = provider!!.defaultBlackList
-    myEditor.text = StringUtil.join(defaultExcludeList, "\n")
+  private fun setLanguageExcludeListToDefault(config: ParameterHintsExcludeListConfig) {
+    myEditor.text = StringUtil.join(config.defaultExcludeList, "\n")
   }
 
   private fun updateOkEnabled(editorTextField: EditorTextField) {
@@ -114,25 +111,22 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
   override fun doOKAction() {
     super.doOKAction()
     val excludeList = myEditor.text
-    storeExcludeListDiff(language, excludeList)
+    storeExcludeListDiff(config, excludeList)
   }
 
-  private fun storeExcludeListDiff(language: Language, text: String) {
+  private fun storeExcludeListDiff(config: ParameterHintsExcludeListConfig, text: String) {
     val updatedExcludeList = text.split("\n").filter { e -> e.trim { it <= ' ' }.isNotEmpty() }.toSet()
 
-    val provider = InlayParameterHintsExtension.forLanguage(language)
-    val defaultExcludeList = provider.defaultBlackList
-    val diff = Diff.build(defaultExcludeList, updatedExcludeList)
-    ParameterNameHintsSettings.getInstance().setExcludeListDiff(getLanguageForSettingKey(language), diff)
-    ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
+    val diff = Diff.build(config.defaultExcludeList, updatedExcludeList)
+    ParameterNameHintsSettings.getInstance().setExcludeListDiff(config.language, diff)
+    refreshParameterHintsOnNextPass()
   }
 }
 
 
-private fun getLanguageExcludeList(language: Language): String {
-  val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return ""
-  val diff = ParameterNameHintsSettings.getInstance().getExcludeListDiff(getLanguageForSettingKey(language))
-  val excludeList = diff.applyOn(hintsProvider.defaultBlackList)
+private fun getLanguageExcludeList(config: ParameterHintsExcludeListConfig): String {
+  val diff = ParameterNameHintsSettings.getInstance().getExcludeListDiff(config.language)
+  val excludeList = diff.applyOn(config.defaultExcludeList)
   return StringUtil.join(excludeList, "\n")
 }
 
@@ -161,8 +155,6 @@ private fun highlightErrorLines(lines: List<Int>, editor: Editor) {
 }
 
 @NlsContexts.DetailedDescription
-private fun getExcludeListExplanationHTML(language: Language): String {
-  val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return CodeInsightBundle.message(
-    "inlay.hints.exclude.list.pattern.explanation")
-  return hintsProvider.blacklistExplanationHTML
+private fun getExcludeListExplanationHTML(config: ParameterHintsExcludeListConfig): String {
+  return config.excludeListExplanationHtml ?: CodeInsightBundle.message("inlay.hints.exclude.list.pattern.explanation")
 }

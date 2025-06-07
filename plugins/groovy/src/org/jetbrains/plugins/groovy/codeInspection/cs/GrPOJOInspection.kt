@@ -35,7 +35,7 @@ class GrPOJOInspection : BaseInspection() {
 
       override fun getText(): String = GroovyBundle.message("add.compilestatic")
 
-      override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+      override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val clazz = startElement as? GrTypeDefinition
         clazz?.modifierList?.addAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC)
       }

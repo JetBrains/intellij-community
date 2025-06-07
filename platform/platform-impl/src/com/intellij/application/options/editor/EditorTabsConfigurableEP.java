@@ -22,7 +22,10 @@ import org.jetbrains.annotations.ApiStatus;
  * If you need to add a section of editor tabs options, your {@code UnnamedConfigurable} should implement
  * {@link EditorTabsOptionsCustomSection}.
  */
-@ApiStatus.Internal
 public final class EditorTabsConfigurableEP extends ConfigurableEP<SearchableConfigurable> {
   static final ExtensionPointName<EditorTabsConfigurableEP> EP_NAME = new ExtensionPointName<>("com.intellij.editorTabsConfigurable");
+
+  @ApiStatus.Internal
+  public EditorTabsConfigurableEP() {
+  }
 }

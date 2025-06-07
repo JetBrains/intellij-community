@@ -4,8 +4,10 @@ package com.jetbrains.python;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.*;
@@ -19,15 +21,16 @@ import java.util.regex.Pattern;
 import static com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY;
 
 public final class PyTypeParameterMappingTest extends PyTestCase {
-  private static final Pattern TYPE_VAR_NAME = Pattern.compile("[A-Z_][A-Z0-9_]*");
-  private static final Pattern TYPE_VAR_TUPLE_NAME = Pattern.compile("[A-Z_][A-Z0-9_]*s");
+  private static final Pattern TYPE_VAR_NAME = Pattern.compile("(?<!\\*)[A-Z_][A-Z0-9_]*\\b");
+  private static final Pattern TYPE_VAR_TUPLE_NAME = Pattern.compile("(?<!\\*)\\*[A-Z_][A-Z0-9_]*s\\b");
+  private static final Pattern PARAM_SPEC_NAME = Pattern.compile("\\*\\*[A-Z_][A-Z0-9_]*\\b");
 
   public void testCompleteMatchOfNonVariadicTypes() {
     doTestShapeMapping("int, T", "T2, str",
                        """
-             int -> T2
-             T -> str
-             """);
+                         int -> T2
+                         T -> str
+                         """);
   }
 
   public void testMatchingNoTypesToSomeTypes() {
@@ -298,12 +301,126 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
       """);
   }
 
+  public void testTypeVarDefault() {
+    doTestShapeMappingWithDefaults("T1, T2=str", "int", """
+      T1 -> int
+      T2 -> str
+      """);
+  }
+
+  public void testTypeVarTupleDefault() {
+    doTestShapeMappingWithDefaults("T1, *Ts=Unpack[tuple[int, str]]", "int", """
+      T1 -> int
+      *Ts -> *tuple[int, str]
+      """);
+  }
+
+  public void testParamSpecDefault() {
+    doTestShapeMappingWithDefaults("T1, **P=[int, str]", "int", """
+      T1 -> int
+      **P -> [int, str]
+      """);
+  }
+
+  public void testMappingParamSpecWithIncompatibleTypes() {
+    doNegativeShapeMappingTest("int", "**P");
+
+    doNegativeShapeMappingTest("**P", "*Ts");
+    doNegativeShapeMappingTest("*Ts", "**P");
+
+    doNegativeShapeMappingTest("**P", "*tuple[int, ...]");
+    doNegativeShapeMappingTest("*tuple[int, ...]", "**P");
+  }
+
+  public void testCallableParameterListWithIncompatibleTypes() {
+    doNegativeShapeMappingTest("[int, str]", "int");
+    doNegativeShapeMappingTest("int", "[int, str]");
+
+    doNegativeShapeMappingTest("[int, str]", "*Ts");
+    doNegativeShapeMappingTest("*Ts", "[int, str]");
+
+    doNegativeShapeMappingTest("[int, str]", "*tuple[int, ...]");
+    doNegativeShapeMappingTest("*tuple[int, ...]", "[int, str]");
+  }
+
+  public void testParamSpecAfterTypeVarTuple() {
+    doTestShapeMappingWithDefaults("*Ts, **P", "int, str, [bool]", """
+      *Ts -> *tuple[int, str]
+      **P -> [bool]
+      """);
+  }
+
+  public void testSingleParamSpec() {
+    doTestShapeMappingWithDefaults("**P", "int", """
+      **P -> [int]
+      """);
+    doTestShapeMappingWithDefaults("**P", "[int]", """
+      **P -> [int]
+      """);
+  }
+
+  public void testParamSpecFollowingTypeVar() {
+    doNegativeShapeMappingTest("T, T1, **P", "int, str, bool");
+
+    doTestShapeMappingWithDefaults("T, T1, **P", "int, str, [bool]", """
+      T -> int
+      T1 -> str
+      **P -> [bool]
+      """);
+  }
+
+  public void testParamSpecWithDefaultAfterTypeVarTupleWithoutDefault() {
+    doTestShapeMappingWithDefaults("*Ts, **P=[float, bool]", "int, str", """
+      *Ts -> *tuple[int, str]
+      **P -> [float, bool]
+      """);
+
+    doTestShapeMappingWithDefaults("*Ts, **P=[float, bool]", "int, str, [bytes]", """
+      *Ts -> *tuple[int, str]
+      **P -> [bytes]
+      """);
+  }
+
+  public void testAllTypeParameterDefaults() {
+    doTestShapeMappingWithDefaults("T=int, *Ts=Unpack[tuple[str, ...]], **P=[bool]", "", """
+      T -> int
+      *Ts -> *tuple[str, ...]
+      **P -> [bool]
+      """);
+  }
+
+  private void doTestShapeMappingWithDefaults(@NotNull String genericTypeParameters,
+                                              @NotNull String actualTypeArguments,
+                                              @NotNull String expectedMapping) {
+    String testData = "from typing import Unpack\n" +
+                      "class Expected[" + genericTypeParameters + "]: ...\n" +
+                      "actual: tuple[Sentinel, " + actualTypeArguments.replace("**", "") + "] = ...";
+
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    myFixture.configureByText("a.py", testData);
+
+    PyClass pyClass = myFixture.findElementByText("Expected", PyClass.class);
+    PyCollectionType expectedGenericClassType =
+      assertInstanceOf(new PyTypingTypeProvider().getGenericType(pyClass, context), PyCollectionType.class);
+
+    PyTargetExpression actualTuple = myFixture.findElementByText("actual", PyTargetExpression.class);
+    PyTupleType actualTupleType = assertInstanceOf(context.getType(actualTuple), PyTupleType.class);
+
+    PyTypeParameterMapping mapping = PyTypeParameterMapping.mapByShape(
+      expectedGenericClassType.getElementTypes(),
+      ContainerUtil.subList(actualTupleType.getElementTypes(), 1),
+      PyTypeParameterMapping.Option.USE_DEFAULTS
+    );
+
+    assertTypeMapping(expectedMapping, mapping, context);
+  }
+
   private void doTestParameterListMapping(@NotNull String expectedTypeList,
                                           @NotNull String functionParameterList,
                                           @NotNull String expectedMapping) {
-    String testData = generateTypingDeclarations(expectedTypeList, functionParameterList) +
-                      "expected: tuple[Sentinel, " + expectedTypeList + "] = ...\n" +
-                      "def actual(" + functionParameterList + "): ...\n";
+    String testData = "def f[" + extractTypeParamList(expectedTypeList, functionParameterList) + "]():\n" +
+                      "    expected: tuple[Sentinel, " + expectedTypeList.replace("**", "") + "] = ...\n" +
+                      "    def actual(" + functionParameterList + "): ...\n";
 
     TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     myFixture.configureByText("a.py", testData);
@@ -331,10 +448,10 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
                                   @NotNull String expectedMapping,
                                   PyTypeParameterMapping.Option @NotNull ... options) {
 
-    String testData = generateTypingDeclarations(expectedTypeList, actualTypeList) +
+    String testData = "def f[" + extractTypeParamList(expectedTypeList, actualTypeList) + "]():\n" +
                       // Add an artificial first type to handle empty parameter list cases
-                      "expected: tuple[Sentinel, " + expectedTypeList + "] = ...\n" +
-                      "actual: tuple[Sentinel, " + actualTypeList + "] = ...\n";
+                      "    expected: tuple[Sentinel, " + expectedTypeList.replace("**", "") + "] = ...\n" +
+                      "    actual: tuple[Sentinel, " + actualTypeList.replace("**", "") + "] = ...\n";
 
     TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     myFixture.configureByText("a.py", testData);
@@ -370,30 +487,25 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
     }
   }
 
-  private static @NotNull String generateTypingDeclarations(@NotNull String expectedTypeList, @NotNull String actualTypeList) {
-    Set<String> allTypeVarName = new LinkedHashSet<>();
-    allTypeVarName.addAll(StringUtil.findMatches(expectedTypeList, TYPE_VAR_NAME, 0));
-    allTypeVarName.addAll(StringUtil.findMatches(actualTypeList, TYPE_VAR_NAME, 0));
+  private static @NotNull String extractTypeParamList(@NotNull String expectedTypeList, @NotNull String actualTypeList) {
+    Set<String> allTypeVarNames = new LinkedHashSet<>();
+    allTypeVarNames.addAll(StringUtil.findMatches(expectedTypeList, TYPE_VAR_NAME, 0));
+    allTypeVarNames.addAll(StringUtil.findMatches(actualTypeList, TYPE_VAR_NAME, 0));
 
-    Set<String> allTypeVarTupleName = new LinkedHashSet<>();
-    allTypeVarTupleName.addAll(StringUtil.findMatches(expectedTypeList, TYPE_VAR_TUPLE_NAME, 0));
-    allTypeVarTupleName.addAll(StringUtil.findMatches(actualTypeList, TYPE_VAR_TUPLE_NAME, 0));
+    Set<String> allTypeVarTupleNames = new LinkedHashSet<>();
+    allTypeVarTupleNames.addAll(StringUtil.findMatches(expectedTypeList, TYPE_VAR_TUPLE_NAME, 0));
+    allTypeVarTupleNames.addAll(StringUtil.findMatches(actualTypeList, TYPE_VAR_TUPLE_NAME, 0));
 
-    StringBuilder testData = new StringBuilder(
-      """
-        from typing import TypeVar, TypeVarTuple
-        """);
+    Set<String> allParamSpecNames = new LinkedHashSet<>();
+    allTypeVarTupleNames.addAll(StringUtil.findMatches(expectedTypeList, PARAM_SPEC_NAME, 0));
+    allTypeVarTupleNames.addAll(StringUtil.findMatches(actualTypeList, PARAM_SPEC_NAME, 0));
 
-    for (String typeVarName : allTypeVarName) {
-      testData.append(typeVarName).append(" = TypeVar('").append(typeVarName).append("')\n");
-    }
-    for (String typeVarTupleName : allTypeVarTupleName) {
-      testData.append(typeVarTupleName).append(" = TypeVarTuple('").append(typeVarTupleName).append("')\n");
-    }
-    return testData.toString();
+    return StringUtil.join(ContainerUtil.concat(allTypeVarNames, allTypeVarTupleNames, allParamSpecNames), ", ");
   }
 
-  public void doNegativeShapeMappingTest(@NotNull String expectedTypeList, @NotNull String actualTypeList, PyTypeParameterMapping.Option @NotNull ... options) {
+  public void doNegativeShapeMappingTest(@NotNull String expectedTypeList,
+                                         @NotNull String actualTypeList,
+                                         PyTypeParameterMapping.Option @NotNull ... options) {
     doTestShapeMapping(expectedTypeList, actualTypeList, "", options);
   }
 }

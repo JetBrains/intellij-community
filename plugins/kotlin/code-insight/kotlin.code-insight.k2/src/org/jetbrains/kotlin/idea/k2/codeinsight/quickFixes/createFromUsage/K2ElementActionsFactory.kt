@@ -1,21 +1,26 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
+import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -27,14 +32,114 @@ import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
+    override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+        return super.createAddConstructorActions(targetClass, request)
+    }
+
+    override fun createChangeOverrideActions(
+        target: JvmModifiersOwner,
+        shouldBePresent: Boolean
+    ): List<IntentionAction> {
+        return super.createChangeOverrideActions(target, shouldBePresent)
+    }
+
+    override fun createRemoveAnnotationActions(
+        target: JvmModifiersOwner,
+        request: AnnotationRequest
+    ): List<IntentionAction> {
+        return super.createRemoveAnnotationActions(target, request)
+    }
+
+    override fun createChangeParametersActions(
+        target: JvmMethod,
+        request: ChangeParametersRequest
+    ): List<IntentionAction> {
+        return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
+            is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
+            is KtConstructor<*> -> kotlinOrigin.containingClass()?.let {
+                createChangeConstructorParametersAction(kotlinOrigin, it, request)
+            } ?: emptyList()
+            is KtClass -> createChangeConstructorParametersAction(kotlinOrigin, kotlinOrigin, request)
+            else -> emptyList()
+        }
+    }
+
+    private fun createChangeConstructorParametersAction(kotlinOrigin: PsiElement,
+                                                        targetKtClass: KtClass,
+                                                        request: ChangeParametersRequest): List<IntentionAction> {
+        return listOfNotNull(run {
+            val lightMethod = kotlinOrigin.toLightMethods().firstOrNull() ?: return@run null
+            val project = kotlinOrigin.project
+            val fakeParametersExpressions = fakeParametersExpressions(request.expectedParameters, project) ?: return@run null
+            QuickFixFactory.getInstance().createChangeMethodSignatureFromUsageFix(
+                lightMethod,
+                fakeParametersExpressions,
+                PsiSubstitutor.EMPTY,
+                targetKtClass,
+                false,
+                2
+            ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
+        })
+    }
+
+    private fun fakeParametersExpressions(parameters: List<ExpectedParameter>, project: Project): Array<PsiExpression>? = when {
+        parameters.isEmpty() -> emptyArray()
+        else -> JavaPsiFacade
+            .getElementFactory(project)
+            .createParameterList(
+                parameters.map { it.semanticNames.firstOrNull() }.toTypedArray(),
+                parameters.map { param ->
+                    param.expectedTypes.firstOrNull()?.theType?.let { type ->
+                        JvmPsiConversionHelper.getInstance(project).convertType(type)
+                    } ?: return null
+                }.toTypedArray()
+            )
+            .parameters
+            .map(::FakeExpressionFromParameter)
+            .toTypedArray()
+    }
+
+    private class FakeExpressionFromParameter(private val psiParam: PsiParameter) : PsiReferenceExpressionImpl() {
+        override fun getText(): String = psiParam.name
+        override fun getProject(): Project = psiParam.project
+        override fun getParent(): PsiElement = psiParam.parent
+        override fun getType(): PsiType = psiParam.type
+        override fun isValid(): Boolean = true
+        override fun getContainingFile(): PsiFile = psiParam.containingFile
+        override fun getReferenceName(): String = psiParam.name
+        override fun resolve(): PsiElement = psiParam
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmMethod,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmParameter,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmField,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
         val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner ?: return emptyList()
 
         if (request.modifier == JvmModifier.FINAL && !request.shouldBePresent()) {
             return listOf(
-                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD)
+                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD).asIntention()
             )
         }
         return emptyList()
@@ -44,40 +149,62 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         if (targetClass is PsiElement && !BaseIntentionAction.canModify(targetClass)) return emptyList()
         var container = targetClass.toKtClassOrFile() ?: return emptyList()
 
-        return when (request) {
-            is CreateMethodFromKotlinUsageRequest -> {
-                if (request.isExtension) {
-                    container = container.containingKtFile
+        val ktRequest = request as? CreateMethodFromKotlinUsageRequest
+        if (ktRequest?.isExtension == true) {
+            // Regular java classes have no companions
+            if (ktRequest.isForCompanion && ktRequest.targetClass is PsiClass) return emptyList()
+
+            container = container.containingKtFile
+        }
+
+        val methodName = request.methodName
+        val targetClassName = targetClass.name
+
+        val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName)
+        if (nameAndKind != null) {
+            val setterRequired = nameAndKind.second == PropertyKind.SETTER
+            val expectedParameters = request.expectedParameters
+            val returnTypes = request.returnType
+
+            fun getCreatedPropertyType(): ExpectedType? {
+                if (setterRequired) {
+                    val jvmPsiConversionHelper = JvmPsiConversionHelper.getInstance(container.project)
+                    if (returnTypes.any { jvmPsiConversionHelper.convertType(it.theType) != PsiTypes.voidType() }) return null
+                    val expectedParameter = expectedParameters.singleOrNull() ?: return null
+                    return expectedParameter.expectedTypes.firstOrNull()
+                } else if (expectedParameters.isEmpty()) {
+                    return returnTypes.firstOrNull()
+                } else {
+                    return null
                 }
-                val actionText = CreateKotlinCallableActionTextBuilder.build(
-                    KotlinBundle.message("text.function"), request
-                )
-                listOf(
-                    CreateKotlinCallableAction(
-                        request = request,
-                        targetClass = targetClass,
-                        abstract = container.isAbstractClass(),
-                        needFunctionBody = !request.isAbstractClassOrInterface,
-                        myText = actionText,
-                        pointerToContainer = container.createSmartPointer(),
-                    )
-                )
             }
 
-            else -> {
-                val isContainerAbstract = container.isAbstractClass()
-                listOf(
-                    CreateKotlinCallableAction(
-                        request = request,
-                        targetClass = targetClass,
-                        abstract = isContainerAbstract,
-                        needFunctionBody = !isContainerAbstract && !container.isInterfaceClass(),
-                        myText = KotlinBundle.message("add.method.0.to.1", request.methodName, targetClass.name.toString()),
-                        pointerToContainer = container.createSmartPointer(),
-                    )
+            val propertyType = getCreatedPropertyType()
+            if (propertyType != null) {
+                return createAddPropertyActions(
+                    targetContainer = container,
+                    modifiers = request.modifiers,
+                    propertyType = propertyType,
+                    propertyName = nameAndKind.first,
+                    setterRequired = setterRequired,
+                    classOrFileName = targetClassName,
+                    annotations = request.annotations.toList()
                 )
             }
         }
+
+        val actionText = if (ktRequest == null)
+            KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()) else CreateKotlinCallableActionTextBuilder.build(
+            KotlinBundle.message("text.function"), request
+        )
+        val isContainerAbstract = container.isAbstractClass()
+        val needFunctionBody = if (ktRequest == null) !isContainerAbstract && !container.isInterfaceClass() else !request.isAbstractClassOrInterface
+
+        return listOf(
+            CreateKotlinCallableAction(
+                request, targetClass, isContainerAbstract, needFunctionBody, actionText, container.createSmartPointer()
+            )
+        )
     }
 
     override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
@@ -99,23 +226,29 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+        var targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+
+        val ktRequest = request as? CreatePropertyFromKotlinUsageRequest
+        if (ktRequest?.isExtension == true) {
+            targetContainer = targetContainer.containingKtFile
+        }
 
         val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
 
         val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
             targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
         )
-
         val actions = if (writable) {
             listOfNotNull(
-                action,
+                action.takeIf { ktRequest == null },
                 K2CreatePropertyFromUsageBuilder.generatePropertyAction(
                     targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = true
                 )
             )
         } else {
-            listOfNotNull(action)
+            listOfNotNull(
+                action
+            )
         }
         return actions
     }
@@ -307,3 +440,44 @@ private fun renderAttributeValue(
             }
         }
     }
+
+private fun createAddPropertyActions(
+    targetContainer: KtElement,
+    modifiers: Collection<JvmModifier>,
+    propertyType: ExpectedType,
+    propertyName: String,
+    setterRequired: Boolean,
+    classOrFileName: String?,
+    annotations: List<AnnotationRequest>,
+): List<IntentionAction> {
+    val request = fieldRequest(
+        fieldName = propertyName,
+        annotations = annotations,
+        modifiers = modifiers,
+        fieldType = listOf(propertyType),
+        targetSubstitutor = PsiJvmSubstitutor(targetContainer.project, PsiSubstitutor.EMPTY),
+        initializer = null,
+        isConstant = false,
+    )
+
+    val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+        targetContainer = targetContainer,
+        classOrFileName = classOrFileName,
+        request = request,
+        lateinit = false,
+    )
+
+    val actions = if (setterRequired) {
+        listOf(
+            action, K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+                targetContainer = targetContainer,
+                classOrFileName = classOrFileName,
+                request = request,
+                lateinit = true,
+            )
+        )
+    } else {
+        listOf(action)
+    }
+    return actions
+}

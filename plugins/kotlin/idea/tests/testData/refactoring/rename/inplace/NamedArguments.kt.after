@@ -1,0 +1,9 @@
+// NEW_NAME: field
+// RENAME: member
+class Foo(
+    val f<caret>ield: String,
+)
+
+fun use(field: String) {
+    Foo(field = field)
+}

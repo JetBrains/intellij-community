@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -25,21 +25,11 @@ public final class LicensingFacade {
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
-  /** @deprecated use {@link #getInstance()} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile LicensingFacade INSTANCE;
   public boolean ai_enabled;
-
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile boolean isUnusedSignalled;
   /** @deprecated temporary field; use {@link #metadata} instead */
   @Deprecated(forRemoval = true)
   public String subType;
-
-  public static @Nullable LicensingFacade getInstance() {
-    return INSTANCE;
-  }
+  public String userBucket;
 
   /**
    * @param productCode the product code to look up the expiration date for
@@ -48,8 +38,8 @@ public final class LicensingFacade {
    * {@code null} value is returned if expiration date is not applicable for the product or the license has not been obtained.
    */
   public @Nullable Date getExpirationDate(String productCode) {
-    final Map<String, Date> result = expirationDates;
-    return result != null? result.get(productCode) : null;
+    var result = expirationDates;
+    return result != null ? result.get(productCode) : null;
   }
 
   public @Nullable String getLicensedToMessage() {
@@ -61,8 +51,8 @@ public final class LicensingFacade {
   }
 
   public @NotNull List<String> getLicenseRestrictionsMessages() {
-    final List<String> result = restrictions;
-    return result != null? result : Collections.emptyList();
+    var result = restrictions;
+    return result != null ? result : Collections.emptyList();
   }
 
   public boolean isEvaluationLicense() {
@@ -70,12 +60,12 @@ public final class LicensingFacade {
   }
 
   public boolean isApplicableForProduct(@NotNull Date releaseDate) {
-    final Date expDate = expirationDate;
+    var expDate = expirationDate;
     return isPerpetualForProduct(releaseDate) || (expDate == null || releaseDate.before(expDate));
   }
 
   public boolean isPerpetualForProduct(@NotNull Date releaseDate) {
-    final Date result = perpetualFallbackDate;
+    var result = perpetualFallbackDate;
     return result != null && releaseDate.before(result);
   }
 
@@ -107,8 +97,14 @@ public final class LicensingFacade {
    *   JetBrains Marketplace online documentation</a> for more information
    */
   public @Nullable String getConfirmationStamp(String productCode) {
-    final Map<String, String> result = confirmationStamps;
-    return result != null? result.get(productCode) : null;
+    var result = confirmationStamps;
+    return result != null ? result.get(productCode) : null;
+  }
+
+  private static volatile LicensingFacade INSTANCE;
+
+  public static @Nullable LicensingFacade getInstance() {
+    return INSTANCE;
   }
 
   @ApiStatus.Internal
@@ -133,6 +129,9 @@ public final class LicensingFacade {
       return null;
     }
   }
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnusedSignalled;
 
   public static void signalUnused(boolean value) {
     isUnusedSignalled = value;

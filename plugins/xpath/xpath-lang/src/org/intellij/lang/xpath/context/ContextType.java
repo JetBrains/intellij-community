@@ -59,6 +59,7 @@ public final class ContextType {
       return myVersion;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -70,10 +71,12 @@ public final class ContextType {
         return true;
     }
 
+    @Override
     public int hashCode() {
         return myName.hashCode();
     }
 
+    @Override
     public String toString() {
         return myName;
     }

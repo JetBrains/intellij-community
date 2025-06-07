@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.impl.eel.EelFileWatcher;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -58,6 +59,11 @@ public final class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
+    if (EelFileWatcher.Companion.useEelFileWatcher()) {
+      myExecutable = null;
+      return;
+    }
+
     myNotificationSink = notificationSink;
     if (SystemInfo.isWin10OrNewer && PathEnvironmentVariableUtil.findInPath("wsl.exe") != null) {
       myExecutable = PathManager.findBinFile(FSNOTIFIER_WSL);
@@ -81,7 +87,7 @@ public final class WslFileWatcher extends PluggableFileWatcher {
 
   @Override
   public boolean isOperational() {
-    if (myExecutable == null) return false;
+    if (myExecutable == null || EelFileWatcher.Companion.useEelFileWatcher()) return false;
     var app = ApplicationManager.getApplication();
     return !(app.isCommandLine() || app.isUnitTestMode()) || myTestStarted;
   }

@@ -15,6 +15,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
@@ -73,6 +74,7 @@ class EditorWindow internal constructor(
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
     val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 
@@ -153,6 +155,7 @@ class EditorWindow internal constructor(
     get() = currentCompositeFlow.value
 
   @Suppress("DEPRECATION")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
   fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
     return selectedComposite as EditorWithProviderComposite?
@@ -424,7 +427,9 @@ class EditorWindow internal constructor(
         withContext(Dispatchers.EDT) {
           if (tab.tabPaneActions != tabActions) {
             tab.setTabPaneActions(tabActions)
-            tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
+            if (tab == tabbedPane.editorTabs.selectedInfo) {
+              tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
+            }
           }
         }
       }
@@ -478,6 +483,15 @@ class EditorWindow internal constructor(
     virtualFile: VirtualFile?,
     focusNew: Boolean,
     fileIsSecondaryComponent: Boolean = true,
+  ): EditorWindow? = split(orientation, forceSplit, virtualFile, focusNew, fileIsSecondaryComponent, null)
+
+  internal fun split(
+    orientation: Int,
+    forceSplit: Boolean,
+    virtualFile: VirtualFile?,
+    focusNew: Boolean,
+    fileIsSecondaryComponent: Boolean = true,
+    explicitlySetCompositeProvider: (() -> EditorComposite?)?,
   ): EditorWindow? {
     checkConsistency()
     if (tabCount < 1) {
@@ -492,7 +506,7 @@ class EditorWindow internal constructor(
           window = target,
           _file = virtualFile,
           entry = selectedComposite.takeIf { it.file == virtualFile }?.currentStateAsFileEntry(),
-          options = FileEditorOpenOptions(requestFocus = focusNew),
+          options = FileEditorOpenOptions(requestFocus = focusNew, explicitlyOpenCompositeProvider = null),
         )
       }
       return target
@@ -520,6 +534,7 @@ class EditorWindow internal constructor(
       splitter.firstComponent = newWindow.component
       splitter.secondComponent = existingEditor
     }
+    InternalUICustomization.getInstance()?.installEditorBackground(newWindow.component)
     normalizeProportionsIfNeed(existingEditor)
 
     // open only selected file in the new splitter instead of opening all tabs
@@ -533,6 +548,7 @@ class EditorWindow internal constructor(
         isExactState = true,
         pin = getComposite(nextFile)?.isPinned ?: false,
         selectAsCurrent = focusNew,
+        explicitlyOpenCompositeProvider = explicitlySetCompositeProvider
       ),
     ) ?: return newWindow
     if (!focusNew) {
@@ -950,7 +966,7 @@ class EditorWindow internal constructor(
 
   fun getComposite(inputFile: VirtualFile): EditorComposite? = findTabByFile(inputFile)?.composite
 
-  internal fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
+  fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
     val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
     for (tab in tabbedPane.tabs.tabs) {
       val composite = tab.composite

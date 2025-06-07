@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.codeWithMe.ClientId
 import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -24,7 +23,6 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
-import java.util.regex.Pattern
 
 private val LOG = logger<FeatureUsageData>()
 
@@ -67,7 +65,8 @@ class FeatureUsageData(val recorderId: String) {
   companion object {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id")
+                                                "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id",
+                                                "auto_license_type", "automated_plugin_version")
 
     private val QODANA_EVENTS_DATA: QodanaEventsData = calcQodanaEventsData()
   }
@@ -119,6 +118,17 @@ class FeatureUsageData(val recorderId: String) {
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
       StatisticsUtil.addPluginInfoTo(info, data)
+    }
+    return this
+  }
+
+  fun addAutomatedPluginVersion(info: PluginInfo?): FeatureUsageData {
+    info?.let {
+      if (!info.type.isSafeToReport()) return@let
+      val version = info.version
+      if (!version.isNullOrEmpty()) {
+        data["automated_plugin_version"] = version
+      }
     }
     return this
   }

@@ -1,17 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
@@ -19,38 +25,33 @@ import java.util.logging.LogRecord
 @ApiStatus.Internal
 class DialogAppender : Handler() {
   private val MAX_EARLY_LOGGING_EVENTS = 20
+  private val NOTIFICATIONS_ENABLED = System.getProperty("idea.fatal.error.notification") != "disabled"
 
-  private var earlyEventCounter = 0
-  private val earlyEvents = ArrayDeque<IdeaLoggingEvent>()
   @OptIn(ExperimentalCoroutinesApi::class)
   private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
 
+  private var earlyEventCounter = 0
+  private val earlyEvents = ArrayDeque<Pair<String?, Throwable>>()
+  private var loggerBroken = AtomicBoolean(false)
+  private val pluginUpdateScheduled = AtomicBoolean(false)
+
   override fun publish(event: LogRecord) {
-    if (event.level.intValue() < Level.SEVERE.intValue() || (AppMode.isCommandLine() && !ApplicationManagerEx.isInIntegrationTest())) {
-      // the dialog appender doesn't deal with non-critical errors
-      // also, it makes no sense when there is no frame to show an error icon
-      return
-    }
+    if (
+      event.level.intValue() < Level.SEVERE.intValue() ||
+      loggerBroken.get() ||
+      (AppMode.isCommandLine() && !ApplicationManagerEx.isInIntegrationTest())
+    ) return
 
-    val ideaEvent: IdeaLoggingEvent
-    val parameters = event.parameters
-    if (parameters?.firstOrNull() is IdeaLoggingEvent) {
-      ideaEvent = parameters[0] as IdeaLoggingEvent
-    }
-    else {
-      val thrown = event.thrown ?: return
-      ideaEvent = extractLoggingEvent(messageObject = event.message, throwable = thrown)
-    }
-
+    val throwable = event.thrown ?: return
     synchronized(this) {
       if (LoadingState.APP_READY.isOccurred) {
         processEarlyEventsIfNeeded()
-        queueAppend(ideaEvent)
+        queueEvent(event.message, throwable)
       }
       else {
         earlyEventCounter++
         if (earlyEvents.size < MAX_EARLY_LOGGING_EVENTS) {
-          earlyEvents.add(ideaEvent)
+          earlyEvents.add(event.message to throwable)
         }
       }
     }
@@ -60,9 +61,9 @@ class DialogAppender : Handler() {
     if (earlyEventCounter == 0) return
 
     while (true) {
-      val queued = earlyEvents.poll() ?: break
+      val (message, throwable) = earlyEvents.poll() ?: break
       earlyEventCounter--
-      queueAppend(queued)
+      queueEvent(message, throwable)
     }
 
     if (earlyEventCounter > 0) {
@@ -72,37 +73,51 @@ class DialogAppender : Handler() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private fun queueAppend(event: IdeaLoggingEvent) {
-    if (DefaultIdeaErrorLogger.canHandle(event)) {
-      GlobalScope.launch(context) {
-        DefaultIdeaErrorLogger.handle(event)
+  private fun queueEvent(message: String?, throwable: Throwable) {
+    GlobalScope.launch(context) {
+      processEvent(message, throwable)
+    }
+  }
+
+  private fun processEvent(message: String?, throwable: Throwable) {
+    try {
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isExitInProgress || app.isDisposed()) return
+
+      val oomErrorKind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable)
+      if (oomErrorKind != null) {
+        LowMemoryNotifier.showNotification(oomErrorKind, true)
+      }
+      else {
+        val plugin = findPlugin(throwable)
+        if (app.isInternal() || NOTIFICATIONS_ENABLED || showPluginError(throwable, message, plugin)) {
+          val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
+          val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
+          val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
+          MessagePool.getInstance().addIdeFatalMessage(LogMessage(throwable, message, attachments))
+        }
       }
     }
+    catch (e: Throwable) {
+      loggerBroken.set(true)
+      throw e
+    }
+  }
+
+  private fun findPlugin(throwable: Throwable): IdeaPluginDescriptor? {
+    val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
+    if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
+      UpdateChecker.updateAndShowResult()
+    }
+    return plugin
+  }
+
+  private fun showPluginError(throwable: Throwable, message: String?, plugin: IdeaPluginDescriptor?): Boolean {
+    val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
+    return submitter !is ITNReporter || submitter.showErrorInRelease(IdeaLoggingEvent(message, throwable))
   }
 
   override fun flush() { }
 
   override fun close() { }
-
-  private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
-    var message: String? = null
-    val withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments::class.java)
-    (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
-      message = it.userMessage
-    }
-    if (message == null && messageObject != null) {
-      message = messageObject.toString()
-    }
-
-    if (withAttachments.isEmpty()) {
-      return IdeaLoggingEvent(message, throwable)
-    }
-    else {
-      val list = ArrayList<Attachment>()
-      for (e in withAttachments) {
-        list.addAll(e.attachments)
-      }
-      return LogMessage.eventOf(throwable, message, list)
-    }
-  }
 }

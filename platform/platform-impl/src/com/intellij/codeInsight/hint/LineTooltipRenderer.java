@@ -39,7 +39,7 @@ import java.util.List;
 
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
-  public final static int CONTENT_PADDING = 20;
+  public static final int CONTENT_PADDING = 20;
   /**
    * Html-like text for showing
    * Please note that the tooltip size is calculated dynamically based on the html so

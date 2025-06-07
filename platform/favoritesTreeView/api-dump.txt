@@ -1,0 +1,48 @@
+a:com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider
+- java.lang.Comparable
+- java.util.Comparator
+- sf:BOOKMARKS_WEIGHT:I
+- sf:BREAKPOINTS_WEIGHT:I
+- sf:TASKS_WEIGHT:I
+- pf:myChildren:java.util.List
+- pf:myNode:com.intellij.ide.favoritesTreeView.FavoritesListNode
+- pf:myProject:com.intellij.openapi.project.Project
+- p:<init>(com.intellij.openapi.project.Project,java.lang.String):V
+- p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
+- createFavoriteListNode(com.intellij.openapi.project.Project):com.intellij.ide.favoritesTreeView.FavoritesListNode
+- customizeRenderer(com.intellij.ui.ColoredTreeCellRenderer,javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
+- getCustomName(com.intellij.ui.CommonActionsPanel$Buttons):java.lang.String
+- getListName(com.intellij.openapi.project.Project):java.lang.String
+- handle(com.intellij.ui.CommonActionsPanel$Buttons,com.intellij.openapi.project.Project,java.util.Set,javax.swing.JComponent):V
+- willHandle(com.intellij.ui.CommonActionsPanel$Buttons,com.intellij.openapi.project.Project,java.util.Set):Z
+c:com.intellij.ide.favoritesTreeView.AbstractUrlFavoriteAdapter
+- com.intellij.ide.projectView.impl.AbstractUrl
+- <init>(java.lang.String,java.lang.String,com.intellij.ide.favoritesTreeView.FavoriteNodeProvider):V
+- createPath(com.intellij.openapi.project.Project):java.lang.Object[]
+- p:createUrl(java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
+- createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
+- getNodeProvider():com.intellij.ide.favoritesTreeView.FavoriteNodeProvider
+c:com.intellij.ide.favoritesTreeView.FavoritesListNode
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- <init>(com.intellij.openapi.project.Project,java.lang.String):V
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
+- getChildren():java.util.Collection
+- s:getFavoritesRoots(com.intellij.openapi.project.Project,java.lang.String,com.intellij.ide.favoritesTreeView.FavoritesListNode):java.util.Collection
+- p:update(com.intellij.ide.projectView.PresentationData):V
+com.intellij.ide.favoritesTreeView.FavoritesListener
+- a:listAdded(java.lang.String):V
+- a:listRemoved(java.lang.String):V
+- rootsChanged():V
+f:com.intellij.ide.favoritesTreeView.FavoritesManager
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>(com.intellij.openapi.project.Project):V
+- addFavoritesListener(com.intellij.ide.favoritesTreeView.FavoritesListener,com.intellij.openapi.Disposable):V
+- addRoots(java.lang.String,com.intellij.openapi.module.Module,java.lang.Object):Z
+- createNewList(java.lang.String):V
+- fireListeners(java.lang.String):V
+- getAvailableFavoritesListNames():java.util.List
+- getFavoritesListRootUrls(java.lang.String):java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.favoritesTreeView.FavoritesManager
+- getState():org.jdom.Element
+- loadState(org.jdom.Element):V
+- noStateLoaded():V

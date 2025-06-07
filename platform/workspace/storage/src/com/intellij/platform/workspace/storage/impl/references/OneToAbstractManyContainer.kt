@@ -5,12 +5,19 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ChildEntityId
 import com.intellij.platform.workspace.storage.impl.ParentEntityId
 import com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
+import java.util.concurrent.ConcurrentHashMap
 
 private typealias ReferenceContainerType = LinkedBidirectionalMap<ChildEntityId, ParentEntityId>
 
 internal class ImmutableOneToAbstractManyContainer(collection: Map<ConnectionId, ReferenceContainerType>)
   : ImmutableReferenceContainer<ReferenceContainerType>(collection) {
-  constructor() : this(HashMap())
+
+  // IJPL-148735: yes, we indeed use ConcurrentHashMap in immutable object.
+  // For example, toMutableContainer leaks this collection (not a copy) to the
+  // outer world, and anyone can mutate immutable object now.
+  // Even if we have at most one writer, readers may get ConcurrentModificationException.
+  // We should make sure that code that attempts to mutate immutable objects does not compile in the first place.
+  constructor() : this(ConcurrentHashMap())
 
   override fun toMutableContainer(): MutableOneToAbstractManyContainer {
     return MutableOneToAbstractManyContainer(collection as MutableMap)

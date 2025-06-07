@@ -49,7 +49,6 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
                         val importData = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
                         importData?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                     }
-                        .inSmartMode(project)
                         .wrapProgress(indicator)
                         .expireWhen { !file.isValid || project.isDisposed() }
                         .executeSynchronously()

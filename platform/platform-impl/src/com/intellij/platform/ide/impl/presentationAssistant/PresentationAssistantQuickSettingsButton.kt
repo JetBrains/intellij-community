@@ -33,7 +33,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
 
   @Service(Service.Level.PROJECT)
   private class AlarmFactory (private val coroutineScope: CoroutineScope) {
-    fun createAlarm() = Alarm(coroutineScope)
+    fun createAlarm() = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
   }
 
   private var popup: JBPopup? = null

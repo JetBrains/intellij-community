@@ -2,7 +2,7 @@ package com.siyeh.igtest.numeric.pointless_arithmetic_expression;
 
 import java.util.Random;
 
-public class PointlessArithmeticExpression
+class PointlessArithmeticExpression
 {
     private static final int ZERO_CONSTANT = 0;
     private static final int ONE_CONSTANT = 1;
@@ -176,6 +176,11 @@ class FloatingPoint {
     float res7 = x * 0.0f;
     float res8 = 0.0f / x;
     float nan = 0.0f / 0.0f;
+  }
+  
+  void testNanWithZero() {
+    double d = 0.0;
+    System.out.println(d / d);
   }
   
   void multiplyToCast(int x, int y) {

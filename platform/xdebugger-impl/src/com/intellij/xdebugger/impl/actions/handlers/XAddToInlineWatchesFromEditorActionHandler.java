@@ -13,6 +13,7 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
           if (text != null) {
             watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, false);
           } else if (caretPosition != null) {
-            watchesManager.showInplaceEditor(caretPosition, editor, session, null);
+            watchesManager.showInplaceEditor(caretPosition, editor, XDebugSessionProxyKeeperKt.asProxy(session), null);
           }
         });
       }).onError(e -> { });

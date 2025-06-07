@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -78,7 +78,7 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
   }
 
   @Override
-  public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
+  public void check(final @NotNull GrControlFlowOwner owner, final @NotNull ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final DFAEngine<Object2IntMap<GrVariable>> engine = new DFAEngine<>(
       flow,

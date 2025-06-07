@@ -32,6 +32,6 @@ class GitRebaseBranchAction : GitSingleBranchAction(GitBundle.messagePointer("br
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    GitBrancher.getInstance(project).rebase(repositories, branch.fullName)
+    GitBrancher.getInstance(project).rebase(repositories, branch)
   }
 }

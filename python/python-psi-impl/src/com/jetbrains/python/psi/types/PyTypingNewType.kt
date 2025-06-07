@@ -1,9 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types
 
-import com.jetbrains.python.psi.PyCallSiteExpression
-import com.jetbrains.python.psi.PyQualifiedNameOwner
-import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.RatedResolveResult
 
 class PyTypingNewType(private val classType: PyClassType,
                       private val name: String,
@@ -54,6 +55,28 @@ class PyTypingNewType(private val classType: PyClassType,
 
   override fun getSuperClassTypes(context: TypeEvalContext): List<PyClassLikeType> = listOf(classType)
 
+  override fun resolveMember(
+    name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext,
+    inherited: Boolean,
+  ): MutableList<out RatedResolveResult>? {
+    return if (name == PyNames.CLASS_GETITEM) {
+      mutableListOf()
+    }
+    else {
+      classType.resolveMember(name, location, direction, resolveContext, inherited)
+    }
+  }
+
+  override fun resolveMember(name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext)
+    : MutableList<out RatedResolveResult>? {
+    return if (name == PyNames.CLASS_GETITEM) {
+      mutableListOf()
+    }
+    else {
+      classType.resolveMember(name, location, direction, resolveContext)
+    }
+  }
+
   override fun getAncestorTypes(context: TypeEvalContext): List<PyClassLikeType> {
     return listOf(classType) + classType.getAncestorTypes(context)
   }
@@ -75,5 +98,12 @@ class PyTypingNewType(private val classType: PyClassType,
 
   override fun hashCode(): Int {
     return 31 * classType.hashCode() + name.hashCode()
+  }
+
+  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyTypingNewType(this)
+    }
+    return visitor.visitPyClassType(this)
   }
 }

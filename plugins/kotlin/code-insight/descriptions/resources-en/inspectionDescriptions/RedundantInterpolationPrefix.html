@@ -1,0 +1,27 @@
+<html>
+<body>
+Reports redundant dollar prefixes in string template expressions.
+<p>
+Such prefixes can be safely removed.
+</p>
+<p>
+Example:
+</p>
+<pre><code>
+fun example() {
+    $"Example: prefix of length one is always redundant"
+    $$"Example: string contains no interpolated values"
+    $$"Example: $$ dollars are plain characters here $$"
+}
+</code></pre>
+<p>After the quick fixes are applied:</p>
+<pre><code>
+fun example() {
+    "Example: prefix of length one is always redundant"
+    "Example: string contains no interpolated values"
+    "Example: $$ dollars are plain characters here $$"
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

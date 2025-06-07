@@ -1,11 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -29,7 +30,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +42,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
-                                               RenameableUsage, DataProvider, UsagePresentation {
+                                               RenameableUsage, UiCompatibleDataProvider, UsagePresentation, UsageDocumentProcessor {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
   @SuppressWarnings("StaticNonFinalField")
@@ -57,7 +61,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private final int myLineNumber;
   private final int myOffset;
   private volatile UsageNodePresentation myCachedPresentation;
-  @Nullable private final VirtualFile myVirtualFile;
+  private final @Nullable VirtualFile myVirtualFile;
   private final @Nullable SmartPsiFileRange myNavigationRange;
   private volatile UsageType myUsageType;
 
@@ -194,8 +198,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
-  @NotNull
-  public UsagePresentation getPresentation() {
+  public @NotNull UsagePresentation getPresentation() {
     return this;
   }
 
@@ -218,8 +221,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
-  @Nullable
-  public FileEditorLocation getLocation() {
+  public @Nullable FileEditorLocation getLocation() {
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
     FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor(virtualFile);
@@ -254,17 +256,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return getUsageInfo().getSegment();
   }
 
-  // must iterate in start offset order
-  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
-    for (UsageInfo usageInfo : getMergedInfos()) {
-      Segment segment = usageInfo.getSegment();
-      if (segment != null && !processor.process(segment)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
+  @Override
   public Document getDocument() {
     PsiFile file = getUsageInfo().getFile();
     if (file == null) return null;
@@ -352,8 +344,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return range;
   }
 
-  @NotNull
-  private Project getProject() {
+  private @NotNull Project getProject() {
     return getUsageInfo().getProject();
   }
 
@@ -396,9 +387,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return null;
   }
 
-  @NotNull
   @Override
-  public List<SyntheticLibrary> getSyntheticLibraries() {
+  public @NotNull List<SyntheticLibrary> getSyntheticLibraries() {
     if (!isValid()) return Collections.emptyList();
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return Collections.emptyList();
@@ -507,8 +497,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return getUsageInfo().isNonCodeUsage;
   }
 
-  @NotNull
-  public UsageInfo getUsageInfo() {
+  public @NotNull UsageInfo getUsageInfo() {
     return myUsageInfo;
   }
 
@@ -541,16 +530,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
-      return getUsageInfo();
-    }
-    if (UsageView.USAGE_INFO_LIST_KEY.is(dataId)) {
-      return Arrays.asList(getMergedInfos());
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(UsageView.USAGE_INFO_KEY, getUsageInfo());
+    sink.set(UsageView.USAGE_INFO_LIST_KEY, Arrays.asList(getMergedInfos()));
   }
 
   private long myModificationStamp;
@@ -593,22 +576,19 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.empty();
   }
 
-  @NotNull
-  private static String clsType(@NotNull PsiElement psiElement) {
+  private static @NotNull String clsType(@NotNull PsiElement psiElement) {
     String type = LanguageFindUsages.getType(psiElement);
     if (!type.isEmpty()) return type;
     return ObjectUtils.notNull(TypePresentationService.getService().getTypePresentableName(psiElement.getClass()), "");
   }
-  @NotNull
-  private static String clsName(@NotNull PsiElement psiElement) {
+  private static @NotNull String clsName(@NotNull PsiElement psiElement) {
     String name = LanguageFindUsages.getNodeText(psiElement, false);
     if (!name.isEmpty()) return name;
     return ObjectUtils.notNull(psiElement instanceof PsiNamedElement ? ((PsiNamedElement)psiElement).getName() : null, "");
   }
 
   @Override
-  @NotNull
-  public String getPlainText() {
+  public @NotNull String getPlainText() {
     PsiElement element = getElement();
     PsiFile psiFile = getPsiFile();
     boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
@@ -647,8 +627,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return getNotNullCachedPresentation().getIcon();
   }
 
-  @Nullable
-  protected Icon computeIcon() {
+  protected @Nullable Icon computeIcon() {
     Icon icon = myUsageInfo.getIcon();
     if (icon != null) {
       return icon;
@@ -666,8 +645,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return myUsageInfo.getTooltipText();
   }
 
-  @Nullable
-  public UsageType getUsageType() {
+  public @Nullable UsageType getUsageType() {
     UsageType usageType = myUsageType;
     if (usageType == null) {
       usageType = computeUsageType();

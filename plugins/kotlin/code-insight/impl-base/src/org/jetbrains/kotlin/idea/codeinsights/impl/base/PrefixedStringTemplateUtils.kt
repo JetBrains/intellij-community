@@ -2,10 +2,16 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
+
+private object PrefixedStringTemplateUtils
+private val LOG: Logger = logger<PrefixedStringTemplateUtils>()
 
 private const val DEFAULT_INTERPOLATION_PREFIX_LENGTH: Int = 2
 private const val INTERPOLATION_PREFIX_LENGTH_THRESHOLD: Int = 5
@@ -59,15 +65,11 @@ fun KtStringTemplateExpression.changeInterpolationPrefix(
             }
         }
     }
-    return if (newPrefixLength == 0) {
-        if (isDestinationSingleQuoted) {
-            factory.createStringTemplate(contentText)
-        } else {
-            // hack until KtPsiFactory has a triple-quoted template generation, KTIJ-31681
-            factory.createExpression("\"\"\"$contentText\"\"\"") as KtStringTemplateExpression
-        }
-    } else {
-        factory.createMultiDollarStringTemplate(contentText, newPrefixLength, forceMultiQuoted = !isDestinationSingleQuoted)
+    return when {
+        newPrefixLength != 0 ->
+            factory.createMultiDollarStringTemplate(contentText, newPrefixLength, forceMultiQuoted = !isDestinationSingleQuoted)
+        isDestinationSingleQuoted -> factory.createStringTemplate(contentText)
+        else -> factory.createRawStringTemplate(contentText)
     }
 }
 
@@ -208,22 +210,16 @@ private fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUp
 }
 
 private fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemplateEntry {
-    fun previousDollarsCount(): Int {
-        if (this.prevSibling !is KtLiteralStringTemplateEntry) return 0
-        return this.prevSibling.text.takeLastWhile { it == '$' }.length
-    }
-
     return when (this) {
         is KtEscapeStringTemplateEntry -> {
             if (this.unescapedValue != "$") return this
-            if (previousDollarsCount() + 1 >= newPrefixLength
-                && (nextSibling as? KtLiteralStringTemplateEntry)?.canBeConsideredIdentifierOrBlock() == true
-            ) return this
+            if (!isSafeToReplaceWithDollar(newPrefixLength)) return this
             KtPsiFactory(project).createLiteralStringTemplateEntry("$")
         }
         is KtBlockStringTemplateEntry -> {
             val expression = this.expression ?: return this
             if (expression.text !in dollarLiteralExpressions) return this
+            if (!isSafeToReplaceWithDollar(newPrefixLength)) return this
             KtPsiFactory(project).createLiteralStringTemplateEntry("$")
         }
         else -> this
@@ -250,7 +246,6 @@ fun KtLiteralStringTemplateEntry.canBeConsideredIdentifierOrBlock(): Boolean =
     text.firstOrNull()?.canBeStartOfIdentifierOrBlock() == true
 
 fun Char.canBeStartOfIdentifierOrBlock(): Boolean {
-    @Suppress("KotlinConstantConditions") // K2 inspection false positive, `isLetter` returns false for these chars KTIJ-31678
     return isLetter() || this == '_' || this == '{' || this == '`'
 }
 
@@ -258,6 +253,12 @@ fun KtStringTemplateEntry.isEscapedDollar(): Boolean = when (this) {
     is KtEscapeStringTemplateEntry -> this.isEscapedDollar()
     is KtBlockStringTemplateEntry -> this.isInterpolatedDollarLiteralExpression()
     else -> false
+}
+
+fun KtStringTemplateExpression.findTextRangesInParentForEscapedDollars(includeUnsafe: Boolean): List<TextRange> {
+    return entries.filter { entry ->
+        entry.isEscapedDollar() && (includeUnsafe || entry.isSafeToReplaceWithDollar(entryPrefixLength))
+    }.map { it.textRangeInParent }
 }
 
 /**
@@ -277,7 +278,9 @@ fun prepareMultiDollarConversionInfo(element: KtStringTemplateExpression, useFal
  * If no such prefix exists, the [DEFAULT_INTERPOLATION_PREFIX_LENGTH] if [useFallbackPrefix] is `true`, or `null` otherwise.
  */
 private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFallbackPrefix: Boolean): Int? {
-    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLength(element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
+    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLengthForConservativeConversion(
+        element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD
+    )
     if (longestUnsafeDollarSequence >= INTERPOLATION_PREFIX_LENGTH_THRESHOLD) {
         return if (useFallbackPrefix) DEFAULT_INTERPOLATION_PREFIX_LENGTH else null
     }
@@ -288,7 +291,13 @@ private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFal
  * Convert a plain string to a multi-dollar string with the specified prefix length
  */
 fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo: MultiDollarConversionInfo): KtStringTemplateExpression {
-    require(element.interpolationPrefix == null) { "Can't convert the string which already has a prefix to multi-dollar string" }
+    if (element.interpolationPrefix != null) {
+        LOG.error("""
+            The string passed for multi-dollar conversion already has an interpolation prefix and won't be changed: ${element.text}.
+            This function should only be used for strings without an interpolation prefix. 
+            """.trimIndent())
+        return element
+    }
     replaceExpressionEntries(element, contextInfo.prefixLength)
 
     val replaced = element.replace(
@@ -303,37 +312,72 @@ fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo:
 }
 
 /**
+ * Convert a multi-dollar string to a plain string with the same quotes.
+ *
+ * @return the replacement string without the interpolation prefix or the original string if it doesn't have a prefix
+ */
+fun convertToStringWithoutPrefix(element: KtStringTemplateExpression): KtStringTemplateExpression {
+    if (element.interpolationPrefix == null) return element
+
+    replaceExpressionEntries(element, 1)
+    val psiFactory = KtPsiFactory(element.project)
+    val replaced = psiFactory.createStringTemplate(
+        content = element.toEscapedText(element.isSingleQuoted()),
+        prefixLength = 0,
+        isRaw = !element.isSingleQuoted(),
+    )
+    return element.replace(replaced) as KtStringTemplateExpression
+}
+
+private fun KtStringTemplateExpression.toEscapedText(isSingleQuoted: Boolean): String {
+    val dollarReplacement = if (isSingleQuoted) """\$""" else "\${'$'}"
+    return entries.joinToString(separator = "") { entry ->
+        if (entry is KtLiteralStringTemplateEntry) {
+            entry.text.replace("$", dollarReplacement)
+        } else {
+            entry.text
+        }
+    }
+}
+
+/**
  * Replace dollar escape sequences in a string template if it's safe, i.e., if replacement won't turn a literal part into interpolation.
  * Both `\$` and `${'$'}` sequences are replaced if possible.
  */
 fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplateExpression {
     val ktPsiFactory = KtPsiFactory(element.project)
-    val prefixLength = element.interpolationPrefix?.textLength?.takeIf { it > 1 } ?: return element
+    val entryPrefixLength = element.entryPrefixLength
 
     for (entry in element.entries) {
         when (entry) {
             is KtEscapeStringTemplateEntry -> {
-                if (entry.isEscapedDollar() && entry.isSafeToReplaceWithDollar(prefixLength))
+                if (entry.isEscapedDollar() && entry.isSafeToReplaceWithDollar(entryPrefixLength))
                     entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
 
             is KtBlockStringTemplateEntry -> {
-                if (entry.expression?.text in dollarLiteralExpressions && entry.isSafeToReplaceWithDollar(prefixLength))
+                if (entry.expression?.text in dollarLiteralExpressions && entry.isSafeToReplaceWithDollar(entryPrefixLength))
                     entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
         }
     }
 
-    val replacement = ktPsiFactory.createMultiDollarStringTemplate(
-        content = element.plainContent,
-        prefixLength = prefixLength,
-        forceMultiQuoted = !element.isSingleQuoted(),
+    val replacement = ktPsiFactory.createStringTemplate(
+        element.plainContent, element.templatePrefixLength, isRaw = !element.isSingleQuoted()
     )
 
     return element.replace(replacement) as KtStringTemplateExpression
 }
 
-internal fun longestUnsafeDollarSequenceLength(
+/**
+ * Finds prefix length for a conversion that doesn't preserve interpolation entries.
+ * In other words, the prefix length with which the string will only contain plain text after the conversion.
+ */
+fun findPrefixLengthForPlainTextConversion(element: KtStringTemplateExpression): Int {
+    return longestUnsafeDollarSequenceLengthForPlainTextConversion(element) + 1
+}
+
+private fun longestUnsafeDollarSequenceLengthForConservativeConversion(
     element: KtStringTemplateExpression,
     threshold: Int = Int.MAX_VALUE
 ): Int {
@@ -345,11 +389,9 @@ internal fun longestUnsafeDollarSequenceLength(
             is KtSimpleNameStringTemplateEntry -> {
                 current = 0
             }
-
             is KtEscapeStringTemplateEntry -> {
                 if (entry.isEscapedDollar()) current++ else current = 0
             }
-
             is KtBlockStringTemplateEntry -> {
                 when {
                     entry.isInterpolatedDollarLiteralExpression() -> current++
@@ -358,27 +400,67 @@ internal fun longestUnsafeDollarSequenceLength(
                     }
                 }
             }
-
             is KtLiteralStringTemplateEntry -> {
                 when {
                     entry.canBeConsideredIdentifierOrBlock() -> {
                         if (current > longest) longest = current
-                        if (longest >= threshold) break
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
-
                     entry.text.all { it == '$' } -> {
                         current += entry.text.length
                     }
-
                     entry.text.endsWith('$') -> {
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
-
                     else -> current = 0
                 }
             }
         }
+        if (longest >= threshold) break
+    }
+
+    return longest
+}
+
+private fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
+    element: KtStringTemplateExpression,
+    threshold: Int = Int.MAX_VALUE
+): Int {
+    var longest = 0
+    var current = 0
+
+    val entryPrefixLength = element.entryPrefixLength
+
+    for (entry in element.entries) {
+        when (entry) {
+            is KtSimpleNameStringTemplateEntry,
+            is KtBlockStringTemplateEntry -> {
+                current += entryPrefixLength
+                if (current > longest) longest = current
+                current = 0
+            }
+            is KtEscapeStringTemplateEntry -> {
+                current = 0
+            }
+            is KtLiteralStringTemplateEntry -> {
+                when {
+                    entry.canBeConsideredIdentifierOrBlock() -> {
+                        if (current > longest) longest = current
+                        current = entry.trailingDollarsLength
+                    }
+                    entry.text.all { it == '$' } -> {
+                        current += entry.text.length
+                    }
+                    entry.text.endsWith('$') -> {
+                        current = entry.trailingDollarsLength
+                    }
+                    else -> {
+                        current = 0
+                    }
+                }
+            }
+        }
+        if (longest >= threshold) break
     }
 
     return longest
@@ -403,9 +485,47 @@ private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedVa
  * By the time we check the entry, previous siblings will have been replaced with dollar literals if that is possible.
  */
 private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): Boolean {
-    if (prevSibling !is KtLiteralStringTemplateEntry) return true
     val nextSiblingStringLiteral = nextSibling as? KtLiteralStringTemplateEntry ?: return true
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
-    val trailingDollarsLength = prevSibling.text.takeLastWhile { it.toString() == "$" }.length
+    val trailingDollarsLength = countTrailingDollarsInPreviousEntries()
     return trailingDollarsLength + 1 < prefixLength
+}
+
+private fun KtStringTemplateEntry.countTrailingDollarsInPreviousEntries(): Int {
+    var count = 0
+    var prev = prevSibling
+    while (prev is KtLiteralStringTemplateEntry) {
+        val trailingDollarsLength = prev.text.takeLastWhile { it.toString() == "$" }.length
+        count += trailingDollarsLength
+        if (prev.textLength == trailingDollarsLength) {
+            prev = prev.prevSibling
+        } else break
+    }
+    return count
+}
+
+private val KtStringTemplateEntry.trailingDollarsLength: Int
+    get() = text.takeLastWhile { it.toString() == "$" }.length
+
+val KtStringTemplateExpression.templatePrefixLength: Int
+    get() = interpolationPrefix?.textLength ?: 0
+
+val KtStringTemplateExpression.entryPrefixLength: Int
+    get() = interpolationPrefix?.textLength ?: 1
+
+/**
+ * A utility dispatcher for creating string templates
+ *
+ * @param content string template content
+ * @param prefixLength interpolation prefix length, `0` for no prefix
+ * @param isRaw `true` for raw triple-quoted string, `false` for normal, single-quoted string
+ */
+fun KtPsiFactory.createStringTemplate(
+    content: String,
+    prefixLength: Int,
+    isRaw: Boolean,
+): KtStringTemplateExpression = when {
+    prefixLength > 0 -> createMultiDollarStringTemplate(content, prefixLength, forceMultiQuoted = isRaw)
+    isRaw -> createRawStringTemplate(content)
+    else -> createStringTemplate(content)
 }

@@ -43,7 +43,7 @@ public class SwitchWithPrimitivesNotAllowed {
 
     private static void testPrimitives() {
         boolean b = true;
-        switch (<error descr="Selector type of 'boolean' is not supported">b</error>) {//error
+        switch (<error descr="Selector type of 'boolean' is not supported at language level '22'">b</error>) {//error
             default -> System.out.println("1");
         }
         int i = 1;
@@ -63,15 +63,15 @@ public class SwitchWithPrimitivesNotAllowed {
             default -> System.out.println("1");
         }
         long l = 1L;
-        switch (<error descr="Selector type of 'long' is not supported">l</error>) { //error
+        switch (<error descr="Selector type of 'long' is not supported at language level '22'">l</error>) { //error
             default -> System.out.println("1");
         }
         double d = 1.0;
-        switch (<error descr="Selector type of 'double' is not supported">d</error>) {//error
+        switch (<error descr="Selector type of 'double' is not supported at language level '22'">d</error>) {//error
             default -> System.out.println("1");
         }
         float f = 1.0F;
-        switch (<error descr="Selector type of 'float' is not supported">f</error>) {//error
+        switch (<error descr="Selector type of 'float' is not supported at language level '22'">f</error>) {//error
             default -> System.out.println("1");
         }
     }

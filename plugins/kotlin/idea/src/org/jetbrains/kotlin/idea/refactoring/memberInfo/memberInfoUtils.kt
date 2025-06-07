@@ -1,25 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? = null): ClassDescriptor? {
@@ -31,31 +25,16 @@ fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? 
 }
 
 // Applies to JetClassOrObject and PsiClass
+@JvmName("qualifiedClassNameForRendering") // to preserve binary compatibility with external usages
+@Deprecated(
+    "Use 'qualifiedClassNameForRendering' instead",
+    ReplaceWith(
+        "this.qualifiedClassNameForRendering()", 
+        "org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering"
+    )
+)
 @NlsSafe
-fun PsiNamedElement.qualifiedClassNameForRendering(): String {
-    val fqName = when (this) {
-        is KtClassOrObject -> fqName?.asString()
-        is PsiClass -> qualifiedName
-        else -> throw AssertionError("Not a class: ${getElementTextWithContext()}")
-    }
-    return fqName ?: name ?: KotlinBundle.message("text.anonymous")
-}
-
-fun KotlinMemberInfo.getChildrenToAnalyze(): List<PsiElement> {
-    val member = member
-    val childrenToCheck = member.allChildren.toMutableList()
-    if (isToAbstract && member is KtCallableDeclaration) {
-        when (member) {
-            is KtNamedFunction -> childrenToCheck.remove(member.bodyExpression as PsiElement?)
-            is KtProperty -> {
-                childrenToCheck.remove(member.initializer as PsiElement?)
-                childrenToCheck.remove(member.delegateExpression as PsiElement?)
-                childrenToCheck.removeAll(member.accessors)
-            }
-        }
-    }
-    return childrenToCheck
-}
+fun PsiNamedElement.qualifiedClassNameForRenderingOld(): String = qualifiedClassNameForRendering()
 
 internal fun KtNamedDeclaration.resolveToDescriptorWrapperAware(resolutionFacade: ResolutionFacade? = null): DeclarationDescriptor {
     if (this is KtPsiClassWrapper) {
@@ -64,9 +43,4 @@ internal fun KtNamedDeclaration.resolveToDescriptorWrapperAware(resolutionFacade
             ?.let { return it }
     }
     return resolutionFacade?.resolveToDescriptor(this) ?: unsafeResolveToDescriptor()
-}
-
-internal fun PsiMember.toKtDeclarationWrapperAware(): KtNamedDeclaration? {
-    if (this is PsiClass && this !is KtLightClass) return KtPsiClassWrapper(this)
-    return namedUnwrappedElement as? KtNamedDeclaration
 }

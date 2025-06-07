@@ -1,0 +1,41 @@
+### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-jvm-debugger-test-compose-k2",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-jvm-debugger-test-compose-k2_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-ui",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/jvm-debugger/test/k2:k2_test_lib",
+    "//plugins/kotlin/jvm-debugger/test:test_test_lib",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//android/compose-ide-plugin",
+    "//java/debugger/impl",
+    "@lib//:kotlinc-compose-compiler-plugin",
+    "//android/streaming",
+    "//plugins/kotlin/tests-compose:tests-compose_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-jvm-debugger-test-compose-k2_test",
+  runtime_deps = [":kotlin-jvm-debugger-test-compose-k2_test_lib"]
+)
+### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` end

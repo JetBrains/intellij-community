@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -28,13 +27,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntityData) : OneToManyRefEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntityData) : OneToManyRefEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val ANOTHERENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OneToManyRefEntity::class.java,
-                                                                                 AnotherOneToManyRefEntity::class.java,
-                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val ANOTHERENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OneToManyRefEntity::class.java, AnotherOneToManyRefEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       ANOTHERENTITY_CONNECTION_ID,
@@ -62,8 +61,8 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
   }
 
 
-  internal class Builder(result: OneToManyRefEntityData?) : ModifiableWorkspaceEntityBase<OneToManyRefEntity, OneToManyRefEntityData>(
-    result), OneToManyRefEntity.Builder {
+  internal class Builder(result: OneToManyRefEntityData?) :
+    ModifiableWorkspaceEntityBase<OneToManyRefEntity, OneToManyRefEntityData>(result), OneToManyRefEntity.Builder {
     internal constructor() : this(OneToManyRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -135,8 +134,9 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ANOTHERENTITY_CONNECTION_ID,
-                                                                             this) as? AnotherOneToManyRefEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            ANOTHERENTITY_CONNECTION_ID, this
+          ) as? AnotherOneToManyRefEntity.Builder)
           ?: (this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? AnotherOneToManyRefEntity.Builder)
         }
         else {
@@ -197,7 +197,8 @@ internal class OneToManyRefEntityData : WorkspaceEntityData<OneToManyRefEntity>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.OneToManyRefEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

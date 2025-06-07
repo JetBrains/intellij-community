@@ -21,30 +21,21 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
     }
 
     val service = PyPackagingToolWindowService.getInstance(project)
-
     PyPackageCoroutine.getIoScope(project).launch {
-      for (pkg in packages) {
-        val specification = pkg.repository.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
-        service.updatePackage(specification)
-      }
+      service.updatePackages(*packages.map { it.name }.toTypedArray())
     }
   }
 
   override fun update(e: AnActionEvent) {
     val packages = getPackagesForUpdate(e)
 
-    if (packages.isEmpty() || packages.any { !it.canBeUpdated }) {
-      e.presentation.isEnabledAndVisible = true
-      return
-    }
-
-    val singlePackage = packages.singleOrNull()
-    e.presentation.text = if (singlePackage !=null) {
-      val currentVersion = singlePackage.currentVersion?.presentableText
-      val nextVersion = singlePackage.nextVersion?.presentableText
-      PyBundle.message("python.toolwindow.packages.update.package.version", currentVersion, nextVersion)
-    } else {
-      PyBundle.message("python.toolwindow.packages.update.packages")
+    e.presentation.apply {
+      isEnabledAndVisible = !packages.isEmpty()
+      text = packages.singleOrNull()?.let {
+        val currentVersion = it.currentVersion?.presentableText
+        val nextVersion = it.nextVersion?.presentableText
+        PyBundle.message("python.toolwindow.packages.update.package.version", currentVersion, nextVersion)
+      } ?: PyBundle.message("python.toolwindow.packages.update.packages")
     }
   }
 

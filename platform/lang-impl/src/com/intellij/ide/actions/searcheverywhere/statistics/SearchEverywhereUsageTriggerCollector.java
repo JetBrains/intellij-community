@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -17,11 +18,12 @@ import java.util.List;
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 18);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 20);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
-  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
+  @ApiStatus.Internal
+  public static final String NOT_REPORTABLE_ID = "third.party";
 
   public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", Arrays.asList(
     "FileSearchEverywhereContributor",
@@ -56,22 +58,26 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                             "third.party");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);
 
-  public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
-                                                                                        CONTRIBUTOR_ID_FIELD,
-                                                                                        EventFields.InputEventByAnAction);
+  public static final BooleanEventField IS_SPLIT = EventFields.Boolean("isSplit");
+
+  public static final EventId3<String, AnActionEvent, Boolean> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
+                                                                                                 CONTRIBUTOR_ID_FIELD,
+                                                                                                 EventFields.InputEventByAnAction,
+                                                                                                 IS_SPLIT);
   public static final VarargEventId TAB_SWITCHED = GROUP.registerVarargEvent("tabSwitched", CONTRIBUTOR_ID_FIELD,
                                                                              EventFields.InputEventByAnAction,
-                                                                             EventFields.InputEventByMouseEvent);
+                                                                             EventFields.InputEventByMouseEvent,
+                                                                             IS_SPLIT);
   public static final EventId1<AnActionEvent> GROUP_NAVIGATE = GROUP.registerEvent("navigateThroughGroups",
                                                                                    EventFields.InputEventByAnAction);
-  public static final EventId DIALOG_CLOSED = GROUP.registerEvent("dialogClosed");
+  public static final EventId1<Boolean> DIALOG_CLOSED = GROUP.registerEvent("dialogClosed", IS_SPLIT);
   public static final IntEventField SELECTED_ITEM_NUMBER = EventFields.Int("selectedItemNumber");
   public static final BooleanEventField HAS_ONLY_SIMILAR_ELEMENT = EventFields.Boolean("hasOnlySimilarElement");
   public static final BooleanEventField IS_ELEMENT_SEMANTIC = EventFields.Boolean("isElementSemantic");
 
   public static final VarargEventId CONTRIBUTOR_ITEM_SELECTED = GROUP.registerVarargEvent(
     "contributorItemChosen", CONTRIBUTOR_ID_FIELD, EventFields.Language, CURRENT_TAB_FIELD, SELECTED_ITEM_NUMBER,
-    HAS_ONLY_SIMILAR_ELEMENT, IS_ELEMENT_SEMANTIC
+    HAS_ONLY_SIMILAR_ELEMENT, IS_ELEMENT_SEMANTIC, IS_SPLIT
   );
   public static final EventId MORE_ITEM_SELECTED = GROUP.registerEvent("moreItemChosen");
   public static final IntEventField ITEM_NUMBER_BEFORE_MORE = EventFields.Int("itemsNumberBeforeMore");
@@ -106,6 +112,22 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
 
+  public enum FuzzySearchResult {
+    PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
+  }
+
+  public enum FuzzySearchType {
+    FUZZY_FILE_SEARCH
+  }
+
+  public static final EnumEventField<FuzzySearchType> FUZZY_SEARCH_TYPE = EventFields.Enum("fuzzySearchType", FuzzySearchType.class);
+  public static final IntEventField FUZZY_SEARCH_TOTAL_RESULTS = EventFields.Int("fuzzySearchTotalResults");
+  public static final EnumEventField<FuzzySearchResult> FUZZY_SEARCH_RESULT =
+    EventFields.Enum("fuzzySearchResult", FuzzySearchResult.class);
+  public static final IdeActivityDefinition FUZZY_SEARCH_ACTIVITY =
+    GROUP.registerIdeActivity("fuzzySearch", new EventField[]{FUZZY_SEARCH_TYPE},
+                              new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -115,6 +137,14 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     //noinspection rawtypes
     Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
-    return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;
+    return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_ID;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull boolean isReportable(@NotNull Object object) {
+    //noinspection rawtypes
+    Class<?> clazz = object.getClass();
+    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
+    return pluginInfo.isDevelopedByJetBrains();
   }
 }

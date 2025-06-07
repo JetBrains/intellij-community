@@ -371,6 +371,15 @@ class JdkVariantDetectorTest {
        |OS_NAME="Darwin"
     """.trimMargin()
 
+  private val RELEASE_UNKNOWN_21 =
+    """|IMPLEMENTOR="Foo"
+       |IMPLEMENTOR_VERSION="Foo-1234"
+       |JAVA_RUNTIME_VERSION="21"
+       |JAVA_VERSION="21"
+       |LIBC="default"
+       |MODULES="java.base ..."
+    """.trimMargin()
+
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
@@ -397,10 +406,16 @@ class JdkVariantDetectorTest {
   @Test fun `GraalVM CE 16`() = assertVariant(GraalVMCE, RELEASE_GRAALVM_CE_16_0_1)
   @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
   @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
+  @Test fun `Unknown variant`() = assertVariant(Unknown, RELEASE_UNKNOWN_21)
 
   @Test fun `GraalVM 21 - version string`() = assertEquals(
     "GraalVM CE 17.0.7 - VM 23.0.0",
     JdkVersionDetector.JdkVersionInfo(JavaVersion.parse("17.0.7"), GraalVMCE, CpuArch.X86_64, "23.0.0").displayVersionString())
+
+  @Test fun `Unknwown - version string`() = assertEquals(
+    "Java 21",
+    JdkVersionDetector.JdkVersionInfo(JavaVersion.parse("21"), Unknown, CpuArch.X86_64, null).displayVersionString()
+  )
 
   private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
     tempDir.newFile("release", releaseText.toByteArray())

@@ -50,6 +50,8 @@ public final class PlatformUtils {
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
   public static final String WRITERSIDE_PREFIX = "Writerside";
+  public static final String GITCLIENT_PREFIX = "GitClient";
+  public static final String MPS_PREFIX = "MPS";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
@@ -116,9 +118,8 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
   }
@@ -128,15 +129,21 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
 
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isCidr() {
     return isAppCode() || isCLion();
+  }
+
+  public static boolean isMPS() {
+    return is(MPS_PREFIX);
   }
 
   public static boolean isPyCharm() {

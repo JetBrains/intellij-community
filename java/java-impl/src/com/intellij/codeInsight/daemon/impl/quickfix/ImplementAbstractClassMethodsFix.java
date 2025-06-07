@@ -30,7 +30,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     if (startElement instanceof PsiNewExpression) {
@@ -59,7 +59,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
 
   @Override
   public void invoke(final @NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      final @Nullable Editor editor,
                      final @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -76,22 +76,22 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
 
       if (selectedElements == null || selectedElements.isEmpty()) return;
 
-      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
         implementNewMethods(project, editor, startElement, selectedElements, options);
       });
     });
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiElement startElement = getStartElement();
     if (!(startElement instanceof PsiNewExpression newExpression)) {
       return IntentionPreviewInfo.EMPTY;
     }
-    if (startElement.getContainingFile() != file.getOriginalFile()) {
+    if (startElement.getContainingFile() != psiFile.getOriginalFile()) {
       return IntentionPreviewInfo.EMPTY;
     }
-    PsiNewExpression copyNewExpression = PsiTreeUtil.findSameElementInCopy(newExpression, file);
+    PsiNewExpression copyNewExpression = PsiTreeUtil.findSameElementInCopy(newExpression, psiFile);
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference == null) return IntentionPreviewInfo.EMPTY;
     final PsiClass psiClass = (PsiClass)classReference.resolve();

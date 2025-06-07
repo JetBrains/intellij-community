@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 
+import pytest
 
 #=======================================================================================================================
 # Test
@@ -56,6 +57,7 @@ class Test(unittest.TestCase):
 
         self.assertEqual(ref_invalid_files, invalid_files)
 
+    @pytest.mark.xfail(reason="PCQA-709")
     def test_pydev_analyse_invalid_files(self):
         with tempfile.NamedTemporaryFile(suffix=".pyx") as pyx_file:
             ref_valid_files = []

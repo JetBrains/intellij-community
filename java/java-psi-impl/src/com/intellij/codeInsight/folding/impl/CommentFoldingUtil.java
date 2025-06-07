@@ -210,7 +210,7 @@ public final class CommentFoldingUtil {
     final StringBuilder sb = new StringBuilder();
     sb.append(prefix);
 
-    if (text != null && text.length() > 0) {
+    if (text != null && !text.isEmpty()) {
       sb.append(text);
       sb.append(" ");
     }

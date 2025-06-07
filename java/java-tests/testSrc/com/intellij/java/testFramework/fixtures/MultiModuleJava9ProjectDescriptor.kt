@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -24,10 +24,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
  * Test dependencies: 'm.test' -> 'm2'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
-  enum class ModuleDescriptor(internal val moduleName: String,
-                              internal val sourceRootName: String? = null,
-                              internal val testRootName: String? = null,
-                              internal val resourceRootName : String? = null) {
+  enum class ModuleDescriptor(
+    @JvmField internal val moduleName: String,
+    internal val sourceRootName: String? = null,
+    internal val testRootName: String? = null,
+    internal val resourceRootName: String? = null,
+  ) {
     MAIN(TEST_MODULE_NAME, testRootName = "test_src", resourceRootName = "res"),
     M2("light_idea_test_m2", sourceRootName = "src_m2"),
     M3("light_idea_test_m3", sourceRootName = "src_m3"),
@@ -36,9 +38,10 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M6("light_idea_test_m6", sourceRootName = "src_m6", resourceRootName = "res_m6"),
     M7("light_idea_test_m7", sourceRootName = "src_m7"),
     M8("light_idea_test_m8", sourceRootName = "src_m8"),
+    INTERNAL_MAIN("llight_idea_test_internal_main", sourceRootName = "src_internal_main", resourceRootName = "res_internal_main"),
     MR_MAIN("light.idea.test.mr.main", sourceRootName = "src_mr_main"),
     MR_JAVA9("light.idea.test.mr.java9", sourceRootName = "src_mr_java9"),
-    M_TEST("light_idea_test_m_test", sourceRootName="m_src_src", testRootName = "m_test_src");
+    M_TEST("light_idea_test_m_test", sourceRootName = "m_src_src", testRootName = "m_test_src");
 
     fun sourceRoot(): VirtualFile? = if (this === MAIN) LightPlatformTestCase.getSourceRoot() else findRoot(sourceRootName)
     fun testRoot(): VirtualFile? = findRoot(testRootName)
@@ -80,6 +83,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       val mrMain = makeModule(project, ModuleDescriptor.MR_MAIN)
       val mrAdd = makeModule(project, ModuleDescriptor.MR_JAVA9)
       ModuleRootModificationUtil.addDependency(mrAdd, mrMain, DependencyScope.COMPILE, false)
+
+      makeModule(project, ModuleDescriptor.INTERNAL_MAIN)
 
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)

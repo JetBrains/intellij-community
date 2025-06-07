@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -34,8 +34,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,9 +46,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
@@ -119,7 +119,9 @@ public final class JavaSdkImpl extends JavaSdk {
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release > LanguageLevel.HIGHEST.feature()) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
+    if (release > JavaRelease.getHighest().feature()) {
+      return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
+    }
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
     if (release >= 6) return "https://docs.oracle.com/javase/" + release + "/docs/api/";
     if (release == 5) return "https://docs.oracle.com/javase/1.5.0/docs/api/";
@@ -201,7 +203,19 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
-    return JavaHomeFinder.suggestHomePaths(EelProviderUtil.getEelApiBlocking(project), false);
+    return JavaHomeFinder.suggestHomePaths(getEelDescriptor(project), false);
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
+    return ContainerUtil.mapNotNull(
+      JavaHomeFinder.findJdks(getEelDescriptor(project), false),
+      JavaHomeFinder.JdkEntry::toSdkEntry
+    );
+  }
+
+  private static @NotNull EelDescriptor getEelDescriptor(@Nullable Project project) {
+    return project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project);
   }
 
   @Override
@@ -219,7 +233,8 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(@NotNull String path) {
-    return JdkUtil.checkForJdk(path);
+    Path homePath = Path.of(path);
+    return JdkUtil.checkForJdk(homePath);
   }
 
   @Override
@@ -278,10 +293,15 @@ public final class JavaSdkImpl extends JavaSdk {
       addSources(jdkHome, sdkModificator);
       addDocs(jdkHome, sdkModificator, sdk);
       attachJdkAnnotations(sdkModificator);
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        sdkModificator.commitChanges();
+      }
+      else {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         ApplicationManager.getApplication().runWriteAction(() ->
                                                              sdkModificator.commitChanges());
       });
+      }
     };
     Application application = ApplicationManager.getApplication();
       if (application.isDispatchThread()) {
@@ -378,7 +398,9 @@ public final class JavaSdkImpl extends JavaSdk {
     LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
-  static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     Path javaPluginClassesRootPath = PathManager.getJarForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
     javaPluginClassesRootPath = javaPluginClassesRootPath.toAbsolutePath();
@@ -492,7 +514,7 @@ public final class JavaSdkImpl extends JavaSdk {
    * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
    * or doesn't contain the expected information.
    */
-  private static @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
+  private static @Unmodifiable @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
     try (InputStream stream = Files.newInputStream(jrtBaseDir.resolve("release"))) {
       Properties p = new Properties();
       p.load(stream);
@@ -507,7 +529,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
-  private static @NotNull List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
+  public static @NotNull List<String> findClasses(@NotNull Path jdkHome, boolean isJre) {
     List<String> result = new ArrayList<>();
 
     if (JdkUtil.isExplodedModularRuntime(jdkHome)) {

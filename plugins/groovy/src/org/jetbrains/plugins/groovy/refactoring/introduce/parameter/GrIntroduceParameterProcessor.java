@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -71,9 +72,8 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     return new GrExpressionWrapper(expression);
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -109,7 +109,7 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
             if (!PsiTreeUtil.isAncestor(toReplaceIn.getContainingClass(), usageInfo.getElement(), false)) {
               conflicts.putValue(mySettings.getExpression(),
                                  JavaRefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                                                           CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
+                                                           CommonRefactoringUtil.htmlEmphasize(JavaKeywords.SUPER)));
               break;
             }
           }
@@ -287,15 +287,13 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     }
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return mySettings.getProject();
   }
 
@@ -304,9 +302,8 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     return (PsiMethod)mySettings.getToReplaceIn();
   }
 
-  @NotNull
   @Override
-  public PsiMethod getMethodToSearchFor() {
+  public @NotNull PsiMethod getMethodToSearchFor() {
     return (PsiMethod)mySettings.getToSearchFor();
   }
 
@@ -315,9 +312,8 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     return myParameterInitializer;
   }
 
-  @NotNull
   @Override
-  public String getParameterName() {
+  public @NotNull String getParameterName() {
     return mySettings.getName();
   }
 
@@ -336,9 +332,8 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     return mySettings.generateDelegate();
   }
 
-  @NotNull
   @Override
-  public PsiType getForcedType() {
+  public @NotNull PsiType getForcedType() {
     final PsiType selectedType = mySettings.getSelectedType();
     if (selectedType != null) return selectedType;
     final PsiManager manager = PsiManager.getInstance(myProject);
@@ -346,9 +341,8 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
     return PsiType.getJavaLangObject(manager, resolveScope);
   }
 
-  @NotNull
   @Override
-  public IntList getParameterListToRemove() {
+  public @NotNull IntList getParameterListToRemove() {
     return mySettings.parametersToRemove();
   }
 }

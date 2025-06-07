@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl;
 
@@ -36,12 +36,15 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   //         So it seems like even though the class is not thread-safe, but it is nevertheless used in multithreaded
   //         context, and the volatile is sort of 'poor-man way to make multithreading bugs less visible'. Which is
   //         obviously incorrect.
+  //         (Example of usage: calls of dropMergedData() from TransientChangesIndexStorage)
   /**
-   * Cached snapshot of merged (stored + modified) data. should be accessed only read-only outside updatable container.
+   * Cached snapshot of merged (stored + modified) data. Should be accessed only read-only outside updatable container.
    * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
-  //RC: why is it Nullable? It seems quite NPE-prone
+
+  //TODO RC: the only reason to use UpdatableValueContainer instead of plain ValueContainer (unmodifiable) is to access
+  //         .needsCompaction() method -- which is strictly speaking should be in a ValueContainer
   private final @NotNull Computable<? extends UpdatableValueContainer<Value>> myInitializer;
 
   public ChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
@@ -71,7 +74,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     boolean wasRemovedFromAdded = removeFromAdded(inputId);
     //RC: It is teasing to short-circuit here if wasRemovedFromAdded=true -- seems like no need to add inputId to invalidatedIds?
     //    Wrong: inputId could be contained in the (not yet loaded) <mergedSnapshot> -- inputId still needs to be in invalidatedIds then.
-    //    I.e consider scenario:
+    //    I.e. consider scenario:
     //    1) container X created: { merged=null, added=[], invalidated=[] }
     //       underlying container (to-be-mergedSnapshot, not yet loaded) = [..., (inputId, value), ... ]
     //    2) X.addValue(inputId, value) => X{ merged=null, added=[(inputId, value)], invalidated=[] }
@@ -196,7 +199,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
-      for (int inputId : myInvalidated.toIntArray()) {
+      for (int inputId : set.toIntArray()) {
         DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
     }

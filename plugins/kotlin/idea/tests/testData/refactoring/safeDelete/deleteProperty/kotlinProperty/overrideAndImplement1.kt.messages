@@ -1,1 +1,1 @@
-property B.foo implements property Z.foo.
+Property B.foo implements property Z.foo.

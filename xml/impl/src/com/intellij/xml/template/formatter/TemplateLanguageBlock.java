@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -75,7 +75,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     List<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
-      if (containsFatalError(child.getPsi()) && markupBlocks.size() > 0) {
+      if (containsFatalError(child.getPsi()) && !markupBlocks.isEmpty()) {
         throw new FragmentedTemplateException();
       }
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
@@ -85,7 +85,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
       }
       child = child.getTreeNext();
     }
-    if (markupBlocks.size() > 0) {
+    if (!markupBlocks.isEmpty()) {
       if (result.isEmpty()) return markupBlocks;
       if (mergeFromMarkup) {
         result = TemplateFormatUtil.mergeBlocks(markupBlocks, result, myNode.getTextRange());

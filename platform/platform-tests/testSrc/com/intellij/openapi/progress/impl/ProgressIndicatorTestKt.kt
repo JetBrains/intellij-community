@@ -5,7 +5,6 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.progress.forEachWithProgress
-import com.intellij.openapi.progress.runUnderBoundCancellation
 import com.intellij.openapi.progress.runUnderNestedProgressAndRelayMessages
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import org.junit.Assert

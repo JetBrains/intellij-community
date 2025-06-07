@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -30,21 +30,21 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
-  @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
+  private static final @NotNull Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
 
-  @NotNull private final Alarm myCollapseStateAlarm = new Alarm();
+  private final @NotNull Alarm myCollapseStateAlarm = new Alarm();
 
   /** Holds list of paths which 'expand/collapse' state should be restored. */
-  @NotNull private final Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();
+  private final @NotNull Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();
 
-  @NotNull private final Map<String/*tree path*/, Boolean/*expanded*/> myExpandedStateHolder;
+  private final @NotNull Map<String/*tree path*/, Boolean/*expanded*/> myExpandedStateHolder;
 
   private boolean mySuppressCollapseTracking;
 
   public ExternalSystemTasksTree(@NotNull ExternalSystemTasksTreeModel model,
                                  @NotNull Map<String/*tree path*/, Boolean/*expanded*/> expandedStateHolder,
-                                 @NotNull final Project project,
-                                 @NotNull final ProjectSystemId externalSystemId)
+                                 final @NotNull Project project,
+                                 final @NotNull ProjectSystemId externalSystemId)
   {
     super(model);
     myExpandedStateHolder = expandedStateHolder;
@@ -147,8 +147,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
     }
   }
 
-  @NotNull
-  private static String getPath(@NotNull TreePath path) {
+  private static @NotNull String getPath(@NotNull TreePath path) {
     StringBuilder buffer = new StringBuilder();
     for (TreePath current = path; current != null; current = current.getParentPath()) {
       buffer.append(current.getLastPathComponent().toString()).append('/');
@@ -157,9 +156,8 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
     return buffer.toString();
   }
 
-  @Nullable
   @Override
-  public ExternalTaskExecutionInfo get() {
+  public @Nullable ExternalTaskExecutionInfo get() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
       return null;

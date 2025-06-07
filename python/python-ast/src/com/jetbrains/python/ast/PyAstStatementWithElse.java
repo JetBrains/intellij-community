@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PyAstStatementWithElse extends PyAstStatement {
-  @Nullable
-  default PyAstElsePart getElsePart() {
+  default @Nullable PyAstElsePart getElsePart() {
     return childToPsi(PyElementTypes.ELSE_PART);
   }
 }

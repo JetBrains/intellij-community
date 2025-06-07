@@ -39,8 +39,7 @@ public final class PyTryExceptAnnotator extends PyAnnotator {
     }
   }
 
-  @Nullable
-  private static PyReferenceExpression tryGetExceptionGroupInExpression(@Nullable PsiElement exceptExpression) {
+  private static @Nullable PyReferenceExpression tryGetExceptionGroupInExpression(@Nullable PsiElement exceptExpression) {
     if (exceptExpression instanceof PyReferenceExpression &&
         "ExceptionGroup".equals(((PyReferenceExpression)exceptExpression).getName())) {
       return (PyReferenceExpression)exceptExpression;

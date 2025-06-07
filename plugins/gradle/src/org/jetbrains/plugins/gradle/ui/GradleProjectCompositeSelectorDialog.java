@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.icons.AllIcons;
@@ -40,10 +40,8 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   private static final int MAX_PATH_LENGTH = 40;
-  @NotNull
-  private final Project myProject;
-  @Nullable
-  private final GradleProjectSettings myCompositeRootSettings;
+  private final @NotNull Project myProject;
+  private final @Nullable GradleProjectSettings myCompositeRootSettings;
   private JPanel mainPanel;
   private JPanel contentPanel;
   @SuppressWarnings("unused")
@@ -62,9 +60,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).

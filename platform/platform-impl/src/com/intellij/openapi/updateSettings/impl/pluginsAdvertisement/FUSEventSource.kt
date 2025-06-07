@@ -116,7 +116,11 @@ enum class FUSEventSource {
   @Deprecated("Use PLUGINS_SEARCH instead")
   SEARCH;
 
-  fun doIgnoreUltimateAndLog(project: Project? = null) {
+  @Deprecated("Deprecated without replacement")
+  fun doIgnoreUltimateAndLog(@Suppress("unused") project: Project? = null) {
+  }
+
+  internal fun ignoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true
     PluginAdvertiserUsageCollector.IGNORE_ULTIMATE_EVENT.log(project, this)
   }

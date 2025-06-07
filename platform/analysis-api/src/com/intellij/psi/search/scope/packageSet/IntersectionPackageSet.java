@@ -26,8 +26,8 @@ public final class IntersectionPackageSet extends CompoundPackageSet {
     PsiFile psiFile = null;
 
     for (PackageSet set : mySets) {
-      if (set instanceof PackageSetBase) {
-        if (!((PackageSetBase)set).contains(file, project, holder)) {
+      if (set instanceof PackageSetBase base) {
+        if (!base.contains(file, project, holder)) {
           return false;
         }
       }

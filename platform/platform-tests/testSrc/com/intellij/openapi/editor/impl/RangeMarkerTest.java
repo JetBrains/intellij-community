@@ -1470,6 +1470,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     if (t.isTimedOut() && d != null) {
       int hashCode = System.identityHashCode(d);
       Class<?> aClass = d.getClass();
+      //Help GC, even in interpreter mode
+      //noinspection UnusedAssignment
       d = null;
       LeakHunter.checkLeak(LeakHunter.allRoots(), aClass, leakedDoc -> System.identityHashCode(leakedDoc) == hashCode);
       fail("Unable to gc the document");

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.psi.*
@@ -36,7 +37,13 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
         if (key != KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             || parent?.parentOfTypes(KtImportDirective::class, KtPackageDirective::class, KtTypeAlias::class) != null) { // annotation was highlighted in AnnoEntryHighVisitor
-            highlightName(expression.project, textRange, key)
+            val parentAnno = PsiTreeUtil.getParentOfType(
+                expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
+            )
+            val toHighlight = parentAnno ?: expression
+            if (toHighlight !is KtAnnotationEntry) {
+                highlightName(expression.project, toHighlight, textRange, key)
+            }
         }
     }
 
@@ -106,10 +113,20 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         return when (target.kind) {
             ClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             ClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
-            ClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+            ClassKind.OBJECT -> if (target.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT
+            } else {
+                KotlinHighlightInfoTypeSemanticNames.OBJECT
+            }
             ClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
             ClassKind.ENUM_ENTRY -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
-            else -> if (target.modality === Modality.ABSTRACT) KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS else KotlinHighlightInfoTypeSemanticNames.CLASS
+            else -> if (target.modality === Modality.ABSTRACT) {
+                KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+            } else if (target.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
+            } else {
+                KotlinHighlightInfoTypeSemanticNames.CLASS
+            }
         }
     }
 

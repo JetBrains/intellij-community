@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
@@ -11,23 +10,17 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl.BuiltRescanningInfo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEntitiesRootsChangedRescanningInfo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEventRescanningInfo
@@ -39,9 +32,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forSdk
-import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder
-import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -97,69 +87,6 @@ class ProjectEntityIndexingService(
 
   fun shouldCauseRescan(oldEntity: WorkspaceEntity?, newEntity: WorkspaceEntity?): Boolean {
     return tracker.shouldRescan(oldEntity, newEntity, project)
-  }
-
-  @RequiresBackgroundThread
-  fun createIteratorsForOrigins(
-    entityStorage: EntityStorage,
-    entityPointers: Collection<EntityPointer<*>>,
-    sdks: Collection<Sdk>,
-    libraryIds: Collection<LibraryId>,
-    filesFromAdditionalLibraryRootsProviders: Collection<VirtualFile>,
-    filesFromIndexableSetContributors: Collection<VirtualFile>,
-  ): Collection<IndexableFilesIterator> {
-    val entities = entityPointers.mapNotNull { ref: EntityPointer<*> ->
-      ref.resolve(entityStorage)
-    }
-    val builders = ArrayList<IndexableIteratorBuilder>(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage))
-
-    for (sdk in sdks) {
-      builders.addAll(forSdk(sdk.getName(), sdk.getSdkType().getName()))
-    }
-    for (id in libraryIds) {
-      builders.addAll(forLibraryEntity(id, true))
-    }
-
-    if (!filesFromAdditionalLibraryRootsProviders.isEmpty()) {
-      val roots = ArrayList<VirtualFile>(filesFromAdditionalLibraryRootsProviders)
-      for (provider in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
-        for (library in provider.getAdditionalProjectLibraries(project)) {
-          val removed = roots.removeIf { file: VirtualFile -> library.contains(file) }
-          if (removed) {
-            val name = if (library is ItemPresentation) library.getPresentableText() else null
-            builders.add(SyntheticLibraryIteratorBuilder(library, name, library.allRoots))
-          }
-          if (roots.isEmpty()) {
-            break
-          }
-        }
-      }
-      if (!roots.isEmpty()) {
-        LOG.error("Failed fo find any SyntheticLibrary roots for " + StringUtil.join(roots, "\n"))
-      }
-    }
-
-    if (!filesFromIndexableSetContributors.isEmpty()) {
-      val roots = ArrayList<VirtualFile>(filesFromIndexableSetContributors)
-      for (contributor in IndexableSetContributor.EP_NAME.extensionList) {
-        val applicationRoots = contributor.getAdditionalRootsToIndex()
-        val removedApp = roots.removeIf { file -> VfsUtilCore.isUnder(file, applicationRoots) }
-        if (removedApp) {
-          builders.add(
-            IndexableSetContributorFilesIteratorBuilder(null, contributor.debugName, applicationRoots, false, contributor))
-        }
-        val projectRoots = contributor.getAdditionalProjectRootsToIndex(project)
-        val removedProject = roots.removeIf { file -> VfsUtilCore.isUnder(file, projectRoots) }
-        if (removedProject) {
-          builders.add(IndexableSetContributorFilesIteratorBuilder(null, contributor.debugName, projectRoots, true, contributor))
-        }
-        if (roots.isEmpty()) {
-          break
-        }
-      }
-    }
-
-    return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
   }
 
   private fun computeScanningParameters(changes: List<RootsChangeRescanningInfo>): Deferred<ScanningParameters> {
@@ -409,14 +336,14 @@ class ProjectEntityIndexingService(
       val newEntityExcludedRoots: List<ExcludeUrlEntity> = newEntity.excludedRoots
       for (excludedRoot: ExcludeUrlEntity in oldEntity.excludedRoots) {
         if (!newEntityExcludedRoots.contains(excludedRoot)) return true
-        //if (!newEntityExcludedRoots.contains(excludedRoot.url)) return true
       }
       return false
     }
 
     private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
       return newEntity is LibraryEntity &&
-             (newEntity as LibraryEntity).symbolicId.tableId is GlobalLibraryTableId
+             (newEntity as LibraryEntity).symbolicId.tableId is LibraryTableId.GlobalLibraryTableId &&
+             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(
@@ -450,7 +377,7 @@ class ProjectEntityIndexingService(
 
       newElements.removeAll(oldElements)
       for (element in newElements) {
-        descriptionsBuilder.registerAddedEntity<C>(element, contributor, entityStorage)
+        descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage)
       }
     }
 
@@ -484,7 +411,7 @@ class ProjectEntityIndexingService(
         builders.addAll(instance.forInheritedSdk())
       }
       for (sdk in info.sdks) {
-        builders.addAll(instance.forSdk(sdk.first, sdk.second))
+        builders.add(instance.forSdk(sdk.first, sdk.second))
       }
       for (library in info.libraries) {
         builders.addAll(instance.forLibraryEntity(library, true))

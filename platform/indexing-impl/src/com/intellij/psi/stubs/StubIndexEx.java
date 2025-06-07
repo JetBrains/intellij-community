@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -31,7 +30,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.VoidDataExternalizer;
-import com.intellij.util.progress.CancellationUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -44,7 +42,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
@@ -69,7 +66,7 @@ public abstract class StubIndexEx extends StubIndex {
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
 
   @ApiStatus.Internal
-  abstract void initializeStubIndexes();
+  public abstract void initializeStubIndexes();
 
   @ApiStatus.Internal
   public abstract void initializationFailed(@NotNull Throwable error);
@@ -116,7 +113,7 @@ public abstract class StubIndexEx extends StubIndex {
 
             return modified;
           },
-          
+
           ForwardIndexUpdate.NOOP
         ));
       }
@@ -146,9 +143,10 @@ public abstract class StubIndexEx extends StubIndex {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
-        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
-        if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE &&
-            Registry.is("ide.dumb.mode.check.awareness")) {
+        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
+        if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
+          // Do not disable this assertion.
+          // Accessing Stub index in RAW_INDEX_DATA_ACCEPTABLE mode will likely cause stub/psi inconsistency
           throw new AssertionError("raw index data access is not available for StubIndex");
         }
       }
@@ -252,7 +250,7 @@ public abstract class StubIndexEx extends StubIndex {
     if (filesWithProblems != null) {
       List<String> fileNames = ContainerUtil.map(filesWithProblems, f -> f.getName());
       String fileNamesStr = StringUtil.first(StringUtil.join(fileNames, ","), 300, true);
-      getLogger().info("Data for " + fileNamesStr + " will be re-indexes because of internal stub processing error. Recomputing index request");
+      getLogger().info("Data for " + fileNamesStr + " will be re-indexed because of internal stub processing error. Recomputing index request");
 
       // clear possibly inconsistent key
       ((FileBasedIndexEx)FileBasedIndex.getInstance()).runCleanupAction(() -> {
@@ -260,29 +258,23 @@ public abstract class StubIndexEx extends StubIndex {
 
         for (VirtualFile file : filesWithProblems) {
           int fileId = FileBasedIndex.getFileId(file);
-          index.mapInputAndPrepareUpdate(fileId, null).update();
+          index.mapInputAndPrepareUpdate(fileId, null).update(); // update what? In-memory or persistent?
         }
 
-        Lock writeLock = getIndex(indexKey).getLock().writeLock();
-        writeLock.lock();
-        try {
-          for (VirtualFile file : filesWithProblems) {
-            int fileId = FileBasedIndex.getFileId(file);
-            updateIndex(indexKey,
-                        fileId,
-                        Collections.singleton(key),
-                        Collections.emptySet());
-          }
+        for (VirtualFile file : filesWithProblems) {
+          int fileId = FileBasedIndex.getFileId(file);
+          updateIndex(indexKey,
+                      fileId,
+                      Collections.singleton(key),
+                      Collections.emptySet());
         }
-        finally {
-          writeLock.unlock();
-        }
+
 
         index.cleanupMemoryStorage();
       });
 
       // schedule indexes to rebuild
-      for (VirtualFile file: filesWithProblems) {
+      for (VirtualFile file : filesWithProblems) {
         FileBasedIndex.getInstance().requestReindex(file);
       }
 
@@ -395,16 +387,15 @@ public abstract class StubIndexEx extends StubIndex {
       trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
       // disable up-to-date check to avoid locks on an attempt to acquire index write lock
       // while holding at the same time the readLock for this index
-      FileBasedIndexEx.disableUpToDateCheckIn(() -> {
-        Lock lock = stubUpdatingIndex.getLock().readLock();
-        CancellationUtil.lockMaybeCancellable(lock);
-        try {
-          return index.getData(dataKey).forEach(action);
+      FileBasedIndexEx.disableUpToDateCheckIn(
+        () -> {
+          index.withData(
+            dataKey,
+            container -> container.forEach(action)
+          );
+          return null;//return value doesn't matter
         }
-        finally {
-          lock.unlock();
-        }
-      });
+      );
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
@@ -433,10 +424,10 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  void setDataBufferingEnabled(boolean enabled) { }
+  public void setDataBufferingEnabled(boolean enabled) { }
 
   @ApiStatus.Internal
-  void cleanupMemoryStorage() { }
+  public void cleanupMemoryStorage() { }
 
   @ApiStatus.Internal
   public static @NotNull <K> FileBasedIndexExtension<K, Void> wrapStubIndexExtension(StubIndexExtension<K, ?> extension) {
@@ -515,8 +506,10 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Experimental
   public interface FileUpdateProcessor {
     void processUpdate(@NotNull VirtualFile file);
-    default void endUpdatesBatch() {}
+
+    default void endUpdatesBatch() { }
   }
+
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public abstract @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();

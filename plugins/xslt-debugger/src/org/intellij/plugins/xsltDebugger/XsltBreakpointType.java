@@ -20,7 +20,7 @@ import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public final class XsltBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
   private final XsltDebuggerEditorsProvider myMyEditorsProvider1 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V1);
   private final XsltDebuggerEditorsProvider myMyEditorsProvider2 = new XsltDebuggerEditorsProvider(XsltChecker.LanguageLevel.V2);
 

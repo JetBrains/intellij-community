@@ -11,16 +11,14 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
-
+final class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
   public static final TokenSet NO_SPELLCHECKING_TYPES = TokenSet.create(MarkdownElementTypes.CODE_BLOCK,
                                                                         MarkdownElementTypes.CODE_FENCE,
                                                                         MarkdownElementTypes.CODE_SPAN,
                                                                         MarkdownElementTypes.LINK_DESTINATION);
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
     if (node == null || node.getElementType() != MarkdownTokenTypes.TEXT) {
       return SpellcheckingStrategy.EMPTY_TOKENIZER;

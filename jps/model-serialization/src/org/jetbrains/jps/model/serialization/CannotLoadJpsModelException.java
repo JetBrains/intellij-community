@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public final class CannotLoadJpsModelException extends RuntimeException {
-  @NotNull private final File myFile;
+  private final @NotNull File myFile;
 
   @ApiStatus.Internal
   public CannotLoadJpsModelException(@NotNull File file, @NotNull String message, @Nullable Throwable cause) {
@@ -16,8 +16,7 @@ public final class CannotLoadJpsModelException extends RuntimeException {
     myFile = file;
   }
 
-  @NotNull
-  public File getFile() {
+  public @NotNull File getFile() {
     return myFile;
   }
 }

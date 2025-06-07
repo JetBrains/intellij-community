@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -72,12 +72,12 @@ public final class LiteralSelectioner extends AbstractBasicBackBasicSelectioner 
         for (; end >= start; end--) {
           char c = text.charAt(end);
           if (c == '\n' || !Character.isWhitespace(c)) {
-            end += 1;
+            end++;
             break;
           }
         }
       }
-      return new TextRange(start, end);
+      return end < start ? range : new TextRange(start, end);
     }
     else {
       throw new IllegalArgumentException();

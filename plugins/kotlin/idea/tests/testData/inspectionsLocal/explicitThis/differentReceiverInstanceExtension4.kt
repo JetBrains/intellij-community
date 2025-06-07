@@ -9,3 +9,6 @@ val SubFoo.bar: String get() = ""
 fun SubFoo.func() = Foo().apply {
     <caret>this@func.bar
 }
+
+// KTIJ-32433
+// IGNORE_K2

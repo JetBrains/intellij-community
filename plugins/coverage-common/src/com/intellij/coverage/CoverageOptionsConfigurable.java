@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +31,13 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "coverage";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
@@ -84,13 +83,12 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     c.fill = GridBagConstraints.BOTH;
     c.weightx = 1;
     c.weighty = 1;
-    panel.add(Box.createVerticalBox(), c);
+    panel.add(JBBox.createVerticalBox(), c);
     return panel;
   }
 
-  @NotNull
   @Override
-  protected List<CoverageOptions> createConfigurables() {
+  protected @NotNull List<CoverageOptions> createConfigurables() {
     return CoverageOptions.EP_NAME.getExtensions(myProject);
   }
 

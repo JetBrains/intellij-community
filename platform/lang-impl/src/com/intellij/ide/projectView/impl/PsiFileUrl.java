@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Konstantin Bulenkov
  */
 public final class PsiFileUrl extends AbstractUrl {
-  private static final @NonNls String ELEMENT_TYPE = "psiFile";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_PSI_FILE;
 
   public PsiFileUrl(final String url) {
     super(url, null, ELEMENT_TYPE);

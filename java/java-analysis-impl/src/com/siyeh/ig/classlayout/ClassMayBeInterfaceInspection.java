@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -51,8 +52,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   public boolean reportClassesWithNonAbstractMethods = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
   }
 
@@ -77,8 +77,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   private static class ClassMayBeInterfaceFix extends ModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
     }
 
@@ -89,7 +88,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       final SearchScope searchScope = interfaceClass.getUseScope();
       final List<PsiClass> elements = new ArrayList<>();
       elements.add(interfaceClass);
-      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
+      for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false).asIterable()) {
         elements.add(inheritor);
       }
       return ModCommand.psiUpdate(interfaceClass, (cls, updater) -> {
@@ -129,7 +128,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       }
       final PsiKeyword classKeyword = PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
-      final PsiKeyword interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE);
+      final PsiKeyword interfaceKeyword = factory.createKeyword(JavaKeywords.INTERFACE);
       if (classKeyword == null) {
         return;
       }

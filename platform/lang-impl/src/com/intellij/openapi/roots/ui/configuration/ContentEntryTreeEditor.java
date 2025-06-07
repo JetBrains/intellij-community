@@ -2,15 +2,26 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.newEditor.AbstractEditor;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.options.newEditor.SingleSettingEditor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
@@ -18,6 +29,9 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,8 +45,10 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +120,7 @@ public class ContentEntryTreeEditor {
     treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
     myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
       sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      // fix SelectInProjectViewAction if the virtual files are moved into BGT_DATA_PROVIDER
       sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
     });
     myComponent.setVisible(false);
@@ -181,9 +198,15 @@ public class ContentEntryTreeEditor {
 
     final NewFolderAction newFolderAction = new MyNewFolderAction();
     final DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
+
+    final AnAction navigateAction = new SelectInProjectViewAction();
+    navigateAction.registerCustomShortcutSet(myFileSystemTree.getTree(), null);
+
     mousePopupGroup.add(myEditingActionsGroup);
     mousePopupGroup.addSeparator();
     mousePopupGroup.add(newFolderAction);
+    mousePopupGroup.addSeparator();
+    mousePopupGroup.add(navigateAction);
     myFileSystemTree.registerMouseListener(mousePopupGroup);
   }
 
@@ -260,6 +283,94 @@ public class ContentEntryTreeEditor {
     }
   }
 
+  private static final class SelectInProjectViewAction extends DumbAwareAction {
+    private SelectInProjectViewAction() {
+      super(ActionsBundle.messagePointer("action.SelectInProjectView.directory.text"));
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+      if (project == null || ProjectView.getInstance(project) == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null && !ModalityState.current().accepts(ModalityState.nonModal())) {
+        e.getPresentation().setEnabledAndVisible(false); // we can't reliably close the dialog
+        return;
+      }
+
+      VirtualFile file = ArrayUtil.getFirstElement(virtualFiles);
+
+      e.getPresentation().setEnabled(file != null);
+      e.getPresentation().setText(file != null && !file.isDirectory()
+                                  ? ActionsBundle.messagePointer("action.SelectInProjectView.text")
+                                  : ActionsBundle.messagePointer("action.SelectInProjectView.directory.text"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+      if (project == null || ArrayUtil.isEmpty(virtualFiles)) return;
+
+      closeSettingsWindow(component);
+
+      ProjectViewSelectInTarget.select(project, null, ProjectViewPane.ID, null, virtualFiles[0], true);
+    }
+
+    private static void closeSettingsWindow(@Nullable Component component) {
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      if (dialogWrapper == null) return;
+
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null) return;
+
+      if (singleConfigurable.isModified()) {
+        boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
+                                                     ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
+          .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
+          .noText(CommonBundle.getCancelButtonText())
+          .ask(component);
+        if (!proceed) return;
+      }
+      dialogWrapper.doCancelAction();
+    }
+
+    private static @Nullable DialogWrapper getDialogWrapperFor(@Nullable Component component) {
+      Window window = UIUtil.getWindow(component);
+      if (window instanceof DialogWrapperDialog wrapper) {
+        return wrapper.getDialogWrapper();
+      }
+      return null;
+    }
+
+    private static @Nullable Configurable getSingleConfigurable(@Nullable DialogWrapper dialogWrapper) {
+      if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
+        return settingsDialog.getConfigurable();
+      }
+      if (dialogWrapper instanceof SettingsDialog settingsDialog) {
+        AbstractEditor editor = settingsDialog.getEditor();
+        if (editor instanceof SingleSettingEditor settingEditor) {
+          return settingEditor.getConfigurable();
+        }
+      }
+      return null;
+    }
+  }
+
   public DefaultActionGroup getEditingActionsGroup() {
     return myEditingActionsGroup;
   }
@@ -267,7 +378,7 @@ public class ContentEntryTreeEditor {
   protected void setupExcludedAction() {
     ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
     myEditingActionsGroup.add(toggleExcludedAction);
-    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)), myTree);
+    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)),
+                                                   myTree);
   }
-
 }

@@ -3,7 +3,6 @@ package com.intellij.cce.evaluation
 
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import kotlin.system.measureTimeMillis
 
 class EvaluationProcess private constructor (
@@ -27,7 +26,7 @@ class EvaluationProcess private constructor (
       if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
-        val result = environment.execute(step, workspace)
+        val result = environment.execute(step, currentWorkspace)
         if (result == null) {
           hasError = true
         } else {
@@ -52,17 +51,12 @@ class EvaluationProcess private constructor (
       val isTestingEnvironment = ApplicationManager.getApplication().isUnitTestMode
 
       if (!isTestingEnvironment && (shouldGenerateActions || shouldInterpretActions)) {
-        factory.setupSdkStep()?.let { steps.add(it) }
-
-        if (!Registry.`is`("evaluation.plugin.disable.sdk.check")) {
-          factory.checkSdkConfiguredStep()?.let {
-            steps.add(it)
-          }
-        }
+        factory.setupEnvironmentSteps().forEach { steps.add(it) }
       }
 
       if (shouldInterpretActions) {
         factory.setupStatsCollectorStep()?.let { steps.add(it) }
+        steps.add(factory.setupRegistryStep())
         steps.addAll(factory.featureSpecificSteps())
       }
 

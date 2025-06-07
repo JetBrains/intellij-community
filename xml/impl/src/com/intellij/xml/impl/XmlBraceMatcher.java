@@ -269,7 +269,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(final @NotNull PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(final @NotNull PsiFile psiFile, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

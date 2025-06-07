@@ -33,9 +33,9 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     return new ExternalToolPass(psiFile, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), HighlightInfoProcessor.getEmpty());
   }
 
-  private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
-    for (Language language : file.getViewProvider().getLanguages()) {
-      List<ExternalAnnotator<?,?>> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, file);
+  private static boolean externalAnnotatorsDefined(@NotNull PsiFile psiFile) {
+    for (Language language : psiFile.getViewProvider().getLanguages()) {
+      List<ExternalAnnotator<?,?>> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiFile);
       if (!externalAnnotators.isEmpty()) {
         return true;
       }
@@ -44,13 +44,13 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+  public @Nullable TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
                                                                          @NotNull Document document,
                                                                          @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    TextRange range = file.getTextRange();
-    if (range == null || !externalAnnotatorsDefined(file)) {
+    TextRange range = psiFile.getTextRange();
+    if (range == null || !externalAnnotatorsDefined(psiFile)) {
       return null;
     }
-    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor);
+    return new ExternalToolPass(psiFile, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor);
   }
 }

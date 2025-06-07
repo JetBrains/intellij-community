@@ -6,7 +6,6 @@ import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -26,6 +25,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
@@ -33,8 +33,8 @@ import java.util.function.Supplier
 @VisibleForTesting
 fun isSelectInProjectViewServiceBusy(project: Project):Boolean = project.serviceOrNull<SelectInProjectViewImpl>()?.isBusy == true
 
-@Service(Service.Level.PROJECT)
-internal class SelectInProjectViewImpl(
+@ApiStatus.Internal
+open class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -116,7 +116,7 @@ internal class SelectInProjectViewImpl(
           if (LOG.isDebugEnabled) {
             LOG.debug("Created select-in context and delegating to it: $selectInContext")
           }
-          selectInContext.selectInCurrentTarget(requestFocus = invokedManually)
+          selectInContext.selectInCurrentTarget(project, requestFocus = invokedManually)
         }
         break
       }
@@ -155,13 +155,21 @@ internal class SelectInProjectViewImpl(
       }
     }
 
-  private fun createSelectInContext(psiFilePointer: SmartPsiElementPointer<PsiFile>, fileEditor: FileEditor): SimpleSelectInContext =
-    if (fileEditor is TextEditor) {
-      EditorSelectInContext(project, psiFilePointer, fileEditor)
+  private fun createSelectInContext(psiFilePointer: SmartPsiElementPointer<PsiFile>, fileEditor: FileEditor): SelectInContext {
+    val dataContext = DataManager.getInstance().getDataContext(fileEditor.component)
+    val providedSelectInContext = dataContext.getData(SelectInContext.DATA_KEY)
+    return when {
+      providedSelectInContext != null -> {
+        providedSelectInContext
+      }
+      fileEditor is TextEditor -> {
+        EditorSelectInContext(project, psiFilePointer, fileEditor)
+      }
+      else -> {
+        SimpleSelectInContext(project, psiFilePointer, fileEditor)
+      }
     }
-    else {
-      SimpleSelectInContext(project, psiFilePointer, fileEditor)
-    }
+  }
 
   fun ensureSelected(
     paneId: String,
@@ -333,6 +341,27 @@ internal class SelectInProjectViewImpl(
     }
   }
 
+  open fun selectCB(pane: AbstractProjectViewPane, element: Any?, file: VirtualFile?, requestFocus: Boolean): ActionCallback {
+    return pane.selectWithCallback(element, file, requestFocus)
+  }
+}
+
+private suspend fun SelectInContext.selectInCurrentTarget(project: Project, requestFocus: Boolean) {
+  if (this is SimpleSelectInContext) {
+    selectInCurrentTarget(requestFocus) // simple, but overridable
+  }
+  else {
+    simpleSelectInCurrentTarget(project, requestFocus)
+  }
+}
+
+private fun SelectInContext.simpleSelectInCurrentTarget(project: Project, requestFocus: Boolean) {
+  val currentTarget = (project.serviceOrNull<ProjectView>() as ProjectViewImpl?)?.currentSelectInTarget
+  if (LOG.isDebugEnabled) {
+    LOG.debug("The current target is $currentTarget")
+  }
+  if (currentTarget == null) return
+  currentTarget.selectIn(this, requestFocus)
 }
 
 private open class SimpleSelectInContext(
@@ -346,12 +375,7 @@ private open class SimpleSelectInContext(
   }
 
   open suspend fun selectInCurrentTarget(requestFocus: Boolean) {
-    val currentTarget = (project.serviceOrNull<ProjectView>() as ProjectViewImpl?)?.currentSelectInTarget
-    if (LOG.isDebugEnabled) {
-      LOG.debug("The current target is $currentTarget")
-    }
-    if (currentTarget == null) return
-    currentTarget.selectIn(this, requestFocus)
+    simpleSelectInCurrentTarget(project, requestFocus)
   }
 
   override fun toString(): String {

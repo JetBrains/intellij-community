@@ -1,0 +1,18 @@
+<idea-plugin>
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <actions>
+    <action id="GitLab.Share" class="com.intellij.vcs.gitlab.git.GitLabShareProjectAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
+      <add-to-group group-id="GitLab.Main.Group"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <openapi.vcs.changes.ui.shareProjectAction implementation="com.intellij.vcs.gitlab.git.GitLabShareProjectActionProvider"/>
+  </extensions>
+</idea-plugin>

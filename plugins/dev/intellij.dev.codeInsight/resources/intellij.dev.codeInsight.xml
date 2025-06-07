@@ -1,5 +1,9 @@
 <idea-plugin package="com.intellij.dev.codeInsight">
   <resource-bundle>messages.DevCodeInsightBundle</resource-bundle>
+  
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.dev.lang.goodCodeRedVisitor"

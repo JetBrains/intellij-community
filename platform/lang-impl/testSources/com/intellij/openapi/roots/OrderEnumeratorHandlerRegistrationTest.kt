@@ -26,7 +26,7 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
     ModuleRootModificationUtil.addDependency(moduleB, moduleC)
     val srcRoot = runWriteAction { dummyRoot.createChildDirectory(this, "project-model").createChildDirectory(this, "src") }
     PsiTestUtil.addSourceRoot(moduleC, srcRoot)
-    runWithRegisteredExtension {
+    runWithRegisteredExtension(MockOrderEnumerationHandlerFactory(processDependenciesRecursively = false)) {
       val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().recursively().roots(OrderRootType.SOURCES).usingCache()
       assertEmpty(enumerator.roots)
     }
@@ -34,9 +34,36 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
     assertEquals(srcRoot, assertOneElement(enumerator.roots))
   }
 
-  private fun runWithRegisteredExtension(action: () -> Unit) {
+  fun `test include test roots from dependent modules`() {
+    val (moduleA, moduleB) = runWriteAction {
+      listOf("a", "b").map {
+        ModuleManager.getInstance(myProject).newModule(File(createTempDirectory(), "$it.iml").systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      }
+    }
+    val dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, DependencyScope.TEST, false)
+    val moduleBTestSources = runWriteAction { dummyRoot.createChildDirectory(this, "project-model").createChildDirectory(this, "bTests") }
+    PsiTestUtil.addSourceRoot(moduleB, moduleBTestSources, true)
+
+    // recursive
+    runWithRegisteredExtension(MockOrderEnumerationHandlerFactory(includeTestsFromDependentModulesToTestClasspath = false)) {
+      val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().recursively().roots(OrderRootType.SOURCES).usingCache()
+      assertEmpty(enumerator.roots)
+    }
+
+    // non-recursive
+    runWithRegisteredExtension(MockOrderEnumerationHandlerFactory(includeTestsFromDependentModulesToTestClasspath = false)) {
+      val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().roots(OrderRootType.SOURCES).usingCache()
+      assertEmpty(enumerator.roots)
+    }
+
+    val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().recursively().roots(OrderRootType.SOURCES).usingCache()
+    assertEquals(moduleBTestSources, assertOneElement(enumerator.roots))
+  }
+
+  private fun runWithRegisteredExtension(factory: OrderEnumerationHandler.Factory, action: () -> Unit) {
     val orderEnumerationDisposable = Disposer.newDisposable()
-    registerOrderEnumerationHandler(orderEnumerationDisposable)
+    registerOrderEnumerationHandler(factory, orderEnumerationDisposable)
     try {
       action()
     }
@@ -45,7 +72,7 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun registerOrderEnumerationHandler(disposable: Disposable) {
+  private fun registerOrderEnumerationHandler(factory: OrderEnumerationHandler.Factory, disposable: Disposable) {
     val orderEnumerationDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {
@@ -53,17 +80,23 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
       }
       UIUtil.dispatchAllInvocationEvents()
     })
-    OrderEnumerationHandler.EP_NAME.point.registerExtension(MockOrderEnumerationHandlerFactory(), orderEnumerationDisposable)
+    OrderEnumerationHandler.EP_NAME.point.registerExtension(factory, orderEnumerationDisposable)
     UIUtil.dispatchAllInvocationEvents()
   }
 }
 
-private class MockOrderEnumerationHandlerFactory : OrderEnumerationHandler.Factory() {
+private class MockOrderEnumerationHandlerFactory(
+  val processDependenciesRecursively: Boolean = true,
+  val includeTestsFromDependentModulesToTestClasspath: Boolean = true,
+) : OrderEnumerationHandler.Factory() {
   override fun isApplicable(module: Module): Boolean = true
+  override fun createHandler(module: Module): OrderEnumerationHandler = Handler()
 
-  override fun createHandler(module: Module): OrderEnumerationHandler = MockOrderEnumerationHandler()
-}
+  private inner class Handler : OrderEnumerationHandler() {
+    override fun shouldProcessDependenciesRecursively(): Boolean =
+      processDependenciesRecursively
 
-private class MockOrderEnumerationHandler : OrderEnumerationHandler() {
-  override fun shouldProcessDependenciesRecursively(): Boolean = false
+    override fun shouldIncludeTestsFromDependentModulesToTestClasspath(): Boolean =
+      includeTestsFromDependentModulesToTestClasspath
+  }
 }

@@ -6,9 +6,6 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Bulenkov
- */
 final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   private final ExperimentalFeature feature;
 
@@ -44,7 +41,7 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   }
 
   @Override
-  public void setValue(@NotNull String value) {
+  public void setValue(@NotNull String value, @NotNull RegistryValueSource source) {
     boolean enable = Boolean.parseBoolean(value);
     Experiments.getInstance().setFeatureEnabled(feature.id, enable);
   }

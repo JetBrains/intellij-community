@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.rd.util
 
+import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -15,8 +17,14 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Internal
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
-    val instance by lazy {
+    @Suppress("OPT_IN_USAGE")
+    val instance: RdCoroutineHost by lazy {
       val scope = ApplicationManager.getApplication().service<ScopeHolder>()
+      val precursor = scope.scope.coroutineContext.get(ClientIdContextElementPrecursor)
+      if (precursor == null) {
+        logger<RdCoroutineHost>().error("ClientIdContextElementPrecursor is missing inside scope for RdCoroutineHost. " +
+                                        "It's required for automatic `ClientId` propagation for `lifetime.coroutineScope.launch {}`")
+      }
       RdCoroutineHost(scope.scope).apply {
         override(this)
       }
@@ -37,7 +45,7 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
     get() = Dispatchers.EDT
 
   @Deprecated("This is a deprecated dispatcher used before Dispatchers.EDT. Please switch to the Dispatchers.EDT")
-  val uiDispatcherWithInlining = object : CoroutineDispatcher() {
+  val uiDispatcherWithInlining: CoroutineDispatcher = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       ApplicationManager.getApplication().invokeLater(block, ModalityState.defaultModalityState())
     }
@@ -61,7 +69,7 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
     get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   override fun onException(throwable: Throwable) {
-    if (throwable !is CancellationException && throwable !is ProcessCanceledException) {
+    if (throwable !is CancellationException) {
       logger<RdCoroutineHost>().error("Unhandled coroutine throwable", throwable)
     }
   }

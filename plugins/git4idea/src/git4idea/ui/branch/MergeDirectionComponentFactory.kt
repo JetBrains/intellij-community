@@ -146,7 +146,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                                                                  applySelection: (RepoMapping?, GitBranch?) -> Unit,
                                                                                  items: List<RepoMapping>) {
 
-      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
+      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items.toMutableList(), currentRepo)
       val branchModel = MutableCollectionComboBoxModel<GitBranch>()
 
       repoModel.addListDataListener(object : ListDataListener {
@@ -204,7 +204,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
             .align(AlignX.FILL)
         }
         row(GitBundle.message("branch.direction.panel.branch.label")) {
-          branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
+          branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::name))
             .align(AlignX.FILL)
             .component.apply {
               isSwingPopup = false
@@ -222,7 +222,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
 
       return JBPopupFactory.getInstance()
         .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
-        .setFocusable(false)
+        .setFocusable(true)
         .createPopup().apply {
           setRequestFocus(true)
         }.also { popup ->

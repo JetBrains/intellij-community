@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -16,13 +16,11 @@ import java.util.Set;
 
 public final class StringExpressionHelper {
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression) {
+  public static @Nullable Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression) {
     return evaluateExpression(expression, new HashSet<>());
   }
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression, @NotNull Collection<PsiElement> visited) {
+  public static @Nullable Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression, @NotNull Collection<PsiElement> visited) {
     if (!visited.add(expression)) {
       return null;
     }
@@ -102,10 +100,9 @@ public final class StringExpressionHelper {
     return null;
   }
 
-  @Nullable
-  private static Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
-                                                                      @NotNull Collection<PsiElement> visited,
-                                                                      PsiExpression @NotNull ... operands) {
+  private static @Nullable Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
+                                                                                @NotNull Collection<PsiElement> visited,
+                                                                                PsiExpression @NotNull ... operands) {
     StringBuilder sb = new StringBuilder();
     for (PsiExpression operand : operands) {
       Pair<PsiElement, String> pair = evaluateExpression(operand, visited);
@@ -115,13 +112,11 @@ public final class StringExpressionHelper {
     return Pair.create(expression, sb.toString());
   }
 
-  @NotNull
-  private static Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
+  private static @NotNull Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
     return Pair.create(expression, ElementManipulators.getValueText(expression));
   }
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateConstantExpression(@NotNull PsiElement expression) {
+  public static @Nullable Pair<PsiElement, String> evaluateConstantExpression(@NotNull PsiElement expression) {
     PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
     Object result = helper.computeConstantExpression(expression);
     if (result instanceof String) {
@@ -130,10 +125,9 @@ public final class StringExpressionHelper {
     return null;
   }
 
-  @NotNull
-  public static Set<Pair<PsiElement, String>> searchStringExpressions(@NotNull final PsiMethod psiMethod,
-                                                                      @NotNull SearchScope searchScope,
-                                                                      int expNum) {
+  public static @NotNull Set<Pair<PsiElement, String>> searchStringExpressions(final @NotNull PsiMethod psiMethod,
+                                                                               @NotNull SearchScope searchScope,
+                                                                               int expNum) {
     Set<Pair<PsiElement, String>> pairs = new HashSet<>();
     for (PsiCall methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
       PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -151,8 +145,7 @@ public final class StringExpressionHelper {
     return pairs;
   }
 
-  @NotNull
-  public static Set<PsiCall> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
+  public static @NotNull Set<PsiCall> searchMethodCalls(final @NotNull PsiMethod psiMethod, @NotNull SearchScope searchScope) {
     final Set<PsiCall> callExpressions = new HashSet<>();
     final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 

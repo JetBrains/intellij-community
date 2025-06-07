@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.StarterLanguage
+import com.intellij.ide.starters.shared.StarterProjectType
+import com.intellij.ide.starters.shared.StarterTestRunner
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.Module
@@ -17,10 +19,10 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import javax.swing.Icon
 
-class ComposeModuleBuilder : StarterModuleBuilder() {
+internal class ComposeModuleBuilder : StarterModuleBuilder() {
     override fun getBuilderId(): String = "ComposeModuleBuilder"
     override fun getPresentableName(): String = ComposeProjectWizardBundle.message("module.presentation.name")
-    override fun getWeight(): Int = KOTLIN_WEIGHT-1
+    override fun getWeight(): Int = KOTLIN_WEIGHT-2
     override fun getNodeIcon(): Icon = KotlinIcons.Wizard.COMPOSE
     override fun getDescription(): String = ComposeProjectWizardBundle.message("module.description")
 

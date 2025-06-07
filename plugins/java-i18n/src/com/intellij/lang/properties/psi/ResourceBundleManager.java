@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,23 +28,19 @@ public abstract class ResourceBundleManager {
   /**
    * By default returns java.util.ResourceBundle class in context JDK
    */
-  @Nullable
-  public abstract PsiClass getResourceBundle();
+  public abstract @Nullable PsiClass getResourceBundle();
 
   public List<String> suggestPropertiesFiles(@NotNull Set<Module> contextModules){
     return I18nUtil.defaultSuggestPropertiesFiles(myProject, contextModules);
   }
 
-  @Nullable
-  public I18nizedTextGenerator getI18nizedTextGenerator() {
+  public @Nullable I18nizedTextGenerator getI18nizedTextGenerator() {
     return null;
   }
 
-  @Nullable @NonNls
-  public abstract String getTemplateName();
+  public abstract @Nullable @NonNls String getTemplateName();
 
-  @Nullable @NonNls
-  public abstract String getConcatenationTemplateName();
+  public abstract @Nullable @NonNls String getConcatenationTemplateName();
 
   public abstract boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException;
 
@@ -54,13 +50,11 @@ public abstract class ResourceBundleManager {
     return value;
   }
 
-  @Nullable
-  public static ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
+  public static @Nullable ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
     return getManager(Collections.singletonList(context), context.getProject());
   }
 
-  @Nullable
-  public static ResourceBundleManager getManager(@NotNull Collection<PsiFile> contexts, @NotNull Project project) throws ResourceBundleNotFoundException {
+  public static @Nullable ResourceBundleManager getManager(@NotNull Collection<PsiFile> contexts, @NotNull Project project) throws ResourceBundleNotFoundException {
     ResourceBundleManager result = null;
     for (ResourceBundleManager manager : RESOURCE_BUNDLE_MANAGER.getExtensions(project)) {
       if (isActiveForAny(manager, contexts)) {
@@ -87,13 +81,11 @@ public abstract class ResourceBundleManager {
     return false;
   }
 
-  @Nullable
-  public PropertyCreationHandler getPropertyCreationHandler() {
+  public @Nullable PropertyCreationHandler getPropertyCreationHandler() {
     return null;
   }
 
-  @Nullable
-  public String suggestPropertyKey(@NotNull final String value) {
+  public @Nullable String suggestPropertyKey(final @NotNull String value) {
     return null;
   }
 

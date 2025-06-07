@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
@@ -85,28 +86,54 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
         codeToInline.replaceExpression(qualified, callableReference)
     }
 
+    data class TypeDescription(val valueTypePresentation: String?, val isContainingErrors: Boolean, val isMarkedNullable: Boolean)
+
+
     inner class IntroduceValueForParameter(
         val parameter: Parameter,
         val value: KtExpression,
-        val valueType: KotlinType?
-    )
+        val valueType: TypeDescription?
+        )
 
     protected open fun KtCallElement.insertExplicitTypeArgument() {}
 
-    protected inner class Argument(
+    protected class Argument(
         val expression: KtExpression,
-        val expressionType: KotlinType?,
+        val expressionType: TypeDescription?,
         val isNamed: Boolean = false,
         val isDefaultValue: Boolean = false
     )
 
     protected abstract fun argumentForParameter(parameter: Parameter, callableDescriptor: CallableDescriptor): Argument?
 
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    protected fun expandTypeArgumentsInParameterDefault(
+        expression: KtExpression,
+    ): KtExpression? {
+        if (expression is KtCallExpression && expression.typeArguments.isEmpty() && expression.calleeExpression != null) {
+            val arguments = allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(expression) {
+                        getRenderedTypeArguments(expression)
+                    }
+                }
+            }
+
+            if (arguments != null) {
+                val ktCallExpression = expression.copied()
+                val callee = ktCallExpression.calleeExpression
+                ktCallExpression.addAfter(psiFactory.createTypeArguments(arguments), callee)
+                return ktCallExpression
+            }
+        }
+        return null
+    }
+
     protected abstract fun CallableDescriptor.valueParameters(): List<Parameter>
     protected abstract fun Parameter.name(): Name
     protected abstract fun introduceValue(
         value: KtExpression,
-        valueType: KotlinType?,
+        valueType: TypeDescription?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String? = null,
@@ -116,7 +143,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     protected fun introduceVariablesForParameters(
         elementToBeReplaced: KtElement,
         receiver: KtExpression?,
-        receiverType: KotlinType?,
+        receiverType: TypeDescription?,
         introduceValuesForParameters: Collection<IntroduceValueForParameter>
     ) {
         if (elementToBeReplaced is KtExpression) {
@@ -220,7 +247,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
                         usage, psiFactory.createExpression(typeClassifier + arguments)
                     )
                 } else if (parent is KtUserType) {
-                    parent.replace(typeElement)
+                    (((parent.parent as? KtTypeReference)?.parent as? KtIntersectionType) ?: parent).replace(typeElement)
                 } else {
                     //TODO: tests for this?
                     codeToInline.replaceExpression(usage, psiFactory.createExpression(typeElement.text))
@@ -230,7 +257,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    fun wrapCodeForSafeCall(receiver: KtExpression, receiverType: KotlinType?, expressionToBeReplaced: KtExpression) {
+    fun wrapCodeForSafeCall(receiver: KtExpression, receiverType: TypeDescription?, expressionToBeReplaced: KtExpression) {
         if (codeToInline.statementsBefore.isEmpty()) {
             val qualified = codeToInline.mainExpression as? KtQualifiedExpression
             if (qualified != null) {

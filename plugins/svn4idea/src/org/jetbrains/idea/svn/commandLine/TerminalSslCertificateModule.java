@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Key;
@@ -28,9 +28,9 @@ public class TerminalSslCertificateModule extends BaseTerminalModule {
   // if credentials caching is allowed
   private static final Pattern ACCEPT_CERTIFICATE_PROMPT = Pattern.compile("\\(R\\)eject.*\\?\\s?");
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder") // TODO: display it 
-  @NotNull private final StringBuilder certificateError = new StringBuilder();
-  @NotNull private final StringBuilder certificateInfo = new StringBuilder();
+  // TODO: display it
+  @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder") private final @NotNull StringBuilder certificateError = new StringBuilder();
+  private final @NotNull StringBuilder certificateInfo = new StringBuilder();
   private boolean collectingCertificateError;
   private boolean collectingCertificateInfo;
   private String serverUrl;

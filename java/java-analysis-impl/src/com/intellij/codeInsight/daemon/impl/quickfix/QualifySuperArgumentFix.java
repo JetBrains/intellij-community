@@ -1,13 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
   private QualifySuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
@@ -16,7 +19,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
 
   @Override
   protected String getQualifierText() {
-    return PsiKeyword.SUPER;
+    return JavaKeywords.SUPER;
   }
 
   @Override
@@ -24,7 +27,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
     return RefactoringChangeUtil.createSuperExpression(manager, myPsiClass);
   }
 
-  public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, @NotNull HighlightInfo.Builder highlightInfo) {
+  public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, @NotNull Consumer<? super CommonIntentionAction> info) {
     LOG.assertTrue(expr.getQualifier() == null);
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
     if (containingClass != null) {
@@ -47,7 +50,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
             }
             if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
               var action = new QualifySuperArgumentFix(expr, superClass);
-              highlightInfo.registerFix(action, null, null, null, null);
+              info.accept(action);
             }
           }
         }

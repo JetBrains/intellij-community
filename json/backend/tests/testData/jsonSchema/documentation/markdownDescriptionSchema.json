@@ -1,0 +1,7 @@
+{
+  "properties": {
+    "my_property": {
+      "markdownDescription": "Use `code` sample, see [link](http://google.com)"
+    }
+  }
+}

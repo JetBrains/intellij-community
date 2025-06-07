@@ -3,9 +3,9 @@ package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -21,24 +21,27 @@ import java.util.List;
 
 public final class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
   private static void addMoveToPackageFix(@NotNull PsiFile file, String packName, @NotNull List<? super LocalQuickFix> availableFixes) {
-    MoveToPackageFix moveToPackageFix = MoveToPackageFix.createIfAvailable(file, packName);
+    ModCommandAction moveToPackageFix = MoveToPackageModCommandFix.createIfAvailable(file, packName);
     if (moveToPackageFix != null) {
-      availableFixes.add(moveToPackageFix);
+      availableFixes.add(LocalQuickFix.from(moveToPackageFix));
+    } else {
+      MoveToPackageFix oldFix = MoveToPackageFix.createIfAvailable(file, packName);
+      if (oldFix != null) {
+        availableFixes.add(oldFix);
+      }
     }
   }
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    // does not work in tests since CodeInsightTestCase copies file into temporary location
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (!(file instanceof PsiJavaFile javaFile)) {
       return null;
     }
     if (FileTypeUtils.isInServerPageFile(file)) return null;
 
-    if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(javaFile)) return null;
 
-    PsiDirectory directory = javaFile.getContainingDirectory();
+    PsiDirectory directory = javaFile.getOriginalFile().getContainingDirectory();
     if (directory == null) return null;
     PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (dirPackage == null) return null;
@@ -99,21 +102,17 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "WrongPackageStatement";
   }
 

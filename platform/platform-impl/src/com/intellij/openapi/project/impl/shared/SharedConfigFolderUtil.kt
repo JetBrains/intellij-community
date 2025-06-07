@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
@@ -44,14 +43,8 @@ object SharedConfigFolderUtil {
   /**
    * @param path $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
    */
-  fun installFsWatcher(path: Path, useVfsWatcher: Boolean) {
-    if (useVfsWatcher) {
-      val root = VfsUtil.findFile(path, true) ?: error("Shared config root not found: $path")
-      SharedConfigFolderVfsListener(root).init()
-    }
-    else {
-      SharedConfigFolderNioListener(path).init()
-    }
+  fun installFsWatcher(path: Path) {
+    SharedConfigFolderNioListener(path).init()
   }
 
   internal fun reloadComponents(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {

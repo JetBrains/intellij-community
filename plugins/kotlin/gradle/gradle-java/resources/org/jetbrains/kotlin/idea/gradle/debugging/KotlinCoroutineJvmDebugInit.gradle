@@ -1,0 +1,66 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleJvmForkedDebuggerHelper
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
+
+import java.util.regex.Pattern
+
+interface Properties {
+    //noinspection GrUnresolvedAccess
+    public static final String debugPropertyName = DEBUG_PROPERTY_NAME
+    //noinspection GrUnresolvedAccess
+    public static final String debugPropertyValueOff = DEBUG_PROPERTY_VALUE_OFF
+
+    public static final String disabledDebugJvmArgument = "-D$debugPropertyName=$debugPropertyValueOff"
+}
+
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+    def tasks = GradleJvmForkedDebuggerHelper.getTasksToDebug(project)
+            .matching { task -> task instanceof Test || task instanceof JavaExecSpec }
+    GradleCollectionUtil.configureEach(tasks) { Task task ->
+        def options = task as JavaForkOptions
+        if (Properties.disabledDebugJvmArgument in options.getJvmArgs()) {
+            return
+        }
+        options.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
+    }
+}
+
+class KotlinCoroutineJvmDebugArgumentsProvider implements CommandLineArgumentProvider {
+
+    private static def VERSION_PATTERN = Pattern.compile(/(\d+)\.(\d+)(\.(\d+))?.*/)
+
+    private final FileCollection taskClasspath
+
+    KotlinCoroutineJvmDebugArgumentsProvider(Task task) {
+        this.taskClasspath = task.classpath
+    }
+
+    @Override
+    Iterable<String> asArguments() {
+        List<String> emptyList = Collections.emptyList()
+        if (System.getProperty(ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP) == null) return emptyList
+        def kotlinxCoroutinesCoreJar = taskClasspath.find {
+            it.name.startsWith("kotlinx-coroutines-core") && !it.name.contains("sources")
+        }
+        if (kotlinxCoroutinesCoreJar == null) return emptyList
+        def results = (kotlinxCoroutinesCoreJar.getName() =~ /kotlinx-coroutines-core(\-jvm)?-(\d[\w\.\-]+)\.jar$/).findAll()
+        if (results.isEmpty()) return emptyList
+        String version = results.first()[2]
+        def matcher = VERSION_PATTERN.matcher(version)
+        try {
+            if (!matcher.matches()) return emptyList
+            int major = Integer.parseInt(matcher.group(1))
+            int minor = Integer.parseInt(matcher.group(2))
+            int patch = Integer.parseInt(matcher.group(4) ?: "0")
+            if (major < 1 || (major == 1 && (minor < 5 || (minor == 5 && patch < 1)))) return emptyList
+        }
+        catch (NumberFormatException ignored) {
+            return emptyList
+        }
+        return ["-javaagent:${kotlinxCoroutinesCoreJar?.absolutePath}", "-ea"]
+    }
+}

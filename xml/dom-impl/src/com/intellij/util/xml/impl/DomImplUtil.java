@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +17,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.*;
 import java.util.Collections;
@@ -123,11 +124,11 @@ public final class DomImplUtil {
   }
 
 
-  public static List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
+  public static @Unmodifiable List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
     return findSubTags(tag, name, file, false);
   }
 
-  static List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
+  static @Unmodifiable List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
 
     if (!tag.isValid()) {
       throw new AssertionError("Invalid tag");
@@ -155,7 +156,7 @@ public final class DomImplUtil {
     });
   }
 
-  public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
+  public static @Unmodifiable List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
     if (tags.length == 0) {
       return Collections.emptyList();
     }
@@ -224,7 +225,7 @@ public final class DomImplUtil {
     return createXmlName(name, method.getGenericReturnType(), method);
   }
 
-  public static List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+  public static @Unmodifiable List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     if (subTags.length == 0) {
       return Collections.emptyList();
     }

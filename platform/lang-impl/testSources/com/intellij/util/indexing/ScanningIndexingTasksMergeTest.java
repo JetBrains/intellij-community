@@ -8,9 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.diagnostic.ScanningType;
-import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import kotlinx.coroutines.CompletableDeferredKt;
@@ -19,13 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
-  private List<VirtualFile> f1;
-  private List<VirtualFile> fShared;
-  private List<VirtualFile> f2;
-
   private IndexableFilesIterator iter1;
   private IndexableFilesIterator iter2;
 
@@ -36,28 +29,11 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    VirtualFile root = getSourceRoot();
-
-    f1 = createFiles(root, "a1", "a2");
-    fShared = createFiles(root, "s1", "s2", "s3");
-    f2 = createFiles(root, "b1");
-
     iter1 = new FakeIndexableFilesIterator();
     iter2 = new FakeIndexableFilesIterator();
 
-    Set<VirtualFile> set1 = new HashSet<>(f1);
-    set1.addAll(fShared.subList(0, 2));
-
-    Set<VirtualFile> set2 = new HashSet<>(f2);
-    set2.addAll(fShared.subList(1, 3));
-
-    task1 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromFilesCollection(set1, Collections.emptyList()), "test task1");
-    task2 = new UnindexedFilesIndexer(getProject(), QueuedFiles.fromFilesCollection(set2, Collections.emptyList()), "test task2");
-  }
-
-  public void testTryMergeIndexingTasks() {
-    assertMergedStateInvariants(task1.tryMergeWith(task2));
-    assertMergedStateInvariants(task2.tryMergeWith(task1));
+    task1 = new UnindexedFilesIndexer(getProject(), "test task1");
+    task2 = new UnindexedFilesIndexer(getProject(), "test task2");
   }
 
   public void testTryMergeScanningTasks() {
@@ -85,32 +61,53 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
 
   // we don't care which exact reason will be after merge. We only care that we don't have hundreds of "On refresh of files" in it
   public void testVFSRefreshIndexingTasksReasonsDoNotAccumulate() {
-    String[][] situations = {
-      {"On refresh of files in awesome.project", "On refresh of files in awesome.project", "On refresh of files in awesome.project"},
-      {"On refresh of A", "On refresh of B", "Merged On refresh of A with On refresh of B"},
-      {"Merged A with B", "Merged A with B", "Merged A with B"},
-      {"Merged A with B", "Merged B with C", "Merged A with B with B with C"},
-      {"Merged A with B with C", "Merged B with C", "Merged A with B with C"},
-      {"Merged On refresh of A with On refresh of B", "On refresh of B", "Merged On refresh of A with On refresh of B"}
+    String[][][] situations = {
+      {{"On refresh of files in awesome.project"}, {"On refresh of files in awesome.project"}, {"On refresh of files in awesome.project (x2)"}},
+      {{"On refresh of A"}, {"On refresh of B"}, {"Merged On refresh of A with On refresh of B"}},
+      {{"A", "B"}, {"Merged A with B"}},
+      {{"A", "B"}, {"A", "B"}, {"Merged A (x2) with B (x2)"}},
+      {{"A"}, {"B", "C"}, {"Merged A with B with C"}},
+      {{"A", "B"}, {"B", "C"}, {"Merged A with B (x2) with C"}},
+      {{"A", "B", "C"}, {"B", "C"}, {"Merged A with B (x2) with C (x2)"}},
+      {{"On refresh of A", "On refresh of B"}, {"On refresh of B"}, {"Merged On refresh of A with On refresh of B (x2)"}}
     };
 
 
-    for (String[] situation : situations) {
-      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0]);
-      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1]);
-      UnindexedFilesIndexer merged = t1.tryMergeWith(t2);
-      assertEquals(situation[2], merged.getIndexingReason());
+    for (String[][] situation : situations) {
+      var tasks = situation.length - 1;
+      var answer = situation[tasks][0];
+
+      UnindexedFilesIndexer merged = null;
+      for (int i = 0; i < tasks; i++) {
+        UnindexedFilesIndexer subtaskRes = null;
+        for (String subtask : situation[i]) {
+          if (subtaskRes == null) {
+            subtaskRes = new UnindexedFilesIndexer(getProject(), subtask);
+          }
+          else {
+            subtaskRes = subtaskRes.tryMergeWith(new UnindexedFilesIndexer(getProject(), subtask));
+          }
+        }
+
+        if (merged == null) {
+          merged = subtaskRes;
+        }
+        else {
+          merged = merged.tryMergeWith(subtaskRes);
+        }
+      }
+      assertEquals(answer, merged.getIndexingReason());
     }
   }
 
-  public void testNonVFSRefreshIndexingTasksReasonsNotRemoved() {
+  public void testReasonCountersNotRemoved() {
     UnindexedFilesIndexer merged = task1.tryMergeWith(task2);
     String task1Reason = task1.getIndexingReason();
     String task2Reason = task2.getIndexingReason();
     assertEquals("Merged " + task1Reason + " with " + task2Reason, merged.getIndexingReason());
 
     merged = merged.tryMergeWith(task2);
-    assertEquals("Merged " + task1Reason + " with " + task2Reason + " with " + task2Reason, merged.getIndexingReason());
+    assertEquals("Merged " + task1Reason + " with " + task2Reason + " (x2)", merged.getIndexingReason());
   }
 
   @NotNull
@@ -126,15 +123,6 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
       null,
       false,
       parameters);
-  }
-
-  private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {
-    Set<VirtualFile> merged = mergedTask.getFiles().getRequests().stream().map(FileIndexingRequest::getFile).collect(Collectors.toSet());
-
-    assertEquals(merged.toString(), f1.size() + f2.size() + fShared.size(), merged.size());
-    assertTrue(merged.containsAll(f1));
-    assertTrue(merged.containsAll(f2));
-    assertTrue(merged.containsAll(fShared));
   }
 
   private static final AtomicInteger idCounter = new AtomicInteger(0);

@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaParsingTestCase {
@@ -18,6 +19,8 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testTag4() { doTest(true); }
   public void testTag5() { doTest(true); }
   public void testTag6() { doTest(true); }
+
+  public void testInheritDocTag0() { doTest(true); }
 
   public void testInlineTag0() { doTest(true); }
   public void testInlineTag1() { doTest(true); }
@@ -41,6 +44,8 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSeeTag14() { doTest(true); }
   public void testSeeTag15() { doTest(true); }
   public void testSeeTag16() { doTest(true); }
+  public void testSeeTag17() { doTest(true); }
+  public void testSeeTag18() { doTest(true); }
 
   public void testLinkTag0() { doTest(true); }
   public void testLinkTag1() { doTest(true); }
@@ -49,6 +54,8 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testLinkTag4() { doTest(true); }
   public void testLinkTag5() { doTest(true); }
   public void testLinkTag6() { doTest(true); }
+  public void testLinkTag7() { doTest(true); }
+  public void testLinkTag8() { doTest(true); }
 
   public void testParamTag0() { doTest(true); }
   public void testParamTag1() { doTest(true); }
@@ -213,5 +220,26 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testReferenceLinkMarkdown09() { doTest(true); }
   public void testReferenceLinkMarkdown10() { doTest(true); }
   public void testReferenceLinkMarkdown11() { doTest(true); }
+  public void testReferenceLinkMarkdown12() { doTest(true); }
+  public void testReferenceLinkMarkdown13() { doTest(true); }
 
+  public void testMarkdownWithDocCommentBeforeMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest(true);
+  }
+
+  public void testOnlyMarkdownBeforeMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest(true);
+  }
+
+  public void testMarkdownWithDocCommentAfterMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_23);
+    doTest(true);
+  }
+
+  public void testOnlyMarkdownAfterMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_23);
+    doTest(true);
+  }
 }

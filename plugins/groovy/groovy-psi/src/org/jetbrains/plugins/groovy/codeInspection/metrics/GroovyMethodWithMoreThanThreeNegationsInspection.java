@@ -29,9 +29,8 @@ public final class GroovyMethodWithMoreThanThreeNegationsInspection extends Base
     return GroovyBundle.message("inspection.message.method.ref.has.too.many.negations", args[0]);
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

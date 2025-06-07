@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -24,8 +24,7 @@ public class XDebugTabLayouter {
    * @param ui {@code RunnerLayoutUi} instance
    * @return registered {@code Content} instance
    */
-  @NotNull
-  public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+  public @NotNull Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content content = ui.createContent(DebuggerContentInfo.CONSOLE_CONTENT, console.getComponent(),
                                        XDebuggerBundle.message("debugger.session.tab.console.content.name"),
                                        null,

@@ -1,6 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -22,23 +26,24 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
 
   private volatile Map<? extends OrderRootType, ? extends VirtualFilePointerContainer> myOrderRootPointerContainers = Map.of();
   private final JavaModuleExternalPathsImpl mySource;
+  private final Project myProject;
 
-  public JavaModuleExternalPathsImpl() {
-    this(null);
+  public JavaModuleExternalPathsImpl(Module module) {
+    this(module.getProject(), null);
   }
 
   @NonInjectable
-  private JavaModuleExternalPathsImpl(JavaModuleExternalPathsImpl source) {
+  private JavaModuleExternalPathsImpl(Project project, JavaModuleExternalPathsImpl source) {
+    myProject = project;
     mySource = source;
     if (source != null) {
       copyContainersFrom(source);
     }
   }
 
-  @NotNull
   @Override
-  public ModuleExtension getModifiableModel(boolean writable) {
-    return new JavaModuleExternalPathsImpl(this);
+  public @NotNull ModuleExtension getModifiableModel(boolean writable) {
+    return new JavaModuleExternalPathsImpl(myProject, this);
   }
 
   @Override
@@ -84,7 +89,8 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
         return;
       }
 
-      container = VirtualFilePointerManager.getInstance().createContainer(this, null);
+      Disposable myDisposable = myProject.getService(ProjectLevelDisposableService.class);
+      container = VirtualFilePointerManager.getInstance().createContainer(myDisposable, null);
       Map<OrderRootType, VirtualFilePointerContainer> newMap = new HashMap<>(myOrderRootPointerContainers);
       newMap.put(orderRootType, container);
       myOrderRootPointerContainers = Map.copyOf(newMap);
@@ -106,7 +112,8 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
         if (pathsElement != null && !pathsElement.getChildren(ROOT_ELEMENT).isEmpty()) {
-          VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(this, null);
+          Disposable myDisposable = myProject.getService(ProjectLevelDisposableService.class);
+          VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myDisposable, null);
           newMap.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT, false);
         }
@@ -120,7 +127,7 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     List<Element> toWrite = null;
     for (OrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
-      if (container != null && container.size() > 0) {
+      if (container != null && !container.isEmpty()) {
         final Element content = new Element(((PersistentOrderRootType)orderRootType).getModulePathsName());
         container.writeExternal(content, ROOT_ELEMENT, false);
         if (toWrite == null) {
@@ -138,8 +145,9 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   private void copyContainersFrom(@NotNull JavaModuleExternalPathsImpl source) {
+    Disposable myDisposable = myProject.getService(ProjectLevelDisposableService.class);
     List<Map.Entry<OrderRootType, VirtualFilePointerContainer>> newEntries =
-      ContainerUtil.map(source.myOrderRootPointerContainers.entrySet(), e -> Map.entry(e.getKey(), e.getValue().clone(this, null)));
+      ContainerUtil.map(source.myOrderRootPointerContainers.entrySet(), e -> Map.entry(e.getKey(), e.getValue().clone(myDisposable, null)));
     myOrderRootPointerContainers = Map.ofEntries(newEntries.toArray(new Map.Entry[0]));
   }
 
@@ -162,5 +170,12 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
       }
     }
     return false;
+  }
+
+  @Service(Service.Level.PROJECT)
+  private static final class ProjectLevelDisposableService implements Disposable {
+    @Override
+    public void dispose() {
+    }
   }
 }

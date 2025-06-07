@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.execution.impl
@@ -63,7 +63,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Expirable
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.Navigatable
@@ -97,9 +100,9 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
-import kotlin.concurrent.Volatile
 import kotlin.math.max
 import kotlin.math.min
+import com.intellij.openapi.util.Pair as OpenApiPair
 
 open class ConsoleViewImpl protected constructor(
   project: Project,
@@ -256,7 +259,7 @@ open class ConsoleViewImpl protected constructor(
   override fun clear() {
     synchronized(LOCK) {
       if (editor == null) return
-      // real document content will be cleared on next flush;
+      // real document content will be cleared on the next flush;
       myDeferredBuffer.clear()
     }
     if (!flushAlarm.isDisposed) {
@@ -278,7 +281,7 @@ open class ConsoleViewImpl protected constructor(
       }
 
       fun getEffectiveOffset(editor: Editor): Int {
-        var moveOffset = min(offset.toDouble(), editor.document.textLength.toDouble()).toInt()
+        var moveOffset = min(offset, editor.document.textLength)
         if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.document.textLength) {
           moveOffset = 0
         }
@@ -384,7 +387,7 @@ open class ConsoleViewImpl protected constructor(
 
   /**
    * Adds transparent (actually, non-opaque) component over console.
-   * It will be as big as console. Use it to draw on console because it does not prevent user from console usage.
+   * It will be as big as a console. Use it to draw on console because it does not prevent user from console usage.
    *
    * @param component component to add
    */
@@ -484,7 +487,7 @@ open class ConsoleViewImpl protected constructor(
           flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
           return@executeOnPooledThread
         }
-        catch (e: CancellationException) {
+        catch (_: CancellationException) {
           //try again
         }
         catch (e: TimeoutException) {
@@ -498,7 +501,7 @@ open class ConsoleViewImpl protected constructor(
           future[10, TimeUnit.MILLISECONDS]
           break
         }
-        catch (ignored: TimeoutException) {
+        catch (_: TimeoutException) {
         }
         EDT.dispatchAllInvocationEvents()
       }
@@ -513,9 +516,11 @@ open class ConsoleViewImpl protected constructor(
 
   protected open fun disposeEditor() {
     UIUtil.invokeAndWaitIfNeeded {
-      val editor = editor
-      if (!editor!!.isDisposed) {
-        EditorFactory.getInstance().releaseEditor(editor)
+      ApplicationManager.getApplication().runWriteIntentReadAction<Unit, Exception> {
+        val editor = editor
+        if (!editor!!.isDisposed) {
+          EditorFactory.getInstance().releaseEditor(editor)
+        }
       }
     }
   }
@@ -563,7 +568,7 @@ open class ConsoleViewImpl protected constructor(
                                              // this may block forever, see IDEA-54340
                                              state.sendUserInput(textToSend.toString())
                                            }
-                                           catch (ignored: IOException) {
+                                           catch (_: IOException) {
                                            }
                                          }
                                        }, 0)
@@ -571,8 +576,10 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
+  internal var useOwnModalityForUpdates: Boolean = false
+
   protected open val stateForUpdate: ModalityState?
-    get() = null
+    get() = if (useOwnModalityForUpdates) ModalityState.stateForComponent(this) else null
 
   private fun requestFlushImmediately() {
     addFlushRequest(0, FLUSH)
@@ -582,7 +589,7 @@ open class ConsoleViewImpl protected constructor(
    * Holds number of symbols managed by the current console.
    *
    *
-   * Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
+   * The Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
    * are awaiting to be pushed to the document.
    */
   override fun getContentSize(): Int {
@@ -592,7 +599,7 @@ open class ConsoleViewImpl protected constructor(
       length = myDeferredBuffer.length()
       editor = this.editor
     }
-    return (if (editor == null || CLEAR.hasRequested()) 0 else editor!!.document.textLength) + length
+    return (if (editor == null || CLEAR.hasRequested()) 0 else editor.document.textLength) + length
   }
 
   override fun canPause(): Boolean {
@@ -623,7 +630,7 @@ open class ConsoleViewImpl protected constructor(
       editor.scrollingModel.accumulateViewportChanges()
     }
     val contentTypes = HashSet<ConsoleViewContentType>()
-    val contents = ArrayList<Pair<String, ConsoleViewContentType>>()
+    val contents = ArrayList<OpenApiPair<String, ConsoleViewContentType>>()
     val addedText: CharSequence
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
@@ -643,7 +650,8 @@ open class ConsoleViewImpl protected constructor(
         if (lineCount != 0) {
           val lineStartOffset = document.getLineStartOffset(lineCount - 1)
           document.deleteString(
-            max(lineStartOffset.toDouble(), (document.textLength - backspacePrefixLength).toDouble()).toInt(), document.textLength)
+            max(lineStartOffset, document.textLength - backspacePrefixLength),
+            document.textLength)
         }
       }
       addedText = TokenBuffer.getRawText(refinedTokens)
@@ -817,7 +825,7 @@ open class ConsoleViewImpl protected constructor(
   private fun getPopupGroup(event: EditorMouseEvent): ActionGroup {
     ThreadingAssertions.assertEventDispatchThread()
     val actionManager = ActionManager.getInstance()
-    val info = if (getHyperlinks() != null) getHyperlinks()!!.getHyperlinkInfoByEvent(event) else null
+    val info = getHyperlinks()?.getHyperlinkInfoByEvent(event)
     var group: ActionGroup? = null
     if (info is HyperlinkWithPopupMenuInfo) {
       group = info.getPopupMenuGroup(event.mouseEvent)
@@ -825,13 +833,18 @@ open class ConsoleViewImpl protected constructor(
     if (group == null) {
       group = actionManager.getAction(CONSOLE_VIEW_POPUP_MENU) as ActionGroup
     }
-    val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
-    var result = group.getChildren(null)
-
-    for (postProcessor in postProcessors) {
-      result = postProcessor.postProcessPopupActions(this, result)
+    return object : ActionGroupWrapper(group) {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        val children = super.getChildren(e)
+        val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
+        if (postProcessors.isEmpty()) return children
+        var result = children
+        for (postProcessor in postProcessors) {
+          result = postProcessor.postProcessPopupActions(this@ConsoleViewImpl, result)
+        }
+        return result
+      }
     }
-    return DefaultActionGroup(*result)
   }
 
   private fun highlightHyperlinksAndFoldings(startLine: Int, expirableToken: Expirable) {
@@ -845,7 +858,7 @@ open class ConsoleViewImpl protected constructor(
     val document = editor!!.document
     if (document.textLength == 0) return
 
-    val endLine = max(0.0, (document.lineCount - 1).toDouble()).toInt()
+    val endLine = max(0, document.lineCount - 1)
 
     if (canHighlightHyperlinks) {
       getHyperlinks()!!.highlightHyperlinksLater(compositeFilter, startLine, endLine, expirableToken)
@@ -873,7 +886,7 @@ open class ConsoleViewImpl protected constructor(
 
   private fun runHeavyFilters(compositeFilter: CompositeFilter, line1: Int, endLine: Int) {
     ThreadingAssertions.assertEventDispatchThread()
-    val startLine = max(0.0, line1.toDouble()).toInt()
+    val startLine = max(0, line1)
 
     val document = editor!!.document
     val startOffset = document.getLineStartOffset(startLine)
@@ -883,108 +896,162 @@ open class ConsoleViewImpl protected constructor(
 
     layeredPane!!.startUpdating()
     val currentValue = heavyUpdateTicket
-    heavyAlarm.addRequest({
-                            if (!compositeFilter.shouldRunHeavy()) {
-                              return@addRequest
-                            }
+    heavyAlarm.addRequest(
+      request = {
+        if (!compositeFilter.shouldRunHeavy()) {
+          return@addRequest
+        }
 
-                            try {
-                              compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine) { additionalHighlight ->
-                                addFlushRequest(0, object : FlushRunnable(true) {
-                                  public override fun doRun() {
-                                    if (heavyUpdateTicket != currentValue) {
-                                      return
-                                    }
+        try {
+          compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine) { additionalHighlight ->
+            addFlushRequest(
+              0,
+              object : FlushRunnable(true) {
+                public override fun doRun() {
+                  if (heavyUpdateTicket != currentValue) {
+                    return
+                  }
 
-                                    val additionalAttributes = additionalHighlight.getTextAttributes(null)
-                                    if (additionalAttributes != null) {
-                                      val item = additionalHighlight.resultItems[0]
-                                      getHyperlinks()!!.addHighlighter(item.highlightStartOffset, item.highlightEndOffset, additionalAttributes)
-                                    }
-                                    else {
-                                      getHyperlinks()!!.highlightHyperlinks(additionalHighlight, 0)
-                                    }
-                                  }
-                                })
-                              }
-                            }
-                            catch (ignore: IndexNotReadyException) {
-                            }
-                            finally {
-                              if (heavyAlarm.activeRequestCount <= 1) { // only the current request
-                                UIUtil.invokeLaterIfNeeded { layeredPane!!.finishUpdating() }
-                              }
-                            }
-                          }, 0)
+                  val additionalAttributes = additionalHighlight.getTextAttributes(null)
+                  val hyperlinks = getHyperlinks()!!
+                  if (additionalAttributes == null) {
+                    hyperlinks.highlightHyperlinks(additionalHighlight)
+                  }
+                  else {
+                    val item = additionalHighlight.resultItems[0]
+                    hyperlinks.addHighlighter(item.highlightStartOffset, item.highlightEndOffset, additionalAttributes)
+                  }
+                }
+              },
+            )
+          }
+        }
+        catch (_: IndexNotReadyException) {
+        }
+        finally {
+          if (heavyAlarm.activeRequestCount <= 1) { // only the current request
+            UIUtil.invokeLaterIfNeeded { layeredPane!!.finishUpdating() }
+          }
+        }
+      },
+      delayMillis = 0,
+    )
   }
 
-  protected open fun updateFoldings(startLine: Int, endLine: Int) {
+  private data class FoldingInfo(val folding: ConsoleFolding, val region: FoldRegion?, val startLine: Int, val expanded: Boolean, val attachedToPreviousLine: Boolean)
+
+  private fun reconstructFoldingInfo(document: Document, region: FoldRegion): FoldingInfo? {
+    val folding = findFoldingByRegion(region) ?: return null
+
+    val offset = region.startOffset
+    val line = document.getLineNumber(offset)
+    val attachedToPreviousLine = document.getLineStartOffset(line) != offset
+    val startLine = if (attachedToPreviousLine) line + 1 else line
+    val expanded = region.isExpanded
+    return FoldingInfo(folding, region, startLine, expanded, attachedToPreviousLine)
+  }
+
+  protected open fun updateFoldings(startLine: Int, endLine: Int ) {
     ThreadingAssertions.assertEventDispatchThread()
-    val editor = editor
-    editor!!.foldingModel.runBatchFoldingOperation {
+
+    val editor = editor!!
+    editor.foldingModel.runBatchFoldingOperation {
       val document = editor.document
-      var existingRegion: FoldRegion? = null
-      if (startLine > 0) {
-        val prevLineStart = document.getLineStartOffset(startLine - 1)
-        val regions = FoldingUtil.getFoldRegionsAtOffset(editor, prevLineStart)
-        if (regions.size == 1) {
-          existingRegion = regions[0]
-        }
-      }
-      var lastFolding = if (existingRegion == null) null else findFoldingByRegion(existingRegion)
-      var lastStartLine = Int.MAX_VALUE
-      if (lastFolding != null) {
-        val offset = existingRegion!!.startOffset
-        if (offset == 0) {
-          lastStartLine = 0
+
+      val lastFoldingInfos =
+        if (startLine > 0) {
+          val prevLineStart = document.getLineStartOffset(startLine - 1)
+          FoldingUtil.getFoldRegionsAtOffset(editor, prevLineStart)
+            .mapNotNull { reconstructFoldingInfo(document, it) }
+            .toMutableList()
         }
         else {
-          lastStartLine = document.getLineNumber(offset)
-          if (document.getLineStartOffset(lastStartLine) != offset) lastStartLine++
+          mutableListOf()
         }
-      }
 
       val extensions = ConsoleFolding.EP_NAME.extensionList.filter { it.isEnabledForConsole(this) }
       if (extensions.isEmpty()) return@runBatchFoldingOperation
+
+      val toRemove = mutableListOf<FoldRegion>()
+      val toAdd = mutableListOf<Pair<FoldingInfo, Int>>()
+
+      require(startLine <= endLine)
       for (line in startLine..endLine) {
-        /*
-            Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
-    
-            Multiple lines are grouped into one folding, but to know when you can create the folding,
-            you need a line which does not belong to that folding.
-            When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
-            (which basically does only one thing, gets a folding displayed).
-            We do not want to process that empty string, but also we do not want to wait for another line
-            which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
-            Thus, the condition: the last line(empty string) should still flush, but not be processed by
-            com.intellij.execution.ConsoleFolding.
-             */
-        val next = if (line < endLine) foldingForLine(extensions, line, document) else null
-        if (next !== lastFolding) {
-          if (lastFolding != null) {
-            var isExpanded = false
-            if (line > startLine && existingRegion != null && lastStartLine < startLine) {
-              isExpanded = existingRegion.isExpanded
-              editor.foldingModel.removeFoldRegion(existingRegion)
+        // Grep Console plugin allows folding empty lines. We need to handle this case in a special way.
+        //
+        // Multiple lines are grouped into one folding, but to know when you can create the folding,
+        // you need a line which does not belong to that folding.
+        // When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
+        // (which basically does only one thing, gets a folding displayed).
+        // We do not want to process that empty string, but also we do not want to wait for another line
+        // which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
+        // Thus, the condition: the last line(empty string) should still flush, but not be processed by
+        // com.intellij.execution.ConsoleFolding.
+        val nextFoldings = if (line < endLine) foldingsForLine(extensions, line, document) else emptyList()
+
+        val foldingsToProcess = (lastFoldingInfos.map { it.folding } + nextFoldings).distinct().sortedByDescending { it.nestingPriority }
+        var splitBelowPriority = Int.MIN_VALUE
+        for (f in foldingsToProcess) {
+          val existing: FoldingInfo? = lastFoldingInfos.find { it.folding === f }
+          val willExist: Boolean = nextFoldings.contains(f)
+          val isSplit = f.nestingPriority < splitBelowPriority
+          var shouldSplitOthers = false
+
+          if (existing != null && (!willExist || isSplit)) {
+            // region ends here
+            val existingRegion = existing.region
+            if (existingRegion != null) {
+              if (line == startLine) {
+                // old region remain as is, no changes needed
+              }
+              else {
+                // old region should be grown
+                toRemove += existingRegion
+                toAdd += existing to line
+              }
             }
-            addFoldRegion(document, lastFolding, lastStartLine, line - 1, isExpanded)
+            else {
+              // create a new region
+              toAdd += existing to line
+            }
+            lastFoldingInfos -= existing
+            shouldSplitOthers = true
           }
-          lastFolding = next
-          lastStartLine = line
-          existingRegion = null
+
+          if ((existing == null || isSplit) && willExist) {
+            // region starts here
+            // Note that we don't attach a folding to the previos line if there is
+            val attachedToPreviousLine = f.shouldBeAttachedToThePreviousLine() && !isSplit
+            lastFoldingInfos += FoldingInfo(f, region = null, line, expanded = false, attachedToPreviousLine)
+            shouldSplitOthers = true
+          }
+
+          if (shouldSplitOthers) {
+            splitBelowPriority = max(splitBelowPriority, f.nestingPriority)
+          }
         }
       }
+
+      assert(lastFoldingInfos.isEmpty())
+
+      // To correctly handle nested regions (i.e., prevent overlapping of new ones with old ones),
+      // we have to first delete all old regions and only then create new ones.
+      toRemove
+        .forEach { editor.foldingModel.removeFoldRegion(it) }
+      toAdd
+        .sortedByDescending { (f, _) -> f.folding.nestingPriority }
+        .forEach { (f, line) -> addFoldRegion(document, f.folding, f.startLine, line - 1, f.expanded, f.attachedToPreviousLine) }
     }
   }
 
-  private fun addFoldRegion(document: Document, folding: ConsoleFolding, startLine: Int, endLine: Int, isExpanded: Boolean) {
+  private fun addFoldRegion(document: Document, folding: ConsoleFolding, startLine: Int, endLine: Int, isExpanded: Boolean, shouldBeAttachedToPreviousLine: Boolean) {
     val toFold: MutableList<String> = ArrayList(endLine - startLine + 1)
     for (i in startLine..endLine) {
       toFold.add(EditorHyperlinkSupport.getLineText(document, i, false))
     }
 
     var oStart = document.getLineStartOffset(startLine)
-    if (oStart > 0 && folding.shouldBeAttachedToThePreviousLine()) oStart--
+    if (oStart > 0 && shouldBeAttachedToPreviousLine) oStart--
     val oEnd = CharArrayUtil.shiftBackward(document.immutableCharSequence, document.getLineEndOffset(endLine) - 1, " \t") + 1
 
     val placeholder = folding.getPlaceholderText(project, toFold)
@@ -1004,19 +1071,13 @@ open class ConsoleViewImpl protected constructor(
     return if (consoleFolding != null && consoleFolding.isEnabledForConsole(this)) consoleFolding else null
   }
 
-  private fun foldingForLine(extensions: List<ConsoleFolding>, line: Int, document: Document): ConsoleFolding? {
+  private fun foldingsForLine(extensions: List<ConsoleFolding>, line: Int, document: Document): List<ConsoleFolding> {
     val lineText = EditorHyperlinkSupport.getLineText(document, line, false)
     if (line == 0 && commandLineFolding.shouldFoldLine(project, lineText)) {
-      return commandLineFolding
+      return listOf(commandLineFolding)
     }
 
-    for (extension in extensions) {
-      if (extension.shouldFoldLine(project, lineText)) {
-        return extension
-      }
-    }
-
-    return null
+    return extensions.filter { it.shouldFoldLine(project, lineText) }
   }
 
   private class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
@@ -1310,8 +1371,7 @@ open class ConsoleViewImpl protected constructor(
 
     val oldDocLength = document.textLength
     document.insertString(offset, text)
-    val newStartOffset = max(0.0,
-                             (document.textLength - oldDocLength + offset - text.length).toDouble()).toInt() // take care of trim document
+    val newStartOffset = max(0, document.textLength - oldDocLength + offset - text.length) // take care of trim document
     val newEndOffset = document.textLength - oldDocLength + offset // take care of trim document
 
     if (ConsoleTokenUtil.findTokenMarker(this.editor!!, project, newEndOffset) == null) {
@@ -1434,7 +1494,7 @@ open class ConsoleViewImpl protected constructor(
   private val FLUSH = FlushRunnable(false)
 
   private inner class ClearRunnable : FlushRunnable(false) {
-    public override fun doRun() {
+    override fun doRun() {
       doClear()
     }
   }
@@ -1475,7 +1535,7 @@ open class ConsoleViewImpl protected constructor(
     })
     @Suppress("LeakingThis")
     ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { `__`: EditorColorsScheme? ->
+      .subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { _: EditorColorsScheme? ->
         ThreadingAssertions.assertEventDispatchThread()
         if (isDisposed) {
           return@EditorColorsListener

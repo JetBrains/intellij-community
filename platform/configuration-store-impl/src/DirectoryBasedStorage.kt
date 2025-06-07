@@ -9,7 +9,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -244,7 +243,9 @@ open class DirectoryBasedStorage(
 
     override fun createSaveSession(): SaveSession? = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
-    override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events = events) }
+    override suspend fun save(events: MutableList<VFileEvent>?) {
+      doSave(useVfs = false, events = events)
+    }
 
     override fun saveBlocking() = doSave(useVfs = true, events = null)
 

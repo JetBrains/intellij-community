@@ -26,9 +26,8 @@ public class RestParserDefinition implements ParserDefinition, RestTokenTypes {
 
   private final RestASTFactory astFactory = new RestASTFactory();
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new RestFlexLexer();
   }
 
@@ -42,27 +41,23 @@ public class RestParserDefinition implements ParserDefinition, RestTokenTypes {
     return FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return astFactory.create(node);
   }
 

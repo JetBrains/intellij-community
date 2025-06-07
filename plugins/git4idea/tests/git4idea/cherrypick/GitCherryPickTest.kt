@@ -17,7 +17,6 @@ package git4idea.cherrypick
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.util.ui.Html
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.i18n.GitBundle

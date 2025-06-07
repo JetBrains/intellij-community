@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 
-private val EMPTY_MAP = HashMap<String, MutableList<ListenerDescriptor>>()
+private val EMPTY_MAP = HashMap<String, MutableList<PluginListenerDescriptor>>()
 
 @Suppress("ReplaceGetOrSet")
 @VisibleForTesting
@@ -31,7 +31,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   private val childBuses = ContainerUtil.createLockFreeCopyOnWriteList<MessageBusImpl>()
 
   @Volatile
-  private var topicClassToListenerDescriptor: MutableMap<String, MutableList<ListenerDescriptor>> = EMPTY_MAP
+  private var topicClassToListenerDescriptor: MutableMap<String, MutableList<PluginListenerDescriptor>> = EMPTY_MAP
 
   constructor(owner: MessageBusOwner, parentBus: CompositeMessageBus) : super(owner, parentBus)
 
@@ -41,7 +41,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   /**
    * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
    */
-  final override fun setLazyListeners(map: ConcurrentMap<String, MutableList<ListenerDescriptor>>) {
+  final override fun setLazyListeners(map: ConcurrentMap<String, MutableList<PluginListenerDescriptor>>) {
     val topicClassToListenerDescriptor = topicClassToListenerDescriptor
     if (topicClassToListenerDescriptor === EMPTY_MAP) {
       this.topicClassToListenerDescriptor = map

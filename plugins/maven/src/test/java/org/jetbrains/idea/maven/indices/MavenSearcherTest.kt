@@ -21,9 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.junit.Ignore
 import org.junit.Test
-import java.util.*
 
 class MavenSearcherTest : MavenIndicesTestCase() {
   private val JUNIT_VERSIONS = arrayOf("junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1")
@@ -39,7 +37,7 @@ class MavenSearcherTest : MavenIndicesTestCase() {
     super.setUp()
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
-        myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+        myIndicesFixture = MavenIndicesTestFixture(dir, project, testRootDisposable)
         myIndicesFixture.setUp()
       }
     }

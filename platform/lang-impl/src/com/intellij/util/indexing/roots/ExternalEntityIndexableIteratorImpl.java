@@ -8,21 +8,18 @@ import com.intellij.util.indexing.roots.origin.ExternalEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderIteratorBase {
 
   public ExternalEntityIndexableIteratorImpl(@NotNull EntityPointer<?> entityPointer,
-                                             @NotNull IndexingSourceRootHolder roots,
-                                             @Nullable IndexableIteratorPresentation presentation) {
-    super(entityPointer, roots, presentation != null
-                                  ? presentation
-                                  : IndexableIteratorPresentation.create("External roots from entity (" + roots.getRootsDebugStr() + ")",
-                                                                         IndexingBundle.message(
-                                                                           "indexable.files.provider.indexing.additional.dependencies"),
-                                                                         IndexingBundle.message(
-                                                                           "indexable.files.provider.scanning.additional.dependencies")));
+                                             @NotNull IndexingSourceRootHolder roots) {
+    super(entityPointer, roots, IndexableIteratorPresentation.create(
+      "External roots from entity (" + roots.getRootsDebugStr() + ")",
+      IndexingBundle.message(
+        "indexable.files.provider.indexing.additional.dependencies"),
+      IndexingBundle.message(
+        "indexable.files.provider.scanning.additional.dependencies")));
   }
 
   @Override

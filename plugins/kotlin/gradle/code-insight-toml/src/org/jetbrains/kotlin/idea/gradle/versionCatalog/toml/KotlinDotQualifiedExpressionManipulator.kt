@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
  * @see [org.jetbrains.plugins.groovy.lang.resolve.GroovyMacroManipulator]
  * @see [com.android.tools.idea.gradle.navigation.KotlinRefManipulator]
  */
-class KotlinDotQualifiedExpressionManipulator : AbstractElementManipulator<KtDotQualifiedExpression>() {
+private class KotlinDotQualifiedExpressionManipulator : AbstractElementManipulator<KtDotQualifiedExpression>() {
     override fun handleContentChange(element: KtDotQualifiedExpression, range: TextRange, newContent: String?): KtDotQualifiedExpression? {
         return null
     }

@@ -1,27 +1,28 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.project` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "project_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "project",
   module_name = "intellij.platform.project",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/kernel/shared:kernel",
-    "@community//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/kernel/shared:kernel",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "//platform/platform-impl/rpc",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":project_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.project` end

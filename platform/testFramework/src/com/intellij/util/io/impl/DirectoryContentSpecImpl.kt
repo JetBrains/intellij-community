@@ -6,19 +6,19 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.io.*
-import org.junit.Assert.assertEquals
 import org.junit.ComparisonFailure
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.jar.JarFile
 import java.util.jar.Manifest
 import java.util.zip.Deflater
-import kotlin.io.path.*
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 import kotlin.io.path.readBytes
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
@@ -38,7 +38,9 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
     if (name in children) {
       val existing = children[name]
       if (spec is DirectorySpecBase && existing is DirectorySpecBase) {
-        existing.children += spec.children
+        for (child in spec.children) {
+          existing.addChild(child.key, child.value)
+        }
         return
       }
       throw IllegalArgumentException("'$name' already exists")
@@ -46,16 +48,16 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
     children[name] = spec
   }
 
-  protected fun generateInDirectory(target: File) {
+  protected fun generateInDirectory(target: Path) {
     for ((name, child) in children) {
-      child.generate(File(target, name))
+      child.generate(path = target.resolve(name))
     }
   }
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempDirectory("directory-by-spec", null, true)
+    val target = FileUtil.createTempDirectory("directory-by-spec", null, true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 
   fun getChildren() : Map<String, DirectoryContentSpecImpl> = Collections.unmodifiableMap(children)
@@ -78,44 +80,42 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
 }
 
 class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile) {
-  override fun generate(target: File) {
-    if (!FileUtil.createDirectory(target)) {
-      throw IOException("Cannot create directory $target")
-    }
-    generateInDirectory(target)
+  override fun generate(path: Path) {
+    path.createDirectories()
+    generateInDirectory(path)
   }
 }
 
 sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null) {
-  override fun generate(target: File) {
+  override fun generate(path: Path) {
     val contentDir = FileUtil.createTempDirectory("$extension-content", null, false)
     try {
-      generateInDirectory(contentDir)
-      FileUtil.createParentDirs(target)
-      compress(contentDir, target)
+      generateInDirectory(contentDir.toPath())
+      path.createParentDirectories()
+      compress(contentDir, path)
     }
     finally {
       FileUtil.delete(contentDir)
     }
   }
 
-  abstract fun compress(contentDir: File, target: File)
+  abstract fun compress(contentDir: File, target: Path)
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true)
+    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 }
 
 class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : ZipSpecBase("zip") {
-  override fun compress(contentDir: File, target: File) {
+  override fun compress(contentDir: File, target: Path) {
     Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
   }
 }
 
 class JarSpec : ZipSpecBase("jar") {
-  override fun compress(contentDir: File, target: File) {
+  override fun compress(contentDir: File, target: Path) {
     Compressor.Jar(target).use {
       val manifestFile = File(contentDir, JarFile.MANIFEST_NAME)
       if (manifestFile.exists()) {
@@ -129,14 +129,14 @@ class JarSpec : ZipSpecBase("jar") {
 }
 
 class FileSpec(val content: ByteArray?, override val originalFile: Path? = null) : DirectoryContentSpecImpl() {
-  override fun generate(target: File) {
-    FileUtil.writeToFile(target, content ?: ByteArray(0))
+  override fun generate(path: Path) {
+    path.write(content ?: ByteArray(0))
   }
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("file-by-spec", null, true)
+    val target = FileUtil.createTempFile("file-by-spec", null, true).toPath()
     generate(target)
-    return target.toPath()
+    return target
   }
 
   override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl {
@@ -185,16 +185,19 @@ internal fun assertContentUnderFileMatches(file: Path,
                                            filePathFilter: (String) -> Boolean,
                                            customErrorReporter: ContentMismatchReporter?,
                                            expectedDataIsInSpec: Boolean) {
+  val errorReporter = customErrorReporter ?: ContentMismatchReporter { _, error -> throw error }
   if (spec is DirectorySpecBase) {
     val actualSpec = createSpecByPath(file, file)
     if (actualSpec is DirectorySpecBase) {
       val specString = spec.toString(filePathFilter)
       val dirString = actualSpec.toString(filePathFilter)
       val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
-      assertEquals(expected, actual)
+      if (actual != expected) {
+        val message = "Expected equal strings: expected <$expected>, but got: <${actual}>"
+        errorReporter.reportError(".", FileComparisonFailedError(message, expected, actual))
+      }
     }
   }
-  val errorReporter = customErrorReporter ?: ContentMismatchReporter { _, error -> throw error }
   assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
 }
 
@@ -237,7 +240,7 @@ private fun assertDirectoryContentMatches(file: Path,
               val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
               val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
               val message = if (StringUtil.convertLineSeparators(fileString) != StringUtil.convertLineSeparators(specString)) {
-                "File content mismatch$place:"
+                "File content mismatch$place: expected:\n $fileString\n but was\n$specString"
               }
               else {
                 "Different line separators$place, expected ${StringUtil.detectSeparators(specString)}, but ${StringUtil.detectSeparators(fileString)} found:"

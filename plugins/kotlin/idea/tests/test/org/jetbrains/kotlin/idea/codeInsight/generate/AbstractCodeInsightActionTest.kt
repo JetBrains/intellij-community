@@ -15,7 +15,10 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -38,9 +41,9 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
 
     protected open fun testAction(action: AnAction): Presentation {
         val e = TestActionEvent.createTestEvent(action)
-        ActionUtil.performDumbAwareUpdate(action, e, false)
+        ActionUtil.updateAction(action, e)
         if (e.presentation.isEnabled) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, e)
+            ActionUtil.performAction(action, e)
         }
         return e.presentation
     }

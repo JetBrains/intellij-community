@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -139,7 +140,8 @@ public class CompletionVariant {
     return false;
   }
 
-  boolean hasKeywordCompletions(){
+  @ApiStatus.Internal
+  public boolean hasKeywordCompletions(){
     for (final CompletionVariantItem item : myCompletionsList) {
       if (!(item.completion() instanceof ElementFilter)) {
         return true;
@@ -148,13 +150,13 @@ public class CompletionVariant {
     return false;
   }
 
-
   private record Scope(Class<?> aClass, boolean isFinalScope) {
   }
 
   private record CompletionVariantItem(Object completion, TailType tailtype){
   }
 
+  @Override
   public String toString(){
     return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
   }

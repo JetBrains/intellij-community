@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -174,7 +174,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    for (PsiReference psiReference : ReferencesSearch.search(psiParameter)) {
+    for (PsiReference psiReference : ReferencesSearch.search(psiParameter).asIterable()) {
       final PsiElement element = psiReference.getElement();
       if (element instanceof PsiExpression exp && PsiUtil.isAccessedForWriting(exp)) {
         CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.parameter.write.usages.warning.message"),
@@ -209,8 +209,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     }, getRefactoringName(), null);
   }
 
-  @Nullable
-  private static PsiField getReferencedFinalField(PsiExpression argument) {
+  private static @Nullable PsiField getReferencedFinalField(PsiExpression argument) {
     if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField field) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) {
@@ -252,8 +251,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     return value1 != null && value1.equals(value2);
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getCannotInlineMessage(PsiParameter psiParameter, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getCannotInlineMessage(PsiParameter psiParameter, PsiMethod method) {
     if (psiParameter.isVarArgs()) {
       return JavaRefactoringBundle.message("inline.parameter.error.varargs");
     }

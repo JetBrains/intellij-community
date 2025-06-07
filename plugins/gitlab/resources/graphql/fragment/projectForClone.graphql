@@ -1,5 +1,0 @@
-fragment projectForClone on Project {
-  nameWithNamespace
-  fullPath
-  httpUrlToRepo
-}

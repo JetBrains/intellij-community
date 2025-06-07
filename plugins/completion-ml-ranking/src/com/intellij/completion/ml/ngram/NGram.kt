@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.tree.LazyParseableElement
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
@@ -66,7 +67,7 @@ object NGram {
     return modelRunner?.let { runner -> Scorer(NGRAM_RECENT_FILES_SCORER_NAME, { runner.score(it) }, prefix) }
   }
 
-  internal fun isSupported(language: Language): Boolean = language.id.toLowerCase() in SUPPORTED_LANGUAGES ||
+  internal fun isSupported(language: Language): Boolean = language.id.lowercase(Locale.getDefault()) in SUPPORTED_LANGUAGES ||
                                                           CompletionFeaturesPolicy.useNgramModel(language)
 
   fun getNGramPrefix(parameters: CompletionParameters, order: Int): Array<String> {

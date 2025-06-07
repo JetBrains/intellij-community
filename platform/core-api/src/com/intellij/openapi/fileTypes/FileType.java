@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +15,7 @@ import javax.swing.*;
  * <p>Describes a filetype.</p>
  *
  * <p>Must be registered via {@code com.intellij.fileType} extension point.
- * If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
+ * If file type depends on a given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
  * can be used for non-static mapping.</p>
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
@@ -25,14 +25,17 @@ import javax.swing.*;
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
  */
-public interface FileType extends Scheme {
+public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
 
   /**
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
    */
-  @Override
   @NonNls @NotNull String getName();
+
+  default @NotNull @Nls String getDisplayName() {
+    return getName(); //NON-NLS
+  }
 
   /**
    * Returns the user-readable description of the file type.
@@ -47,7 +50,7 @@ public interface FileType extends Scheme {
   /**
    * Returns the icon used for showing files of the type, or {@code null} if no icon should be shown.
    */
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Returns {@code true} if files of the specified type contain binary data, {@code false} if the file is plain text.
@@ -72,9 +75,6 @@ public interface FileType extends Scheme {
    */
   default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
-    // if (isBinary()) {
-    //   throw new UnsupportedOperationException();
-    // }
     return null;
   }
 }

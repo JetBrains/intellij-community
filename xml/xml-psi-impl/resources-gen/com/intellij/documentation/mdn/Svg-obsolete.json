@@ -1,0 +1,717 @@
+{
+  "license": {
+    "name": "CC-BY-SA 2.5",
+    "url": "https://creativecommons.org/licenses/by-sa/2.5/"
+  },
+  "author": {
+    "name": "Mozilla Contributors",
+    "url": "https://github.com/mdn/content"
+  },
+  "lang": "en-us",
+  "attrs": {
+    "color-profile": {
+      "url": "$MDN_URL$/web/svg/attribute/color-profile",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>color-profile</code></strong> attribute is used to define which color profile a raster image included through the <a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a> element should use.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute, <code>color-profile</code> can be used as a CSS property.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n</ul>"
+    },
+    "data-_star_": {
+      "url": "$MDN_URL$/web/svg/attribute/data-_star_",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "55",
+        "ChromeAndroid": "55",
+        "Edge": "79",
+        "Firefox": "51",
+        "Opera": "42",
+        "Safari": "10",
+        "SafariIOS": "10"
+      },
+      "doc": "The <strong><code>data-*</code></strong> SVG attributes are called custom data attributes. They let SVG markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/REC-xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>SVGElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a> format.\n</div>\n<p>You can use this attribute with any SVG element."
+    },
+    "enable-background": {
+      "url": "$MDN_URL$/web/svg/attribute/enable-background",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>enable-background</code></strong> attribute specifies how the accumulation of the background image is managed.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute, <code>enable-background</code> can be used as a CSS property.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/defs\"><code>&lt;defs&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/g\"><code>&lt;g&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/marker\"><code>&lt;marker&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/missing-glyph\"><code>&lt;missing-glyph&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/switch\"><code>&lt;switch&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n</ul>"
+    },
+    "fill": {
+      "url": "$MDN_URL$/web/svg/attribute/fill",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Firefox": "3"
+      },
+      "doc": "The <strong><code>fill</code></strong> attribute has two different meanings. For shapes and text it's a presentation attribute that defines the color (<em>or any SVG paint servers like gradients or patterns</em>) used to paint the element; for animation it defines the final state of the animation.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/circle\"><code>&lt;circle&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/ellipse\"><code>&lt;ellipse&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>\n<p>For animation, these elements are using this attribute: <a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a>, <a href=\"$MDN_URL$/Web/SVG/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a>, and <a href=\"$MDN_URL$/Web/SVG/Element/set\"><code>&lt;set&gt;</code></a>."
+    },
+    "href": {
+      "url": "$MDN_URL$/web/svg/attribute/href",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "50",
+        "ChromeAndroid": "50",
+        "Edge": "",
+        "Firefox": "51",
+        "Opera": "37",
+        "Safari": "12.1",
+        "SafariIOS": "12.2"
+      },
+      "doc": "The <strong><code>href</code></strong> attribute defines a link to a resource as a reference <a href=\"$MDN_URL$/Web/SVG/Content_type#url\">URL</a>. The exact meaning of that link depends on the context of each element using it.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Specifications before SVG 2 defined an <code><a href=\"$MDN_URL$/Web/SVG/Attribute/xlink:href\">xlink:href</a></code> attribute, which is now rendered obsolete by the <code>href</code> attribute. If you need to support earlier browser versions, the deprecated <code>xlink:href</code> attribute can be used as a fallback in addition to the <code>href</code> attribute, e.g. <code>&lt;use href=\"some-id\" xlink:href=\"some-id\" x=\"5\" y=\"5\" /&gt;</code>.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/a\"><code>&lt;a&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animateMotion\"><code>&lt;animateMotion&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/animateTransform\"><code>&lt;animateTransform&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/linearGradient\"><code>&lt;linearGradient&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mpath\"><code>&lt;mpath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/radialGradient\"><code>&lt;radialGradient&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/script\"><code>&lt;script&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/set\"><code>&lt;set&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+    },
+    "kerning": {
+      "url": "$MDN_URL$/web/svg/attribute/kerning",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>kerning</code></strong> attribute indicates whether the spacing between <a href=\"$MDN_URL$/Glossary/Glyph\">glyphs</a> should be adjusted based on kerning tables that are included in the relevant font (i.e., enable auto-kerning) or instead disable auto-kerning and set the spacing between them to a specific length (typically, zero).\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> As a presentation attribute <code>kerning</code> can be used as a CSS property. In CSS the property is called <a href=\"$MDN_URL$/Web/CSS/font-kerning\"><code>font-kerning</code></a>, though.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
+    },
+    "textlength": {
+      "url": "$MDN_URL$/web/svg/attribute/textlength",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The <strong><code>textLength</code></strong> attribute, available on SVG <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> and <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a> elements, lets you specify the width of the space into which the text will draw. The <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> will ensure that the text does not extend farther than that distance, using the method or methods specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/lengthAdjust\">lengthAdjust</a></code> attribute. By default, only the spacing between characters is adjusted, but the glyph size can also be adjusted if you change <code>lengthAdjust</code>.\n<p>By using <code>textLength</code>, you can ensure that your SVG text displays at the same width regardless of conditions including web fonts failing to load (or not having loaded yet).\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
+    }
+  },
+  "tags": {
+    "altglyph": {
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "18",
+        "Opera": "10.6",
+        "Safari": "4",
+        "SafariIOS": "4"
+      },
+      "doc": "The <strong><code>&lt;altGlyph&gt;</code></strong> SVG element allows sophisticated selection of the glyphs used to render its child character data.</p>",
+      "attrs": {
+        "dx": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "This attribute indicates a shift along the x-axis on the position of the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Relative x-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
+        },
+        "dy": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "This attribute indicates a shift along the x-axis on the position of the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Relative y-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
+        },
+        "format": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The format of the given font.\n<br>\n<small><em>Value type</em>: <strong>&lt;string</strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong></small>"
+        },
+        "glyphref": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "rotate": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "This attribute defines the supplemental rotation that will be applied to the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-numbers&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes (non-additive)</strong></small>"
+        },
+        "x": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "This attribute defines the corresponding absolute x-coordinates for rendering the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Absolute x-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
+        },
+        "xlink:href": {
+          "doc": "An\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;iri&gt;</a>\nreference either to a\n<a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a>\nelement in an SVG document or to an\n<a href=\"$MDN_URL$/Web/SVG/Element/altGlyphDef\"><code>&lt;altGlyphDef&gt;</code></a>\nelement.\n<br>\n<br>\nIf the reference is to a\n<a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a>\nelement and that glyph is available, then that glyph is rendered instead of the character(s) that are inside of the\n<a href=\"$MDN_URL$/Web/SVG/Element/altGlyph\" aria-current=\"page\"><code>&lt;altGlyph&gt;</code></a>\nelement.\n<br>\n<br>\nIf the reference is to an\n<a href=\"$MDN_URL$/Web/SVG/Element/altGlyphDef\"><code>&lt;altGlyphDef&gt;</code></a>\nelement, then if an appropriate set of alternate glyphs is located from processing the\n<a href=\"$MDN_URL$/Web/SVG/Element/altGlyphDef\"><code>&lt;altGlyphDef&gt;</code></a>\nelement, then those alternate glyphs are rendered instead of the character(s) that are inside of the\n<a href=\"$MDN_URL$/Web/SVG/Element/altGlyph\" aria-current=\"page\"><code>&lt;altGlyph&gt;</code></a>\nelement.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;iri</strong></a><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong></small>"
+        },
+        "y": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "This attribute defines the corresponding absolute y-coordinates for rendering the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Absolute y-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
+        }
+      }
+    },
+    "altglyphdef": {
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>&lt;altGlyphDef&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element defines a substitution representation for glyphs.</p>"
+    },
+    "altglyphitem": {
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>&lt;altGlyphItem&gt;</code></strong> element provides a set of candidates for glyph substitution by the <a href=\"$MDN_URL$/Web/SVG/Element/altGlyph\"><code>&lt;altGlyph&gt;</code></a> element.</p>"
+    },
+    "animatecolor": {
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div></div>\n<div class=\"warning notecard\">\n<p>This element has been deprecated in SVG 1.1 Second Edition and may be removed in a future version of SVG. It provides no features not already available by using the <a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a> element. So, authors should use the <code>&lt;animate&gt;</code> element instead.</p>\n</div>\n<p>The <strong><code>&lt;animateColor&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element specifies a color transformation over time.</p>",
+      "attrs": {
+        "by": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "from": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "to": {
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        }
+      }
+    },
+    "cursor": {
+      "url": "$MDN_URL$/web/svg/element/cursor",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> The CSS <a href=\"$MDN_URL$/Web/CSS/cursor\"><code>cursor</code></a> property should be used instead of this element.\n</div>\n<p>The <strong><code>&lt;cursor&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element can be used to define a platform-independent custom cursor. A recommended approach for defining a platform-independent custom cursor is to create a PNG image and define a <code>cursor</code> element that references the PNG image and identifies the exact position within the image which is the pointer position (i.e., the hot spot).\n<p>The PNG format is recommended because it supports the ability to define a transparency mask via an alpha channel. If a different image format is used, this format should support the definition of a transparency mask (two options: provide an explicit alpha channel or use a particular pixel color to indicate transparency). If the transparency mask can be determined, the mask defines the shape of the cursor; otherwise, the cursor is an opaque rectangle. Typically, the other pixel information (e.g., the R, G and B channels) defines the colors for those parts of the cursor which are not masked out. Note that cursors usually contain at least two colors so that the cursor can be visible over most backgrounds.",
+      "attrs": {
+        "href": {
+          "url": "$MDN_URL$/web/svg/element/cursor#href",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "x": {
+          "url": "$MDN_URL$/web/svg/attribute/x",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>x</code></strong> attribute defines an x-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+        },
+        "y": {
+          "url": "$MDN_URL$/web/svg/attribute/y",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>y</code></strong> attribute defines a y-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "filter": {
+      "doc": "",
+      "attrs": {
+        "filterres": {
+          "url": "$MDN_URL$/web/svg/attribute/filterres",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "5",
+            "ChromeAndroid": "",
+            "Edge": "79",
+            "Firefox": "3",
+            "Opera": "15",
+            "Safari": "6",
+            "SafariIOS": "6"
+          },
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>filterRes</code></strong> attribute indicates the width and height of the intermediate images in pixels of a filter primitive.\n<p>Take care when assigning a non-default value to this attribute. Too small of a value may result in unwanted pixelation in the result. Too large of a value may result in slow processing and large memory usage.\n<p>Note that negative values or zero values disable the rendering of the element which referenced the filter.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "font": {
+      "url": "$MDN_URL$/web/svg/element/font",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element defines a font to be used for text layout."
+    },
+    "font-face": {
+      "url": "$MDN_URL$/web/svg/element/font-face",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font-face&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element corresponds to the CSS <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rule. It defines a font's outer properties.",
+      "attrs": {
+        "alphabetic": {
+          "url": "$MDN_URL$/web/svg/attribute/alphabetic",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>alphabetic</code></strong> attribute defines the lower baseline of a font. It has the same syntax and semantics as the <a class=\"page-not-created\"  ><code>baseline</code></a> descriptor within an <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a>.\n<p>For horizontally oriented glyph layouts, it indicates the alignment coordinate for glyphs to achieve alphabetic baseline alignment. The value is an offset in the font coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "ascent": {
+          "url": "$MDN_URL$/web/svg/attribute/ascent",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>ascent</code></strong> attribute defines the maximum unaccented height of the font within the font coordinate system.\n<p>If the attribute is not specified, the effect is as if the attribute were set to the difference between the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/units-per-em\">units-per-em</a></code> value and the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/vert-origin-y\">vert-origin-y</a></code> value for the corresponding font.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "bbox": {
+          "url": "$MDN_URL$/web/svg/attribute/bbox",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>bbox</code></strong> attribute defines the maximal bounding box of a font.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "descent": {
+          "url": "$MDN_URL$/web/svg/attribute/descent",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>descent</code></strong> attribute defines the maximum unaccented depth of the font.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> It was specified to share the syntax and semantics of the obsolete <code>descent</code> descriptor of the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> at-rule defined in an early version of CSS 2.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "hanging": {
+          "url": "$MDN_URL$/web/svg/attribute/hanging",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>hanging</code></strong> attribute indicates the alignment coordinate for <a href=\"$MDN_URL$/Glossary/Glyph\">glyphs</a> to achieve hanging baseline alignment for horizontally oriented glyph layouts. The value is an offset in the font coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "ideographic": {
+          "url": "$MDN_URL$/web/svg/attribute/ideographic",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>ideographic</code></strong> attribute indicates the alignment coordinate for <a class=\"page-not-created\"  >glyphs</a> to achieve ideographic <a href=\"$MDN_URL$/Glossary/Baseline/Typography\">baseline</a> alignment for horizontally oriented glyph layouts. The value is an offset in the font coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "mathematical": {
+          "url": "$MDN_URL$/web/svg/attribute/mathematical",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathematical</code></strong> attribute indicates the alignment coordinate for <a href=\"$MDN_URL$/Glossary/Glyph\">glyphs</a> to achieve mathematical baseline alignment for horizontally oriented glyph layouts. The value is an offset in the font coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "slope": {
+          "url": "$MDN_URL$/web/svg/attribute/slope",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>slope</code></strong> attribute indicates the vertical stroke angle of a font.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "stemh": {
+          "url": "$MDN_URL$/web/svg/attribute/stemh",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>stemh</code></strong> attribute indicates the horizontal stem width of the font.\n<p>The stem width refers to the dominant stem of the font. There may be two or more designed widths. For example, the main vertical stems of Roman characters will differ from the thin stems on serifed \"M\" and \"N\", plus there may be different widths for uppercase and lowercase characters in the same font. Also, either by design or by error, all stems may have slightly different widths.\n<p>If this attribute is used, the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/units-per-em\">units-per-em</a></code> must also be used.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "stemv": {
+          "url": "$MDN_URL$/web/svg/attribute/stemv",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>stemv</code></strong> attribute indicates the vertical stem width of the font.\n<p>The vertical stem width is the width of vertical (or near-vertical) stems of <a class=\"page-not-created\"  >glyphs</a>. This information is often tied to hinting, and may not be directly accessible in some font formats. The measurement is meant for the dominant vertical stem in the font because there might be different groupings of vertical stems (e.g., one main one, and one lighter weight one as for an uppercase \"M\" or \"N\").\n<p>If this attribute is used, the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/units-per-em\">units-per-em</a></code> must also be used.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        },
+        "widths": {
+          "url": "$MDN_URL$/web/svg/attribute/widths",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>widths</code></strong> attribute indicates a list of range values, each followed by one or more <a href=\"$MDN_URL$/Glossary/Glyph\">glyph</a> widths.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face\"><code>&lt;font-face&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "font-face-format": {
+      "url": "$MDN_URL$/web/svg/element/font-face-format",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font-face-format&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element describes the type of font referenced by its parent <a href=\"$MDN_URL$/Web/SVG/Element/font-face-uri\"><code>&lt;font-face-uri&gt;</code></a>.",
+      "attrs": {
+        "string": {
+          "url": "$MDN_URL$/web/svg/attribute/string",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>string</code></strong> attribute is a hint to the user agent, and specifies a list of formats that the font referenced by the parent <a href=\"$MDN_URL$/Web/SVG/Element/font-face-uri\"><code>&lt;font-face-uri&gt;</code></a> element supports.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face-format\"><code>&lt;font-face-format&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "font-face-name": {
+      "url": "$MDN_URL$/web/svg/element/font-face-name",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font-face-name&gt;</code></strong> element points to a locally installed copy of this font, identified by its name.",
+      "attrs": {
+        "name": {
+          "url": "$MDN_URL$/web/svg/attribute/name",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>name</code></strong> attribute specifies either the name of a color profile or a font face.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/font-face-name\"><code>&lt;font-face-name&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "font-face-src": {
+      "url": "$MDN_URL$/web/svg/element/font-face-src",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font-face-src&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element corresponds to the <a href=\"$MDN_URL$/Web/CSS/@font-face/src\"><code>src</code></a> descriptor in CSS <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> rules. It serves as container for <a href=\"$MDN_URL$/Web/SVG/Element/font-face-name\"><code>&lt;font-face-name&gt;</code></a>, pointing to locally installed copies of this font, and <a href=\"$MDN_URL$/Web/SVG/Element/font-face-uri\"><code>&lt;font-face-uri&gt;</code></a>, utilizing remotely defined fonts."
+    },
+    "font-face-uri": {
+      "url": "$MDN_URL$/web/svg/element/font-face-uri",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;font-face-uri&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element points to a remote definition of the current font."
+    },
+    "glyph": {
+      "url": "$MDN_URL$/web/svg/element/glyph",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>A <strong><code>&lt;glyph&gt;</code></strong> defines a single glyph in an SVG font.",
+      "attrs": {
+        "d": {
+          "url": "$MDN_URL$/web/svg/attribute/d",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "1.5",
+            "Opera": "8",
+            "Safari": "3",
+            "SafariIOS": "3"
+          },
+          "doc": "The <strong><code>d</code></strong> attribute defines a path to be drawn.\n<p>A path definition is a list of <a href=\"#path_commands\">path commands</a> where each command is composed of a command letter and numbers that represent the command parameters.\nThe commands are <a href=\"#path_commands\">detailed below</a>.\n<p>You can use this attribute with the following SVG elements: <a href=\"#path\"><code>&lt;path&gt;</code></a>, <a href=\"#glyph\"><code>&lt;glyph&gt;</code></a>, <a href=\"#missing-glyph\"><code>&lt;missing-glyph&gt;</code></a>.\n<p><code>d</code> is a <a href=\"$MDN_URL$/Web/SVG/Attribute/Presentation\">presentation attribute</a>, and hence can also be <a href=\"#using_d_as_a_css_property\">used as a CSS property</a>."
+        },
+        "lang": {
+          "url": "$MDN_URL$/web/svg/element/glyph#lang",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "orientation": {
+          "url": "$MDN_URL$/web/svg/attribute/orientation",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>orientation</code></strong> attribute indicates that the given <a href=\"$MDN_URL$/Glossary/Glyph\">glyph</a> is only to be used for a particular text direction, i.e. horizontal or vertical.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a></li>\n</ul>"
+        },
+        "unicode": {
+          "url": "$MDN_URL$/web/svg/attribute/unicode",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>unicode</code></strong> attribute specifies one or more <a href=\"$MDN_URL$/Glossary/Unicode\">Unicode</a> characters indicating the sequence of Unicode characters which corresponds to a <a href=\"$MDN_URL$/Glossary/Glyph\">glyph</a>.\n<p>If a character is provided, then this glyph corresponds to the given Unicode character. If multiple characters are provided, then this glyph corresponds to the given sequence of Unicode characters. One use of a sequence of characters is ligatures. For example, if <code>unicode=\"ffl\"</code>, then the given glyph will be used to render the sequence of characters \"f\", \"f\", and \"l\".\n<p>It is often useful to refer to characters using XML character references expressed in hexadecimal notation or decimal notation. For example, <code>unicode=\"ffl\"</code> could be expressed as XML character references in hexadecimal notation as <code>unicode=\"&amp;#x66;&amp;#x66;&amp;#x6c;\"</code> or in decimal notation as <code>unicode=\"&amp;#102;&amp;#102;&amp;#108;\"</code>.\n<p>The <code>unicode</code> attribute contributes to the process for deciding which glyph(s) are used to represent which character(s).\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "glyphref": {
+      "url": "$MDN_URL$/web/svg/element/glyphref",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <code>glyphRef</code> element provides a single possible glyph to the referencing <code>&lt;altGlyph&gt;</code> substitution.",
+      "attrs": {
+        "dx": {
+          "url": "$MDN_URL$/web/svg/attribute/dx",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>dx</code></strong> attribute indicates a shift along the x-axis on the position of an element or its content.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
+        },
+        "dy": {
+          "url": "$MDN_URL$/web/svg/attribute/dy",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>dy</code></strong> attribute indicates a shift along the y-axis on the position of an element or its content.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
+        },
+        "format": {
+          "url": "$MDN_URL$/web/svg/element/glyphref#format",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "glyphref": {
+          "url": "$MDN_URL$/web/svg/element/glyphref#glyphref",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
+        },
+        "x": {
+          "url": "$MDN_URL$/web/svg/attribute/x",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>x</code></strong> attribute defines an x-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+        },
+        "y": {
+          "url": "$MDN_URL$/web/svg/attribute/y",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The <strong><code>y</code></strong> attribute defines a y-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "hkern": {
+      "url": "$MDN_URL$/web/svg/element/hkern",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;hkern&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element allows to fine-tweak the horizontal distance between two glyphs. This process is known as <a href=\"https://en.wikipedia.org/wiki/Kerning\" class=\"external\" target=\"_blank\">kerning</a>.",
+      "attrs": {
+        "g1": {
+          "url": "$MDN_URL$/web/svg/attribute/g1",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>g1</code></strong> attribute specifies a list of glyph names which identify a set of possible first glyphs in the kerning pair.\n<p>All glyphs with the given glyph name are included in the set. The total set of possible first glyphs in the kerning pair is the union of glyphs specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/u1\">u1</a></code> and <code>g1</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "g2": {
+          "url": "$MDN_URL$/web/svg/attribute/g2",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>g2</code></strong> attribute specifies a list of glyph names which identify a set of possible second glyphs in the kerning pair.\n<p>All glyphs with the given glyph name are included in the set. The total set of possible second glyphs in the kerning pair is the union of glyphs specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/u2\">u2</a></code> and <code>g2</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "k": {
+          "url": "$MDN_URL$/web/svg/attribute/k",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>k</code></strong> attribute specifies the amount for decreasing the spacing between the two glyphs in a kerning pair.\n<p>The value is in the font coordinate system. This attribute is required.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "u1": {
+          "url": "$MDN_URL$/web/svg/attribute/u1",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>u1</code></strong> attribute specifies list of <a href=\"$MDN_URL$/Glossary/Unicode\">Unicode</a> characters (refer to the description of the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/unicode\">unicode</a></code> attribute of the <a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a> element for a description of how to express individual Unicode characters) and/or ranges of Unicode characters, which identify a set of possible first <a class=\"page-not-created\"  >glyphs</a> in a kerning pair.\n<p>If a given Unicode character within the set has multiple corresponding <code>&lt;glyph&gt;</code> elements (i.e., there are multiple <code>&lt;glyph&gt;</code> elements with the same <code>unicode</code> attribute value but different <code><a href=\"$MDN_URL$/Web/SVG/Attribute/glyph-name\">glyph-name</a></code> values), then all such glyphs are included in the set. Comma is the separator character; thus, to kern a comma, specify the comma as part of a range of Unicode characters or as a glyph name using the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/g1\">g1</a></code> attribute. The total set of possible first glyphs in the kerning pair is the union of glyphs specified by the <code>u1</code> and <code>g1</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "u2": {
+          "url": "$MDN_URL$/web/svg/attribute/u2",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>u2</code></strong> attribute specifies list of <a href=\"$MDN_URL$/Glossary/Unicode\">Unicode</a> characters (refer to the description of the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/unicode\">unicode</a></code> attribute of the <a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a> element for a description of how to express individual Unicode characters) and/or ranges of Unicode characters, which identify a set of possible second <a class=\"page-not-created\"  >glyphs</a> in a kerning pair.\n<p>If a given Unicode character within the set has multiple corresponding <code>&lt;glyph&gt;</code> elements (i.e., there are multiple <code>&lt;glyph&gt;</code> elements with the same <code>unicode</code> attribute value but different <code><a href=\"$MDN_URL$/Web/SVG/Attribute/glyph-name\">glyph-name</a></code> values), then all such glyphs are included in the set. Comma is the separator character; thus, to kern a comma, specify the comma as part of a range of Unicode characters or as a glyph name using the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/g2\">g2</a></code> attribute. The total set of possible second glyphs in the kerning pair is the union of glyphs specified by the <code>u2</code> and <code>g2</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "missing-glyph": {
+      "url": "$MDN_URL$/web/svg/element/missing-glyph",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;missing-glyph&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element's content is rendered, if for a given character the font doesn't define an appropriate <a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a>.",
+      "attrs": {
+        "d": {
+          "url": "$MDN_URL$/web/svg/attribute/d",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "1.5",
+            "Opera": "8",
+            "Safari": "3",
+            "SafariIOS": "3"
+          },
+          "doc": "The <strong><code>d</code></strong> attribute defines a path to be drawn.\n<p>A path definition is a list of <a href=\"#path_commands\">path commands</a> where each command is composed of a command letter and numbers that represent the command parameters.\nThe commands are <a href=\"#path_commands\">detailed below</a>.\n<p>You can use this attribute with the following SVG elements: <a href=\"#path\"><code>&lt;path&gt;</code></a>, <a href=\"#glyph\"><code>&lt;glyph&gt;</code></a>, <a href=\"#missing-glyph\"><code>&lt;missing-glyph&gt;</code></a>.\n<p><code>d</code> is a <a href=\"$MDN_URL$/Web/SVG/Attribute/Presentation\">presentation attribute</a>, and hence can also be <a href=\"#using_d_as_a_css_property\">used as a CSS property</a>."
+        }
+      }
+    },
+    "svg": {
+      "doc": "",
+      "attrs": {
+        "contentscripttype": {
+          "url": "$MDN_URL$/web/svg/attribute/contentscripttype",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Firefox": "1.5",
+            "Safari": "3",
+            "SafariIOS": "2"
+          },
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>contentScriptType</code></strong> attribute specifies the default scripting language for the given document fragment on the <a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a> element.\n<p>This attribute sets the default scripting language used to process the value strings in <a href=\"$MDN_URL$/Web/SVG/Attribute#document_event_attributes\">event attributes</a>. This language must be used for all instances of script that do not specify their own scripting language. The value specifies a media type, per <a href=\"https://www.ietf.org/rfc/rfc2046.txt\" class=\"external\" target=\"_blank\">MIME Part Two: Media Types [RFC2046]</a>."
+        },
+        "contentstyletype": {
+          "url": "$MDN_URL$/web/svg/attribute/contentstyletype",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Firefox": "1.5",
+            "Safari": "3",
+            "SafariIOS": "2"
+          },
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>contentStyleType</code></strong> attribute specifies the style sheet language for the given document fragment on the <a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a> element.\n<p>This language is used for all instances of style that do not specify their own styling language, such as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/style\">style</a></code> attribute that is available on many elements. The value specifies a media type, per <a href=\"https://www.ietf.org/rfc/rfc2046.txt\" class=\"external\" target=\"_blank\">MIME Part Two: Media Types [RFC2046]</a>."
+        }
+      }
+    },
+    "switch": {
+      "doc": "",
+      "attrs": {
+        "allowreorder": {
+          "url": "$MDN_URL$/web/svg/element/switch#allowreorder",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "79",
+            "Opera": "15",
+            "Safari": "3.1",
+            "SafariIOS": "2"
+          }
+        }
+      }
+    },
+    "tref": {
+      "url": "$MDN_URL$/web/svg/element/tref",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The textual content for a <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element can be either character data directly embedded within the <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> element or the character data content of a referenced element, where the referencing is specified with a <strong><code>&lt;tref&gt;</code></strong> element."
+    },
+    "viewbox": {
+      "doc": "",
+      "attrs": {
+        "viewtarget": {
+          "url": "$MDN_URL$/web/svg/attribute/viewtarget",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "79",
+            "Firefox": "15",
+            "Opera": "15",
+            "Safari": "3",
+            "SafariIOS": "2"
+          },
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>viewTarget</code></strong> attribute indicates the target object associated with the view.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/view\"><code>&lt;view&gt;</code></a></li>\n</ul>"
+        }
+      }
+    },
+    "vkern": {
+      "url": "$MDN_URL$/web/svg/element/vkern",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;vkern&gt;</code></strong> SVG element allows to fine-tweak the vertical distance between two glyphs in top-to-bottom fonts. This process is known as <a href=\"https://en.wikipedia.org/wiki/Kerning\" class=\"external\" target=\"_blank\">kerning</a>.",
+      "attrs": {
+        "g1": {
+          "url": "$MDN_URL$/web/svg/attribute/g1",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>g1</code></strong> attribute specifies a list of glyph names which identify a set of possible first glyphs in the kerning pair.\n<p>All glyphs with the given glyph name are included in the set. The total set of possible first glyphs in the kerning pair is the union of glyphs specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/u1\">u1</a></code> and <code>g1</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "g2": {
+          "url": "$MDN_URL$/web/svg/attribute/g2",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>g2</code></strong> attribute specifies a list of glyph names which identify a set of possible second glyphs in the kerning pair.\n<p>All glyphs with the given glyph name are included in the set. The total set of possible second glyphs in the kerning pair is the union of glyphs specified by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/u2\">u2</a></code> and <code>g2</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "k": {
+          "url": "$MDN_URL$/web/svg/attribute/k",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>k</code></strong> attribute specifies the amount for decreasing the spacing between the two glyphs in a kerning pair.\n<p>The value is in the font coordinate system. This attribute is required.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "u1": {
+          "url": "$MDN_URL$/web/svg/attribute/u1",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>u1</code></strong> attribute specifies list of <a href=\"$MDN_URL$/Glossary/Unicode\">Unicode</a> characters (refer to the description of the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/unicode\">unicode</a></code> attribute of the <a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a> element for a description of how to express individual Unicode characters) and/or ranges of Unicode characters, which identify a set of possible first <a class=\"page-not-created\"  >glyphs</a> in a kerning pair.\n<p>If a given Unicode character within the set has multiple corresponding <code>&lt;glyph&gt;</code> elements (i.e., there are multiple <code>&lt;glyph&gt;</code> elements with the same <code>unicode</code> attribute value but different <code><a href=\"$MDN_URL$/Web/SVG/Attribute/glyph-name\">glyph-name</a></code> values), then all such glyphs are included in the set. Comma is the separator character; thus, to kern a comma, specify the comma as part of a range of Unicode characters or as a glyph name using the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/g1\">g1</a></code> attribute. The total set of possible first glyphs in the kerning pair is the union of glyphs specified by the <code>u1</code> and <code>g1</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        },
+        "u2": {
+          "url": "$MDN_URL$/web/svg/attribute/u2",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>u2</code></strong> attribute specifies list of <a href=\"$MDN_URL$/Glossary/Unicode\">Unicode</a> characters (refer to the description of the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/unicode\">unicode</a></code> attribute of the <a href=\"$MDN_URL$/Web/SVG/Element/glyph\"><code>&lt;glyph&gt;</code></a> element for a description of how to express individual Unicode characters) and/or ranges of Unicode characters, which identify a set of possible second <a class=\"page-not-created\"  >glyphs</a> in a kerning pair.\n<p>If a given Unicode character within the set has multiple corresponding <code>&lt;glyph&gt;</code> elements (i.e., there are multiple <code>&lt;glyph&gt;</code> elements with the same <code>unicode</code> attribute value but different <code><a href=\"$MDN_URL$/Web/SVG/Attribute/glyph-name\">glyph-name</a></code> values), then all such glyphs are included in the set. Comma is the separator character; thus, to kern a comma, specify the comma as part of a range of Unicode characters or as a glyph name using the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/g2\">g2</a></code> attribute. The total set of possible second glyphs in the kerning pair is the union of glyphs specified by the <code>u2</code> and <code>g2</code> attributes.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/hkern\"><code>&lt;hkern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/vkern\"><code>&lt;vkern&gt;</code></a></li>\n</ul>"
+        }
+      }
+    }
+  },
+  "tagAliases": {}
+}

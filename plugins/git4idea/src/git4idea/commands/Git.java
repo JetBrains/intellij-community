@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +15,7 @@ import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
@@ -63,6 +64,7 @@ public interface Git {
 
   @Deprecated
   @NotNull
+  @Unmodifiable
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<? extends VirtualFile> files) throws VcsException;
 
@@ -73,12 +75,11 @@ public interface Git {
   Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
-  @NotNull
-  default GitCommandResult clone(@Nullable Project project,
-                                 @NotNull File parentDirectory,
-                                 @NotNull String url,
-                                 @NotNull String clonedDirectoryName,
-                                 GitLineHandlerListener @NotNull ... progressListeners) {
+  default @NotNull GitCommandResult clone(@Nullable Project project,
+                                          @NotNull File parentDirectory,
+                                          @NotNull String url,
+                                          @NotNull String clonedDirectoryName,
+                                          GitLineHandlerListener @NotNull ... progressListeners) {
     return clone(project, parentDirectory, url, clonedDirectoryName, null, progressListeners);
   }
 
@@ -184,6 +185,11 @@ public interface Git {
 
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
+
+  @NotNull
+  default GitCommandResult getResolvedFiles(@NotNull GitRepository repository) {
+    throw new IllegalStateException("getResolvedFiles should be implemented in GitImpl");
+  }
 
   @NotNull
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,

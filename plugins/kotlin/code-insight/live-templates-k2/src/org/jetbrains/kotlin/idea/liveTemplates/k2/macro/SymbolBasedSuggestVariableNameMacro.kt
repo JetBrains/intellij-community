@@ -26,9 +26,10 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                     allowAnalysisFromWriteAction {
                         analyze(initializer) {
                             val nameValidator = KotlinDeclarationNameValidator(
-                                declaration,
-                                false,
-                                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                              declaration,
+                              false,
+                              KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                              listOf(declaration)
                             )
 
                             return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestExpressionNames(initializer))
@@ -47,9 +48,10 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                     val symbol = declaration.symbol as? KaVariableSymbol
                     if (symbol != null) {
                         val nameValidator = KotlinDeclarationNameValidator(
-                            declaration,
-                            false,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+                          declaration,
+                          false,
+                          KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                          listOf(declaration)
                         )
                         return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
                             .filter { nameValidator.validate(it) }

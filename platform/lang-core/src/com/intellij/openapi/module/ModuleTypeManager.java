@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public abstract class ModuleTypeManager {
   @ApiStatus.Internal
   public abstract void unregisterModuleType(@NotNull ModuleType<?> type);
 
-  public abstract @NotNull List<ModuleType<?>> getRegisteredTypes();
+  public abstract @NotNull @Unmodifiable List<ModuleType<?>> getRegisteredTypes();
 
   public abstract @NotNull ModuleType<?> findByID(@Nullable String moduleTypeID);
 

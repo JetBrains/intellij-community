@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.XmlCharsetDetector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +38,8 @@ public final class JpsEncodingProjectConfigurationImpl extends JpsElementBase<Jp
     myProjectEncoding = projectEncoding;
   }
 
-  @Nullable
   @Override
-  public String getEncoding(@NotNull File file) {
+  public @Nullable String getEncoding(@NotNull File file) {
     if (isXmlFile(file)) {
       try {
         String encoding = XmlCharsetDetector.extractXmlEncodingFromProlog(FileUtil.loadFileBytes(file));
@@ -92,24 +77,23 @@ public final class JpsEncodingProjectConfigurationImpl extends JpsElementBase<Jp
 
   private static boolean isXmlFile(File file) {
     String fileName = file.getName();
-    return SystemInfo.isFileSystemCaseSensitive ? fileName.endsWith(XML_NAME_SUFFIX) : StringUtil.endsWithIgnoreCase(fileName, XML_NAME_SUFFIX);
+    return SystemInfoRt.isFileSystemCaseSensitive
+           ? fileName.endsWith(XML_NAME_SUFFIX)
+           : Strings.endsWithIgnoreCase(fileName, XML_NAME_SUFFIX);
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getUrlToEncoding() {
+  public @NotNull Map<String, String> getUrlToEncoding() {
     return Collections.unmodifiableMap(myUrlToEncoding);
   }
 
-  @Nullable
   @Override
-  public String getProjectEncoding() {
+  public @Nullable String getProjectEncoding() {
     return myProjectEncoding;
   }
 
-  @NotNull
   @Override
-  public JpsEncodingProjectConfigurationImpl createCopy() {
+  public @NotNull JpsEncodingProjectConfigurationImpl createCopy() {
     return new JpsEncodingProjectConfigurationImpl(myUrlToEncoding, myProjectEncoding);
   }
 }

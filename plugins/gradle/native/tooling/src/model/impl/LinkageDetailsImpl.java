@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,7 @@ import java.util.List;
 public final class LinkageDetailsImpl implements LinkageDetails {
   private ExternalTask linkTask;
   private File outputLocation;
-  @NotNull
-  private List<String> additionalArgs;
+  private @NotNull List<String> additionalArgs;
 
   public LinkageDetailsImpl() {
     additionalArgs = Collections.emptyList();
@@ -48,9 +47,8 @@ public final class LinkageDetailsImpl implements LinkageDetails {
     this.outputLocation = outputLocation;
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalArgs() {
+  public @NotNull List<String> getAdditionalArgs() {
     return additionalArgs;
   }
 

@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
 import java.util.*
 
-object ChangeMemberFunctionSignatureFixFactory {
+internal object ChangeMemberFunctionSignatureFixFactory {
     val nothingToOverrideFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NothingToOverride ->
         val function = diagnostic.psi as? KtNamedFunction ?: return@ModCommandBased emptyList()
         val signatures = computePossibleSignatures(function)
@@ -87,7 +87,7 @@ object ChangeMemberFunctionSignatureFixFactory {
         val names = superParameters.map { it.name.asString() }.toMutableList()
         val substitutedTypes = superParameters.map { superParam ->
             val returnType = superParam.returnType
-            substitutor?.substitute(returnType) ?: returnType
+            (substitutor?.substitute(returnType) ?: returnType).approximateToSubPublicDenotableOrSelf(false)
         }.toMutableList()
 
         // Parameters in superFunction, which are matched in new function signature:

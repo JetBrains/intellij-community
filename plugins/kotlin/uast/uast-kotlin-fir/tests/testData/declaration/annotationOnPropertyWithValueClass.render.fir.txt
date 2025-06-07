@@ -1,0 +1,24 @@
+package test.pkg
+
+public abstract annotation Anno {
+}
+
+public final class IntValue {
+    @null public static final var Companion: test.pkg.IntValue.Companion
+    @org.jetbrains.annotations.NotNull @test.pkg.Anno private static final var withValueClassTypeSpecified: int = IntValue(0)
+    @org.jetbrains.annotations.NotNull @test.pkg.Anno private static final var withValueClassTypeUnspecified: int = IntValue(1)
+    @org.jetbrains.annotations.NotNull @test.pkg.Anno private static final var withNonValueClassTypeSpecified: int = 2
+    @org.jetbrains.annotations.NotNull @test.pkg.Anno private static final var withNonValueClassTypeUnSpecified: int = 3
+    @org.jetbrains.annotations.NotNull private final var value: int
+    public fun toString() : java.lang.String = UastEmptyExpression
+    public fun hashCode() : int = UastEmptyExpression
+    public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
+    public final fun getValue() : int = UastEmptyExpression
+    public static final class Companion {
+        public final fun getWithValueClassTypeUnspecified() : int = UastEmptyExpression
+        public final fun getWithNonValueClassTypeSpecified() : int = UastEmptyExpression
+        public final fun getWithNonValueClassTypeUnSpecified() : int = UastEmptyExpression
+        private fun Companion() = UastEmptyExpression
+        public final fun getWithValueClassTypeSpecified() : int = UastEmptyExpression
+    }
+}

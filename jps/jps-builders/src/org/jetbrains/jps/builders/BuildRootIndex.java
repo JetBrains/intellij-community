@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,8 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> List<R> getTempTargetRoots(@NotNull BuildTarget<R> target, @NotNull CompileContext context);
 
   @NotNull
-  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
+  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root,
+                                                             @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                              @Nullable CompileContext context);
 
   <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root);
@@ -49,5 +50,5 @@ public interface BuildRootIndex {
 
   boolean isDirectoryAccepted(@NotNull Path dir, @NotNull BuildRootDescriptor descriptor);
 
-  boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor);
+  boolean isFileAccepted(@NotNull Path file, @NotNull BuildRootDescriptor descriptor);
 }

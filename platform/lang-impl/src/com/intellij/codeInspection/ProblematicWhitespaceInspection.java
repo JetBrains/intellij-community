@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,13 +12,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -85,25 +83,25 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      final FileType fileType = file.getFileType();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      final FileType fileType = psiFile.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
-      if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) {
+      if (psiFile.getViewProvider().getBaseLanguage() != psiFile.getLanguage()) {
         // don't warn multiple times on files which have multiple views like PHP and JSP
         return;
       }
-      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      if (injectedLanguageManager.isInjectedFragment(file)) {
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+      if (injectedLanguageManager.isInjectedFragment(psiFile)) {
         return;
       }
-      final CodeStyleSettings settings = CodeStyle.getSettings(file);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
+      final CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
+      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(psiFile);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
@@ -119,13 +117,13 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
-                if (registerError(file, startOffset, true)) {
+                if (registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
             }
             else {
-              if (registerError(file, startOffset, false)) {
+              if (registerError(psiFile, startOffset, false)) {
                 return;
               }
             }
@@ -133,13 +131,13 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (registerError(file, startOffset, true)) {
+                if (!isSpaceAllowed(psiFile, j, line, startOffset) && registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
               else if (!spaceSeen) {
                 if (j < previousLineIndent) {
-                  if (registerError(file, startOffset, true)) {
+                  if (registerError(psiFile, startOffset, true)) {
                     return;
                   }
                 }
@@ -156,6 +154,13 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           }
         }
       }
+    }
+
+    private static boolean isSpaceAllowed(@NotNull PsiFile file, int index, String line, int lineOffsetInFile) {
+      PsiElement element = file.findElementAt(lineOffsetInFile + index);
+      if (!(element instanceof PsiWhiteSpace)) return true; // e.g. multiline string literal
+      return index + 1 < line.length() && line.charAt(index + 1) == '*'
+             && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null; // doc comment in java, c++, php...
     }
 
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {

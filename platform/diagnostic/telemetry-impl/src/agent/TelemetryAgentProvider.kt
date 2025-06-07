@@ -17,7 +17,8 @@ object TelemetryAgentProvider {
     return listOf(
       "-javaagent:${configuration.agentLocation.pathString}",
       "-Dotel.javaagent.configuration-file=${FileUtilRt.toSystemDependentName(configLocation.absolutePath)}",
-      "-D$TRACE_CONTEXT_JVM_PROPERTY_NAME=${configuration.context.asString()}"
+      "-D$TRACE_CONTEXT_JVM_PROPERTY_NAME=${configuration.context.asString()}",
+      "-Dotel.service.name=${configuration.serviceName}"
     )
   }
 

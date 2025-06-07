@@ -25,7 +25,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertFolding(String marker) {
-    assert assertFolding(myFixture.getFile().getText().indexOf(marker)) : marker;
+    assertTrue(marker, assertFolding(myFixture.getFile().getText().indexOf(marker)));
   }
 
   private boolean assertNoFolding(final int offset) {
@@ -38,7 +38,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertNoFolding(String marker) {
-    assert assertNoFolding(myFixture.getFile().getText().indexOf(marker)) : marker;
+    assertTrue(marker, assertNoFolding(myFixture.getFile().getText().indexOf(marker)));
   }
 
   public void testEditingImports() {

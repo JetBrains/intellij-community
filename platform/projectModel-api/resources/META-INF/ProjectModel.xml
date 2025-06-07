@@ -7,13 +7,11 @@
     <extensionPoint name="customLibraryTable" interface="com.intellij.openapi.roots.libraries.CustomLibraryTableDescription" dynamic="true"/>
     <extensionPoint name="primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
-    <extensionPoint name="workspaceModel.preUpdateHandler" interface="com.intellij.platform.backend.workspace.WorkspaceModelPreUpdateHandler"
-                    dynamic="true"/>
-    <extensionPoint name="workspace.bridgeInitializer" interface="com.intellij.platform.backend.workspace.BridgeInitializer"
-                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+                        serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
   </extensions>
 </idea-plugin>

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
@@ -53,7 +53,7 @@ class WorkspaceModelSubscriptionTest {
     val firstStorage = firstStorageChannel.receive()
     assertTrue(firstStorage.entities<ModuleEntity>().toList().isEmpty())
 
-    writeAction {
+    edtWriteAction {
       workspaceModel.updateProjectModel("Test add new module asynchronously") {
         it addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
       }
@@ -82,7 +82,7 @@ class WorkspaceModelSubscriptionTest {
     assertTrue(firstStorage.entities<ModuleEntity>().toList().isEmpty())
 
     repeat(5) {
-      writeAction {
+      edtWriteAction {
         workspaceModel.updateProjectModel {
           it addEntity ModuleEntity("MyModule$it", emptyList(), object : EntitySource {})
         }
@@ -151,7 +151,7 @@ class WorkspaceModelSubscriptionTest {
 
       fireException.complete(Unit)
 
-      writeAction {
+      edtWriteAction {
         workspaceModel.updateProjectModel {
           it addEntity NamedEntity("MyName", MySource)
         }
@@ -195,7 +195,7 @@ class WorkspaceModelSubscriptionTest {
 
       awaitStarted.await()
 
-      writeAction {
+      edtWriteAction {
         repeat(10) {
           if (awaitFinished.isCompleted) return@repeat
           workspaceModel.updateProjectModel {

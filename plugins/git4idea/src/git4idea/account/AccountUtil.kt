@@ -10,7 +10,9 @@ import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use git4idea.push.GitPushNotificationUtil instead")
 object AccountUtil {
 

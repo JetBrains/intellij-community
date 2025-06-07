@@ -17,10 +17,24 @@
     <orderEntry type="module" module-name="intellij.relaxng" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.javascript.impl" />
-    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
+    <orderEntry type="module" module-name="intellij.javascript" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.javascript.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.angular" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vuejs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javascript.web.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.css.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.react.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.astro.tests" scope="TEST" />
   </component>
 </module>

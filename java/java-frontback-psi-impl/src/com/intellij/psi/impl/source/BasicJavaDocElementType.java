@@ -1,16 +1,17 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.JavaDocSyntaxElementType;
+import com.intellij.java.syntax.lexer.JavaLexer;
+import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer;
+import com.intellij.java.syntax.parser.JavaDocParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
-import com.intellij.lang.java.parser.BasicJavaDocParser;
-import com.intellij.lang.java.parser.BasicJavaParser;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
@@ -22,9 +23,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
+//todo remove and merge with standard
+/**
+ * @see JavaDocSyntaxElementType
+ */
 public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_TAG = new IJavaDocElementType("DOC_TAG");
   IElementType BASIC_DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
@@ -46,6 +50,7 @@ public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_COMMENT = new IJavaDocElementType("DOC_COMMENT");
   IElementType BASIC_DOC_MARKDOWN_CODE_BLOCK = new IJavaDocElementType("DOC_CODE_BLOCK");
   IElementType BASIC_DOC_MARKDOWN_REFERENCE_LINK = new IJavaDocElementType("DOC_REFERENCE_LINK");
+  IElementType BASIC_DOC_MARKDOWN_REFERENCE_LABEL = new IJavaDocElementType("DOC_REFERENCE_LABEL");
 
   ParentAwareTokenSet BASIC_ALL_JAVADOC_ELEMENTS = ParentAwareTokenSet.create(
     BASIC_DOC_TAG, BASIC_DOC_INLINE_TAG, BASIC_DOC_METHOD_OR_FIELD_REF, BASIC_DOC_PARAMETER_REF, BASIC_DOC_TAG_VALUE_ELEMENT,
@@ -64,9 +69,8 @@ public interface BasicJavaDocElementType {
       myParentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return myConstructor.get();
     }
 
@@ -79,7 +83,7 @@ public interface BasicJavaDocElementType {
   class JavaDocLazyElementType extends ILazyParseableElementType implements ParentProviderElementType {
     private final Set<IElementType> myParentElementTypes;
 
-    private JavaDocLazyElementType(@NonNls final String debugName, @NotNull IElementType parentElementType) {
+    private JavaDocLazyElementType(final @NonNls String debugName, @NotNull IElementType parentElementType) {
       super(debugName, JavaLanguage.INSTANCE);
       myParentElementTypes = Collections.singleton(parentElementType);
     }
@@ -95,93 +99,65 @@ public interface BasicJavaDocElementType {
     }
   }
 
-
   final class DocReferenceHolderElementType extends JavaDocLazyElementType {
-
-    private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
-    private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
-
-
-    public DocReferenceHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
-                                         @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                         @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+    public DocReferenceHolderElementType() {
       super("DOC_REFERENCE_HOLDER", BASIC_DOC_REFERENCE_HOLDER);
-      this.myJavaThinParser = parser;
-      this.javaDocLexer = docLexerFunction;
-      this.javaLexer = javaLexer;
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      BasicJavaParserUtil.ParserWrapper wrapper = builder -> BasicJavaDocParser.parseJavadocReference(builder,
-                                                                                                      myJavaThinParser.get());
-      return BasicJavaParserUtil.parseFragment(chameleon, wrapper, false, LanguageLevel.JDK_1_3, javaDocLexer, javaLexer
-      );
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      return BasicJavaParserUtil.parseFragment(
+        chameleon,
+        (builder, languageLevel) -> {
+          new JavaDocParser(builder, languageLevel).parseJavadocReference(new JavaParser(languageLevel));
+        },
+        false,
+        LanguageLevel.JDK_1_3);
     }
   }
 
   final class DocTypeHolderElementType extends JavaDocLazyElementType {
-
-    private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
-    private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer;
-
-    public DocTypeHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
-                                    @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                    @NotNull Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer) {
+    public DocTypeHolderElementType() {
       super("DOC_TYPE_HOLDER", BASIC_DOC_TYPE_HOLDER);
-      this.myJavaThinParser = parser;
-      this.javaDocLexer = docLexerFunction;
-      this.javaLexer = javaLexer;
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      BasicJavaParserUtil.ParserWrapper wrapper = builder -> BasicJavaDocParser.parseJavadocType(builder, myJavaThinParser.get());
-      return BasicJavaParserUtil.parseFragment(chameleon, wrapper, false, LanguageLevel.JDK_1_3, javaDocLexer, javaLexer
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      return BasicJavaParserUtil.parseFragment(
+        chameleon,
+        (builder, languageLevel) -> {
+          new JavaDocParser(builder, languageLevel).parseJavadocType(new JavaParser(languageLevel));
+        },
+        false,
+        LanguageLevel.JDK_1_3,
+        level -> new JavaTypeEscapeLexer(new JavaLexer(level))
       );
     }
   }
 
   abstract class DocCommentElementType extends IReparseableElementType implements ParentProviderElementType {
     private final BasicJavaParserUtil.ParserWrapper myParser;
-    private final AbstractBasicJavaDocElementTypeFactory myJavaDocElementTypeFactory;
-
-    private final Function<LanguageLevel, JavaDocLexer> myDocLexerFunction;
-    private final Function<LanguageLevel, BasicJavaLexer> myLexerFunction;
-
-    private final Function<Project, Lexer> lexerByProject;
 
     private static final Set<IElementType> myParentElementTypes = Collections.singleton(BASIC_DOC_COMMENT);
 
-    public DocCommentElementType(@NotNull Function<LanguageLevel, JavaDocLexer> function,
-                                 @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
-                                 @NotNull AbstractBasicJavaDocElementTypeFactory factory,
-                                 @NotNull Function<Project, Lexer> project) {
+    public DocCommentElementType() {
       super("DOC_COMMENT", JavaLanguage.INSTANCE);
-      myParser = builder -> BasicJavaDocParser.parseDocCommentText(builder, factory.getContainer());
-      myJavaDocElementTypeFactory = factory;
-      myDocLexerFunction = function;
-      myLexerFunction = lexerFunction;
-      lexerByProject = project;
-    }
-
-    @Nullable
-    @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragment(chameleon, myParser, myDocLexerFunction, myLexerFunction);
+      myParser = (builder, languageLevel) -> new JavaDocParser(builder, languageLevel).parseDocCommentText();
     }
 
     @Override
-    public boolean isParsable(@NotNull final CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
+    }
+
+    @Override
+    public boolean isParsable(final @NotNull CharSequence buffer, @NotNull Language fileLanguage, final @NotNull Project project) {
       if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
 
-      Lexer lexer = lexerByProject.apply(project);
+      LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+      JavaLexer lexer = new JavaLexer(level);
       lexer.start(buffer);
-      if (lexer.getTokenType() == myJavaDocElementTypeFactory.getContainer().DOC_COMMENT) {
+      if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
         lexer.advance();
         return lexer.getTokenType() == null;
       }

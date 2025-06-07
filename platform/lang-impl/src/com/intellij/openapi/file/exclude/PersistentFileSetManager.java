@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
@@ -15,7 +15,9 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.*;
@@ -23,7 +25,8 @@ import java.util.*;
 /**
  * A persistent {@code Set<VirtualFile>} or persistent {@code Map<VirtualFile, String>}
  */
-abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String URL_ATTR = "url";
   private static final String VALUE_ATTR = "value";
@@ -62,7 +65,7 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
     return isAdded;
   }
 
-  boolean removeFile(@NotNull VirtualFile file) {
+  public boolean removeFile(@NotNull VirtualFile file) {
     boolean isRemoved = myMap.remove(file) != null;
     if (isRemoved) {
       onFileSettingsChanged(Collections.singleton(file));
@@ -70,7 +73,8 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
     return isRemoved;
   }
 
-  String getFileValue(@NotNull VirtualFile file) {
+  @VisibleForTesting
+  public String getFileValue(@NotNull VirtualFile file) {
     return myMap.get(file);
   }
 

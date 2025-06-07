@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,10 @@ public interface VcsDirtyScopeBuilder {
   boolean belongsTo(@NotNull FilePath path);
 
   void addDirtyPathFast(@NotNull VirtualFile vcsRoot, @NotNull FilePath filePath, boolean recursively);
+
+  default void markRootDirty(@NotNull VirtualFile vcsRoot) {
+    addDirtyPathFast(vcsRoot, VcsUtil.getFilePath(vcsRoot), true);
+  }
 
   void markEverythingDirty();
 

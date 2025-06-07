@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -152,7 +152,7 @@ public final class CommentTracker {
     StringBuilder sb = new StringBuilder();
     for (PsiElement comment : comments) {
       PsiElement prev = comment.getPrevSibling();
-      if (sb.length() == 0 && prev instanceof PsiWhiteSpace) {
+      if (sb.isEmpty() && prev instanceof PsiWhiteSpace) {
         sb.append(prev.getText());
       }
       sb.append(comment.getText());
@@ -429,8 +429,7 @@ public final class CommentTracker {
     return element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT;
   }
 
-  @NotNull
-  private List<PsiElement> grabSuffixComments(@NotNull PsiElement element) {
+  private @NotNull List<PsiElement> grabSuffixComments(@NotNull PsiElement element) {
     if (!(element instanceof PsiStatement)) {
       return Collections.emptyList();
     }

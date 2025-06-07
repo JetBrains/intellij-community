@@ -93,7 +93,7 @@ public final class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjecti
         sb.append(s.trim());
         continue;
       }
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         final String text = sb.toString();
         places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
         sb.setLength(0);
@@ -101,7 +101,7 @@ public final class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjecti
       sb.append(s);
       enabled = nextEnabled;
     }
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       final String text = sb.toString();
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }

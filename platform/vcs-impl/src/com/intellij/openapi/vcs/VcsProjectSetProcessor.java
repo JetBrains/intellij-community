@@ -35,9 +35,9 @@ public final class VcsProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public void processEntries(@NotNull final List<? extends Pair<String, String>> entries,
-                             @NotNull final Context context,
-                             @NotNull final Runnable runNext) {
+  public void processEntries(final @NotNull List<? extends Pair<String, String>> entries,
+                             final @NotNull Context context,
+                             final @NotNull Runnable runNext) {
 
     if (!getDirectory(context)) return;
     if (!getDirectoryName(context)) return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -11,9 +11,9 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReferenceProviderBean;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.psi.stubs.StubElementTypeHolderEP;
@@ -30,6 +30,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -39,7 +40,10 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
-final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
+import java.util.Objects;
+
+@ApiStatus.Internal
+public final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
   protected void checkDomElement(@NotNull DomElement element,
@@ -101,6 +105,22 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
         }
       }
       return;
+    }
+
+    if (DescriptionTypesKt.INTENTION_ACTION_EP.equals(epFqn)) {
+      GenericDomValue<?> descriptionDirectoryDom = DevKitDomUtil.getTag(extension, DescriptionTypesKt.INTENTION_DESCRIPTION_DIRECTORY_NAME);
+      if (descriptionDirectoryDom != null && DomUtil.hasXml(descriptionDirectoryDom)) {
+        String customDescriptionDirectory = descriptionDirectoryDom.getStringValue();
+        GenericDomValue<?> classNameDom = DevKitDomUtil.getTag(extension, "className");
+        if (classNameDom != null && DomUtil.hasXml(classNameDom)) {
+          PsiClass intentionClass = (PsiClass)classNameDom.getValue();
+          if (intentionClass != null && Objects.equals(customDescriptionDirectory, DescriptionTypeResolver.getDefaultDescriptionDirName(intentionClass))) {
+            highlightRedundant(descriptionDirectoryDom, DevKitBundle.message(
+                                 "inspection.plugin.xml.extension.registration.intention.redundant.description.directory"),
+                               ProblemHighlightType.WARNING, holder);
+          }
+        }
+      }
     }
 
     if (InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {

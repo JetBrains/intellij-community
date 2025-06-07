@@ -376,4 +376,142 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testMismatchedConditionalImplementationsHaveBothTooFewAndTooManyParameters() {
     doTest();
   }
+
+  public void testNoTypeCheck() {
+    doTestByText(
+      """
+        from typing import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+    doTestByText(
+      """
+        from typing_extensions import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+      
+      
+                   class Meta(type):
+                       def call(cls, *args, **kwargs) -> object: ...
+                   
+                       __call__ = call
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   expr = MyClass()
+                   """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructedMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__(cls): ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c1 = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   c2 = MyClass(1) # TODO PY-80602 Missing error 'Unexpected argument'
+                   """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls, x: T) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p1, p2) -> Self: ...
+                   
+                   
+                   c = MyClass(1)
+                   """);
+  }
+
+  public void testKeywordUnpack() {
+    doTestByText("""
+                   from collections.abc import Mapping
+                   
+                   class M(Mapping[str, str]): pass
+                   
+                   dict(**M())
+                   
+                   dict(<warning descr="Expected a mapping, got int">**1</warning>)
+                   """);
+  }
+
+  // PY-79816
+  public void testGenericDataclassExplicitType() {
+    doTest();
+  }
+
+
+  // PY-79816
+  public void testGenericDataclassExplicitTypeDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testGenericClassExplicitTypeDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testGenericDataclassDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testClassWith__init__Deconstructed() {
+    doTest();
+  }
 }

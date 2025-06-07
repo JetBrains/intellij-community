@@ -21,13 +21,11 @@ public final class DocStringParser {
   /**
    * @param stringText docstring text with possible string prefix and quotes
    */
-  @NotNull
-  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
     return parseDocString(format, stripPrefixAndQuotes(stringText));
   }
 
-  @NotNull
-  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
     return switch (format) {
       case REST -> new SphinxDocString(content);
       case GOOGLE -> new GoogleCodeStyleDocString(content);
@@ -36,8 +34,7 @@ public final class DocStringParser {
     };
   }
 
-  @NotNull
-  private static Substring stripPrefixAndQuotes(@NotNull String text) {
+  private static @NotNull Substring stripPrefixAndQuotes(@NotNull String text) {
     final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
@@ -47,8 +44,7 @@ public final class DocStringParser {
    * {@link #guessDocStringFormat(String, PsiElement)} of this method.
    * @see #guessDocStringFormat(String, PsiElement)
    */
-  @NotNull
-  public static DocStringFormat guessDocStringFormat(@NotNull String text) {
+  public static @NotNull DocStringFormat guessDocStringFormat(@NotNull String text) {
     if (isLikeSphinxDocString(text)) {
       return DocStringFormat.REST;
     }
@@ -67,8 +63,7 @@ public final class DocStringParser {
    * @return docstring inferred heuristically and if unsuccessful fallback to configured format retrieved from anchor PSI element
    * @see #getConfiguredDocStringFormat(PsiElement)
    */
-  @NotNull
-  public static DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
+  public static @NotNull DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
     final DocStringFormat guessed = guessDocStringFormat(text);
     return guessed == DocStringFormat.PLAIN && anchor != null ? getConfiguredDocStringFormatOrPlain(anchor) : guessed;
   }
@@ -78,8 +73,7 @@ public final class DocStringParser {
    * @return docstring format configured for file or module containing given anchor PSI element
    * @see PyDocumentationSettings#getFormatForFile(PsiFile)
    */
-  @Nullable
-  public static DocStringFormat getConfiguredDocStringFormat(@NotNull PsiElement anchor) {
+  public static @Nullable DocStringFormat getConfiguredDocStringFormat(@NotNull PsiElement anchor) {
     final Module module = getModuleForElement(anchor);
     if (module == null) {
       return null;
@@ -89,8 +83,7 @@ public final class DocStringParser {
     return settings.getFormatForFile(anchor.getContainingFile());
   }
 
-  @NotNull
-  public static DocStringFormat getConfiguredDocStringFormatOrPlain(@NotNull PsiElement anchor) {
+  public static @NotNull DocStringFormat getConfiguredDocStringFormatOrPlain(@NotNull PsiElement anchor) {
     return ObjectUtils.chooseNotNull(getConfiguredDocStringFormat(anchor), DocStringFormat.PLAIN);
   }
 
@@ -117,7 +110,7 @@ public final class DocStringParser {
     for (int i = 0; i < lines.length; i++) {
       final String line = lines[i];
       if (NumpyDocString.SECTION_HEADER.matcher(line).matches() && i > 0) {
-        @NonNls final String lineBefore = lines[i - 1];
+        final @NonNls String lineBefore = lines[i - 1];
         if (SectionBasedDocString.SECTION_NAMES.contains(StringUtil.toLowerCase(lineBefore.trim()))) {
           return true;
         }
@@ -128,8 +121,7 @@ public final class DocStringParser {
 
   // Might return {@code null} in some rare cases when PSI element doesn't have an associated module.
   // For instance, an empty IDEA project with a Python scratch file.
-  @Nullable
-  public static Module getModuleForElement(@NotNull PsiElement element) {
+  public static @Nullable Module getModuleForElement(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element.getContainingFile());
     if (module != null) {
       return module;

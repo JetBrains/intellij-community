@@ -20,8 +20,7 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.list.comprehensions.with.for");
   }
 

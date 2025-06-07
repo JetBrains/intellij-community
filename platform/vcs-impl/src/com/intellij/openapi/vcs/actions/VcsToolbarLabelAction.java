@@ -28,8 +28,7 @@ public final class VcsToolbarLabelAction extends ToolbarLabelAction {
     return ActionUpdateThread.BGT;
   }
 
-  @NlsContexts.Label
-  private static String getConsolidatedVcsName(@Nullable Project project) {
+  private static @NlsContexts.Label String getConsolidatedVcsName(@Nullable Project project) {
     String name = VcsBundle.message("vcs.common.labels.vcs");
     if (project != null) {
       name = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName() + ":";

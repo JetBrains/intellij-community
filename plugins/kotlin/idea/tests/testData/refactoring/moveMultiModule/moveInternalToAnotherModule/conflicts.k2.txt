@@ -1,5 +1,5 @@
 Class packA1.InternalContent, referenced in file InternalSource.kt, will not be accessible from module A
-Class packA1.InternalContent, referenced in function InternalContentUser.useInternal(InternalContent), will not be accessible from module A
+Class packA1.InternalContent, referenced in parameter p, will not be accessible from module A
 Class packA2.InternalContentUser, referenced in function InternalContent.useInternal(), will not be accessible in module B
 Function useInternal() uses function internalFunUser() which will be inaccessible after move
-Function useInternal(InternalContent) uses function internalFun() which will be inaccessible after move
+Function useInternal(InternalContent) uses internal function internalFun() which will be inaccessible after move

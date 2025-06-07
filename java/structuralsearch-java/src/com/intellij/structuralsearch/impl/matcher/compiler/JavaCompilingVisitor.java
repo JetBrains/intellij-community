@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,12 +40,11 @@ import java.util.regex.Pattern;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
 
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
-  @NotNull
-  private final GlobalCompilingVisitor myCompilingVisitor;
+  private final @NotNull GlobalCompilingVisitor myCompilingVisitor;
 
-  @NonNls private static final Pattern COMMENT_PATTERN = Pattern.compile("__\\$_\\w+");
-  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
-                                                                               PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
+  private static final @NonNls Pattern COMMENT_PATTERN = Pattern.compile("__\\$_\\w+");
+  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(JavaKeywords.CLASS, JavaKeywords.INTERFACE, JavaKeywords.ENUM,
+                                                                               JavaKeywords.THROWS, JavaKeywords.EXTENDS, JavaKeywords.IMPLEMENTS);
 
   public JavaCompilingVisitor(@NotNull GlobalCompilingVisitor compilingVisitor) {
     myCompilingVisitor = compilingVisitor;
@@ -123,19 +123,19 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final CompileContext context = myCompilingVisitor.getContext();
       if (!handleWord(aClass.getName(), CODE, context)) return;
       if (aClass.isInterface()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, true, CODE, context);
       }
       else if (aClass.isEnum()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, true, CODE, context);
       }
       else if (aClass.isRecord()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, true, CODE, context);
       }
       else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.CLASS, true, CODE, context);
       }
       super.visitClass(aClass);
     }
@@ -254,7 +254,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final String text = expression.getText();
 
     if (StringUtil.isQuotedString(text)) {
-      @Nullable final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
+      final @Nullable MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
 
       if (PsiTypes.charType().equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
@@ -394,7 +394,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandlerSimple(parameter);
-    @NonNls final String name = "__catch_" + parent.getTextOffset();
+    final @NonNls String name = "__catch_" + parent.getTextOffset();
     final SubstitutionHandler substitutionHandler;
     if (handler instanceof SubstitutionHandler parameterHandler) {
       substitutionHandler =

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
@@ -54,6 +53,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
@@ -259,6 +259,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 element?.element?.takeIf { (it as? KtConstructor<*>)?.containingClass()?.isEnum() == true }?.let { el ->
                     val klass = (el as KtConstructor<*>).containingClass() as KtClass
+                    if (!effectiveSearchScope.contains(klass.containingFile.virtualFile)) return@let
                     klass.declarations.filterIsInstance<KtEnumEntry>().forEach { enumEntry ->
                         enumEntry.descendantsOfType<KtEnumEntrySuperclassReferenceExpression>().forEach { superEntry ->
                             val target = analyze(superEntry) {
@@ -271,7 +272,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                             }
 
                             consumer.process(object : PsiReferenceBase<KtEnumEntrySuperclassReferenceExpression>(superEntry) {
-                                override fun resolve(): PsiElement? = el
+                                override fun resolve(): PsiElement = el
                                 override fun getRangeInElement(): TextRange {
                                     return TextRange(0, superEntry.textLength)
                                 }
@@ -425,13 +426,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         private fun findAllRelatedActualsOrSelf(element: KtDeclaration): Set<KtDeclaration> {
             val expectActualSupport = ExpectActualSupport.getInstance(element.project)
             return when {
-                element.isExpectDeclaration() -> expectActualSupport.actualsForExpected(element)
+                element.isExpectDeclaration() -> expectActualSupport.actualsForExpect(element)
                 !kotlinOptions.searchForExpectedUsages -> setOf(element)
                 else -> {
-                    val expectDeclaration = expectActualSupport.expectedDeclarationIfAny(element)
+                    val expectDeclaration = expectActualSupport.expectDeclarationIfAny(element)
                     when (expectDeclaration) {
                         null -> setOf(element)
-                        else -> expectActualSupport.actualsForExpected(expectDeclaration)
+                        else -> expectActualSupport.actualsForExpect(expectDeclaration)
                     }
                 }
             }

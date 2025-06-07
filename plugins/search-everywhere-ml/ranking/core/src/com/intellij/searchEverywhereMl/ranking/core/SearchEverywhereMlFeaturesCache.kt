@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -6,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.core.id.SearchEverywhereMlItemIdProvider
 import kotlin.math.round
 

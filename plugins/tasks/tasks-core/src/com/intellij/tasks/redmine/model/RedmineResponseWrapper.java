@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -36,8 +37,7 @@ public abstract class RedmineResponseWrapper {
     @Mandatory
     private List<RedmineIssue> issues;
 
-    @NotNull
-    public List<RedmineIssue> getIssues() {
+    public @NotNull List<RedmineIssue> getIssues() {
       return issues;
     }
   }
@@ -47,8 +47,7 @@ public abstract class RedmineResponseWrapper {
     @Mandatory
     private RedmineIssue issue;
 
-    @NotNull
-    public RedmineIssue getIssue() {
+    public @NotNull RedmineIssue getIssue() {
       return issue;
     }
   }
@@ -58,8 +57,7 @@ public abstract class RedmineResponseWrapper {
     @Mandatory
     private List<RedmineProject> projects;
 
-    @NotNull
-    public List<RedmineProject> getProjects() {
+    public @NotNull List<RedmineProject> getProjects() {
       return projects;
     }
   }

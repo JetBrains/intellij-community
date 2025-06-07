@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+
+jvm_resources(
+  name = "java_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "java_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+jvm_provided_library(
+  name = "java-guiForms-rt_provided",
+  lib = "//platform/forms_rt:java-guiForms-rt"
+)
+
+jvm_library(
+  name = "java",
+  module_name = "intellij.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/extensions",
+    "//platform/icons",
+    "//platform/workspace/storage",
+    "//xml/openapi:xml",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//xml/dom-openapi:dom",
+    "//platform/refactoring",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/java-analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//xml/xml-psi-api:psi",
+    "@lib//:kotlin-stdlib",
+    ":java-guiForms-rt_provided",
+  ],
+  exports = [
+    "//platform/util",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/java-analysis-api:analysis",
+  ],
+  runtime_deps = [
+    ":java_resources",
+    ":java_resources_1",
+  ]
+)
+### auto-generated section `build intellij.java` end

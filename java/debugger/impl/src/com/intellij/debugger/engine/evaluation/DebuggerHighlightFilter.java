@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class DebuggerHighlightFilter implements HighlightInfoFilter {
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, PsiFile file) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, PsiFile psiFile) {
     return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION ||
-           file == null ||
-           !DefaultCodeFragmentFactory.isDebuggerFile(file);
+           psiFile == null ||
+           !DefaultCodeFragmentFactory.isDebuggerFile(psiFile);
   }
 }

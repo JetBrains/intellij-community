@@ -171,7 +171,7 @@ public class GitExecutableDetectorWindowsTest {
 
       @NotNull
       @Override
-      protected File getWinRoot() {
+      protected File getWinRootInTests() {
         return TEST_WIN_ROOT;
       }
 
@@ -179,7 +179,7 @@ public class GitExecutableDetectorWindowsTest {
       protected String getPathEnv() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
-    }.detect(null);
+    }.getExecutable(null, null, true);
   }
 
   private File testRoot;

@@ -24,8 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
@@ -126,6 +126,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       super(pair.first, pair.second);
     }
 
+    @Override
     public String toString() {
       return StringUtil.notNullize(first);
     }
@@ -255,18 +256,18 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       Color background = getDefaultBackground();
       comboBox.setToolTipText(null);
 
-      if (errorProblems.size() > 0) {
+      if (!errorProblems.isEmpty()) {
         background = getErrorBackground();
         comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
       }
-      else if (warningProblems.size() > 0) {
+      else if (!warningProblems.isEmpty()) {
         background = getWarningBackground();
         comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
       }
 
       final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
       final String s = Pair.getFirst(pair);
-      background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
+      background = s != null && !s.trim().isEmpty() ? getDefaultBackground() : background;
 
       comboBox.setBackground(background);
       comboBox.getEditor().getEditorComponent().setBackground(background);

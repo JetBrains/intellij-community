@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -30,24 +30,22 @@ public class EscapeCharacterIntentionFix extends LocalQuickFixAndIntentionAction
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return XmlAnalysisBundle.message("xml.quickfix.escape.character", original, replacement);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
     Document document = topLevelFile.getViewProvider().getDocument();
     assert document != null;
     var startOffset = InjectedLanguageManager.getInstance(project).injectedToHost(startElement, startElement.getTextRange()).getStartOffset();

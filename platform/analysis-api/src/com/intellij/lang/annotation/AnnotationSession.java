@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -20,28 +20,26 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public /*abstract*/ class AnnotationSession implements UserDataHolder {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
 
   /**
    * FOR MAINTAINING BINARY COMPATIBILITY ONLY.
    * @deprecated Do not instantiate this class directly, use {@link AnnotationHolder#getCurrentAnnotationSession()} instead
    */
   @Deprecated
-  public AnnotationSession(@NotNull PsiFile file) {
-    myFile = file;
+  public AnnotationSession(@NotNull PsiFile psiFile) {
+    myPsiFile = psiFile;
   }
 
-  @NotNull
-  public /*abstract*/ PsiFile getFile() {
-    return myFile;
+  public @NotNull /*abstract*/ PsiFile getFile() {
+    return myPsiFile;
   }
 
   /**
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
-  @NotNull
-  public /*abstract*/ TextRange getPriorityRange() {
+  public @NotNull /*abstract*/ TextRange getPriorityRange() {
     return getFile().getTextRange();
   }
 
@@ -77,7 +75,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the annotator might choose to ignore it.
    */
-  public /*abstract*/ HighlightSeverity getMinimumSeverity() {
+  public /*abstract*/ @Nullable HighlightSeverity getMinimumSeverity() {
     return null;
   }
 }

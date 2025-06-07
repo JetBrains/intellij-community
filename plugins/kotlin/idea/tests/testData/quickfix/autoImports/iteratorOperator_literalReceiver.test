@@ -1,0 +1,28 @@
+// FILE: first.before.kt
+// "Import operator 'Int.iterator'" "true"
+// ERROR: For-loop range must have an 'iterator()' method
+// WITH_STDLIB
+
+package bar
+
+fun foo() {
+    for (date in <caret>10) {}
+}
+
+// FILE: second.kt
+package foo
+
+operator fun Int.iterator(): Iterator<Int> = TODO()
+
+// FILE: first.after.kt
+// "Import operator 'Int.iterator'" "true"
+// ERROR: For-loop range must have an 'iterator()' method
+// WITH_STDLIB
+
+package bar
+
+import foo.iterator
+
+fun foo() {
+    for (date in <caret>10) {}
+}

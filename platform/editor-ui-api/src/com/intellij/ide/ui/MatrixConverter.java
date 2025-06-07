@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.util.Matrix;
 import com.intellij.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 
-final class MatrixConverter extends ColorConverter {
+@ApiStatus.Internal
+public final class MatrixConverter extends ColorConverter {
   private final Double myWeight;
   private final Matrix myMatrix;
 
-  MatrixConverter(Matrix matrix) {
+  public MatrixConverter(Matrix matrix) {
     this(null, matrix);
   }
 

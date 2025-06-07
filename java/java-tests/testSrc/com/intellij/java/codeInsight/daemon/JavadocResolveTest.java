@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -63,7 +63,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     assertTrue(request instanceof SourceNavigationRequest);
     SourceNavigationRequest snr = (SourceNavigationRequest)request;
     VirtualFile file = snr.getFile();
-    assertEquals(file.getName(), "Test.java");
+    assertEquals("Test.java", file.getName());
     PsiFile snippetFile = PsiManager.getInstance(myProject).findFile(file);
     assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffsetMarker().getStartOffset()));
   }

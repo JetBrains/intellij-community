@@ -23,6 +23,7 @@ import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -70,6 +71,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
 
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null
+  private var boundsInitialized = false
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -170,6 +172,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   fun doDispose() {
     EdtInvocationManager.invokeLaterIfNeeded {
       Disposer.dispose(mouseActivationWatcher)
+      fixDragRecognitionSupportLeak()
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
       super.dispose()
@@ -255,6 +258,15 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @Suppress("OVERRIDE_DEPRECATION") // just for debugging, because all other methods delegate to this one
   override fun reshape(x: Int, y: Int, width: Int, height: Int) {
     super.reshape(x, y, width, height)
+    // Only start checking bounds after they first become sensible,
+    // because a frame always starts with zero width / height,
+    // and that would produce unnecessary error messages in the log.
+    if (!boundsInitialized) {
+      boundsInitialized = width > 0 || height > 0
+    }
+    if (boundsInitialized) {
+      checkForNonsenseBounds("reshape", width, height)
+    }
     IDE_FRAME_EVENT_LOG.traceThrowable {
       Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }
@@ -295,4 +307,26 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
       "screen bounds: ${toDebugString(screenBounds)}"
     )
   }
+}
+
+private fun fixDragRecognitionSupportLeak() {
+  // sending a "mouse release" event to any DnD-supporting component indirectly calls javax.swing.plaf.basic.DragRecognitionSupport.clearState,
+  // cleaning up the potential leak (that can happen if the user started dragging something and released the mouse outside the component)
+  val fakeTree = object : Tree() {
+    fun releaseDND() {
+      processMouseEvent(MouseEvent(
+        this,
+        MouseEvent.MOUSE_RELEASED,
+        System.currentTimeMillis(),
+        0,
+        0,
+        0,
+        1,
+        false,
+        MouseEvent.BUTTON1
+      ))
+    }
+  }
+  fakeTree.dragEnabled = true
+  fakeTree.releaseDND()
 }

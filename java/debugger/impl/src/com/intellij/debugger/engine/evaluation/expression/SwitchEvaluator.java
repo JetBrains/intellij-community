@@ -151,7 +151,7 @@ public class SwitchEvaluator implements Evaluator {
   }
 
   static class YieldEvaluator implements Evaluator {
-    @Nullable final Evaluator myValueEvaluator;
+    final @Nullable Evaluator myValueEvaluator;
 
     YieldEvaluator(@Nullable Evaluator valueEvaluator) {
       myValueEvaluator = valueEvaluator;

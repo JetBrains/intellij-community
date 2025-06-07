@@ -157,9 +157,9 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
                             systemShortcuts, myQuickLists);
       });
       AnAction action = ActionManager.getInstance().getAction(actId);
-      String actionText = action == null ? actId : action.getTemplatePresentation().getText();
+      String actionText = action == null ? null : action.getTemplateText();
       if (!empty) links.append(", ");
-      links.appendLink(actId, actionText);
+      links.appendLink(actId, StringUtil.notNullize(actionText, actId));
 
       empty = false;
       ++count;

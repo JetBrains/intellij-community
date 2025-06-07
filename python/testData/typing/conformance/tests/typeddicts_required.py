@@ -11,6 +11,9 @@ from typing import Annotated, NotRequired, Required, TypedDict
 class NotTypedDict:
     x: Required[int]  # E: Required not allowed in this context
 
+    def __init__(self, x: int) -> None:
+        self.x = x
+
 
 def func1(
     x: NotRequired[int],  # E: NotRequired not allowed in this context

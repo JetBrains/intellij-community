@@ -116,6 +116,7 @@ public final class CommandLineWaitingManager {
     if (future == null) {
       return;
     }
+    LOG.debug("Finished waiting for the " + fileOrProject);
     future.complete(CliResult.OK);
   }
 

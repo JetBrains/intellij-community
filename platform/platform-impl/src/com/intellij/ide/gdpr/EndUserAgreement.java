@@ -49,7 +49,7 @@ public final class EndUserAgreement {
     return getDocumentContentFile(getDocumentName());
   }
 
-  private static @NotNull Path getDocumentContentFile(@NotNull String docName) {
+  public static @NotNull Path getDocumentContentFile(@NotNull String docName) {
     return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? PRIVACY_POLICY_CONTENT_FILE_NAME : (docName + ".cached"));
   }
 
@@ -71,8 +71,11 @@ public final class EndUserAgreement {
   }
 
   public static void setAccepted(@NotNull Document doc) {
-    final Version version = doc.getVersion();
-    String versionKey = getAcceptedVersionKey(doc.getName());
+    setAcceptedVersion(doc.getName(), doc.getVersion());
+  }
+
+  public static void setAcceptedVersion(@NotNull String docName, @NotNull Version version) {
+    String versionKey = getAcceptedVersionKey(docName);
     if (version.isUnknown()) {
       Prefs.remove(versionKey);
     }

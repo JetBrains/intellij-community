@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -15,14 +15,14 @@ import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class MergeContext {
 
-  @NotNull private final Project myProject;
-  @NotNull private final String myBranchName;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final WCInfo myWcInfo;
-  @NotNull private final Url mySourceUrl;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final String myRepositoryRelativeSourcePath;
-  @NotNull private final String myRepositoryRelativeWorkingCopyPath;
+  private final @NotNull Project myProject;
+  private final @NotNull String myBranchName;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull WCInfo myWcInfo;
+  private final @NotNull Url mySourceUrl;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull String myRepositoryRelativeSourcePath;
+  private final @NotNull String myRepositoryRelativeWorkingCopyPath;
 
   public MergeContext(@NotNull SvnVcs vcs,
                       @NotNull Url sourceUrl,
@@ -39,49 +39,39 @@ public class MergeContext {
     myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), myWcInfo.getUrl()));
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public String getBranchName() {
+  public @NotNull String getBranchName() {
     return myBranchName;
   }
 
-  @NotNull
-  public VirtualFile getRoot() {
+  public @NotNull VirtualFile getRoot() {
     return myRoot;
   }
 
-  @NotNull
-  public WCInfo getWcInfo() {
+  public @NotNull WCInfo getWcInfo() {
     return myWcInfo;
   }
 
-  @NotNull
-  public Url getSourceUrl() {
+  public @NotNull Url getSourceUrl() {
     return mySourceUrl;
   }
 
-  @NotNull
-  public String getRepositoryRelativeSourcePath() {
+  public @NotNull String getRepositoryRelativeSourcePath() {
     return myRepositoryRelativeSourcePath;
   }
 
-  @NotNull
-  public String getRepositoryRelativeWorkingCopyPath() {
+  public @NotNull String getRepositoryRelativeWorkingCopyPath() {
     return myRepositoryRelativeWorkingCopyPath;
   }
 
-  @NotNull
-  public SvnVcs getVcs() {
+  public @NotNull SvnVcs getVcs() {
     return myVcs;
   }
 
-  @DialogTitle
-  @NotNull
-  public String getMergeTitle() {
+  public @DialogTitle @NotNull String getMergeTitle() {
     return message("dialog.title.merge.from.branch", myBranchName);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -36,8 +36,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtValueArgumentList): Unit? =
+    override fun KaSession.prepareContext(element: KtValueArgumentList): Unit? =
         ((element.parent as? KtCallExpression)
             ?.resolveToCall() is KaSuccessCallInfo)
             .asUnit
@@ -45,7 +44,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
     override fun createQuickFix(
         element: KtValueArgumentList,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
+    ): KotlinModCommandQuickFix<KtValueArgumentList> = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")

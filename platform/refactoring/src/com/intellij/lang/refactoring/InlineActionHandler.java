@@ -72,9 +72,7 @@ public abstract class InlineActionHandler {
     */
   public abstract void inlineElement(Project project, Editor editor, PsiElement element);
 
-  @Nullable
-  @ActionText
-  public String getActionName(PsiElement element) {
+  public @Nullable @ActionText String getActionName(PsiElement element) {
     return null;
   }
 }

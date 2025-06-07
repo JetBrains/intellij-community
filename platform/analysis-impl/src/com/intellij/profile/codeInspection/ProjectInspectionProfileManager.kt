@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.runActivity
@@ -46,8 +45,9 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
                                                                                   Disposable {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ProjectInspectionProfileManager =
-      InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
+    fun getInstance(project: Project): ProjectInspectionProfileManager {
+      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
+    }
   }
 
   private var state = ProjectInspectionProfileManagerState()
@@ -67,8 +67,9 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
 
       override fun isSchemeFile(name: CharSequence): Boolean = name != PROFILES_SETTINGS
 
-      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean =
-        scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
+      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean {
+        return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
+      }
 
       override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
         schemeRemoved(scheme)
@@ -127,16 +128,15 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     }
   }
 
-  override fun getStateModificationCount(): Long =
-    state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
+  override fun getStateModificationCount(): Long {
+    return state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
+  }
 
   @TestOnly
   fun forceLoadSchemes() {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode)
     schemeManager.loadSchemes()
   }
-
-  fun isCurrentProfileInitialized(): Boolean = currentProfile.wasInitialized()
 
   override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
@@ -193,7 +193,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
 
   @Synchronized
   override fun getProfiles(): Collection<InspectionProfileImpl> {
-    currentProfile
+    getCurrentProfile()
     return schemeManager.allSchemes
   }
 
@@ -252,8 +252,9 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
   }
 
   @Synchronized
-  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? =
-    schemeManager.findSchemeByName(name) ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
+  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
+    return schemeManager.findSchemeByName(name) ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
+  }
 
   fun fireProfileChanged() {
     fireProfileChanged(currentProfile)

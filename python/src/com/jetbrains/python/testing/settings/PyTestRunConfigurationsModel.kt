@@ -11,7 +11,7 @@ import com.jetbrains.python.testing.TestRunnerService
 internal class PyTestRunConfigurationsModel private constructor(private val module: Module?,
                                                                 items: List<PyAbstractTestFactory<*>>,
                                                                 selection: PyAbstractTestFactory<*>) :
-  CollectionComboBoxModel<PyAbstractTestFactory<*>>(items, selection) {
+  CollectionComboBoxModel<PyAbstractTestFactory<*>>(items.toMutableList(), selection) {
   companion object {
     fun create(module: Module?): PyTestRunConfigurationsModel =
       PyTestRunConfigurationsModel(module, PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().toList(),

@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import static com.intellij.platform.navbar.frontend.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
 
-public sealed abstract class NavBarActions extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
+public abstract sealed class NavBarActions extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   NavBarActions() {
     setEnabledInModalContext(true);
   }

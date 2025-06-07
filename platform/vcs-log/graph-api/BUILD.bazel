@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.vcs.log.graph` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-log-graph",
+  module_name = "intellij.platform.vcs.log.graph",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/util-rt",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.log.graph` end

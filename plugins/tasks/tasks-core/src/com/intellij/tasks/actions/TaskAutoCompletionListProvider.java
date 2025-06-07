@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -37,9 +37,8 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
     return "task description and comments";
   }
 
-  @NotNull
   @Override
-  public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
+  public @NotNull List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
     return TaskSearchSupport.getItems(TaskManager.getManager(myProject), prefix, cached, parameters.isAutoPopup());
   }
 
@@ -49,7 +48,7 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
   }
 
   @Override
-  public LookupElementBuilder createLookupBuilder(@NotNull final Task task) {
+  public LookupElementBuilder createLookupBuilder(final @NotNull Task task) {
     LookupElementBuilder builder = super.createLookupBuilder(task);
 
     builder = builder.withLookupString(task.getSummary());
@@ -61,7 +60,7 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
   }
 
   @Override
-  protected InsertHandler<LookupElement> createInsertHandler(@NotNull final Task task) {
+  protected InsertHandler<LookupElement> createInsertHandler(final @NotNull Task task) {
     return new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -76,33 +75,32 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
     };
   }
 
-  protected void handleInsert(@NotNull final Task task) {
+  protected void handleInsert(final @NotNull Task task) {
     // Override it for autocompletion insert handler
   }
 
   @Override
-  protected Icon getIcon(@NotNull final Task task) {
+  protected Icon getIcon(final @NotNull Task task) {
     return task.getIcon();
   }
 
-  @NotNull
   @Override
-  protected String getLookupString(@NotNull final Task task) {
+  protected @NotNull String getLookupString(final @NotNull Task task) {
     return task.getPresentableId();
   }
 
   @Override
-  protected String getTailText(@NotNull final Task task) {
+  protected String getTailText(final @NotNull Task task) {
     return " " + task.getSummary();
   }
 
   @Override
-  protected String getTypeText(@NotNull final Task task) {
+  protected String getTypeText(final @NotNull Task task) {
     return null;
   }
 
   @Override
-  public int compare(@NotNull final Task task1, @NotNull final Task task2) {
+  public int compare(final @NotNull Task task1, final @NotNull Task task2) {
     // N/A here
     throw new UnsupportedOperationException();
   }

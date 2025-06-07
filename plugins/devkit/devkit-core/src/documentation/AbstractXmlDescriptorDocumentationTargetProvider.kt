@@ -1,25 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
 import com.intellij.icons.AllIcons
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.documentation.DocumentationLinkHandler
-import com.intellij.platform.backend.documentation.DocumentationResult
-import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.platform.backend.documentation.LinkResolveResult
-import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
+import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.siblings
 import com.intellij.psi.xml.XmlAttribute
+import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.xml.reflect.DomAttributeChildDescription
 
-const val ELEMENT_PATH_PREFIX = "#element:"
-const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
-const val ELEMENT_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ELEMENT_PATH_PREFIX"
-const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREFIX"
+internal const val ELEMENT_PATH_PREFIX = "#element:"
+internal const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
+internal const val ELEMENT_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ELEMENT_PATH_PREFIX"
+internal const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREFIX"
 
 /**
  * Base class for XML descriptors (for example, plugin.xml) documentation providers.
@@ -29,7 +33,8 @@ const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREF
  * [SDK docs](https://plugins.jetbrains.com/docs/intellij).
  *
  * To implement a new documentation provider:
- * 1. Create a documentation YAML containing the descriptor content.
+ * 1. Create a documentation YAML containing the descriptor content (the YAML file should be automatically mapped to
+ *    the `schemas/descriptor-documentation-schema.json` schema; all elements are documented).
  * 2. Extend this class.
  * 3. Provide a documentation YAML URL and path in [docYamlCoordinates].
  * 4. Register the provider in `com.intellij.platform.backend.documentation.psiTargetProvider` extension point.
@@ -39,24 +44,60 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
   override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
     originalElement ?: return null
     if (!isApplicable(element, originalElement)) return null
-    val parent = originalElement.parent
-    val xmlElement = parent as? XmlAttribute ?: parent as? XmlTag ?: return null
-    val elementPath = getXmlElementPath(xmlElement)
+    val (isAttribute, elementPath) = getIsAttributeAndPath(element, originalElement) ?: return null
     val content = DocumentationContentProvider.getInstance().getContent(docYamlCoordinates) ?: return null
-    return when (xmlElement) {
-      is XmlTag -> {
-        val docElement = content.findElement(elementPath) ?: return null
-        XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
-      }
-      is XmlAttribute -> {
-        val docAttribute = content.findAttribute(elementPath) ?: return null
-        XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
-      }
-      else -> null
+    return if (isAttribute) {
+      val docAttribute = content.findAttribute(elementPath)?.takeIf { it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
+    }
+    else {
+      val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() && it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
     }
   }
 
   abstract fun isApplicable(element: PsiElement, originalElement: PsiElement?): Boolean
+
+  private fun getIsAttributeAndPath(element: PsiElement, originalElement: PsiElement): Pair<Boolean, List<String>>? {
+    val context = findContextElement(originalElement) ?: return null
+    val elementName = getElementName(element) ?: return null
+    if (elementName == getContextElementName (context)) { // assume no parent and child with the same name
+      return (context is XmlAttribute) to getXmlElementPath(context)
+    }
+    // handle lookup element
+    val target = (element as? PomTargetPsiElement)?.target ?: return null
+    val isAttribute = target is DomAttributeChildDescription<*>
+    val parentTag = context.parentOfType<XmlTag>(withSelf = isAttribute) ?: return null
+    val parentPath = getXmlElementPath(parentTag)
+    return isAttribute to (parentPath + elementName)
+  }
+
+  private fun getElementName(element: PsiElement): String? {
+    // because in case of elements defined with XSD:
+    if (element is XmlTag && element.containingFile.virtualFile.extension == "xsd") {
+      return element.getAttribute("name")?.value
+    }
+    return (element as? PsiNamedElement)?.name
+  }
+
+  private fun getContextElementName(context: PsiElement): String? {
+    return (context as? XmlTag)?.localName ?: (context as? PsiNamedElement)?.name
+  }
+
+  private fun findContextElement(context: PsiElement): XmlElement? {
+    if (context is PsiWhiteSpace) {
+      val prevXmlElement = context.siblings(forward = false, withSelf = false)
+        .mapNotNull { it as? XmlTag }
+        .firstOrNull()
+      if (prevXmlElement != null) {
+        return prevXmlElement
+      }
+    }
+    return generateSequence(context) { it.parent }
+      .filter { it is XmlTag || it is XmlAttribute }
+      .filterIsInstance<XmlElement>()
+      .firstOrNull()
+  }
 
   private fun getXmlElementPath(element: PsiElement): List<String> =
     generateSequence(element) { it.parent }
@@ -129,6 +170,12 @@ internal class XmlDescriptorDocumentationLinkHandler : DocumentationLinkHandler 
           return LinkResolveResult.resolvedTarget(
             XmlDescriptorAttributeDocumentationTarget(target.project, target.content, attribute)
           )
+        }
+        else -> {
+          // required for Java links to work; inspired by PsiDocumentationLinkHandler
+          val project = target.project
+          val resolved = DocumentationManager.targetAndRef(project, url, null)?.first ?: return null // we can't get rid of this API usage
+          return LinkResolveResult.resolvedTarget(psiDocumentationTargets(resolved, null).first())
         }
       }
     }

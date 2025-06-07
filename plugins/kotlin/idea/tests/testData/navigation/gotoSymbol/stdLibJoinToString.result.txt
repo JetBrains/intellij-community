@@ -1,16 +1,7 @@
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
-    locationString: (in kotlin.collections.ArraysKt)
-    icon: RowIcon(icons=[Function, Public])
-TargetElement: public fun <T> kotlin.Array<out T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
-QualifiedName: kotlin.collections.ArraysKt.joinToString
-
-NavigationItem:
-    name: joinToString
-ItemPresentation:
-    presentableText: Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence?))
+    presentableText: Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
 TargetElement: public fun <T> kotlin.Array<out T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -19,7 +10,16 @@ QualifiedName: Array.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: BooleanArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> kotlin.CharSequence)?)
+    locationString: (in kotlin.collections.ArraysKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <T> kotlin.Array<out T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
+QualifiedName: kotlin.collections.ArraysKt.joinToString
+
+NavigationItem:
+    name: joinToString
+ItemPresentation:
+    presentableText: BooleanArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Boolean) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.BooleanArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Boolean) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -28,7 +28,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: BooleanArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: BooleanArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Boolean) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.BooleanArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Boolean) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -37,7 +37,7 @@ QualifiedName: BooleanArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: ByteArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: ByteArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Byte) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.ByteArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Byte) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -46,7 +46,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: ByteArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: ByteArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Byte) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.ByteArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Byte) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -55,7 +55,7 @@ QualifiedName: ByteArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: CharArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: CharArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Char) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.CharArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Char) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -64,7 +64,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: CharArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: CharArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Char) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.CharArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Char) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -73,7 +73,7 @@ QualifiedName: CharArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: DoubleArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: DoubleArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Double) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.DoubleArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Double) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -82,7 +82,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: DoubleArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: DoubleArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Double) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.DoubleArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Double) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -91,7 +91,7 @@ QualifiedName: DoubleArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: FloatArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: FloatArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Float) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.FloatArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Float) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -100,7 +100,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: FloatArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: FloatArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Float) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.FloatArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Float) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -109,7 +109,7 @@ QualifiedName: FloatArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: IntArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: IntArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Int) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.IntArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Int) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -118,7 +118,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: IntArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: IntArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Int) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.IntArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Int) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -127,16 +127,7 @@ QualifiedName: IntArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
-    locationString: (in kotlin.collections.CollectionsKt)
-    icon: RowIcon(icons=[Function, Public])
-TargetElement: public fun <T> kotlin.collections.Iterable<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
-QualifiedName: kotlin.collections.CollectionsKt.joinToString
-
-NavigationItem:
-    name: joinToString
-ItemPresentation:
-    presentableText: Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence?))
+    presentableText: Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
 TargetElement: public fun <T> kotlin.collections.Iterable<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -145,7 +136,16 @@ QualifiedName: Iterable.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: LongArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> kotlin.CharSequence)?)
+    locationString: (in kotlin.collections.CollectionsKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <T> kotlin.collections.Iterable<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
+QualifiedName: kotlin.collections.CollectionsKt.joinToString
+
+NavigationItem:
+    name: joinToString
+ItemPresentation:
+    presentableText: LongArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Long) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.LongArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Long) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -154,7 +154,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: LongArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: LongArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Long) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.LongArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Long) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -163,16 +163,7 @@ QualifiedName: LongArray.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
-    locationString: (in kotlin.sequences.SequencesKt)
-    icon: RowIcon(icons=[Function, Public])
-TargetElement: public fun <T> kotlin.sequences.Sequence<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
-QualifiedName: kotlin.sequences.SequencesKt.joinToString
-
-NavigationItem:
-    name: joinToString
-ItemPresentation:
-    presentableText: Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence?))
+    presentableText: Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.sequences)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
 TargetElement: public fun <T> kotlin.sequences.Sequence<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -181,7 +172,16 @@ QualifiedName: Sequence.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: ShortArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> kotlin.CharSequence)?)
+    locationString: (in kotlin.sequences.SequencesKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <T> kotlin.sequences.Sequence<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
+QualifiedName: kotlin.sequences.SequencesKt.joinToString
+
+NavigationItem:
+    name: joinToString
+ItemPresentation:
+    presentableText: ShortArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Short) -> kotlin.CharSequence)?)
     locationString: (in kotlin.collections.ArraysKt)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.ShortArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Short) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
@@ -190,7 +190,7 @@ QualifiedName: kotlin.collections.ArraysKt.joinToString
 NavigationItem:
     name: joinToString
 ItemPresentation:
-    presentableText: ShortArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, CharSequence)?)
+    presentableText: ShortArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((kotlin.Short) -> kotlin.CharSequence)?)
     locationString: (kotlin.collections)
     icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun kotlin.ShortArray.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((kotlin.Short) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }

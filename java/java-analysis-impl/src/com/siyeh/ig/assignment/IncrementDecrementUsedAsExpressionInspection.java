@@ -17,6 +17,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -39,14 +40,12 @@ import org.jetbrains.annotations.Nullable;
 public final class IncrementDecrementUsedAsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ValueOfIncrementOrDecrementUsed";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiPostfixExpression postfixExpression) {
       final IElementType tokenType = postfixExpression.getOperationTokenType();
@@ -74,8 +73,7 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, true, PsiMember.class) == null) {
       return null;
@@ -93,16 +91,14 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message(
         "increment.decrement.used.as.expression.quickfix",
         elementText);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("increment.decrement.used.as.expression.fix.family.name");
     }
 
@@ -181,11 +177,11 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
         parent.addBefore(newStatement, statement);
         final String keyword;
         if (statement instanceof PsiReturnStatement) {
-          keyword = PsiKeyword.RETURN;
+          keyword = JavaKeywords.RETURN;
         } else if (statement instanceof PsiYieldStatement) {
-          keyword = PsiKeyword.YIELD;
+          keyword = JavaKeywords.YIELD;
         } else {
-          keyword = PsiKeyword.THROW;
+          keyword = JavaKeywords.THROW;
         }
         final PsiStatement newReturnStatement = factory.createStatementFromText(keyword + " " + variableName + ';', statement);
         statement.replace(newReturnStatement);

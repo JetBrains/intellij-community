@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.fs.EelFileSystemApi.*
 import com.intellij.platform.eel.path.EelPath
 
-internal data class WriteOptionsImpl(
-  override val path: EelPath.Absolute,
+internal data class WriteOptionsImpl2(
+  override val path: EelPath,
   override var append: Boolean = false,
   override var truncateExisting: Boolean = false,
   override var creationMode: FileWriterCreationMode = FileWriterCreationMode.ONLY_OPEN_EXISTING,
@@ -21,9 +21,9 @@ internal data class WriteOptionsImpl(
   }
 }
 
-internal data class CopyOptionsImpl(
-  override val source: EelPath.Absolute,
-  override val target: EelPath.Absolute,
+internal data class CopyOptionsImpl2(
+  override val source: EelPath,
+  override val target: EelPath,
   override var copyRecursively: Boolean = false,
   override var replaceExisting: Boolean = false,
   override var preserveAttributes: Boolean = false,
@@ -47,11 +47,14 @@ internal data class CopyOptionsImpl(
 
 internal data class TimeSinceEpochImpl(override val seconds: ULong, override val nanoseconds: UInt) : TimeSinceEpoch
 
-internal data class ChangeAttributesOptionsImpl(
+internal data class ChangeAttributesOptionsImpl2(
   override var accessTime: TimeSinceEpoch? = null,
   override var modificationTime: TimeSinceEpoch? = null,
   override var permissions: EelFileInfo.Permissions? = null,
 ) : ChangeAttributesOptions, ChangeAttributesOptions.Builder {
+  override val path: EelPath
+    get() = TODO("Not yet implemented")
+
   override fun accessTime(duration: TimeSinceEpoch): ChangeAttributesOptions.Builder = apply { accessTime = duration }
 
   override fun modificationTime(duration: TimeSinceEpoch): ChangeAttributesOptions.Builder = apply { modificationTime = duration }
@@ -63,29 +66,49 @@ internal data class ChangeAttributesOptionsImpl(
   }
 }
 
-internal data class CreateTemporaryDirectoryOptionsImpl(
+internal data class CreateTemporaryEntryOptionsImpl2(
   override var prefix: String = "tmp",
   override var suffix: String = "",
   override var deleteOnExit: Boolean = false,
-  override var parentDirectory: EelPath.Absolute? = null,
-) : CreateTemporaryDirectoryOptions, CreateTemporaryDirectoryOptions.Builder {
-  override fun prefix(prefix: String): CreateTemporaryDirectoryOptions.Builder = apply {
+  override var parentDirectory: EelPath? = null,
+) : CreateTemporaryEntryOptions, CreateTemporaryEntryOptions.Builder {
+  override fun prefix(prefix: String): CreateTemporaryEntryOptions.Builder = apply {
     this.prefix = prefix
   }
 
-  override fun suffix(suffix: String): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun suffix(suffix: String): CreateTemporaryEntryOptions.Builder = apply {
     this.suffix = suffix
   }
 
-  override fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryEntryOptions.Builder = apply {
     this.deleteOnExit = deleteOnExit
   }
 
-  override fun parentDirectory(parentDirectory: EelPath.Absolute?): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun parentDirectory(parentDirectory: EelPath?): CreateTemporaryEntryOptions.Builder = apply {
     this.parentDirectory = parentDirectory
   }
 
-  override fun build(): CreateTemporaryDirectoryOptions {
+  override fun build(): CreateTemporaryEntryOptions {
     return copy()
   }
+}
+
+internal data class AbsoluteSymbolicLinkTarget(override val path: EelPath) : EelFileSystemPosixApi.SymbolicLinkTarget.Absolute
+internal data class RelativeSymbolicLinkTarget(override val reference: List<String>) : EelFileSystemPosixApi.SymbolicLinkTarget.Relative
+
+internal class WatchedPathBuilder(
+  private val path: EelPath,
+  private var recursive: Boolean = false,
+) : WatchedPath.Builder {
+  override fun build(): WatchedPath {
+    return WatchPathImpl(this.path, this.recursive)
+  }
+
+  override fun recursive(boolean: Boolean): WatchedPath.Builder {
+    this.recursive = recursive
+    return this
+  }
+
+  private class WatchPathImpl(override val path: EelPath, override val recursive: Boolean) : WatchedPath {}
+
 }

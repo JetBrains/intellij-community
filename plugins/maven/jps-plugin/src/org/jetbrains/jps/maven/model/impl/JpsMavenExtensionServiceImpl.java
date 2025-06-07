@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,14 +22,15 @@ import org.jetbrains.jps.model.java.impl.JpsJavaAwareProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsMavenExtensionServiceImpl.class);
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("maven production on test");
-  private final Map<File, MavenProjectConfiguration> myLoadedConfigs = FileCollectionFactory.createCanonicalFileMap();
-  private final Map<File, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> key.exists());
+  private final Map<Path, MavenProjectConfiguration> myLoadedConfigs = FileCollectionFactory.createCanonicalPathMap();
+  private final Map<Path, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> Files.exists(key));
 
   public JpsMavenExtensionServiceImpl() {
     ResourcesBuilder.registerEnabler(new StandardResourceBuilderEnabler() {
@@ -42,15 +43,13 @@ public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService
     });
   }
 
-  @Nullable
   @Override
-  public JpsMavenModuleExtension getExtension(@NotNull JpsModule module) {
+  public @Nullable JpsMavenModuleExtension getExtension(@NotNull JpsModule module) {
     return module.getContainer().getChild(JpsMavenModuleExtensionImpl.ROLE);
   }
 
-  @NotNull
   @Override
-  public JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module) {
+  public @NotNull JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module) {
     JpsMavenModuleExtension extension = module.getContainer().getChild(JpsMavenModuleExtensionImpl.ROLE);
     if (extension == null) {
       extension = new JpsMavenModuleExtensionImpl();
@@ -81,21 +80,16 @@ public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService
 
   @Override
   public boolean hasMavenProjectConfiguration(@NotNull BuildDataPaths paths) {
-    return myConfigFileExists.get(new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
+    return myConfigFileExists.get(paths.getDataStorageDir().resolve(MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
   }
 
   @Override
-  public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
-    if (!hasMavenProjectConfiguration(paths)) {
-      return null;
-    }
-    final File dataStorageRoot = paths.getDataStorageRoot();
-    return getMavenProjectConfiguration(dataStorageRoot);
+  public MavenProjectConfiguration getMavenProjectConfiguration(@NotNull BuildDataPaths paths) {
+    return hasMavenProjectConfiguration(paths) ? getMavenProjectConfiguration(paths.getDataStorageDir()) : null;
   }
 
-  @NotNull
-  public MavenProjectConfiguration getMavenProjectConfiguration(@NotNull File dataStorageRoot) {
-    final File configFile = new File(dataStorageRoot, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+  public @NotNull MavenProjectConfiguration getMavenProjectConfiguration(@NotNull Path dataStorageRoot) {
+    Path configFile = dataStorageRoot.resolve(MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
     MavenProjectConfiguration config;
     synchronized (myLoadedConfigs) {
       config = myLoadedConfigs.get(configFile);

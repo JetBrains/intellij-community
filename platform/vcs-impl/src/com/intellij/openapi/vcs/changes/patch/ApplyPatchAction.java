@@ -84,7 +84,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
   /**
    * @deprecated Use {@link ApplyPatchUtil#showAndGetApplyPatch(Project, File)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresEdt
   public static Boolean showAndGetApplyPatch(@NotNull Project project, @NotNull File file) {
     return ApplyPatchUtil.showAndGetApplyPatch(project, file);
@@ -94,7 +94,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
    * @deprecated Use {@link ApplyPatchUtil#applyContent(Project, ApplyFilePatchBase, ApplyPatchContext, VirtualFile, CommitContext, boolean, String, String)} instead.
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,
                                                        @Nullable ApplyPatchContext context,

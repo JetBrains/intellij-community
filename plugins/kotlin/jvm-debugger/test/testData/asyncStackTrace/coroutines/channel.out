@@ -1,0 +1,20 @@
+LineBreakpoint created at channel.kt:12
+Run Java
+Connected to the target VM
+channel.kt:12
+vvv stack trace vvv
+  foo:12, ChannelKt
+  invokeSuspend:20, ChannelKt$main$1$a$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, ChannelKt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:18, ChannelKt
+  main:-1, ChannelKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

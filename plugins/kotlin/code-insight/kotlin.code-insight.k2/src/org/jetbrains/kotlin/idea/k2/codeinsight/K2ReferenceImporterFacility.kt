@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
@@ -66,7 +69,10 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
 
             val importFixes = buildList {
                 for (diagnostic in diagnostics) {
-                    for (importFix in quickFixService.getImportQuickFixesFor(diagnostic)) {
+                    val importQuickFixesForDiagnostic = with(quickFixService) {
+                        getImportQuickFixesFor(diagnostic)
+                    }
+                    for (importFix in importQuickFixesForDiagnostic) {
                         val element = importFix.element
                         // Obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
                         if (element != null && !file.hasUnresolvedImportWhichCanImport(element)) {

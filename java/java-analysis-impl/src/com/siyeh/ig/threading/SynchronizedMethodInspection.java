@@ -42,8 +42,7 @@ public final class SynchronizedMethodInspection extends BaseInspection {
   public boolean ignoreSynchronizedSuperMethods = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return InspectionGadgetsBundle.message(
       "synchronized.method.problem.descriptor", method.getName());
@@ -73,8 +72,7 @@ public final class SynchronizedMethodInspection extends BaseInspection {
   private static class SynchronizedMethodFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "synchronized.method.move.quickfix");
     }
@@ -91,7 +89,7 @@ public final class SynchronizedMethodInspection extends BaseInspection {
         return;
       }
       final String text = body.getText();
-      @NonNls final String replacementText;
+      final @NonNls String replacementText;
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;

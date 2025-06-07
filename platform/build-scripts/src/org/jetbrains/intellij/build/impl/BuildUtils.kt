@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -14,6 +15,19 @@ object BuildUtils {
     replacements.forEach(BiConsumer { k, v ->
       result = result.replace("$marker${k}$marker", v)
     })
+    return result
+  }
+
+  fun checkedReplace(oldText: String, regex: String, newText: String, regexOptions: Set<RegexOption> = emptySet()): String {
+    val result = oldText.replaceFirst(Regex(regex, regexOptions), newText)
+    if (result == oldText) {
+      if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
+        // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
+        return result
+      }
+
+      throw IllegalStateException("Cannot find '$regex' in '$oldText'")
+    }
     return result
   }
 

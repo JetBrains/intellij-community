@@ -29,7 +29,7 @@ class WithAnonym {
 
 class WithAnonymInheritor extends WithAnonym {
   {
-    <error descr="Anonymous class implements interface; cannot have qualifier for new">this.new I() {}</error>;
+    <error descr="Unexpected qualifier for anonymous class implementing interface">this.new I() {}</error>;
     this.new Inner() {};
   }
 }

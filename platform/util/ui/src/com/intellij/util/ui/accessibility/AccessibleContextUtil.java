@@ -17,19 +17,17 @@ package com.intellij.util.ui.accessibility;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import java.awt.*;
 
 public final class AccessibleContextUtil {
-  //@VisibleForTesting
-  static final String PUNCTUATION_CHARACTER = ".";
-  //@VisibleForTesting
-  static final String PUNCTUATION_SEPARATOR = "  ";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_CHARACTER = ".";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_SEPARATOR = "  ";
 
   public static void setName(@NotNull Component component, @Nls String name) {
     setAccessibleName(component, name);
@@ -40,7 +38,7 @@ public final class AccessibleContextUtil {
   }
 
   public static void setCombinedName(@NotNull Component component,
-                                     @NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+                                     @Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     setAccessibleName(component,
       combineAccessibleStrings(
         getAccessibleName(j1),
@@ -49,8 +47,8 @@ public final class AccessibleContextUtil {
   }
 
   public static void setCombinedName(@NotNull Component component,
-                                     @NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                     @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+                                     @Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                     @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     setAccessibleName(component,
       combineAccessibleStrings(
         getAccessibleName(j1),
@@ -60,12 +58,12 @@ public final class AccessibleContextUtil {
         getAccessibleName(j3)));
   }
 
-  public static @Nls @Nullable String getCombinedName(@NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     return combineAccessibleStrings(getAccessibleName(j1), separator, getAccessibleName(j2));
   }
 
-  public static @Nls @Nullable String getCombinedName(@NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                                      @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                                      @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3));
   }
 
@@ -85,8 +83,8 @@ public final class AccessibleContextUtil {
     setAccessibleDescription(component, description);
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1,
-                                            @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1,
+                                            @NotNull @NlsSafe String separator, @Nullable Component j2) {
     setAccessibleDescription(component,
       combineAccessibleStrings(
         getAccessibleDescription(j1),
@@ -94,8 +92,8 @@ public final class AccessibleContextUtil {
         getAccessibleDescription(j2)));
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                            @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                            @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     setAccessibleDescription(component,
       combineAccessibleStrings(
         getAccessibleDescription(j1),
@@ -105,12 +103,12 @@ public final class AccessibleContextUtil {
         getAccessibleDescription(j3)));
   }
 
-  public static String getCombinedDescription(@NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     return combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2));
   }
 
-  public static String getCombinedDescription(@NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                              @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                              @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     return combineAccessibleStrings(getAccessibleDescription(j1), separator1,
                                     getAccessibleDescription(j2), separator2, getAccessibleDescription(j3));
   }
@@ -189,7 +187,7 @@ public final class AccessibleContextUtil {
     return result.toString();
   }
 
-  private static @Nls @Nullable String getAccessibleName(@NotNull Component component) {
+  private static @Nls @Nullable String getAccessibleName(@Nullable Component component) {
     if (component instanceof Accessible) {
       return component.getAccessibleContext().getAccessibleName();
     }
@@ -202,7 +200,7 @@ public final class AccessibleContextUtil {
     }
   }
 
-  private static @Nullable @Nls String getAccessibleDescription(@NotNull Component component) {
+  private static @Nullable @Nls String getAccessibleDescription(@Nullable Component component) {
     if (component instanceof Accessible) {
       return component.getAccessibleContext().getAccessibleDescription();
     }

@@ -123,17 +123,19 @@ abstract class GitStageTree(project: Project,
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
+
+    val selectedNodes = selectedStatusNodes().collect()
+    val selectedChanges = selectedChanges().collect()
+
     sink[GitStageDataKeys.GIT_STAGE_TREE] = this
     sink[GitStageDataKeys.GIT_STAGE_UI_SETTINGS] = settings
-    sink[GitStageDataKeys.GIT_FILE_STATUS_NODES] = selectedStatusNodes()
+    sink[GitStageDataKeys.GIT_FILE_STATUS_NODES] = selectedNodes
     sink[VcsDataKeys.FILE_PATHS] =
-      selectedStatusNodes().map { it.filePath } +
-      selectedChanges().map { ChangesUtil.getFilePath(it) }
-    sink[VcsDataKeys.CHANGES] = selectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY)
-    sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
+      selectedNodes.map { it.filePath } +
+      selectedChanges.map { ChangesUtil.getFilePath(it) }
+    sink[VcsDataKeys.CHANGES] = selectedChanges.toArray(Change.EMPTY_CHANGE_ARRAY)
+    sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = if (!selectedNodes.isEmpty) VirtualFileDeleteProvider() else null
 
-    val selectedNodes = selectedStatusNodes()
-    val selectedChanges = selectedChanges()
     sink.lazy(VcsDataKeys.VIRTUAL_FILES) {
       selectedVirtualFiles(selectedNodes, selectedChanges)
     }

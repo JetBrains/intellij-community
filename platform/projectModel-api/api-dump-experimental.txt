@@ -28,16 +28,11 @@ Fa:com.intellij.openapi.module.ModuleManager
 - *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - *:removeUnloadedModules(java.util.Collection):V
 - *a:setUnloadedModules(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.openapi.project.ProjectCloseListener
-- *sf:Companion:com.intellij.openapi.project.ProjectCloseListener$Companion
-- sf:TOPIC:com.intellij.util.messages.Topic
-- projectClosed(com.intellij.openapi.project.Project):V
-- projectClosing(com.intellij.openapi.project.Project):V
-- projectClosingBeforeSave(com.intellij.openapi.project.Project):V
-*f:com.intellij.openapi.project.ProjectCloseListener$Companion
 *:com.intellij.openapi.project.ProjectTypesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:inferProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
+Fa:com.intellij.openapi.projectRoots.ProjectJdkTable
+- *s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.projectRoots.ProjectJdkTable
 *:com.intellij.openapi.roots.AdditionalLibraryRootsListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V

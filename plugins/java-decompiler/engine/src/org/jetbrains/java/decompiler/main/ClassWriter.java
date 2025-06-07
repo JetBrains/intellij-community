@@ -216,7 +216,12 @@ public class ClassWriter {
             IFernflowerLogger.Severity.WARN,
             ex);
           methodWrapper.decompiledWithErrors = true;
-          buffer.append(" // $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
         }
         finally {
           tracer.addMapping(root.getDummyExit().bytecode);
@@ -399,8 +404,7 @@ public class ClassWriter {
     }
   }
 
-  @NotNull
-  private static AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
+  private static @NotNull AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
     AnnotationContainer result = new AnnotationContainer(new HashSet<>(), new HashSet<>());
     if (mt == null) {
       return result;
@@ -973,7 +977,12 @@ public class ClassWriter {
 
         if (methodWrapper.decompiledWithErrors) {
           buffer.appendIndent(indent + 1);
-          buffer.append("// $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
           buffer.appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
@@ -1088,8 +1097,7 @@ public class ClassWriter {
 
   record RecordConstructorContext(boolean hideConstructor, boolean compact) { }
 
-  @NotNull
-  private static List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
+  private static @NotNull List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
     List<AnnotationExprent> result = new ArrayList<>();
     if (mt == null || type == null) return result;
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
@@ -1098,7 +1106,7 @@ public class ClassWriter {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
-            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, param)) continue;
             result.add(annotation);
           }
         }
@@ -1213,7 +1221,12 @@ public class ClassWriter {
 
       if (methodWrapper.decompiledWithErrors) {
         buffer.appendIndent(indent);
-        buffer.append("// $FF: Couldn't be decompiled");
+        if (methodWrapper.decompiledWithErrorsMessage != null) {
+          buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+        }
+        else {
+          buffer.append("// $FF: Couldn't be decompiled");
+        }
         buffer.appendLineSeparator();
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.find.impl.FindInProjectUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +19,7 @@ import static java.util.Collections.singletonList;
 @ApiStatus.Internal
 public final class IndexPatternOptimizerImpl implements IndexPatternOptimizer {
   @Override
-  public @NotNull List<String> extractStringsToFind(@NotNull String regexp) {
+  public @Unmodifiable @NotNull List<String> extractStringsToFind(@NotNull String regexp) {
     // short circuit for known built-in patterns, no need to spin up RegExp parser and its elements
     if ("\\btodo\\b.*".equals(regexp)) return singletonList("todo");
     if ("\\bfixme\\b.*".equals(regexp)) return singletonList("fixme");

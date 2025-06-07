@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.psi.PsiElement
@@ -7,14 +9,15 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import junit.framework.TestCase.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.uast.UAnchorOwner
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin
 import org.jetbrains.uast.sourcePsiElement
-import org.jetbrains.uast.test.common.kotlin.checkDescriptorsLeak
 import org.jetbrains.uast.test.common.kotlin.RenderLogTestBase
+import org.jetbrains.uast.test.common.kotlin.checkDescriptorsLeak
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import java.io.File

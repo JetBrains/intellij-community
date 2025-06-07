@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -58,9 +58,8 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     setNameAndTooltip(presentation, getName(), tooltip, hint);
   }
 
-  @NotNull
   @Override
-  protected List<ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<ExternalSystemNode<?>> doBuildChildren() {
     List<ExternalSystemNode<?>> myChildNodes = new ArrayList<>();
     if (getExternalProjectsView().getGroupModules()) {
       List<ModuleNode> childModules = ContainerUtil.findAll(
@@ -75,9 +74,8 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     return myChildNodes;
   }
 
-  @Nullable
   @Override
-  protected String getMenuId() {
+  protected @Nullable String getMenuId() {
     return "ExternalSystemView.ModuleMenu";
   }
 
@@ -101,15 +99,13 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     return super.getName();
   }
 
-  @Nullable
-  public String getIdeGrouping() {
+  public @Nullable String getIdeGrouping() {
     ModuleData data = getData();
     if (data == null) return null;
     return data.getIdeGrouping();
   }
 
-  @Nullable
-  public String getIdeParentGrouping() {
+  public @Nullable String getIdeParentGrouping() {
     ModuleData data = getData();
     if (data == null) return null;
     return data.getIdeParentGrouping();

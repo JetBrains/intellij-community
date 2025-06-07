@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -69,10 +70,12 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @see AdditionalRootsProviderService
    * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
-  public abstract @NotNull List<R> computeRootDescriptors(@NotNull JpsModel model,
-                                                 @NotNull ModuleExcludeIndex index,
-                                                 @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                 @NotNull BuildDataPaths dataPaths);
+  public abstract @NotNull @Unmodifiable List<R> computeRootDescriptors(
+    @NotNull JpsModel model,
+    @NotNull ModuleExcludeIndex index,
+    @NotNull IgnoredFileIndex ignoredFileIndex,
+    @NotNull BuildDataPaths dataPaths
+  );
 
   /**
    * Finds a source root by its serialized ID.
@@ -93,7 +96,9 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param context the compilation context.
    * @return the collection of output roots.
    */
-  public abstract @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
+  public @Unmodifiable @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    return List.of();
+  }
 
   @Override
   public String toString() {

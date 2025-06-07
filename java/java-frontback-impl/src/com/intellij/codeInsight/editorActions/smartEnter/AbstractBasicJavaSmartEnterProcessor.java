@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.application.options.CodeStyle;
@@ -69,12 +69,12 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
   private static class TooManyAttemptsException extends Exception {
   }
 
-  private final AbstractBasicJavadocFixer myJavadocFixer;
+  private final JavadocFixer myJavadocFixer;
 
   protected AbstractBasicJavaSmartEnterProcessor(@NotNull List<Fixer> fixers,
                                                  EnterProcessor @NotNull [] enterProcessors,
                                                  EnterProcessor @NotNull [] afterCompletionEnterProcessors,
-                                                 @NotNull AbstractBasicJavadocFixer thinJavadocFixer,
+                                                 @NotNull JavadocFixer thinJavadocFixer,
                                                  @NotNull EnterProcessor breakerEnterProcessor) {
     myBreakerEnterProcessor = breakerEnterProcessor;
     ourFixers = fixers;
@@ -84,7 +84,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
   }
 
   @Override
-  public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean process(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     return invokeProcessor(editor, psiFile, false);
   }
 
@@ -106,7 +106,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
       document.replaceString(0, document.getTextLength(), textForRollback);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     finally {
       editor.putUserData(SMART_ENTER_TIMESTAMP, null);
@@ -114,7 +114,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
     return true;
   }
 
-  private void process(@NotNull final Editor editor, @NotNull final PsiFile file, final int attempt, boolean afterCompletion)
+  private void process(final @NotNull Editor editor, final @NotNull PsiFile file, final int attempt, boolean afterCompletion)
     throws TooManyAttemptsException {
     if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
 
@@ -206,12 +206,12 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
 
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
-      reformat(editor, atCaret);
+      reformat(atCaret);
       return;
     }
 
     final RangeMarker rangeMarker = createRangeMarker(atCaret);
-    reformat(editor, atCaret);
+    reformat(atCaret);
     commit(editor);
 
     if (!mySkipEnter) {
@@ -271,8 +271,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
   }
 
   @Override
-  @Nullable
-  protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
+  protected @Nullable PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     PsiElement atCaretElement = super.getStatementAtCaret(editor, psiFile);
     if (atCaretElement == null) {
       return null;
@@ -318,7 +317,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
 
   protected abstract boolean isImportStatementBase(PsiElement el);
 
-  protected void moveCaretInsideBracesIfAny(@NotNull final Editor editor, @NotNull final PsiFile file) throws IncorrectOperationException {
+  protected void moveCaretInsideBracesIfAny(final @NotNull Editor editor, final @NotNull PsiFile file) throws IncorrectOperationException {
     int caretOffset = editor.getCaretModel().getOffset();
     final CharSequence chars = editor.getDocument().getCharsSequence();
 
@@ -358,10 +357,6 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
     editor.getCaretModel().moveToOffset(caretOffset - 1);
   }
 
-  protected void reformat(@NotNull Editor editor, @Nullable PsiElement elt) {
-    reformat(elt);
-  }
-
   private void reformatBlockParentIfNeeded(@NotNull Editor editor, @NotNull PsiFile file) {
     commit(editor);
     ASTNode block =
@@ -386,7 +381,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
     mySkipEnter = skipEnter;
   }
 
-  protected static void plainEnter(@NotNull final Editor editor) {
+  protected static void plainEnter(final @NotNull Editor editor) {
     getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), EditorUtil.getEditorDataContext(editor));
   }
 
@@ -394,7 +389,7 @@ public abstract class AbstractBasicJavaSmartEnterProcessor extends SmartEnterPro
     return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 
-  protected static boolean isModified(@NotNull final Editor editor) {
+  protected static boolean isModified(final @NotNull Editor editor) {
     final Long timestamp = editor.getUserData(SMART_ENTER_TIMESTAMP);
     return timestamp != null && editor.getDocument().getModificationStamp() != timestamp.longValue();
   }

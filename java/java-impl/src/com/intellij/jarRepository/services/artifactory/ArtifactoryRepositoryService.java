@@ -68,7 +68,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
 
 
       final String className = template.getClassNames();
-      if (className == null || className.length() == 0) {
+      if (className == null || className.isEmpty()) {
         return searchArtifacts(url, template);
       }
       else {

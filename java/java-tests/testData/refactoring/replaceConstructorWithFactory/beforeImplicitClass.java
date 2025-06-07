@@ -1,5 +1,8 @@
+enum E {A, B}
 
-void main() {
-  Rar x = new R<caret>ar();
+record Rar() {
 }
 
+void main() {
+  Rar rar = new R<caret>ar();
+}

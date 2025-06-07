@@ -5,4 +5,4 @@ fun usage(a: A) {
     a.copy(<caret>)
 }
 
-//Text: (<highlight>i: Int = ...</highlight>, j: Int = ...), Disabled: false, Strikeout: false, Green: true
+//Text: (<highlight>i: Int = …</highlight>, j: Int = …), Disabled: false, Strikeout: false, Green: true

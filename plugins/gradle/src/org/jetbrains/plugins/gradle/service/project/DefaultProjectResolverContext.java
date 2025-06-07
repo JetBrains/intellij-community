@@ -13,21 +13,18 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
-import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleLightBuild;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContextImpl;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -41,42 +38,32 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
-  @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
-  @NotNull private final String myProjectPath;
-  @Nullable private final GradleExecutionSettings mySettings;
-  @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
-  private ProjectConnection myConnection;
-  @Nullable private GradleIdeaModelHolder myModels;
-  private File myGradleUserHome;
-  @Nullable private String myProjectGradleVersion;
-  private final boolean myBuildSrcProject;
-  @Nullable private String myBuildSrcGroup;
-  @Nullable private BuildEnvironment myBuildEnvironment;
-  @Nullable private final GradlePartialResolverPolicy myPolicy;
+public class DefaultProjectResolverContext extends GradleExecutionContextImpl implements ProjectResolverContext {
 
-  @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
+  private final @NotNull GradleProjectResolverIndicator myProjectResolverIndicator;
+  private @Nullable GradleIdeaModelHolder myModels;
+  private File myGradleUserHome;
+  private final boolean myBuildSrcProject;
+  private @Nullable String myBuildSrcGroup;
+  private final @Nullable GradlePartialResolverPolicy myPolicy;
+
+  private final @NotNull ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
 
   private @Nullable Boolean myPhasedSyncEnabled = null;
   private @Nullable Boolean myStreamingModelFetchingEnabled = null;
 
-  private final static Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
+  private static final Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
 
   public DefaultProjectResolverContext(
     @NotNull ExternalSystemTaskId externalSystemTaskId,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradlePartialResolverPolicy resolverPolicy,
     @NotNull GradleProjectResolverIndicator projectResolverIndicator,
     boolean isBuildSrcProject
   ) {
-    myExternalSystemTaskId = externalSystemTaskId;
-    myProjectPath = projectPath;
-    mySettings = settings;
-    myConnection = null;
-    myListener = listener;
+    super(projectPath, externalSystemTaskId, settings, listener, projectResolverIndicator.token());
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
@@ -85,53 +72,29 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public DefaultProjectResolverContext(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     boolean isBuildSrcProject
   ) {
-    this(
-      resolverContext.myExternalSystemTaskId,
-      projectPath,
-      settings,
-      resolverContext.myListener,
-      resolverContext.myPolicy,
-      resolverContext.myProjectResolverIndicator,
-      isBuildSrcProject
-    );
+    super(projectPath, settings, resolverContext);
+    myPolicy = resolverContext.myPolicy;
+    myProjectResolverIndicator = resolverContext.myProjectResolverIndicator;
+    myBuildSrcProject = isBuildSrcProject;
     resolverContext.copyUserDataTo(this);
   }
 
-  @NotNull
   @Override
-  public ExternalSystemTaskId getExternalSystemTaskId() {
-    return myExternalSystemTaskId;
+  public @NotNull ExternalSystemTaskId getExternalSystemTaskId() {
+    return getTaskId();
   }
 
-  @Nullable
   @Override
-  public String getIdeProjectPath() {
-    return mySettings != null ? mySettings.getIdeProjectPath() : null;
+  public @NotNull String getProjectGradleVersion() {
+    return getGradleVersion().getVersion();
   }
 
-  @NotNull
   @Override
-  public String getProjectPath() {
-    return myProjectPath;
-  }
-
-  @Nullable
-  @Override
-  public GradleExecutionSettings getSettings() {
-    return mySettings;
-  }
-
-  @NotNull
-  @Override
-  public ProjectConnection getConnection() {
-    return myConnection;
-  }
-
-  public void setConnection(@NotNull ProjectConnection connection) {
-    myConnection = connection;
+  public @Nullable String getIdeProjectPath() {
+    return getSettings().getIdeProjectPath();
   }
 
   public @NotNull ProgressIndicator getProgressIndicator() {
@@ -140,11 +103,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   public @NotNull CancellationTokenSource getCancellationTokenSource() {
     return myProjectResolverIndicator;
-  }
-
-  @Override
-  public @NotNull CancellationToken getCancellationToken() {
-    return myProjectResolverIndicator.token();
   }
 
   public <R> R computeCancellable(@NotNull Supplier<R> action) {
@@ -166,12 +124,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       myProjectResolverIndicator.cancel();
       throw e;
     }
-  }
-
-  @NotNull
-  @Override
-  public ExternalSystemTaskNotificationListener getListener() {
-    return myListener;
   }
 
   @Override
@@ -216,11 +168,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       LOG.debug("The streaming Gradle model fetching isn't applicable: project is closed: " + projectId);
       return false;
     }
-    var gradleVersion = context.getProjectGradleVersion();
-    if (gradleVersion == null) {
-      LOG.debug("The streaming Gradle model fetching isn't applicable: Gradle version cannot be determined");
-      return false;
-    }
+    var gradleVersion = context.getGradleVersion();
     if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.6")) {
       LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
@@ -239,22 +187,22 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public boolean isResolveModulePerSourceSet() {
-    return mySettings == null || mySettings.isResolveModulePerSourceSet();
+    return getSettings().isResolveModulePerSourceSet();
   }
 
   @Override
   public boolean isUseQualifiedModuleNames() {
-    return mySettings != null && mySettings.isUseQualifiedModuleNames();
+    return getSettings().isUseQualifiedModuleNames();
   }
 
   @Override
   public boolean isDelegatedBuild() {
-    return mySettings == null || mySettings.isDelegatedBuild();
+    return getSettings().isDelegatedBuild();
   }
 
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
-      String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
+      String serviceDirectory = getSettings().getServiceDirectory();
       myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir();
     }
     return myGradleUserHome;
@@ -304,17 +252,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return getModels().hasModulesWithModel(modelClass);
   }
 
-  @Override
-  public String getProjectGradleVersion() {
-    if (myProjectGradleVersion == null) {
-      var buildEnvironment = getBuildEnvironment();
-      if (buildEnvironment != null) {
-        myProjectGradleVersion = buildEnvironment.getGradle().getGradleVersion();
-      }
-    }
-    return myProjectGradleVersion;
-  }
-
   public boolean isBuildSrcProject() {
     return myBuildSrcProject;
   }
@@ -323,15 +260,13 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myBuildSrcGroup = groupId;
   }
 
-  @Nullable
   @Override
-  public String getBuildSrcGroup() {
+  public @Nullable String getBuildSrcGroup() {
     return myBuildSrcGroup;
   }
 
-  @Nullable
   @Override
-  public String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier) {
+  public @Nullable String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier) {
     if (!"buildSrc".equals(rootName)) {
       return myBuildSrcGroup;
     }
@@ -345,20 +280,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue) {
-    BuildIssueEventImpl buildIssueEvent = new BuildIssueEventImpl(myExternalSystemTaskId, buildIssue, kind);
-    myListener.onStatusChange(new ExternalSystemBuildEvent(myExternalSystemTaskId, buildIssueEvent));
-  }
-
-  void setBuildEnvironment(@NotNull BuildEnvironment buildEnvironment) {
-    myBuildEnvironment = buildEnvironment;
-  }
-
-  @Override
-  public @Nullable BuildEnvironment getBuildEnvironment() {
-    if (myBuildEnvironment == null && myModels != null) {
-      myBuildEnvironment = myModels.getBuildEnvironment();
-    }
-    return myBuildEnvironment;
+    BuildIssueEventImpl buildIssueEvent = new BuildIssueEventImpl(getExternalSystemTaskId(), buildIssue, kind);
+    getListener().onStatusChange(new ExternalSystemBuildEvent(getExternalSystemTaskId(), buildIssueEvent));
   }
 
   @Override

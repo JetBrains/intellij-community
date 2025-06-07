@@ -12,10 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -308,8 +305,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     return parameter != null ? parameter.getAttributeValue("name") : null;
   }
 
-  private static @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
-                                                                    @NotNull String vulnerabilitiesTagName) {
+  private static @Unmodifiable @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
+                                                                                  @NotNull String vulnerabilitiesTagName) {
     Element vulnerabilities = element.getChild(vulnerabilitiesTagName);
     if (vulnerabilities == null) {
       return Collections.emptyList();

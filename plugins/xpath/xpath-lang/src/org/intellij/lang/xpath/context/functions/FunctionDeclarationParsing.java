@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.lexer.FilterLexer;
@@ -105,8 +105,7 @@ public final class FunctionDeclarationParsing {
     return XPathType.fromString(type);
   }
 
-  @Nullable
-  public static XPath2SequenceType.Cardinality parseCardinality(Lexer lexer) {
+  public static @Nullable XPath2SequenceType.Cardinality parseCardinality(Lexer lexer) {
     if (lexer.getTokenType() == XPath2TokenTypes.QUEST) {
       lexer.advance();
       return XPath2SequenceType.Cardinality.OPTIONAL;
@@ -127,8 +126,7 @@ public final class FunctionDeclarationParsing {
     return s;
   }
 
-  @Nullable
-  public static String parseType(Lexer lexer) {
+  public static @Nullable String parseType(Lexer lexer) {
     String type = parseQName(lexer);
     if (type == null) {
       if (lexer.getTokenType() == XPath2TokenTypes.ITEM || lexer.getTokenType() == XPathTokenTypes.FUNCTION_NAME || lexer.getTokenType() == XPathTokenTypes.NODE_TYPE) {
@@ -144,8 +142,7 @@ public final class FunctionDeclarationParsing {
     return type;
   }
 
-  @Nullable
-  public static String parseQName(Lexer lexer) {
+  public static @Nullable String parseQName(Lexer lexer) {
     String name;
     if (lexer.getTokenType() == XPathTokenTypes.NCNAME) {
       name = lexer.getTokenText();
@@ -166,7 +163,7 @@ public final class FunctionDeclarationParsing {
     final Pair<String, ? extends Function> pair = parseFuntionDeclaration(s);
     final Function func = pair.second;
 
-    final boolean fn = pair.first.equals("fn") || pair.first.length() == 0;
+    final boolean fn = pair.first.equals("fn") || pair.first.isEmpty();
     final boolean xs = pair.first.equals("xs");
     final Pair<QName, Integer> key = Pair.create(new QName(fn ? FUNCTION_NAMESPACE : (xs ? XPath2Type.XMLSCHEMA_NS : null), func.getName()), func.getParameters().length);
     assert !decls.containsKey(key) : key;

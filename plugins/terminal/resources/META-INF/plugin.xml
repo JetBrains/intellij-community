@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal" allow-bundled-update="true">
   <name>Terminal</name>
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
@@ -17,7 +17,6 @@
     For more details, refer to the <a href="https://www.jetbrains.com/help/idea/terminal-emulator.html" target="_blank">documentation</a>.
     ]]></description>
 
-  <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
     2024.3
     <ul>
@@ -45,6 +44,9 @@
   </dependencies>
 
   <content>
+    <module name="intellij.terminal.backend"/>
+    <module name="intellij.terminal.frontend"/>
+    <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal/cloud"/>
     <module name="intellij.terminal.sh"/>
   </content>
@@ -59,7 +61,7 @@
       <override-text place="RevealInPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
-    <action id="Terminal.CloseTab" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="CloseContent"/>
+    <action id="Terminal.CloseTab" class="org.jetbrains.plugins.terminal.action.TerminalCloseTabAction" use-shortcut-of="CloseContent"/>
     <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
@@ -98,16 +100,8 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
-      <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
-      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
-    </action>
-    <action id="Terminal.Find" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Find"/>
-    <action id="Terminal.SelectAll" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X 10.5+"/>
     </action>
@@ -116,11 +110,6 @@
     </action>
     <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
-    </action>
-    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearAction">
-      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
 
 
@@ -155,16 +144,11 @@
       <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X 10.5+"/>
     </action>
 
-    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
     <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>
     <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
             use-shortcut-of="QuickJavaDoc"/>
-    <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
-            use-shortcut-of="EditorEscape"/>
     <action id="Terminal.CloseSession" class="org.jetbrains.plugins.terminal.action.TerminalCloseSessionAction">
       <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>
@@ -186,11 +170,22 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
 
-    <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
-
-    <group id="Terminal.ToolWindowActions">
-      <reference id="Terminal.EnableNewUi"/>
-    </group>
+    <action id="Terminal.LineUp" class="org.jetbrains.plugins.terminal.action.TerminalLineUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.LineDown" class="org.jetbrains.plugins.terminal.action.TerminalLineDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction">
+      <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
+    </action>
 
     <group id="Terminal.PromptStyle" popup="true">
       <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>
@@ -198,24 +193,10 @@
       <action id="Terminal.UseShellPrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseShellPromptAction"/>
     </group>
 
-    <group id="Terminal.OutputContextMenu">
-      <reference ref="Terminal.CopyBlock"/>
-      <reference ref="Terminal.CopySelectedText"/>
-      <reference ref="Terminal.Paste"/>
-    </group>
-
-    <group id="Terminal.PromptContextMenu">
-      <!-- todo: replace editor actions with dedicated terminal actions -->
-      <reference ref="EditorCut"/>
-      <reference ref="Terminal.CopySelectedText"/>
-      <reference ref="Terminal.Paste"/>
-      <reference ref="Terminal.PromptStyle"/>
-    </group>
-
     <group id="Terminal.PromptToolbar"/>
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.block.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
+            class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

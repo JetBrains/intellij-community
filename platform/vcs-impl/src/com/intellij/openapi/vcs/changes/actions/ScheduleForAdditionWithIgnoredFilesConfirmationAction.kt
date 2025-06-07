@@ -146,7 +146,7 @@ private fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
   }
   else {
     val files = paths.mapNotNull(FilePath::getVirtualFile)
-    val dlg = SelectFilesDialog.init(project, files, null, null, true, true,
+    val dlg = SelectFilesDialog.init(project, files, message("confirmation.message.add.ignored.files.or.dirs"), null, true, true,
                                      CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText())
     dlg.title = multiplePathsDialogTitle
     if (dlg.showAndGet()) {

@@ -19,6 +19,7 @@ abstract class TestCaseWithoutTestsInspectionTestBase : JvmInspectionTestBase() 
       model.addJUnit3Library()
       model.addJUnit4Library()
       model.addJUnit5Library()
+      model.addTestNGLibrary()
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -51,10 +51,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -99,7 +96,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
     SourcePosition sourcePosition = getSourcePosition();
     if (sourcePosition != null) {
-      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      MethodDescriptor descriptor = computeMethodDescriptor(sourcePosition);
       if (descriptor != null) {
         setMethodName(descriptor.methodName);
         mySignature = descriptor.methodSignature;
@@ -108,10 +105,20 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
     }
-    PsiClass psiClass = getPsiClass();
-    if (psiClass != null) {
-      getProperties().myClassPattern = psiClass.getQualifiedName();
+    String classPattern = computeClassPattern();
+    if (classPattern != null) {
+      getProperties().myClassPattern = classPattern;
     }
+  }
+
+  protected @Nullable String computeClassPattern() {
+    PsiClass psiClass = getPsiClass();
+    if (psiClass == null) return null;
+    return psiClass.getQualifiedName();
+  }
+
+  protected @Nullable MethodDescriptor computeMethodDescriptor(@NotNull SourcePosition sourcePosition) {
+    return getMethodDescriptor(myProject, sourcePosition);
   }
 
   private static void createRequestForSubClasses(@NotNull MethodBreakpointBase breakpoint,
@@ -204,10 +211,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     StreamEx<Method> methods = lambdaMethod != null
                                ? StreamEx.of(lambdaMethod)
                                : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
-    boolean found = false;
+    boolean scanSubClasses = false;
     for (Method original : methods) {
-      found = true;
-
       Method bridgeTarget = MethodBytecodeUtil.getBridgeTargetMethod(original, classesByName);
       Method method = bridgeTarget != null ? bridgeTarget : original;
 
@@ -216,7 +221,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         breakpoint.disableEmulation();
         return;
       }
+      if (!method.isStatic() && !method.isPrivate() && !method.isFinal()) {
+        scanSubClasses = true;
+      }
       if (method.isAbstract()) {
+        scanSubClasses = true;
         continue;
       }
 
@@ -251,7 +260,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         MethodBytecodeUtil.visit(method, new BytecodeVisitor(), false);
       }
     }
-    if (base && found) {
+    if (base && scanSubClasses) {
       // desired class found - now also track all new classes
       createRequestForSubClasses(breakpoint, debugProcess, classType);
     }
@@ -461,30 +470,36 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       if (method == null) {
         return null;
       }
-      final int methodOffset = method.getTextOffset();
-      if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
-        return null;
-      }
-
-      final PsiIdentifier identifier = method.getNameIdentifier();
-      int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
-      final MethodDescriptor res =
-        new MethodDescriptor();
-      res.methodName = JVMNameUtil.getJVMMethodName(method);
-      try {
-        res.methodSignature = JVMNameUtil.getJVMSignature(method);
-        res.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-      }
-      catch (IndexNotReadyException ignored) {
-        return null;
-      }
-      res.methodLine = document.getLineNumber(methodNameOffset);
-      return res;
+      return getMethodDescriptor(sourcePosition, method, document);
     });
     if (descriptor == null || descriptor.methodName == null || descriptor.methodSignature == null) {
       return null;
     }
     return descriptor;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable MethodDescriptor getMethodDescriptor(@NotNull SourcePosition sourcePosition,
+                                                               @NotNull PsiMethod method,
+                                                               @NotNull Document document) {
+    final int methodOffset = method.getTextOffset();
+    if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+      return null;
+    }
+
+    final PsiIdentifier identifier = method.getNameIdentifier();
+    int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
+    final MethodDescriptor res = new MethodDescriptor();
+    res.methodName = JVMNameUtil.getJVMMethodName(method);
+    try {
+      res.methodSignature = JVMNameUtil.getJVMSignature(method);
+      res.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    }
+    catch (IndexNotReadyException ignored) {
+      return null;
+    }
+    res.methodLine = document.getLineNumber(methodNameOffset);
+    return res;
   }
 
   static @Nullable <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
@@ -546,6 +561,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     public JVMName methodSignature;
     public boolean isStatic;
     public int methodLine;
+
+    public MethodDescriptor() {
+    }
+
+    public MethodDescriptor(String methodName, String signature, boolean isStatic, int methodLine) {
+      this.methodName = methodName;
+      this.methodSignature = new JVMName() {
+        @Override
+        public String getName(DebugProcessImpl process) throws EvaluateException {
+          return signature;
+        }
+
+        @Override
+        public String getDisplayName(DebugProcessImpl debugProcess) {
+          return signature;
+        }
+      };
+      this.isStatic = isStatic;
+      this.methodLine = methodLine;
+    }
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,

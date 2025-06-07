@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.java.indexing.JavaIndexingBundle;
@@ -54,9 +54,9 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     }
   }
 
-  private static void processInheritors(@NotNull final ClassInheritorsSearch.SearchParameters parameters,
-                                        @NotNull final Processor<? super PsiClass> consumer) {
-    @NotNull final PsiClass baseClass = parameters.getClassToProcess();
+  private static void processInheritors(final @NotNull ClassInheritorsSearch.SearchParameters parameters,
+                                        final @NotNull Processor<? super PsiClass> consumer) {
+    final @NotNull PsiClass baseClass = parameters.getClassToProcess();
     if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return;
 
     final SearchScope searchScope = parameters.getScope();
@@ -94,11 +94,10 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     }
   }
 
-  @NotNull
-  private static Iterable<@NotNull PsiClass> getOrComputeSubClasses(@NotNull Project project,
-                                                                    @NotNull PsiClass baseClass,
-                                                                    @NotNull SearchScope searchScopeForNonPhysical,
-                                                                    @NotNull ClassInheritorsSearch.SearchParameters parameters) {
+  private static @NotNull Iterable<@NotNull PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                                             @NotNull PsiClass baseClass,
+                                                                             @NotNull SearchScope searchScopeForNonPhysical,
+                                                                             @NotNull ClassInheritorsSearch.SearchParameters parameters) {
     HighlightingCaches caches = HighlightingCaches.getInstance(project);
     ConcurrentMap<PsiClass, Iterable<PsiClass>> map = parameters.isIncludeAnonymous()
                                                       ? caches.ALL_SUB_CLASSES
@@ -142,8 +141,8 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     return cached;
   }
 
-  private static void processLocalScope(@NotNull final Project project,
-                                        @NotNull final ClassInheritorsSearch.SearchParameters parameters,
+  private static void processLocalScope(final @NotNull Project project,
+                                        final @NotNull ClassInheritorsSearch.SearchParameters parameters,
                                         @NotNull LocalSearchScope searchScope,
                                         @NotNull PsiClass baseClass,
                                         @NotNull Processor<? super PsiClass> consumer) {
@@ -169,9 +168,9 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
   }
 
   private static void processFile(PsiFile psiFile,
-                           final Processor<? super PsiClass> consumer,
-                           final ClassInheritorsSearch.@NotNull SearchParameters parameters,
-                           @NotNull final PsiClass baseClass, final boolean[] success) {
+                                  final Processor<? super PsiClass> consumer,
+                                  final ClassInheritorsSearch.@NotNull SearchParameters parameters,
+                                  final @NotNull PsiClass baseClass, final boolean[] success) {
     psiFile.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass candidate) {
@@ -203,11 +202,11 @@ public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClas
     return name != null && parameters.getNameCondition().value(name);
   }
 
-  static boolean isJavaLangObject(@NotNull final PsiClass baseClass) {
+  static boolean isJavaLangObject(final @NotNull PsiClass baseClass) {
     return ReadAction.compute(() -> baseClass.isValid() && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName()));
   }
 
-  private static boolean isFinal(@NotNull final PsiClass baseClass) {
+  private static boolean isFinal(final @NotNull PsiClass baseClass) {
     return ReadAction.compute(() -> baseClass.hasModifierProperty(PsiModifier.FINAL));
   }
 }

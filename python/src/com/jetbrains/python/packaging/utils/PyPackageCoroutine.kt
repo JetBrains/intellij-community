@@ -7,10 +7,12 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
-class PyPackageCoroutine(val project: Project, val coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+internal class PyPackageCoroutine(val project: Project, val coroutineScope: CoroutineScope) {
   val ioScope = coroutineScope.childScope("Jupyter IO scope", context = Dispatchers.IO)
 
   companion object {

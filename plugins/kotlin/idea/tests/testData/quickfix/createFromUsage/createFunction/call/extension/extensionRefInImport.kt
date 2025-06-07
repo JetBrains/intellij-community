@@ -1,5 +1,6 @@
 // "Create extension function 'foo'" "false"
 // ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 package p
 

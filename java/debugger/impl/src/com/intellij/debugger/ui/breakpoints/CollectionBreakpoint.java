@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
 public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollectionBreakpointProperties> {
-  @NonNls public static final Key<CollectionBreakpoint> CATEGORY = BreakpointCategory.lookup("collection_breakpoints");
+  public static final @NonNls Key<CollectionBreakpoint> CATEGORY = BreakpointCategory.lookup("collection_breakpoints");
 
   private static final String GET_INTERNAL_CLS_NAME_METHOD_NAME = "getInternalClsName";
   private static final String GET_INTERNAL_CLS_NAME_METHOD_DESC = "(Ljava/lang/String;)Ljava/lang/String;";
@@ -687,8 +687,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
                                 2);
   }
 
-  @NotNull
-  private static List<Location> findLocationsInInstrumentorMethods(ClassType instrumentorCls) {
+  private static @NotNull List<Location> findLocationsInInstrumentorMethods(ClassType instrumentorCls) {
     List<Location> locations = new ArrayList<>();
     Location location = findLocationInCaptureFieldModificationMethod(instrumentorCls);
     if (location != null) {
@@ -800,7 +799,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       try {
         DebugProcessImpl debugProcess = context.getDebugProcess();
         DebugProcessImpl.ResumeCommand stepOutCommand = debugProcess.createStepOutCommand(context);
-        debugProcess.getManagerThread().schedule(stepOutCommand);
+        context.getManagerThread().schedule(stepOutCommand);
       }
       catch (Exception e) {
         DebuggerUtilsImpl.logError(e);

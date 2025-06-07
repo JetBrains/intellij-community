@@ -288,6 +288,14 @@ class InflowSlicer(
                 expression.`else`?.let(::processBodyResults)
             }
 
+            is KtBinaryExpression -> {
+                val elementType = expression.operationReference.getReferencedNameElementType()
+                if (elementType == KtTokens.ELVIS) {
+                    expression.left?.let(::processBodyResults)
+                    expression.right?.let(::processBodyResults)
+                }
+            }
+
             is KtWhenExpression -> {
                 expression.entries.forEach { entry ->
                     entry.expression?.let(::processBodyResults)
@@ -386,9 +394,12 @@ class InflowSlicer(
         val bodyExpression = bodyExpression ?: return
         if (bodyExpression is KtBlockExpression) {
             analyze(bodyExpression) {
-                val returnExpressions = computeExitPointSnapshot(bodyExpression.statements).valuedReturnExpressions
-                returnExpressions.forEach {
-                    ((it as? KtReturnExpression)?.returnedExpression ?: it).passToProcessorAsValue()
+                val statements = bodyExpression.statements
+                if (statements.isNotEmpty()) {
+                    val returnExpressions = computeExitPointSnapshot(statements).valuedReturnExpressions
+                    returnExpressions.forEach {
+                        ((it as? KtReturnExpression)?.returnedExpression ?: it).passToProcessorAsValue()
+                    }
                 }
             }
         } else {

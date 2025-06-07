@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.indexing.IndexingStamp;
+import com.intellij.util.indexing.IndexingStampStorageOverRegularAttributes;
 import com.intellij.util.indexing.TimestampsImmutable;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
@@ -21,9 +22,6 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.util.indexing.IndexingStampStorageOverRegularAttributes.PERSISTENCE;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 /**
  * Benchmarks different approaches to access index timestamps (file attribute).
  * New API allows raw access to the segment page ByteBuffer, while old API allows only access through InputStream
@@ -31,8 +29,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 @BenchmarkMode({Mode.AverageTime, Mode.SampleTime})
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Warmup(iterations = 3, time = 2, timeUnit = SECONDS)
-@Measurement(iterations = 5, time = 5, timeUnit = SECONDS)
+@Warmup(iterations = 3, time = 2, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 public class IndexStampAccessBenchmark {
 
@@ -71,7 +69,7 @@ public class IndexStampAccessBenchmark {
                                                      final Context context) {
     return FSRecords.readAttributeRawWithLock(
       context.fileId,
-      PERSISTENCE,
+      IndexingStampStorageOverRegularAttributes.PERSISTENCE,
       TimestampsImmutable::readTimestamps
     );
   }
@@ -79,7 +77,7 @@ public class IndexStampAccessBenchmark {
   @Benchmark
   public TimestampsImmutable readIndexStamps_ViaInputStream(final ApplicationContext application,
                                                    final Context context) throws IOException {
-    try (final DataInputStream stream = FSRecords.readAttributeWithLock(context.fileId, PERSISTENCE)) {
+    try (final DataInputStream stream = FSRecords.readAttributeWithLock(context.fileId, IndexingStampStorageOverRegularAttributes.PERSISTENCE)) {
       return TimestampsImmutable.readTimestamps(stream);
     }
   }

@@ -397,6 +397,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return (NodeRenderer)getCellRenderer();
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + '#' + System.identityHashCode(this);
   }

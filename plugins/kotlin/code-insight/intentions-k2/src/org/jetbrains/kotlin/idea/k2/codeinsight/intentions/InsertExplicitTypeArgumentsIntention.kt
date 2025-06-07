@@ -22,8 +22,7 @@ internal class InsertExplicitTypeArgumentsIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("add.explicit.type.arguments")
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): String? = getRenderedTypeArguments(element)
+    override fun KaSession.prepareContext(element: KtCallExpression): String? = getRenderedTypeArguments(element)
 
     override fun invoke(
       actionContext: ActionContext,

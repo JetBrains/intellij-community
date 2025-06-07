@@ -3,7 +3,6 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.Switcher
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -83,18 +82,19 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task("rfd") {
-      text(LessonsBundle.message("recent.files.search.typing", code(it)))
+    task {
+      val prefixes = "rfd"
+      text(LessonsBundle.message("recent.files.search.typing", code(prefixes)))
       triggerUI().component { ui: ExtendableTextField ->
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
-      stateCheck { checkRecentFilesSearch(it) }
+      stateCheck { checkRecentFilesSearch(prefixes) }
       restoreByUi()
       test {
         ideFrame {
-          waitComponent(Switcher.SwitcherPanel::class.java)
+          waitComponent(JBListWithOpenInRightSplit::class.java)
         }
-        type(it)
+        type(prefixes)
       }
     }
 
@@ -151,16 +151,16 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task(stringForRecentFilesSearch) {
-      text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
-      stateCheck { checkRecentLocationsSearch(it) }
+    task {
+      text(LessonsBundle.message("recent.files.locations.search.typing", code(stringForRecentFilesSearch)))
+      stateCheck { checkRecentLocationsSearch(stringForRecentFilesSearch) }
       triggerUI().component { _: SearchTextField -> true } // needed in next task to restore if search field closed
       restoreByUi()
       test {
         ideFrame {
           waitComponent(JBList::class.java)
         }
-        type(it)
+        type(stringForRecentFilesSearch)
       }
     }
 
@@ -207,8 +207,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   }
 
   private fun TaskRuntimeContext.checkRecentFilesSearch(expected: String): Boolean {
-    val focusOwner = UIUtil.getParentOfType(Switcher.SwitcherPanel::class.java, focusOwner)
-    return focusOwner != null && checkWordInSearch(expected, focusOwner)
+    return UIUtil.uiParents(focusOwner, false).any { it is JComponent && checkWordInSearch(expected, it) }
   }
 
   private fun TaskRuntimeContext.checkRecentLocationsSearch(expected: String): Boolean {

@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Surround with null check" "true"
+// ERROR: Reference has a nullable type 'A?', use explicit '?.invoke()' to make a function-like call instead
 package p;
 
 fun test(x: Foo) {
@@ -38,6 +39,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Surround with null check" "true"
+// ERROR: Reference has a nullable type 'A?', use explicit '?.invoke()' to make a function-like call instead
 package p;
 
 fun test(x: Foo) {

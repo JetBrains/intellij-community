@@ -34,7 +34,9 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
@@ -48,14 +50,35 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   commandLineBuilder.charset = charset
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
-  sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
-  commandLineBuilder.addParameters(interpreterParameters)
+
+  when (this) {
+    is PythonToolExecution -> {
+      toolPath?.let {
+        commandLineBuilder.exePath = TargetValue.fixed(it.pathString)
+        commandLineBuilder.addParameters(listOf(*toolParams.toTypedArray()))
+      }
+    }
+    else -> {
+      sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+      commandLineBuilder.addParameters(interpreterParameters)
+    }
+  }
+
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
                                 ?: throw IllegalArgumentException("Python script path must be set")
     is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", it)) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
+    is PythonToolScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment).pathString) }
+                                    ?: throw IllegalArgumentException("Python script path must be set")
+    is PythonToolModuleExecution -> moduleName?.let { moduleName ->
+      moduleFlag?.let { moduleFlag ->
+        commandLineBuilder.addParameters(listOf(moduleFlag, moduleName))
+      } ?: throw IllegalArgumentException("Module flag must be set")
+    } ?: throw IllegalArgumentException("Python module name must be set")
+
   }
+
   for (parameter in parameters) {
     val resolvedParameter = parameter.apply(targetEnvironment)
     if (resolvedParameter != PythonExecution.SKIP_ARGUMENT) {
@@ -117,6 +140,24 @@ fun prepareHelperScriptExecution(helperPackage: HelperPackage,
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
   }
 
+@ApiStatus.Internal
+fun prepareHelperScriptViaToolExecution(
+  helperPackage: HelperPackage,
+  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+  toolPath: Path,
+  toolParams: List<String>,
+): PythonToolScriptExecution {
+  val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
+  val uploads = addHelperEntriesToPythonPath(envs, helperPackage.pythonPathEntries, helpersAwareTargetRequest)
+  val execution = PythonToolScriptExecution(
+    toolPath,
+    toolParams,
+    resolveUploadPath(helperPackage.asParamString(), uploads).andThen { Path.of(it) }
+  )
+  execution.envs += envs;
+  return execution;
+}
+
 private const val PYTHONPATH_ENV = "PYTHONPATH"
 
 /**
@@ -134,11 +175,11 @@ fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<Strin
 
 /**
  * @param envs the environment variables to be modified
- * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm Professional helpers directories
+ * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm helpers directories
  * @param helpersAwareTargetRequest the request
  * @param failOnError specifies whether the method should fail if one of [pythonPathEntries] is not located within PyCharm helpers dirs
  *
- * **Note.** This method assumes that PyCharm Community and PyCharm Professional helpers are uploaded to the same root path on the target.
+ * **Note.** This method assumes that PyCharm Community and PyCharm helpers are uploaded to the same root path on the target.
  * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
  */
 fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
@@ -180,6 +221,15 @@ fun PythonExecution.addPythonScriptAsParameter(targetScript: PythonExecution) {
 
     is PythonModuleExecution -> targetScript.moduleName?.let { moduleName -> addParameters("-m", moduleName) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
+
+    is PythonToolScriptExecution -> targetScript.pythonScriptPath?.let { pythonScriptPath -> addParameter(pythonScriptPath.andThen { it.pathString }) }
+                                    ?: throw IllegalArgumentException("Python script path must be set")
+
+    is PythonToolModuleExecution -> targetScript.moduleName?.let { moduleName ->
+      targetScript.moduleFlag?.let { moduleFlag ->
+        addParameters(moduleFlag, moduleName)
+      } ?: throw java.lang.IllegalArgumentException("Module flag must be set")
+    } ?: throw IllegalArgumentException("Python module name must be set")
   }
 }
 

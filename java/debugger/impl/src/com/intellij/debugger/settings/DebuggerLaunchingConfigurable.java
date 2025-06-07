@@ -6,6 +6,7 @@ import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -63,9 +64,8 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     return !debuggerSettings.equals(currentSettings);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     myCbShowAlternativeSource = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
     myRbSocket = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.shmem"));
@@ -77,7 +77,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
     gr.add(myRbShmem);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbSocket);
     box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));

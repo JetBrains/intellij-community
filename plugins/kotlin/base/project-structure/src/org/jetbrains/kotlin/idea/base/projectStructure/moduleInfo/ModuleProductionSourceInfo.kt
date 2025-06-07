@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.stableName
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
@@ -24,6 +25,9 @@ data class ModuleProductionSourceInfo internal constructor(
     override val stableName: Name by lazy { module.stableName }
 
     override fun keyForSdk(): KeyForSdks = KeyForSdks
+
+    override val sourceModuleKind: KaSourceModuleKind
+        get() = KaSourceModuleKind.PRODUCTION
 
     override val contentScope: GlobalSearchScope
         get() = KotlinResolveScopeEnlarger.enlargeScope(module.kotlinProductionSourceScope, module, isTestScope = false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
@@ -84,8 +84,7 @@ public final class DGMMemberContributor {
     return true;
   }
 
-  @NotNull
-  private static List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
+  private static @NotNull List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
     List<GdkMethodHolder> gdkMethods = new ArrayList<>();
 
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -105,8 +104,7 @@ public final class DGMMemberContributor {
     return gdkMethods;
   }
 
-  @NotNull
-  private static Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
+  private static @NotNull Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
     List<String> instanceClasses = new ArrayList<>(DEFAULT_INSTANCE_EXTENSIONS);
     List<String> staticClasses = new ArrayList<>(DEFAULT_STATIC_EXTENSIONS);
     doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.groovy");

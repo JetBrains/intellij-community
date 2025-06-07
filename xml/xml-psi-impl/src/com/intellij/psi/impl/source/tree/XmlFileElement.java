@@ -17,9 +17,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
 
-public class XmlFileElement extends FileElement implements XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_FILE;
+
+public class XmlFileElement extends FileElement {
   private static final Logger LOG = Logger.getInstance(XmlFileElement.class);
 
   public XmlFileElement(CharSequence text) {

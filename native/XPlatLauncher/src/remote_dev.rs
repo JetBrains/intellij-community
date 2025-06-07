@@ -451,10 +451,6 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
         remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
     }
 
-    if let Some(os_spec) = get_os_specific_env_vars() {
-        remote_dev_env_var_values.extend(os_spec);
-    }
-
     // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
     let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
@@ -494,17 +490,6 @@ fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
     })
 }
 
-#[cfg(target_os = "macos")]
-fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
-    // GTW-6786 fix macOS host crashing on start
-    Some(vec![("AWT_FORCE_HEADFUL", "true")])
-}
-
-#[cfg(not(target_os = "macos"))]
-fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
-    None
-}
-
 #[cfg(not(target_os = "linux"))]
 fn preload_native_libs(_ide_home_dir: &Path) -> Result<()> {
     // We don't ship self-contained libraries outside of Linux
@@ -524,6 +509,9 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 
     debug!("Loading self-contained libraries");
 
+    let full_set = parse_bool_env_var("REMOTE_DEV_SERVER_FULL_SELF_CONTAINED_LIBS", false)?;
+    debug!("Using full set of libraries: {full_set}");
+
     let self_contained_dir = &ide_home_dir.join("plugins/remote-dev-server/selfcontained/");
     if !self_contained_dir.is_dir() {
         error!("Self-contained dir not found at {self_contained_dir:?}. Only OS-provided libraries will be used.");
@@ -535,14 +523,26 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but lib dir is missing at {libs_dir:?}")
     }
 
-    let lib_load_order_file = &self_contained_dir.join("lib-load-order");
+    let lib_load_order_file = &self_contained_dir.join(if full_set { "lib-load-order" } else { "lib-load-order-limited" });
     if !lib_load_order_file.is_file() {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but load order file is missing at {lib_load_order_file:?}")
     }
 
     let mut provided_libs = BTreeSet::new();
+    let filter_extensions = vec![
+        "hmac".to_string()
+    ];
+
     for f in fs::read_dir(libs_dir)? {
-        let file_name = f?.file_name();
+        let entry = f?;
+        let file_name = entry.file_name();
+        let file_extension = entry.path().extension().map(|ext| ext.to_string_lossy().to_string());
+
+        if file_extension.is_some_and(|ext| filter_extensions.contains(&ext)) {
+            debug!("Filter the file by extension '{file_name:?}'");
+            continue;
+        }
+
         if !provided_libs.insert(file_name.clone()) {
             bail!("Two files with the same name '{file_name:?}' in {libs_dir:?}")
         }
@@ -588,19 +588,21 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         }
     }
 
-    if !provided_libs.is_empty() {
-        let error: Vec<String> = provided_libs
-            .iter()
-            .map(|os| os.to_string_lossy().to_string())
-            .collect();
-        let joined = error.join(", ");
-        bail!("Libs were provided but not loaded: {joined}")
-    }
+    if full_set {
+        if !provided_libs.is_empty() {
+            let error: Vec<String> = provided_libs
+                .iter()
+                .map(|os| os.to_string_lossy().to_string())
+                .collect();
+            let joined = error.join(", ");
+            bail!("Libs were provided but not loaded: {joined}")
+        }
 
-    // we should have more detailed logs in this count,
-    // but just to be safe we'll do this simple assertion
-    if ordered_libs_to_load.len() != provided_libs_initial_len {
-        bail!("Library count mismatch");
+        // we should have more detailed logs in this count,
+        // but just to be safe we'll do this simple assertion
+        if ordered_libs_to_load.len() != provided_libs_initial_len {
+            bail!("Library count mismatch");
+        }
     }
 
     debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());

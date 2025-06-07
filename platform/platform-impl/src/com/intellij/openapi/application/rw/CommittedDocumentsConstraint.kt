@@ -3,7 +3,6 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadConstraint
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
@@ -18,9 +17,7 @@ internal class CommittedDocumentsConstraint(
   }
 
   override suspend fun awaitConstraint() {
-    val manager = blockingContext {
-      PsiDocumentManager.getInstance(project)
-    }
+    val manager = PsiDocumentManager.getInstance(project)
     yieldUntilRun {
       manager.performLaterWhenAllCommitted(ModalityState.any(), it)
     }

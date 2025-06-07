@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.query.entities
@@ -44,7 +44,7 @@ class WorkspaceModelReactiveTest {
   fun `collect data from query`() {
     runBlocking {
       val collector = ArrayList<String>()
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
       }
       val rete = WmReactive(wm)
@@ -61,7 +61,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "X")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("Y", MySource) }
       }
       waitUntilAllAsserted {
@@ -70,7 +70,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "Y")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel {
           it addEntity NamedEntity("Z", MySource)
           it addEntity NamedEntity("ZZ", MySource)
@@ -86,7 +86,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "ZZZ")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("C", MySource) }
         wm.updateProjectModel { it addEntity NamedEntity("CC", MySource) }
         wm.updateProjectModel { it addEntity NamedEntity("CCC", MySource) }
@@ -104,7 +104,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "CCC")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity SampleEntity2("data", true, MySource) }
       }
 
@@ -112,7 +112,7 @@ class WorkspaceModelReactiveTest {
         assertEquals(8, collector.size)
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("A", MySource) }
       }
 
@@ -137,7 +137,7 @@ class WorkspaceModelReactiveTest {
   fun `rename and collect data`() {
     runBlocking {
       val collector = ArrayList<String>()
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
       }
       val rete = WmReactive(wm)
@@ -154,7 +154,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "X")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel {
           val entity = it.resolve(NameId("X"))!!
           it.modifyNamedEntity(entity) {
@@ -177,7 +177,7 @@ class WorkspaceModelReactiveTest {
   fun `request entities themselves`() {
     runBlocking {
       val collector = ArrayList<NamedEntity>()
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
       }
       val rete = WmReactive(wm)
@@ -194,7 +194,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector.map { it.myName }, "X")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel {
           val entity = it.resolve(NameId("X"))!!
           it.modifyNamedEntity(entity) {
@@ -216,7 +216,7 @@ class WorkspaceModelReactiveTest {
   fun `operations with query`() {
     runBlocking {
       val collector = ArrayList<String>()
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
       }
       val rete = WmReactive(wm)
@@ -233,7 +233,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "X")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("Y", MySource) }
       }
 
@@ -244,7 +244,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "Y")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel {
           it addEntity NamedEntity("Z", MySource)
           it addEntity NamedEntity("ZZ", MySource)
@@ -260,7 +260,7 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "ZZZ")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("C", MySource) }
         wm.updateProjectModel { it addEntity NamedEntity("CC", MySource) }
         wm.updateProjectModel { it addEntity NamedEntity("CCC", MySource) }
@@ -277,14 +277,14 @@ class WorkspaceModelReactiveTest {
         assertContains(collector, "CCC")
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity SampleEntity2("data", true, MySource) }
       }
       waitUntilAllAsserted {
         assertEquals(8, collector.size)
       }
 
-      writeAction {
+      edtWriteAction {
         wm.updateProjectModel { it addEntity NamedEntity("A", MySource) }
       }
 
@@ -315,7 +315,7 @@ class WorkspaceModelReactiveTest {
     var counter2 = 0
     var counter3 = 0
     var counter4 = 0
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel {
         it addEntity ParentSubEntity("ParentData", MySource) {
           child = ChildSubEntity(MySource) {
@@ -381,7 +381,7 @@ class WorkspaceModelReactiveTest {
       assertContains(collector4, "ChildData")
     }
 
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel {
         val entity = it.entities(ChildSubEntity::class.java).single()
         it addEntity ParentSubEntity("ParentData2", MySource) parent@{
@@ -417,7 +417,7 @@ class WorkspaceModelReactiveTest {
   @Test
   fun `delay in read`() = runBlocking {
     val collector = ArrayList<String>()
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
     }
     val rete = WmReactive(wm)
@@ -435,7 +435,7 @@ class WorkspaceModelReactiveTest {
       assertContains(collector, "X")
     }
 
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("Y", MySource) }
     }
     waitUntilAllAsserted {
@@ -444,7 +444,7 @@ class WorkspaceModelReactiveTest {
       assertContains(collector, "Y")
     }
 
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("Z", MySource) }
     }
     waitUntilAllAsserted {
@@ -461,7 +461,7 @@ class WorkspaceModelReactiveTest {
   fun `flow of entities add and remove`() = runBlocking {
     val collector = ArrayList<String>()
     val removedCollector = ArrayList<String>()
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("X", MySource) }
     }
     val rete = WmReactive(wm)
@@ -484,7 +484,7 @@ class WorkspaceModelReactiveTest {
       assertContains(collector, "X")
     }
 
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("Y", MySource) }
     }
     waitUntilAllAsserted {
@@ -494,7 +494,7 @@ class WorkspaceModelReactiveTest {
       assertContains(collector, "Y")
     }
 
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it.resolve(NameId("X"))!!.also { entity -> it.removeEntity(entity) } }
     }
     waitUntilAllAsserted {
@@ -507,7 +507,7 @@ class WorkspaceModelReactiveTest {
 
 
     // Query for entities doesn't react on changes of entities. Only on adding and remove
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel {
         it.resolve(NameId("Y"))!!.also { entity ->
           it.modifyNamedEntity(entity) {
@@ -516,7 +516,7 @@ class WorkspaceModelReactiveTest {
         }
       }
     }
-    writeAction {
+    edtWriteAction {
       wm.updateProjectModel { it addEntity NamedEntity("C", MySource) }
     }
 

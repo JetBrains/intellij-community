@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.psi.PsiElement;
@@ -16,7 +16,7 @@ import java.util.List;
 
 public final class MethodImplementationsSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull DefinitionsScopedSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiElement> consumer) {
     final PsiElement sourceElement = queryParameters.getElement();
     if (sourceElement instanceof PsiMethod) {
       return processImplementations((PsiMethod)sourceElement, consumer, queryParameters.getScope());

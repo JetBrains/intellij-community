@@ -34,17 +34,17 @@ public abstract class AbstractImportFromExternalSystemControl<
   SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>>
   extends AbstractSettingsControl
 {
-  @NotNull private final SystemSettings  mySystemSettings;
-  @NotNull private final ProjectSettings myProjectSettings;
+  private final @NotNull SystemSettings  mySystemSettings;
+  private final @NotNull ProjectSettings myProjectSettings;
 
-  @NotNull private final PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
-  @NotNull private final NamePathComponent myLinkedProjectPathField;
-  @Nullable private final HideableTitledPanel hideableSystemSettingsPanel;
-  @NotNull private final ProjectFormatPanel myProjectFormatPanel;
+  private final @NotNull PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
+  private final @NotNull NamePathComponent myLinkedProjectPathField;
+  private final @Nullable HideableTitledPanel hideableSystemSettingsPanel;
+  private final @NotNull ProjectFormatPanel myProjectFormatPanel;
 
-  @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
-  @NotNull private final  ProjectSystemId                                myExternalSystemId;
-  @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
+  private final @NotNull ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
+  private final @NotNull ProjectSystemId                                myExternalSystemId;
+  private final @Nullable ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
 
   private boolean myShowProjectFormatPanel;
   private final JLabel myProjectFormatLabel;
@@ -153,8 +153,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @param settings  target external project settings
    * @return          control for managing given project settings
    */
-  @NotNull
-  protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
+  protected abstract @NotNull ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
   /**
    * Creates a control for managing given system-level settings (if any).
@@ -163,21 +162,17 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @return          a control for managing given system-level settings;
    *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
-  @Nullable
-  protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
+  protected abstract @Nullable ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
-  @NotNull
-  public ExternalSystemSettingsControl<ProjectSettings> getProjectSettingsControl() {
+  public @NotNull ExternalSystemSettingsControl<ProjectSettings> getProjectSettingsControl() {
     return myProjectSettingsControl;
   }
 
-  @Nullable
-  public ExternalSystemSettingsControl<SystemSettings> getSystemSettingsControl() {
+  public @Nullable ExternalSystemSettingsControl<SystemSettings> getSystemSettingsControl() {
     return mySystemSettingsControl;
   }
 
@@ -186,13 +181,11 @@ public abstract class AbstractImportFromExternalSystemControl<
     myLinkedProjectPathField.setPath(path);
   }
 
-  @NotNull
-  public SystemSettings getSystemSettings() {
+  public @NotNull SystemSettings getSystemSettings() {
     return mySystemSettings;
   }
 
-  @NotNull
-  public ProjectSettings getProjectSettings() {
+  public @NotNull ProjectSettings getProjectSettings() {
     return myProjectSettings;
   }
 
@@ -233,8 +226,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     }
   }
 
-  @Nullable
-  public ProjectFormatPanel getProjectFormatPanel() {
+  public @Nullable ProjectFormatPanel getProjectFormatPanel() {
     return myShowProjectFormatPanel ? myProjectFormatPanel : null;
   }
 

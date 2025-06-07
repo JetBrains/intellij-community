@@ -3,7 +3,6 @@ package com.intellij.build.progress;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEventsNls;
-import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.util.NlsContexts;

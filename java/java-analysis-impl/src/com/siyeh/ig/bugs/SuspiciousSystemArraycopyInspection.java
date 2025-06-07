@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -18,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return (String)infos[0];
   }
 
@@ -130,8 +129,7 @@ public final class SuspiciousSystemArraycopyInspection extends BaseInspection {
       }
     }
 
-    @NotNull
-    private static LongRangeSet getDefiniteRange(@NotNull LongRangeSet startSet, @NotNull LongRangeSet lengthSet) {
+    private static @NotNull LongRangeSet getDefiniteRange(@NotNull LongRangeSet startSet, @NotNull LongRangeSet lengthSet) {
       long maxLeftBorder = startSet.max();
       LongRangeSet lengthMinusOne = lengthSet.minus(LongRangeSet.point(1), LongRangeType.INT32);
       long minRightBorder = startSet.plus(lengthMinusOne, LongRangeType.INT32).min();

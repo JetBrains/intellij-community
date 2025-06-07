@@ -34,7 +34,7 @@ import java.util.Map;
 
 // TODO: include/import semantics are not 100% correct currently
 public final class DeclarationChecker extends ElementProcessor<XmlTag> implements PsiElementProcessor<PsiElement> {
-  private final static UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void> CACHE =
+  private static final UserDataCache<CachedValue<DeclarationChecker>, XmlFile, Void> CACHE =
     new UserDataCache<>("CACHE") {
       @Override
       protected CachedValue<DeclarationChecker> compute(final XmlFile file, final Void p) {

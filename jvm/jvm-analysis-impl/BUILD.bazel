@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.jvm.analysis.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-impl",
+  module_name = "intellij.jvm.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//jvm/jvm-analysis-api:analysis",
+    "//java/openapi:java",
+    "@lib//:stream_ex",
+    "//platform/analysis-api:analysis",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-impl:impl",
+    "//platform/indexing-api:indexing",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//platform/ide-core-impl",
+    "//jvm/jvm-analysis-quickFix:analysis-quickFix",
+    "//java/codeserver/core",
+  ],
+  exports = ["//jvm/jvm-analysis-api:analysis"],
+  runtime_deps = [":analysis-impl_resources"]
+)
+### auto-generated section `build intellij.jvm.analysis.impl` end

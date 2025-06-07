@@ -1,6 +1,5 @@
 // "Create local variable 'abc'" "true"
 // WITH_STDLIB
-//TODO K2 incorrectly deduces the type, see KT-67250
 class Test {
     fun outer() {
         val abc = 0

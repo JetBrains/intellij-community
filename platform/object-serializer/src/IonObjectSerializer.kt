@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.serialization
@@ -138,7 +138,7 @@ internal class IonObjectSerializer {
     }
   }
 
-  // reader cursor must be already pointed to struct
+  // reader cursor must be already pointed to the struct
   private fun <T> doRead(objectClass: Class<T>, originalType: Type?, context: ReadContext): T {
     when (context.reader.type) {
       IonType.NULL -> throw SerializationException("root value is null")
@@ -153,7 +153,12 @@ internal class IonObjectSerializer {
 
   fun <T> readList(itemClass: Class<T>, reader: ValueReader, configuration: ReadConfiguration): List<T> {
     @Suppress("UNCHECKED_CAST")
-    return read(List::class.java, reader, configuration, ParameterizedTypeImpl(List::class.java, itemClass)) as List<T>
+    return read(
+      objectClass = List::class.java,
+      reader = reader,
+      configuration = configuration,
+      originalType = ParameterizedTypeImpl(List::class.java, itemClass),
+    ) as List<T>
   }
 
   private fun createReadContext(reader: ValueReader, configuration: ReadConfiguration): ReadContext {
@@ -165,10 +170,12 @@ private val DEFAULT_FILTER = object : SerializationFilter {
   override fun isSkipped(value: Any?) = false
 }
 
-private data class ReadContextImpl(override val reader: ValueReader,
-                                   override val objectIdReader: ObjectIdReader,
-                                   override val bindingProducer: BindingProducer,
-                                   override val configuration: ReadConfiguration) : ReadContext {
+private data class ReadContextImpl(
+  override val reader: ValueReader,
+  override val objectIdReader: ObjectIdReader,
+  override val bindingProducer: BindingProducer,
+  override val configuration: ReadConfiguration,
+) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
 
   private val job = currentThreadContext().get(Job)

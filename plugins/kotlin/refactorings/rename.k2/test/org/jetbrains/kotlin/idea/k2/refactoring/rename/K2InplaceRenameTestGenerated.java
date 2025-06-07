@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.rename;
 
@@ -85,6 +85,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
     }
 
+    @TestMetadata("conflicts/functions/ConflictParameterLocalProperty.kt")
+    public void testConflicts_functions_ConflictParameterLocalProperty() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/ConflictParameterLocalProperty.kt");
+    }
+
     @TestMetadata("conflicts/functions/DefaultParameter.kt")
     public void testConflicts_functions_DefaultParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/DefaultParameter.kt");
@@ -103,6 +108,16 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("conflicts/functions/FunctionalParameter.kt")
     public void testConflicts_functions_FunctionalParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/FunctionalParameter.kt");
+    }
+
+    @TestMetadata("conflicts/functions/NoConflictParameterFunction.kt")
+    public void testConflicts_functions_NoConflictParameterFunction() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterFunction.kt");
+    }
+
+    @TestMetadata("conflicts/functions/NoConflictParameterProperty.kt")
+    public void testConflicts_functions_NoConflictParameterProperty() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterProperty.kt");
     }
 
     @TestMetadata("conflicts/functions/SameSignature.kt")
@@ -595,6 +610,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/MultiDeclaration.kt");
     }
 
+    @TestMetadata("NamedArguments.kt")
+    public void testNamedArguments() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/NamedArguments.kt");
+    }
+
     @TestMetadata("NoReformat.kt")
     public void testNoReformat() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/NoReformat.kt");
@@ -663,6 +683,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("QuotedLocalVar.kt")
     public void testQuotedLocalVar() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedLocalVar.kt");
+    }
+
+    @TestMetadata("QuotedOuterNames.kt")
+    public void testQuotedOuterNames() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedOuterNames.kt");
     }
 
     @TestMetadata("QuotedParameter.kt")

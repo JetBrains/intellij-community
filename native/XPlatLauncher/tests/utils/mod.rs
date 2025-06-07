@@ -578,6 +578,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
             (DEBUG_MODE_ENV_VAR, "1")
         ]),
         LauncherLocation::RemoteDev => HashMap::from([
+            (DEBUG_MODE_ENV_VAR, "1"),
             ("CWM_NO_PASSWORD", "1"),
             ("CWM_HOST_PASSWORD", "1"),
             ("REMOTE_DEV_NON_INTERACTIVE", "1"),

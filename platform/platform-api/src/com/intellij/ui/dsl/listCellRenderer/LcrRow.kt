@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer
 
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -60,6 +61,18 @@ interface LcrRow<T> {
    */
   var selectionColor: Color?
 
+  /**
+   * Row tooltip
+   */
+  var toolTipText: @NlsContexts.Tooltip String?
+
+  /**
+   * Height of the row (excluding separator) or null for auto height calculation.
+   * By default [com.intellij.util.ui.JBUI.CurrentTheme.List.rowHeight] is used
+   */
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var rowHeight: Int?
 
   /**
    * The gap between the previous cell and the next one. Not used for the first cell
@@ -77,7 +90,13 @@ interface LcrRow<T> {
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
   /**
+   * Adds a cell with a switcher (toggle button).
+   */
+  @ApiStatus.Internal
+  fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)? = null)
+
+  /**
    * Adds separator above the row
    */
-  fun separator(init: (LcrSeparator.() -> Unit))
+  fun separator(init: LcrSeparator.() -> Unit)
 }

@@ -19,9 +19,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.PyNewStyleStringFormatParser;
 import com.jetbrains.python.PyNewStyleStringFormatParser.Field;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,21 +37,18 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     super(pyString);
   }
 
-  @NotNull
   @Override
-  protected List<Field> extractAllSubstitutionChunks() {
+  protected @NotNull List<Field> extractAllSubstitutionChunks() {
     return PyNewStyleStringFormatParser.parse(myPyString.getText()).getAllFields();
   }
 
-  @NotNull
   @Override
-  protected List<Field> extractTopLevelSubstitutionChunks() {
+  protected @NotNull List<Field> extractTopLevelSubstitutionChunks() {
     return PyNewStyleStringFormatParser.parse(myPyString.getText()).getFields();
   }
 
-  @NotNull
   @Override
-  protected PySubstitutionChunkReference createReference(@NotNull Field field) {
+  protected @NotNull PySubstitutionChunkReference createReference(@NotNull Field field) {
     return new PySubstitutionChunkReference(myPyString, field);
   }
 
@@ -60,24 +57,21 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     return true;
   }
 
-  @NotNull
   @Override
-  public PyExpression getWholeExpressionToReplace() {
+  public @NotNull PyExpression getWholeExpressionToReplace() {
     //noinspection ConstantConditions
     return PsiTreeUtil.getParentOfType(myPyString, PyCallExpression.class);
   }
 
-  @Nullable
   @Override
-  protected PsiElement getValuesSource() {
+  protected @Nullable PsiElement getValuesSource() {
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(myPyString, PyCallExpression.class);
     assert callExpression != null;
     return callExpression.getArgumentList();
   }
 
-  @Nullable
   @Override
-  protected PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull Field field) {
+  protected @Nullable PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull Field field) {
     final PsiElement prepared = super.prepareExpressionToInject(expression, field);
     if (prepared == null) return null;
 
@@ -147,8 +141,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
     fStringText.append(chunk);
   }
 
-  @Nullable
-  private String quoteItemsInFragments(@NotNull Field field) {
+  private @Nullable String quoteItemsInFragments(@NotNull Field field) {
     final List<String> escaped = new ArrayList<>();
     for (String part : field.getAttributesAndLookups()) {
       if (part.startsWith(".")) {

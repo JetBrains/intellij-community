@@ -2,13 +2,14 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
@@ -149,7 +150,23 @@ public class ExtensionsImplTest {
     String moduleXml = "<idea-plugin><extensions>" + extensionElement + "</extensions></idea-plugin>";
     PluginId id = PluginId.getId(pluginName);
     IdeaPluginDescriptorImpl pluginDescriptor =
-      PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
-    pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null);
+      PluginDescriptorLoadUtilsKt.readAndInitDescriptorFromBytesForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
+    pluginDescriptor.registerExtensions(area.getNameToPointMap(), null);
+  }
+
+  private static final class TestExtensionClassOne {
+    @Tag("text")
+    public String myText;
+
+    TestExtensionClassOne() {
+    }
+
+    TestExtensionClassOne(String text) {
+      myText = text;
+    }
+
+    public String getText() {
+      return myText;
+    }
   }
 }

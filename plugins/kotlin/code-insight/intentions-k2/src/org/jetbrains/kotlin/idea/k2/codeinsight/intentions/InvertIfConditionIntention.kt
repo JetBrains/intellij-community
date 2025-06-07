@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
@@ -49,8 +49,7 @@ internal class InvertIfConditionIntention :
         return element.condition != null && element.then != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): Context {
+    override fun KaSession.prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
         val commentSavingRange = if (rBrace != null)
             PsiChildRange(element, rBrace)
@@ -219,7 +218,6 @@ internal class InvertIfConditionIntention :
         return null
     }
 
-    context(KaSession)
     private fun areAllOperandsBoolean(expression: KtBinaryExpression): Boolean {
         return getOperandsIfAllBoolean(expression) != null
     }

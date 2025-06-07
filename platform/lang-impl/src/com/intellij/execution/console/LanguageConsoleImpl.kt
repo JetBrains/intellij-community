@@ -152,8 +152,8 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
             }.anyMatch { x: String? -> x == highlightInfo.type.attributesKey.externalName }) continue
         }
         val localOffset = textRange.startOffset
-        val start = (max(rangeHighlighter.startOffset.toDouble(), localOffset.toDouble()) - localOffset).toInt()
-        val end = (min(rangeHighlighter.endOffset.toDouble(), textRange.endOffset.toDouble()) - localOffset).toInt()
+        val start = max(rangeHighlighter.startOffset, localOffset) - localOffset
+        val end = min(rangeHighlighter.endOffset, textRange.endOffset) - localOffset
         if (start > end) {
           continue
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -184,8 +184,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       addAll(generateActions());
     }
 
-    @NotNull
-    private static List<? extends AnAction> generateActions() {
+    private static @NotNull List<? extends AnAction> generateActions() {
       return Arrays.stream(Anchor.values())
         .filter(x -> isAllowed(x))
         .map(x -> new ToolWindowMoveAction(x))

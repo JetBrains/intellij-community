@@ -100,8 +100,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private Module getSelectedModule() {
+  private @Nullable Module getSelectedModule() {
     return (Module)myModuleComboBox.getSelectedItem();
   }
 
@@ -113,8 +112,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     return myContext.getModulesProvider().getModules();
   }
 
-  @NotNull
-  public String getDirectoryForManifest() {
+  public @NotNull String getDirectoryForManifest() {
     return FileUtil.toSystemIndependentName(myManifestDirField.getText());
   }
 

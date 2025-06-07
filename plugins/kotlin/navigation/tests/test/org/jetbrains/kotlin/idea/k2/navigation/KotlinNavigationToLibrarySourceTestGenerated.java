@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.navigation;
 
@@ -156,6 +156,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ctorParameter.kt")
+            public void testCtorParameter() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/ctorParameter.kt");
             }
 
             @TestMetadata("dataClass.kt")

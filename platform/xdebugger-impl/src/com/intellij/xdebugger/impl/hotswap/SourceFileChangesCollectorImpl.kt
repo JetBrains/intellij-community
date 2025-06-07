@@ -18,6 +18,8 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @Service(Service.Level.APP)
 private class ChangesProcessingService(private val coroutineScope: CoroutineScope) : Disposable.Default {
@@ -39,9 +43,6 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
   private val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Document changed: ${event.document}")
-      }
       queueSizeEstimate.incrementAndGet()
       coroutineScope.launch(documentChangeDispatcher) {
         try {
@@ -76,18 +77,21 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
   private suspend fun onDocumentChange(document: Document) = coroutineScope {
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@coroutineScope
+    if (logger.isDebugEnabled) {
+      logger.debug("Document changed: ${virtualFile}")
+    }
     val filteredCollectors = collectors
       .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
       .filter { it.second.await() }
       .map { it.first }
     if (filteredCollectors.isEmpty()) {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change skipped as filtered: $document")
+        logger.debug("Document change skipped as filtered: $virtualFile")
       }
       return@coroutineScope
     }
     if (logger.isDebugEnabled) {
-      logger.debug("Document change processing: $document")
+      logger.debug("Document change processing: $virtualFile")
     }
     val contentHash = Strings.stringHashCode(document.immutableCharSequence)
     val groupedByTimeStamp = filteredCollectors.groupBy { it.lastResetTimeStamp }
@@ -145,6 +149,7 @@ class SourceFileChangesCollectorImpl(
 ) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private val lock = ReentrantLock()
 
   @Volatile
   private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
@@ -157,7 +162,7 @@ class SourceFileChangesCollectorImpl(
     ChangesProcessingService.getInstance().addCollector(this)
   }
 
-  override fun getChanges(): Set<VirtualFile> = currentChanges
+  override fun getChanges(): Set<VirtualFile> = lock.withLock { currentChanges.toHashSet() }
   override fun resetChanges() {
     lastResetTimeStamp = System.currentTimeMillis()
     currentChanges = hashSetOf()
@@ -168,23 +173,25 @@ class SourceFileChangesCollectorImpl(
     file: VirtualFile, document: Document,
   ) = coroutineScope.launch(limitedDispatcher) {
     val currentChanges = currentChanges
-    if (hasChangesSinceLastReset) {
-      currentChanges.add(file)
-    }
-    else {
-      currentChanges.remove(file)
+    lock.withLock {
+      if (hasChangesSinceLastReset) {
+        currentChanges.add(file)
+      }
+      else {
+        currentChanges.remove(file)
+      }
     }
 
     val isEmpty = currentChanges.isEmpty()
     if (isEmpty) {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change reverted previous changes: $document")
+        logger.debug("Document change reverted previous changes: $file")
       }
       listener.onChangesCanceled()
     }
     else {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change active: $document")
+        logger.debug("Document change active: $file")
       }
       listener.onNewChanges()
     }

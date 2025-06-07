@@ -16,9 +16,10 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -36,8 +37,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
   public boolean ignoreAssignmentsToFields = false;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
   }
 
@@ -62,7 +62,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
     if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
       return null;
     }
-    return new AddAnnotationPsiFix(annotation, variable);
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(annotation, variable));
   }
 
   @Override
@@ -84,7 +84,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
       @NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
-      if (!PsiKeyword.NULL.equals(text)) {
+      if (!JavaKeywords.NULL.equals(text)) {
         return;
       }
       PsiElement parent = value.getParent();

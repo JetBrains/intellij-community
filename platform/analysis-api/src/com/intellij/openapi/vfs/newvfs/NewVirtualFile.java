@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -98,14 +95,14 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     });
   }
 
-  public abstract @NotNull Collection<VirtualFile> getCachedChildren();
+  public abstract @NotNull @Unmodifiable Collection<VirtualFile> getCachedChildren();
 
   @SuppressWarnings("SpellCheckingInspection")
-  public abstract @NotNull Iterable<VirtualFile> iterInDbChildren();
+  public abstract @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildren();
 
   @ApiStatus.Internal
   @SuppressWarnings("SpellCheckingInspection")
-  public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+  public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }
 }

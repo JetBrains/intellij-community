@@ -13,7 +13,9 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.net.HttpURLConnection
 import java.net.InetSocketAddress
+import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
@@ -63,10 +65,14 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
     startRepositoryFor(File(repo), "/", null, null)
   }
 
+  fun startProxyRepositoryForUrl(repoUrl: String) {
+    setupRemoteRepositoryServerProxy(repoUrl, "/", null)
+  }
+
   private fun setupRemoteRepositoryServerReadFiles(repo: File, contextPath: String, authenticator: Authenticator?) {
     val httpContext = myServer.createContext(contextPath) { exchange ->
       val path = exchange.requestURI.path
-      MavenLog.LOG.warn("Got request for $path")
+      //MavenLog.LOG.warn("Got request for $path")
       val file = File(repo, path)
       if (file.isDirectory) {
         exchange.responseHeaders.add("Content-Type", "text/html")
@@ -85,7 +91,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         exchange.sendResponseHeaders(404, -1)
       }
       exchange.close()
-      MavenLog.LOG.warn("Sent response for $path")
+      //MavenLog.LOG.warn("Sent response for $path")
     }
     httpContext.authenticator = authenticator
   }
@@ -96,7 +102,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
 
     val httpContext = myServer.createContext(contextPath) { exchange ->
       val path = exchange.requestURI.path
-      MavenLog.LOG.warn("Got request for $path")
+      //MavenLog.LOG.warn("Got request for $path")
       val content = pathMap[path]
       if (null != content) {
         exchange.responseHeaders.add("Content-Type", "application/octet-stream")
@@ -107,7 +113,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         exchange.sendResponseHeaders(404, -1)
       }
       exchange.close()
-      MavenLog.LOG.warn("Sent response for $path")
+      //MavenLog.LOG.warn("Sent response for $path")
     }
     httpContext.authenticator = authenticator
   }
@@ -121,6 +127,38 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         pathMap[relativePath] = file.readBytes()
       }
     }
+  }
+
+  private fun setupRemoteRepositoryServerProxy(repoUrl: String, contextPath: String, authenticator: Authenticator?) {
+    val httpContext = myServer.createContext(contextPath) { exchange ->
+      val path = exchange.requestURI.path
+      MavenLog.LOG.warn("Got request for $path")
+
+      val centralUrl = "$repoUrl$path"
+
+      val connection = URL(centralUrl).openConnection() as HttpURLConnection
+      connection.requestMethod = "GET"
+
+      val responseCode = connection.responseCode
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        if (centralUrl.endsWith("/")) {
+          exchange.responseHeaders.add("Content-Type", "text/html")
+        }
+        else {
+          exchange.responseHeaders.add("Content-Type", "application/octet-stream")
+        }
+        exchange.sendResponseHeaders(200, 0)
+        BufferedInputStream(connection.inputStream).use {
+          StreamUtil.copy(it, exchange.responseBody)
+        }
+      }
+      else {
+        exchange.sendResponseHeaders(404, -1)
+      }
+      exchange.close()
+      MavenLog.LOG.warn("Sent response for $path")
+    }
+    httpContext.authenticator = authenticator
   }
 
   companion object {

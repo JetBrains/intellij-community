@@ -16,8 +16,8 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
@@ -36,8 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ForeachStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("extended.for.statement.problem.descriptor");
   }
 
@@ -49,8 +48,7 @@ public final class ForeachStatementInspection extends BaseInspection {
   private static class ForEachFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("extended.for.statement.replace.quickfix");
     }
 
@@ -63,7 +61,7 @@ public final class ForeachStatementInspection extends BaseInspection {
         return;
       }
       CommentTracker tracker = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder();
+      final @NonNls StringBuilder newStatement = new StringBuilder();
       final PsiParameter iterationParameter = statement.getIterationParameter();
       boolean generateFinalLocals = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isGenerateFinalLocals();
       tracker.markUnchanged(iteratedValue);
@@ -81,7 +79,7 @@ public final class ForeachStatementInspection extends BaseInspection {
         newStatement.append(" = ").append(iteratedValue.getText()).append('[').append(index).append("];");
       }
       else {
-        @NonNls final StringBuilder methodCall = new StringBuilder();
+        final @NonNls StringBuilder methodCall = new StringBuilder();
         if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
           methodCall.append('(').append(iteratedValue.getText()).append(')');
         }

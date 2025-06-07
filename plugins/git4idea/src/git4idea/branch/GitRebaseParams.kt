@@ -2,28 +2,43 @@
 package git4idea.branch
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
+import git4idea.GitUtil
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.rebase.GitRebaseOption
 
-class GitRebaseParams internal constructor(private val version: GitVersion,
-                                           branch: String?,
-                                           newBase: String?,
-                                           val upstream: String?,
-                                           private val selectedOptions: Set<GitRebaseOption>,
-                                           private val autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
-                                           val editorHandler: GitRebaseEditorHandler? = null) {
+class GitRebaseParams internal constructor(
+  private val version: GitVersion,
+  branch: String?,
+  newBase: String?,
+  val upstream: RebaseUpstream,
+  private val selectedOptions: Set<GitRebaseOption>,
+  private val autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
+  val editorHandler: GitRebaseEditorHandler? = null,
+) {
   companion object {
     private val LOG = logger<GitRebaseParams>()
 
-    fun editCommits(version: GitVersion,
-                    base: String,
-                    editorHandler: GitRebaseEditorHandler?,
-                    preserveMerges: Boolean,
-                    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT) = GitRebaseParams(version, null, null, base,
-                                                                                               collectOptions(true, preserveMerges),
-                                                                                               autoSquash, editorHandler)
+    fun editCommits(
+      version: GitVersion,
+      base: String,
+      editorHandler: GitRebaseEditorHandler?,
+      preserveMerges: Boolean,
+      autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
+    ) = editCommits(version, RebaseUpstream.Reference(base), editorHandler, preserveMerges, autoSquash)
+
+    fun editCommits(
+      version: GitVersion,
+      base: RebaseUpstream,
+      editorHandler: GitRebaseEditorHandler?,
+      preserveMerges: Boolean,
+      autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
+    ) = GitRebaseParams(version, null, null, base,
+                        collectOptions(true, preserveMerges),
+                        autoSquash, editorHandler)
 
     private fun collectOptions(interactive: Boolean, rebaseMerges: Boolean) = mutableSetOf<GitRebaseOption>().apply {
       if (interactive) {
@@ -31,6 +46,36 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
       }
       if (rebaseMerges) {
         add(GitRebaseOption.REBASE_MERGES)
+      }
+    }
+  }
+
+  sealed interface RebaseUpstream {
+    /**
+     * Rebase up to the initial commit, inclusive
+     */
+    object Root : RebaseUpstream
+
+    open class Reference(val ref: String) : RebaseUpstream
+    class Commit(val commit: Hash) : Reference(commit.asString())
+
+    companion object {
+      fun fromRefString(ref: String): Reference {
+        if (ref.isEmpty()) {
+          LOG.error("Empty rebase upstream specified")
+          return Reference(GitUtil.HEAD)
+        }
+
+        if (GitUtil.isHashString(ref)) {
+          return Commit(HashImpl.build(ref))
+        }
+        return Reference(ref)
+      }
+
+      @Deprecated("Prefer using fromRefString", ReplaceWith("fromRefString(upstream)"))
+      fun fromNullableString(upstream: String?): RebaseUpstream {
+        if (upstream.isNullOrBlank()) return Root
+        return fromRefString(upstream)
       }
     }
   }
@@ -44,21 +89,33 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
   val branch: String? = branch?.takeIf { it.isNotBlank() }
   val newBase: String? = newBase?.takeIf { it.isNotBlank() }
 
+  internal constructor(
+    version: GitVersion,
+    branch: String?,
+    newBase: String?,
+    upstream: String?,
+    selectedOptions: Set<GitRebaseOption>,
+    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
+    editorHandler: GitRebaseEditorHandler? = null,
+  ) : this(version, branch, newBase, RebaseUpstream.fromNullableString(upstream), selectedOptions, autoSquash, editorHandler)
+
   constructor(version: GitVersion, upstream: String) : this(version, null, null, upstream, false, false)
 
-  constructor(version: GitVersion,
-              branch: String?,
-              newBase: String?,
-              upstream: String,
-              interactive: Boolean,
-              preserveMerges: Boolean)
-    : this(version, branch, newBase, upstream, collectOptions(interactive, preserveMerges), AutoSquashOption.DEFAULT)
+  constructor(
+    version: GitVersion,
+    branch: String?,
+    newBase: String?,
+    upstream: String,
+    interactive: Boolean,
+    preserveMerges: Boolean,
+  ) : this(version, branch, newBase, RebaseUpstream.Reference(upstream),
+           collectOptions(interactive, preserveMerges), AutoSquashOption.DEFAULT)
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
     selectedOptions.mapNotNull { option ->
       when (option) {
         GitRebaseOption.REBASE_MERGES -> handleRebaseMergesOption()
-        GitRebaseOption.ROOT -> null // this option is added to the end of the command line, see below
+        GitRebaseOption.ROOT -> null // this option is converted to RebaseUpstream.Root
         else -> option.getOption(version)
       }
     }.forEach { option -> add(option) }
@@ -73,17 +130,9 @@ class GitRebaseParams internal constructor(private val version: GitVersion,
       addAll(listOf("--onto", newBase))
     }
 
-    if (!upstream.isNullOrEmpty()) {
-      add(upstream)
-    }
-
-    if (GitRebaseOption.ROOT in selectedOptions) {
-      if (upstream.isNullOrEmpty()) {
-        add(GitRebaseOption.ROOT.getOption(version))
-      }
-      else {
-        LOG.error("Git rebase --root option is incompatible with upstream and will be omitted")
-      }
+    when (upstream) {
+      RebaseUpstream.Root -> add("--root")
+      is RebaseUpstream.Reference -> add(upstream.ref)
     }
 
     if (branch != null) {

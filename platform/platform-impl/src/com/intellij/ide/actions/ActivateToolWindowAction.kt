@@ -3,7 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -31,7 +31,7 @@ import java.lang.ref.WeakReference
  * Dynamically registered in Settings|Keymap for each newly registered tool window.
  */
 open class ActivateToolWindowAction protected constructor(val toolWindowId: String)
-  : DumbAwareAction(), MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
+  : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   companion object {
     @Suppress("DeprecatedCallableAddReplaceWith")
     @JvmStatic
@@ -104,11 +104,10 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
     }
   }
 
-  override fun alwaysShowIconInMainMenu(): Boolean = true
-
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
+    e.presentation.putClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU, true)
     val project = getEventProject(e)?.takeIf { !it.isDisposed }
     val presentation = e.presentation
     if (project == null) {

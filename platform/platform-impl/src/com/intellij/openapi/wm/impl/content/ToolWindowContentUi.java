@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -55,16 +55,17 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
-  // when client property is put in toolwindow component, hides toolwindow label
+  // when client property is put in a toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
-  // when client property is set to true in toolwindow component, the toolbar is always visible in the tool window header
+  // when client property is set to true in a toolwindow component, the toolbar is always visible in the tool window header
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
   @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
-  @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
+  @ApiStatus.Experimental
+  public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -126,7 +127,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       public void contentAdded(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         ContentManager manager = content.getManager();
-        // merge subContents to main content if they are together inside one content manager
+        // merge subContents to the main content if they are together inside one content manager
         if (manager != null && !(content instanceof SingleContentLayout.SubContent)) {
           List<Content> contents = manager.getContentsRecursively();
           List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.SubContent)).toList();
@@ -199,7 +200,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     };
     contentManager.addContentManagerListener(contentManagerListener);
     // some tool windows clients can use contentManager.removeAllContents(true)
-    // - ensure that we don't receive such events if window is already disposed
+    // - ensure that we don't receive such events if a window is already disposed
     Disposer.register(window.getDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -579,7 +580,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
-        ui.showContextMenu(comp, x, y, ui.window.createPopupGroup(), content);
+        ui.showContextMenu(comp, x, y, ui.window.createPopupGroup(false), content);
       }
     });
 
@@ -639,7 +640,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
 
     if (toolWindowGroup != null) {
-      group.addAll(toolWindowGroup);
+      group.add(toolWindowGroup);
     }
 
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
@@ -729,7 +730,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     tabActionGroup.removeAll();
     tabActionGroup.addSeparator();
     tabActionGroup.addAll(actions);
-    tabToolbar.updateActionsImmediately();
+    if (tabComponent.isShowing()) {
+      tabToolbar.updateActionsAsync();
+    }
   }
 
   private @NotNull CloseAction.CloseTarget computeCloseTarget() {

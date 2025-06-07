@@ -30,9 +30,8 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     myNameIdentifier = new LombokLightIdentifier(declarationScope.getManager(), name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myNameIdentifier.getText();
   }
 

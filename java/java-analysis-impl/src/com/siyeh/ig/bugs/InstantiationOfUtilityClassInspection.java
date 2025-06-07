@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public final class InstantiationOfUtilityClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "instantiation.utility.class.problem.descriptor");
   }

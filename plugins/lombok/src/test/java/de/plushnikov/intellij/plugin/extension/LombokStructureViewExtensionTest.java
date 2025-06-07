@@ -38,10 +38,6 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
                          canEqual(Object): boolean
                          hashCode(): int
                          toString(): String
-                         -fff: float
-                          fff(): float
-                          fff(float): Test
-                          fff: float
                          -myString: String
                           string(): String
                           string(String): Test
@@ -55,6 +51,7 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
                           getX(): int
                           setX(int): void
                           myX: int
+                         fff: float
                        """);
   }
 

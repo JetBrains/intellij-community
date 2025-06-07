@@ -14,9 +14,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -97,7 +99,7 @@ public final class JavaReflectionCompletionContributor extends CompletionContrib
 
   private static void addAnnotationClasses(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
     Set<PsiAnnotation> declaredAnnotations =
-      isDeclared ? ContainerUtil.immutableSet(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
+      isDeclared ? Collections.unmodifiableSet(new HashSet<>(Arrays.asList(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)))) : null;
 
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(psiClass, true, null, false);
     for (PsiAnnotation annotation : annotations) {

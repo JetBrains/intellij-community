@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -13,6 +13,8 @@ internal interface ProblemsTreeVisitor : TreeVisitor {
     is Root -> visitRoot(node)
     is FileNode -> visitFile(node)
     is ProblemsViewGroupNode -> visitGroup(node)
+    is ProblemsContextNode -> visitContext(node)
+    is ProblemsContextGroupNode -> visitContextGroup(node)
     is ProblemNode -> visitProblem(node)
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
@@ -20,6 +22,8 @@ internal interface ProblemsTreeVisitor : TreeVisitor {
   fun visitRoot(root: Root): TreeVisitor.Action = TreeVisitor.Action.CONTINUE
   fun visitFile(node: FileNode): TreeVisitor.Action
   fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
+  fun visitContext(node: ProblemsContextNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
+  fun visitContextGroup(node: ProblemsContextGroupNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
   fun visitProblem(node: ProblemNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
 }
 
@@ -39,6 +43,16 @@ internal class ProblemNodeFinder(private val problem: Problem) : ProblemsTreeVis
   }
 
   override fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = when (node.group) {
+    problem.group -> TreeVisitor.Action.CONTINUE
+    else -> TreeVisitor.Action.SKIP_CHILDREN
+  }
+
+  override fun visitContext(node: ProblemsContextNode): TreeVisitor.Action = when (node.contextGroup) {
+    problem.contextGroup -> TreeVisitor.Action.CONTINUE
+    else -> TreeVisitor.Action.SKIP_CHILDREN
+  }
+
+  override fun visitContextGroup(node: ProblemsContextGroupNode): TreeVisitor.Action = when (node.group) {
     problem.group -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }

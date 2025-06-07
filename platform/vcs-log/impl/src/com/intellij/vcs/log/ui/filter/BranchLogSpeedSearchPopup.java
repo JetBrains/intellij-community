@@ -16,8 +16,8 @@ import java.util.List;
 @ApiStatus.Internal
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
-    super(null, ActionGroupUtil.forceRecursiveUpdateInBackground(new DefaultActionGroup(actionGroup,
-                                                                                        createSpeedSearchActionGroup(actionGroup))),
+    super(null, ActionGroupUtil.forceRecursiveUpdateInBackground(
+      new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup))),
           dataContext, ActionPlaces.getPopupPlace("VCS.Log.BranchWidget"), null, false);
     setMinimumSize(new JBDimension(250, 0));
   }
@@ -36,22 +36,29 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   }
 
   public static @NotNull ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    List<AnAction> speedSearchActions = new ArrayList<>();
-    createSpeedSearchActions(actionGroup, speedSearchActions, true);
-    return new DefaultActionGroup(speedSearchActions);
+    return new ActionGroup() {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        List<AnAction> speedSearchActions = new ArrayList<>();
+        createSpeedSearchActions(e, actionGroup, speedSearchActions, true);
+        return speedSearchActions.toArray(EMPTY_ARRAY);
+      }
+    };
   }
 
-  private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
+  private static void createSpeedSearchActions(@NotNull AnActionEvent e,
+                                               @NotNull ActionGroup actionGroup,
                                                @NotNull List<? super AnAction> speedSearchActions,
                                                boolean isFirstLevel) {
     if (!isFirstLevel) speedSearchActions.add(Separator.create(actionGroup.getTemplatePresentation().getText()));
 
-    for (AnAction child : actionGroup.getChildren(null)) {
+    for (AnAction child : e.getUpdateSession().children(actionGroup)) {
       if (!isFirstLevel && !(child instanceof ActionGroup || child instanceof Separator || child instanceof SpeedsearchAction)) {
         speedSearchActions.add(createSpeedSearchWrapper(child));
       }
       else if (child instanceof ActionGroup) {
-        createSpeedSearchActions((ActionGroup)child, speedSearchActions, isFirstLevel && !((ActionGroup)child).isPopup());
+        createSpeedSearchActions(e, (ActionGroup)child, speedSearchActions, isFirstLevel && !((ActionGroup)child).isPopup());
       }
     }
   }

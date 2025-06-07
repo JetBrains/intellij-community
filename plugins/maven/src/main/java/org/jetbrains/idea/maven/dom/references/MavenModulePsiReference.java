@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -100,7 +100,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
-    if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    if (myText.isEmpty() || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
@@ -115,15 +115,13 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       myModulePath = modulePath;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return myWithParent ? MavenDomBundle.message("fix.create.module.with.parent") : MavenDomBundle.message("fix.create.module");
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
@@ -7,10 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.Java11Shim;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,7 +36,8 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Object lock = new Object();
   private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
   private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
-  static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
+  @ApiStatus.Internal
+  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private volatile int uniqueId;
 
@@ -119,7 +117,8 @@ public class ID<K, V> extends IndexId<K,V> {
     return id;
   }
 
-  static void reinitializeDiskStorage() {
+  @ApiStatus.Internal
+  public static void reinitializeDiskStorage() {
     nameToIdRegistry.forceDiskSync();
   }
 
@@ -173,7 +172,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
-  public static Collection<ID<?, ?>> getRegisteredIds() {
+  public static @Unmodifiable Collection<ID<?, ?>> getRegisteredIds() {
     return idToPluginId.keySet();
   }
 

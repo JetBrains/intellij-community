@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -18,9 +18,8 @@ import org.jetbrains.annotations.Nullable;
  * see https://bugs.openjdk.org/browse/JDK-8037567
  */
 public final class StaticInitializerReferencesSubClassInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -48,8 +47,7 @@ public final class StaticInitializerReferencesSubClassInspection extends Abstrac
     };
   }
 
-  @Nullable
-  private static Pair<PsiElement, PsiClass> findSubClassReference(@NotNull PsiElement scope, @Nullable final PsiClass baseClass) {
+  private static @Nullable Pair<PsiElement, PsiClass> findSubClassReference(@NotNull PsiElement scope, final @Nullable PsiClass baseClass) {
     if (baseClass == null || baseClass.isInterface()) return null;
 
     final Ref<Pair<PsiElement, PsiClass>> result = Ref.create();
@@ -94,16 +92,14 @@ public final class StaticInitializerReferencesSubClassInspection extends Abstrac
     });
   }
 
-  @Nullable
-  private static PsiElement calcProblemElement(PsiElement element) {
+  private static @Nullable PsiElement calcProblemElement(PsiElement element) {
     if (element instanceof PsiNewExpression) return calcProblemElement(((PsiNewExpression)element).getClassOrAnonymousClassReference());
     if (element instanceof PsiMethodCallExpression) return calcProblemElement(((PsiMethodCallExpression)element).getMethodExpression());
     if (element instanceof PsiJavaCodeReferenceElement) return ((PsiJavaCodeReferenceElement)element).getReferenceNameElement();
     return element;
   }
 
-  @Nullable
-  private static PsiClass extractClass(PsiElement element) {
+  private static @Nullable PsiClass extractClass(PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)element).resolve();
       if (target instanceof PsiClass) {

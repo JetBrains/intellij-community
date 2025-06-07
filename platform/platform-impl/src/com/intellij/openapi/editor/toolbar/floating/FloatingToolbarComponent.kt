@@ -3,6 +3,16 @@ package com.intellij.openapi.editor.toolbar.floating
 
 interface FloatingToolbarComponent {
 
+  var backgroundAlpha: Float
+
+  var showingTime: Int
+
+  var hidingTime: Int
+
+  var retentionTime: Int
+
+  var autoHideable: Boolean
+
   fun scheduleHide()
 
   fun scheduleShow()

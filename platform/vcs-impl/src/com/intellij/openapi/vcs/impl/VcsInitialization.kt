@@ -9,7 +9,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.ProjectActivity
@@ -96,9 +95,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     val wasScheduled = scheduleActivity(vcsInitObject, runnable)
     if (!wasScheduled) {
       coroutineScope.launch {
-        blockingContext {
-          runnable.run()
-        }
+        runnable.run()
       }
     }
   }

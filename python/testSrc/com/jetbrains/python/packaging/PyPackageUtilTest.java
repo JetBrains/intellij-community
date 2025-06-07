@@ -146,9 +146,9 @@ public class PyPackageUtilTest extends PyTestCase {
           final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
 
           final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
-            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1")),
-            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2")),
-            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3"), PyRequirementsKt.pyRequirement("r4"))
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1",null)),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2",null)),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3",null), PyRequirementsKt.pyRequirement("r4",null))
           );
 
           assertEquals(expected, extrasRequirements);

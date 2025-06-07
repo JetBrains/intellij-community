@@ -19,6 +19,7 @@ public abstract class DataViewStrategy {
   private static class StrategyHolder {
     private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(
       ArrayViewStrategy.createInstanceForNumpyArray(),
+      ArrayViewStrategy.createInstanceForNumpyRecarray(),
       ArrayViewStrategy.createInstanceForEagerTensor(),
       ArrayViewStrategy.createInstanceForResourceVariable(),
       ArrayViewStrategy.createInstanceForSparseTensor(),
@@ -33,7 +34,7 @@ public abstract class DataViewStrategy {
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount,
                                                         int columnCount,
-                                                        @NotNull PyDataViewerPanel panel,
+                                                        @NotNull PyDataViewerCommunityPanel panel,
                                                         @NotNull PyDebugValue debugValue);
 
   public abstract ColoredCellRenderer createCellRenderer(double minValue, double maxValue, @NotNull ArrayChunk arrayChunk);

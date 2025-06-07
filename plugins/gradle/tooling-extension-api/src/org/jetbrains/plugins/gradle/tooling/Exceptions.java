@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.tooling.model.UnsupportedMethodException;
@@ -21,8 +21,7 @@ public final class Exceptions {
   }
 
 
-  @NotNull
-  public static Throwable unwrap(@NotNull Throwable e) {
+  public static @NotNull Throwable unwrap(@NotNull Throwable e) {
     for (Throwable candidate = e; candidate != null; candidate = candidate.getCause()) {
       Class<? extends Throwable> clazz = candidate.getClass();
       if (clazz != InvocationTargetException.class && clazz != UndeclaredThrowableException.class) {

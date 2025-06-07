@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.injection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -16,6 +16,7 @@ import com.intellij.patterns.ValuePatternCondition
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -30,10 +31,15 @@ import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -130,15 +136,20 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     ): BaseInjection? {
         val containingFile = ktHost.containingFile
 
-        val languageInjectionHost = when (ktHost) {
-            is PsiLanguageInjectionHost -> ktHost
-            is KtBinaryExpression -> flattenBinaryExpression(ktHost).firstIsInstanceOrNull<PsiLanguageInjectionHost>()
+        val host = when(ktHost) {
+            is KtStringTemplateEntry -> ktHost.parent as? KtElement
+            else -> ktHost
+        } ?: return null
+
+        val languageInjectionHost = when (host) {
+            is PsiLanguageInjectionHost -> host
+            is KtBinaryExpression -> flattenBinaryExpression(host).firstIsInstanceOrNull<PsiLanguageInjectionHost>()
             else -> null
         } ?: return null
 
-        val unwrapped = unwrapTrims(ktHost) // put before TempInjections for side effects, because TempInjection could also be trim-indented
+        val unwrapped = unwrapTrims(host) // put before TempInjections for side effects, because TempInjection could also be trim-indented
 
-        val tempInjectedLanguage = TemporaryPlacesRegistry.getInstance(ktHost.project).getLanguageFor(languageInjectionHost, containingFile)
+        val tempInjectedLanguage = TemporaryPlacesRegistry.getInstance(host.project).getLanguageFor(languageInjectionHost, containingFile)
         if (tempInjectedLanguage != null) {
             return BaseInjection(support.id).apply {
                 injectedLanguageId = tempInjectedLanguage.id
@@ -176,13 +187,13 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
             ?: injectWithReceiver(place)
             ?: injectWithVariableUsage(place, originalHost)
             ?: injectWithMutation(place)
-            ?: injectWithInfixCall(place)
+            ?: injectWithInfixCallOrOperator(place)
     }
 
     private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
 
     private fun injectWithMutation(host: KtElement): InjectionInfo? {
-        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringMutationOperators } ?: return null
+        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.safeOperationToken() in stringMutationOperators } ?: return null
         if (parent.right != host) return null
 
         if (isAnalyzeOff(host.project)) return null
@@ -210,7 +221,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpression? = when (expression) {
             is KtReturnExpression -> expression
-            is KtBinaryExpression -> findReturnExpression(expression.takeIf { it.operationToken == KtTokens.ELVIS }?.parent)
+            is KtBinaryExpression -> findReturnExpression(expression.takeIf { it.safeOperationToken() == KtTokens.ELVIS }?.parent)
             is KtContainerNodeForControlStructureBody, is KtIfExpression -> findReturnExpression(expression.parent)
             else -> null
         }
@@ -283,11 +294,18 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         if (isAnalyzeOff(host.project)) return null
 
         val searchScope = LocalSearchScope(arrayOf(ktProperty.containingFile), "", true)
-        return ReferencesSearch.search(ktProperty, searchScope).asSequence().mapNotNull { psiReference ->
+        val targetProperty = getTargetProperty(ktProperty)
+        return ReferencesSearch.search(targetProperty, searchScope).asIterable().asSequence().mapNotNull { psiReference ->
             val element = psiReference.element as? KtElement ?: return@mapNotNull null
             findInjectionInfo(element, false)
         }.firstOrNull()
     }
+
+    /**
+     * Returns property which can be found in its containing file.
+     * For K2 and non-physical copy, one needs to go to the original property to find something
+     */
+    protected open fun getTargetProperty(ktProperty: KtProperty): KtProperty = ktProperty
 
     private tailrec fun injectWithCall(host: KtElement): InjectionInfo? {
         val argument = getArgument(host) ?: return null
@@ -318,26 +336,60 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return null
     }
 
-    private fun injectWithInfixCall(host: KtElement): InjectionInfo? {
-        val binaryExpression = host.parent as? KtBinaryExpression ?: return null
+    private fun injectWithInfixCallOrOperator(host: KtElement): InjectionInfo? {
+        // infix calls and operators are similar from the syntax point of view
+        val deparenthesized = host.deparenthesized()
+        val arrayAccessExpression = (deparenthesized.parent as? KtContainerNode)?.parent as? KtArrayAccessExpression
+        val fixedHost = arrayAccessExpression ?: deparenthesized
+        val binaryExpression = fixedHost.parent as? KtBinaryExpression ?: return arrayAccessExpression?.let { injectWithArrayReadAccess(deparenthesized, arrayAccessExpression) }
         val left = binaryExpression.left
         val right = binaryExpression.right
-        if ((host != left || host != right) && binaryExpression.operationToken != KtTokens.IDENTIFIER) return null
+        if (fixedHost != left && fixedHost != right || binaryExpression.isStandardConcatenationExpression()) return null
         val operationExpression = binaryExpression.operationReference
+        // all kotlin operators have two parameters, so they could be expressed as `left` `operator` `right`
+        // exceptions are get and set operators, those use syntax of array access:
+        // e.g. `a[key1, key2...]` for getter, and `a[key, key2...] = value` for setter
+        val isArrayAccessExpression = left is KtArrayAccessExpression
 
         for (reference in operationExpression.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = resolveReference(reference) as? KtFunction ?: continue
-            when (host) {
-              right -> injectionForKotlinInfixCallParameter(resolvedTo, reference)?.let { return it }
+            val ktFunction = resolveReference(reference) as? KtFunction ?: continue
+            when (fixedHost) {
+              right -> {
+                  injectionForKotlinInfixCallParameter(ktFunction, reference, ktFunction.valueParameters.size - 1)?.let { return it }
+              }
               left -> {
-                  val injectionInfo = resolvedTo.receiverTypeReference?.findInjection() ?: injectionInfoByAnnotation(resolvedTo)
-                  injectionInfo?.let { return it }
+                  if (isArrayAccessExpression) {
+                      injectionForKotlinInfixCallParameter(ktFunction, reference, left.indexExpressions.indexOf(deparenthesized))?.let { return it }
+                  } else {
+                      val injectionInfo = ktFunction.receiverTypeReference?.findInjection() ?: injectionInfoByAnnotation(ktFunction)
+                      injectionInfo?.let { return it }
+                  }
               }
             }
         }
 
+        return null
+    }
+
+    private fun KtElement.deparenthesized(): KtElement {
+        var element = this
+        while (element.parent is KtParenthesizedExpression) {
+            element = element.parent as? KtElement ?: break
+        }
+
+        return element
+    }
+
+    private fun injectWithArrayReadAccess(host: KtElement, arrayAccessExpression: KtArrayAccessExpression): InjectionInfo? {
+        // get operator
+        for (reference in arrayAccessExpression.references) {
+            ProgressManager.checkCanceled()
+
+            val ktFunction = resolveReference(reference) as? KtFunction ?: continue
+            injectionForKotlinInfixCallParameter(ktFunction, reference, arrayAccessExpression.indexExpressions.indexOf(host))?.let { return it }
+        }
         return null
     }
 
@@ -428,8 +480,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return injectionForKotlinCall(ktParameter, reference, argumentName, argumentIndex)
     }
 
-    private fun injectionForKotlinInfixCallParameter(ktFunction: KtFunction, reference: PsiReference): InjectionInfo? {
-        val argumentIndex = 0
+    private fun injectionForKotlinInfixCallParameter(ktFunction: KtFunction, reference: PsiReference, argumentIndex: Int): InjectionInfo? {
         val ktParameter = ktFunction.valueParameters.getOrNull(argumentIndex) ?: return null
         return injectionForKotlinCall(ktParameter, reference, null, argumentIndex)
     }
@@ -531,9 +582,9 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 }
 
 internal fun isSupportedElement(context: KtElement): Boolean {
-    if (context.parent?.isConcatenationExpression() != false) return false // we will handle the top concatenation only, will not handle KtFile-s
+    if (context.parent?.isStandardConcatenationExpression() != false) return false // we will handle the top concatenation only, will not handle KtFile-s
     if (context is KtStringTemplateExpression && context.isValidHost) return true
-    if (context.isConcatenationExpression()) return true
+    if (context.isStandardConcatenationExpression()) return true
     if (context.parent.parent is KtBinaryExpression) {
         return true
     }
@@ -546,7 +597,7 @@ internal var KtElement.indentHandler: IndentHandler? by UserDataProperty(
 
 private fun flattenBinaryExpression(root: KtBinaryExpression): Sequence<KtExpression> = sequence {
     root.left?.let { lOperand ->
-        if (lOperand.isConcatenationExpression())
+        if (lOperand.isStandardConcatenationExpression())
             yieldAll(flattenBinaryExpression(lOperand as KtBinaryExpression))
         else
             yield(lOperand)
@@ -554,4 +605,39 @@ private fun flattenBinaryExpression(root: KtBinaryExpression): Sequence<KtExpres
     root.right?.let { yield(it) }
 }
 
-private fun PsiElement.isConcatenationExpression(): Boolean = this is KtBinaryExpression && this.operationToken == KtTokens.PLUS
+private fun KtExpression?.isSimpleConcatenationSubexpression(): Boolean =
+    // "foo"
+    this is KtStringTemplateExpression ||
+    // 42
+            this is KtConstantExpression ||
+            // ("foo" + "bar")
+            (this as? KtBinaryExpression)?.isSimpleStandardConcatenationExpression() == true
+
+private fun KtBinaryExpression.isSimpleStandardConcatenationExpression(): Boolean =
+    this.safeOperationToken() == KtTokens.PLUS &&
+            left.isSimpleConcatenationSubexpression() && right.isSimpleConcatenationSubexpression()
+
+private fun KtBinaryExpression.safeOperationToken(): IElementType? {
+    // this.operationToken can throw NPE
+    val operationReference = node.findChildByType(KtNodeTypes.OPERATION_REFERENCE)?.psi as? KtOperationReferenceExpression
+    return operationReference?.getReferencedNameElementType()
+}
+
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+private fun PsiElement.isStandardConcatenationExpression(): Boolean {
+    if (this !is KtBinaryExpression || this.safeOperationToken() != KtTokens.PLUS) return false
+    if (isSimpleStandardConcatenationExpression()) return true
+
+    val referenceExpression = this.operationReference
+    val packageFqName = allowAnalysisOnEdt {
+        allowAnalysisFromWriteAction {
+            analyze(referenceExpression) {
+                val singleFunctionCallOrNull = referenceExpression.resolveToCall()?.singleFunctionCallOrNull()
+                singleFunctionCallOrNull?.symbol?.callableId?.packageName
+            }
+        }
+    } ?: return true
+    val packageName = packageFqName.asString()
+    val kotlinPackage = StandardNames.BUILT_INS_PACKAGE_NAME.asString()
+    return packageName == kotlinPackage || packageName.startsWith(kotlinPackage)
+}

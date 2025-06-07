@@ -35,9 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 public final class GroovyTrivialConditionalInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryConditionalExpressionVisitor();
   }
 
@@ -66,8 +65,7 @@ public final class GroovyTrivialConditionalInspection extends BaseInspection {
   private static class TrivialConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
@@ -109,12 +107,12 @@ public final class GroovyTrivialConditionalInspection extends BaseInspection {
   }
 
   private static boolean isFalse(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "false".equals(text);
   }
 
   private static boolean isTrue(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "true".equals(text);
   }
 }

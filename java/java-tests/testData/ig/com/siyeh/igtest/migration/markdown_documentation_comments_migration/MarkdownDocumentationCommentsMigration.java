@@ -381,3 +381,31 @@ final class LookupWithIndentsBuilder {
    */
   void x() {}
 }
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * {@code test<b>}
+ * @param <T> The <em>M</em> type.
+ * @param <B> The B type.
+ * @param <P> The P type.
+ * @param <I> The I type.
+ */
+interface Foo<T, B, P, I>
+{
+}
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ *    <prE>
+ * This has some formatted text with blank lines.
+ *
+ * This has some formatted text with blank lines.
+ *
+ * This has some formatted text with blank lines.
+ *
+ *     An indented line.
+ *
+ *
+ * Multiple blank lines above and more below.
+ *
+ *
+ * </Pre>
+ * end
+ */
+class Preformatted {}

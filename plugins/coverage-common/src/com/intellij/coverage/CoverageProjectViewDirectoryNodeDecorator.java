@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 
-
 final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   @Override
   public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
@@ -18,17 +17,16 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
     if (project == null) {
       return;
     }
-    if (!isShowingCoverageInProjectViewEnabled(project)) return;
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
 
     final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     if (manager == null) return;
     for (CoverageSuitesBundle suite : manager.activeSuites()) {
       decorateBundle(node, data, suite, project, manager);
     }
-
   }
 
-  private static void decorateBundle(ProjectViewNode node,
+  private static void decorateBundle(ProjectViewNode<?> node,
                                      PresentationData data,
                                      CoverageSuitesBundle currentSuite,
                                      Project project,
@@ -51,7 +49,8 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
     String informationString = null;
     if (element instanceof PsiDirectory) {
       informationString = coverageAnnotator.getDirCoverageInformationString((PsiDirectory)element, currentSuite, manager);
-    } else if (element instanceof PsiFile) {
+    }
+    else if (element instanceof PsiFile) {
       informationString = coverageAnnotator.getFileCoverageInformationString((PsiFile)element, currentSuite, manager);
     }
 

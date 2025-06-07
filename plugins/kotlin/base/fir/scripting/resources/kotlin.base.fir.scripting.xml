@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.base.fir.scripting">
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <k2KaModuleFactory implementation="org.jetbrains.kotlin.base.fir.scripting.projectStructure.K2ScriptingKaModuleFactory"/>
+  </extensions>
+
+  <dependencies>
+    <module name="kotlin.base.fir.analysis-api-platform"/>
+    <module name="kotlin.base.fir.project-structure"/>
+    <module name="kotlin.base.scripting.k2"/>
+  </dependencies>
+</idea-plugin>

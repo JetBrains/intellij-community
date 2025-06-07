@@ -3,15 +3,14 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
-import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
+import org.jetbrains.kotlin.idea.debugger.core.methodName
 
 data class CallableMemberInfo(
     val isInvoke: Boolean,
@@ -24,50 +23,44 @@ data class CallableMemberInfo(
     val name: String,
     val isLocal: Boolean,
     var ordinal: Int,
+    val isEqualsNullCall: Boolean,
 ) {
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInParameters
 }
 
-context(KaSession)
-internal fun CallableMemberInfo(
+internal fun KaSession.CallableMemberInfo(
     symbol: KaFunctionSymbol,
     ordinal: Int = 0,
-    name: String = symbol.methodName()
+    isEqualsNullCall: Boolean = false,
 ): CallableMemberInfo {
+    val name = methodName(symbol) ?: ""
     val isInvoke = symbol.isInvoke()
     val isSuspend = symbol.isSuspend()
     val effectiveName = if (isInvoke && isSuspend) KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME else name
     return CallableMemberInfo(
         isInvoke = isInvoke,
         isSuspend = isSuspend,
-        isInlineClassMember = symbol.isInsideInlineClass(),
-        hasInlineClassInParameters = symbol.containsInlineClassInParameters(),
+        isInlineClassMember = isInsideInlineClass(symbol),
+        hasInlineClassInParameters = containsInlineClassInParameters(symbol),
         isInternalMethod = symbol.visibility == KaSymbolVisibility.INTERNAL,
         isExtension = symbol.isExtension,
         isInline = symbol is KaNamedFunctionSymbol && symbol.isInline,
         name = effectiveName,
         isLocal = symbol.isLocal,
         ordinal = ordinal,
+        isEqualsNullCall = isEqualsNullCall,
     )
 }
 
 internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymbol && this.isSuspend
 internal fun KaFunctionSymbol.isInvoke(): Boolean = this is KaNamedFunctionSymbol && this.isBuiltinFunctionInvoke
 
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-internal fun KaFunctionSymbol.containsInlineClassInParameters(): Boolean =
-    valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
-            || receiverParameter?.returnType?.expandedSymbol?.isInlineClass() == true
-            || contextReceivers.any { it.type.expandedSymbol?.isInlineClass() == true }
+internal fun KaSession.containsInlineClassInParameters(symbol: KaFunctionSymbol): Boolean =
+    symbol.valueParameters.any { isInlineClass(it.returnType.expandedSymbol) }
+            || isInlineClass(symbol.receiverParameter?.returnType?.expandedSymbol)
+            || symbol.contextReceivers.any { isInlineClass(it.type.expandedSymbol) }
 
-context(KaSession)
-private fun KaFunctionSymbol.methodName() = when (this) {
-    is KaNamedFunctionSymbol -> getByteCodeMethodName()
-    is KaConstructorSymbol -> "<init>"
-    else -> ""
-}
-
-context(KaSession)
-internal fun KaFunctionSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true
+internal fun KaSession.isInsideInlineClass(symbol: KaFunctionSymbol): Boolean =
+    isInlineClass(getContainingClassOrObjectSymbol(symbol))
 

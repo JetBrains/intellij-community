@@ -15,6 +15,7 @@ import com.sun.jna.platform.win32.WinReg
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
+import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
@@ -115,7 +116,7 @@ private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boole
       val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
       val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
 
-      return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
+      return appleInterfaceStyle?.lowercase(Locale.getDefault())?.contains("dark") ?: false
     }
     finally{
       pool.drain()

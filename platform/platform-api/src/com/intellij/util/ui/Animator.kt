@@ -2,11 +2,17 @@
 package com.intellij.util.ui
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.GraphicsEnvironment
@@ -26,10 +32,18 @@ abstract class Animator @JvmOverloads constructor(
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
-  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() +
-                                                                Dispatchers.Default +
-                                                                ModalityState.defaultModalityState().asContextElement() +
-                                                                ClientId.coroutineContext())
+  private val coroutineScope = coroutineScope ?: if (isRepeatable) animatorCoroutineScopeWithError(name) else animatorCoroutineScope(name)
+
+  @JvmOverloads
+  constructor(
+    name: @NonNls String?,
+    totalFrames: Int,
+    cycleDuration: Int,
+    isRepeatable: Boolean,
+    isForward: Boolean = true,
+    disposable: Disposable,
+  ) : this(name = name, totalFrames = totalFrames, cycleDuration = cycleDuration, isRepeatable = isRepeatable, isForward = isForward,
+           coroutineScope = animatorCoroutineScope(name, disposable))
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -43,6 +57,14 @@ abstract class Animator @JvmOverloads constructor(
     if (skipAnimation()) {
       animationDone()
     }
+  }
+
+  /**
+   * This operation is used for manual processing of animation in cases when IDE event queue is unavailable
+   */
+  @ApiStatus.Internal
+  fun forceTick() {
+    onTick()
   }
 
   private fun onTick() {
@@ -137,6 +159,11 @@ abstract class Animator @JvmOverloads constructor(
 
   abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
 
+  /**
+   * Prefer passing a [CoroutineScope] or [Disposable] constructor argument instead.
+   *
+   * Prefer not to override the method: it is not called by the animator itself, nor is a part of [Disposable] contract.
+   */
   open fun dispose() {
     stopTicker()
     coroutineScope.cancel()
@@ -168,3 +195,48 @@ private fun skipAnimation(): Boolean {
   return app != null && app.isUnitTestMode()
 }
 
+/**
+ * A 'runaway' animator will not only leak itself and its repainter, but also everything else that happened to be close in the Swing hierarchy.
+ * That means whole toolwindow tabs and FileEditors worth of memory.
+ */
+@Suppress("RAW_SCOPE_CREATION")
+private fun animatorCoroutineScopeWithError(name: String?): CoroutineScope {
+  val realName = name ?: getCallerClassName()
+  logger<Animator>().error("Do not use repeatable animators without an explicit lifetime scope. " +
+                           "An explicit Disposable would at least let us to log memory leaks and runaway tasks.")
+  return CoroutineScope(SupervisorJob() +
+                        Dispatchers.Default +
+                        ModalityState.defaultModalityState().asContextElement() +
+                        ClientId.coroutineContext() +
+                        CoroutineName("Dangerously utilized ui.Animator by $realName"))
+}
+
+internal fun animatorCoroutineScope(name: String?, disposable: Disposable): CoroutineScope {
+  if (disposable is Application) {
+    throw IllegalArgumentException("Please use a real disposable")
+  }
+  val scope = animatorCoroutineScope(name)
+  Disposer.register(disposable) { scope.cancel() }
+  return scope
+}
+
+@Suppress("RAW_SCOPE_CREATION")
+internal fun animatorCoroutineScope(name: String?): CoroutineScope {
+  val realName = name ?: getCallerClassName()
+  val scope = CoroutineScope(SupervisorJob() +
+                             Dispatchers.Default +
+                             ModalityState.defaultModalityState().asContextElement() +
+                             ClientId.coroutineContext() +
+                             CoroutineName("ui.Animator by $realName"))
+  return scope
+}
+
+private fun getCallerClassName(): String? {
+  // fight '@JvmOverloads' and constructor delegations
+  for (i in 5..10) {
+    val callerClazz = ReflectionUtil.getCallerClass(i)
+    if (callerClazz == Animator::class.java) continue
+    return callerClazz.name
+  }
+  return "Unknown Caller"
+}

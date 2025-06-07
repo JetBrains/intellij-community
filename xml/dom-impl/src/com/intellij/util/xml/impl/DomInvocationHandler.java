@@ -34,6 +34,7 @@ import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
@@ -663,6 +664,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return tag.getValue().getTrimmedText();
   }
 
+  @Override
   public final String toString() {
     if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
       return ((GenericValue<?>)getProxy()).getStringValue();
@@ -749,11 +751,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return getXmlName().evaluateChildName(xmlName);
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
     return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -804,7 +806,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return Collections.unmodifiableList(elements);
   }
 
-  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
+  private @Unmodifiable List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
     if (description instanceof CollectionChildDescriptionImpl) {
       return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag, processIncludes);
     }
@@ -839,6 +841,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || !o.getClass().equals(getClass())) return false;
@@ -850,6 +853,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myChildDescription.hashCode();
   }

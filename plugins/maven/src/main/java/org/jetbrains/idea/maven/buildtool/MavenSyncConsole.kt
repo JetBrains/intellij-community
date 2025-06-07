@@ -201,9 +201,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
   @Synchronized
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
-    hasErrors = true
-    val group = if (problem.isRecoverable) SyncBundle.message("maven.sync.group.warning") else SyncBundle.message("maven.sync.group.error")
-    val kind = if (problem.isRecoverable) MessageEvent.Kind.WARNING else MessageEvent.Kind.ERROR
+    hasErrors = hasErrors || problem.isError
+    val group = if (problem.isError) SyncBundle.message("maven.sync.group.error") else SyncBundle.message("maven.sync.group.warning")
+    val kind = if (problem.isError) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     val position = problem.getFilePosition()
     val message = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.message")
     val detailedMessage = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.detailed.message", problem.path)

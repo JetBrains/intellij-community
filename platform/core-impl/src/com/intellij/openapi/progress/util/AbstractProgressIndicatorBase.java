@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -22,6 +22,7 @@ import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +131,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     LOG.error(message + ": " + this + "," + getClass(), new IllegalStateException());
   }
 
-  void stopSystemActivity() {
+  @ApiStatus.Internal
+  public void stopSystemActivity() {
     Runnable macActivity = myMacActivity;
     if (macActivity != null) {
       macActivity.run();
@@ -263,7 +265,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return myModalityProgress != null;
   }
 
-  final boolean isModalEntity() {
+  @ApiStatus.Internal
+  public final boolean isModalEntity() {
     return myModalityProgress == this;
   }
 
@@ -355,7 +358,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return stack;
   }
 
-  protected @NotNull Object getLock() {
+  @ApiStatus.Internal
+  public @NotNull Object getLock() {
     return lock;
   }
 }

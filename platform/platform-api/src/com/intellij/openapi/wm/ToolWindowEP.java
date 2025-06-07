@@ -33,7 +33,7 @@ public class ToolWindowEP implements PluginAware {
    * @deprecated Not used
    */
   @Attribute
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String largeStripeAnchor;
 
   /**

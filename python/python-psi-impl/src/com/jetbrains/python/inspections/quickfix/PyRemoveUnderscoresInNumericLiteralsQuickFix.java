@@ -28,10 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveUnderscoresInNumericLiteralsQuickFix extends PsiUpdateModCommandQuickFix {
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.underscores.in.numeric");
   }
 

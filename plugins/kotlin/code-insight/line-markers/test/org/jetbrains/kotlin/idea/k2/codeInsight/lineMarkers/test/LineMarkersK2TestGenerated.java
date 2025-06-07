@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test;
 
@@ -55,6 +55,11 @@ public abstract class LineMarkersK2TestGenerated extends AbstractLineMarkersK2Te
         @TestMetadata("defaultValue.kt")
         public void testDefaultValue() throws Exception {
             runTest("testData/recursive/defaultValue.kt");
+        }
+
+        @TestMetadata("destructuring.kt")
+        public void testDestructuring() throws Exception {
+            runTest("testData/recursive/destructuring.kt");
         }
 
         @TestMetadata("dispatchExtensionReceivers.kt")
@@ -485,6 +490,11 @@ public abstract class LineMarkersK2TestGenerated extends AbstractLineMarkersK2Te
         @TestMetadata("jUnit5TestFile.kt")
         public void testJUnit5TestFile() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")

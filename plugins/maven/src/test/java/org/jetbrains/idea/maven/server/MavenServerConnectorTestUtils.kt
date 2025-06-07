@@ -7,9 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenModel
-import java.nio.file.Path
 import java.rmi.ConnectException
 
 suspend fun <R> withStoppedConnector(action: suspend () -> R): R {
@@ -60,7 +57,7 @@ suspend fun <R> withCompatibleConnector(action: suspend () -> R): R {
                           debugPort: Int?,
                           mavenDistribution: MavenDistribution,
                           multimoduleDirectory: String): MavenServerConnector {
-        return CompatibleMavenServerConnector(project)
+        return CompatibleMavenServerConnector(project, jdk, mavenDistribution, vmOptions)
       }
     }
     ApplicationManager.getApplication().replaceService(MavenServerManager.MavenServerConnectorFactory::class.java, factory, disposable)
@@ -68,16 +65,15 @@ suspend fun <R> withCompatibleConnector(action: suspend () -> R): R {
   }
 }
 
-private class CompatibleMavenServerConnector(override val project: Project) : MavenServerConnector {
+private class CompatibleMavenServerConnector(
+  override val project: Project,
+  override val jdk: Sdk,
+  override val mavenDistribution: MavenDistribution,
+  override val vmOptions: String
+) : MavenServerConnector {
   override val supportType: String
     get() = throw RuntimeException("not implemented")
   override val state: MavenServerConnector.State
-    get() = throw RuntimeException("not implemented")
-  override val jdk: Sdk
-    get() = throw RuntimeException("not implemented")
-  override val mavenDistribution: MavenDistribution
-    get() = throw RuntimeException("not implemented")
-  override val vmOptions: String
     get() = throw RuntimeException("not implemented")
   override val multimoduleDirectories: List<String>
     get() = throw RuntimeException("not implemented")
@@ -93,26 +89,11 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     return true
   }
 
-  override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+  override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw RuntimeException("not implemented")
   }
 
   override fun createIndexer(): MavenServerIndexer {
-    throw RuntimeException("not implemented")
-  }
-
-  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
-    throw RuntimeException("not implemented")
-  }
-
-  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    throw RuntimeException("not implemented")
-  }
-
-    override suspend fun applyProfiles(model: MavenModel,
-                                       basedir: Path,
-                                       explicitProfiles: MavenExplicitProfiles,
-                                       alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
     throw RuntimeException("not implemented")
   }
 
@@ -137,10 +118,6 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
 
   override fun dispose() {
   }
-
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
-    return true
-  }
 }
 
 private class StoppedMavenServerConnector : MavenServerConnector {
@@ -154,8 +131,8 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     get() = throw RuntimeException("not implemented")
   override val vmOptions: String
     get() = throw RuntimeException("not implemented")
-  override val project: Project
-    get() = throw RuntimeException("not implemented")
+  override val project: Project?
+    get() = null
   override val multimoduleDirectories: List<String>
     get() = throw RuntimeException("not implemented")
 
@@ -163,20 +140,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
-    throw ConnectException("Cannot reconnect")
-  }
-
-  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    throw ConnectException("Cannot reconnect")
-  }
-
-
   override fun dispose() {
-  }
-
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
-    return true
   }
 
   override fun isNew(): Boolean {
@@ -190,14 +154,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
-    throw RuntimeException("not implemented")
-  }
-
-  override suspend fun applyProfiles(model: MavenModel,
-                                     basedir: Path,
-                                     explicitProfiles: MavenExplicitProfiles,
-                                     alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
+  override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     throw ConnectException("Cannot reconnect")
   }
 

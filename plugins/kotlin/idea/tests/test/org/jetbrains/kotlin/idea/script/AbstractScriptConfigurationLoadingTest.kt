@@ -11,9 +11,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManagerExtensions
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.FileContentsDependentConfigurationLoader
+import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.testingBackgroundExecutor
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.testScriptConfigurationNotification
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -22,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurationTest() {
-    lateinit var scriptConfigurationManager: CompositeScriptConfigurationManager
+    lateinit var scriptConfigurationManager: ScriptConfigurationManager
 
     companion object {
         private var occurredLoadings = 0
@@ -42,7 +41,7 @@ abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurat
         testScriptConfigurationNotification = true
         ApplicationManager.getApplication().isScriptChangesNotifierDisabled = false
 
-        scriptConfigurationManager = project.getService(ScriptConfigurationManager::class.java) as CompositeScriptConfigurationManager
+        scriptConfigurationManager = ScriptConfigurationManager.getInstance(project)
     }
 
     override fun tearDown() {
@@ -59,7 +58,7 @@ abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurat
 
     override fun setUpTestProject() {
         addExtensionPointInTest(
-            DefaultScriptConfigurationManagerExtensions.LOADER,
+            ScriptConfigurationLoader.EP_NAME,
             project,
             FileContentsDependentConfigurationLoader(project),
             testRootDisposable

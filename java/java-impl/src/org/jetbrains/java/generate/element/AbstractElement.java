@@ -366,6 +366,7 @@ public abstract class AbstractElement implements Element {
         isModifierStatic = modifierStatic;
     }
 
+    @Override
     public String toString() {
         return "AbstractElement{" +
                 "name='" + name + "'" +

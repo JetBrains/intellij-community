@@ -1,6 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ConstPropertyName")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
@@ -10,14 +8,19 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.DistFileContent
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.LocalDistFileContent
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
+import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
@@ -87,13 +90,16 @@ fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiC
       buffer.get(array)
       consumer.accept(name, array)
     }
+    ZipEntryProcessorResult.CONTINUE
   }
 }
 
-fun ZipArchiveOutputStream.dir(startDir: Path,
-                               prefix: String,
-                               fileFilter: ((sourceFile: Path, relativePath: String) -> Boolean)? = null,
-                               entryCustomizer: ((entry: ZipArchiveEntry, sourceFile: Path, relativePath: String) -> Unit)? = null) {
+fun ZipArchiveOutputStream.dir(
+  startDir: Path,
+  prefix: String,
+  fileFilter: ((sourceFile: Path, relativePath: String) -> Boolean)? = null,
+  entryCustomizer: ((entry: ZipArchiveEntry, sourceFile: Path, relativePath: String) -> Unit)? = null,
+) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
@@ -104,7 +110,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
     val dirStream = try {
       Files.newDirectoryStream(dir)
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       continue
     }
 
@@ -148,8 +154,8 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
   }
 }
 
-internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
-  entry("$zipPath/${file.fileName}", file)
+internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String, unixMode: Int = -1) {
+  entry("$zipPath/${file.fileName}", file, unixMode)
 }
 
 /**

@@ -10,28 +10,42 @@ public abstract class MetadataStorageBase(
   private val metadataByTypeFqn: MutableMap<String, StorageTypeMetadata> = hashMapOf(),
   private val metadataHashByTypeFqn: MutableMap<String, MetadataHash> = hashMapOf()
 ): MetadataStorage {
+  @Volatile
   private var metadataIsInitialized: Boolean = false
+  @Volatile
   private var hashMetadataIsInitialized: Boolean = false
 
-  override fun getMetadataByTypeFqnOrNull(fqName: String): StorageTypeMetadata? {
+  final override fun getMetadataByTypeFqnOrNull(fqName: String): StorageTypeMetadata? {
     if (!metadataIsInitialized) {
-      metadataIsInitialized = true
-      initializeMetadata()
+      internalInitializeMetadata()
     }
     return metadataByTypeFqn[fqName]
   }
 
-  override fun getMetadataHashByTypeFqnOrNull(fqName: String): MetadataHash? {
+  final override fun getMetadataHashByTypeFqnOrNull(fqName: String): MetadataHash? {
     if (!hashMetadataIsInitialized) {
-      hashMetadataIsInitialized = true
-      initializeMetadataHash()
+      internalInitializeMetadataHash()
     }
     return metadataHashByTypeFqn[fqName]
   }
 
   protected abstract fun initializeMetadata()
 
+  @Synchronized
+  private fun internalInitializeMetadata() {
+    if (metadataIsInitialized) return
+    initializeMetadata()
+    metadataIsInitialized = true
+  }
+
   protected abstract fun initializeMetadataHash()
+
+  @Synchronized
+  private fun internalInitializeMetadataHash() {
+    if (hashMetadataIsInitialized) return
+    initializeMetadataHash()
+    hashMetadataIsInitialized = true
+  }
 
   protected fun addMetadata(typeMetadata: StorageTypeMetadata) {
     typeMetadata.collectTypesByFqn(metadataByTypeFqn)
@@ -41,4 +55,3 @@ public abstract class MetadataStorageBase(
     metadataHashByTypeFqn[typeFqn] = metadataHash
   }
 }
-

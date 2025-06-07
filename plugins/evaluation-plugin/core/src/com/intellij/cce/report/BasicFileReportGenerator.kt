@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang3.StringEscapeUtils
+
 
 open class BasicFileReportGenerator(
   filterName: String,
@@ -75,27 +78,45 @@ open class BasicFileReportGenerator(
     if (_sessions.isEmpty() || _sessions.all { it.isEmpty() }) return text
 
     val sessions = _sessions.filterNot { it.isEmpty() }
+
     return StringBuilder().run {
       val delimiter = "&int;"
-      val offsets = sessions.flatten().map { it.offset }.distinct().sorted()
-      val sessionGroups = offsets.map { offset -> sessions.map { session -> session.find { it.offset == offset } } }
+      val offsets = sessions.flatten()
+        .map { it.offset }
+        .distinct()
+        .sorted()
+      val unfilteredSessionGroups = offsets.map { offset -> sessions.map { session -> session.find { it.offset == offset } } }
+      val sessionGroups = unfilteredSessionGroups.take(1) + unfilteredSessionGroups.zipWithNext()
+        .filter { (prev, current) ->
+          val previousSession = prev.filterNotNull().first()
+          val currentSession = current.filterNotNull().first()
+          val offsetDiff = currentSession.offset - (previousSession.offset + textToInsert(previousSession).length)
+          if (offsetDiff < 0)
+            LOG.warn("Removing sessionId ${currentSession.id} because of overlapping with sessionId ${previousSession.id}")
+          offsetDiff >= 0
+        }.map { it.second }
+
       var offset = 0
 
       for (sessionGroup in sessionGroups) {
         val session = sessionGroup.filterNotNull().first()
+
         val commonText = StringEscapeUtils.escapeHtml4(text.substring(offset, session.offset))
         append(commonText)
 
         val textToInsert = textToInsert(session)
         val center = textToInsert.length / sessions.size
+        val promptText = " <<<++++<<< " + session.properties.additionalProperty(PROMPT_PROPERTY).orEmpty()
         var shift = 0
         for (j in 0 until sessionGroup.lastIndex) {
           val subToken = if (center == 0) textToInsert else textToInsert.substring(shift, shift + center)
-          append(getSpan(sessionGroup[j], subToken, lookupOrder))
+          val spanText = subToken.ifEmpty { promptText }
+          append(getSpan(sessionGroup[j], spanText, lookupOrder))
           append(delimiter)
           shift += center
         }
-        append(getSpan(sessionGroup.last(), textToInsert.substring(shift), lookupOrder))
+        val spanText = textToInsert.substring(shift).ifEmpty { promptText }
+        append(getSpan(sessionGroup.last(), spanText, lookupOrder))
         offset = session.offset + textToInsert.length
       }
       append(StringEscapeUtils.escapeHtml4(text.substring(offset)))
@@ -114,4 +135,8 @@ open class BasicFileReportGenerator(
       id = "${session?.id} $lookupOrder"
       +text
     }
+
+  companion object {
+    private val LOG = thisLogger()
+  }
 }

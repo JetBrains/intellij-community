@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -69,7 +69,7 @@ public class GradleResourceFileFilter implements FileFilter {
   }
 
   private static class MyRelativePathSpec implements Spec<RelativePath> {
-    @NotNull private final PatternMatcher matcher;
+    private final @NotNull PatternMatcher matcher;
 
     MyRelativePathSpec(@NotNull PatternMatcher matcher) {
       this.matcher = matcher;

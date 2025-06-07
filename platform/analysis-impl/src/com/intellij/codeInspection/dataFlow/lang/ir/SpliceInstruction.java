@@ -30,6 +30,7 @@ public class SpliceInstruction extends Instruction {
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
+  @Override
   public String toString() {
     return "SPLICE [" + myCount + "] -> " + Arrays.toString(myReplacement);
   }

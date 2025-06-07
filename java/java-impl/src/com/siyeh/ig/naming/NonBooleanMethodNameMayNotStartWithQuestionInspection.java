@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -61,13 +62,13 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
-    final InspectionGadgetsFix suppressFix = SuppressForTestsScopeFix.build(this, context);
+    final LocalQuickFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {
-      return new InspectionGadgetsFix[] {new RenameFix()};
+      return new InspectionGadgetsFix[]{new RenameFix()};
     }
-    return new InspectionGadgetsFix[] {new RenameFix(), suppressFix};
+    return new LocalQuickFix[]{new RenameFix(), suppressFix};
   }
 
   @Override

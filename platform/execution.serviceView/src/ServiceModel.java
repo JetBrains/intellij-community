@@ -32,8 +32,8 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
@@ -42,18 +42,16 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);
 
   static final TreeTraversal NOT_LOADED_LAST_BFS = new TreeTraversal("NOT_LOADED_LAST_BFS") {
-    @NotNull
     @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+    public @NotNull <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                             @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
       return new NotLoadedLastBfsIt<>(roots, tree);
     }
   };
   static final TreeTraversal ONLY_LOADED_BFS = new TreeTraversal("ONLY_LOADED_BFS") {
-    @NotNull
     @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+    public @NotNull <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                             @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
       return new OnlyLoadedBfsIt<>(roots, tree);
     }
   };
@@ -72,9 +70,8 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   public void dispose() {
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return myInvoker;
   }
 
@@ -608,9 +605,8 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       return myChildren;
     }
 
-    @Nullable
     @Override
-    public Color getColor() {
+    public @Nullable Color getColor() {
       ServiceViewDescriptor descriptor = getViewDescriptor();
       return descriptor instanceof ColoredItem ? ((ColoredItem)descriptor).getColor() : null;
     }
@@ -736,8 +732,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       return myProvidingContributor;
     }
 
-    @NotNull
-    private Object getService() {
+    private @NotNull Object getService() {
       return myProvidingContributor != null ? myProvidingContributor : getValue();
     }
   }

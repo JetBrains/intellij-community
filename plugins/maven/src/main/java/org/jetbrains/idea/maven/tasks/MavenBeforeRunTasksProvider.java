@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -63,9 +63,8 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
     return RepositoryLibraryLogo;
   }
 
-  @Nullable
   @Override
-  public Icon getTaskIcon(MavenBeforeRunTask task) {
+  public @Nullable Icon getTaskIcon(MavenBeforeRunTask task) {
     return RepositoryLibraryLogo;
   }
 
@@ -80,8 +79,7 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
     return TasksBundle.message("maven.tasks.before.run", desc);
   }
 
-  @Nullable
-  private MavenProject getMavenProject(MavenBeforeRunTask task) {
+  private @Nullable MavenProject getMavenProject(MavenBeforeRunTask task) {
     String pomXmlPath = task.getProjectPath();
     if (StringUtil.isEmpty(pomXmlPath)) return null;
 
@@ -111,7 +109,7 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
       // just created empty task.
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       List<MavenProject> rootProjects = projectsManager.getRootProjects();
-      if (rootProjects.size() > 0) {
+      if (!rootProjects.isEmpty()) {
         dialog.setSelectedMavenProject(rootProjects.get(0));
       }
       else {
@@ -154,10 +152,10 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
   }
 
   @Override
-  public boolean executeTask(@NotNull final DataContext context,
+  public boolean executeTask(final @NotNull DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
-                             @NotNull final MavenBeforeRunTask task) {
+                             final @NotNull MavenBeforeRunTask task) {
     ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
     final Project project = CommonDataKeys.PROJECT.getData(context);
@@ -195,8 +193,7 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
     return RunConfigurationBeforeRunProvider.doRunTask(executor.getId(), environment, runner);
   }
 
-  @NotNull
-  private static Pair<String, String> splitToGoalsAndPomFileName(@Nullable String goals) {
+  private static @NotNull Pair<String, String> splitToGoalsAndPomFileName(@Nullable String goals) {
     if (goals == null) {
       return pair(null, MavenConstants.POM_XML);
     }

@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.relativizer;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
@@ -16,8 +15,8 @@ public final class MavenPathRelativizer extends CommonPathRelativizer {
     super(mavenRepositoryPath, IDENTIFIER);
   }
 
-  public static @Nullable String getNormalizedMavenRepositoryPath() {
+  public static @NotNull String getNormalizedMavenRepositoryPath() {
     String path = JpsMavenSettings.getMavenRepositoryPath();
-    return path == null ? null : PathRelativizerService.normalizePath(path);
+    return PathRelativizerService.normalizePath(path);
   }
 }

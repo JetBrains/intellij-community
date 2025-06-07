@@ -55,8 +55,7 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   public boolean typeUseWithType = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiModifierList modifierList = (PsiModifierList)infos[0];
     final List<String> modifiers = getModifiers(modifierList);
     final List<String> sortedModifiers = ModifierListUtil.getSortedModifiers(modifierList, null, !typeUseWithType);
@@ -119,8 +118,7 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   private class SortModifiersFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix");
     }
 

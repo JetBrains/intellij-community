@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -22,10 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(PossibleHeapPollutionVarargsInspection.class);
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -34,22 +31,19 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "SafeVarargsDetector";
   }
 
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "unchecked";
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new HeapPollutionVisitor(holder);
   }
 
@@ -65,9 +59,8 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
       return myFinal ? JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs") : super.getName();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("annotate.as.safevarargs");
     }
 
@@ -160,7 +153,7 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
 
     protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
       final LocalQuickFix quickFix;
-      if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
+      if (GenericsUtil.isSafeVarargsNoOverridingCondition(method)) {
         quickFix = new AnnotateAsSafeVarargsQuickFix(false);
       }
       else {

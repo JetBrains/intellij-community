@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.util.io.URLUtil;
@@ -7,6 +7,7 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefResourceHandler;
 import org.cef.network.CefRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,10 +20,9 @@ import java.util.*;
  * in order to allow for loading resource files from the passed html string.
  * <p>
  * All the standard "file" requests are handled by default CEF handler with default security policy.
- *
- * @author tav
  */
-final class JBCefFileSchemeHandlerFactory implements JBCefApp.JBCefCustomSchemeHandlerFactory {
+@ApiStatus.Internal
+public final class JBCefFileSchemeHandlerFactory implements JBCefApp.JBCefCustomSchemeHandlerFactory {
   public static final String FILE_SCHEME_NAME = "file";
   public static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 

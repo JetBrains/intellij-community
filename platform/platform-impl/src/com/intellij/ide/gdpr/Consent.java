@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -12,7 +12,7 @@ public final class Consent extends ConsentBase {
   private final String myText;
   private final boolean myAccepted;
   private final boolean myDeleted;
-  private String myLocale;
+  private final String myLocale;
 
   public Consent(ConsentAttributes attributes) {
     this(attributes.consentId, Version.fromString(attributes.version), attributes.printableName, attributes.text, attributes.accepted, attributes.deleted, attributes.locale);
@@ -73,6 +73,6 @@ public final class Consent extends ConsentBase {
   }
 
   public Consent derive(boolean accepted) {
-    return accepted == isAccepted()? this : new Consent(getId(), getVersion(), getName(), getText(), accepted, isDeleted(), getLocale());
+    return accepted == isAccepted() ? this : new Consent(getId(), getVersion(), getName(), getText(), accepted, isDeleted(), getLocale());
   }
 }

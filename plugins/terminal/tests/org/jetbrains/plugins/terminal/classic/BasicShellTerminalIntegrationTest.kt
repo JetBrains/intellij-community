@@ -9,14 +9,14 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.classic.fixture.TestShellSession
 import org.jetbrains.plugins.terminal.classic.fixture.TestTerminalBufferWatcher
+import org.junit.Assume
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 class BasicShellTerminalIntegrationTest : BasePlatformTestCase() {
   fun testEchoAndClear() {
-    if (!SystemInfo.isUnix) {
-      return
-    }
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val session = TestShellSession(project, testRootDisposable)
     session.executeCommand("_MY_FOO=test; echo -e \"1\\n2\\n\$_MY_FOO\"")
     session.awaitScreenLinesEndWith(listOf("1", "2", "test"), 10000)
@@ -25,6 +25,8 @@ class BasicShellTerminalIntegrationTest : BasePlatformTestCase() {
   }
 
   fun testCommandsExecuteInOrder() {
+    Assume.assumeFalse(SystemInfo.isWindows)
+
     val outputFile = Files.createTempFile("output", ".txt")
     val widget = ShellTerminalWidget(project, JBTerminalSystemSettingsProvider(), testRootDisposable)
     val commandCount = 10

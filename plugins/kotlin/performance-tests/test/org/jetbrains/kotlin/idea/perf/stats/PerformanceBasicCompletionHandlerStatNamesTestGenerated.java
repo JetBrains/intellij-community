@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.stats;
 
@@ -19,19 +19,23 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../completion/testData/handlers/basic")
-public class PerformanceBasicCompletionHandlerStatNamesTestGenerated extends AbstractPerformanceBasicCompletionHandlerStatNamesTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
-    }
+public abstract class PerformanceBasicCompletionHandlerStatNamesTestGenerated extends AbstractPerformanceBasicCompletionHandlerStatNamesTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/bracketOperators")
+    public static class BracketOperators extends AbstractPerformanceBasicCompletionHandlerStatNamesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("GetOperator.kt")
-    public void testGetOperator() throws Exception {
-        runTest("../completion/testData/handlers/basic/GetOperator.kt");
+        @TestMetadata("GetOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("../completion/testData/handlers/basic/bracketOperators/GetOperator.kt");
+        }
     }
 }

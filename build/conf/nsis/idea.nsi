@@ -1,18 +1,36 @@
 Unicode true
 ManifestDPIAware true
+SetCompressor lzma
+RequestExecutionLevel user
+
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
-SetCompressor lzma
-
-!include "paths.nsi"
-!include "strings.nsi"
-!include "log.nsi"
-!include "registry.nsi"
-!include "version.nsi"
+!include FileFunc.nsh
+!include InstallOptions.nsh
+!include LogicLib.nsh
+!include MUI2.nsh
+!include StrFunc.nsh
+!include TextFunc.nsh
+!include UAC.nsh
 !include WinVer.nsh
 !include x64.nsh
-!define Environment 'Environment'
+
+; `StrFunc.nsh` requires priming the commands which actually get used later
+${StrStr}
+${UnStrStr}
+${StrLoc}
+${UnStrLoc}
+${UnStrRep}
+
+!include "log.nsi"
+!include "paths.nsi"
+!include "registry.nsi"
+!include "strings.nsi"
+!include "version.nsi"
+!include "customInstallActions.nsi"
+
+Name "${MUI_PRODUCT}"
 
 ; Product with version (IntelliJ IDEA #xxxx).
 ; Used in registry to put each build info into the separate subkey
@@ -20,13 +38,6 @@ SetCompressor lzma
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-Name "${MUI_PRODUCT}"
-; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
-RequestExecutionLevel user
-
-;------------------------------------------------------------------------------
-; Variables
-;------------------------------------------------------------------------------
 Var STARTMENU_FOLDER
 Var config_path
 Var system_path
@@ -34,7 +45,6 @@ Var productLauncher
 Var baseRegKey
 Var productDir
 Var silentMode
-Var pathEnvVar
 Var requiredDiskSpace
 
 ; position of controls for Uninstall Old Installations dialog
@@ -50,26 +60,6 @@ Var launcherShortcut
 Var addToPath
 Var updateContextMenu
 
-;------------------------------------------------------------------------------
-; include "Modern User Interface"
-;------------------------------------------------------------------------------
-!include "MUI2.nsh"
-!include "FileFunc.nsh"
-!include "TextFunc.nsh"
-!include UAC.nsh
-!include "InstallOptions.nsh"
-!include StrFunc.nsh
-!include LogicLib.nsh
-
-${UnStrStr}
-${StrStr}
-${StrLoc}
-${UnStrLoc}
-${UnStrRep}
-${StrRep}
-
-!include "customInstallActions.nsi"
-
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
 ReserveFile "UninstallOldVersions.ini"
@@ -82,75 +72,31 @@ ReserveFile "UninstallOldVersions.ini"
 !define MUI_HEADERIMAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_HEADER_FILE}"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
-;------------------------------------------------------------------------------
-; on GUI initialization installer checks whether IDEA is already installed
-;------------------------------------------------------------------------------
-
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
+
+
 !macro INST_UNINST_SWITCH un
-  ;check if the window is win7 or newer
-  Function ${un}winVersion
-    ;The platform is returned into $0, minor version into $1.
-    ;Windows 7 is equals values of 6 as platform and 1 as minor version.
-    ;Windows 8 is equals values of 6 as platform and 2 as minor version.
-    ${If} ${AtLeastWin8}
-      StrCpy $0 "1"
-    ${else}
-      StrCpy $0 "0"
-    ${EndIf}
-  FunctionEnd
-
-
-  Function ${un}compareFileInstallationTime
-    StrCpy $9 ""
-  get_first_file:
-    Pop $7
-    IfFileExists "$7" get_next_file 0
-      StrCmp $7 "Complete" complete get_first_file
-  get_next_file:
-    Pop $8
-    StrCmp $8 "Complete" 0 +2
-      ; check if there is only one property file
-      StrCmp $9 "no changes" complete different
-    IfFileExists "$8" 0 get_next_file
-    ClearErrors
-    ${GetTime} "$7" "M" $0 $1 $2 $3 $4 $5 $6
-    ${GetTime} "$8" "M" $R0 $R1 $R2 $R3 $R4 $R5 $R6
-    StrCmp $0 $R0 0 different
-      StrCmp $1 $R1 0 different
-        StrCmp $2 $R2 0 different
-          StrCmp $4 $R4 0 different
-            StrCmp $5 $R5 0 different
-              StrCmp $6 $R6 0 different
-		StrCpy $9 "no changes"
-		Goto get_next_file
-  different:
-    StrCpy $9 "Modified"
-  complete:
-FunctionEnd
-
-
-Function ${un}SplitStr
-  Exch $0 ; str
-  Push $1 ; inQ
-  Push $3 ; idx
-  Push $4 ; tmp
-  StrCpy $1 0
-  StrCpy $3 0
-loop:
-  StrCpy $4 $0 1 $3
-  ${If} $4 == '"'
-    ${If} $1 <> 0
-      StrCpy $0 $0 "" 1
-      IntOp $3 $3 - 1
-    ${EndIf}
-    IntOp $1 $1 !
-  ${EndIf}
-  ${If} $4 == '' ; The end?
+  Function ${un}SplitStr
+    Exch $0 ; str
+    Push $1 ; inQ
+    Push $3 ; idx
+    Push $4 ; tmp
     StrCpy $1 0
-    StrCpy $4 ','
-  ${EndIf}
-  ${If} $4 == ','
+    StrCpy $3 0
+  loop:
+    StrCpy $4 $0 1 $3
+    ${If} $4 == '"'
+      ${If} $1 <> 0
+        StrCpy $0 $0 "" 1
+        IntOp $3 $3 - 1
+      ${EndIf}
+      IntOp $1 $1 !
+    ${EndIf}
+    ${If} $4 == '' ; The end?
+      StrCpy $1 0
+      StrCpy $4 ','
+    ${EndIf}
+    ${If} $4 == ','
     ${AndIf} $1 = 0
       StrCpy $4 $0 $3
       StrCpy $1 $4 "" -1
@@ -164,148 +110,25 @@ loop:
       Push $0 ; Remaining
       Exch 4
       Pop $0
-      StrCmp $4 "" 0 moreleft
+      ${If} $4 == ""
         Pop $4
         Pop $3
         Pop $1
         Return
-  moreleft:
+      ${EndIf}
       Exch $4
       Exch 2
       Pop $1
       Pop $3
       Return
-  ${EndIf}
-  IntOp $3 $3 + 1
-  Goto loop
-FunctionEnd
-
-
-Function ${un}deleteFiles
-  ClearErrors
-  FindFirst $2 $1 $0\*.*
-loop:
-  StrCmp $1 "." next 0
-  StrCmp $1 ".." next 0
-  StrCmp $1 "" done
-  Delete "$0\$1"
-next:
-  FindNext $2 $1
-  Goto loop
-done:
-  FindClose $2
-FunctionEnd
-
-
-Function ${un}deleteDirIfEmpty
-  ClearErrors
-  FindFirst $R0 $R1 "$0\*.*"
-  StrCmp $R1 "." 0 done
-  FindNext $R0 $R1
-  StrCmp $R1 ".." 0 done
-  ClearErrors
-  FindNext $R0 $R1
-  IfErrors 0 done
-  Sleep 1000
-  RMDir "$0"
-done:
-  FindClose $R0
-FunctionEnd
+    ${EndIf}
+    IntOp $3 $3 + 1
+    Goto loop
+  FunctionEnd
 !macroend
 
 !insertmacro INST_UNINST_SWITCH ""
 !insertmacro INST_UNINST_SWITCH "un."
-
-
-Function InstDirState
-  !define InstDirState `!insertmacro InstDirStateCall`
-
-  !macro InstDirStateCall _PATH _RESULT
-    Push `${_PATH}`
-    Call InstDirState
-    Pop ${_RESULT}
-  !macroend
-
-  Exch $0
-  Push $1
-  ClearErrors
-
-  FindFirst $1 $0 '$0\*.*'
-  IfErrors 0 +3
-    StrCpy $0 -1
-    goto end
-  StrCmp $0 '.' 0 +4
-    FindNext $1 $0
-    StrCmp $0 '..' 0 +2
-      FindNext $1 $0
-      FindClose $1
-  IfErrors 0 +3
-    StrCpy $0 0
-    goto end
-  StrCpy $0 1
-end:
-  Pop $1
-  Exch $0
-FunctionEnd
-
-
-Function SplitFirstStrPart
-  Exch $R0
-  Exch
-  Exch $R1
-  Push $R2
-  Push $R3
-  StrCpy $R3 $R1
-  StrLen $R1 $R0
-  IntOp $R1 $R1 + 1
-loop:
-  IntOp $R1 $R1 - 1
-  StrCpy $R2 $R0 1 -$R1
-  StrCmp $R1 0 exit0
-  StrCmp $R2 $R3 exit1 loop
-exit0:
-  StrCpy $R1 ""
-  Goto exit2
-exit1:
-  IntOp $R1 $R1 - 1
-  StrCmp $R1 0 0 +3
-     StrCpy $R2 ""
-     Goto +2
-  StrCpy $R2 $R0 "" -$R1
-  IntOp $R1 $R1 + 1
-  StrCpy $R0 $R0 -$R1
-  StrCpy $R1 $R2
-exit2:
-  Pop $R3
-  Pop $R2
-  Exch $R1 ;rest
-  Exch
-  Exch $R0 ;first
-FunctionEnd
-
-
-Function VersionSplit
-  !define VersionSplit `!insertmacro VersionSplitCall`
-
-  !macro VersionSplitCall _FULL _PRODUCT _BRANCH _BUILD
-    Push `${_FULL}`
-    Call VersionSplit
-    Pop ${_PRODUCT}
-    Pop ${_BRANCH}
-    Pop ${_BUILD}
-  !macroend
-
-  Pop $R0
-  Push "-"
-  Push $R0
-  Call SplitFirstStrPart
-  Pop $R0
-  Pop $R1
-  Push "."
-  Push $R1
-  Call SplitFirstStrPart
-  Push $R0
-FunctionEnd
 
 
 Function OnDirectoryPageLeave
@@ -384,7 +207,6 @@ Function ConfirmDesktopShortcut
 
   Call customPreInstallActions
 
-  SetRegView 32
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   ; start position for association checkboxes
@@ -464,7 +286,7 @@ UninstPage custom un.ConfirmDeleteSettings
 
 OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
-InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+InstallDir "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 !define MUI_BRANDINGTEXT " "
 BrandingText " "
 
@@ -493,26 +315,24 @@ FunctionEnd
 
 
 function silentInstallDirValidate
-; use current user path as install dir if installation run in user mode
-  push $0
   ${If} $silentMode == "user"
-    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
-    StrCmp $0 "" check_if_install_dir_contains_PROGRAMFILES64 update_install_dir
-check_if_install_dir_contains_PROGRAMFILES64:
-    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
-    StrCmp $0 "" done update_install_dir
-update_install_dir:
+    ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
+    ${If} $R0 == ""
+      ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
+      ${If} $R0 == ""
+        ${LogText} "Silent installation dir: $INSTDIR"
+        Return
+      ${EndIf}
+    ${EndIf}
+
     ${LogText} ""
-    ${LogText} "  NOTE: Specified install dir: $INSTDIR is required administrative rights."
-    ${LogText} "  It is corresponding with the admin mode in silent config file."
-    ${LogText} "  But installation has been run with user mode. So install folder has been changed to the default: "
-    StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${LogText} "  NOTE: Specified directory '$INSTDIR' requires administrative rights."
+    ${LogText} "  It is corresponding to the 'admin' mode in the silent config file."
+    ${LogText} "  But installation has been run in the 'user' mode. So the directory has been changed to the default: "
+    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${PRODUCT_WITH_VER}"
     ${LogText} "  $INSTDIR "
     ${LogText} ""
   ${EndIf}
-done:
-  pop $0
-  ${LogText} "Silent installation dir: $INSTDIR"
 FunctionEnd
 
 
@@ -855,7 +675,6 @@ Function GUIInit
 ; search old versions of IDEA installed from the user and admin.
   ${LogText} "Search if old versions of ${MUI_PRODUCT} were installed"
 
-user:
   StrCpy $4 0
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
@@ -1055,41 +874,36 @@ command_exists:
 FunctionEnd
 
 
-Function getPathEnvVar
-  ${LogText} "  get value of user's PATH env var"
-  ClearErrors
-  ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
-  IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
-  ${LogText} "  PATH: $pathEnvVar"
-  Goto done
-do_not_change_path:
-  ${LogText} "  an error occured on readyng value of PATH env var"
-  StrCpy $pathEnvVar ""
-done:
-FunctionEnd
-
-
-Function createProductEnvVar
-  WriteRegStr HKCU ${Environment} "${MUI_PRODUCT}" "$INSTDIR\bin;"
-  ${LogText} "  create product env var: ${MUI_PRODUCT} $INSTDIR\bin;"
-FunctionEnd
-
-
 Function updatePathEnvVar
-  StrCmp $pathEnvVar "" do_not_change_path 0
+  Var /GLOBAL pathEnvVar
+
+  ClearErrors
+  ReadRegStr $pathEnvVar HKCU "Environment" "Path"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot read the 'Path' env var"
+    Return
+  ${EndIf}
+
+  ${LogText} "  writing product env var '${MUI_PRODUCT}' = '$INSTDIR\bin'"
+  WriteRegStr HKCU "Environment" "${MUI_PRODUCT}" "$INSTDIR\bin"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot write a product env var"
+    Return
+  ${EndIf}
+
   ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
-  StrCmp $R0 "" absent done
-absent:
-  WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
-  ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
-  Goto done
-do_not_change_path:
-  ${LogText} ""
-  ${LogText} "  NOTE: Length of PATH is bigger than 8192 bytes."
-  ${LogText} "  Installer cannot update it."
-  ${LogText} ""
-  MessageBox MB_OK|MB_ICONEXCLAMATION " $(path_var_too_long)"
-done:
+  ${If} $R0 != ""
+    ${LogText} "  '${MUI_PRODUCT}' is already on the path"
+    Return
+  ${EndIf}
+
+  WriteRegExpandStr HKCU "Environment" "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot write the 'Path' env var"
+    Return
+  ${EndIf}
+
+  SetRebootFlag true
 FunctionEnd
 
 
@@ -1099,7 +913,6 @@ FunctionEnd
 Section "IDEA Files" CopyIdeaFiles
   CreateDirectory $INSTDIR
   Call customInstallActions
-  SetRegView 32
 
   StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${LogText} "Default launcher: $productLauncher"
@@ -1107,18 +920,14 @@ Section "IDEA Files" CopyIdeaFiles
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
   ${If} $R0 == 1
-    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                   "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-    ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk' -> '$INSTDIR\bin\${PRODUCT_EXE_FILE}'"
+    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
   ${EndIf}
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
-    ${LogText} "Update PATH env var"
-    Call getPathEnvVar
-    Call createProductEnvVar
+    ${LogText} "Updating the 'Path' env var"
     CALL updatePathEnvVar
-    SetRebootFlag true
   ${EndIf}
 
   ${If} $updateContextMenu > 0
@@ -1218,7 +1027,6 @@ skip_ipr:
 
   Call customPostInstallActions
 
-  SetRegView 32
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 ""
@@ -1251,14 +1059,6 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  call winVersion
-  ${If} $0 == "1"
-    AccessControl::GrantOnFile \
-      "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
-    AccessControl::GrantOnFile \
-      "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
-  ${EndIf}
-
   ; reset icon cache
   ${LogText} "Reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
@@ -1266,15 +1066,19 @@ SectionEnd
 
 
 Function .onInit
-  SetRegView 32
+  SetRegView 64
   Call createLog
-  ${If} ${RunningX64}
-    Goto init
-  ${Else}
-    MessageBox MB_OK "$(not_supported_32bit_win_version)"
+
+  ${GetNativeMachineArchitecture} $R0
+  ${IfNot} $R0 == ${INSTALLER_ARCH}
+  ${OrIfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
+    ${LogText} "Architecture: expected=${INSTALLER_ARCH} actual=$R0"
+    ${IfNot} ${Silent}
+      MessageBox MB_OK "$(unsupported_win_version)"
+    ${EndIf}
     Abort
   ${EndIf}
-init:
+
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
@@ -1294,9 +1098,9 @@ custom_silent_config:
 validate_install_dir:
   Call searchCurrentVersion
   Call silentInstallDirValidate
-set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate installdir_is_empty
+
 uac_elevate:
   !insertmacro UAC_RunElevated
   StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
@@ -1309,7 +1113,7 @@ uac_elevation_aborted:
   ${LogText} ""
   ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
   ${LogText} ""
-  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
@@ -1408,6 +1212,52 @@ undefined_location:
 Done:
 FunctionEnd
 
+; deletes the directory "$0" if it is empty (contains only "." and ".." entries)
+Function un.deleteDirIfEmpty
+  ClearErrors
+  FindFirst $R0 $R1 "$0\*.*"
+  ${If} $R1 == "."
+    FindNext $R0 $R1
+    ${If} $R1 == ".."
+      ClearErrors
+      FindNext $R0 $R1
+      ${If} ${Errors}
+        Sleep 1000
+        RMDir "$0"
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  FindClose $R0
+FunctionEnd
+
+Function un.compareFileInstallationTime
+  StrCpy $9 ""
+get_first_file:
+  Pop $7
+  IfFileExists "$7" get_next_file 0
+  StrCmp $7 "Complete" complete get_first_file
+get_next_file:
+  Pop $8
+  StrCmp $8 "Complete" 0 +2
+  ; check if there is only one property file
+  StrCmp $9 "no changes" complete different
+  IfFileExists "$8" 0 get_next_file
+  ClearErrors
+  ${GetTime} "$7" "M" $0 $1 $2 $3 $4 $5 $6
+  ${GetTime} "$8" "M" $R0 $R1 $R2 $R3 $R4 $R5 $R6
+  StrCmp $0 $R0 0 different
+    StrCmp $1 $R1 0 different
+      StrCmp $2 $R2 0 different
+        StrCmp $4 $R4 0 different
+          StrCmp $5 $R5 0 different
+            StrCmp $6 $R6 0 different
+  StrCpy $9 "no changes"
+  Goto get_next_file
+different:
+  StrCpy $9 "Modified"
+complete:
+FunctionEnd
+
 
 Function un.onUninstSuccess
   SetErrorLevel 0
@@ -1431,6 +1281,8 @@ FunctionEnd
 
 
 Function un.onInit
+  SetRegView 64
+
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
   Call un.UninstallFeedback
 
@@ -1438,8 +1290,6 @@ Function un.onInit
   IfFileExists "$INSTDIR\fsnotifier.exe" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
-get_reg_key:
-  SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
 
@@ -1698,7 +1548,6 @@ FunctionEnd
 
 Section "Uninstall"
   Call un.customUninstallActions
-  SetRegView 32
   DetailPrint "baseRegKey: $baseRegKey"
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"

@@ -80,8 +80,7 @@ public class PythonUiService {
     return ApplicationManager.getApplication().getService(PythonUiService.class);
   }
 
-  @Nullable
-  public LocalQuickFix createPyRenameElementQuickFix(@NotNull final PsiElement element) {
+  public @Nullable LocalQuickFix createPyRenameElementQuickFix(final @NotNull PsiElement element) {
     return null;
   }
 
@@ -103,12 +102,11 @@ public class PythonUiService {
     return false;
   }
 
-  @Nullable
-  public String showInputDialog(@Nullable Project project,
-                                @DialogMessage String message,
-                                @DialogTitle String title,
-                                @Nullable String initialValue,
-                                @Nullable InputValidator validator) {
+  public @Nullable String showInputDialog(@Nullable Project project,
+                                          @DialogMessage String message,
+                                          @DialogTitle String title,
+                                          @Nullable String initialValue,
+                                          @Nullable InputValidator validator) {
     return null;
   }
 

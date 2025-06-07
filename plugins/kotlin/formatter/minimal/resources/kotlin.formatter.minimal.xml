@@ -1,3 +1,3 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.core.formatter">
+<idea-plugin>
   <module value="kotlin.formatter.minimal"/>
 </idea-plugin>

@@ -22,6 +22,7 @@ fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsC
     actions = existingConfig.actions?.copy(
       projectPath = projectPath
     )
+    fileDataset = existingConfig.fileDataset
     strategy = existingConfig.strategy
     outputDir = existingConfig.outputDir
     title?.let { evaluationTitle = title }

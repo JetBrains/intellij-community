@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -11,6 +12,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,13 +83,13 @@ public final class SplitConditionUtil {
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
-  @Nullable
-  static PsiIfStatement create(@NotNull PsiElementFactory factory,
-                               @NotNull PsiIfStatement ifStatement,
-                               @NotNull PsiExpression extract,
-                               @NotNull PsiExpression leave,
-                               @NotNull IElementType operation,
-                               CommentTracker tracker) {
+  @ApiStatus.Internal
+  public static @Nullable PsiIfStatement create(@NotNull PsiElementFactory factory,
+                                                @NotNull PsiIfStatement ifStatement,
+                                                @NotNull PsiExpression extract,
+                                                @NotNull PsiExpression leave,
+                                                @NotNull IElementType operation,
+                                                CommentTracker tracker) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch == null) {
       return null;
@@ -104,13 +106,12 @@ public final class SplitConditionUtil {
     return null;
   }
 
-  @NotNull
-  private static PsiIfStatement createAndAnd(@NotNull PsiElementFactory factory,
-                                             @NotNull PsiStatement thenBranch,
-                                             @Nullable PsiStatement elseBranch,
-                                             @NotNull PsiExpression extract,
-                                             @NotNull PsiExpression leave,
-                                             CommentTracker tracker) {
+  private static @NotNull PsiIfStatement createAndAnd(@NotNull PsiElementFactory factory,
+                                                      @NotNull PsiStatement thenBranch,
+                                                      @Nullable PsiStatement elseBranch,
+                                                      @NotNull PsiExpression extract,
+                                                      @NotNull PsiExpression leave,
+                                                      CommentTracker tracker) {
     List<String> elseChain = new ArrayList<>();
     boolean chainFinished = false;
     loop:
@@ -167,64 +168,58 @@ public final class SplitConditionUtil {
       }
     }
     else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + PsiKeyword.ELSE + " ", elseChain), tracker) + "\n}";
+      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + JavaKeywords.ELSE + " ", elseChain), tracker) + "\n}";
     }
     String ifString = createIfString(extract, thenString, elseBranch, tracker);
     return (PsiIfStatement)factory.createStatementFromText(ifString, thenBranch);
   }
 
-  @NotNull
-  private static PsiIfStatement createOrOr(@NotNull PsiElementFactory factory,
-                                           @NotNull PsiStatement thenBranch,
-                                           @Nullable PsiStatement elseBranch,
-                                           @NotNull PsiExpression extract,
-                                           @NotNull PsiExpression leave,
-                                           CommentTracker tracker) {
+  private static @NotNull PsiIfStatement createOrOr(@NotNull PsiElementFactory factory,
+                                                    @NotNull PsiStatement thenBranch,
+                                                    @Nullable PsiStatement elseBranch,
+                                                    @NotNull PsiExpression extract,
+                                                    @NotNull PsiExpression leave,
+                                                    CommentTracker tracker) {
     return (PsiIfStatement)factory.createStatementFromText(
       createIfString(extract, thenBranch, createIfString(leave, thenBranch, elseBranch, tracker), tracker), thenBranch);
   }
 
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull PsiStatement thenBranch,
-                                       @Nullable PsiStatement elseBranch,
-                                       CommentTracker tracker) {
+  private static @NotNull String createIfString(@NotNull PsiExpression condition,
+                                                @NotNull PsiStatement thenBranch,
+                                                @Nullable PsiStatement elseBranch,
+                                                CommentTracker tracker) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(condition);
     return createIfString(tracker.text(stripped == null ? condition : stripped),
                           toThenBranchString(tracker.markUnchanged(thenBranch)),
                           toElseBranchString(tracker.markUnchanged(elseBranch), false));
   }
 
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull PsiStatement thenBranch,
-                                       @Nullable String elseBranch,
-                                       CommentTracker tracker) {
+  private static @NotNull String createIfString(@NotNull PsiExpression condition,
+                                                @NotNull PsiStatement thenBranch,
+                                                @Nullable String elseBranch,
+                                                CommentTracker tracker) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(condition);
     return createIfString(tracker.text(stripped == null ? condition : stripped),
                           toThenBranchString(tracker.markUnchanged(thenBranch)), elseBranch);
   }
 
-  @NotNull
-  private static String createIfString(@NotNull PsiExpression condition,
-                                       @NotNull String thenBranch,
-                                       @Nullable PsiStatement elseBranch,
-                                       CommentTracker tracker) {
+  private static @NotNull String createIfString(@NotNull PsiExpression condition,
+                                                @NotNull String thenBranch,
+                                                @Nullable PsiStatement elseBranch,
+                                                CommentTracker tracker) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(condition);
     return createIfString(tracker.text(stripped == null ? condition : stripped),
                           thenBranch, toElseBranchString(tracker.markUnchanged(elseBranch), true));
   }
 
-  @NotNull
-  private static String createIfString(@NotNull String condition,
-                                       @NotNull String thenBranch,
-                                       @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? "\n " + PsiKeyword.ELSE + " " + elseBranch : "";
-    return PsiKeyword.IF + " (" + condition + ")\n" + thenBranch + elsePart;
+  private static @NotNull String createIfString(@NotNull String condition,
+                                                @NotNull String thenBranch,
+                                                @Nullable String elseBranch) {
+    final String elsePart = elseBranch != null ? "\n " + JavaKeywords.ELSE + " " + elseBranch : "";
+    return JavaKeywords.IF + " (" + condition + ")\n" + thenBranch + elsePart;
   }
 
-  @NotNull
-  private static String toThenBranchString(@NotNull PsiStatement statement) {
+  private static @NotNull String toThenBranchString(@NotNull PsiStatement statement) {
     if (!(statement instanceof PsiBlockStatement)) {
       return "{ " + statement.getText() + "\n }";
     }
@@ -232,8 +227,7 @@ public final class SplitConditionUtil {
     return statement.getText();
   }
 
-  @Nullable
-  private static String toElseBranchString(@Nullable PsiStatement statement, boolean skipElse) {
+  private static @Nullable String toElseBranchString(@Nullable PsiStatement statement, boolean skipElse) {
     if (statement == null) {
       return null;
     }

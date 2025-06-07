@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration.loader
 
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -29,4 +30,9 @@ interface ScriptConfigurationLoader {
         scriptDefinition: ScriptDefinition,
         context: ScriptConfigurationLoadingContext
     ): Boolean
+
+    companion object {
+        val EP_NAME: ProjectExtensionPointName<ScriptConfigurationLoader> =
+            ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.loader")
+    }
 }

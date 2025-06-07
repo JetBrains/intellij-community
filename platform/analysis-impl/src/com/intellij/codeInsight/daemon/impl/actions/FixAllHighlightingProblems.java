@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
@@ -58,14 +60,14 @@ class FixAllHighlightingProblems implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project,
                              Editor editor,
-                             PsiFile file) {
+                             PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
-    PsiFile topLevelFile = manager.getTopLevelFile(file);
+    PsiFile topLevelFile = manager.getTopLevelFile(psiFile);
     Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     // IntentionAction, offset
     List<Pair<IntentionAction, SmartPsiFileRange>> actions = new ArrayList<>();
@@ -80,14 +82,15 @@ class FixAllHighlightingProblems implements IntentionAction {
       }
       return true;
     };
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ReadAction.run(() -> {
         DaemonCodeAnalyzerEx.processHighlights(
-          document, project, null, 0, document.getTextLength(), processor);
+          document, project, null, 0, document.getTextLength(), context, processor);
       });
     }, AnalysisBundle.message("command.name.gather.fixes"), true, project)) return;
 
-    if (actions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+    if (actions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(psiFile)) return;
     // Applying in reverse order looks safer
     Collections.reverse(actions);
 
@@ -110,8 +113,8 @@ class FixAllHighlightingProblems implements IntentionAction {
             Segment range = pair.getSecond().getRange();
             if (range != null) {
               topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
-              if (action.isAvailable(project, editor, file)) {
-                action.invoke(project, editor, file);
+              if (action.isAvailable(project, editor, psiFile)) {
+                action.invoke(project, editor, psiFile);
                 psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
                 psiDocumentManager.commitDocument(document);
               }
@@ -122,11 +125,11 @@ class FixAllHighlightingProblems implements IntentionAction {
   }
 
   private static void runModCommands(@Nullable Editor editor,
-                                     @NotNull PsiFile file,
+                                     @NotNull PsiFile psiFile,
                                      @Nls String actionName,
                                      @NotNull List<Pair<ModCommandAction, SmartPsiFileRange>> modCommands) {
-    Project project = file.getProject();
-    Document document = file.getFileDocument();
+    Project project = psiFile.getProject();
+    Document document = psiFile.getFileDocument();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final SequentialModalProgressTask progressTask =
       new SequentialModalProgressTask(project, actionName, true);
@@ -151,7 +154,7 @@ class FixAllHighlightingProblems implements IntentionAction {
         Segment range = pair.getSecond().getRange();
         if (range != null) {
           ModCommandWithContext contextAndCommand =
-            ModCommandService.getInstance().chooseFileAndPerform(file, editor, pair.first, range.getStartOffset());
+            ModCommandService.getInstance().chooseFileAndPerform(psiFile, editor, pair.first, range.getStartOffset());
           if (contextAndCommand == null) return true;
           contextAndCommand.executeInBatch();
           psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);

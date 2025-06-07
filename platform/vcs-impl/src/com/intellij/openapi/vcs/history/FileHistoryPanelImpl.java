@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +52,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +67,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -78,26 +78,26 @@ import static java.util.Comparator.reverseOrder;
 public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider, Disposable, EditorColorsListener, CopyProvider {
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
-  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
-  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
-  private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
-  private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
   
   private final String myHelpId;
 
-  @NotNull private final AbstractVcs myVcs;
+  private final @NotNull AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
-  @NotNull private final FileHistoryRefresherI myRefresherI;
-  @NotNull private final FilePath myFilePath;
-  @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = new HashMap<>();
-  @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<>();
-  @NotNull private final DetailsPanel myDetails;
-  @NotNull private final DualView myDualView;
-  @Nullable private final JComponent myAdditionalDetails;
-  @Nullable private final Consumer<VcsFileRevision> myRevisionSelectionListener;
+  private final @NotNull FileHistoryRefresherI myRefresherI;
+  private final @NotNull FilePath myFilePath;
+  private final @Nullable VcsRevisionNumber myStartingRevision;
+  private final @NotNull Map<VcsRevisionNumber, Integer> myRevisionsOrder = new HashMap<>();
+  private final @NotNull Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<>();
+  private final @NotNull DetailsPanel myDetails;
+  private final @NotNull DualView myDualView;
+  private final @Nullable JComponent myAdditionalDetails;
+  private final @Nullable Consumer<VcsFileRevision> myRevisionSelectionListener;
 
-  @NotNull private VcsHistorySession myHistorySession;
+  private @NotNull VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private List<Object> myTargetSelection;
   private boolean myIsStaticAndEmbedded;
@@ -205,9 +205,7 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
   }
 
-  @Nls
-  @NotNull
-  public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
+  public static @Nls @NotNull String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     @Nls StringBuilder sb = new StringBuilder();
     long time = revision.getRevisionDate().getTime();
@@ -355,8 +353,7 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
   }
 
-  @NotNull
-  private JComponent createCenterPanel() {
+  private @NotNull JComponent createCenterPanel() {
     mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
     mySplitter.setFirstComponent(myDualView);
 
@@ -386,8 +383,7 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
   }
 
-  @NotNull
-  private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
+  private @NotNull DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
@@ -487,8 +483,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     if (!myRevisionToVirtualFile.containsKey(revision)) {
       FilePath filePath = (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : myFilePath);
       myRevisionToVirtualFile.put(revision, filePath.isDirectory()
-                                            ? new VcsVirtualFolder(filePath.getPath(), null, VcsFileSystem.getInstance())
-                                            : new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()));
+                                            ? new VcsVirtualFolder(filePath, null)
+                                            : new VcsVirtualFile(filePath, revision));
     }
     return myRevisionToVirtualFile.get(revision);
   }
@@ -607,8 +603,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
   }
 
   public static class RevisionColumnInfo extends ColumnInfo<VcsFileRevision, VcsRevisionNumber> {
-    @Nullable private final Comparator<VcsFileRevision> myComparator;
-    @NotNull private final ColoredTableCellRenderer myRenderer;
+    private final @Nullable Comparator<VcsFileRevision> myComparator;
+    private final @NotNull ColoredTableCellRenderer myRenderer;
 
     public RevisionColumnInfo(@Nullable Comparator<VcsFileRevision> comparator) {
       super(VcsBundle.message("column.name.revision.version"));
@@ -623,15 +619,13 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       };
     }
 
-    @Nullable
     @Override
-    public VcsRevisionNumber valueOf(VcsFileRevision revision) {
+    public @Nullable VcsRevisionNumber valueOf(VcsFileRevision revision) {
       return revision.getRevisionNumber();
     }
 
-    @Nullable
     @Override
-    public Comparator<VcsFileRevision> getComparator() {
+    public @Nullable Comparator<VcsFileRevision> getComparator() {
       return myComparator;
     }
 
@@ -640,15 +634,14 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       return StringUtil.repeatSymbol('m', 10);
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+    public @Nullable TableCellRenderer getRenderer(VcsFileRevision revision) {
       return myRenderer;
     }
   }
 
   public static class DateColumnInfo extends ColumnInfo<VcsFileRevision, Date> {
-    @NotNull private final ColoredTableCellRenderer myRenderer;
+    private final @NotNull ColoredTableCellRenderer myRenderer;
 
     public DateColumnInfo() {
       super(VcsBundle.message("column.name.revision.date"));
@@ -666,15 +659,13 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       };
     }
 
-    @NotNull
     @Override
-    public Comparator<VcsFileRevision> getComparator() {
+    public @NotNull Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
     }
 
-    @Nullable
     @Override
-    public Date valueOf(VcsFileRevision revision) {
+    public @Nullable Date valueOf(VcsFileRevision revision) {
       return revision.getRevisionDate();
     }
 
@@ -683,9 +674,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       return DateFormatUtil.formatDateTime(Clock.getTime() + 1000);
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+    public @Nullable TableCellRenderer getRenderer(VcsFileRevision revision) {
       return myRenderer;
     }
   }
@@ -718,9 +708,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       super(VcsBundle.message("column.name.revision.list.author"));
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+    public @Nullable TableCellRenderer getRenderer(VcsFileRevision revision) {
       return AUTHOR_RENDERER;
     }
 
@@ -741,9 +730,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       return renderer;
     }
 
-    @Nullable
     @Override
-    public String valueOf(VcsFileRevision revision) {
+    public @Nullable String valueOf(VcsFileRevision revision) {
       if (revision instanceof VcsFileRevisionEx) {
         if (!Objects.equals(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
           return revision.getAuthor() + "*";
@@ -753,14 +741,12 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
 
     @Override
-    @NonNls
-    public String getPreferredStringValue() {
+    public @NonNls String getPreferredStringValue() {
       return StringUtil.repeatSymbol('m', 14);
     }
 
-    @NotNull
     @Override
-    public Comparator<VcsFileRevision> getComparator() {
+    public @NotNull Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
     }
   }
@@ -784,8 +770,7 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       myIssueLinkRenderer = new IssueLinkRenderer(project, myRenderer);
     }
 
-    @NotNull
-    public static String getSubject(@NotNull VcsFileRevision object) {
+    public static @NotNull String getSubject(@NotNull VcsFileRevision object) {
       final String originalMessage = object.getCommitMessage();
       if (originalMessage == null) return "";
 
@@ -793,9 +778,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       return index == -1 ? originalMessage : originalMessage.substring(0, index);
     }
 
-    @Nullable
     @Override
-    public String valueOf(VcsFileRevision revision) {
+    public @Nullable String valueOf(VcsFileRevision revision) {
       return getSubject(revision);
     }
 
@@ -804,15 +788,13 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
       return StringUtil.repeatSymbol('m', 80);
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+    public @Nullable TableCellRenderer getRenderer(VcsFileRevision revision) {
       return myRenderer;
     }
 
-    @NotNull
     @Override
-    public Comparator<VcsFileRevision> getComparator() {
+    public @NotNull Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
     }
   }
@@ -849,14 +831,12 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
 
     @Override
-    @NotNull
-    public FilePath getFile() {
+    public @NotNull FilePath getFile() {
       return myFile;
     }
 
     @Override
-    @NotNull
-    public VcsRevisionNumber getRevisionNumber() {
+    public @NotNull VcsRevisionNumber getRevisionNumber() {
       return myRevision.getRevisionNumber();
     }
   }
@@ -973,8 +953,7 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     }
   }
 
-  @NlsContexts.ColumnName
-  private static String getCommitMessageTitle() {
+  private static @NlsContexts.ColumnName String getCommitMessageTitle() {
     return VcsBundle.message("label.selected.revision.commit.message");
   }
 }

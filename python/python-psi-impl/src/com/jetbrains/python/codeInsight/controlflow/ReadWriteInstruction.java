@@ -23,18 +23,17 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReadWriteInstruction extends InstructionImpl {
-  final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
-    @Nullable
-    @Override
-    public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-      return Ref.create(myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null);
-    }
-  };
+  private static InstructionTypeCallback instructionTypeCallback(@Nullable PsiElement element) {
+    return element instanceof PyExpression expression
+           ? context -> Ref.create(context.getType(expression))
+           : context -> Ref.create(null);
+  }
 
   public enum ACCESS {
     READ(true, false, false, false),
@@ -72,71 +71,68 @@ public final class ReadWriteInstruction extends InstructionImpl {
     }
   }
 
-  private final String myName;
-  private final ACCESS myAccess;
-  private final InstructionTypeCallback myGetType;
+  private final @Nullable String myName;
+  private final @NotNull ACCESS myAccess;
+  private final @NotNull InstructionTypeCallback myGetType;
 
-  private ReadWriteInstruction(final ControlFlowBuilder builder,
-                               final PsiElement element,
-                               final String name,
-                               final ACCESS access) {
+  private ReadWriteInstruction(final @NotNull ControlFlowBuilder builder,
+                               final @Nullable PsiElement element,
+                               final @Nullable String name,
+                               final @NotNull ACCESS access) {
     this(builder, element, name, access, null);
   }
 
-  private ReadWriteInstruction(final ControlFlowBuilder builder,
-                               final PsiElement element,
-                               final String name,
-                               final ACCESS access,
-                               @Nullable final InstructionTypeCallback getType) {
+  private ReadWriteInstruction(final @NotNull ControlFlowBuilder builder,
+                               final @Nullable PsiElement element,
+                               final @Nullable String name,
+                               final @NotNull ACCESS access,
+                               final @Nullable InstructionTypeCallback getType) {
     super(builder, element);
     myName = name;
     myAccess = access;
-    myGetType = getType != null ? getType : EXPR_TYPE;
+    myGetType = getType != null ? getType : instructionTypeCallback(element);
   }
 
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
-  public ACCESS getAccess() {
+  public @NotNull ACCESS getAccess() {
     return myAccess;
   }
-
-  public static ReadWriteInstruction read(final ControlFlowBuilder builder,
-                                          final PyElement element,
-                                          final String name) {
+  
+  public static @NotNull ReadWriteInstruction read(final @NotNull ControlFlowBuilder builder,
+                                                   final @Nullable PyElement element,
+                                                   final @Nullable String name) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.READ);
   }
 
-  public static ReadWriteInstruction write(final ControlFlowBuilder builder,
-                                           final PyElement element,
-                                           final String name) {
+  public static @NotNull ReadWriteInstruction write(final @NotNull ControlFlowBuilder builder,
+                                                    final @Nullable PyElement element,
+                                                    final @Nullable String name) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.WRITE);
   }
-
-  public static ReadWriteInstruction newInstruction(final ControlFlowBuilder builder,
-                                                    final PsiElement element,
-                                                    final String name,
-                                                    final ACCESS access) {
+  
+  public static @NotNull ReadWriteInstruction newInstruction(final @NotNull ControlFlowBuilder builder,
+                                                             final @Nullable PsiElement element,
+                                                             final @Nullable String name,
+                                                             final @NotNull ACCESS access) {
     return new ReadWriteInstruction(builder, element, name, access);
   }
-
-  public static ReadWriteInstruction assertType(final ControlFlowBuilder builder,
-                                                final PsiElement element,
-                                                final String name,
-                                                final InstructionTypeCallback getType) {
+  
+  public static @NotNull ReadWriteInstruction assertType(final @NotNull ControlFlowBuilder builder,
+                                                         final @Nullable PsiElement element,
+                                                         final @Nullable String name,
+                                                         final @Nullable InstructionTypeCallback getType) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
-  @Nullable
-  public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-    return myGetType.getType(context, anchor);
+  public @Nullable Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+    return myGetType.getType(context);
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String getElementPresentation() {
+  public @NotNull @NonNls String getElementPresentation() {
     return myAccess + " ACCESS: " + myName;
   }
 }

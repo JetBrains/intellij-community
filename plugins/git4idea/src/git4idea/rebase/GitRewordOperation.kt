@@ -12,6 +12,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
+import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.rebase.log.GitCommitEditingOperation
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.repo.GitRepository
@@ -73,7 +74,8 @@ internal class GitRewordOperation(
     val result = Git.getInstance().runCommand(handler)
     repository.update()
     if (result.success()) {
-      return GitCommitEditingOperationResult.Complete(repository, commit.parents.first().asString(), initialHeadPosition,
+      val upstream = getRebaseUpstreamFor(commit)
+      return GitCommitEditingOperationResult.Complete(repository, upstream, initialHeadPosition,
                                                       repository.currentRevision!!)
     }
     else {
@@ -95,7 +97,7 @@ internal class GitRewordOperation(
       return newMessage
     }
     else {
-      LOG.error("Unexpected editor content. Charset: ${GitConfigUtil.getCommitEncoding(project, commit.root)}",
+      LOG.error("Unexpected editor content. Charset: ${GitConfigUtil.getCommitEncodingCharset(project, commit.root)}",
                 Attachment("actual.txt", editorText), Attachment("expected.txt", commit.fullMessage))
       throw IllegalStateException("Unexpected editor content")
     }

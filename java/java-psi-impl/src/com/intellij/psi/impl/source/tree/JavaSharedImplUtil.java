@@ -20,13 +20,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
@@ -88,11 +85,9 @@ public final class JavaSharedImplUtil {
   }
 
   public static @NotNull PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
-    String typeText = typeInfo.text();
-    assert typeText != null : owner;
+    String typeText = typeInfo.annotatedText();
     PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
-    type = applyAnnotations(type, owner.getModifierList());
-    return typeInfo.getTypeAnnotations().applyTo(type, owner);
+    return applyAnnotations(type, owner.getModifierList());
   }
 
   public static @NotNull PsiType applyAnnotations(@NotNull PsiType type, @Nullable PsiModifierList modifierList) {
@@ -100,7 +95,7 @@ public final class JavaSharedImplUtil {
       PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length > 0) {
         if (type instanceof PsiArrayType) {
-          Stack<PsiArrayType> types = new Stack<>();
+          Deque<PsiArrayType> types = new ArrayDeque<>();
           do {
             types.push((PsiArrayType)type);
             type = ((PsiArrayType)type).getComponentType();

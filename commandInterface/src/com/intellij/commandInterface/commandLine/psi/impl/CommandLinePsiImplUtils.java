@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.commandInterface.commandLine.psi.impl;
 
-import com.intellij.commandInterface.commandLine.CommandLinePart;
-import com.intellij.commandInterface.commandLine.ValidationResult;
-import com.intellij.psi.PsiElement;
 import com.intellij.commandInterface.command.Argument;
 import com.intellij.commandInterface.command.Help;
 import com.intellij.commandInterface.command.Option;
+import com.intellij.commandInterface.commandLine.CommandLinePart;
+import com.intellij.commandInterface.commandLine.ValidationResult;
 import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
 import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
 import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ final class CommandLinePsiImplUtils {
    * @param o option
    * @return true if long
    */
-  static boolean isLong(@NotNull final CommandLineOption o) {
+  static boolean isLong(final @NotNull CommandLineOption o) {
     return o.getLongOptionNameToken() != null;
   }
 
@@ -42,8 +42,7 @@ final class CommandLinePsiImplUtils {
    * For options with out of eq just use next psi
    * @return null if option does not have eq
    */
-  @Nullable
-  static CommandLineArgument findArgument(@NotNull final CommandLineOption option) {
+  static @Nullable CommandLineArgument findArgument(final @NotNull CommandLineOption option) {
     if (option.getText().endsWith("=")) {
       return ObjectUtils.tryCast(option.getNextSibling(), CommandLineArgument.class);
     }
@@ -55,8 +54,7 @@ final class CommandLinePsiImplUtils {
    * @param option psi option
    * @return real option (if any)
    */
-  @Nullable
-  static Option findRealOption(@NotNull final CommandLineOption option) {
+  static @Nullable Option findRealOption(final @NotNull CommandLineOption option) {
     final ValidationResult validationResult = getValidationResult(option);
     if (validationResult == null) {
       return null;
@@ -67,8 +65,7 @@ final class CommandLinePsiImplUtils {
   /**
    * @return for arg in quotes returns bare value, or simply value otherwise
    */
-  @NotNull
-  static String getValueNoQuotes(@NotNull final CommandLineArgument argument) {
+  static @NotNull String getValueNoQuotes(final @NotNull CommandLineArgument argument) {
     final char[] chars = argument.getText().toCharArray();
     if (chars.length == 0) {
       return "";
@@ -86,8 +83,7 @@ final class CommandLinePsiImplUtils {
    * @param argument argument to search help for
    * @return help for argument or null if not found
    */
-  @Nullable
-  static Help findBestHelp(@NotNull final CommandLineArgument argument) {
+  static @Nullable Help findBestHelp(final @NotNull CommandLineArgument argument) {
     final Option option = argument.findOptionForOptionArgument();
     if (option != null) {
       return option.getHelp();
@@ -103,8 +99,7 @@ final class CommandLinePsiImplUtils {
    * @param argument psi argument
    * @return real argument (if any)
    */
-  @Nullable
-  static Argument findRealArgument(@NotNull final CommandLineArgument argument) {
+  static @Nullable Argument findRealArgument(final @NotNull CommandLineArgument argument) {
     final ValidationResult validationResult = getValidationResult(argument);
     if (validationResult == null) {
       return null;
@@ -118,8 +113,7 @@ final class CommandLinePsiImplUtils {
    * @param argument argument to check
    * @return option (if option argument) or null if not
    */
-  @Nullable
-  static Option findOptionForOptionArgument(@NotNull final CommandLineArgument argument) {
+  static @Nullable Option findOptionForOptionArgument(final @NotNull CommandLineArgument argument) {
     final ValidationResult validationResult = getValidationResult(argument);
     if (validationResult == null) {
       return null;
@@ -133,8 +127,7 @@ final class CommandLinePsiImplUtils {
    * @param commandLinePart command line part
    * @return validation result (if any)
    */
-  @Nullable
-  private static ValidationResult getValidationResult(@NotNull final CommandLinePart commandLinePart) {
+  private static @Nullable ValidationResult getValidationResult(final @NotNull CommandLinePart commandLinePart) {
     final CommandLineFile commandLineFile = commandLinePart.getCommandLineFile();
     if (commandLineFile == null) {
       return null;
@@ -152,9 +145,7 @@ final class CommandLinePsiImplUtils {
    * @param o option
    * @return name (if any)
    */
-  @Nullable
-  @NonNls
-  static String getOptionName(@NotNull final CommandLineOption o) {
+  static @Nullable @NonNls String getOptionName(final @NotNull CommandLineOption o) {
     final PsiElement longNameToken = o.getLongOptionNameToken();
     if (longNameToken != null) {
       return longNameToken.getText();

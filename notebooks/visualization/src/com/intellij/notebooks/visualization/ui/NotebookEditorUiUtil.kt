@@ -1,21 +1,21 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
+import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JScrollPane
-import javax.swing.SwingUtilities
 
 fun EditorEx.addComponentInlay(
   component: JComponent,
@@ -52,6 +52,7 @@ fun EditorEx.addComponentInlay(
 
   updateUiOnParentResizeImpl(component.parent as JComponent, WeakReference(component))
   component.revalidate()
+  inlay.update()
   return inlay
 }
 
@@ -112,7 +113,37 @@ fun registerEditorSizeWatcher(
 val EditorEx.textEditingAreaWidth: Int
   get() = scrollingModel.visibleArea.width - scrollPane.verticalScrollBar.width
 
-fun JComponent.yOffsetFromEditor(editor: Editor): Int? =
-  SwingUtilities.convertPoint(this, 0, 0, editor.contentComponent).y
-    .takeIf { it >= 0 }
-    ?.let { it + insets.top }
+fun EditorEx.getFirstFullyVisibleLogicalLine(): Int? {
+  val visibleArea = this.scrollingModel.visibleArea
+  val startY = visibleArea.y
+  val endY = visibleArea.y + visibleArea.height
+
+  val firstVisibleLine = this.xyToLogicalPosition(Point(0, startY)).line
+  val lastVisibleLine = this.xyToLogicalPosition(Point(0, endY)).line
+
+  for (line in firstVisibleLine..lastVisibleLine) {
+    val lineStartY = this.logicalPositionToXY(LogicalPosition(line, 0)).y
+    val lineEndY = lineStartY + this.lineHeight
+    if (lineStartY >= startY && lineEndY <= endY) {
+      return line
+    }
+  }
+  return null
+}
+
+fun NotebookCellLines.Interval.computeFirstLineForHighlighter(
+  editor: EditorEx, gutterIconStickToFirstVisibleLine: Boolean = true
+): Int {
+  return if (gutterIconStickToFirstVisibleLine) {
+    val firstFullyVisibleLine = editor.getFirstFullyVisibleLogicalLine()
+    val startLine = if (firstFullyVisibleLine != null && firstFullyVisibleLine in this.lines) {
+      firstFullyVisibleLine
+    } else {
+      this.lines.first
+    }
+    val fullyVisibleCell = firstFullyVisibleLine == this.lines.first
+    if (fullyVisibleCell) this.lines.first else startLine
+  } else {
+    this.lines.first
+  }
+}

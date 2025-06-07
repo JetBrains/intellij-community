@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.EntityTypeProvider
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asEntity
 import com.jetbrains.rhizomedb.EID
@@ -69,15 +71,13 @@ class ValueLookupManagerController(private val project: Project, private val cs:
       return
     }
     cs.launch(Dispatchers.IO) {
-      withKernel {
-        change {
-          shared {
-            val projectEntity = project.asEntity()
-            val alreadyExists = XDebuggerValueLookupListeningStartedEntity.all().any { it.projectEntity == projectEntity }
-            if (!alreadyExists) {
-              XDebuggerValueLookupListeningStartedEntity.new {
-                it[XDebuggerValueLookupListeningStartedEntity.Project] = projectEntity
-              }
+      val projectEntity = project.asEntity()
+      change {
+        shared {
+          val alreadyExists = XDebuggerValueLookupListeningStartedEntity.all().any { it.projectEntity == projectEntity }
+          if (!alreadyExists) {
+            XDebuggerValueLookupListeningStartedEntity.new {
+              it[XDebuggerValueLookupListeningStartedEntity.Project] = projectEntity
             }
           }
         }
@@ -90,15 +90,23 @@ class ValueLookupManagerController(private val project: Project, private val cs:
    */
   fun hideHint() {
     cs.launch(Dispatchers.IO) {
-      withKernel {
-        change {
-          shared {
-            val projectEntity = project.asEntity()
-            XDebuggerValueLookupHideHintsRequestEntity.new {
-              it[XDebuggerValueLookupHideHintsRequestEntity.Project] = projectEntity
-            }
+      val projectEntity = project.asEntity()
+      change {
+        shared {
+          val projectEntity = projectEntity
+          XDebuggerValueLookupHideHintsRequestEntity.new {
+            it[XDebuggerValueLookupHideHintsRequestEntity.Project] = projectEntity
           }
         }
+      }
+    }
+  }
+
+  fun showEditorInfoTooltip(event: EditorMouseEvent?) {
+    if (event != null) {
+      cs.launch(Dispatchers.EDT) {
+        hideHint()
+        EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event)
       }
     }
   }

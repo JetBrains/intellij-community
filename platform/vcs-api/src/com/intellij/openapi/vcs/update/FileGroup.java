@@ -197,6 +197,7 @@ public final class FileGroup {
     return myUpdateName;
   }
 
+  @Override
   public String toString() {
     return myId + " " + myFiles.size() + " items: " + myFiles;
   }

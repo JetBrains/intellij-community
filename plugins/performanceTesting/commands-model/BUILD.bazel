@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.tools.ide.performanceTesting.commands` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tools-ide-performanceTesting-commands",
+  module_name = "intellij.tools.ide.performanceTesting.commands",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+  ]
+)
+### auto-generated section `build intellij.tools.ide.performanceTesting.commands` end

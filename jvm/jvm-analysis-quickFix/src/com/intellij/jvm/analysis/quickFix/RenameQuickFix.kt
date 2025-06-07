@@ -25,7 +25,7 @@ class RenameQuickFix(element: PsiElement, private val targetName: String) : Loca
     return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+  override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     RefactoringFactory.getInstance(project).createRename(startElement, targetName).run()
   }
 }

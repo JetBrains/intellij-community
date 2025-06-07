@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="cucumber-core-1" type="repository">
+    <properties maven-id="info.cukes:cucumber-core:1.2.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/1.2.6/cucumber-core-1.2.6.jar">
+          <sha256sum>ace77c533236213a1aa9f68b8de10e564da809605371ef2f8c73cd8f4c71293a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/info/cukes/gherkin/2.12.2/gherkin-2.12.2.jar">
+          <sha256sum>0a5ebc0506ab1e4a08af1ca150f797304ff53b953c5b1f6fcf1f81551d964aad</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="info.cukes:cucumber-html" />
+        <dependency maven-id="info.cukes:cucumber-jvm-deps" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/1.2.6/cucumber-core-1.2.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/gherkin/2.12.2/gherkin-2.12.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/1.2.6/cucumber-core-1.2.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/gherkin/2.12.2/gherkin-2.12.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

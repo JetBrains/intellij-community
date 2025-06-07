@@ -33,14 +33,13 @@ import static com.intellij.patterns.XmlPatterns.*;
 
 final class I18nReferenceContributor extends PsiReferenceContributor {
 
-  @NonNls private static final String INTENTION_ACTION_TAG = "intentionAction";
-  @NonNls private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
+  private static final @NonNls String INTENTION_ACTION_TAG = "intentionAction";
+  private static final @NonNls String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
 
-  @NonNls private static final String SEPARATOR_TAG = "separator";
-  @NonNls private static final String SYNONYM_TAG = "synonym";
+  private static final @NonNls String SEPARATOR_TAG = "separator";
+  private static final @NonNls String SYNONYM_TAG = "synonym";
 
-  @NonNls
-  private static class Holder {
+  private static @NonNls class Holder {
     private static final String GROUP_CONFIGURABLE_EP = "com.intellij.openapi.options.ex.ConfigurableGroupEP";
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
     private static final String INSPECTION_EP = InspectionEP.class.getName();
@@ -56,8 +55,8 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
 
     private static final String DECLARATIVE_INLAY_PROVIDER_EP = InlayHintsProviderExtensionBean.class.getName();
 
-    private static final String WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP =
-      "com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP";
+    private static final String POLY_SYMBOLS_INSPECTION_TOOL_MAPPING_EP =
+      "com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP";
   }
 
   @Override
@@ -110,7 +109,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
                                         new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"messageKey"},
-                                                                  Holder.WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
+                                                                  Holder.POLY_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
                                         new PropertyKeyReferenceProvider(false, "messageKey", "bundleName"));
 
 
@@ -230,7 +229,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundleName"},
-                                                                  Holder.WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
+                                                                  Holder.POLY_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
                                         bundleReferenceProvider);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =
@@ -264,8 +263,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
       .withSuperParent(3, extensionPointCapture(extensionPointClassNames));
   }
 
-  @NotNull
-  private static XmlTagPattern.Capture extensionPointCapture(@NonNls String[] extensionPointClassNames) {
+  private static @NotNull XmlTagPattern.Capture extensionPointCapture(@NonNls String[] extensionPointClassNames) {
     return xmlTag()
       .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
         @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.util.progress.ProgressState
 import fleet.kernel.onDispose
 import fleet.kernel.rete.*
@@ -36,6 +37,14 @@ val TaskInfoEntity.updates: Query<ProgressState>
 val TaskInfoEntity.statuses: Query<TaskStatus>
   @ApiStatus.Internal
   get() = asQuery()[TaskInfoEntity.TaskStatusType]
+
+/**
+ * Returns a query that provides changes in the suspendable status of the task.
+ * For more info about suspendable see [TaskSuspension].
+ */
+val TaskInfoEntity.suspensionState: Query<TaskSuspension>
+  @ApiStatus.Internal
+  get() = asQuery()[TaskInfoEntity.TaskSuspensionType]
 
 /**
  * Converts a query result into a finite flow that emits results as long as the specified entity is alive.

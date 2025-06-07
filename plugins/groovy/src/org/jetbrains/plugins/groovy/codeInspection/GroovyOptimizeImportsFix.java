@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -43,29 +43,27 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Runnable optimize = new GroovyImportOptimizer().processFile(file);
-    invokeOnTheFlyImportOptimizer(optimize, file, editor);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final Runnable optimize = new GroovyImportOptimizer().processFile(psiFile);
+    invokeOnTheFlyImportOptimizer(optimize, psiFile, editor);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    String originalText = file.getText();
-    final Runnable optimize = new GroovyImportOptimizer().processFile(file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    String originalText = psiFile.getText();
+    final Runnable optimize = new GroovyImportOptimizer().processFile(psiFile);
     optimize.run();
-    String newText = file.getText();
+    String newText = psiFile.getText();
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, originalText, newText);
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("optimize.all.imports");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("optimize.imports");
   }
 
@@ -75,8 +73,8 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof GroovyFile && (!onTheFly || timeToOptimizeImports((GroovyFile)file, editor));
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return psiFile instanceof GroovyFile && (!onTheFly || timeToOptimizeImports((GroovyFile)psiFile, editor));
   }
 
   private boolean timeToOptimizeImports(GroovyFile myFile, Editor editor) {
@@ -130,9 +128,9 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
       });
   }
 
-  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable,
-                                                   @NotNull final PsiFile file,
-                                                   @NotNull final Editor editor) {
+  public static void invokeOnTheFlyImportOptimizer(final @NotNull Runnable runnable,
+                                                   final @NotNull PsiFile file,
+                                                   final @NotNull Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     Project project = file.getProject();
     ApplicationManager.getApplication().invokeLater(() -> {

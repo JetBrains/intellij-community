@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "compose-foundation-desktop-junit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "compose-foundation-desktop-junit",
+  visibility = ["//visibility:public"],
+  exports = [
+    "//libraries/compose-foundation-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-hamcrest-hamcrest-core",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-text",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-unit",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-annotations",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-desktop-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-desktop-desktop-jvm",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime2",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui2",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-tooling-preview",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime3",
+    "//libraries/junit4",
+    "@lib//:kotlinx-coroutines-test",
+    "//libraries/skiko",
+  ],
+  runtime_deps = [":compose-foundation-desktop-junit_resources"]
+)
+### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end

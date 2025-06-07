@@ -154,8 +154,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       2b      6
       2c      6
       2d      6
-      2e      6
-      2f      6
       30      7
       33      9
       34      9
@@ -169,8 +167,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       3e      11
       3f      11
       40      11
-      41      11
-      42      11
       43      12
       46      15
       47      15
@@ -190,16 +186,12 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       2f      22
       30      22
       31      22
-      32      22
-      33      22
       37      23
       38      23
       39      23
       3a      23
       3b      23
       3c      23
-      3d      23
-      3e      23
       44      24
       45      24
       46      24
@@ -216,24 +208,18 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       27      32
       28      32
       29      32
-      2a      32
-      2b      32
       2f      33
       30      33
       31      33
       32      33
       33      33
       34      33
-      35      33
-      36      33
       3a      31
       3b      31
       3c      31
       3d      31
       3e      31
       3f      31
-      40      31
-      41      31
       47      34
       48      34
       49      34
@@ -250,8 +236,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       2a      44
       2b      44
       2c      44
-      2d      44
-      2e      44
       2f      45
       32      48
       33      48
@@ -271,8 +255,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       27      57
       28      57
       29      57
-      2a      57
-      2b      57
       2c      58
       2f      61
       30      61
@@ -292,8 +274,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       2a      71
       2b      71
       2c      71
-      2d      71
-      2e      71
       2f      72
       32      75
       33      75
@@ -316,8 +296,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       26      83
       27      83
       28      83
-      29      83
-      2a      83
       2e      84
       2f      84
       30      84
@@ -339,8 +317,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       34      93
       35      93
       36      93
-      37      93
-      38      93
       3c      91
       3d      91
       3e      91
@@ -362,8 +338,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       34      103
       35      103
       36      103
-      37      103
-      38      103
       3c      101
       3d      101
       3e      101
@@ -382,16 +356,12 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       2a      113
       2b      113
       2c      113
-      2d      113
-      2e      113
       32      111
       33      111
       34      111
       35      111
       36      111
       37      111
-      38      111
-      39      111
       3f      114
       40      114
       41      114
@@ -411,8 +381,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       26      122
       27      122
       28      122
-      29      122
-      2a      122
       2e      123
       2f      123
       30      123
@@ -431,8 +399,6 @@ class 'pkg/TestSwitchSimpleReferencesJavac' {
       27      131
       28      131
       29      131
-      2a      131
-      2b      131
       2c      132
       2f      135
       30      135

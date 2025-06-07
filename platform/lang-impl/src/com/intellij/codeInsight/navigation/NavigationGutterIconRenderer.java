@@ -114,6 +114,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     return dumbService.computeWithAlternativeResolveEnabled(() -> ContainerUtil.mapNotNull(pointers, smartPsiElementPointer -> smartPsiElementPointer.getElement()));
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -127,6 +128,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myPopupTitle != null ? myPopupTitle.hashCode() : 0;

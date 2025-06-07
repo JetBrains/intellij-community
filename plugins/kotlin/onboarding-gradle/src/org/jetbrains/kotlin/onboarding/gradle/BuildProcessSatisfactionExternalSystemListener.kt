@@ -11,7 +11,9 @@ private class BuildProcessSatisfactionExternalSystemListener: ExternalSystemTask
         if (id.projectSystemId.id != "GRADLE") return
         val project = id.findProject() ?: return
         if (project.modules.any { it.hasKotlinPluginEnabled() }) {
-            BuildProcessSatisfactionSurveyStore.getInstance().recordBuild()
+            BuildProcessSatisfactionSurveyStore.getInstance().recordKotlinBuild()
+        } else {
+            BuildProcessSatisfactionSurveyStore.getInstance().recordNonKotlinBuild()
         }
     }
 }

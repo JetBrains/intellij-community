@@ -3,7 +3,7 @@
 
 # oct
 <warning descr="Python version 2.7 does not support underscores in numeric literals">0o1_23</warning>
-<error descr="Python version 3.6 does not support this syntax. It requires '0o' prefix for octal literals"><warning descr="Python version 2.7 does not support underscores in numeric literals"><warning descr="Python versions 3.7, 3.8, 3.9, 3.10, 3.11, 3.12, 3.13 do not support this syntax. It requires '0o' prefix for octal literals">01_23</warning></warning></error>
+<error descr="Python version 3.6 does not support this syntax. It requires '0o' prefix for octal literals"><warning descr="Python version 2.7 does not support underscores in numeric literals"><warning descr="Python versions 3.7, 3.8, 3.9, 3.10, 3.11, 3.12, 3.13, 3.14 do not support this syntax. It requires '0o' prefix for octal literals">01_23</warning></warning></error>
 
 # bin
 <warning descr="Python version 2.7 does not support underscores in numeric literals">0b_0011_1111_0100_1110</warning>

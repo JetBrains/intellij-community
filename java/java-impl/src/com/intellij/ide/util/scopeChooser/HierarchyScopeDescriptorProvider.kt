@@ -2,12 +2,9 @@
 package com.intellij.ide.util.scopeChooser
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 
 class HierarchyScopeDescriptorProvider : ScopeDescriptorProvider {
   override fun getScopeDescriptors(project: Project, dataContext: DataContext): Array<ScopeDescriptor> =

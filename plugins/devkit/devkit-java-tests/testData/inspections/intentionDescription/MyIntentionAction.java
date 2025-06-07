@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
-public class <warning descr="Intention does not have a description">MyIntentionAction</warning> implements com.intellij.codeInsight.intention.IntentionAction {
+public class <error descr="Intention does not have a description">MyIntentionAction</error> implements com.intellij.codeInsight.intention.IntentionAction {
 
   public String getText() { return"text"; }
   public String getFamilyName() { return"familyName"; }

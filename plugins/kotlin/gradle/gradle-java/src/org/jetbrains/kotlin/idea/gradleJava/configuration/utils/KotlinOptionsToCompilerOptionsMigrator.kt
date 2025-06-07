@@ -25,21 +25,23 @@ data class CompilerOption(val expression: String, val classToImport: FqName? = n
 data class Replacement(val expressionToReplace: KtExpression, val replacement: String, val classToImport: FqName? = null)
 
 @ApiStatus.Internal
-fun expressionContainsOperationForbiddenToReplace(binaryExpression: KtBinaryExpression): Boolean {
-    if (binaryExpression.operationToken == KtTokens.MINUSEQ) return true
-    val rightPartOfBinaryExpression = binaryExpression.right ?: return true
-    return if (rightPartOfBinaryExpression is KtBinaryExpression) {
-        checkIfExpressionContainsMinusOperator(rightPartOfBinaryExpression)
-    } else {
-        false
-    }
+fun KtDotQualifiedExpression.containsNonReplaceableOperation(): Boolean {
+    val psiElementParent = parent as? KtBinaryExpression ?: return true
+    return psiElementParent.containsNonReplaceableOperation()
 }
 
-private fun checkIfExpressionContainsMinusOperator(binaryExpression: KtBinaryExpression): Boolean {
-    if (binaryExpression.operationToken == KtTokens.MINUS) return true
-    val leftPartOfBinaryExpression = binaryExpression.left ?: return true
+@ApiStatus.Internal
+fun KtBinaryExpression.containsNonReplaceableOperation(): Boolean {
+    if (operationToken == KtTokens.MINUSEQ || right == null) return true
+    val rightPartOfBinaryExpression = right as? KtBinaryExpression ?: return false
+    return rightPartOfBinaryExpression.containsMinusOperator()
+}
+
+private fun KtBinaryExpression.containsMinusOperator(): Boolean {
+    if (this.operationToken == KtTokens.MINUS) return true
+    val leftPartOfBinaryExpression = this.left ?: return true
     return if (leftPartOfBinaryExpression is KtBinaryExpression) {
-        checkIfExpressionContainsMinusOperator(leftPartOfBinaryExpression)
+        leftPartOfBinaryExpression.containsMinusOperator()
     } else {
         false
     }

@@ -19,6 +19,8 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
@@ -38,9 +40,8 @@ public final class ControlFlowCache {
     scopeOwner.putUserData(SCOPE_KEY, null);
   }
 
-  @NotNull
-  public static ControlFlow getControlFlow(@NotNull ScopeOwner element,
-                                           @NotNull PyControlFlowBuilder controlFlowBuilder) {
+  public static @NotNull ControlFlow getControlFlow(@NotNull ScopeOwner element,
+                                                    @NotNull PyControlFlowBuilder controlFlowBuilder) {
     SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlow flow = dereference(ref);
     if (flow == null) {
@@ -50,13 +51,11 @@ public final class ControlFlowCache {
     return flow;
   }
 
-  @NotNull
-  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+  public static @NotNull ControlFlow getControlFlow(@NotNull ScopeOwner element) {
     return getControlFlow(element, new PyControlFlowBuilder());
   }
 
-  @NotNull
-  public static Scope getScope(@NotNull ScopeOwner element) {
+  public static @NotNull Scope getScope(@NotNull ScopeOwner element) {
     SoftReference<Scope> ref = element.getUserData(SCOPE_KEY);
     Scope scope = dereference(ref);
     if (scope == null) {
@@ -64,5 +63,12 @@ public final class ControlFlowCache {
       element.putUserData(SCOPE_KEY, new SoftReference<>(scope));
     }
     return scope;
+  }
+
+  public static @NotNull PyDataFlow getDataFlow(@NotNull ScopeOwner element, @NotNull TypeEvalContext context) {
+    // Cache will reset on psi modification, same as TypeEvalContext
+    return PyUtil.getParameterizedCachedValue(element, context, (ctx) -> {
+      return new PyDataFlow(getControlFlow(element), context);
+    });
   }
 }

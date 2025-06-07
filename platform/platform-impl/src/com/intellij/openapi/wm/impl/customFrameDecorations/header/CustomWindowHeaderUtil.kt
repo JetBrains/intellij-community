@@ -3,8 +3,11 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -31,7 +34,7 @@ object CustomWindowHeaderUtil {
    */
   internal fun isMenuButtonInToolbar(uiSettings: UISettings): Boolean {
     return ExperimentalUI.isNewUI() &&
-           (SystemInfoRt.isUnix && !SystemInfoRt.isMac && !uiSettings.separateMainMenu && !hideNativeLinuxTitle(uiSettings) ||
+           (SystemInfoRt.isUnix && !SystemInfoRt.isMac && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !hideNativeLinuxTitle(uiSettings) ||
             SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
   }
 
@@ -42,9 +45,29 @@ object CustomWindowHeaderUtil {
   internal val hideNativeLinuxTitleSupported: Boolean
     get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac &&
             ExperimentalUI.isNewUI() &&
-            JBR.isWindowMoveSupported() &&
-            (StartupUiUtil.isXToolkit() && !X11UiUtil.isWSL() && !X11UiUtil.isTileWM() && !X11UiUtil.isUndefinedDesktop() ||
-             StartupUiUtil.isWaylandToolkit())
+            hideNativeLinuxTitleNotSupportedReason == null
+
+  internal enum class HideNativeLinuxTitleNotSupportedReason {
+    INCOMPATIBLE_JBR,
+    WAYLAND_OR_XTOOLKIT_REQUIRED,
+    WSL_NOT_SUPPORTED,
+    TILING_WM_NOT_SUPPORTED,
+    UNDEFINED_DESKTOP_NOT_SUPPORTED,
+  }
+
+  /**
+   * Returns `null` if supported
+   */
+  internal val hideNativeLinuxTitleNotSupportedReason: HideNativeLinuxTitleNotSupportedReason?
+    get() = when {
+      !JBR.isWindowMoveSupported() -> HideNativeLinuxTitleNotSupportedReason.INCOMPATIBLE_JBR
+      StartupUiUtil.isWaylandToolkit() -> null
+      !StartupUiUtil.isXToolkit() -> HideNativeLinuxTitleNotSupportedReason.WAYLAND_OR_XTOOLKIT_REQUIRED
+      X11UiUtil.isWSL() -> HideNativeLinuxTitleNotSupportedReason.WSL_NOT_SUPPORTED
+      X11UiUtil.isTileWM() -> HideNativeLinuxTitleNotSupportedReason.TILING_WM_NOT_SUPPORTED
+      X11UiUtil.isUndefinedDesktop() -> HideNativeLinuxTitleNotSupportedReason.UNDEFINED_DESKTOP_NOT_SUPPORTED
+      else -> null
+    }
 
   internal val hideNativeLinuxTitleAvailable: Boolean
     get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac &&
@@ -64,12 +87,18 @@ object CustomWindowHeaderUtil {
       return true
     }
 
-    val mainToolbarHasNoActions = mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+    val mainToolbarHasNoActions = mainToolbarActionSupplier().all {
+      when (val g = it.first) {
+        is DefaultActionGroup -> g.childActionsOrStubs.isEmpty()
+        is CustomisedActionGroup -> g.defaultChildrenOrStubs.isEmpty()
+        else -> false
+      }
+    }
     return if (SystemInfoRt.isMac) {
       mainToolbarHasNoActions
     }
     else {
-      mainToolbarHasNoActions && !UISettings.getInstance().separateMainMenu
+      mainToolbarHasNoActions && UISettings.getInstance().mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR
     }
   }
 
@@ -85,11 +114,11 @@ object CustomWindowHeaderUtil {
       if (SystemInfoRt.isMac) {
         return true
       }
-      if (SystemInfoRt.isWindows && !uiSettings.separateMainMenu && uiSettings.mergeMainMenuWithWindowTitle && !isFullscreen) {
+      if (SystemInfoRt.isWindows && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && uiSettings.mergeMainMenuWithWindowTitle && !isFullscreen) {
         return true
       }
     }
-    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !uiSettings.separateMainMenu && !isFullscreen) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance) && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !isFullscreen) {
       return true
     }
     return false

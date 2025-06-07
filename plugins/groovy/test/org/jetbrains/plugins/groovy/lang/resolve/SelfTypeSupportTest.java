@@ -51,7 +51,7 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
   }
 
   public void test_do_not_count__SelfType_on_interfaces_in_hierarchy() {
-    assert resolveByText("""
+    assertNull(resolveByText("""
                            interface I { def foo() }
                            @SelfType(I)
                            interface II {}
@@ -60,7 +60,7 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
                                    fo<caret>o()
                                }
                            }
-                           """) == null;
+                           """));
   }
 
   public void test_highlighting() {

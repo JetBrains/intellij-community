@@ -12,7 +12,7 @@ import static junit.framework.TestCase.assertEquals;
 public class TrimHelperTest extends SingleClassesTestBase {
 
   @Override
-  protected Map<String, String> getDecompilerOptions() {
+  protected Map<String, Object> getDecompilerOptions() {
     return Map.of(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS, "1"
     );
   }

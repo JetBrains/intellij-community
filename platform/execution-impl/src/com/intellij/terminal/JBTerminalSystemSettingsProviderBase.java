@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.client.ClientSystemInfo;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -24,6 +22,8 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,16 +43,38 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
 
   private final TerminalUiSettingsManager myUiSettingsManager;
+  private final TerminalFontSizeProvider myFontSizeProvider = createFontSizeProvider();
 
   public JBTerminalSystemSettingsProviderBase() {
     myUiSettingsManager = TerminalUiSettingsManager.getInstance();
   }
 
-  @NotNull TerminalUiSettingsManager getUiSettingsManager() {
-    return myUiSettingsManager;
+  @ApiStatus.Internal
+  protected @NotNull TerminalFontSizeProvider createFontSizeProvider() {
+    return new TerminalConsoleFontSizeProvider();
   }
 
-  @NotNull EditorColorsScheme getColorsScheme() {
+  @ApiStatus.Internal
+  public void addUiSettingsListener(@NotNull Disposable parentDisposable, @NotNull TerminalUiSettingsListener listener) {
+    myUiSettingsManager.addListener(parentDisposable, new TerminalUiSettingsListener() {
+      @Override
+      public void cursorChanged() {
+        listener.cursorChanged();
+      }
+    });
+
+    // Do not get font change notifications from TerminalUiSettingsManager directly.
+    // Use `myFontSettingsProvider` to make it possible to substitute another implementation in descendants.
+    myFontSizeProvider.addListener(parentDisposable, new TerminalFontSizeProvider.Listener() {
+      @Override
+      public void fontChanged(boolean showZoomIndicator) {
+        listener.fontChanged();
+      }
+    });
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull EditorColorsScheme getColorsScheme() {
     return myUiSettingsManager.getEditorColorsScheme();
   }
 
@@ -140,7 +162,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
-    String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
+    @Language("devkit-action-id") String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
     String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
     return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
       if (listener != null) {
@@ -150,7 +172,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     });
   }
 
-  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId, @NotNull String failoverActionId) {
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@Language("devkit-action-id") @NotNull String actionId, @NotNull String failoverActionId) {
     List<KeyStroke> strokes = getKeyStrokesByActionId(actionId);
     if (strokes.isEmpty() && ActionManager.getInstance().getAction(actionId) == null) {
       strokes = getKeyStrokesByActionId(failoverActionId);
@@ -194,6 +216,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return getColorsScheme().getConsoleLineSpacing();
   }
 
+  public float getColumnSpacing() {
+    return 1.0f;
+  }
+
   @Override
   public @NotNull TextStyle getSelectionColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
@@ -227,6 +253,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return new TextStyle(getDefaultForeground(), getDefaultBackground());
   }
 
+  @ApiStatus.Internal
+  public FontPreferences getFontPreferences() {
+    return getColorsScheme().getConsoleFontPreferences();
+  }
+
   @Override
   public Font getTerminalFont() {
     Font font = getColorsScheme().getFont(EditorFontType.CONSOLE_PLAIN);
@@ -235,7 +266,17 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myUiSettingsManager.getFontSize();
+    return myFontSizeProvider.getFontSize();
+  }
+
+  @ApiStatus.Internal
+  public void setTerminalFontSize(float fontSize) {
+    myFontSizeProvider.setFontSize(fontSize);
+  }
+
+  @ApiStatus.Internal
+  public void resetTerminalFontSize() {
+    myFontSizeProvider.resetFontSize();
   }
 
   @Override

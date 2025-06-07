@@ -1,8 +1,8 @@
 package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.DecisionFunction
@@ -19,11 +19,15 @@ abstract class MLSortingTestCase : LightFixtureCompletionTestCase() {
 
   protected abstract fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState
 
-  override fun setUp() {
+  public override fun setUp() {
     super.setUp()
 
     setUpRankingSettings()
     setUpRankingModel()
+  }
+
+  public override fun tearDown() {
+    super.tearDown()
   }
 
   protected fun withRanker(value: Ranker) {
@@ -32,6 +36,7 @@ abstract class MLSortingTestCase : LightFixtureCompletionTestCase() {
 
   private fun setUpRankingSettings() {
     val settings = CompletionMLRankingSettings.getInstance()
+
     val settingsStateBefore = MLRankingSettingsState.build("Java", settings)
     val actualSettingsState = customizeSettings(settingsStateBefore)
 
@@ -41,9 +46,17 @@ abstract class MLSortingTestCase : LightFixtureCompletionTestCase() {
 
     RankingSupport.enableInTests(testRootDisposable)
 
-    ApplicationManager.getApplication().replaceService(ExperimentStatus::class.java, TestExperimentStatus(actualSettingsState),
-                                                       testRootDisposable)
+    configureExperimentStatus(actualSettingsState)
   }
+
+  protected open fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) {
+    ApplicationManager.getApplication().replaceService(
+      ExperimentStatus::class.java,
+      TestExperimentStatus(actualSettingsState),
+      testRootDisposable
+    )
+  }
+
 
   private fun setUpRankingModel() {
     ExperimentModelProvider.registerProvider(TestModelProvider(::ranker), testRootDisposable)

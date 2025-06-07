@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
   public static final String BUILDER_ID = "artifacts-builder";
 
   public IncArtifactBuilder() {
-    super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
+    super(List.of(ArtifactBuildTargetType.INSTANCE));
   }
 
   @Override
@@ -48,7 +48,8 @@ public final class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescript
                     @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException {
     try {
       new IncArtifactBuilderHelper(target, outputConsumer, context).build(holder);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new ProjectBuildException(e);
     }
   }

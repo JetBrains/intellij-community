@@ -1,0 +1,38 @@
+public class TypePattern {
+    static fun formatter(o: java.lang.Object) : java.lang.String {
+        var formatted: java.lang.String
+        switch (o) 
+            java.lang.Integer i when i < 0 -> {
+                formatted = String.format("int %d", i)
+                break
+            }
+            
+            java.lang.Integer i -> {
+                formatted = String.format("int %d", i)
+                break
+            }
+            
+            java.lang.Long l when l < 0 -> {
+                formatted = String.format("long %d", l)
+                break
+            }
+            
+            java.lang.Double d -> {
+                formatted = String.format("double %f", d)
+                break
+            }
+            
+            java.lang.String s -> {
+                formatted = String.format("String %s", s)
+                break
+            }
+            
+            else -> {
+                formatted = o.toString()
+                break
+            }
+            
+        
+        return formatted
+    }
+}

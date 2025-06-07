@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.util.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
@@ -374,7 +374,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(module)
-                    || hasKotlinCommonLegacyRuntimeInScope(scope)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope, module.project)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinWasmJsRuntimeInScope(module)
@@ -449,8 +449,8 @@ fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
 /**
  * Will check if kotlin is present as .kotlin_metadata (legacy) file
  */
-fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
-    return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope, project: Project): Boolean {
+    return IdeVirtualFileFinder(scope, project).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
@@ -586,12 +586,13 @@ fun getTargetBytecodeVersionFromModule(
 ): String? {
     val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
     val project = module.project
-    return ExternalSystemApiUtil.findModuleNode(project, ProjectSystemId("GRADLE"), projectPath)?.let { moduleDataNode ->
-        val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
-        javaModuleData?.let {
-            javaModuleData.data.targetBytecodeVersion
-        }
-    } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
+    return ExternalSystemApiUtil.findModuleNode(project, GRADLE_SYSTEM_ID, projectPath)
+        ?.let { moduleDataNode ->
+            val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
+            javaModuleData?.let {
+                javaModuleData.data.targetBytecodeVersion
+            }
+        } ?: getJvmTargetFromSdkOrDefault(module, kotlinVersion)
 }
 
 private fun getJvmTargetFromSdkOrDefault(

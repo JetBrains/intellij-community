@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,17 +16,15 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage(value = "gradle.settings.xml", roamingType = RoamingType.DISABLED))
 public class GradleSystemSettings implements PersistentStateComponent<GradleSystemSettings.MyState> {
 
-  @Nullable private String myServiceDirectoryPath;
-  @Nullable private String myGradleVmOptions;
+  private @Nullable String myServiceDirectoryPath;
+  private @Nullable String myGradleVmOptions;
 
-  @NotNull
-  public static GradleSystemSettings getInstance() {
+  public static @NotNull GradleSystemSettings getInstance() {
     return ApplicationManager.getApplication().getService(GradleSystemSettings.class);
   }
 
-  @Nullable
   @Override
-  public GradleSystemSettings.MyState getState() {
+  public @Nullable GradleSystemSettings.MyState getState() {
     MyState state = new MyState();
     state.serviceDirectoryPath = myServiceDirectoryPath;
     state.gradleVmOptions = myGradleVmOptions;
@@ -43,8 +41,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
    * @deprecated use GradleSettings#getServiceDirectoryPath()
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public String getServiceDirectoryPath() {
+  public @Nullable String getServiceDirectoryPath() {
     return myServiceDirectoryPath;
   }
 
@@ -56,8 +53,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
     myServiceDirectoryPath = newPath;
   }
 
-  @Nullable
-  public String getGradleVmOptions() {
+  public @Nullable String getGradleVmOptions() {
     return myGradleVmOptions;
   }
 

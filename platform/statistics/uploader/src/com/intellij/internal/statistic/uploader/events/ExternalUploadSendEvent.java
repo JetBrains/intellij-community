@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +10,8 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
   private final int mySucceed;
   private final int myFailed;
   private final int myTotal;
-  @NotNull private final List<String> mySuccessfullySentFiles;
-  @NotNull private final List<Integer> myErrors;
+  private final @NotNull List<String> mySuccessfullySentFiles;
+  private final @NotNull List<Integer> myErrors;
 
   public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total,
                                  @NotNull List<String> successfullySentFiles,

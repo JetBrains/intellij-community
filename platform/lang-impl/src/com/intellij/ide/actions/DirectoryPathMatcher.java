@@ -20,8 +20,8 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,6 @@ final class DirectoryPathMatcher {
   private final @NotNull GotoFileModel myModel;
   private final @Nullable List<Pair<VirtualFile, String>> myFiles;
   private final @NotNull Predicate<VirtualFile> myProjectFileFilter;
-  private final @NotNull DirectoryPathMatcherService myService;
 
   final @NotNull String dirPattern;
 
@@ -46,9 +45,7 @@ final class DirectoryPathMatcher {
 
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     Project project = model.getProject();
-    IdFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
-                                           ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
-                                           : null;
+    IdFilter projectIndexableFilesFilter = fileBasedIndex.projectIndexableFiles(project);
     var allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
       myProjectFileFilter = vFile -> allScope.contains(vFile);
@@ -60,8 +57,6 @@ final class DirectoryPathMatcher {
                : allScope.contains(vFile);
       };
     }
-
-    myService = DirectoryPathMatcherService.getInstance(project);
   }
 
   static @Nullable DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
@@ -111,9 +106,11 @@ final class DirectoryPathMatcher {
     AtomicInteger counter = new AtomicInteger();
     BooleanSupplier tooMany = () -> counter.get() > 1000;
     for (Pair<VirtualFile, String> pair : files) {
-      if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
-        names.add(pair.first.getName());
-      } else {
+      // Commented this out because the pattern Utils/TT matched the original "Utils" directory name and nothing more here.
+      // ("Utils" contain "t", "Utils" is matched by a ["T" "T"] matcher)
+      //if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
+      //  names.add(pair.first.getName());
+      //} else {
         processProjectFilesUnder(pair.first, sub -> {
           counter.incrementAndGet();
           if (tooMany.getAsBoolean()) return false;
@@ -124,7 +121,7 @@ final class DirectoryPathMatcher {
           }
           return true;
         });
-      }
+      //}
     }
     return tooMany.getAsBoolean() ? null : names;
   }
@@ -146,7 +143,7 @@ final class DirectoryPathMatcher {
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return (myService.shouldProcess(file) || myProjectFileFilter.test(file)) && consumer.process(file);
+        return myProjectFileFilter.test(file) && consumer.process(file);
       }
 
       @Override
@@ -160,7 +157,8 @@ final class DirectoryPathMatcher {
     return StringUtil.indexOf(name, c, 0, name.length(), false) >= 0;
   }
 
-  private static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
+  @ApiStatus.Internal
+  static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
     Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {

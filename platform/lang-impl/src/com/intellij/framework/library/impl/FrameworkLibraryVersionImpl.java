@@ -34,7 +34,7 @@ public final class FrameworkLibraryVersionImpl extends DownloadableFileSetDescri
   @Override
   public @NotNull String getDefaultLibraryName() {
     String libName = StringUtil.isEmptyOrSpaces(myLibraryName) ? myLibraryCategory : myLibraryName;
-    return myVersionString.length() > 0 ? libName + "-" + myVersionString : myLibraryCategory;
+    return !myVersionString.isEmpty() ? libName + "-" + myVersionString : myLibraryCategory;
   }
 
   @Override

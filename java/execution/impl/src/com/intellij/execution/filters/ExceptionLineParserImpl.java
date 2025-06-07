@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -43,8 +43,8 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -120,8 +120,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -413,8 +412,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       return document.getLineNumber(range.getStartOffset());
     }
 
-    @Nullable
-    private AnAction findAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @Nullable Editor originalEditor) {
+    private @Nullable AnAction findAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @Nullable Editor originalEditor) {
       if (myAnalysisWasActivated) {
         // Do not show the balloon if analysis was already activated once on this link
         return null;
@@ -478,7 +476,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   static class LinkInfo {
-    @NotNull final PsiFile myPsiFile;
+    final @NotNull PsiFile myPsiFile;
     final @Nullable PsiElement myTarget;
 
     final @Nullable PsiElement myReason;

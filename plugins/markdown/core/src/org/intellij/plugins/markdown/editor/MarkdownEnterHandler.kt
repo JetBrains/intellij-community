@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -27,7 +27,7 @@ import org.intellij.plugins.markdown.util.MarkdownPsiUtil
  * It generates blockquotes on `enter`.
  * Also it stops indentation when there is >= 2 new lines after text
  */
-internal class MarkdownEnterHandler : EnterHandlerDelegateAdapter() {
+internal class MarkdownEnterHandler : EnterHandlerDelegate {
   /**
    * During preprocessing indentation can be stopped if there are more than
    * two new lines after last element of text in Markdown file.

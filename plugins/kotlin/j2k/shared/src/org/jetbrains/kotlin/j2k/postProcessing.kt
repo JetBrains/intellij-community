@@ -7,10 +7,8 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 
@@ -19,15 +17,14 @@ interface PostProcessing {
         get() = PostProcessingOptions.DEFAULT
 
     // For K1: analysis and application are mixed between post-processings
-    fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext)
+    fun runProcessing(target: PostProcessingTarget, converterContext: ConverterContext)
 
     // For K2: separate analysis stage and application stage
     // to avoid reanalyzing the changed files
-    context(KaSession)
-    fun computeAppliers(target: PostProcessingTarget, converterContext: NewJ2kConverterContext): List<PostProcessingApplier>
+    fun computeAppliers(target: PostProcessingTarget, converterContext: ConverterContext): List<PostProcessingApplier>
 }
 
-fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
+fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget, converterContext: ConverterContext) {
     if (options.disablePostprocessingFormatting) {
         PostprocessReformattingAspect.getInstance(converterContext.project).disablePostprocessFormattingInside {
             runProcessing(target, converterContext)
@@ -38,7 +35,7 @@ fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget,
 }
 
 abstract class FileBasedPostProcessing : PostProcessing {
-    final override fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
+    final override fun runProcessing(target: PostProcessingTarget, converterContext: ConverterContext) {
         when (target) {
             is PieceOfCodePostProcessingTarget ->
                 runProcessing(target.file, listOf(target.file), target.rangeMarker, converterContext)
@@ -51,12 +48,11 @@ abstract class FileBasedPostProcessing : PostProcessing {
         }
     }
 
-    abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext)
+    abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext)
 
-    context(KaSession)
     final override fun computeAppliers(
         target: PostProcessingTarget,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): List<PostProcessingApplier> = when (target) {
         is PieceOfCodePostProcessingTarget ->
             listOf(computeApplier(target.file, listOf(target.file), target.rangeMarker, converterContext))
@@ -68,30 +64,27 @@ abstract class FileBasedPostProcessing : PostProcessing {
         }
     }
 
-    context(KaSession)
     abstract fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier
 }
 
 abstract class ElementsBasedPostProcessing : PostProcessing {
-    final override fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
+    final override fun runProcessing(target: PostProcessingTarget, converterContext: ConverterContext) {
         runProcessing(target.elements(), converterContext)
     }
 
-    abstract fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext)
+    abstract fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext)
 
-    context(KaSession)
     final override fun computeAppliers(
         target: PostProcessingTarget,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): List<PostProcessingApplier> = listOf(computeApplier(target.elements(), converterContext))
 
-    context(KaSession)
-    abstract fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier
+    abstract fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier
 }
 
 data class NamedPostProcessingGroup(val description: String, val processings: List<PostProcessing>)

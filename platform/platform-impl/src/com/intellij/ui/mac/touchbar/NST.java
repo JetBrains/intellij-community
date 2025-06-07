@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
@@ -14,8 +14,10 @@ import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import sun.awt.AWTAccessor;
 import sun.awt.image.WritableRasterNative;
 
@@ -32,12 +34,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class NST {
+@ApiStatus.Internal
+public final class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
   private static NSTLibrary nstLibrary = null;
 
-  static boolean isSupportedOS() {
+  @VisibleForTesting
+  public static boolean isSupportedOS() {
     return SystemInfoRt.isMac;
   }
 
@@ -72,7 +76,8 @@ final class NST {
     }
   }
 
-  static NSTLibrary loadLibraryImpl() {
+  @VisibleForTesting
+  public static NSTLibrary loadLibraryImpl() {
     Path lib = PathManager.findBinFile("libnst64.dylib");
     assert lib != null : "NST lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
     return nstLibrary = Native.load(lib.toString(), NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
@@ -90,7 +95,8 @@ final class NST {
     nstLibrary.releaseNativePeer(nativePeer);
   }
 
-  static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
+  @VisibleForTesting
+  public static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
     long nsViewPtr = 0;
     if (window != null) {
       final ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
@@ -229,7 +235,8 @@ final class NST {
     }
   }
 
-  static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
+  @VisibleForTesting
+  public static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
     if (indices == null || indices.isEmpty() || scrubObj == ID.NIL || scrubObj == null) {
       return;
     }
@@ -237,7 +244,8 @@ final class NST {
     nstLibrary.enableScrubberItems(scrubObj, mem, indices.size(), enabled);
   }
 
-  static void showScrubberItem(ID scrubObj, Collection<Integer> indices, boolean show, boolean inverseOthers) {
+  @VisibleForTesting
+  public static void showScrubberItem(ID scrubObj, Collection<Integer> indices, boolean show, boolean inverseOthers) {
     if (scrubObj == ID.NIL || scrubObj == null) {
       return;
     }

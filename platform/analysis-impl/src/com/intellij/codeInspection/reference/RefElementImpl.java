@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
-  protected static final Logger LOG = Logger.getInstance(RefElement.class);
+  protected static final Logger LOG = Logger.getInstance(RefElementImpl.class);
 
   private static final int IS_DELETED_MASK         = 0b10000; // 5th bit
   private static final int IS_INITIALIZED_MASK     = 0b100000; // 6th bit
@@ -73,7 +73,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public @Nullable Icon getIcon(final boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     final PsiElement element = getPsiElement();
     if (element != null && element.isValid()) {
       return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
@@ -83,8 +83,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public RefModule getModule() {
-    final RefEntity owner = getOwner();
-    return owner instanceof RefElement ? ((RefElement)owner).getModule() : null;
+    return getOwner() instanceof RefElement e ? e.getModule() : null;
   }
 
   @Override
@@ -186,13 +185,9 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
-  public void setReferencesBuilt(boolean built) {
-    setFlag(built, REFERENCES_BUILT_MASK);
-  }
-
   @Override
   public boolean areReferencesBuilt() {
-    return checkFlag(REFERENCES_BUILT_MASK);
+    return checkAndSetFlag(REFERENCES_BUILT_MASK);
   }
 
   public void setEntry(boolean entry) {
@@ -240,9 +235,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public @Nullable String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
-    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem
-                                             ? (PsiFileSystemItem) element
-                                             : element.getContainingFile();
+    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem item ? item : element.getContainingFile();
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
@@ -258,7 +251,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return checkFlag(IS_INITIALIZED_MASK);
   }
 
-  public synchronized void setInitialized(final boolean initialized) {
+  public synchronized void setInitialized(boolean initialized) {
     setFlag(initialized, IS_INITIALIZED_MASK);
   }
 
@@ -273,7 +266,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public void addSuppression(final String text) {
+  public void addSuppression(String text) {
     mySuppressions = text.split("[, ]");
   }
 
@@ -289,7 +282,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
         }
       }
     }
-    final RefEntity entity = getOwner();
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolIds);
+    return getOwner() instanceof RefElementImpl e && e.isSuppressed(toolIds);
   }
 }

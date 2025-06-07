@@ -2,9 +2,13 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ModalityStateEx
+import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -53,19 +57,17 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `with current job non-cancellable`(): Unit = timeoutRunBlocking {
     val job = launch {
-      blockingContext {
-        Cancellation.computeInNonCancelableSection<_, Nothing> {
-          assertDoesNotThrow {
-            runBlockingCancellable {
-              @OptIn(ExperimentalCoroutinesApi::class)
-              assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
-              assertDoesNotThrow {
-                ensureActive()
-              }
-              this@launch.cancel()
-              assertDoesNotThrow {
-                ensureActive()
-              }
+      Cancellation.computeInNonCancelableSection<_, Nothing> {
+        assertDoesNotThrow {
+          runBlockingCancellable {
+            @OptIn(ExperimentalCoroutinesApi::class)
+            assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+            assertDoesNotThrow {
+              ensureActive()
+            }
+            this@launch.cancel()
+            assertDoesNotThrow {
+              ensureActive()
             }
           }
         }
@@ -146,21 +148,19 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `with indicator under job non-cancellable`(): Unit = timeoutRunBlocking {
     launch {
-      blockingContext {
-        indicatorTest {
-          Cancellation.computeInNonCancelableSection<_, Nothing> {
-            assertDoesNotThrow {
-              runBlockingCancellable {
-                @OptIn(ExperimentalCoroutinesApi::class)
-                assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
-                assertDoesNotThrow {
-                  ensureActive()
-                }
-                this@launch.cancel()
-                delay(100.milliseconds) // let indicator polling job kick in
-                assertDoesNotThrow {
-                  ensureActive()
-                }
+      indicatorTest {
+        Cancellation.computeInNonCancelableSection<_, Nothing> {
+          assertDoesNotThrow {
+            runBlockingCancellable {
+              @OptIn(ExperimentalCoroutinesApi::class)
+              assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+              assertDoesNotThrow {
+                ensureActive()
+              }
+              this@launch.cancel()
+              delay(100.milliseconds) // let indicator polling job kick in
+              assertDoesNotThrow {
+                ensureActive()
               }
             }
           }
@@ -247,22 +247,41 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `two neighbor calls the same thread restore context properly`(): Unit = timeoutRunBlocking {
     launch {
-      blockingContext {
-        runBlockingCancellable {} // 2
+      runBlockingCancellable {} // 2
+    }
+    runBlockingCancellable { // 1
+      yield()
+      // Will pump the queue and run previously launched coroutine.
+      // That coroutine runs inner runBlockingCancellable which installs its own thread context.
+      // Then inner runBlockingCancellable pumps the same queue, and gets to this continuation.
+      // This continuation tries to restore its context.
+      // We get the following incorrect chain:
+      // set context 1
+      // -> set context 2
+      // -> reset context to whatever was before 1
+      // -> reset context to whatever was before 2 (i.e. 1)
+    }
+  }
+
+  @Test
+  @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  fun `runBlockingCancellable is not allowed in wa`(): Unit = timeoutRunBlocking {
+    edtWriteAction {
+      assertErrorLogged<java.lang.IllegalStateException> {
+        runBlockingCancellable {
+        }
       }
     }
-    blockingContext {
-      runBlockingCancellable { // 1
-        yield()
-        // Will pump the queue and run previously launched coroutine.
-        // That coroutine runs inner runBlockingCancellable which installs its own thread context.
-        // Then inner runBlockingCancellable pumps the same queue, and gets to this continuation.
-        // This continuation tries to restore its context.
-        // We get the following incorrect chain:
-        // set context 1
-        // -> set context 2
-        // -> reset context to whatever was before 1
-        // -> reset context to whatever was before 2 (i.e. 1)
+  }
+
+  @Test
+  @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
+  fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
+    getGlobalThreadingSupport().runWriteAction(Runnable::class.java) {
+      ReadAction.run<Throwable> {
+        // checks that there are no assertions
+        runBlockingCancellable {
+        }
       }
     }
   }

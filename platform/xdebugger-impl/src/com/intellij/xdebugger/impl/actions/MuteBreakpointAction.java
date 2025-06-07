@@ -1,28 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler;
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerMuteBreakpointsHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class MuteBreakpointAction extends ToggleAction {
+import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandlerKt.getAvailableCustomMuteBreakpointHandler;
+
+public class MuteBreakpointAction extends ToggleAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  private static final DebuggerToggleActionHandler ourHandler = new XDebuggerMuteBreakpointsHandler();
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -30,47 +21,45 @@ public class MuteBreakpointAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(@NotNull final AnActionEvent e) {
+  public boolean isSelected(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project != null) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
-        if (handler.isEnabled(project, e)) {
-          return handler.isSelected(project, e);
-        }
-      }
+    if (project == null) {
+      return false;
     }
-    return false;
+    XDebuggerCustomMuteBreakpointHandler customHandler = getAvailableCustomMuteBreakpointHandler(project, e);
+    if (customHandler != null) {
+      return customHandler.areBreakpointsMuted(project, e);
+    }
+    return ourHandler.isSelected(project, e);
   }
 
   @Override
-  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+  public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
     Project project = e.getProject();
-    if (project != null) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
-        if (handler.isEnabled(project, e)) {
-          handler.setSelected(project, e, state);
-          return;
-        }
-      }
+    if (project == null) {
+      return;
     }
+    XDebuggerCustomMuteBreakpointHandler customHandler = getAvailableCustomMuteBreakpointHandler(project, e);
+    if (customHandler != null) {
+      customHandler.updateBreakpointsState(project, e, state);
+      return;
+    }
+    ourHandler.setSelected(project, e, state);
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    if (project != null) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
-        if (handler.isEnabled(project, e)) {
-          e.getPresentation().setEnabled(true);
-          return;
-        }
-      }
+    if (project == null) {
+      return;
     }
-    e.getPresentation().setEnabled(false);
+    XDebuggerCustomMuteBreakpointHandler customHandler = getAvailableCustomMuteBreakpointHandler(project, e);
+    if (customHandler != null) {
+      e.getPresentation().setEnabled(true);
+      return;
+    }
+    e.getPresentation().setEnabled(ourHandler.isEnabled(project, e));
   }
 
   @Override

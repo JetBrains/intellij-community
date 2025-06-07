@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +19,8 @@ public class SvnCopyPathTracker {
 
   private static final Logger LOG = Logger.getInstance(SvnCopyPathTracker.class);
 
-  @NotNull private String myCurrentPath;
-  @NotNull private final Url myRepositoryUrl;
+  private @NotNull String myCurrentPath;
+  private final @NotNull Url myRepositoryUrl;
   private boolean myHadChanged;
 
   public SvnCopyPathTracker(@NotNull Url repositoryUrl, @NotNull String repositoryRelativeUrl) {
@@ -45,8 +45,7 @@ public class SvnCopyPathTracker {
     }
   }
 
-  @Nullable
-  public FilePath getFilePath(@NotNull SvnVcs vcs) throws SvnBindException {
+  public @Nullable FilePath getFilePath(@NotNull SvnVcs vcs) throws SvnBindException {
     if (!myHadChanged) return null;
 
     Url currentUrl = append(myRepositoryUrl, myCurrentPath);

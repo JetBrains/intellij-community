@@ -213,8 +213,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     });
   }
 
-  @Nullable
-  protected JavaLineBreakpointType getXBreakpointType() {
+  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     XBreakpointType<?, P> type = myXBreakpoint.getType();
     // Nashorn breakpoints do not contain JavaLineBreakpointType
     if (type instanceof JavaLineBreakpointType) {
@@ -278,8 +277,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return true;
   }
 
-  @Nullable
-  private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
+  private @Nullable Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0 ? className.substring(0, dollarIndex) : className;
@@ -403,8 +401,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return JavaDebuggerBundle.message("status.breakpoint.invalid");
   }
 
-  @Nullable
-  private static String findOwnerMethod(final PsiFile file, final int offset) {
+  private static @Nullable String findOwnerMethod(final PsiFile file, final int offset) {
     if (offset < 0 || file instanceof JspFile) {
       return null;
     }
@@ -506,8 +503,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     myMethodName = computeMethodName();
   }
 
-  @Nullable
-  protected String computeMethodName() {
+  protected @Nullable String computeMethodName() {
     SourcePosition position = getSourcePosition();
     if (position != null) {
       return findOwnerMethod(position.getFile(), position.getOffset());

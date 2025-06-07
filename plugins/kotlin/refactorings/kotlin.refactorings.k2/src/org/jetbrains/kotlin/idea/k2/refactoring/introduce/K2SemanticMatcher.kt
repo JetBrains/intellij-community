@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.psi.PsiNamedElement
@@ -7,8 +7,10 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -33,6 +35,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
+/**
+ * For the K1 Mode-specific version of this functionality, see [org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier].
+ */
 object K2SemanticMatcher {
     context(KaSession)
     fun findMatches(patternElement: KtElement, scopeElement: KtElement): List<KtElement> {
@@ -70,6 +75,7 @@ object K2SemanticMatcher {
                 }
             }
         )
+
 
         return matches
     }
@@ -221,6 +227,9 @@ object K2SemanticMatcher {
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
                         if (!targetSymbol.returnType.isSubtypeOf(patternSymbol.returnType)) return false
+                    }
+                    if (patternSymbol is KaReceiverParameterSymbol && targetSymbol is KaReceiverParameterSymbol) {
+                        return true
                     }
                     val expression =
                         KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
@@ -461,15 +470,19 @@ object K2SemanticMatcher {
 
         override fun visitConstantExpression(expression: KtConstantExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtConstantExpression ?: return false
-            with(analysisSession) {
+            val exprText = with(analysisSession) {
                 val evaluatedExpression = expression.evaluate() ?: return false
-                val evaluatedPatternExpression = patternExpression.evaluate() ?: return false
-                if (evaluatedExpression.value is KaConstantValue.ErrorValue ||
-                    evaluatedPatternExpression.value is KaConstantValue.ErrorValue ||
-                    evaluatedExpression.render() != evaluatedPatternExpression.render()
-                ) return false
+                if (evaluatedExpression.value is KaConstantValue.ErrorValue) return false
+                evaluatedExpression.render()
             }
-            return true
+
+            val patternText = analyze(patternExpression) {
+                val evaluatedPatternExpression = patternExpression.evaluate() ?: return false
+                if (evaluatedPatternExpression.value is KaConstantValue.ErrorValue) return false
+                evaluatedPatternExpression.render()
+            }
+
+            return exprText == patternText
         }
 
         override fun visitLabeledExpression(expression: KtLabeledExpression, data: KtElement): Boolean = false // TODO()
@@ -639,7 +652,7 @@ object K2SemanticMatcher {
         override fun visitEscapeStringTemplateEntry(
             entry: KtEscapeStringTemplateEntry,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternEntry = data as? KtEscapeStringTemplateEntry ?: return false
             return entry.unescapedValue == patternEntry.unescapedValue
         }
@@ -647,7 +660,7 @@ object K2SemanticMatcher {
         override fun visitStringTemplateEntryWithExpression(
             entry: KtStringTemplateEntryWithExpression,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternEntry = data?.deparenthesized() as? KtStringTemplateEntryWithExpression ?: return false
             return elementsMatchOrBothAreNull(entry.expression, patternEntry.expression)
         }
@@ -655,7 +668,7 @@ object K2SemanticMatcher {
         override fun visitLiteralStringTemplateEntry(
             entry: KtLiteralStringTemplateEntry,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternLiteral = data?.deparenthesized() as? KtLiteralStringTemplateEntry ?: return false
             return entry.text == patternLiteral.text
         }
@@ -701,8 +714,14 @@ object K2SemanticMatcher {
     ): Boolean {
         if (areNonCallsMatchingByResolve(targetExpression, patternExpression, context)) return true
 
-        val targetCallInfo = targetExpression.resolveToCall() ?: return false
-        val patternCallInfo = patternExpression.resolveToCall() ?: return false
+        val targetCallInfo = targetExpression.resolveToCall()
+        val patternCallInfo = patternExpression.resolveToCall()
+
+        if (targetCallInfo == null && patternCallInfo == null) {
+            return areUnresolvedCallsMatchingByResolve(targetExpression, patternExpression, context)
+        } else if (targetCallInfo == null || patternCallInfo == null) {
+            return false
+        }
 
         if (targetCallInfo is KaErrorCallInfo && patternCallInfo is KaErrorCallInfo) {
             if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false

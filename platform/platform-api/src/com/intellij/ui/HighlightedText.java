@@ -33,6 +33,7 @@ public final class HighlightedText {
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof HighlightedText highlightedText)) return false;
 

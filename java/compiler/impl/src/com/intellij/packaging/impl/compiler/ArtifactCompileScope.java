@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
@@ -103,10 +103,9 @@ public final class ArtifactCompileScope {
                                                   }, context, true);
   }
 
-  @NotNull
-  private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<? extends Artifact> artifacts,
-                                                    @NotNull PackagingElementResolvingContext context,
-                                                    final boolean withOutputPathOnly) {
+  private static @NotNull Set<Artifact> addIncludedArtifacts(@NotNull Collection<? extends Artifact> artifacts,
+                                                             @NotNull PackagingElementResolvingContext context,
+                                                             final boolean withOutputPathOnly) {
     Set<Artifact> result = new HashSet<>();
     for (Artifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, context, new HashSet<>(), result, withOutputPathOnly);

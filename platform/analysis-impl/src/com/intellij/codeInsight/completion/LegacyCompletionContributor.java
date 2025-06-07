@@ -103,10 +103,10 @@ public class LegacyCompletionContributor extends CompletionContributor implement
                                        final PairConsumer<? super PsiReference, ? super CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
     final PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
-    if (ref instanceof PsiMultiReference) {
-      for (final PsiReference reference : CompletionData.getReferences((PsiMultiReference)ref)) {
-        if (reference instanceof PsiReferencesWrapper) {
-          for (PsiReference r : ((PsiReferencesWrapper)reference).getReferences()) {
+    if (ref instanceof PsiMultiReference multi) {
+      for (final PsiReference reference : CompletionData.getReferences(multi)) {
+        if (reference instanceof PsiReferencesWrapper wrapper) {
+          for (PsiReference r : wrapper.getReferences()) {
             processReference(result, startOffset, consumer, r);
           }
         }
@@ -115,8 +115,8 @@ public class LegacyCompletionContributor extends CompletionContributor implement
         }
       }
     }
-    else if (ref instanceof PsiDynaReference) {
-      for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
+    else if (ref instanceof PsiDynaReference<?> dyna) {
+      for (final PsiReference reference : dyna.getReferences()) {
         processReference(result, startOffset, consumer, reference);
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.util.Ref;
@@ -6,6 +6,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.AbstractList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class FCTSBackedLighterAST extends LighterAST {
   }
 
   @Override
-  public @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
+  public @Unmodifiable @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
     final Ref<LighterASTNode[]> into = new Ref<>();
     final int numKids = myTreeStructure.getChildren(parent, into);
     if (numKids == 0) {

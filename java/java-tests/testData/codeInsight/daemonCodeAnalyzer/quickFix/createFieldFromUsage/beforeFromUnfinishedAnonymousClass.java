@@ -1,4 +1,4 @@
-// "Create field 'i' in 'A'" "false"
+// "Create field 'i' in 'A'" "true-preview"
 class A {
     Object o = new Object() {
 

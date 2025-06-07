@@ -17,6 +17,7 @@ public class AstAwareResourceLoader implements GroovyResourceLoader {
     myClass2File = Collections.synchronizedMap(class2File);
   }
 
+  @Override
   public URL loadGroovySource(String className) throws MalformedURLException {
     if (className == null) return null;
 

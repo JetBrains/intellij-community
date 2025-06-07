@@ -1,11 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.utils.checkMayBeConstantByFields
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.NONE
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -16,17 +23,10 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.isStandaloneOnlyConstant
 import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
-
 
 class MayBeConstantInspection : MayBeConstantInspectionBase() {
-    override fun createAddConstModifierFix(property: KtProperty): AddModifierFix {
-        return AddConstModifierFix(property)
+    override fun createAddConstModifierFix(property: KtProperty): LocalQuickFix {
+        return AddConstModifierFix(property).asQuickFix()
     }
 
     override fun KtProperty.getConstantStatus(): Status {

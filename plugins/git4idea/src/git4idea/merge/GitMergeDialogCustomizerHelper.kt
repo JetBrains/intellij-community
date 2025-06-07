@@ -2,10 +2,10 @@
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.diff.impl.DiffEditorTitleDetails
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList
 
 internal object GitMergeDialogCustomizerHelper {
@@ -24,5 +24,5 @@ internal object GitMergeDialogCustomizerHelper {
     getCustomizers(project, filePath, null, null)
 
   private fun getCentralCustomizer(project: Project?, filePath: FilePath): DiffEditorTitleCustomizer =
-    DiffTitleFilePathCustomizer.getTitleCustomizer(project, filePath, DiffBundle.message("merge.version.title.merged.result"))
+    DiffEditorTitleDetails.create(project, filePath, DiffBundle.message("merge.version.title.merged.result")).getCustomizer()
 }

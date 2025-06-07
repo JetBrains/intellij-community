@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -36,9 +36,7 @@ import com.intellij.util.xmlb.Constants;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -48,8 +46,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class FileTypeDetectionService {
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
+@ApiStatus.Internal
+public final class FileTypeDetectionService {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
+
+  private static final boolean LOG_ACCESSED_FILES = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.LOG_ACCESSED_FILES", false);
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
@@ -496,7 +499,8 @@ final class FileTypeDetectionService {
     }
   }
 
-  boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
+  @VisibleForTesting
+  public boolean wasAutoDetectedBefore(@NotNull VirtualFile file) {
     if (file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) != null) {
       return true;
     }
@@ -615,7 +619,7 @@ final class FileTypeDetectionService {
 
   private @NotNull ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-      if (toLog()) {
+      if (LOG_ACCESSED_FILES || toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
       int fileLength = (int)Math.min(file.getLength(), bufferLength);
@@ -727,7 +731,7 @@ final class FileTypeDetectionService {
   }
 
   @TestOnly
-  void drainReDetectQueue() {
+  public void drainReDetectQueue() {
     reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 

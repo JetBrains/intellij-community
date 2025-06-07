@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenSettingsCache;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,6 +44,6 @@ public final class MavenGotoSettingsFileContributor implements ChooseByNameContr
   }
 
   private static List<VirtualFile> getSettingsFiles(Project project) {
-    return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles();
+    return MavenSettingsCache.getInstance(project).getEffectiveVirtualSettingsFiles();
   }
 }

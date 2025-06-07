@@ -3,7 +3,7 @@ package com.intellij.platform.execution.serviceView;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.ide.DeleteProvider;
+import com.intellij.execution.services.ServiceViewDefaultDeleteProvider;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,12 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-final class ServiceViewDeleteProvider implements DeleteProvider {
-  private final ServiceView myServiceView;
-
-  ServiceViewDeleteProvider(@NotNull ServiceView serviceView) {
-    myServiceView = serviceView;
-  }
+final class ServiceViewDeleteProvider implements ServiceViewDefaultDeleteProvider {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -63,12 +58,13 @@ final class ServiceViewDeleteProvider implements DeleteProvider {
     if (!ContainerUtil.exists(selectedItems, item -> item.getViewDescriptor().getRemover() != null)) {
       return false;
     }
-    JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();
+    ServiceView selectedView = ServiceViewActionProvider.getSelectedView(dataContext);
+    if (selectedView == null) return false;
+    JComponent detailsComponent = selectedView.getUi().getDetailsComponent();
     return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
-  @NotNull
-  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
+  private static @NotNull List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
     return ContainerUtil.filter(items, item -> {
       ServiceViewItem parent = item.first.getParent();
       while (parent != null) {

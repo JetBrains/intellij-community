@@ -11,12 +11,13 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.load.java.descriptors.isFromJvmPackagePart
+import org.jetbrains.kotlin.load.java.descriptors.getImplClassNameForDeserialized
+import org.jetbrains.kotlin.load.kotlin.JvmPackagePartSource
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.MemberComparator
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -42,7 +42,7 @@ class DecompiledTextConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
             FqName("kotlin.collections.TypeAliasesKt") to null
         )) {
             val classId = ClassId.topLevel(packageFacadeFqName)
-            val classFile = VirtualFileFinder.SERVICE.getInstance(project).findVirtualFileWithHeader(classId)!!
+            val classFile = VirtualFileFinder.SERVICE.getInstance(project, null).findVirtualFileWithHeader(classId)!!
 
             val module = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
                 project, listOf(), BindingTraceContext(project), KotlinTestUtils.newConfiguration(), ::IDEPackagePartProvider
@@ -72,8 +72,7 @@ class DecompiledTextConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
             }.sortedWith(MemberComparator.INSTANCE)
 
         private fun isFromFacade(descriptor: MemberDescriptor, facadeFqName: FqName): Boolean =
-            descriptor is DeserializedMemberDescriptor && descriptor.isFromJvmPackagePart() && facadeFqName == JvmFileClassUtil.getPartFqNameForDeserialized(
-                descriptor
-            )
+            descriptor is DeserializedMemberDescriptor && descriptor.containerSource is JvmPackagePartSource &&
+                    facadeFqName == descriptor.getImplClassNameForDeserialized()!!.fqNameForTopLevelClassMaybeWithDollars
     }
 }

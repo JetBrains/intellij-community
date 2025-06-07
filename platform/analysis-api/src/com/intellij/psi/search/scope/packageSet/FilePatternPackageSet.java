@@ -53,8 +53,8 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   private boolean fileMatcher(@NotNull VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    if (virtualFile instanceof VirtualFileWindow window) {
+      virtualFile = window.getDelegate();
     }
     
     if (fileIndex.isInContent(virtualFile) != myProjectFiles) return false;

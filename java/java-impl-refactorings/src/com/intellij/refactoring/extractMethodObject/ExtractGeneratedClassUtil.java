@@ -73,9 +73,8 @@ final class ExtractGeneratedClassUtil {
     }
   }
 
-  @Nullable
-  private static PsiElement copy(@NotNull PsiImportStaticStatement importStatement,
-                                 @NotNull PsiElementFactory elementFactory) {
+  private static @Nullable PsiElement copy(@NotNull PsiImportStaticStatement importStatement,
+                                           @NotNull PsiElementFactory elementFactory) {
     PsiClass targetClass = importStatement.resolveTargetClass();
     String memberName = importStatement.getReferenceName();
     if (targetClass != null && memberName != null) {

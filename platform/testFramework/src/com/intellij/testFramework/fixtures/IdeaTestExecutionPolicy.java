@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.TestCaseLoader;
@@ -75,13 +75,12 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
   }
 
   @Override
-  public void testModeFlagChanged(@NotNull Key<?> key, @Nullable Object value) {
+  public <T> void testModeFlagChanged(@NotNull Key<T> key, @Nullable T value) {
   }
 
   private static IdeaTestExecutionPolicy ourCurrent;
 
-  @Nullable
-  public static IdeaTestExecutionPolicy current() {
+  public static @Nullable IdeaTestExecutionPolicy current() {
     if (ourCurrent != null) return ourCurrent;
     String policyClassName = System.getProperty(SYSTEM_PROPERTY_NAME);
     if (policyClassName == null) return null;

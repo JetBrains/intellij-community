@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.facet.Facet;
@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,7 +43,7 @@ public final class FacetTypeUsageCollector extends ProjectUsagesCollector {
   }
 
   @Override
-  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+  public @Unmodifiable @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     final Set<String> facets = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -14,9 +14,9 @@ public final class QuerySearchRequest {
   public final Processor<? super PsiReference> processor;
 
   public QuerySearchRequest(@NotNull Query<PsiReference> query,
-                            @NotNull final SearchRequestCollector collector,
+                            final @NotNull SearchRequestCollector collector,
                             boolean inReadAction,
-                            @NotNull final PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
+                            final @NotNull PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
     this.query = query;
     this.collector = collector;
     if (inReadAction) {

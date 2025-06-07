@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.ErrorBean
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -38,10 +37,9 @@ internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, rep
  * Third-party plugins need to provide their own implementations of [ErrorReportSubmitter].
  */
 @InternalIgnoreDependencyViolation
-open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr") : ErrorReportSubmitter() {
-  private val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
-
-  @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
+open class ITNReporter internal constructor(private val postUrl: String) : ErrorReportSubmitter() {
+  @ApiStatus.Internal
+  constructor() : this("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
@@ -54,20 +52,17 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     parentComponent: Component,
     consumer: Consumer<in SubmittedReportInfo>
   ): Boolean {
-    val event = events[0]
-    val plugin = IdeErrorsDialog.getPlugin(event)
-    val errorBean = createReportBean(event, additionalInfo, plugin)
+    val errorBean = createReportBean(events[0], additionalInfo)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     return submit(project, errorBean, parentComponent, consumer::consume)
   }
 
   @ApiStatus.Internal
-  suspend fun submitAutomated(event: IdeaLoggingEvent, plugin: IdeaPluginDescriptor?): SubmittedReportInfo {
-    val errorBean = createReportBean(event, comment = "Automatically reported exception", plugin)
+  suspend fun submitAutomated(event: IdeaLoggingEvent): SubmittedReportInfo {
+    val errorBean = createReportBean(event, comment = "Automatically reported exception")
     return service<ITNProxyCoroutineScopeHolder>().coroutineScope.async {
       try {
         val reportId = ITNProxy.sendError(errorBean, postUrl)
-        updatePreviousReport(event, reportId)
         SubmittedReportInfo(ITNProxy.getBrowseUrl(reportId), reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
       }
       catch (_: Exception) {
@@ -84,18 +79,8 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
   @ApiStatus.Internal
   fun hostId(): String = ITNProxy.DEVICE_ID
 
-  private fun createReportBean(event: IdeaLoggingEvent, comment: String?, plugin: IdeaPluginDescriptor?): ErrorBean {
-    val lastActionId = IdeaLogger.ourLastActionId
-    val prevReport = previousReport
-    val eventDate = (event.data as? AbstractMessage)?.date
-    val prevReportId = if (prevReport != null && eventDate != null && eventDate.time - prevReport.first in 0..INTERVAL) prevReport.second else -1
-    return ErrorBean(event, comment, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, prevReportId)
-  }
-
-  private fun updatePreviousReport(event: IdeaLoggingEvent, reportId: Int) {
-    val eventDate = (event.data as? AbstractMessage)?.date
-    previousReport = if (eventDate != null) eventDate.time to reportId else null
-  }
+  private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean =
+    ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, IdeaLogger.ourLastActionId)
 
   private fun submit(
     project: Project?,
@@ -113,7 +98,6 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
         else {
           ITNProxy.sendError(errorBean, postUrl)
         }
-        updatePreviousReport(errorBean.event, reportId)
         onSuccess(project, reportId, callback)
       }
       catch (e: Exception) {
@@ -123,7 +107,7 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     return true
   }
 
-  private fun onSuccess(project: Project?, reportId: Int, callback: (SubmittedReportInfo) -> Unit) {
+  private fun onSuccess(project: Project?, reportId: Long, callback: (SubmittedReportInfo) -> Unit) {
     val reportUrl = ITNProxy.getBrowseUrl(reportId)
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
 
@@ -161,7 +145,7 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
       else {
-        val message = DiagnosticBundle.message("error.report.failed.message", e.message)
+        val message = DiagnosticBundle.message("error.report.failed.message", e.message ?: e.javaClass.name)
         val title = DiagnosticBundle.message("error.report.failed.title")
         val result = MessageDialogBuilder.yesNo(title, message).ask(project)
         if (!result || !submit(project, errorBean, parentComponent, callback)) {

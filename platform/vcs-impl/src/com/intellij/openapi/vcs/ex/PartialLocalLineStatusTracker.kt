@@ -193,7 +193,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
-      assert(!affectedChangeLists.isEmpty)
+      assert(!affectedChangeLists.isEmpty())
       affectedChangeLists.toList()
     }
   }
@@ -721,8 +721,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       }
 
       override fun isSelected(e: AnActionEvent): Boolean {
-        val newRange = findRange(range)
-        return (newRange as LocalRange).changelistId == changelist.id
+        val newRange = findRange(range) ?: return false
+        newRange as? LocalRange ?: return false
+        return newRange.changelistId == changelist.id
       }
 
       override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -794,7 +795,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
-    affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
+    setExcludedFromCommit({ true }, isExcluded)
+
+    if (!isOperational()) {
+      for (changelistId in affectedChangeLists) {
+        initialExcludeState[ChangeListMarker(changelistId)] = isExcluded
+      }
+    }
   }
 
   override fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean) {
@@ -820,13 +827,6 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
           block.excludedFromCommit = if (isExcluded) RangeExclusionState.Excluded else RangeExclusionState.Included
         }
       }
-    }
-    fireExcludedFromCommitChanged()
-  }
-
-  fun excludeAllBlocks() {
-    documentTracker.writeLock {
-      blocks.forEach { b -> b.excludedFromCommit = RangeExclusionState.Excluded }
     }
     fireExcludedFromCommitChanged()
   }

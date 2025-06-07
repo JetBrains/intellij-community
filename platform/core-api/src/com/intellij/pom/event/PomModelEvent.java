@@ -6,6 +6,7 @@ import com.intellij.pom.PomModelAspect;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.EventObject;
@@ -20,7 +21,7 @@ public class PomModelEvent extends EventObject {
     myChangeSet = changeSet;
   }
 
-  public @NotNull Set<PomModelAspect> getChangedAspects() {
+  public @NotNull @Unmodifiable Set<PomModelAspect> getChangedAspects() {
     if (myChangeSet != null) {
       return Collections.singleton(myChangeSet.getAspect());
     }

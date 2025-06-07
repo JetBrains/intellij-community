@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -30,14 +29,7 @@ import java.util.List;
 /**
  * Removes <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> (if any).
  */
-@ApiStatus.Internal
-public final class RemoveBomAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
-
-  public RemoveBomAction() {
-    super(IdeBundle.messagePointer("remove.BOM"));
-  }
-
+final class RemoveBomAction extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -124,7 +116,7 @@ public final class RemoveBomAction extends AnAction implements DumbAware {
       WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
+      Logger.getInstance(RemoveBomAction.class).warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
     }
   }
 

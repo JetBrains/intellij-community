@@ -21,7 +21,6 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -158,7 +157,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
         breakpoint!!.isEnabled = !breakpoint.isEnabled
       }
       ClickAction.REMOVE -> {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint?.asProxy())
       }
     }
   }

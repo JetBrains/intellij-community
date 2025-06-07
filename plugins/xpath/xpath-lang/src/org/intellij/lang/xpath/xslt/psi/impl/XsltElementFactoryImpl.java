@@ -71,14 +71,13 @@ class XsltElementFactoryImpl extends XsltElementFactory {
         return clazz.cast(element);
     }
 
-    private static class DummyElementImpl extends XsltElementImpl {
+    private static final class DummyElementImpl extends XsltElementImpl {
         DummyElementImpl(XmlTag target) {
             super(target);
         }
 
         @Override
-        @Nullable
-        public String toString() {
+        public @Nullable String toString() {
             return "Unrecognized tag: " + getTag().getName();
         }
     }

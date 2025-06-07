@@ -16,7 +16,7 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 
 public class AnnotationParserTest extends AbstractBasicAnnotationParserTest {
   public AnnotationParserTest() {
@@ -25,6 +25,6 @@ public class AnnotationParserTest extends AbstractBasicAnnotationParserTest {
 
   @Override
   protected void doParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotations(builder));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseAnnotations(builder));
   }
 }

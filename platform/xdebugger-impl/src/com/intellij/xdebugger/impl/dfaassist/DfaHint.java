@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.dfaassist;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -37,8 +37,7 @@ public enum DfaHint {
    *
    * @return merged state
    */
-  @NotNull
-  public DfaHint merge(@NotNull DfaHint other) {
+  public @NotNull DfaHint merge(@NotNull DfaHint other) {
     if (other == this) return this;
     if (this.myValue && other.myValue) return ANY_VALUE;
     if (this.myValue) return other;

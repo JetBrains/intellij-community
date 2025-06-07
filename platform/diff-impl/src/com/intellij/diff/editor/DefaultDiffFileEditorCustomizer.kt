@@ -3,6 +3,7 @@ package com.intellij.diff.editor
 
 import com.intellij.diff.DiffContext
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -10,9 +11,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
 internal val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
-private val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
+
+@ApiStatus.Internal
+val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
 
 private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
@@ -42,7 +46,7 @@ private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustom
 
 private class DiffEditorEscapeDelegatingAction(delegate: AnAction) : AnActionWrapper(delegate), DiffEditorEscapeAction
 
-private class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction {
+private class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {

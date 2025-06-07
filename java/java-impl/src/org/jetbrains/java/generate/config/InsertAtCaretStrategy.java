@@ -47,6 +47,7 @@ public final class InsertAtCaretStrategy implements InsertNewMethodStrategy {
     return generationInfo.getPsiMember();
   }
 
+  @Override
   public String toString() {
     return "At caret";
   }

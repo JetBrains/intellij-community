@@ -10,7 +10,7 @@ import org.jetbrains.plugins.terminal.util.ShellType
 
 @ApiStatus.Experimental
 interface TerminalShellSupport {
-  val promptContentElementType: IElementType
+  val promptContentElementType: IElementType?
 
   /**
    * The character that used to continue the command on the next line.

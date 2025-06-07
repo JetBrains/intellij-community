@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +15,8 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class TypesTest extends GenericsTestCase {
   @Override
@@ -45,7 +47,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType typeListOfA = factory.createTypeFromText("test.List<java.lang.String>", null);
     assertEquals(varList.getType(), typeListOfA);
     final PsiType typeListOfObject = factory.createTypeFromText("test.List<java.lang.Object>", null);
-    assertFalse(varList.getType().equals(typeListOfObject));
+    assertNotEquals(varList.getType(), typeListOfObject);
 
     final PsiReferenceExpression methodExpression
             = ((PsiMethodCallExpression) ((PsiExpressionStatement) methodStatements[1]).getExpression()).getMethodExpression();
@@ -62,7 +64,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType aIteratorType = factory.createTypeFromText("test.Iterator<java.lang.String>", null);
     assertEquals(aIteratorType, aListIteratorType);
     final PsiType objectIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Object>", null);
-    assertFalse(objectIteratorType.equals(aListIteratorType));
+    assertNotEquals(objectIteratorType, aListIteratorType);
   }
 
   public void testRawTypes() {
@@ -76,7 +78,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement) methodStatements[0];
     final PsiVariable varList = (PsiVariable) declarationStatement.getDeclaredElements()[0];
     final PsiType typeFromText = factory.createTypeFromText("test.List", null);
-    assertEquals(varList.getType(), typeFromText);
+    assertEquals(typeFromText, varList.getType());
 
     final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) ((PsiExpressionStatement) methodStatements[1]).getExpression()).getMethodExpression();
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
@@ -102,7 +104,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement) methodStatements[0];
     final PsiVariable varList = (PsiVariable) declarationStatement.getDeclaredElements()[0];
     final PsiType typeFromText = factory.createTypeFromText("test.IntList", null);
-    assertEquals(varList.getType(), typeFromText);
+    assertEquals(typeFromText, varList.getType());
 
     final PsiReferenceExpression methodExpression
             = ((PsiMethodCallExpression) ((PsiExpressionStatement) methodStatements[1]).getExpression()).getMethodExpression();
@@ -118,7 +120,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiType integerIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Integer>", null);
     assertEquals(integerIteratorType, intListIteratorReturnType);
     final PsiType objectIteratorType = factory.createTypeFromText("test.Iterator<java.lang.Object>", null);
-    assertFalse(objectIteratorType.equals(integerIteratorType));
+    assertNotEquals(objectIteratorType, integerIteratorType);
   }
 
   public void testSimpleRawTypeInMethodArg() {
@@ -141,7 +143,7 @@ public class TypesTest extends GenericsTestCase {
     final PsiClassType qualifierType = (PsiClassType) qualifierExpression.getType();
     assertFalse(qualifierType.hasParameters());
     final PsiType typeFromText = factory.createTypeFromText("test.List", null);
-    assertEquals(qualifierType, typeFromText);
+    assertEquals(typeFromText, qualifierType);
 
     final PsiElement psiElement = ((PsiReferenceExpression) qualifierExpression).resolve();
     assertTrue(psiElement instanceof PsiVariable);
@@ -151,8 +153,6 @@ public class TypesTest extends GenericsTestCase {
     assertEquals("add", methodFromList.getName());
     assertEquals("test.List", methodFromList.getContainingClass().getQualifiedName());
   }
-
-
 
   public void testRawTypeInMethodArg() {
     final PsiClass classA = getJavaFacade().findClass("A");
@@ -181,10 +181,10 @@ public class TypesTest extends GenericsTestCase {
     final PsiVariable var = (PsiVariable) ((PsiDeclarationStatement) statements[0]).getDeclaredElements()[0];
     final PsiType varType = var.getType();
     final PsiType typeRawIterator = factory.createTypeFromText("test.Iterator", null);
-    assertEquals(varType, typeRawIterator);
+    assertEquals(typeRawIterator, varType);
 
     final PsiType initializerType = var.getInitializer().getType();
-    assertEquals(initializerType, typeRawIterator);
+    assertEquals(typeRawIterator, initializerType);
     assertTrue(varType.isAssignableFrom(initializerType));
   }
 
@@ -200,10 +200,10 @@ public class TypesTest extends GenericsTestCase {
     final PsiVariable var = (PsiVariable) ((PsiDeclarationStatement) statements[0]).getDeclaredElements()[0];
     final PsiType varType = var.getType();
     final PsiType typeRawIterator = factory.createTypeFromText("test.Iterator", null);
-    assertEquals(varType, typeRawIterator);
+    assertEquals(typeRawIterator, varType);
 
     final PsiType initializerType = var.getInitializer().getType();
-    assertEquals(initializerType, typeRawIterator);
+    assertEquals(typeRawIterator, initializerType);
     assertTrue(varType.isAssignableFrom(initializerType));
   }
 
@@ -231,8 +231,8 @@ public class TypesTest extends GenericsTestCase {
     final PsiClass classList = psiManager.findClass("test.List");
     final PsiType collectionType = factory.createType(classCollection, PsiSubstitutor.EMPTY);
     final PsiType listType = factory.createType(classList, PsiSubstitutor.EMPTY);
-    assertEquals(collectionType.getCanonicalText(), "test.Collection<E>");
-    assertEquals(listType.getCanonicalText(), "test.List<T>");
+    assertEquals("test.Collection<E>", collectionType.getCanonicalText());
+    assertEquals("test.List<T>", listType.getCanonicalText());
 
     final PsiType typeListOfString = factory.createTypeFromText("test.List<java.lang.String>", null);
     final PsiType typeCollectionOfString = factory.createTypeFromText("test.Collection<java.lang.String>", null);
@@ -376,21 +376,21 @@ public class TypesTest extends GenericsTestCase {
     assertFalse(extendsWildcard.isSuper());
     assertEquals("Y", extendsWildcard.getBound().getCanonicalText());
     assertEquals("Y", extendsWildcard.getExtendsBound().getCanonicalText());
-    assertEquals(extendsWildcard.getSuperBound(), PsiTypes.nullType());
+    assertEquals(PsiTypes.nullType(), extendsWildcard.getSuperBound());
 
     // super wildcard test
     assertFalse(superWildcard.isExtends());
     assertTrue(superWildcard.isSuper());
     assertEquals("Z<A,B>", superWildcard.getBound().getCanonicalText());
-    assertEquals(superWildcard.getExtendsBound(), javaLangObject);
+    assertEquals(javaLangObject, superWildcard.getExtendsBound());
     assertEquals("Z<A,B>", superWildcard.getSuperBound().getCanonicalText());
 
     // unbounded wildcard test
     assertFalse(unboundedWildcard.isExtends());
     assertFalse(unboundedWildcard.isSuper());
     assertNull(unboundedWildcard.getBound());
-    assertEquals(unboundedWildcard.getExtendsBound(), javaLangObject);
-    assertEquals(unboundedWildcard.getSuperBound(), PsiTypes.nullType());
+    assertEquals(javaLangObject, unboundedWildcard.getExtendsBound());
+    assertEquals(PsiTypes.nullType(), unboundedWildcard.getSuperBound());
   }
 
   public void testWildcardTypesAssignable() {

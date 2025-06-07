@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
 import com.intellij.util.ui.tree.TreeUtil
@@ -23,16 +24,16 @@ class JChangesListViewFixture(private val robot: Robot, private val component: J
 
   private fun handleCheckBoxWithFileName(fileName: String, setEnabled: Boolean) {
     val root = component.model.root as DefaultMutableTreeNode
-    val node = TreeUtil.findNode(root) { it.toString().contains(fileName) }
+    val node = TreeUtil.findNode(root) { it.toString().contains(fileName) } ?: error("Node with name containing $fileName is not found")
 
-    val fileTreePath = TreePath(node!!.path)
+    val fileTreePath = TreePath(node.path)
     val checkbox = getCheckBoxForNode(node, fileTreePath)
 
     if (checkbox.isSelected != setEnabled) {
-      val fileTrePathLocation = computeOnEdt {
+      val fileTreePathLocation = computeOnEdt {
         component.getPathBounds(fileTreePath) ?: error("Have not found bounds")
       }
-      clickOnCheckbox(checkbox, fileTrePathLocation)
+      clickOnCheckbox(checkbox, fileTreePathLocation)
     }
   }
 

@@ -14,10 +14,8 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes.MARKDOWN_TEMPLATE
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.parser.createMarkdownFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class DefaultMarkdownFileViewProvider(
+internal class DefaultMarkdownFileViewProvider(
   manager: PsiManager,
   file: VirtualFile,
   eventSystemEnabled: Boolean

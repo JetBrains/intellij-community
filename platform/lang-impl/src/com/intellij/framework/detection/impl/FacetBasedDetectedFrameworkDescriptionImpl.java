@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -37,7 +38,7 @@ public final class FacetBasedDetectedFrameworkDescriptionImpl<F extends Facet, C
   }
 
   @Override
-  protected @NotNull Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
+  protected @NotNull @Unmodifiable Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
     return FacetManager.getInstance(myModule).getFacetsByType(underlyingFacetType);
   }
 }

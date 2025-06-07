@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.psi.psiUtil.textRangeWithoutComments
 
-val MODIFIERS_LIST_ENTRIES = TokenSet.orSet(TokenSet.create(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATION),
+val MODIFIERS_LIST_ENTRIES = TokenSet.orSet(TokenSet.create(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATION, KtNodeTypes.CONTEXT_RECEIVER_LIST),
                                             KtTokens.MODIFIER_KEYWORDS)
 val EXTEND_COLON_ELEMENTS =
     TokenSet.create(KtNodeTypes.TYPE_CONSTRAINT, KtNodeTypes.CLASS, KtNodeTypes.OBJECT_DECLARATION, KtNodeTypes.TYPE_PARAMETER,
@@ -333,7 +333,19 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         before(KtTokens.ELVIS).spaceIf(kotlinCustomSettings.SPACE_AROUND_ELVIS)
         after(KtTokens.ELVIS).spacesNoLineBreak(spacesAroundElvis)
 
-        around(KtTokens.RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
+        custom {
+          // For the range operator, we have to require a space after it if the next node starts with a `.`.
+          // Otherwise, the `..` operator becomes `...` and the code is changed semantically.
+          inPosition(left = KtTokens.RANGE).customRule { parent, left, right ->
+              if (right.node?.text?.startsWith(".") == true) {
+                  createSpacing(minSpaces = 1, keepLineBreaks = commonCodeStyleSettings.KEEP_LINE_BREAKS, keepBlankLines = commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE)
+              } else {
+                  val minSpaces = if (kotlinCustomSettings.SPACE_AROUND_RANGE) 1 else 0
+                  createSpacing(minSpaces = minSpaces, keepLineBreaks = commonCodeStyleSettings.KEEP_LINE_BREAKS, keepBlankLines = commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE)
+              }
+          }
+        }
+        before(KtTokens.RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
         around(KtTokens.RANGE_UNTIL).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
 
         after(KtNodeTypes.MODIFIER_LIST).spaces(1)
@@ -430,6 +442,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         betweenInside(KtNodeTypes.LOOP_RANGE, KtTokens.RPAR, KtNodeTypes.FOR).spaces(0)
 
         afterInside(KtNodeTypes.ANNOTATION_ENTRY, KtNodeTypes.ANNOTATED_EXPRESSION).spaces(1)
+        afterInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
+        beforeInside(KtTokens.COLON, KtNodeTypes.ANNOTATION_ENTRY).spaces(0)
 
         before(KtTokens.SEMICOLON).spaces(0)
 
@@ -538,7 +552,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         // Add space after a semicolon if there is another child at the same line
         inPosition(left = KtTokens.SEMICOLON).customRule { _, left, _ ->
           val nodeAfterLeft = left.requireNode().treeNext
-          if (nodeAfterLeft is PsiWhiteSpace && !nodeAfterLeft.textContains('\n')) {
+          if (nodeAfterLeft !is PsiWhiteSpace || !nodeAfterLeft.textContains('\n')) {
             createSpacing(1)
           }
           else {
@@ -561,6 +575,11 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         inPosition(parent = KtNodeTypes.SECONDARY_CONSTRUCTOR, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
         inPosition(parent = KtNodeTypes.CLASS_INITIALIZER, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
         inPosition(parent = KtNodeTypes.PROPERTY_ACCESSOR, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
+
+        // No space before the spread operator.
+        // MUL with a direct VALUE_ARGUMENT parent is always a spread operator.
+        // Otherwise, it would be part of a binary expression or similar.
+        inPosition(parent = KtNodeTypes.VALUE_ARGUMENT, left = KtTokens.MUL).spacing(createSpacing(0))
 
         inPosition(right = KtNodeTypes.CLASS_BODY).customRule(leftBraceRule(blockType = KtNodeTypes.CLASS_BODY))
         inPosition(left = KtNodeTypes.WHEN_ENTRY, right = KtNodeTypes.WHEN_ENTRY).customRule { _, left, right ->

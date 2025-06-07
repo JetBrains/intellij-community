@@ -2,6 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 
-public interface PsiPresentableMetaDataRenderStrategy {
-  boolean isExpensiveRender();
+import com.intellij.psi.meta.PsiPresentableMetaData;
+
+/**
+ * Defines a strategy for rendering metadata from {@link PsiPresentableMetaData}.
+ */
+public interface PsiPresentableMetaDataRenderStrategy extends PsiPresentableMetaData {
+  boolean isRenderExpensive();
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.treeView.FileNameComparator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.FontUtil
@@ -41,9 +42,8 @@ import java.io.File
 import javax.swing.*
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
-import kotlin.Throws
 
-class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
+internal class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 
   private val isEditingDisabled = project.isDefault
@@ -186,7 +186,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 
   private fun scheduleUnregisteredRootsLoading() {
-    if (project.isDefault || !project.isTrusted()) return
+    if (project.isDefault || !TrustedProjects.isProjectTrusted(project)) return
     rootDetectionIndicator?.cancel()
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 
@@ -298,7 +298,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       .setDefaultWeightX(1.0)
       .setDefaultFill(GridBagConstraints.HORIZONTAL)
 
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       val notificationPanel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
       notificationPanel.text = VcsBundle.message("configuration.project.not.trusted.label")
       panel.add(notificationPanel, gb.nextLine().next())
@@ -492,7 +492,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
     private fun buildVcsesComboBox(project: Project, allVcses: List<AbstractVcs>): ComboBox<AbstractVcs?> {
       val comboBox = ComboBox((allVcses + null).sortedWith(SuggestedVcsComparator.create(project)).toTypedArray())
-      comboBox.renderer = SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs? -> obj?.displayName }
+      comboBox.renderer = textListCellRenderer(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs -> obj.displayName }
       return comboBox
     }
   }

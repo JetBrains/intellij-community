@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.images.thumbnail.actions;
 
@@ -27,7 +27,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
     ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
     boolean hasApplicableExtension =
@@ -37,9 +37,8 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
     e.getPresentation().setText(filter == null ? CommonBundle.message("action.text.all") : filter.getDisplayName());
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new FilterImagesAction(new ThemeFilter() {
       @Override

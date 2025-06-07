@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -72,6 +72,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId;
   }
 
+  @Override
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleType moduleType)) return false;
@@ -79,10 +80,12 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId.equals(moduleType.myId);
   }
 
+  @Override
   public final int hashCode() {
     return myId.hashCode();
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -104,7 +107,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return true;
   }
 
-  public static boolean is(@NotNull Module module, @NotNull ModuleType moduleType) {
+  public static boolean is(@NotNull Module module, @NotNull ModuleType<?> moduleType) {
     return moduleType.getId().equals(module.getModuleTypeName());
   }
 

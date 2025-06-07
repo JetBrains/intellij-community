@@ -1,7 +1,6 @@
 package com.siyeh.ig.fixes.javadoc;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection;
 

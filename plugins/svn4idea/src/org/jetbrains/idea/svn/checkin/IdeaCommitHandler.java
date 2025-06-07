@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ReadAction;
@@ -23,8 +23,8 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);
 
-  @Nullable private final ProgressIndicator myProgress;
-  @NotNull private final List<VirtualFile> myDeletedFiles = new ArrayList<>();
+  private final @Nullable ProgressIndicator myProgress;
+  private final @NotNull List<VirtualFile> myDeletedFiles = new ArrayList<>();
   private final boolean myCheckCancel;
   private final boolean myTrackDeletedFiles;
 
@@ -38,8 +38,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
     myTrackDeletedFiles = trackDeletedFiles;
   }
 
-  @NotNull
-  public List<VirtualFile> getDeletedFiles() {
+  public @NotNull List<VirtualFile> getDeletedFiles() {
     return myDeletedFiles;
   }
 
@@ -95,7 +94,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
   }
 
   private void trackDeletedFile(@NotNull ProgressEvent event) {
-    @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+    final @NonNls String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
     VirtualFile virtualFile =
       ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(filePath));
 
@@ -104,8 +103,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
     }
   }
 
-  @NotNull
-  private static CommitEventType convert(@NotNull EventAction action) {
+  private static @NotNull CommitEventType convert(@NotNull EventAction action) {
     CommitEventType result = CommitEventType.unknown;
 
     if (EventAction.COMMIT_ADDED.equals(action)) {

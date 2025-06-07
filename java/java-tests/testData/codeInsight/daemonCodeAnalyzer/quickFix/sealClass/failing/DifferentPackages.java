@@ -1,5 +1,5 @@
-packages p;
+package p;
 
-class Pa<caret>rent {
+public class Pa<caret>rent {
 
 }

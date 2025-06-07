@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith;
 
@@ -786,6 +786,16 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
             runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOut.kt");
         }
 
+        @TestMetadata("moveDeclarationsOutWithNonDeclarationLastStatement.kt")
+        public void testMoveDeclarationsOutWithNonDeclarationLastStatement() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithNonDeclarationLastStatement.kt");
+        }
+
+        @TestMetadata("moveDeclarationsOutWithTreeValueDeclarations.kt")
+        public void testMoveDeclarationsOutWithTreeValueDeclarations() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithTreeValueDeclarations.kt");
+        }
+
         @TestMetadata("multiStatement.kt")
         public void testMultiStatement() throws Exception {
             runTest("testData/codeInsight/surroundWith/functionLiteral/multiStatement.kt");
@@ -794,6 +804,11 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
         @TestMetadata("singleStatement.kt")
         public void testSingleStatement() throws Exception {
             runTest("testData/codeInsight/surroundWith/functionLiteral/singleStatement.kt");
+        }
+
+        @TestMetadata("statementWithElvis.kt")
+        public void testStatementWithElvis() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/statementWithElvis.kt");
         }
     }
 

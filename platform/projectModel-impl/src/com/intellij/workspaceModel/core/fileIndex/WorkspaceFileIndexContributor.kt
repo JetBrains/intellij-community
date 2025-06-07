@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -35,7 +34,26 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
   fun registerFileSets(entity: E, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage)
 
   /**
-   * Describes other entities which properties may be used in [registerFileSets].
+   * Describes other entities whose properties may be used in [registerFileSets].
+   *
+   * The [WorkspaceFileIndexContributor] is registered per-entity, however if the implementation of the contributor accesses properties
+   * that refer to other entities, the changes of the referred entities won't be tracked by the contributor automatically.
+   *
+   * For example, if the contributor for ParentEntity accesses the ChildEntity,
+   * the ChildEntity should be listed in [dependenciesOnOtherEntities]:
+   * ```
+   * class MyParentContributor : WorkspaceFileIndexContributor<ParentEntity> {
+   *
+   *   override fun registerFileSets(entity: ParentEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+   *     val childUrl = entity.child.url   // <--- Accessing fields from the referred entity
+   *     registrar.registerFileSet(childUrl, ...)
+   *   }
+   *
+   *   override val dependenciesOnOtherEntities = listOf(DependencyDescription.OnChild(ChildEntity::class.java) { it.parent })
+   * }
+   *```
+   * Then MyParentContributor with overridden [dependenciesOnOtherEntities] will be called when ChildEntity specified
+   * as a dependency is changed.
    */
   val dependenciesOnOtherEntities: List<DependencyDescription<E>>
     get() = emptyList()
@@ -89,6 +107,12 @@ enum class WorkspaceFileKind {
   CONTENT,
 
   /**
+   * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
+   * but before the project is imported by any build system. They can be edited.
+   */
+  CONTENT_NON_INDEXABLE,
+
+  /**
    * Subset of [CONTENT] which is used to identify test files. 
    * Files of this kind constitute 'Project Test Files' scope in UI.
    * This kind corresponds to [com.intellij.openapi.roots.FileIndex.isInTestSourceContent] method in the old API.
@@ -122,7 +146,10 @@ enum class WorkspaceFileKind {
   CUSTOM;
   
   val isContent: Boolean
-    get() = this == CONTENT || this == TEST_CONTENT
+    get() = this == CONTENT || this == TEST_CONTENT || this == CONTENT_NON_INDEXABLE
+
+  val isIndexable: Boolean
+    get() = (this != CONTENT_NON_INDEXABLE)
 }
 
 /**
@@ -181,13 +208,15 @@ interface WorkspaceFileSetRegistrar {
   fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
 
   /**
-   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included. 
+   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included.
    * @param kind specify kind which will be assigned to the files
    * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    * @param customData optional custom data which will be associated with the root and can be accessed via [WorkspaceFileSetWithCustomData].
    */
-  fun registerNonRecursiveFileSet(file: VirtualFileUrl,
-                                  kind: WorkspaceFileKind,
-                                  entity: WorkspaceEntity,
-                                  customData: WorkspaceFileSetData?)
+  fun registerNonRecursiveFileSet(
+    file: VirtualFileUrl,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+  )
 }

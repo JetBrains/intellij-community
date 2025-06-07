@@ -6,15 +6,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
-import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-
-private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
@@ -40,18 +34,6 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
     protected fun deleteFile(virtualFile: VirtualFile) {
         runWriteAction { virtualFile.delete(this) }
     }
-
-    protected fun getDisableTestDirective(): String =
-        if (isFirPlugin) IGNORE_K2 else IGNORE_K1
-
-    protected fun File.getFileTextWithoutDirectives(): String =
-        readText().getTextWithoutDirectives()
-
-    protected fun String.getTextWithoutDirectives(): String =
-        split("\n").filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
-
-    protected fun KtFile.getFileTextWithErrors(): String =
-        if (isFirPlugin) getK2FileTextWithErrors(this) else dumpTextWithErrors()
 
     // Needed to make the Kotlin compiler think it is running on JDK 16+
     // see org.jetbrains.kotlin.resolve.jvm.checkers.JvmRecordApplicabilityChecker
@@ -107,31 +89,4 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
             """.trimIndent()
         )
     }
-
-    // A hack to workaround KTIJ-26751 bug in K2 import optimizer
-    // that leads to trivial test failures.
-    // TODO remove this hack once the optimizer is fixed
-    protected fun removeRedundantImports(actualText: String): String {
-        if (!isFirPlugin) return actualText
-
-        var result = actualText
-        for (regex in redundantImportLines) {
-            result = result.replace(regex, "")
-        }
-
-        return result
-    }
-
-    private val redundantImportLines: List<Regex> = listOf(
-        Regex("""import kotlin\.\w+\n\n"""),
-        Regex("""import kotlin\.\w+\n"""),
-        Regex("""import kotlin\.jvm\..+\n\n"""),
-        Regex("""import kotlin\.jvm\..+\n"""),
-        Regex("""import java\.lang\.\w+\n\n"""),
-        Regex("""import java\.lang\.\w+\n"""),
-        Regex("""import java\.util\.Hash\w+\n\n"""),
-        Regex("""import java\.util\.Hash\w+\n"""),
-        Regex("""import java\.util\.ArrayList\n\n"""),
-        Regex("""import java\.util\.ArrayList\n"""),
-    )
 }

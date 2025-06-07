@@ -6,6 +6,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -17,7 +18,11 @@ fun TreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel):
 interface TreeViewModel {
   val domainModel: TreeDomainModel
   val root: Flow<TreeNodeViewModel?>
+  val selection: StateFlow<Set<TreeNodeViewModel>>
+  val scrollEvents: Flow<TreeNodeViewModel>
   fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
+  fun setSelection(nodes: Collection<TreeNodeViewModel>)
+  fun scrollTo(node: TreeNodeViewModel)
   suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
   @ApiStatus.Internal
   suspend fun awaitUpdates()
@@ -30,18 +35,30 @@ interface TreeViewModelVisitor {
 
 @ApiStatus.Experimental
 interface TreeNodeViewModel {
+  val domainModel: TreeNodeDomainModel
   val parent: TreeNodeViewModel?
-  val presentation: Flow<TreeNodePresentation>
+  val state: Flow<TreeNodeState>
   val children: Flow<List<TreeNodeViewModel>>
-  fun presentationSnapshot(): TreeNodePresentation
-  @ApiStatus.Internal
-  fun getUserObject(): Any
+  fun stateSnapshot(): TreeNodeState
+  fun setExpanded(isExpanded: Boolean)
+}
+
+@ApiStatus.Experimental
+interface TreeNodeState {
+  val presentation: TreeNodePresentation
+  val isExpanded: Boolean
 }
 
 @ApiStatus.Internal
 interface TreeViewModelFactory {
   fun createTreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel): TreeViewModel
 }
+
+@ApiStatus.Internal
+data class TreeNodeStateImpl(
+  override val presentation: TreeNodePresentationImpl,
+  override val isExpanded: Boolean,
+): TreeNodeState
 
 @ApiStatus.Internal
 data class TreeNodePresentationImpl(

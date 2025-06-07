@@ -4,6 +4,6 @@
   "targetPackage": "packB",
   "targetSourceRoot": "B/src",
   "withRuntime": "true",
-  "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK1": "false",
+  "enabledInK2": "true"
 }

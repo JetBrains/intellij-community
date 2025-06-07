@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.output
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.BlockTerminalColors
@@ -12,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.executeInBulk
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -180,7 +180,7 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
 
   @RequiresEdt
   override fun trimOutput() {
-    val maxCapacity = getMaxCapacity()
+    val maxCapacity = TerminalUiUtils.getDefaultMaxOutputLength()
     val textLength = document.textLength
     if (textLength <= maxCapacity) {
       return
@@ -255,10 +255,6 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
     return max(intersectionLength, 0)
   }
 
-  private fun getMaxCapacity(): Int {
-    return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
-  }
-
   companion object {
     @VisibleForTesting
     internal fun createCommandAndRightPromptText(command: String?,
@@ -307,5 +303,3 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
 
 @ApiStatus.Internal
 data class CommandBlockInfo(val exitCode: Int)
-
-internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

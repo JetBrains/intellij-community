@@ -340,9 +340,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     return moduleSelector;
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return panel;
   }
 
@@ -511,16 +510,14 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private class AddActionButtonRunnable implements AnActionButtonRunnable {
     private final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
-    @Nullable
-    protected GlobalSearchScope getSearchScope(Module[] modules) {
+    protected @Nullable GlobalSearchScope getSearchScope(Module[] modules) {
       if (modules == null || modules.length == 0) return null;
       GlobalSearchScope[] scopes =
         ContainerUtil.map2Array(modules, GlobalSearchScope.class, GlobalSearchScope::moduleWithDependenciesAndLibrariesScope);
       return GlobalSearchScope.union(scopes);
     }
 
-    @Nullable
-    protected String selectListenerClass() {
+    protected @Nullable String selectListenerClass() {
       GlobalSearchScope searchScope = getSearchScope(config.getModules());
       if (searchScope == null) {
         searchScope = GlobalSearchScope.allScope(project);

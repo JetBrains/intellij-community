@@ -1,0 +1,123 @@
+PsiJavaFile:InheritDocTag0.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_COMMENT_DATA('A doc ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n\n')
+  PsiClass:B
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_COMMENT_DATA('B doc ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:B('B')
+    PsiTypeParameterList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiReferenceList
+      PsiKeyword:extends('extends')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:A
+        PsiIdentifier:A('A')
+        PsiReferenceParameterList
+          <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n\n')
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('  ')
+      PsiInlineDocTag:@inheritDoc
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@inheritDoc')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:A
+              PsiIdentifier:A('A')
+              PsiReferenceParameterList
+                <empty list>
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiReferenceList
+      PsiKeyword:extends('extends')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:B
+        PsiIdentifier:B('B')
+        PsiReferenceParameterList
+          <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n\n')
+  PsiClass:D
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('  ')
+      PsiInlineDocTag:@inheritDoc
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@inheritDoc')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:D('D')
+    PsiTypeParameterList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiReferenceList
+      PsiKeyword:extends('extends')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:B
+        PsiIdentifier:B('B')
+        PsiReferenceParameterList
+          <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

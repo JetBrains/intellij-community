@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -15,10 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -110,8 +107,8 @@ public class JavaInheritorsGetter {
 
     PsiElement position = parameters.getPosition();
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
-        HighlightClassUtil.checkCreateInnerClassFromStaticContext(position, null, psiClass) != null &&
-        !psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(".")).accepts(position)) {
+        isInnerClassFromStaticContext(position, psiClass) &&
+        !psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW).afterLeaf(".")).accepts(position)) {
       return null;
     }
 
@@ -250,5 +247,15 @@ public class JavaInheritorsGetter {
       }
     }
     return true;
+  }
+
+  private static boolean isInnerClassFromStaticContext(@NotNull PsiElement element, @NotNull PsiClass aClass) {
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiClass outerClass = aClass.getContainingClass();
+    if (outerClass == null) return false;
+
+    return !InheritanceUtil.hasEnclosingInstanceInScope(outerClass, element, true, false) &&
+           (!PsiTreeUtil.isContextAncestor(outerClass, element, false) ||
+            PsiUtil.getEnclosingStaticElement(element, outerClass) != null);
   }
 }

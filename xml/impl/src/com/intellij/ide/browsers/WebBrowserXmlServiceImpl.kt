@@ -37,7 +37,7 @@ private class WebBrowserXmlServiceImpl : WebBrowserXmlService() {
 
   override fun isHtmlOrXmlLanguage(language: Language): Boolean {
     return language.isKindOf(HTMLLanguage.INSTANCE)
-           || language === XHTMLLanguage.INSTANCE
+           || language === XHTMLLanguage
            || language === XMLLanguage.INSTANCE
   }
 }

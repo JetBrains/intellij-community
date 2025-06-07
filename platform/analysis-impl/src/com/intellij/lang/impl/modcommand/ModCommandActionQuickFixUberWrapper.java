@@ -61,22 +61,22 @@ public final class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndI
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    ActionContext context = ActionContext.from(editor, file).withElement(startElement);
+    ActionContext context = ActionContext.from(editor, psiFile).withElement(startElement);
     myPresentation = myAction.getPresentation(context);
     return myPresentation != null;
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    ActionContext context = ActionContext.from(editor, file).withElement(startElement);
+    ActionContext context = ActionContext.from(editor, psiFile).withElement(startElement);
     Presentation presentation = myPresentation;
     String name = presentation == null ? getFamilyName() : presentation.name();
     ModCommandExecutor.executeInteractively(context, name, editor, () -> myAction.perform(context));
@@ -88,8 +88,8 @@ public final class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndI
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myAction.generatePreview(ActionContext.from(editor, file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return myAction.generatePreview(ActionContext.from(editor, psiFile));
   }
 
   @Override

@@ -65,13 +65,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiType[] typeParameters = myExpression.getTypeParameters();
 
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
+    final PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
 
     if (myExpression.isExact()) {
       final PsiMember applicableMember = myExpression.getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
 
       final PsiClass applicableMemberContainingClass = applicableMember.getContainingClass();
-      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
 
       PsiSubstitutor psiSubstitutor = getSubstitutor(signature, qualifierResolveResult, applicableMember, applicableMemberContainingClass, myExpression);
 
@@ -120,8 +120,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
         if (applicableMethodReturnType == null && 
             (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor())) {
-          if (containingClass != null) {
-            applicableMethodReturnType = JavaPsiFacade.getElementFactory(applicableMember.getProject()).createType(containingClass, PsiSubstitutor.EMPTY);
+          if (qContainingClass != null) {
+            applicableMethodReturnType = JavaPsiFacade.getElementFactory(applicableMember.getProject()).createType(qContainingClass, PsiSubstitutor.EMPTY);
           } 
         }
 
@@ -139,16 +139,18 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     for (PsiType paramType : signature.getParameterTypes()) {
       if (!session.isProperType(paramType)) {
-        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + session.getPresentableText(paramType));
         return false;
       }
     }
 
     JavaResolveResult resolve = myExpression.advancedResolve(false);
     final PsiElement element = resolve.getElement();
-    if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
+    if (element == null) {
       session.registerIncompatibleErrorMessage(
         JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"));
+      return false;
+    }
+    if (resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
       return false;
     }
 
@@ -205,7 +207,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      PsiClass qContainingClass = qualifierResolveResult.getContainingClass();
       if (qContainingClass != null && PsiUtil.isRawSubstitutor(qContainingClass, qualifierResolveResult.getSubstitutor())) {
         //15.13.1 If there exist a parameterization, then it would be used to search, the *raw type* would be used otherwise
         if (getParameterization(signature, qualifierResolveResult, method, myExpression, qContainingClass) == null) {

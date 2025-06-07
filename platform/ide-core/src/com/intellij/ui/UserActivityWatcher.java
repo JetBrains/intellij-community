@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +25,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
   private boolean myIsModified = false;
   private final EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
 
-  private final static String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor"; // ComboBox.TABLE_CELL_EDITOR_PROPERTY
+  private static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor"; // ComboBox.TABLE_CELL_EDITOR_PROPERTY
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     @Override
@@ -36,7 +36,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
 
   private final com.intellij.openapi.editor.event.DocumentListener myIdeaDocumentListener = new com.intellij.openapi.editor.event.DocumentListener() {
     @Override
-    public void documentChanged(@NotNull final com.intellij.openapi.editor.event.DocumentEvent e) {
+    public void documentChanged(final @NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
       fireUIChanged();
     }
   };

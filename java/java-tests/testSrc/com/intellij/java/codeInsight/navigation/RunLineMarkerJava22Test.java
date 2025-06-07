@@ -238,7 +238,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
             public static void main(String[] args) {
                 System.out.println("main with parameters");
             }
-                
+        
             static void main() {
                 System.out.println("main without parameters");
             }
@@ -272,12 +272,12 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   public void testInheritMain() {
     IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.addClass("""
-        public class AAAAAA {
-            public void main(String[] args) {
-                System.out.println("2");
-            }
-        }
-      """);
+                             public class AAAAAA {
+                                 public void main(String[] args) {
+                                     System.out.println("2");
+                                 }
+                             }
+                           """);
       myFixture.configureByText("BBBBBB.java", """
           public class BBBBBB extends AAAAAA {
               public static void <caret>main() {
@@ -293,14 +293,14 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   public void testImpossibleInheritStatic() {
     IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.addClass("""
-        public class AAAAAA {
-            public AAAAAA(int a){}
-      
-            public void main(String[] args) {
-                System.out.println("2");
-            }
-        }
-      """);
+                             public class AAAAAA {
+                                 public AAAAAA(int a){}
+                           
+                                 public void main(String[] args) {
+                                     System.out.println("2");
+                                 }
+                             }
+                           """);
       myFixture.configureByText("BBBBBB.java", """
           public class BBBBBB extends AAAAAA {
               public static void <caret>main() {
@@ -311,14 +311,71 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
       GutterMark mark = marks.get(0);
-      assertTrue(mark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
-      LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark;
-      PsiElement element = gutterIconRenderer.getLineMarkerInfo().getElement();
-      assertEquals(AllIcons.RunConfigurations.TestState.Run, gutterIconRenderer.getIcon());
-      assertTrue(element instanceof PsiIdentifier);
-      assertEquals("main", element.getText());
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      assertEquals("BBBBBB", psiClass.getName());
+      checkMark(mark, "BBBBBB");
     });
+  }
+
+  public void testImpossibleCreateClassForNonStaticMethodWithSuperClass() {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
+      myFixture.configureByText("BBBBBB.java", """
+        class Parent {
+            void main(String[] args) {
+                System.out.println("non-static, args");
+            }
+        }
+        
+        
+        class Child extends Parent <caret> {
+            Child(int p) {
+                System.out.println("Child constructor");
+            }
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+
+      myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("void main"));
+
+      marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      GutterMark mark = marks.get(0);
+      checkMark(mark, "Parent");
+    });
+  }
+
+  public void testImpossibleCreateClassForNonStaticMethod() {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
+      myFixture.configureByText("BBBBBB.java", """
+        public abstract class AbstractClass {
+            static void main() {
+                System.out.println("Hello, World!");
+            }
+        
+            void main<caret>(String[] args) {
+                System.out.println("Hello, World! no constructor, non-static, args");
+            }
+        }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+
+      myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("static void main"));
+      marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+
+      myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("class AbstractClass"));
+      marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+    });
+  }
+
+  private static void checkMark(@NotNull GutterMark mark2, @NotNull String className) {
+    assertTrue(mark2 instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
+    LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer2 = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark2;
+    PsiElement element2 = gutterIconRenderer2.getLineMarkerInfo().getElement();
+    assertEquals(AllIcons.RunConfigurations.TestState.Run, gutterIconRenderer2.getIcon());
+    assertTrue(element2 instanceof PsiIdentifier);
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element2, PsiClass.class);
+    assertEquals(className, psiClass.getName());
   }
 }

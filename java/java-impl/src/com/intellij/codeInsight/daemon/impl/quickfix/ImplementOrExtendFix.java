@@ -22,8 +22,8 @@ public final class ImplementOrExtendFix extends PsiUpdateModCommandAction<PsiCla
     myExternal = subclass.getContainingFile() != parentClass.getContainingFile();
     myParentClassPointer = SmartPointerManager.createPointer(parentClass);
     myName = parentClass.isInterface() && !subclass.isInterface()
-             ? QuickFixBundle.message("implement.or.extend.fix.implement.text", subclass.getName(), parentClass.getName())
-             : QuickFixBundle.message("implement.or.extend.fix.extend.text", subclass.getName(), parentClass.getName());
+             ? QuickFixBundle.message("add.interface.to.implements.list", subclass.getName(), parentClass.getName())
+             : QuickFixBundle.message("add.class.to.extends.list", subclass.getName(), parentClass.getName());
   }
 
   @Override

@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
+import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
@@ -85,7 +87,7 @@ internal class PyCondaTest {
   @Test
   fun testCondaCreateByYaml() = runTest(timeout = 60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).mapFlat { it.getResultStdoutStr() }.getOrThrow()
+                         LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).asKotlinResult().mapFlat { it.getResultStdoutStr() }.getOrThrow()
     val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
       .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
@@ -98,7 +100,7 @@ internal class PyCondaTest {
   fun testCondaCreateEnv(): Unit = runTest(timeout = 20.seconds) {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).mapFlat { it.getResultStdout() }
+                         EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).asKotlinResult().mapFlat { it.getResultStdout() }
     PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
       .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
   }
@@ -135,9 +137,9 @@ internal class PyCondaTest {
     val siblingEnvPrefix = siblingDir.resolve("siblingEnv").toString()
 
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
+                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).asKotlinResult().mapFlat { it.getResultStdout() }
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
+                         NewCondaEnvRequest.EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).asKotlinResult().mapFlat { it.getResultStdout() }
 
     // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
     // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envsDirs

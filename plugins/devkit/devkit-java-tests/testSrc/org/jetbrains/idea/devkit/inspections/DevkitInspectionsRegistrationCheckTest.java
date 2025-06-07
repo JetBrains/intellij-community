@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -16,8 +16,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    * Inspections that are finished and intentionally disabled.
    */
   private static final List<String> DISABLED_INSPECTIONS =
-    Stream.of("PluginXmlI18n",
-              "SerializableCtor",
+    Stream.of("SerializableCtor",
               "StatisticsCollectorNotRegistered"
     ).sorted().toList();
 
@@ -31,8 +30,9 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
               "CancellationCheckInLoops",
               "ThreadingConcurrency",
               "CallingMethodShouldBeRequiresBlockingContext",
-              "IncorrectCancellationExceptionHandling",
-              "PotentialDeadlockInServiceInitialization"
+              "PotentialDeadlockInServiceInitialization",
+              "ObsoleteDispatchersEdt",
+              "PathAnnotationInspection"
     ).sorted().toList();
 
   /**
@@ -42,7 +42,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin)", 74,
+    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)", 81,
                  devkitInspections.size());
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);

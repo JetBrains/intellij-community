@@ -3,9 +3,12 @@ package com.intellij.util.indexing.storage.fake
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.ValueContainer
+import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.IndexStorage
-import com.intellij.util.indexing.impl.ValueContainerImpl
+import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
@@ -32,7 +35,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 class FakeStorageLayoutProvider : FileBasedIndexLayoutProvider {
-  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
+  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>,
+                                otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>): VfsAwareIndexStorageLayout<K, V> {
     return FakeStorageLayout(extension)
   }
 
@@ -52,14 +56,17 @@ internal class FakeStorageLayout<K, V>(private val extension: FileBasedIndexExte
     return MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
   }
 
-  override fun clearIndexData() {}
+  override fun clearIndexData() = Unit
 }
 
 internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
-  override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope?, idFilter: IdFilter?): Boolean = true
 
-  override fun read(key: K): ValueContainer<V> = ValueContainerImpl.createNewValueContainer()
+  override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope, idFilter: IdFilter?): Boolean = true
 
+  override fun <E : Exception?> read(key: K?, processor: ValueContainerProcessor<V?, E?>): Boolean {
+    return processor.process(ValueContainer.emptyContainer())
+  }
+  
   override fun flush() = Unit
 
   override fun close() = Unit
@@ -67,6 +74,8 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
   override fun addValue(key: K, inputId: Int, value: V) = Unit
 
   override fun removeAllValues(key: K & Any, inputId: Int) = Unit
+
+  override fun updateValue(key: K, inputId: Int, newValue: V) = Unit
 
   override fun clear() = Unit
 

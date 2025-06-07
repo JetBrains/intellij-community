@@ -54,6 +54,7 @@ import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.time.Duration;
@@ -255,6 +256,11 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseExistingInterpreterFix(systemWideSdk, module);
       }
 
+      LocalQuickFix fallbackFix = PyCondaSdkCustomizer.Companion.getInstance().getFallbackInterpreterFix();
+      if (fallbackFix != null) {
+        return fallbackFix;
+      }
+
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
       if (detectedSystemWideSdk != null) {
         return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
@@ -263,7 +269,7 @@ public final class PyInterpreterInspection extends PyInspection {
       return null;
     }
 
-    private static @NotNull List<Sdk> getExistingSdks() {
+    private static @Unmodifiable @NotNull List<Sdk> getExistingSdks() {
       final ProjectSdksModel model = new ProjectSdksModel();
       model.reset(null);
       return ContainerUtil.filter(model.getSdks(), it -> it.getSdkType() instanceof PythonSdkType);

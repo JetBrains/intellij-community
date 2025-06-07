@@ -21,7 +21,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class CoreInjectedLanguageManager extends InjectedLanguageManager {
-  CoreInjectedLanguageManager() {}
+  public CoreInjectedLanguageManager() {}
 
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
@@ -124,5 +124,15 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
   @Override
   public @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return document;
+  }
+
+  @Override
+  public boolean shouldInspectionsBeLenient(@NotNull PsiElement injectedContext) {
+    return false;
+  }
+
+  @Override
+  public boolean isFrankensteinInjection(@NotNull PsiElement injectedContext) {
+    return false;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.HelpID;
@@ -59,6 +60,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       showErrorMessage(parentClass.getProject(), editor, message);
       return false;
     }
+    if (PsiTypes.nullType().equals(type) || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType ||
+        type instanceof PsiMethodReferenceType) {
+      String message = JavaRefactoringBundle.message("variable.type.unknown");
+      showErrorMessage(parentClass.getProject(), editor, message);
+      return false;
+    }
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
       String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
@@ -81,7 +88,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -214,7 +221,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
                                                PsiExpression[] occurrences,
                                                boolean isStatic) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurrences, local, statement);
+        PsiType type = PsiTypesUtil.removeExternalAnnotations(local.getType());
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), type, occurrences, local, statement);
       }
 
       @Override

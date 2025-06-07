@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -9,6 +9,7 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -35,8 +36,9 @@ public class CompressedAppendableFile {
   private static final boolean DO_DEBUG_SELF_CHECKS = SystemProperties.getBooleanProperty("idea.compressed.file.self.check", false);
 
   @VisibleForTesting
+  @ApiStatus.Internal
   //TODO RC: this field is used ONLY in test -- should it be this class's field even?
-  static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
+  public static final int PAGE_LENGTH = SystemProperties.getIntProperty("idea.compressed.file.page.length", 32768);
 
   private static final int MAX_PAGE_LENGTH = 0xFFFF;
 
@@ -317,7 +319,7 @@ public class CompressedAppendableFile {
 
   private void saveNextChunkIfNeeded() throws IOException {
     if (myBufferPosition == myNextChunkBuffer.length) {
-      int dataWrittenCount = 0;
+      int dataWrittenCount;
       try (DataOutputStream stream = getChunkAppendStream()) {
         compress(stream, myNextChunkBuffer);
         dataWrittenCount = stream.getWrittenBytesCount();

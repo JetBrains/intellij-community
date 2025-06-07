@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -19,7 +19,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class Key<T> implements Comparable<Key<?>>, Serializable {
-  @NotNull private final String dataClass;
+  private final @NotNull String dataClass;
 
   private final int processingWeight;
 
@@ -39,13 +39,11 @@ public final class Key<T> implements Comparable<Key<?>>, Serializable {
     this.processingWeight = processingWeight;
   }
 
-  @NotNull
-  public static <T> Key<T> create(@NotNull Class<T> dataClass, int processingWeight) {
+  public static @NotNull <T> Key<T> create(@NotNull Class<T> dataClass, int processingWeight) {
     return new Key<>(dataClass.getName(), processingWeight);
   }
 
-  @NotNull
-  public String getDataType() {
+  public @NotNull String getDataType() {
     return dataClass;
   }
 

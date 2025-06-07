@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.intentions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCopyToClipboard;
 
 public class GrCopyStringConcatenationContentIntentionTest extends GrIntentionTestCase{
   public void testCopyConcatenation() {

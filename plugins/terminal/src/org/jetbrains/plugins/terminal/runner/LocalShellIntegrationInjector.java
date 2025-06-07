@@ -1,13 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,10 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
-import org.jetbrains.plugins.terminal.ShellStartupOptions;
-import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
-import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.*;
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
@@ -31,14 +33,16 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.Optional;
 
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
 
 @ApiStatus.Internal
-public class LocalShellIntegrationInjector {
-
+public final class LocalShellIntegrationInjector {
+  @VisibleForTesting
   public static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
@@ -46,70 +50,11 @@ public class LocalShellIntegrationInjector {
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
-  private final Supplier<Boolean> myBlockTerminalEnabled;
-
-  public LocalShellIntegrationInjector(Supplier<Boolean> isBlockTerminalEnabled) {
-    myBlockTerminalEnabled = isBlockTerminalEnabled;
-  }
-
-  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    return injectShellIntegration(baseOptions, myBlockTerminalEnabled.get());
-  }
-
-  @Nullable
-  private static String findRCFile(@NotNull String shellName) {
-    String rcfile = switch (shellName) {
-      case ShellNameUtil.BASH_NAME, ShellNameUtil.SH_NAME -> "shell-integrations/bash/bash-integration.bash";
-      case ShellNameUtil.ZSH_NAME -> "shell-integrations/zsh/.zshenv";
-      case ShellNameUtil.FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
-      default -> null;
-    };
-    if (rcfile == null && ShellNameUtil.isPowerShell(shellName)) {
-      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
-    }
-    if (rcfile != null) {
-      try {
-        return findAbsolutePath(rcfile);
-      }
-      catch (Exception e) {
-        LOG.warn("Unable to find " + rcfile + " configuration file", e);
-      }
-    }
-    return null;
-  }
-
-  @VisibleForTesting
-  static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
-    String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
-    final File result;
-    if (jarPath.endsWith(".jar")) {
-      File jarFile = new File(jarPath);
-      if (!jarFile.isFile()) {
-        throw new IOException("Broken installation: " + jarPath + " is not a file");
-      }
-      File pluginBaseDir = jarFile.getParentFile().getParentFile();
-      result = new File(pluginBaseDir, relativePath);
-    }
-    else {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && application.isInternal()) {
-        jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
-        String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
-                                        "/community/plugins/terminal/resources/");
-        if (new File(srcDir).isDirectory()) {
-          jarPath = srcDir;
-        }
-      }
-      result = new File(jarPath, relativePath);
-    }
-    if (!result.isFile()) {
-      throw new IOException("Cannot find " + relativePath + ": " + result.getAbsolutePath() + " is not a file");
-    }
-    return result.getAbsolutePath();
-  }
 
   // todo: it would be great to extract block terminal configuration from here
-  private static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options, boolean blockTerminalEnabled) {
+  public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options,
+                                                                    boolean isGenOneTerminal,
+                                                                    boolean isGenTwoTerminal) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -126,7 +71,12 @@ public class LocalShellIntegrationInjector {
     if (rcFilePath != null) {
       boolean isBlockTerminal = isBlockTerminalSupported(shellName);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
-        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile");
+        final var useEel = TerminalStartupKt.shouldUseEelApi();
+        final var eelDescriptor = useEel ? Optional.ofNullable(options.getWorkingDirectory())
+          .map(e -> EelProviderUtil.getEelDescriptor(Path.of(e)))
+          .orElse(null) : null;
+
+        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile", eelDescriptor);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
@@ -134,13 +84,13 @@ public class LocalShellIntegrationInjector {
         integration = new ShellIntegration(ShellType.BASH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (ShellNameUtil.isZshName(shellName)) {
-        String zdotdir = envs.get(ZDOTDIR);
-        if (StringUtil.isNotEmpty(zdotdir)) {
-          envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
+        String originalZDotDir = envs.get(ZDOTDIR);
+        if (StringUtil.isNotEmpty(originalZDotDir)) {
+          envs.put("JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR", originalZDotDir);
         }
-        String zshDir = PathUtil.getParentPath(rcFilePath);
-        envs.put(ZDOTDIR, zshDir);
-        envs.put(IJ_ZSH_DIR, zshDir);
+        String intellijZDotDir = PathUtil.getParentPath(rcFilePath);
+        envs.put(ZDOTDIR, intellijZDotDir);
+        envs.put(IJ_ZSH_DIR, PathUtil.getParentPath(intellijZDotDir));
         integration = new ShellIntegration(ShellType.ZSH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (shellName.equals(ShellNameUtil.FISH_NAME)) {
@@ -157,8 +107,13 @@ public class LocalShellIntegrationInjector {
       }
     }
 
-    if (blockTerminalEnabled && integration != null && integration.getCommandBlockIntegration() != null) {
-      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlockIntegration() != null) {
+      // If Gen1 is enabled, use its integration even if Gen2 is enabled.
+      // So the Gen1 setting takes precedence over Gen2 setting.
+      var commandBlocksOption = isGenOneTerminal
+                                ? "INTELLIJ_TERMINAL_COMMAND_BLOCKS"
+                                : "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED";
+      envs.put(commandBlocksOption, "1");
       // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
       // at startup it runs a sub-shell without IntelliJ shell integration
       envs.put("FIG_TERM", "1");
@@ -185,6 +140,59 @@ public class LocalShellIntegrationInjector {
       .build();
   }
 
+  private static @Nullable String findRCFile(@NotNull String shellName) {
+    String rcfile = switch (shellName) {
+      case ShellNameUtil.BASH_NAME, ShellNameUtil.SH_NAME -> "shell-integrations/bash/bash-integration.bash";
+      case ShellNameUtil.ZSH_NAME -> "shell-integrations/zsh/zdotdir/.zshenv";
+      case ShellNameUtil.FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
+      default -> null;
+    };
+    if (rcfile == null && ShellNameUtil.isPowerShell(shellName)) {
+      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
+    }
+    if (rcfile != null) {
+      try {
+        return findAbsolutePath(rcfile);
+      }
+      catch (Exception e) {
+        LOG.warn("Unable to find " + rcfile + " configuration file", e);
+      }
+    }
+    return null;
+  }
+
+  @VisibleForTesting
+  public static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
+    String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
+    final File result;
+    if (PluginManagerCore.isRunningFromSources()) {
+      result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath).toFile();
+    } else if (jarPath.endsWith(".jar")) {
+      File jarFile = new File(jarPath);
+      if (!jarFile.isFile()) {
+        throw new IOException("Broken installation: " + jarPath + " is not a file");
+      }
+      File pluginBaseDir = jarFile.getParentFile().getParentFile();
+      result = new File(pluginBaseDir, relativePath);
+    }
+    else {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isInternal()) {
+        jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
+        String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
+                                        "/community/plugins/terminal/resources/");
+        if (new File(srcDir).isDirectory()) {
+          jarPath = srcDir;
+        }
+      }
+      result = new File(jarPath, relativePath);
+    }
+    if (!result.isFile()) {
+      throw new IOException("Cannot find " + relativePath + ": " + result.getAbsolutePath() + " is not a file");
+    }
+    return result.getAbsolutePath();
+  }
+
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
     if (loginShell) {
       envs.put(LOGIN_SHELL, "1");
@@ -194,9 +202,16 @@ public class LocalShellIntegrationInjector {
   private static void addRcFileArgument(Map<String, String> envs,
                                         List<String> arguments,
                                         List<String> result,
-                                        String rcFilePath, String rcfileOption) {
+                                        String rcFilePath, String rcfileOption, @Nullable EelDescriptor eelDescriptor) {
     result.add(rcfileOption);
-    result.add(rcFilePath);
+    if (eelDescriptor != null) {
+      final var rcFile = Path.of(rcFilePath);
+      final var bashSupportDir = transferLocalContentToRemote(rcFile.getParent(), new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
+      result.add(asEelPath(bashSupportDir.resolve(rcFile.getFileName().toString())).toString());
+    }
+    else {
+      result.add(rcFilePath);
+    }
     int idx = arguments.indexOf(rcfileOption);
     if (idx >= 0) {
       arguments.remove(idx);
@@ -227,5 +242,4 @@ public class LocalShellIntegrationInjector {
     TerminalWidget widget = options != null ? options.getWidget() : null;
     return widget != null ? ShellTerminalWidget.asShellJediTermWidget(widget) : null;
   }
-
 }

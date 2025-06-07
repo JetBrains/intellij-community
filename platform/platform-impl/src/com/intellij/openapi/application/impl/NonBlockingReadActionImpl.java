@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,11 +7,9 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -20,10 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -36,14 +31,15 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
 import kotlin.Result;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
@@ -64,6 +60,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @VisibleForTesting
+@ApiStatus.Internal
 public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
   private static final Executor SYNC_DUMMY_EXECUTOR = __ -> {
@@ -139,8 +136,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static void invokeLater(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication()
-      .invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+    Application app = ApplicationManager.getApplication();
+    AppImplKt.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+      SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
+        app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
+        return Unit.INSTANCE;
+      });
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
@@ -240,7 +243,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     return submission;
   }
 
-  private static final class Submission<T> extends AsyncPromise<T> {
+  @ApiStatus.Internal
+  public static final class Submission<T> extends AsyncPromise<T> {
     private final @NotNull Executor backendExecutor;
     private final @Nullable String myStartTrace;
     private volatile ProgressIndicator currentIndicator;
@@ -503,7 +507,20 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     T executeSynchronously() {
       try {
         while (true) {
-          attemptComputation();
+          // here we override the context job in case when this code is running under non-cancellable section
+          CoroutineContext context;
+          if (myChildContext.getJob() != null) {
+            context = myChildContext.getContext();
+          }
+          else if (Cancellation.isInNonCancelableSection()) {
+            context = ThreadContext.currentThreadContext().minusKey(Job.Key);
+          }
+          else {
+            context = ThreadContext.currentThreadContext();
+          }
+          try (AccessToken ignored = ThreadContext.installThreadContext(context, true)) {
+            attemptComputation();
+          }
 
           if (isDone()) {
             if (isCancelled()) {
@@ -761,7 +778,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
     }
@@ -797,7 +814,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @TestOnly
-  static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
+  @VisibleForTesting
+  public static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
     return ourTasksByEquality;
   }
 

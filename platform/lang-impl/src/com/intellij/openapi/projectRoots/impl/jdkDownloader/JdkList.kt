@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.diagnostic.LoadingState
@@ -8,18 +9,17 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPackageType.entries
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.*
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
@@ -40,13 +40,14 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.readText
 
 /** describes vendor + product part of the UI **/
 @Internal
 data class JdkProduct(
   val vendor: @NlsSafe String,
   val product: @NlsSafe String?,
-  val flavour: @NlsSafe String?
+  val flavour: @NlsSafe String?,
 ) {
   val packagePresentationText: String
     get() = buildString {
@@ -73,6 +74,7 @@ data class JdkItem(
 
   /** there are some JdkList items that are not shown in the downloader but suggested for JdkAuto **/
   val isVisibleOnUI: Boolean,
+  val isPreview: Boolean,
 
   val jdkMajorVersion: Int,
   @NlsSafe
@@ -103,7 +105,7 @@ data class JdkItem(
 
   val sharedIndexAliases: List<String>,
 
-  private val saveToFile: (Path) -> Unit
+  private val saveToFile: (Path) -> Unit,
 ) {
   val archiveSizeInMB: String = String.format("%.1f", archiveSize.toDouble() / 1024 / 1024)
 
@@ -142,7 +144,7 @@ data class JdkItem(
   private val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
 
-  fun matchesVendor(predicate: String) : Boolean {
+  fun matchesVendor(predicate: String): Boolean {
     val cases = sequence {
       yield(product.vendor)
 
@@ -187,17 +189,18 @@ data class JdkItem(
    * returns Arch if it's expected to be shown, `null` otherwise
    */
   val presentableArchIfNeeded: @NlsSafe String?
-    get() = if (arch != "x86_64") arch else null
+    get() = if (Registry.`is`("jdk.downloader.show.other.arch", false) || arch != "x86_64") arch else null
 
   val fullPresentationText: @NlsSafe String
-    get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+    get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let { " ($it)" } ?: "")
 
   val fullPresentationWithVendorText: @NlsSafe String
-    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let { " ($it)" } ?: "")
 
   companion object {
     fun detectVariant(vendorText: @NlsSafe String): JdkVersionDetector.Variant {
       if (vendorText.contains("Oracle OpenJDK")) return JdkVersionDetector.Variant.Oracle
+      if (vendorText.contains("Microsoft")) return JdkVersionDetector.Variant.Microsoft
       if (vendorText.contains("Corretto")) return JdkVersionDetector.Variant.Corretto
       if (vendorText.contains("BellSoft")) return JdkVersionDetector.Variant.Liberica
       if (vendorText.contains("Azul")) return JdkVersionDetector.Variant.Zulu
@@ -273,13 +276,14 @@ data class JdkPredicate(
     }
 
     private fun createInstance(eel: EelApi, buildNumber: BuildNumber?): JdkPredicate {
-      val platform = when (eel.platform) {
-        EelPlatform.Arm64Darwin -> setOf(JdkPlatform("macOS", "x86_64"), JdkPlatform("macOS", "aarch64"))
-        EelPlatform.X8664Darwin -> setOf(JdkPlatform("macOS", "x86_64"))
-        EelPlatform.Aarch64Linux -> setOf(JdkPlatform("linux", "aarch64"))
-        EelPlatform.X8664Linux -> setOf(JdkPlatform("linux", "x86_64"))
-        EelPlatform.X64Windows -> setOf(JdkPlatform("windows", "x86_64"))
-        // TODO Windows aarch64
+      val platform = when {
+        eel.platform.isMac && eel.platform.isArm64 -> setOf(JdkPlatform("macOS", "x86_64"), JdkPlatform("macOS", "aarch64"))
+        eel.platform.isMac && eel.platform.isX86_64 -> setOf(JdkPlatform("macOS", "x86_64"))
+        eel.platform.isLinux && eel.platform.isArm64 -> setOf(JdkPlatform("linux", "aarch64"))
+        eel.platform.isLinux && eel.platform.isX86_64 -> setOf(JdkPlatform("linux", "x86_64"))
+        eel.platform.isWindows && eel.platform.isX86_64 -> setOf(JdkPlatform("windows", "x86_64"))
+        eel.platform.isWindows && eel.platform.isArm64 -> setOf(JdkPlatform("windows", "aarch64"))
+        else -> emptySet()
       }
       return JdkPredicate(buildNumber, platform)
     }
@@ -416,6 +420,15 @@ data class JdkPredicate(
   }
 }
 
+
+//we need this to install JDK on WSL agents on buildserver
+@Internal
+object ReadJdkItemsForWSL {
+  fun readJdkItems(file: Path): List<JdkItem> {
+    return JdkListParser.parseJdkList(JdkListParser.readTree(file.readText(Charsets.UTF_8)), JdkPredicate.forWSL())
+  }
+
+}
 @Internal
 object JdkListParser {
   fun readTree(rawData: String): JsonObject = Json.decodeFromString<JsonElement>(rawData).jsonObject
@@ -449,6 +462,7 @@ object JdkListParser {
         product = product,
         isDefaultItem = item["default"]?.let { filters.testPredicate(it) == true } ?: false,
         isVisibleOnUI = item["listed"]?.let { filters.testPredicate(it) == true } ?: true,
+        isPreview = item["preview"]?.let { filters.testPredicate(it) == true } ?: false,
 
         jdkMajorVersion = (item["jdk_version_major"] as? JsonPrimitive)?.intOrNull ?: return emptyList(),
         jdkVersion = (item["jdk_version"] as? JsonPrimitive)?.contentOrNull ?: return emptyList(),
@@ -537,12 +551,12 @@ abstract class JdkListDownloaderBase {
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
-  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null) : List<JdkItem> = downloadForUI(progress, feedUrl, JdkPredicate.default())
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null): List<JdkItem> = downloadForUI(progress, feedUrl, JdkPredicate.default())
 
   /**
    * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
    */
-  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null, predicate: JdkPredicate) : List<JdkItem> {
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String? = null, predicate: JdkPredicate): List<JdkItem> {
     //we intentionally disable cache here for all user UI requests, as of IDEA-252237
     val url = feedUrl ?: this.feedUrl
     val raw = downloadJdksListNoCache(url, progress)
@@ -593,11 +607,11 @@ abstract class JdkListDownloaderBase {
 }
 
 private interface RawJdkList {
-  fun getJdks(predicate: JdkPredicate) : List<JdkItem>
+  fun getJdks(predicate: JdkPredicate): List<JdkItem>
 }
 
 private object EmptyRawJdkList : RawJdkList {
-  override fun getJdks(predicate: JdkPredicate) : List<JdkItem> = listOf()
+  override fun getJdks(predicate: JdkPredicate): List<JdkItem> = listOf()
 }
 
 private class RawJdkListImpl(
@@ -608,7 +622,7 @@ private class RawJdkListImpl(
 
   override fun getJdks(predicate: JdkPredicate) = cache.computeIfAbsent(predicate) { parseJson(it) }()
 
-  private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
+  private fun parseJson(predicate: JdkPredicate): () -> List<JdkItem> {
     val result = runCatching {
       try {
         JdkListParser.parseJdkList(json, predicate)
@@ -623,7 +637,7 @@ private class RawJdkListImpl(
 }
 
 private class CachedValueWithTTL<T : Any>(
-  private val ttl: Pair<Int, TimeUnit>
+  private val ttl: Pair<Int, TimeUnit>,
 ) {
   private val lock = ReentrantReadWriteLock()
   private var cachedUrl: String? = null

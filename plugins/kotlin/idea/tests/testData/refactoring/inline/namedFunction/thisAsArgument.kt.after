@@ -1,0 +1,16 @@
+fun foo() {
+    bar { val a: Foo = 1.fooBarBaz(this) }
+}
+
+interface Foo {
+
+    fun Int.fooBarBaz(foo: Foo): Foo = foo
+
+    fun m() {
+        2.fooBarBaz(this)
+    }
+}
+
+fun bar(a: Foo.() -> Unit) {}
+
+// IGNORE_K1

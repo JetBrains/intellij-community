@@ -31,14 +31,12 @@ import java.util.Set;
 public final class SerializableWithUnconstructableAncestorInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "SerializableClassWithUnconstructableAncestor";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass ancestor = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("serializable.with.unconstructable.ancestor.problem.descriptor", ancestor.getName());
   }

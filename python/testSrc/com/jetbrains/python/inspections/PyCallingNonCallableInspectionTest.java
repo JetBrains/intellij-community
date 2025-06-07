@@ -116,9 +116,23 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
                            from typing import TypeVar, Callable, Any
 
                            F = TypeVar('F', bound=Callable[[], Any])
+                           Int = TypeVar('Int', bound=int)
 
-                           def deco(func: F):
-                               func()""")
+                           def deco(func: F, non_func: Int):
+                               func()
+                               <warning descr="'non_func' is not callable">non_func()</warning>""")
+    );
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("""
+                           from typing import TypeVar, Callable, Any
+
+                           F = TypeVar('F', Callable[[], Any], Callable[[], int])
+                           IntOrFloat = TypeVar('IntOrFloat', int, float)
+
+                           def deco(func: F, non_func: IntOrFloat):
+                               func()
+                               <warning descr="'non_func' is not callable">non_func()</warning>""")
     );
   }
 

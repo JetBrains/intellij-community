@@ -5,6 +5,7 @@ package com.intellij.psi;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -28,7 +29,7 @@ public abstract class FileContextProvider {
 
   protected abstract boolean isAvailable(final PsiFile hostFile);
 
-  public abstract @NotNull Collection<PsiFileSystemItem> getContextFolders(final PsiFile hostFile);
+  public abstract @NotNull @Unmodifiable Collection<PsiFileSystemItem> getContextFolders(final PsiFile hostFile);
 
   public abstract @Nullable PsiFile getContextFile(final PsiFile hostFile);
 }

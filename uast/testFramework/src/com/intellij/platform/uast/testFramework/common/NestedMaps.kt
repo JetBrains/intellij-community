@@ -350,7 +350,7 @@ internal fun <A : Appendable> A.withMargin(margin: CharSequence,
       return this
     }
   }
-    .apply { if (withTrailingNewLine) appendln() }.targetInit()
+    .apply { if (withTrailingNewLine) appendLine() }.targetInit()
 
   return this
 }

@@ -12,6 +12,7 @@ import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCount
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogShown
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackSent
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import kotlinx.serialization.json.jsonPrimitive
 import javax.swing.Action
 
 internal class EvaluationFeedbackDialog(
@@ -94,6 +95,7 @@ internal class EvaluationFeedbackDialog(
   }
 
   override fun shouldAutoCloseZendeskTicket(): Boolean {
-    return false
+    val collectedData = collectDataToJsonObject()
+    return collectedData[tellUsMoreJsonElementName]?.jsonPrimitive?.content?.isBlank() ?: return true
   }
 }

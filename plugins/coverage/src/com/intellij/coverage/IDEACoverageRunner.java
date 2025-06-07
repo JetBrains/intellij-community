@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,7 +38,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
+  public @NotNull CoverageLoadingResult loadCoverageData(
+    final @NotNull File sessionDataFile,
+    final @Nullable CoverageSuite coverageSuite,
+    final @NotNull CoverageLoadErrorReporter reporter
+  ) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
@@ -46,6 +51,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
+        reporter.reportWarning("Error reading source map associated with coverage data: " + e.getMessage(), e);
       }
     }
     if (coverageSuite instanceof JavaCoverageSuite javaSuite) {
@@ -60,7 +66,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         javaSuite.setExcludePatterns(excludePatterns);
       }
     }
-    return projectData;
+    return new SuccessCoverageLoadingResult(projectData);
   }
 
   @Override
@@ -80,7 +86,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean testTracking,
                                      final boolean branchCoverage,
                                      @Nullable String sourceMapPath,
-                                     @Nullable final Project project) {
+                                     final @Nullable Project project) {
     final String agentPath = getAgentPath();
     if (agentPath == null) return;
     final String[] excludeAnnotations = getExcludeAnnotations(project);
@@ -101,23 +107,21 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  @Nullable
-  private static String getAgentPath() {
+  private static @Nullable String getAgentPath() {
     final String userDefinedAgentPath = System.getProperty(COVERAGE_AGENT_PATH_PROPERTY);
     final String bundledAgentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String agentPath = userDefinedAgentPath != null ? userDefinedAgentPath : bundledAgentPath;
     return handleSpacesInAgentPath(agentPath);
   }
 
-  @Nullable
-  private static JavaTargetParameter createArgumentTargetParameter(String agentPath,
-                                                                   String sessionDataFilePath,
-                                                                   String @Nullable [] patterns,
-                                                                   String[] excludePatterns,
-                                                                   String[] excludeAnnotations,
-                                                                   boolean testTracking,
-                                                                   boolean branchCoverage,
-                                                                   String sourceMapPath) {
+  private static @Nullable JavaTargetParameter createArgumentTargetParameter(String agentPath,
+                                                                             String sessionDataFilePath,
+                                                                             String @Nullable [] patterns,
+                                                                             String[] excludePatterns,
+                                                                             String[] excludeAnnotations,
+                                                                             boolean testTracking,
+                                                                             boolean branchCoverage,
+                                                                             String sourceMapPath) {
     try {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
@@ -206,7 +210,8 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  static String @NotNull [] convertToPatterns(String @NotNull [] patterns) {
+  @VisibleForTesting
+  public static String @NotNull [] convertToPatterns(String @NotNull [] patterns) {
     final String[] result = new String[patterns.length];
     for (int i = 0; i < patterns.length; i++) {
       String coveragePattern = patterns[i];
@@ -219,7 +224,8 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     return result;
   }
 
-  static String @NotNull [] convertFromPatterns(String @NotNull [] patterns) {
+  @VisibleForTesting
+  public static String @NotNull [] convertFromPatterns(String @NotNull [] patterns) {
     final String[] result = new String[patterns.length];
     for (int i = 0; i < patterns.length; i++) {
       String coveragePattern = patterns[i];
@@ -251,20 +257,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
 
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "IntelliJ IDEA";
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "idea";
   }
 
   @Override
-  @NotNull
-  public String getDataFileExtension() {
+  public @NotNull String getDataFileExtension() {
     return "ic";
   }
 

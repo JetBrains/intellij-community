@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.toolWindow
@@ -8,13 +8,11 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.DesktopLayout
-import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
-import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
@@ -52,7 +50,9 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
 
-  fun setLayout(layout: DesktopLayout): Unit = setLayout(activeLayoutName, layout)
+  fun setLayout(layout: DesktopLayout) {
+    setLayout(activeLayoutName, layout)
+  }
 
   fun setLayout(name: String, layout: DesktopLayout) {
     tracker.incModificationCount()
@@ -78,10 +78,13 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withoutLayout(name)
   }
 
+  @ApiStatus.Internal
   override fun getState(): ToolWindowLayoutStorageManagerState = state
 
+  @ApiStatus.Internal
   override fun getStateModificationCount(): Long = tracker.modificationCount
 
+  @ApiStatus.Internal
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {
@@ -96,6 +99,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, getDefaultLayoutToolWindowDescriptors(isNewUi), isNewUi)
   }
 
+  @ApiStatus.Internal
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
       ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to ToolWindowLayoutDescriptor(v1 = state.v1, v2 = state.v2)))
@@ -114,12 +118,14 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
  * Rider uses default layout for per-app toolwindows feature, so we need to migrate the default layout
  */
 @Serializable
+@ApiStatus.Internal
 data class ToolWindowLayoutStorageManagerStateV1(
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList()
 )
 
 @Serializable
+@ApiStatus.Internal
 data class ToolWindowLayoutStorageManagerState(
   val activeLayoutName: String = ToolWindowDefaultLayoutManager.INITIAL_LAYOUT_NAME,
   val layouts: Map<String, ToolWindowLayoutDescriptor> = emptyMap(),
@@ -168,6 +174,7 @@ data class ToolWindowLayoutStorageManagerState(
 }
 
 @Serializable
+@ApiStatus.Internal
 data class ToolWindowLayoutDescriptor(
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList(),
@@ -249,7 +256,7 @@ private fun convertUnifiedWeightsToDescriptor(unifiedToolWindowWeights: UnifiedT
 }
 
 private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescriptor>): MutableMap<String, WindowInfoImpl> {
-  return list.associateTo(hashMapOf()) { descriptor ->
+  val result = list.associateTo(hashMapOf()) { descriptor ->
     descriptor.id to WindowInfoImpl().apply {
       id = descriptor.id
       order = descriptor.order
@@ -282,6 +289,9 @@ private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescripto
       }
     }
   }
+  val windowInfoList = result.values.toMutableList()
+  normalizeOrder(windowInfoList)
+  return result
 }
 
 private fun convertUnifiedWeightsDescriptorToUnifiedWeights(unifiedWeightsDescriptor: Map<String, Float>): UnifiedToolWindowWeights {

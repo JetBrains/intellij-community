@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,13 +27,12 @@ public abstract class JavaStaticMethodNameCache {
    * @return true if all methods were successfully processed (processor return true for all methods), false otherwise
    */
   public abstract boolean processMethodsWithName(@NotNull Predicate<String> namePredicate,
-                                                 @NotNull final Processor<? super PsiMethod> processor,
+                                                 final @NotNull Processor<? super PsiMethod> processor,
                                                  @NotNull GlobalSearchScope scope,
                                                  @Nullable IdFilter filter);
 
   /**
    * @return the subclass of PsiShortNamesCache that can be replaced by current class for static methods.
    */
-  @NotNull
-  public abstract Class<? extends PsiShortNamesCache> replaced();
+  public abstract @NotNull Class<? extends PsiShortNamesCache> replaced();
 }

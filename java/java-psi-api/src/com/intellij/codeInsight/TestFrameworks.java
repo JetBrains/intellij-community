@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -29,14 +29,11 @@ public abstract class TestFrameworks {
   public abstract boolean isTestClass(@NotNull PsiClass psiClass);
   public abstract boolean isPotentialTestClass(@NotNull PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findSetUpMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findSetUpMethod(PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findTearDownMethod(PsiClass psiClass);
 
   protected abstract boolean hasConfigMethods(PsiClass psiClass);
 
@@ -57,13 +54,11 @@ public abstract class TestFrameworks {
     return isTestClass(psiClass) || hasConfigMethods(psiClass);
   }
 
-  @Nullable
-  public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
+  public static @Nullable TestFramework detectFramework(final @NotNull PsiClass psiClass) {
     return ContainerUtil.getFirstItem(detectApplicableFrameworks(psiClass));
   }
 
-  @NotNull
-  public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
+  public static @NotNull Set<TestFramework> detectApplicableFrameworks(final @NotNull PsiClass psiClass) {
     PsiModifierListOwner normalized = AnnotationCacheOwnerNormalizer.normalize(psiClass);
     return CachedValuesManager.getCachedValue(normalized, () -> CachedValueProvider.Result
       .create(computeFrameworks(normalized), PsiModificationTracker.MODIFICATION_COUNT));

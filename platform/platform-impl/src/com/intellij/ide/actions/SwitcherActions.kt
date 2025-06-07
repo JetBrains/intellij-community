@@ -31,6 +31,11 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
 
   override fun update(event: AnActionEvent) {
+    if (!shouldUseFallbackSwitcher()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabled = event.project != null && !isControlTabDisabled(event)
     event.presentation.isVisible = forward == null
   }
@@ -55,6 +60,11 @@ internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesActio
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
 internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
+    if (!shouldUseFallbackSwitcher()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabledAndVisible = event.project != null
   }
 
@@ -72,6 +82,11 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 
 internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
+    if (!shouldUseFallbackSwitcher()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
   }
 
@@ -90,6 +105,11 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
     Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 
   override fun update(event: AnActionEvent) {
+    if (!shouldUseFallbackSwitcher()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
   }
 
@@ -130,6 +150,11 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
   }
 
   override fun update(event: AnActionEvent) {
+    if (!shouldUseFallbackSwitcher()) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     event.presentation.isEnabledAndVisible = getFileList(event) != null
   }
 

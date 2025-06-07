@@ -24,6 +24,7 @@ public class CycleNode extends PackageDependenciesNode{
     super(project);
   }
 
+  @Override
   public String toString() {
     return JavaBundle.message("cyclic.dependencies.tree.cycle.node.text");
   }

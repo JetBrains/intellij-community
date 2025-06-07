@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
@@ -289,7 +290,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(DefaultLanguageHighlighterColors.IDENTIFIER, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
-    Assertions.assertThat(result.second).isEqualTo(fallbackAttrs);
+    Assertions.assertThat(result.second).isNotSameAs(fallbackAttrs);
+    Assertions.assertThat(ExpectedHighlightingData.sameTextAttributesByValue(result.second, fallbackAttrs)).isTrue();
   }
 
   public void testSaveInheritanceForEmptyAttrs() {
@@ -406,6 +408,37 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
     }
+  }
+
+  @TestFor(issues = "IJPL-26971")
+  public void testTransparencyHexPadding() {
+    // Opacity gets stored in color schemes without padding.
+    var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
+    ensureColorRoundTrips(testColor);
+  }
+
+  @TestFor(issues = "IJPL-26971")
+  public void testColorZeroPadding() {
+    // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
+    var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
+    ensureColorRoundTrips(testColor);
+  }
+
+  private static void ensureColorRoundTrips(Color color) {
+    var defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    var parentScheme = (EditorColorsScheme)defaultScheme.clone();
+    var editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    editorColorsScheme.setName("testEditorColorsScheme");
+
+    var testColorKey = ColorKey.createColorKey("testColorKey");
+    editorColorsScheme.setColor(testColorKey, color);
+
+    var root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    var targetScheme = new EditorColorsSchemeImpl(parentScheme);
+    targetScheme.readExternal(root);
+    var targetColor = targetScheme.getColor(testColorKey);
+    assertEquals(color, targetColor);
   }
 
   public void testWriteDefaultSemanticHighlighting() {

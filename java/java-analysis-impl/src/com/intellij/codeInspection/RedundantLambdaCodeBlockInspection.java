@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -21,10 +21,8 @@ public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLo
   public static final Logger LOG = Logger.getInstance(RedundantLambdaCodeBlockInspection.class);
   private static final @NonNls String SHORT_NAME = "CodeBlock2Expr";
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -33,9 +31,8 @@ public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLo
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -101,9 +98,8 @@ public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLo
   }
 
   private static class ReplaceWithExprFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.expression.lambda");
     }
 

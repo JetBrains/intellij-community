@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -88,8 +88,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return createTemplateFormattingModelInternal(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
   }
 
-  @NotNull
-  protected List<PsiElement> getTreeElementsInsideOuterFragment(
+  protected @NotNull List<PsiElement> getTreeElementsInsideOuterFragment(
     @NotNull TemplateLanguageFileViewProvider viewProvider,
     @NotNull OuterLanguageElement outerTemplateElement
   ) {
@@ -105,7 +104,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       return createTemplateFormattingModelInternal(file, settings, xmlFormattingPolicy, elements, indent);
     }
     catch (FragmentedTemplateException fte) {
-      assert elements.size() > 0;
+      assert !elements.isEmpty();
       int start = Integer.MAX_VALUE;
       int end = -1;
       for (PsiElement element : elements) {
@@ -122,7 +121,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                                           XmlFormattingPolicy xmlFormattingPolicy,
                                                                           List<? extends PsiElement> elements,
                                                                           Indent indent) throws FragmentedTemplateException {
-    if (elements.size() == 0) return null;
+    if (elements.isEmpty()) return null;
     List<Block> templateBlocks = new ArrayList<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiErrorElement) throw new FragmentedTemplateException((PsiErrorElement)element);
@@ -130,14 +129,13 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
         templateBlocks.add(createTemplateLanguageBlock(element.getNode(), settings, xmlFormattingPolicy, indent, null, null));
       }
     }
-    if (templateBlocks.size() == 0) return null;
+    if (templateBlocks.isEmpty()) return null;
     Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : createCompositeTemplateBlock(templateBlocks, xmlFormattingPolicy);
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
   }
 
-  @NotNull
-  protected Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
-                                                                XmlFormattingPolicy xmlFormattingPolicy) {
+  protected @NotNull Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
+                                                        XmlFormattingPolicy xmlFormattingPolicy) {
     return new CompositeTemplateBlock(templateBlocks);
   }
 
@@ -336,8 +334,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return templateBlocks;
   }
 
-  @NotNull
-  protected List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
+  protected @NotNull List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
     return TemplateFormatUtil.findAllElementsInside(range,
                                                     viewProvider,
                                                     true);

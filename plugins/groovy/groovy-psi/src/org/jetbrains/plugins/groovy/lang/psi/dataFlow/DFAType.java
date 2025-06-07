@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
@@ -36,8 +36,7 @@ public final class DFAType {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public DFAType withNewMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
+  public @NotNull DFAType withNewMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
     if (mixin == null) {
       return this;
     }
@@ -52,8 +51,7 @@ public final class DFAType {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public DFAType withNegated(@NotNull NegatingGotoInstruction negation) {
+  public @NotNull DFAType withNegated(@NotNull NegatingGotoInstruction negation) {
     if (mixins.isEmpty()) {
       return this;
     }
@@ -72,8 +70,7 @@ public final class DFAType {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static DFAType merge(DFAType t1, DFAType t2, PsiManager manager) {
+  public static @NotNull DFAType merge(DFAType t1, DFAType t2, PsiManager manager) {
     if (t1.equals(t2)) return t1;
     if (dominates(t1, t2)) {
       return t1;
@@ -112,8 +109,7 @@ public final class DFAType {
     return true;
   }
 
-  @Nullable
-  public PsiType getResultType() {
+  public @Nullable PsiType getResultType() {
     if (mixins.isEmpty()) return primary;
 
     List<PsiType> types = new ArrayList<>();
@@ -133,8 +129,7 @@ public final class DFAType {
     return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));
   }
 
-  @NotNull
-  public static DFAType create(@Nullable PsiType type) {
+  public static @NotNull DFAType create(@Nullable PsiType type) {
     return type == null ? NULL_DFA_TYPE : new DFAType(type);
   }
 
@@ -160,8 +155,7 @@ public final class DFAType {
   }
 
   @Contract("-> new")
-  @NotNull
-  private DFAType copy() {
+  private @NotNull DFAType copy() {
     final DFAType type = new DFAType(primary);
     type.mixins.addAll(mixins);
     return type;

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -12,7 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-final class SubmissionTracker {
+@ApiStatus.Internal
+public final class SubmissionTracker {
   private static final Logger LOG = Logger.getInstance(SubmissionTracker.class);
   private static final String TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE =
     "Too many non-blocking read actions submitted at once";
@@ -21,7 +23,7 @@ final class SubmissionTracker {
   private static final String TOO_MANY_SUBMISSIONS =
     TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE + ". " + SUGGESTIONS;
   @VisibleForTesting
-  static final String ARE_CURRENTLY_ACTIVE = " with similar stack traces are currently active";
+  public static final String ARE_CURRENTLY_ACTIVE = " with similar stack traces are currently active";
 
   private final AtomicInteger myCount = new AtomicInteger();
 

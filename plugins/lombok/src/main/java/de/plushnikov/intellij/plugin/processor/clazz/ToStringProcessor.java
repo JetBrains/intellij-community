@@ -21,8 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static de.plushnikov.intellij.plugin.LombokClassNames.TO_STRING_EXCLUDE;
-import static de.plushnikov.intellij.plugin.LombokClassNames.TO_STRING_INCLUDE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.*;
 
 /**
  * Inspect and validate @ToString lombok annotation on a class
@@ -80,7 +79,8 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   private static void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     final boolean methodAlreadyExists = hasToStringMethodDefined(psiClass);
     if (methodAlreadyExists) {
-      builder.addWarningMessage("inspection.message.not.generated.s.method.with.same.name.already.exists", TO_STRING_METHOD_NAME);
+      builder.addWarningMessage("inspection.message.not.generated.s.method.with.same.name.already.exists", TO_STRING_METHOD_NAME)
+        .withLocalQuickFixes(() -> PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, TO_STRING));
       builder.markFailed();
     }
   }
@@ -97,8 +97,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }
 
-  @NotNull
-  Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  @NotNull Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (hasToStringMethodDefined(psiClass)) {
       return Collections.emptyList();
     }
@@ -111,9 +110,8 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     return Collections.singletonList(stringMethod);
   }
 
-  @NotNull
-  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
-                                        @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
+  public @NotNull PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
+                                                 @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
     final PsiManager psiManager = psiClass.getManager();
 
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
@@ -195,9 +193,8 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     return paramString.toString();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addFieldsAnnotation(result, psiClass, TO_STRING_INCLUDE, TO_STRING_EXCLUDE);
     return result;

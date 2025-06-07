@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
@@ -36,8 +36,7 @@ public class BasicJavaDummyElement extends FileElement {
     myConsumeAll = consumeAll;
   }
 
-  @NotNull
-  public BasicJavaParserUtil.ParserWrapper getParser() {
+  public @NotNull BasicJavaParserUtil.ParserWrapper getParser() {
     return myParser;
   }
 
@@ -45,8 +44,7 @@ public class BasicJavaDummyElement extends FileElement {
     return myConsumeAll;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
@@ -72,8 +70,7 @@ public class BasicJavaDummyElement extends FileElement {
     }
   }
 
-  @Nullable
-  public Throwable getParserError() {
+  public @Nullable Throwable getParserError() {
     return myParserError;
   }
 }

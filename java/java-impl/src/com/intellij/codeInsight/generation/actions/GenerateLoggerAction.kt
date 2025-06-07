@@ -10,9 +10,9 @@ import com.intellij.psi.PsiFile
 
 class GenerateLoggerAction : BaseGenerateAction(GenerateLoggerHandler()) {
 
-  override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean {
-    val element = file.findElementAt(editor.caretModel.offset) ?: return false
-    val module = ModuleUtil.findModuleForFile(file)
+  override fun isValidForFile(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
+    val element = psiFile.findElementAt(editor.caretModel.offset) ?: return false
+    val module = ModuleUtil.findModuleForFile(psiFile)
     val availableLoggers = JvmLogger.findSuitableLoggers(module)
     return availableLoggers.isNotEmpty() && JvmLogger.getPossiblePlacesForLogger(element, availableLoggers).isNotEmpty()
   }

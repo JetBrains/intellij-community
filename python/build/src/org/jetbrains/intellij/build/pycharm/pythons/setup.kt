@@ -2,8 +2,7 @@
 package org.jetbrains.intellij.build.pycharm.pythons
 
 import com.intellij.util.system.OS
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.nio.file.Path
@@ -35,8 +34,7 @@ val Python.directoryName: String
   get() = "$pyenvDefinition-$name-$revision-$os-$arch"
 
 
-private val buildRoot =
-  BuildDependenciesCommunityRoot(IdeaProjectLoaderUtil.guessCommunityHome(BuildDependenciesCommunityRoot::class.java).communityRoot)
+private val buildRoot = BuildPaths.COMMUNITY_ROOT
 
 private val pyEnvHome = buildRoot.communityRoot / "out" / "pyenv"
 private val pythonsHome = buildRoot.communityRoot / "out" / "pythons"

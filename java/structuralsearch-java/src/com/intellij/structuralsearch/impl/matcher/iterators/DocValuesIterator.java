@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -6,7 +6,6 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.tree.IElementType;
 
 import java.util.ArrayList;
 
@@ -16,12 +15,11 @@ import java.util.ArrayList;
 public class DocValuesIterator extends NodeIterator {
   private int index;
   private final ArrayList<PsiElement> tokens = new ArrayList<>(2);
-  private static final IElementType tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
 
   public DocValuesIterator(PsiElement start) {
-    for(PsiElement e = start; e != null; e = e.getNextSibling()) {
+    for (PsiElement e = start; e != null; e = e.getNextSibling()) {
       if (e instanceof PsiDocTagValue) tokens.add(e);
-      else if (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == tokenType) {
+      else if (PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_DATA)) {
         tokens.add(e);
         e = advanceToNext(e);
       }
@@ -34,10 +32,7 @@ public class DocValuesIterator extends NodeIterator {
     if (nextSibling instanceof PsiDocTagValue) e = nextSibling;
 
     nextSibling = e.getNextSibling();
-
-    if (nextSibling instanceof PsiDocToken &&
-        ((PsiDocToken)nextSibling).getTokenType() == tokenType
-       ) {
+    if (PsiDocToken.isDocToken(nextSibling, JavaDocTokenType.DOC_COMMENT_DATA)) {
       e = nextSibling;
     }
     return e;

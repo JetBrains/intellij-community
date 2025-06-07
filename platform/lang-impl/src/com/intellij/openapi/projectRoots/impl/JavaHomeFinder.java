@@ -1,21 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. aversionributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.nio.file.FileSystems;
@@ -27,8 +32,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getLocalEel;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -78,7 +83,7 @@ public abstract class JavaHomeFinder {
    * or that need the embedded JetBrains Runtime.
    */
   public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
-    return suggestHomePaths(getLocalEel(), forceEmbeddedJava);
+    return suggestHomePaths(LocalEelDescriptor.INSTANCE, forceEmbeddedJava);
   }
 
   /**
@@ -88,16 +93,46 @@ public abstract class JavaHomeFinder {
    * @return suggested sdk home paths (sorted)
    */
   public static @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
-    return suggestHomePaths(getEelApiBlocking(project), false);
+    return suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project), false);
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<String> suggestHomePaths(@NotNull EelApi eel, boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(eel, forceEmbeddedJava);
+  public static @NotNull @Unmodifiable List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+    return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), JdkEntry::path);
+  }
+
+  @ApiStatus.Internal
+  public record JdkEntry(@NotNull String path, @Nullable JdkVersionDetector.JdkVersionInfo versionInfo) implements Comparable<JdkEntry> {
+    /// An entry should appear before another one if it has a **more recent** version or a shorter path.
+    @Override
+    public int compareTo(@NotNull JavaHomeFinder.JdkEntry o) {
+      final var v1 = versionInfo != null ? versionInfo.version : null;
+      final var v2 = o.versionInfo != null ? o.versionInfo.version : null;
+      final int v = Comparing.compare(v2, v1);
+      if (v != 0) return v;
+      return Comparing.compare(path, o.path);
+    }
+
+    public @Nullable SdkType.SdkEntry toSdkEntry() {
+      if (versionInfo == null) return null;
+      return new SdkType.SdkEntry(path, versionInfo.displayVersionString());
+    }
+  }
+
+  /**
+   * Returns a list of {@link JdkEntry} containing information about the JDKs detected on the computer.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<JdkEntry> findJdks(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+    JavaHomeFinderBasic javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
-    ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
-    paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
+    return findJdks(javaFinder);
+  }
+
+  private static @NotNull ArrayList<JdkEntry> findJdks(JavaHomeFinderBasic javaFinder) {
+    ArrayList<JdkEntry> paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
+    ContainerUtil.sort(paths);
     return paths;
   }
 
@@ -105,19 +140,19 @@ public abstract class JavaHomeFinder {
     return forceEmbeddedJava || Registry.is("java.detector.enabled", true);
   }
 
-  private static JavaHomeFinderBasic getFinder(@NotNull EelApi eel, boolean forceEmbeddedJava) {
+  private static JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor, boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
-    return getFinder(eel).checkEmbeddedJava(forceEmbeddedJava);
+    return getFinder(descriptor).checkEmbeddedJava(forceEmbeddedJava);
   }
 
   public static @NotNull JavaHomeFinderBasic getFinder(@Nullable Project project) {
-    return getFinder(getEelApiBlocking(project));
+    return getFinder(project == null ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project));
   }
 
-  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelApi eel) {
+  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor) {
     if (Registry.is("java.home.finder.use.eel")) {
-      return javaHomeFinderEel(eel);
+      return javaHomeFinderEel(descriptor);
     }
 
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
@@ -164,7 +199,7 @@ public abstract class JavaHomeFinder {
   }
 
   private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
-    EelApi eel = getEelApiBlocking(path);
+    EelApi eel = toEelApiBlocking(getEelDescriptor(path));
     EelPlatform platform = eel.getPlatform();
     String eelPath = null;
     if (platform instanceof EelPlatform.Windows) {
@@ -175,7 +210,7 @@ public abstract class JavaHomeFinder {
     }
     if (platform instanceof EelPlatform.Linux) {
       String defaultLinuxPathRepresentation = "/opt/java";
-      Path defaultLinuxPath = eel.getMapper().toNioPath(EelPath.Absolute.parse(defaultLinuxPathRepresentation, platform.pathOs()));
+      Path defaultLinuxPath = EelNioBridgeServiceKt.asNioPath(EelPath.parse(defaultLinuxPathRepresentation, eel.getDescriptor()));
       if (Files.exists(defaultLinuxPath)) {
         eelPath = defaultLinuxPathRepresentation;
       }
@@ -183,13 +218,9 @@ public abstract class JavaHomeFinder {
         eelPath = eel.getUserInfo().getHome().toString();
       }
     }
-    if (SystemInfo.isSolaris) {
-      // todo: Do we need solaris in Eel?
-      eelPath = "/usr/jdk";
-    }
     if (eelPath != null) {
-      EelPath.Absolute absoluteLocation = EelPath.Absolute.parse(eelPath, platform.pathOs());
-      return eel.getMapper().toNioPath(absoluteLocation);
+      EelPath absoluteLocation = EelPath.parse(eelPath, eel.getDescriptor());
+      return EelNioBridgeServiceKt.asNioPathOrNull(absoluteLocation);
     }
     return null;
   }

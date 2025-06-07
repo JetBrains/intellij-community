@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -48,5 +47,5 @@ fun MutableEntityStorage.modifySubsetEnumEntity(
 //endregion
 
 enum class SubsetEnumEnum(val type: String) {
-  FIRST(type = "first"), FIFTH(type = "fifth"), THIRD(type = "third")
+  A_ENUM(type = "a"), E_ENUM(type = "e"), C_ENUM(type = "c")
 }

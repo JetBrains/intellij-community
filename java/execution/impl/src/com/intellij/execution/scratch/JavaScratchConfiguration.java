@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.debugger.DebuggerManager;
@@ -48,7 +48,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final String className = getMainClassName();
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
     if (getScratchFileUrl() == null) {
@@ -91,9 +91,8 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
         }
       }
 
-      @NotNull
       @Override
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         if (getRunnerSettings() instanceof DebuggingRunnerData) {
           final VirtualFile vFile = getConfiguration().getScratchVirtualFile();
@@ -116,9 +115,8 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return state;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new JavaScratchConfigurable(getProject());
   }
 
@@ -126,32 +124,27 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     getOptions().setScratchFileUrl(url);
   }
 
-  @Nullable
-  public String getScratchFileUrl() {
+  public @Nullable String getScratchFileUrl() {
     return getOptions().getScratchFileUrl();
   }
 
-  @Nullable
-  public VirtualFile getScratchVirtualFile() {
+  public @Nullable VirtualFile getScratchVirtualFile() {
     final String url = getScratchFileUrl();
     return url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  @NotNull
   @Override
-  protected JavaScratchConfigurationOptions getOptions() {
+  protected @NotNull JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();
   }
 
-  @Nullable
   @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return null;
   }
 }

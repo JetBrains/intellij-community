@@ -2,10 +2,11 @@
 package com.intellij.vcs.log.graph.impl.print.elements
 
 import com.intellij.vcs.log.graph.NodePrintElement
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
-internal class SimplePrintElementImpl(override val rowIndex: Int, override val positionInCurrentRow: Int, graphElement: GraphElement,
+internal class SimplePrintElementImpl(override val rowIndex: VcsLogVisibleGraphIndex, override val positionInCurrentRow: Int, graphElement: GraphElement,
                                       presentationManager: PrintElementPresentationManager) :
   PrintElementBase(graphElement, presentationManager), NodePrintElement {
 

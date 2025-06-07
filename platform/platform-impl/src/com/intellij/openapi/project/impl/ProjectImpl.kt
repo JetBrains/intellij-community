@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.project.impl
@@ -9,7 +9,6 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -21,7 +20,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -39,8 +37,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.platform.project.PROJECT_ID
-import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.registerNewProjectId
+import com.intellij.platform.project.unregisterProjectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
@@ -48,7 +46,10 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.messages.impl.MessageBusEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -81,7 +82,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     val CREATION_TIME: Key<Long> = Key.create("ProjectImpl.CREATION_TIME")
 
     @JvmField
-    val PROJECT_PATH = Key.create<Path>("ProjectImpl.PROJECT_PATH")
+    val PROJECT_PATH: Key<Path> = Key.create<Path>("ProjectImpl.PROJECT_PATH")
 
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
@@ -95,20 +96,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     @TestOnly
     @JvmField
     val USED_TEST_NAMES: Key<String> = Key.create("ProjectImpl.USED_TEST_NAMES")
-
-    // for light projects, preload only services that are essential
-    // ("await" means "project component loading activity is completed only when all such services are completed")
-    internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
-      launch(CoroutineName("project service preloading (sync)")) {
-        project.preloadServices(
-          modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-          activityPrefix = "project ",
-          syncScope = this,
-          onlyIfAwait = project.isLight,
-          asyncScope = project.asyncPreloadServiceScope,
-        )
-      }
-    }
   }
 
   // used by Rider
@@ -143,14 +130,13 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
 
-    @Suppress("LeakingThis")
-    putUserData(PROJECT_ID, ProjectId.create())
+    registerNewProjectId(this)
 
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
     cachedName = projectName
-    // light project may be changed later during test, so we need to remember its initial state
+    // a light project may be changed later during test, so we need to remember its initial state
     @Suppress("TestOnlyProblems")
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
@@ -173,6 +159,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     emptyConstructorMethodType,
   )
 
+  override fun isComponentCreated(): Boolean {
+    return containerState.get() >= ContainerState.COMPONENT_CREATED
+  }
+
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
     if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS) ||
@@ -182,7 +172,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       return false
     }
     else if (ApplicationManager.getApplication().isUnitTestMode && getUserData(RUN_START_UP_ACTIVITIES) == false) {
-      // if test asks to not run RUN_START_UP_ACTIVITIES, it means "ignore start-up activities", but the project considered as initialized
+      // if the test asks to not run RUN_START_UP_ACTIVITIES,
+      // it means "ignore start-up activities", but the project considered as initialized
       return true
     }
     else {
@@ -193,7 +184,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   override fun getName(): String {
     var result = cachedName
     if (result == null) {
-      // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, project name is required on each load of configuration file.
+      // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, a project name is required on each load of configuration file.
       // So the name is computed very early anyway.
       result = componentStore.projectName
       cachedName = result
@@ -228,8 +219,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   final override val componentStore: IProjectStore
     get() = componentStoreValue.value
-
-  final override suspend fun _getComponentStore(): IComponentStore = componentStoreValue.value
 
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
@@ -275,14 +264,15 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       }
     }
 
-    // Must be not only on temporarilyDisposed = true, but also on temporarilyDisposed = false,
+    // Must be not only on temporarilyDisposed = true but also on temporarilyDisposed = false,
     // because events are fired for temporarilyDisposed project between project closing and project opening,
     // and it can lead to cache population.
     // Message bus implementation can be complicated to add "owner.isDisposed" check before getting subscribers,
     // but as the bus is a very important subsystem, it's better to not add any non-production logic.
 
     // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
-    // so, we clear subscriber cache. `isDisposed` for project returns `true` if `temporarilyDisposed`, so, handler will be not added.
+    // so, we clear the subscriber cache.
+    // `isDisposed` for the project returns `true` if `temporarilyDisposed`, so, handler will be not added.
     (messageBus as MessageBusEx).clearAllSubscriberCache()
     isTemporarilyDisposed = value
   }
@@ -338,6 +328,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this)
     }
     projectManager.updateTheOnlyProjectField()
+    unregisterProjectId(this)
     TimedReference.disposeTimed()
     LaterInvocator.purgeExpiredItems()
   }
@@ -364,7 +355,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
           store.projectFilePath
         }
       }
-      catch (e: ClosedFileSystemException) {
+      catch (_: ClosedFileSystemException) {
         "<fs closed>"
       }
     }
@@ -391,8 +382,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       return
     }
 
-    // ensure that expensive save operation is not performed before startupActivityPassed
-    // first save may be quite cost operation, because cache is not warmed up yet
+    // ensure that an expensive save operation is not performed before startupActivityPassed
+    // first save may be a quiet cost operation, because cache is not warmed up yet
     if (!isInitialized) {
       LOG.debug { "Skip save for $name: not initialized" }
       return

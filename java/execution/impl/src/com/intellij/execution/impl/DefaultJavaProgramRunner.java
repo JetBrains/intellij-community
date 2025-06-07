@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -31,14 +31,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.unscramble.AnalyzeStacktraceUtil;
-import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
-import com.intellij.util.ArrayUtil;
+import com.intellij.unscramble.AnalyzeStacktraceUtil;
+import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,8 +46,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -57,11 +53,6 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +61,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
-  private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
+  private static final String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
@@ -79,8 +70,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   }
 
   @Override
-  @NotNull
-  public String getRunnerId() {
+  public @NotNull String getRunnerId() {
     return DEFAULT_JAVA_RUNNER_ID;
   }
 
@@ -148,9 +138,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
   }
 
-  @NotNull
-  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
-                                                                   @NotNull ExecutionEnvironment env)
+  protected @NotNull Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                            @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     boolean isLocal = !((TargetEnvironmentAwareRunProfile)env.getRunProfile()).needPrepareTarget();
@@ -190,7 +179,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       ProcessHandler handler = executionResult != null ? executionResult.getProcessHandler() : null;
       if (handler != null) {
         proxy.attach(handler);
-        handler.addProcessListener(new ProcessAdapter() {
+        handler.addProcessListener(new ProcessListener() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
             proxy.destroy();
@@ -228,9 +217,9 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     final ControlBreakAction controlBreakAction = new ControlBreakAction();
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           processHandler.removeProcessListener(this);
           controlBreakAction.unregisterCustomShortcutSet(consoleComponent);
         }
@@ -290,7 +279,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  public static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
+  static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction() {
@@ -310,44 +299,22 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         return;
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
-      if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
+      if (processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
         String pid = String.valueOf(((BaseProcessHandler<?>)processHandler).getProcess().pid());
         RunTab runTab = event.getData(RunTab.KEY);
         GlobalSearchScope scope =
           runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
         if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
           myExecutor.execute(() -> {
-            VirtualMachine vm = null;
-            try {
-              vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-              InputStream inputStream = (InputStream)vm.getClass()
-                .getMethod("remoteDataDump", Object[].class)
-                .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
-              String text;
-              try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                text = StreamUtil.readText(reader);
-              }
-              List<ThreadState> threads = ThreadDumpParser.parse(text);
+            String dump = ThreadDumpProvider.dump(pid);
+            if (dump != null) {
+              List<ThreadState> threads = ThreadDumpParser.parse(dump);
               ApplicationManager.getApplication().invokeLater(
                 () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), scope),
                 ModalityState.nonModal());
             }
-            catch (AttachNotSupportedException e) {
-              LOG.debug(e);
+            else {
               dumpWithBreak(proxy, project, processHandler);
-            }
-            catch (Exception e) {
-              LOG.warn(e);
-              dumpWithBreak(proxy, project, processHandler);
-            }
-            finally {
-              if (vm != null) {
-                try {
-                  vm.detach();
-                }
-                catch (IOException ignored) {
-                }
-              }
             }
           });
           return;
@@ -378,7 +345,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       super(ExecutionBundle.message("run.configuration.attach.debugger.action.name"), null, AllIcons.Debugger.AttachToProcess);
 
       myProcessHandler = processHandler;
-      myProcessHandler.addProcessListener(new ProcessAdapter() {
+      myProcessHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -505,8 +472,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.nonModal());
   }
 
-  public static final class SoftExitAction extends ProxyBasedAction {
-    public SoftExitAction() {
+  static final class SoftExitAction extends ProxyBasedAction {
+    SoftExitAction() {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit);
     }
 

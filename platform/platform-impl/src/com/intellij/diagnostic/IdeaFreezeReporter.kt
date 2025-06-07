@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.appInfoString
@@ -10,17 +10,18 @@ import com.intellij.idea.AppMode
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.ObjectInputStream
@@ -48,6 +49,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) && !ApplicationManagerEx.isInIntegrationTest()) {
+      throw ExtensionNotApplicableException.create()
+    }
+
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
@@ -55,25 +60,14 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       })
 
-      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer())) {
+      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) || ApplicationManagerEx.isInIntegrationTest()) {
         reportUnfinishedFreezes()
       }
-    }
-
-    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) || !isEnabled(app)) {
-      throw ExtensionNotApplicableException.create()
     }
   }
 
   @Suppress("CompanionObjectInExtension")
   companion object {
-    internal fun setAppInfo(event: IdeaLoggingEvent, appInfo: String?) {
-      val data = event.data
-      if (data is AbstractMessage) {
-        data.appInfo = appInfo
-      }
-    }
-
     internal fun saveAppInfo(appInfoFile: Path, overwrite: Boolean) {
       if (overwrite || !Files.exists(appInfoFile)) {
         Files.createDirectories(appInfoFile.parent)
@@ -81,13 +75,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
     }
 
-    internal fun report(event: IdeaLoggingEvent?) {
-      if (event != null) {
-        // only report to JB
-        val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
-        if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-          MessagePool.getInstance().addIdeFatalMessage(event)
-        }
+    internal fun report(event: LogMessage) {
+      // only report to JB
+      val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
+      if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
+        MessagePool.getInstance().addIdeFatalMessage(event)
       }
     }
 
@@ -134,7 +126,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val edtStack = dump.edtStackTrace
     if (edtStack != null) {
       stacktraceCommonPart = if (stacktraceCommonPart == null) {
-        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RemoveRedundantQualifierName")
         java.util.List.of(*edtStack)
       }
       else {
@@ -166,7 +158,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     if (Registry.`is`("freeze.reporter.enabled", false)) {
-      if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) {
+      if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
         val dumps = ArrayList(currentDumps) // defensive copy
         if (dumpTask.isValid() && dumps.size >= 2) {
           val attachments = ArrayList<Attachment>()
@@ -176,7 +168,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
           }
 
           val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-          report(loggingEvent)
+          if (loggingEvent != null && (application.isEAP || application.isInternal)) {
+            // plugins freezes reported separately via com.intellij.diagnostic.FreezeNotifier
+            report(loggingEvent)
+          }
 
           if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
             for (notifier in FREEZE_NOTIFIER_EP.extensionList) {
@@ -205,14 +200,16 @@ internal class IdeaFreezeReporter : PerformanceListener {
     stacktraceCommonPart = null
   }
 
-  private fun createEvent(dumpTask: SamplingTask,
-                          duration: Long,
-                          attachments: List<Attachment>,
-                          reportDir: Path?,
-                          performanceWatcher: PerformanceWatcher,
-                          finished: Boolean): IdeaLoggingEvent? {
+  private fun createEvent(
+    dumpTask: SamplingTask,
+    duration: Long,
+    attachments: List<Attachment>,
+    reportDir: Path?,
+    performanceWatcher: PerformanceWatcher,
+    finished: Boolean,
+  ): LogMessage? {
     if (!dumpTask.isValid()) return null
-    var infos = dumpTask.threadInfos.toList()
+    val infos = dumpTask.threadInfos.toList()
 
     val causeThreads = infos.mapNotNull { getCauseThread(it) }
     val jitProblem = performanceWatcher.jitProblem
@@ -261,13 +258,13 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     }
     val processCpuLoad = dumpTask.processCpuLoad
     if (processCpuLoad > 0) {
-      message += ", cpu load: ${(processCpuLoad * 100).toInt()}%"
+      message += ", CPU load: ${(processCpuLoad * 100).toInt()}%"
     }
     if (nonEdtCause) {
       message += "\n\nThe stack is from the thread that was blocking EDT"
     }
     val report = createReportAttachment(durationInSeconds, reportText)
-    return LogMessage.eventOf(Freeze(commonStack), message, attachments + report)
+    return LogMessage(Freeze(commonStack), message, attachments + report)
   }
 }
 
@@ -379,7 +376,7 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
  * DEBUG = true overrides all this, and enables freeze detection anyway
  * -- useful, e.g., while developing/debugging freeze detection code itself.
  */
-private const val DEBUG = false
+private val DEBUG = "false".toBoolean()
 
 private suspend fun reportUnfinishedFreezes() {
   ApplicationManager.getApplication().serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->
@@ -453,10 +450,9 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
 
   addDumpsAttachments(dumps, { it }, attachments)
   EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
-  @Suppress("LocalVariableName") val _throwable = throwable
-  if (message != null && _throwable != null && !attachments.isEmpty()) {
-    val event = LogMessage.eventOf(_throwable, message, attachments)
-    IdeaFreezeReporter.setAppInfo(event, appInfo)
+  if (message != null && throwable != null && !attachments.isEmpty()) {
+    val event = LogMessage(throwable, message, attachments)
+    event.appInfo = appInfo
     IdeaFreezeReporter.report(event)
   }
 }

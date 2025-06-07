@@ -25,10 +25,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.impl.source.codeStyle.AdjustCodeStyleSettingsHandler;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +57,8 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isFileSuitable(file) && editor.getSelectionModel().hasSelection() && hasSettingsToShow(editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return isFileSuitable(psiFile) && editor.getSelectionModel().hasSelection() && hasSettingsToShow(editor, psiFile);
   }
 
   private static boolean isFileSuitable(@NotNull PsiFile file) {
@@ -82,17 +84,25 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
-    LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, psiFile);
+    LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, psiFile);
     assert settingsProvider != null;
+    AdjustCodeStyleSettingsHandler handler = ContainerUtil.find(
+      AdjustCodeStyleSettingsHandler.getEP_NAME().getExtensionList(),
+      it -> it.isApplicableFor(psiFile, project)
+    );
+    if (handler != null) {
+      handler.handleAdjustCodestyleAction(psiFile, project);
+      return;
+    }
 
     //reformat before calculating settings to show
     //to avoid considering that arbitrary first setting affects formatting for this fragment
-    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
     textFormatter.reformatSelectedText(settings);
 
-    CodeStyleSettingsToShow settingsToShow = new CodeStyleSettingsCodeFragmentFilter(file, textFormatter.getSelectedRange(), settingsProvider)
+    CodeStyleSettingsToShow settingsToShow = new CodeStyleSettingsCodeFragmentFilter(psiFile, textFormatter.getSelectedRange(), settingsProvider)
       .getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
 
     new FragmentCodeStyleSettingsDialog(editor, textFormatter, settingsProvider, settings, settingsToShow).show();

@@ -7,14 +7,15 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
-import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog, private val coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLogBase<*>, private val coroutineScope: CoroutineScope) {
   private val countBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
   @RequiresEdt
@@ -65,7 +66,7 @@ internal suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invali
   val storageIds = logManager.storageIds()
   thisLogger().assertTrue(storageIds.isNotEmpty())
 
-  runOnDisposedLog {
+  reinit {
     if (invalidateCaches) {
       for (storageId in storageIds) {
         try {

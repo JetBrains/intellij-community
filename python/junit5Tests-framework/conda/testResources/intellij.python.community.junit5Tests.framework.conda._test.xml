@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.python.community.testFramework.testEnv.conda"/>
+  </dependencies>
+</idea-plugin>

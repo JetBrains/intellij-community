@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -248,11 +248,10 @@ public final class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static abstract class ArtifactActionItem implements Runnable {
+  private abstract static class ArtifactActionItem implements Runnable {
     protected final List<ArtifactPopupItem> myArtifactPopupItems;
     protected final Project myProject;
-    @Nls
-    private final String myActionName;
+    private final @Nls String myActionName;
 
     protected ArtifactActionItem(@NotNull List<ArtifactPopupItem> item, @NotNull Project project, @NotNull @Nls String name) {
       myArtifactPopupItems = item;
@@ -266,9 +265,8 @@ public final class BuildArtifactAction extends DumbAwareAction {
   }
 
   private static final class ArtifactPopupItem {
-    @Nullable private final Artifact myArtifact;
-    @Nls
-    private final String myText;
+    private final @Nullable Artifact myArtifact;
+    private final @Nls String myText;
     private final Icon myIcon;
 
     private ArtifactPopupItem(@Nullable Artifact artifact, @Nls String text, Icon icon) {
@@ -277,13 +275,11 @@ public final class BuildArtifactAction extends DumbAwareAction {
       myIcon = icon;
     }
 
-    @Nullable
-    public Artifact getArtifact() {
+    public @Nullable Artifact getArtifact() {
       return myArtifact;
     }
 
-    @Nls
-    public String getText() {
+    public @Nls String getText() {
       return myText;
     }
 
@@ -321,9 +317,8 @@ public final class BuildArtifactAction extends DumbAwareAction {
       return aValue.getIcon();
     }
 
-    @NotNull
     @Override
-    public String getTextFor(ArtifactPopupItem value) {
+    public @NotNull String getTextFor(ArtifactPopupItem value) {
       return value.getText();
     }
 
@@ -351,9 +346,8 @@ public final class BuildArtifactAction extends DumbAwareAction {
       }
       String title = JavaCompilerBundle.message("popup.title.chosen.artifact.action", selectedValues.size());
       return new BaseListPopupStep<>(title, actions) {
-        @NotNull
         @Override
-        public String getTextFor(ArtifactActionItem value) {
+        public @NotNull String getTextFor(ArtifactActionItem value) {
           return value.getActionName();
         }
 

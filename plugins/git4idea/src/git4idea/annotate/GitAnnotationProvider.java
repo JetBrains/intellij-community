@@ -21,11 +21,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.AnnotationWarning;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -52,10 +53,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -111,7 +109,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   @Override
-  public String getActionName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @Nullable String getCustomActionName() {
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
@@ -125,10 +123,16 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   public @NotNull FileAnnotation annotate(final @NotNull FilePath path, final @NotNull VcsRevisionNumber revision) throws VcsException {
     return logTime(() -> {
       GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
-      VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
+      VcsVirtualFile file = new VcsVirtualFile(path, fileRevision);
 
       return annotate(path, revision, file);
     });
+  }
+
+  @Override
+  public @Nullable AnnotationWarning getAnnotationWarnings(@NotNull FileAnnotation fileAnnotation) {
+    GitFileAnnotation gitFileAnnotation = ObjectUtils.tryCast(fileAnnotation, GitFileAnnotation.class);
+    return gitFileAnnotation == null ? null : GitAnnotationWarnings.getInstance(myProject).getAnnotationWarnings(gitFileAnnotation);
   }
 
   private @NotNull GitFileAnnotation annotate(@NotNull FilePath filePath,

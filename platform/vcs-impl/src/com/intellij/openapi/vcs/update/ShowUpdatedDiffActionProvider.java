@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.diff.DiffContentFactoryEx;
@@ -113,12 +99,12 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
   }
 
   private static class MyDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
-    @Nullable private final Project myProject;
-    @NotNull private final Label myBefore;
-    @NotNull private final Label myAfter;
+    private final @Nullable Project myProject;
+    private final @NotNull Label myBefore;
+    private final @NotNull Label myAfter;
 
-    @NotNull private final FileStatus myFileStatus;
-    @NotNull private final FilePath myFilePath;
+    private final @NotNull FileStatus myFileStatus;
+    private final @NotNull FilePath myFilePath;
 
     MyDiffRequestProducer(@Nullable Project project,
                           @NotNull Label before,
@@ -132,27 +118,23 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
       myFilePath = filePath;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myFilePath.getPresentableUrl();
     }
 
-    @NotNull
     @Override
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return myFilePath;
     }
 
-    @NotNull
     @Override
-    public FileStatus getFileStatus() {
+    public @NotNull FileStatus getFileStatus() {
       return myFileStatus;
     }
 
-    @NotNull
     @Override
-    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+    public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       try {
         DiffContent content1;

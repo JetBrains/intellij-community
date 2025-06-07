@@ -15,9 +15,12 @@ class GitIndexFileSystem : VirtualFileSystem(), NonPhysicalFileSystem {
   override fun isReadOnly(): Boolean = false
 
   override fun findFileByPath(path: String): VirtualFile? {
-    val (project, virtualFile, filePath) = GitIndexVirtualFile.decode(path) ?: return null
+    val (project, root, filePath) = GitIndexVirtualFile.decode(path) ?: return null
 
-    return GitIndexFileSystemRefresher.getInstance(project).getFile(virtualFile, filePath)
+    // we do not check actual content here
+    // the returned file is valid, but may stop being such after the first read access
+    // this is a tradeoff with making EditorHistoryManager load every file that was ever loaded
+    return GitIndexFileSystemRefresher.getInstance(project).findFile(root, filePath)
   }
 
   override fun refreshAndFindFileByPath(path: String): VirtualFile? = findFileByPath(path)

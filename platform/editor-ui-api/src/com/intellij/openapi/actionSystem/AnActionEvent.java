@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
@@ -19,7 +19,7 @@ import java.awt.event.MouseEvent;
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
  * @see AnAction#actionPerformed(AnActionEvent)
  * @see AnAction#update(AnActionEvent)
  */
@@ -220,7 +220,7 @@ public class AnActionEvent implements PlaceProvider {
    * @deprecated See the {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)} javadoc.
    * @see #getData(DataKey)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
     if (data == null) throw new AssertionError(key.getName() + " is missing");

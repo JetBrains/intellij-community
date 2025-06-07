@@ -72,12 +72,6 @@ a:com.intellij.structuralsearch.MatchResult
 - a:isScopeMatch():Z
 - a:isTarget():Z
 - a:size():I
-com.intellij.structuralsearch.MatchResultSink
-- a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
-- a:matchingFinished():V
-- a:newMatch(com.intellij.structuralsearch.MatchResult):V
-- a:processFile(com.intellij.psi.PsiFile):V
-- a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
 f:com.intellij.structuralsearch.MatchUtil
 - <init>():V
 - s:containsRegExpMetaChar(java.lang.String):Z
@@ -89,7 +83,7 @@ f:com.intellij.structuralsearch.MatchUtil
 - s:shieldRegExpMetaChars(java.lang.String):java.lang.String
 - s:shieldRegExpMetaChars(java.lang.String,java.lang.StringBuilder):java.lang.StringBuilder
 - s:stripAccents(java.lang.String):java.lang.String
-c:com.intellij.structuralsearch.MatchVariableConstraint
+f:com.intellij.structuralsearch.MatchVariableConstraint
 - com.intellij.structuralsearch.NamedScriptableDefinition
 - <init>():V
 - <init>(java.lang.String):V
@@ -211,7 +205,7 @@ f:com.intellij.structuralsearch.PredefinedConfigurationUtil
 - s:createConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
 - s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.structuralsearch.plugin.ui.Configuration
 - s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
-c:com.intellij.structuralsearch.ReplacementVariableDefinition
+f:com.intellij.structuralsearch.ReplacementVariableDefinition
 - com.intellij.structuralsearch.NamedScriptableDefinition
 - <init>():V
 - <init>(com.intellij.structuralsearch.ReplacementVariableDefinition):V
@@ -331,7 +325,7 @@ f:com.intellij.structuralsearch.StructuralSearchUtil
 c:com.intellij.structuralsearch.UnsupportedPatternException
 - com.intellij.structuralsearch.StructuralSearchException
 - <init>(java.lang.String):V
-c:com.intellij.structuralsearch.XmlStructuralSearchProfile
+f:com.intellij.structuralsearch.XmlStructuralSearchProfile
 - com.intellij.structuralsearch.StructuralSearchProfile
 - <init>():V
 - checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
@@ -376,18 +370,16 @@ a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - setScope(com.intellij.psi.search.SearchScope):V
 - setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
 - setTargetNode(com.intellij.psi.PsiElement):V
-c:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 - com.intellij.dupLocator.AbstractMatchingVisitor
 - sf:UNMATCHED_ELEMENTS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - allowsAbsenceOfMatch(com.intellij.psi.PsiElement):Z
-- p:doMatchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
 - getElement():com.intellij.psi.PsiElement
 - getElement(java.lang.Class):com.intellij.psi.PsiElement
 - getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
-- p:getNodeFilter():com.intellij.dupLocator.util.NodeFilter
 - getResult():Z
-- f:handleTypedElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- handleTypedElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - isLeftLooseMatching():Z
 - isRightLooseMatching():Z
 - match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
@@ -757,7 +749,7 @@ c:com.intellij.structuralsearch.inspection.StructuralSearchAdvertiser
 - com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser
 - <init>():V
 - getCustomGroups():java.util.List
-c:com.intellij.structuralsearch.inspection.StructuralSearchFakeInspection
+f:com.intellij.structuralsearch.inspection.StructuralSearchFakeInspection
 - com.intellij.codeInspection.LocalInspectionTool
 - <init>(java.util.Collection):V
 - createOptionsPanel():javax.swing.JComponent
@@ -876,11 +868,9 @@ c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
 - s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language):java.lang.String
 f:com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil
 - s:copySpacesAndCommentsBefore(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand
+f:com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand
 - com.intellij.structuralsearch.plugin.ui.SearchCommand
 - <init>(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
-- p:createUsageViewContext():com.intellij.structuralsearch.plugin.ui.UsageViewContext
-- p:foundUsage(com.intellij.structuralsearch.MatchResult,com.intellij.usages.Usage):V
 c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
 - com.intellij.structuralsearch.plugin.ui.Configuration
 - sf:REPLACEMENT_VARIABLE_SUFFIX:java.lang.String
@@ -1217,7 +1207,7 @@ c:com.intellij.structuralsearch.plugin.ui.filters.TextFilter
 - hasFilter():Z
 - isApplicable(java.util.List,Z,Z):Z
 - p:setLabel(com.intellij.ui.SimpleColoredComponent):V
-c:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
+f:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
 - com.intellij.structuralsearch.plugin.ui.filters.FilterAction
 - <init>():V
 - clearFilter():V
@@ -1225,7 +1215,6 @@ c:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
 - getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
 - hasFilter():Z
 - isApplicable(java.util.List,Z,Z):Z
-- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
 c:com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
 - com.intellij.structuralsearch.DefaultMatchResultSink
 - <init>():V

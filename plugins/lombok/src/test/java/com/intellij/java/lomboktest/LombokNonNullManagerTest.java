@@ -52,6 +52,10 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
     doAddNullAnnotationTest("custom:lombok.NonNull:org.jetbrains.annotations.Nullable");
   }
 
+  public void testLombokAddNullAnnotationJspecifyConfigProperty() {
+    doAddNullAnnotationTest("jspecify");
+  }
+
   private void doAddNullAnnotationTest(String addNullAnnotation) {
     myFixture.addFileToProject("lombok.config", """
       lombok.addNullAnnotations = #PLACEHOLDER#

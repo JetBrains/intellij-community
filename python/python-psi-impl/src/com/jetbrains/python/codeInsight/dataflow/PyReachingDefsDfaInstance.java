@@ -7,6 +7,7 @@ import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
@@ -35,6 +36,12 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     final PsiElement element = instruction.getElement();
     if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
       return processReducedMap(map, instruction, element);
+    }
+    var scope = ScopeUtil.getScopeOwner(element);
+    if (scope != null) {
+      if (ControlFlowCache.getDataFlow(scope, myContext).isUnreachable(instruction)) {
+        return UNREACHABLE_MARKER;
+      }
     }
     if (instruction instanceof CallInstruction callInstruction) {
       if (callInstruction.isNoReturnCall(myContext)) {
@@ -112,8 +119,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   }
 
   @Override
-  @NotNull
-  public DFAMap<ScopeVariable> initial() {
+  public @NotNull DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;
   }
 }

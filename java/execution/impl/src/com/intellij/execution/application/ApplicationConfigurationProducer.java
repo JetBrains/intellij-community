@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 public class ApplicationConfigurationProducer extends AbstractApplicationConfigurationProducer<ApplicationConfiguration>
   implements DumbAware {
 
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return ApplicationConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 }

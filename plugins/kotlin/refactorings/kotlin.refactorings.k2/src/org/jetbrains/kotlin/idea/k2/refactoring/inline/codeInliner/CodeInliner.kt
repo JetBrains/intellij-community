@@ -1,41 +1,30 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AnnotationEntryReplacementPerformer
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.SuperTypeCallEntryReplacementPerformer
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.collectDescendantsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -79,7 +68,9 @@ class CodeInliner(
             //the originalDeclaration in this case should point to the converted non-physical function
             (call.parent as? KtCallableReferenceExpression
                 ?: treeUpToCall())
-                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration ?: replacement.originalDeclaration
+                .resolveToCall()
+                ?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi?.navigationElement as? KtDeclaration
+                ?: replacement.originalDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration
@@ -125,8 +116,7 @@ class CodeInliner(
         var receiverType =
             receiver?.let {
                 analyze(it) {
-                    val type = it.expressionType
-                    type to (type?.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE)
+                    createTypeDescription(it.expressionType)
                 }
             }
 
@@ -145,11 +135,12 @@ class CodeInliner(
                                 ?: symbol.owningCallableSymbol.callableId?.callableName
                             name?.asString()?.let { "this@$it" } ?: "this"
                         }
+
                         else -> "this"
                     }
                     receiver = psiFactory.createExpression(thisText)
                     val type = receiverValue.type
-                    receiverType = type to (type.nullability == KaTypeNullability.NULLABLE)
+                    receiverType = createTypeDescription(type)
                 }
             }
         }
@@ -161,11 +152,14 @@ class CodeInliner(
                 it is KtThisExpression
             }) {
                 if (instanceExpression.getCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY) != null) {
-                    (instanceExpression.parent as? KtDotQualifiedExpression)?.let {
-                        val selectorExpression = it.selectorExpression
+                    val parent = instanceExpression.parent
+                    if (parent is KtDotQualifiedExpression) {
+                        val selectorExpression = parent.selectorExpression
                         if (selectorExpression != null) {
-                            it.replace(selectorExpression)
+                            codeToInline.replaceExpression(parent, selectorExpression)
                         }
+                    } else if (!parent.isPhysical) {
+                        codeToInline.replaceExpression(instanceExpression, instanceExpression.instanceReference)
                     }
                 } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
                     codeToInline.replaceExpression(instanceExpression, r)
@@ -177,16 +171,18 @@ class CodeInliner(
 
         processTypeParameterUsages(
             callElement = call as? KtCallElement,
-            typeParameters = (originalDeclaration as? KtConstructor<*>)?.containingClass()?.typeParameters ?: (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
+            typeParameters = (originalDeclaration as? KtConstructor<*>)?.containingClass()?.typeParameters
+                ?: (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
             namer = { it.nameAsSafeName },
             typeRetriever = {
-                analyze(callableForParameters) {
-                    call.resolveToCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
+                analyze(call) {
+                    call.resolveToCall()
+                        ?.singleFunctionCallOrNull()?.typeArgumentsMapping?.entries?.find { entry -> entry.key.psi?.navigationElement == it }?.value
                 }
             },
             renderType = {
                 analyze(call) {
-                    it.render(position = Variance.INVARIANT)
+                    (it.approximateToSubPublicDenotable(true) ?: it).render(position = Variance.INVARIANT)
                 }
             },
             isArrayType = {
@@ -211,18 +207,19 @@ class CodeInliner(
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
             val target =
-                psiFactory.createImportDirective(importPath.importPath).mainReference?.resolve() as? KtNamedDeclaration ?: return@mapNotNull null
+                psiFactory.createImportDirective(importPath.importPath).mainReference?.resolve() as? KtNamedDeclaration
+                    ?: return@mapNotNull null
             importPath to target
         }
 
-        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.second == true) {
-            wrapCodeForSafeCall(receiver!!, receiverType?.first, elementToBeReplaced)
+        if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.isMarkedNullable == true) {
+            wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
         } else if (call is KtBinaryExpression && call.operationToken == KtTokens.IDENTIFIER) {
             keepInfixFormIfPossible(importDeclarations.map { it.second })
         }
 
         codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
-        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
+        introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType, introduceValueForParameters)
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
         findAndMarkNewDeclarations()
@@ -234,7 +231,8 @@ class CodeInliner(
         }
         return performer.doIt { range ->
             val pointers = range.filterIsInstance<KtElement>().map { it.createSmartPointer() }.toList()
-            val declarations = pointers.mapNotNull { pointer -> pointer.element?.takeIf { it.getCopyableUserData(NEW_DECLARATION_KEY) != null } as? KtNamedDeclaration }
+            val declarations =
+                pointers.mapNotNull { pointer -> pointer.element?.takeIf { it.getCopyableUserData(NEW_DECLARATION_KEY) != null } as? KtNamedDeclaration }
             if (declarations.isNotEmpty()) {
                 val endOfScope = pointers.last().element?.endOffset ?: error("Can't find the end of the scope")
                 renameDuplicates(declarations, names, endOfScope)
@@ -285,7 +283,7 @@ class CodeInliner(
             }
         }
         declaration2Name.forEach { declaration, newName ->
-            for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
+            for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent)).asIterable()) {
                 if (reference.element.startOffset < endOfScope) {
                     reference.handleElementRename(newName)
                 }
@@ -317,78 +315,140 @@ class CodeInliner(
         callableDescriptor: KtDeclaration
     ): Argument? {
         if (callableDescriptor is KtPropertyAccessor && callableDescriptor.isSetter) {
-            val expr = (call as? KtExpression)
-                ?.getQualifiedExpressionForSelectorOrThis()
-                ?.getAssignmentByLHS()
-                ?.right ?: return null
-            return Argument(expr, analyze(call) { expr.expressionType })
+            return argumentForPropertySetter()
         }
 
-        val expressions = mapping?.entries?.filter { (_, value) ->
+        val argumentExpressionsForParameter = mapping?.entries?.filter { (_, value) ->
             value == parameter.name()
         }?.map { it.key } ?: return null
 
         if (parameter.isVarArg) {
-            return analyze(call) {
-                val single = expressions.singleOrNull()?.parent as? KtValueArgument
-                if (single?.getSpreadElement() != null) {
-                    val expression = expressions.first()
-                    expression.putCopyableUserData(USER_CODE_KEY, Unit)
-                    return Argument(expression, expression.expressionType, isNamed = single.isNamed())
-                }
-                val parameterType = parameter.returnType
-                val elementType = parameterType.arrayElementType ?: return null
-                val expression = psiFactory.buildExpression {
-                    appendFixedText(arrayOfFunctionName(elementType))
-                    appendFixedText("(")
-                    for ((i, argument) in expressions.withIndex()) {
-                        if (i > 0) appendFixedText(",")
-                        val valueArgument = argument.parent as KtValueArgument
-                        if (valueArgument.getSpreadElement() != null) {
-                            appendFixedText("*")
-                        }
-                        val argumentExpression = valueArgument.getArgumentExpression()!!
-                        argumentExpression.putCopyableUserData(USER_CODE_KEY, Unit)
-                        appendExpression(argumentExpression)
-                    }
-                    appendFixedText(")")
-                }
-                Argument(expression, expression.expressionType)
-            }
+            return argumentForVarargParameter(argumentExpressionsForParameter, parameter)
         } else {
-            val expression = expressions.firstOrNull() ?: parameter.defaultValue ?: return null
-            val parent = expression.parent
-            val isNamed = (parent as? KtValueArgument)?.isNamed() == true
-            val resultExpression = run {
-                if (expression !is KtLambdaExpression) return@run null
-                if (parent is LambdaArgument) {
-                    expression.putCopyableUserData(WAS_FUNCTION_LITERAL_ARGUMENT_KEY, Unit)
-                }
+            return argumentForRegularParameter(argumentExpressionsForParameter, parameter, callableDescriptor)
+        }
+    }
 
-                analyze(call) {
-                    if ((expression.expressionType as? KaFunctionType)?.hasReceiver == true) {
-                        //expand to function only for types with an extension
-                        LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
-                    } else {
-                        null
-                    }
-                }?.let { functionText -> LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText) }
-            } ?: expression
-            resultExpression.putCopyableUserData(USER_CODE_KEY, Unit)
+    private fun argumentForRegularParameter(
+        argumentExpressionsForParameter: List<KtExpression>, parameter: KtParameter, callableDeclaration: KtDeclaration
+    ): Argument? {
+        val expression = argumentExpressionsForParameter.firstOrNull() ?: parameter.defaultValue ?: return null
+        val parent = expression.parent
+        val isNamed = (parent as? KtValueArgument)?.isNamed() == true
+        var resultExpression = run {
+            if (expression !is KtLambdaExpression) return@run null
+            if (parent is LambdaArgument) {
+                expression.putCopyableUserData(WAS_FUNCTION_LITERAL_ARGUMENT_KEY, Unit)
+            }
 
-            if (expressions.isEmpty() && callableDescriptor is KtFunction) {
-                //encode default value
-                val allParameters = callableDescriptor.valueParameters()
-                expression.forEachDescendantOfType<KtSimpleNameExpression> {
-                    val target = it.mainReference.resolve()
-                    if (target is KtParameter && target in allParameters) {
-                        it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, target.nameAsSafeName)
-                    }
+            markNonLocalJumps(expression, parameter)
+
+            val flag = analyze(call) {
+                val functionType = expression.expressionType as? KaFunctionType
+                (functionType)?.hasReceiver == true && !functionType.isSuspend
+            }
+
+            val functionText = if (flag) {
+                //expand to function only for types with an extension
+                LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
+            } else {
+                null
+            }
+
+            functionText?.let {
+                val function = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText)
+                function.putCopyableUserData(WAS_CONVERTED_TO_FUNCTION_KEY, Unit)
+                function
+            }
+        } ?: expression
+
+        markAsUserCode(resultExpression)
+
+        val expressionType = analyze(call) { createTypeDescription(resultExpression.expressionType) }
+        if (argumentExpressionsForParameter.isEmpty() && callableDeclaration is KtFunction) {
+            //encode default value
+            val allParameters = callableDeclaration.valueParameters()
+            expression.forEachDescendantOfType<KtSimpleNameExpression> {
+                val target = it.mainReference.resolve()
+                if (target is KtParameter && target in allParameters) {
+                    it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, target.nameAsSafeName)
                 }
             }
 
-            return Argument(resultExpression, analyze(call) { resultExpression.expressionType }, isNamed = isNamed, expressions.isEmpty())
+            resultExpression = expandTypeArgumentsInParameterDefault(expression) ?: resultExpression
         }
+
+        return Argument(resultExpression, expressionType, isNamed = isNamed, argumentExpressionsForParameter.isEmpty())
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(KaSession)
+    private fun createTypeDescription(type: KaType?): TypeDescription? {
+        if (type == null) return null
+        return TypeDescription(
+            type.render(position = Variance.INVARIANT),
+            type is KaErrorType,
+            type.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE
+        )
+    }
+
+    private fun argumentForPropertySetter(): Argument? {
+        val expr = (call as? KtExpression)
+            ?.getQualifiedExpressionForSelectorOrThis()
+            ?.getAssignmentByLHS()
+            ?.right ?: return null
+        return Argument(expr, analyze(call) { createTypeDescription(expr.expressionType) })
+    }
+
+    private fun argumentForVarargParameter(argumentExpressionsForParameter: List<KtExpression>, parameter: KtParameter): Argument? {
+        val single = argumentExpressionsForParameter.singleOrNull()?.parent as? KtValueArgument
+        if (single?.getSpreadElement() != null) {
+            val expression = argumentExpressionsForParameter.first()
+            markAsUserCode(expression)
+            return analyze(call) {
+                Argument(expression, createTypeDescription(expression.expressionType), isNamed = single.isNamed())
+            }
+        }
+
+        val expression = analyze(parameter) {
+            val parameterType = parameter.returnType
+            val elementType = parameterType.arrayElementType ?: return null
+            psiFactory.buildExpression {
+                appendFixedText(arrayOfFunctionName(elementType))
+                appendFixedText("(")
+                for ((i, argument) in argumentExpressionsForParameter.withIndex()) {
+                    if (i > 0) appendFixedText(",")
+                    val valueArgument = argument.parent as KtValueArgument
+                    if (valueArgument.getSpreadElement() != null) {
+                        appendFixedText("*")
+                    }
+                    val argumentExpression = valueArgument.getArgumentExpression()!!
+                    markAsUserCode(argumentExpression)
+                    appendExpression(argumentExpression)
+                }
+
+                appendFixedText(")")
+            }
+        }
+
+        return analyze(expression) {
+            Argument(expression, createTypeDescription(expression.expressionType))
+        }
+    }
+
+    private fun markAsUserCode(expression: KtExpression) {
+        // if type arguments were inserted at the preprocessing stage, markers are already set
+        if (expression.children.all { it.getCopyableUserData(USER_CODE_KEY) == null }) {
+            expression.putCopyableUserData(USER_CODE_KEY, Unit)
+        }
+    }
+
+    private fun markNonLocalJumps(lambdaArgumentExpression: KtLambdaExpression, parameter: KtParameter) {
+        val ownerDeclaration = parameter.ownerDeclaration
+        if (ownerDeclaration !is KtNamedFunction || !ownerDeclaration.hasModifier(KtTokens.INLINE_KEYWORD)) return
+        val isJumpPossible = lambdaArgumentExpression.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
+        if (!isJumpPossible) return
+        lambdaArgumentExpression.accept(NonLocalJumpVisitor(lambdaArgumentExpression))
     }
 
     override fun KtDeclaration.valueParameters(): List<KtParameter> = (this as? KtDeclarationWithBody)?.valueParameters ?: emptyList()
@@ -397,7 +457,7 @@ class CodeInliner(
 
     override fun introduceValue(
         value: KtExpression,
-        valueType: KaType?,
+        valueType: TypeDescription?,
         usages: Collection<KtExpression>,
         expressionToBeReplaced: KtExpression,
         nameSuggestion: String?,
@@ -405,6 +465,26 @@ class CodeInliner(
     ) {
         analyze(value) {
             codeToInline.introduceValue(value, valueType, usages, expressionToBeReplaced, nameSuggestion, safeCall)
+        }
+    }
+}
+
+private class NonLocalJumpVisitor(val lambdaArgumentExpression: KtLambdaExpression) : KtTreeVisitorVoid() {
+    override fun visitBreakExpression(expression: KtBreakExpression) {
+        markIfNonLocal(expression)
+    }
+
+    override fun visitContinueExpression(expression: KtContinueExpression) {
+        markIfNonLocal(expression)
+    }
+
+    private fun markIfNonLocal(expression: KtExpressionWithLabel) {
+        if (expression.getTargetLabel() != null) return
+        val loopForJump = expression.getStrictParentOfType<KtLoopExpression>() ?: return
+        if (PsiTreeUtil.isAncestor(loopForJump, lambdaArgumentExpression, true)) {
+            val loopToken = loopForJump.getCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY) ?: NonLocalJumpToken()
+            loopForJump.putCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY, loopToken)
+            expression.putCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY, loopToken)
         }
     }
 }

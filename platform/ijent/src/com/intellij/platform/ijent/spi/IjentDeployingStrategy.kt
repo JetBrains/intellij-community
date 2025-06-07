@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.deploy
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +27,12 @@ interface IjentDeployingStrategy {
    * @see com.intellij.platform.ijent.IjentExecFileProvider.getIjentBinary
    */
   suspend fun getTargetPlatform(): EelPlatform
+
+  /**
+   * Description of the target environment. This descriptor is accepted by IntelliJ Platform API that works with Eel.
+   * todo: merge it with [getTargetPlatform]
+   */
+  suspend fun getTargetDescriptor(): EelDescriptor
 
   /**
    * Defines a set of options for connecting to a running IJent
@@ -63,6 +70,23 @@ interface IjentDeployingStrategy {
    * The function should not block the thread.
    */
   fun close()
+
+  /**
+   * Validates if a process exit code indicates normal termination.
+   *
+   * Called when [ProcessExitPolicy] is [CHECK_CODE] to determine if termination should raise [IjentUnavailableException].
+   * By default, only exit code 0 is considered normal.
+   *
+   * Common case in containerized environments: when stopping container, all processes receive SIGKILL (137).
+   * To avoid false error reporting, we check container state:
+   * - container.isRunning=false: normal container stop
+   * - container.isRunning=true: process killed unexpectedly
+   *
+   * @param exitCode The exit code returned by the process
+   * @return true if termination is normal, false to trigger error handling
+   * @see ProcessExitPolicy
+   */
+  suspend fun isExpectedProcessExit(exitCode: Int): Boolean = exitCode == 0
 
   interface Posix : IjentDeployingStrategy {
     /** @see [IjentDeployingStrategy.getTargetPlatform] */

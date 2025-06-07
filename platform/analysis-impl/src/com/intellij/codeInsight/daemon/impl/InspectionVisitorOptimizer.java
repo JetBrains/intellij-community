@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ClearableClassValue;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +56,8 @@ public final class InspectionVisitorOptimizer {
     myTargetPsiClasses = getTargetPsiClasses(elements);
   }
 
-  @NotNull @Unmodifiable
-  static List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
     if (!useOptimizedVisitors) return ALL_ELEMENTS_VISIT_LIST;
 
     List<? extends Class<?>> acceptingPsiTypes;
@@ -132,9 +133,14 @@ public final class InspectionVisitorOptimizer {
     return accepts;
   }
 
-  private static final ClassValue<Class<?>[]> SELF_AND_SUPERS = new ClassValue<>() {
+  @ApiStatus.Internal
+  public static void clearCache() {
+    SELF_AND_SUPERS.clear();
+  }
+
+  private static final ClearableClassValue<Class<?>[]> SELF_AND_SUPERS = new ClearableClassValue<>() {
     @Override
-    protected Class<?> @NotNull [] computeValue(@NotNull Class<?> type) {
+    public Class<?> @NotNull [] computeValueImpl(@NotNull Class<?> type) {
       return getAllSupers(type);
     }
 
@@ -190,7 +196,8 @@ public final class InspectionVisitorOptimizer {
     acceptElements(elements, acceptingPsiTypes, element -> element.accept(elementVisitor));
   }
 
-  void acceptElements(@NotNull List<? extends PsiElement> elements,
+  @ApiStatus.Internal
+  public void acceptElements(@NotNull List<? extends PsiElement> elements,
                       @NotNull List<? extends Class<?>> acceptingPsiTypes,
                       @NotNull Consumer<? super PsiElement> consumer) {
     if (acceptingPsiTypes == ALL_ELEMENTS_VISIT_LIST) {

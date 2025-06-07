@@ -1,0 +1,65 @@
+build --nobuild_runfile_links
+common --nolegacy_external_runfiles --experimental_sibling_repository_layout
+
+# Without it it fails in Windows Sandbox with:
+# ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:
+# ---8<---8<--- Start of log, file at C:/users/wdagutilityaccount/_bazel_wdagutilityaccount/ilgdy3ge/bazel-workers/worker-7-JdepsMerge.log ---8<---8<---
+# LAUNCHER ERROR: Rlocation failed on rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# ---8<---8<--- End of log ---8<---8<---
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1309
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+#
+# jdeps is used to check that there are no unused dependencies for target
+# which is we don't need for generator
+build --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
+
+# https://bazel.build/docs/bazel-and-java#hermetic-testing
+# The code is compiled for, executed, and tested on this JVM.
+build --java_language_version=21
+build --java_runtime_version=remotejdk_21
+
+# https://bazel.build/docs/bazel-and-java#config-build-tools-java
+# A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
+# That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
+build --tool_java_language_version=21
+# Java runtime the tools should use
+build --tool_java_runtime_version=remotejdk_21
+
+# see https://bazel.build/external/lockfile
+# use `bazel mod deps --lockfile_mode=refresh` to update lock file
+common --lockfile_mode=error
+common:windows --lockfile_mode=off  # todo: https://youtrack.jetbrains.com/issue/DPE-59
+
+# make sure you don't need to open file to read compilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
+
+# disable deprecated WORKSPACE support
+common --noenable_workspace
+
+test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
+
+# https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
+common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
+
+# Disable symlinks from working copy, they're not needed for the generator and require writing to working copy
+common --experimental_convenience_symlinks=ignore
+
+common --incompatible_strict_action_env=true
+
+common --enable_platform_specific_config
+common --incompatible_enable_proto_toolchain_resolution
+
+# Do not depend on external environment
+build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
+# Remote-caches related
+common --remote_cache=https://packages.jetbrains.team/files/p/ij/intellij-bazel-cache
+common --remote_upload_local_results=false
+common:ci --remote_upload_local_results=true
+
+# More debug on CI
+common:ci --announce_rc
+
+# TeamCity-specific options
+common:teamcity --show_progress_rate_limit=30

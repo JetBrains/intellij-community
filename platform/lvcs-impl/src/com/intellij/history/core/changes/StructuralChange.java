@@ -121,6 +121,7 @@ public abstract class StructuralChange extends Change {
     return Collections.emptyList();
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + myPath;
   }

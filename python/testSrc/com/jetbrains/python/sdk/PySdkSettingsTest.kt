@@ -1,5 +1,5 @@
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.junit.Assert
 import org.junit.Test
 import kotlin.io.path.absolutePathString

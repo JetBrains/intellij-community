@@ -5,14 +5,18 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance;
+
 
 public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   @NotNull
@@ -21,12 +25,13 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     return PyPackageRequirementsInspection.class;
   }
 
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
-    PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+    replacePythonPackageManagerServiceWithTestInstance(myFixture.getProject(), List.of());
   }
 
   public void testPartiallySatisfiedRequirementsTxt() {
@@ -91,8 +96,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
     final VirtualFile pipFileLock = myFixture.findFileInTempDir("Pipfile.lock");
     assertNotNull(pipFileLock);
-    final PyPackageManager packageManager = PyPackageManager.getInstance(getProjectDescriptor().getSdk());
-    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock, packageManager);
+    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock);
     final List<String> names = ContainerUtil.map(requirements, PyRequirement::getName);
     assertNotEmpty(names);
     assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
@@ -104,9 +108,18 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.configureByText("requirements.txt", "pkg[extras]");
 
     final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
-    inspection.ignoredPackages.add("pkg");
+    inspection.getIgnoredPackages().add("pkg");
 
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  // PY-54850
+  public void testRequirementMismatchWarningDisappearsOnInstall() {
+    PythonPackage zopeInterfacePackage = new PythonPackage("zope.interface", "5.4.0", false);
+
+    replacePythonPackageManagerServiceWithTestInstance(myFixture.getProject(), Collections.singletonList(zopeInterfacePackage));
+
+    doMultiFileTest("a.py");
   }
 }

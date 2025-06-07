@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.openapi.observable.operation.OperationExecutionContext
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
@@ -34,10 +36,6 @@ import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatche
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-
-private val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
 
 private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String
@@ -45,13 +43,19 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
 }
 
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
-  return openProject()
-    .withProjectAsync { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it) }
+  return openProject().withProjectAsync { project ->
+    TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+  }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
-  return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project) }
+  try {
+    return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
+  } finally {
+    TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+  }
 }
 
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {

@@ -291,7 +291,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     //nothing in HTML <code> tag
     assertNull(extractText("a.html", "<code>abc</code>def", 7));
     assertEquals("|def", unknownOffsets(extractText("a.html", "<code>abc</code>def", 18)));
+    assertEquals(inlineTagsSupported ? "before | after" : "before|", unknownOffsets(extractText("a.html", "before <code>abc</code> after", 0)));
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<code>abc</code>", 6)));
+
+    assertEquals(inlineTagsSupported ? "before" : "before|", unknownOffsets(extractText("a.html", "before <pre>abc</pre> after", 0)));
 
     // exclude entities
     assertEquals(inlineTagsSupported ? "A | B\tC" : "|A | B|\t|C|",
@@ -301,7 +304,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
       String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
 
       TextContent text = extractText("a.html", longHtml, 9);
-      assertEquals("Hello world|", unknownOffsets(text));
+      assertEquals("Hello world|!|", unknownOffsets(text));
       Assertions.assertArrayEquals(new int[]{0, 5, 6}, text.markupOffsets());
 
       assertEquals("|Another text.", unknownOffsets(extractText("a.html", longHtml, 70)));

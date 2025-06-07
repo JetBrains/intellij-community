@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -37,40 +38,40 @@ public class FunctionExprent extends Exprent {
   public static final int FUNCTION_BOOL_NOT = 12;
   public static final int FUNCTION_NEG = 13;
 
-  public final static int FUNCTION_I2L = 14;
-  public final static int FUNCTION_I2F = 15;
-  public final static int FUNCTION_I2D = 16;
-  public final static int FUNCTION_L2I = 17;
-  public final static int FUNCTION_L2F = 18;
-  public final static int FUNCTION_L2D = 19;
-  public final static int FUNCTION_F2I = 20;
-  public final static int FUNCTION_F2L = 21;
-  public final static int FUNCTION_F2D = 22;
-  public final static int FUNCTION_D2I = 23;
-  public final static int FUNCTION_D2L = 24;
-  public final static int FUNCTION_D2F = 25;
-  public final static int FUNCTION_I2B = 26;
-  public final static int FUNCTION_I2C = 27;
-  public final static int FUNCTION_I2S = 28;
+  public static final int FUNCTION_I2L = 14;
+  public static final int FUNCTION_I2F = 15;
+  public static final int FUNCTION_I2D = 16;
+  public static final int FUNCTION_L2I = 17;
+  public static final int FUNCTION_L2F = 18;
+  public static final int FUNCTION_L2D = 19;
+  public static final int FUNCTION_F2I = 20;
+  public static final int FUNCTION_F2L = 21;
+  public static final int FUNCTION_F2D = 22;
+  public static final int FUNCTION_D2I = 23;
+  public static final int FUNCTION_D2L = 24;
+  public static final int FUNCTION_D2F = 25;
+  public static final int FUNCTION_I2B = 26;
+  public static final int FUNCTION_I2C = 27;
+  public static final int FUNCTION_I2S = 28;
 
-  public final static int FUNCTION_CAST = 29;
-  public final static int FUNCTION_INSTANCEOF = 30;
+  public static final int FUNCTION_CAST = 29;
+  public static final int FUNCTION_INSTANCEOF = 30;
 
-  public final static int FUNCTION_ARRAY_LENGTH = 31;
+  public static final int FUNCTION_ARRAY_LENGTH = 31;
 
-  public final static int FUNCTION_IMM = 32;
-  public final static int FUNCTION_MMI = 33;
+  public static final int FUNCTION_IMM = 32;
+  public static final int FUNCTION_MMI = 33;
 
-  public final static int FUNCTION_IPP = 34;
-  public final static int FUNCTION_PPI = 35;
+  public static final int FUNCTION_IPP = 34;
+  public static final int FUNCTION_PPI = 35;
 
-  public final static int FUNCTION_IIF = 36;
+  public static final int FUNCTION_IIF = 36;
 
-  public final static int FUNCTION_LCMP = 37;
-  public final static int FUNCTION_FCMPL = 38;
-  public final static int FUNCTION_FCMPG = 39;
-  public final static int FUNCTION_DCMPL = 40;
-  public final static int FUNCTION_DCMPG = 41;
+  public static final int FUNCTION_LCMP = 37;
+  public static final int FUNCTION_FCMPL = 38;
+  public static final int FUNCTION_FCMPG = 39;
+  public static final int FUNCTION_DCMPL = 40;
+  public static final int FUNCTION_DCMPG = 41;
 
   public static final int FUNCTION_EQ = 42;
   public static final int FUNCTION_NE = 43;
@@ -186,8 +187,7 @@ public class FunctionExprent extends Exprent {
   private VarType implicitType;
   private final List<Exprent> lstOperands;
   private boolean needsCast = true;
-  @Nullable
-  private VarType inferredType;
+  private @Nullable VarType inferredType;
 
   public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(), bytecodeOffsets);
@@ -219,7 +219,7 @@ public class FunctionExprent extends Exprent {
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     if(inferredType != null) {
       return inferredType;
     }
@@ -279,6 +279,9 @@ public class FunctionExprent extends Exprent {
       exprType = TYPES[funcType - FUNCTION_I2L];
     }
 
+    if (exprType == null) {
+      return VarType.VARTYPE_UNKNOWN;
+    }
     return exprType;
   }
 
@@ -290,7 +293,7 @@ public class FunctionExprent extends Exprent {
       VarType right = lstOperands.get(0).getExprType();
       VarType cast = lstOperands.get(1).getExprType();
 
-      if (upperBound != null && right != null && (upperBound.isGeneric() || right.isGeneric())) {
+      if (upperBound != null && (upperBound.isGeneric() || right.isGeneric())) {
         Map<VarType, List<VarType>> names = this.getNamedGenerics();
         int arrayDim = 0;
 
@@ -325,7 +328,7 @@ public class FunctionExprent extends Exprent {
         }
       }
       else { //TODO: Capture generics to make cast better?
-        this.needsCast = right != null && (right.getType() == CodeConstants.TYPE_NULL ||
+        this.needsCast = (right.getType() == CodeConstants.TYPE_NULL ||
                          !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue()));
       }
     }

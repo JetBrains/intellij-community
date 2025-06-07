@@ -1,17 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
@@ -27,7 +24,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -40,85 +36,129 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
-  private val LISTEN_DELAY = 15.milliseconds
+private val EP_NAME = ExtensionPointName<SaveAndSyncHandlerListener>("com.intellij.saveAndSyncHandlerListener")
+private val LISTEN_DELAY = 15.seconds
 
-  private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+@OptIn(FlowPreview::class)
+private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+  private val refreshKnownLocalRootsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val refreshOpenedFilesRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
-  private val blockSyncOnFrameActivationCount = AtomicInteger()
-
-  private val refreshSession = AtomicReference<RefreshSession?>()
-  private var bgRefreshJob: Job? = null
-  @Volatile private var bgRefreshSession: RefreshSession? = null
+  private val blockSyncCount = AtomicInteger()
 
   private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
   private val currentJob = AtomicReference<Job?>()
 
-  private val eventPublisher: SaveAndSyncHandlerListener
-    get() = ApplicationManager.getApplication().messageBus.syncPublisher(SaveAndSyncHandlerListener.TOPIC)
-
   private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
-    coroutineScope.launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
-      // not collectLatest - wait for previous execution
-      refreshRequests
-        .debounce(300.milliseconds)
-        .collect {
-          val eventPublisher = eventPublisher
-          withContext(Dispatchers.EDT) {
-            writeIntentReadAction {
-              eventPublisher.beforeRefresh()
-              refreshOpenFiles()
-              maybeRefresh(ModalityState.nonModal())
+    coroutineScope.launch {
+      // add listeners after some delay - doesn't make sense to listen earlier
+      delay(LISTEN_DELAY)
+
+      val settings = serviceAsync<GeneralSettings>()
+      launch {
+        listenIdleAndActivate(settings)
+      }
+
+      val refreshQueue = serviceAsync<RefreshQueue>()
+
+      launch(CoroutineName("refresh known local roots requests flow processing")) {
+        val refreshSession = AtomicReference<RefreshSession>()
+        coroutineContext.job.invokeOnCompletion {
+          refreshSession.getAndSet(null)?.cancel()
+        }
+
+        // not collectLatest - wait for previous execution
+        refreshKnownLocalRootsRequests
+          .debounce(300.milliseconds)
+          .collect {
+            if (!isSyncBlocked(settings)) {
+              doRefreshAllKnownLocalRoots(refreshQueue, refreshSession)
             }
           }
-        }
-    }
+      }
 
-    coroutineScope.launch(CoroutineName("save requests flow processing")) {
-      // not collectLatest - wait for previous execution
-      saveRequests.collect {
-        val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
-        if (!forceExecuteImmediately) {
-          delay(300.milliseconds)
-        }
-
-        if (blockSaveOnFrameDeactivationCount.get() != 0) {
-          return@collect
-        }
-
-        val job = currentJob.updateAndGet { oldJob ->
-          oldJob?.cancel()
-          launch(start = CoroutineStart.LAZY) {
-            processTasks(forceExecuteImmediately)
+      launch(CoroutineName("refresh opened files requests flow processing")) {
+        // not collectLatest - wait for previous execution
+        refreshOpenedFilesRequests
+          .debounce(300.milliseconds)
+          .collect {
+            if (!isSyncBlocked(settings)) {
+              doRefreshOpenedFiles(refreshQueue)
+            }
           }
-        }!!
-        try {
-          if (job.start()) {
-            job.join()
+      }
+
+      launch(CoroutineName("save requests flow processing")) {
+        // not collectLatest - wait for previous execution
+        saveRequests.collect {
+          val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+          if (!forceExecuteImmediately) {
+            delay(300.milliseconds)
           }
-        }
-        catch (_: CancellationException) {
-        }
-        finally {
-          currentJob.compareAndSet(job, null)
+
+          if (blockSaveOnFrameDeactivationCount.get() != 0) {
+            return@collect
+          }
+
+          val job = currentJob.updateAndGet { oldJob ->
+            oldJob?.cancel()
+            launch(start = CoroutineStart.LAZY) {
+              processSaveTasks(forceExecuteImmediately)
+            }
+          }!!
+          try {
+            if (job.start()) {
+              job.join()
+            }
+          }
+          catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+          }
+          finally {
+            currentJob.compareAndSet(job, null)
+          }
         }
       }
     }
+  }
 
-    coroutineScope.launch {
-      listenIdleAndActivate()
-    }
+  private fun doRefreshAllKnownLocalRoots(refreshQueue: RefreshQueue, refreshSession: AtomicReference<RefreshSession>) {
+    // We cannot use async=false because `semaphore.waitFor` is used, which can lead to thread starvation.
+    // (While there's compensation for this, it's still not ideal.)
+    // The `debounce` logic never worked as intended — we want to fix that.
+    // A suspend function for refresh will be available soon, so it's better to wait for that.
+    val session = refreshQueue.createSession(
+      /* async = */ true,
+      /* recursive = */ true,
+      /* finishRunnable = */ null,
+      /* state = */ ModalityState.nonModal(),
+    )
+    session.addAllFiles(*ManagingFS.getInstance().localRoots)
 
-    coroutineScope.awaitCancellationAndInvoke {
-      bgRefreshSession?.cancel()
-      refreshSession.get()?.cancel()
+    refreshSession.getAndSet(session)?.cancel()
+    LOG.debug("VFS refresh started (refreshRequests)")
+    session.launch()
+  }
+
+  private fun isSyncBlocked(settings: GeneralSettings): Boolean {
+    if (!settings.isSyncOnFrameActivation) {
+      LOG.debug("VFS refresh rejected: isSyncOnFrameActivation=false")
+      return true
     }
+    return isSyncBlockedTemporarily()
+  }
+
+  private fun isSyncBlockedTemporarily(): Boolean {
+    val blockSyncOnFrameActivationCount = blockSyncCount.get()
+    if (blockSyncOnFrameActivationCount == 0) {
+      return false
+    }
+    LOG.debug { "VFS refresh rejected: blocked=$blockSyncOnFrameActivationCount" }
+    return true
   }
 
   /**
@@ -137,8 +177,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     check(saveRequests.tryEmit(Unit))
   }
 
-  private suspend fun processTasks(forceExecuteImmediately: Boolean) {
-    val eventPublisher = eventPublisher
+  private suspend fun processSaveTasks(forceExecuteImmediately: Boolean) {
     while (true) {
       if (blockSaveOnFrameDeactivationCount.get() != 0) {
         return
@@ -156,25 +195,28 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         return
       }
 
+      for (listener in EP_NAME.extensionList) {
+        runCatching {
+          listener.beforeSave(task, forceExecuteImmediately)
+        }.getOrLogException(LOG)
+      }
+
       runCatching {
-        eventPublisher.beforeSave(task, forceExecuteImmediately)
-        saveProjectsAndApp(task.forceSavingAllSettings, task.project)
+        saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
       }.getOrLogException(LOG)
     }
   }
 
-  private suspend fun listenIdleAndActivate() {
-    // add listeners after some delay - doesn't make sense to listen earlier
-    delay(15.seconds)
-
-    val settings = serviceAsync<GeneralSettings>()
-
-    if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private suspend fun listenIdleAndActivate(settings: GeneralSettings) {
+    if (settings.inactiveTimeout.seconds <= LISTEN_DELAY) {
       executeOnIdle()
     }
 
     ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+        private var backgroundRefreshJob: Job? = null
+
         override fun applicationDeactivated(ideFrame: IdeFrame) {
           externalChangesModificationTracker.incModificationCount()
 
@@ -187,15 +229,17 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
           }
 
           if (settings.isBackgroundSync) {
-            bgRefreshJob = startBackgroundSync()
+            backgroundRefreshJob = startBackgroundSync()
           }
         }
 
         override fun applicationActivated(ideFrame: IdeFrame) {
-          bgRefreshJob?.cancel()
-          bgRefreshJob = null
+          backgroundRefreshJob?.let {
+            backgroundRefreshJob = null
+            it.cancel()
+          }
 
-          if (settings.isSyncOnFrameActivation) {
+          if (settings.isSyncOnFrameActivation && !isSyncBlocked(settings)) {
             scheduleRefresh()
           }
         }
@@ -208,7 +252,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
       .distinctUntilChanged()
       .flatMapConcat { delay ->
-        IdleTracker.getInstance().events.debounce(delay)
+        serviceAsync<IdleTracker>().events.debounce(delay)
       }
       .collect {
         executeOnIdle()
@@ -216,11 +260,10 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun executeOnIdle() {
-    withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
-      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).run {
-        writeIntentReadAction {
-          saveAllDocuments(false)
-        }
+    withContext(Dispatchers.EDT) {
+      val fileDocumentManager = serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl
+      writeIntentReadAction {
+        fileDocumentManager.saveAllDocuments(false)
       }
     }
   }
@@ -263,7 +306,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     var isSavedSuccessfully = true
     var isAutoSaveCancelled = false
     disableAutoSave().use {
-      saveRequests.resetReplayCache()
       val currentJob = currentJob.getAndSet(null)
       currentJob?.let {
         it.cancel(CancellationException("Superseded by explicit save"))
@@ -280,21 +322,24 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
+      @Suppress("DialogTitleCapitalization")
       runWithModalProgressBlocking(
         owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
         title = getProgressTitle(componentManager),
         cancellation = TaskCancellation.nonCancellable(),
       ) {
-        // ensure that is fully canceled
-        currentJob?.join()
+        withContext(NonCancellable) {
+          // ensure that is fully canceled
+          currentJob?.join()
 
-        isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+          isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
 
-        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-          val stateStore = project.stateStore
-          val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-          // update last modified for all project files modified between project open and close
-          ConversionService.getInstance()?.saveConversionResult(path)
+          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+            val stateStore = project.stateStore
+            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
+            // update last modified for all project files modified between project open and close
+            (componentManager as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
+          }
         }
       }
     }
@@ -309,7 +354,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private fun startBackgroundSync(): Job {
     LOG.debug("starting background VFS sync")
-    val t = System.nanoTime()
+    val startTime = System.nanoTime()
     val sessions = AtomicInteger()
     val events = AtomicInteger()
     val job = coroutineScope.launch(CoroutineName("background sync")) {
@@ -318,11 +363,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       val interval = Registry.intValue("vfs.background.refresh.interval", 15).coerceIn(0, Int.MAX_VALUE).seconds
       while (true) {
         delay(interval)
-        if (roots.any { it is NewVirtualFile && it.isDirty }) {
+        if (!isSyncBlockedTemporarily() || roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
-          bgRefreshSession = session
           session.launch()
-          bgRefreshSession = null
           sessions.incrementAndGet()
           events.addAndGet(session.metric("events") as Int)
         }
@@ -330,7 +373,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     }
     job.invokeOnCompletion {
       if (coroutineScope.isActive) {
-        VfsUsageCollector.logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - t), sessions.get(), events.get())
+        VfsUsageCollector.logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - startTime), sessions.get(), events.get())
       }
     }
     return job
@@ -338,42 +381,32 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   override fun scheduleRefresh() {
     externalChangesModificationTracker.incModificationCount()
-    check(refreshRequests.tryEmit(Unit))
+    check(refreshOpenedFilesRequests.tryEmit(Unit))
+    check(refreshKnownLocalRootsRequests.tryEmit(Unit))
   }
 
   override fun maybeRefresh(modalityState: ModalityState) {
-    if (blockSyncOnFrameActivationCount.get() != 0 || !GeneralSettings.getInstance().isSyncOnFrameActivation) {
-      LOG.debug {
-        "VFS refresh rejected: blocked=${blockSyncOnFrameActivationCount.get() != 0}" +
-        " isSyncOnFrameActivation=${GeneralSettings.getInstance().isSyncOnFrameActivation}"
-      }
+    if (isSyncBlocked(GeneralSettings.getInstance())) {
       return
     }
 
     val session = RefreshQueue.getInstance().createSession(true, true, null, modalityState)
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
-    refreshSession.getAndSet(session)?.cancel()
     session.launch()
     LOG.debug("VFS refresh started")
   }
 
   override fun refreshOpenFiles() {
-    val files = getOpenedProjects()
-      .flatMap { FileEditorManager.getInstance(it).selectedEditors.asSequence() }
-      .flatMap { it.filesToRefresh }
-      .filter { it is NewVirtualFile }
-      .toList()
-    if (files.isNotEmpty()) {
-      // refresh open files synchronously, so it doesn't wait for a potentially longish refresh request in the queue to finish
-      RefreshQueue.getInstance().refresh(false, false, null, files)
-    }
+    check(refreshOpenedFilesRequests.tryEmit(Unit))
   }
 
   override fun disableAutoSave(): AccessToken {
     blockSaveOnFrameDeactivation()
+    blockSyncOnFrameActivation()
     return object : AccessToken() {
       override fun finish() {
         unblockSaveOnFrameDeactivation()
+        unblockSyncOnFrameActivation()
       }
     }
   }
@@ -391,28 +424,54 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   override fun blockSyncOnFrameActivation() {
     LOG.debug("sync blocked")
-    blockSyncOnFrameActivationCount.incrementAndGet()
+    blockSyncCount.incrementAndGet()
   }
 
   override fun unblockSyncOnFrameActivation() {
-    blockSyncOnFrameActivationCount.decrementAndGet()
+    blockSyncCount.decrementAndGet()
     LOG.debug("sync unblocked")
   }
+}
 
-  @NlsContexts.ProgressTitle
-  private fun getProgressTitle(componentManager: ComponentManager): String =
-    if (componentManager is Project) IdeBundle.message("progress.saving.project", componentManager.name) else IdeBundle.message("progress.saving.app")
+private suspend fun doRefreshOpenedFiles(refreshQueue: RefreshQueue) {
+  val files = getOpenedProjects()
+    .flatMap { it.serviceIfCreated<FileEditorManager>()?.selectedEditors?.asSequence() ?: emptySequence() }
+    .flatMap { it.filesToRefresh }
+    .filter { it is NewVirtualFile }
+    .toList()
+  if (files.isEmpty()) {
+    return
+  }
 
-  private fun <T> generalSettingFlow(
-    settings: GeneralSettings,
-    name: GeneralSettings.PropertyNames,
-    getter: (GeneralSettings) -> T,
-  ): Flow<T> {
-    return merge(
-      settings.propertyChangedFlow
-        .filter { it == name }
-        .map { getter(GeneralSettings.getInstance()) },
-      flowOf(getter(GeneralSettings.getInstance())),
-    )
+  withContext(Dispatchers.EDT) {
+    writeIntentReadAction {
+      val session = refreshQueue.createSession(
+        /* async = */ false,
+        /* recursive = */ false,
+        /* finishRunnable = */ null,
+        /* state = */ ModalityState.nonModal(),
+      )
+      session.addAllFiles(files)
+      session.launch()
+    }
+  }
+}
+
+private fun <T> generalSettingFlow(settings: GeneralSettings, name: GeneralSettings.PropertyNames, getter: (GeneralSettings) -> T): Flow<T> {
+  return merge(
+    settings.propertyChangedFlow
+      .filter { it == name }
+      .map { getter(GeneralSettings.getInstance()) },
+    flowOf(getter(GeneralSettings.getInstance())),
+  )
+}
+
+@NlsContexts.ProgressTitle
+private fun getProgressTitle(componentManager: ComponentManager): String {
+  if (componentManager is Project) {
+    return IdeBundle.message("progress.saving.project", componentManager.name)
+  }
+  else {
+    return IdeBundle.message("progress.saving.app")
   }
 }

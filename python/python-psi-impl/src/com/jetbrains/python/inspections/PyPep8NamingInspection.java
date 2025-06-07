@@ -106,11 +106,10 @@ public final class PyPep8NamingInspection extends PyInspection {
     return fixes.toArray(new LocalQuickFix[fixes.size()]);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -125,14 +124,13 @@ public final class PyPep8NamingInspection extends PyInspection {
       }
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("INSP.pep8.ignore.method.names.for.descendants.of.class");
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       PythonUiService.getInstance().showPopup(project, getBaseClassNames(), PyPsiBundle.message("INSP.pep8.ignore.base.class"),
                                               (selectedValue) -> InspectionProfileModifiableModelKt
                                                 .modifyAndCommitProjectProfile(project, it -> {
@@ -162,9 +160,8 @@ public final class PyPep8NamingInspection extends PyInspection {
       myCode = code;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.errors.like.this");
     }
 
@@ -238,7 +235,7 @@ public final class PyPep8NamingInspection extends PyInspection {
       }
     }
 
-    protected void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
+    protected void registerAndAddRenameAndIgnoreErrorQuickFixes(final @Nullable PsiElement node, final @NotNull String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly()) {
         registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIgnoreErrorQuickFixes(node, errorCode));
       }

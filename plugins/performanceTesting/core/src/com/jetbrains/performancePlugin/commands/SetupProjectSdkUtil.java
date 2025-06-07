@@ -1,5 +1,7 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +38,11 @@ public final class SetupProjectSdkUtil {
       });
     });
     return sdkRef.get();
+  }
+
+  @VisibleForTesting
+  public static boolean isApplicationLoaded() {
+    return LoadingState.APP_STARTED.isOccurred();
   }
 
   @VisibleForTesting

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -425,7 +427,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return null;
   }
 
-  public @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
+  public @Unmodifiable @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = null;
     for (Tools toolList : myTools.values()) {
@@ -562,8 +564,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
 
-      if (toolWrapper instanceof LocalInspectionToolWrapper &&
-          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+      if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isDynamicGroup() &&
           // some settings were read for the tool, so it must be initialized, otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
         ToolsImpl parent = myTools.get(toolWrapper.getShortName());
@@ -623,18 +624,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
-      if (toolWrapper instanceof LocalInspectionToolWrapper) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
-                                           ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
+      if (toolWrapper instanceof LocalInspectionToolWrapper local) {
+        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID());
       }
       else {
         key = HighlightDisplayKey.register(shortName, computable, shortName);
       }
-    }
-
-    if (key == null) {
-      LOG.error(shortName + " ; number of initialized tools: " + myTools.size());
-      return;
+      if (key == null) {
+        PluginException.logPluginError(LOG, "Couldn't register HighlightDisplayKey '"+shortName + "' ; number of initialized tools: " + myTools.size()+"; toolWrapper:"+toolWrapper+"; extension:"+extension, null, toolWrapper.getDescriptionContextClass());
+        return;
+      }
     }
 
     HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
@@ -680,8 +679,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   private static @Nullable InspectionElementsMergerBase getMerger(@NotNull String shortName) {
     InspectionElementsMerger merger = InspectionElementsMerger.getMerger(shortName);
-    if (merger instanceof InspectionElementsMergerBase) {
-      return (InspectionElementsMergerBase)merger;
+    if (merger instanceof InspectionElementsMergerBase base) {
+      return base;
     }
     return merger == null ? null : new InspectionElementsMergerBase() {
       @Override
@@ -1126,9 +1125,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
       // returns true when settings are default, so defaults will not be saved in profile
       boolean enabled = myWrapper.isEnabledByDefault();
-      return Boolean.parseBoolean(element.getAttributeValue("enabled")) == enabled &&
-             Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == enabled &&
-             myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+      return Boolean.parseBoolean(element.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE)) == enabled &&
+             Boolean.parseBoolean(element.getAttributeValue(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE)) == enabled &&
+             myWrapper.getDefaultLevel().getName().equals(element.getAttributeValue(ToolsImpl.LEVEL_ATTRIBUTE)) &&
              element.getChildren("scope").isEmpty();
     }
   }

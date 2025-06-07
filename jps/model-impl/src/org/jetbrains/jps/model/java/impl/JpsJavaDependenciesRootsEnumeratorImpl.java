@@ -46,7 +46,8 @@ class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumera
     }
     else {
       includeProduction = true;
-      includeTests = !myDependenciesEnumerator.isProductionOnly();
+      includeTests = !myDependenciesEnumerator.isProductionOnly() 
+                     && (myDependenciesEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath() || myDependenciesEnumerator.isEnumerationRootModule(module));
     }
 
     if (myRootType == JpsOrderRootType.SOURCES) {

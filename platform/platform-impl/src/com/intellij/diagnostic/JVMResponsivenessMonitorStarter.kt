@@ -6,6 +6,8 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 /** Starts [JVMResponsivenessMonitor] on app start */
 private class JVMResponsivenessMonitorStarter : ApplicationActivity {
@@ -19,6 +21,9 @@ private class JVMResponsivenessMonitorStarter : ApplicationActivity {
   }
 
   override suspend fun execute() {
+    while (!LoadingState.APP_STARTED.isOccurred) {
+      delay(5.seconds)
+    }
     if (!DebugAttachDetector.isDebugEnabled()) {
       serviceAsync<JVMResponsivenessMonitor>()
     }

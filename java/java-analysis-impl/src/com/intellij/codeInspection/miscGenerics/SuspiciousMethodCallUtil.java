@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -15,10 +15,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -209,13 +206,12 @@ public final class SuspiciousMethodCallUtil {
            MethodSignatureUtil.findMethodBySignature(bClass, inheritorCandidate.getSignature(substitutor), false) == base;
   }
 
-  @Nullable
-  public static @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
-                                                                         PsiExpression arg,
-                                                                         PsiType argType,
-                                                                         boolean reportConvertibleMethodCalls,
-                                                                         @NotNull List<PatternMethod> patternMethods,
-                                                                         int idx) {
+  public static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
+                                                                                   PsiExpression arg,
+                                                                                   PsiType argType,
+                                                                                   boolean reportConvertibleMethodCalls,
+                                                                                   @NotNull List<PatternMethod> patternMethods,
+                                                                                   int idx) {
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
 
     if (arg instanceof PsiConditionalExpression &&
@@ -227,12 +223,11 @@ public final class SuspiciousMethodCallUtil {
     return getSuspiciousMethodCallMessage(methodExpression, argType, reportConvertibleMethodCalls, patternMethods, idx);
   }
 
-  @Nullable
-  static @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
-                                                                  PsiType argType,
-                                                                  boolean reportConvertibleMethodCalls,
-                                                                  @NotNull List<PatternMethod> patternMethods,
-                                                                  int argIdx) {
+  static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
+                                                                            PsiType argType,
+                                                                            boolean reportConvertibleMethodCalls,
+                                                                            @NotNull List<PatternMethod> patternMethods,
+                                                                            int argIdx) {
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
     if (argType instanceof PsiPrimitiveType) {
@@ -358,7 +353,8 @@ public final class SuspiciousMethodCallUtil {
     return false;
   }
 
-  static class PatternMethod {
+  @ApiStatus.Internal
+  public static final class PatternMethod {
     PsiMethod patternMethod;
     int typeParameterIdx;
     int argIdx;

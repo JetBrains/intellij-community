@@ -62,7 +62,8 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
     var similarityScore: Double? = null
 

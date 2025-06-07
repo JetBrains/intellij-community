@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
-val KOTLIN_CAST_REQUIRED_COLOR = JBColor(0x4E4040, 0x969696)
+val KOTLIN_CAST_REQUIRED_COLOR: JBColor = JBColor(0x4E4040, 0x969696)
 
 tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
     if (this is LookupElementDecorator<*>) {
@@ -74,7 +74,7 @@ fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 enum class ItemPriority {
     SUPER_METHOD_WITH_ARGUMENTS,
     FROM_UNRESOLVED_NAME_SUGGESTION,
-    GET_OPERATOR,
+    BRACKET_OPERATOR,
     DEFAULT,
     IMPLEMENT,
     OVERRIDE,
@@ -168,9 +168,12 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
 }
 
 fun findValueArgument(expression: KtExpression): KtValueArgument? {
-    // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231
-    return expression.parent as? KtValueArgument
-        ?: expression.parent.parent as? KtValueArgument
+    // Search for value argument among parents to avoid parsing errors like KTIJ-18231 and KTIJ-30471
+    // The parsing errors in value argument lists in the relevant positions always seem to be a binary
+    // operation with an identifier as operation.
+    return expression.parents
+        .dropWhile { it is KtBinaryExpression && it.operationToken == KtTokens.IDENTIFIER }
+        .firstOrNull() as? KtValueArgument
 }
 
 infix fun <T> ElementPattern<T>.and(rhs: ElementPattern<T>) = StandardPatterns.and(this, rhs)
@@ -215,7 +218,7 @@ fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
 }
 
 fun isPositionInsideImportOrPackageDirective(position: PsiElement): Boolean =
-   position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
+    position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
 
 fun KtElement.reference() = when (this) {
     is KtCallExpression -> calleeExpression?.mainReference

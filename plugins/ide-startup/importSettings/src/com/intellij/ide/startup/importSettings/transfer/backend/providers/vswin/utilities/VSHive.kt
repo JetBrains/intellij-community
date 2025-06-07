@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.utilities
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSIsolationIniParser
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSRegistryParserNew
+import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSIsolationIniParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.openapi.diagnostic.logger
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 
 class VSHiveDetourFileNotFoundException : Exception()
-class VSHiveDetourFileReadErrorException(t: Throwable?) : Exception(t)
 
 private val logger = logger<VSHive>()
 // Example: "15.0_a0848a47Exp", where VS version = "15.0", Instance Id = "a0848a47", Root Suffix = "Exp".
@@ -25,7 +27,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   val isolation: VSIsolationIniParser? by lazy { VSIsolationIniParser.create(this) }
 
   val isInstalled: Boolean by lazy { registry?.envPath?.second.let { it != null && it.exists() } }
-  val lastUsage: Date by lazy { registry?.settingsFile?.lastModified().let { Date(it ?: 0) } }
+  val lastUsage: Date by lazy { registry?.settingsFile?.getLastModifiedTime().let { Date(it?.toMillis() ?: 0L) } }
   val edition: String? by lazy { isolation?.edition }
 
   init {
@@ -63,12 +65,10 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   }
 
   companion object {
-    const val LATEST_VS_VERSION: Int = 16
-
-    val regex: Regex = Regex("\\b(?:(?:([0-9]{1,2}).([0-9]))(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*))\\b")
+    val regex: Regex = Regex("\\b([0-9]{1,2})\\.([0-9])(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*)\\b")
 
     fun parse(hive: String, type: Types = Types.All): VSHive? {
-      logger.info("Starting $hive on type $type")
+      logger.trace("Starting $hive on type $type")
 
       val spl = regex.find(hive) ?: return null
       val (maj, min, instId, rtSuf) = spl.destructured
@@ -76,8 +76,8 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       val ver = try {
         Version2(maj.toInt(), min.toInt())
       }
-      catch (e: NumberFormatException) {
-        logger.warn("Bad major or minor version number ($hive)")
+      catch (_: NumberFormatException) {
+        logger.info("Bad major or minor version number ($hive)")
         return null
       }
 
@@ -87,12 +87,12 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       }
 
       if (type == Types.New && instId.length != 8) {
-        logger.warn("Requested only new vs, but got something other ($hive)")
+        logger.trace("Requested only new vs, but got something other ($hive)")
         return null
       }
 
       if (maj.toInt() < 14) { // 2015
-        logger.warn("Unsupported version ($hive)")
+        logger.trace("Unsupported version ($hive)")
         return null
       }
 
@@ -103,7 +103,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       }
        */
 
-      logger.info("Parsed $hive")
+      logger.trace("Parsed $hive")
 
       return VSHive(ver, instId.ifEmpty { null }, rtSuf.ifEmpty { null }).apply {
         logger.assertTrue(hive == this.hiveString, "different hive string")

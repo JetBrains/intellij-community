@@ -92,9 +92,8 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
     return super.addInternal(first, last, anchor, before);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getAttributes());
   }
 }

@@ -1,44 +1,47 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
 
 @ApiStatus.NonExtendable
-interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : ScriptElementBuilder {
+interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
+  : GradleSettingScriptBuilderCore<Self> {
 
-  fun setProjectName(projectName: String): Self
+  fun include(relativePath: Path): Self
 
-  fun include(vararg name: String): Self
-
-  fun includeFlat(vararg name: String): Self
-
-  fun includeBuild(name: String): Self
-
-  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit)
-
-  fun enableFeaturePreview(featureName: String): Self
-
-  fun addCode(text: String): Self
-
-  fun addCode(expression: Expression): Self
-
-  fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self
-
-  fun generateTree(): BlockElement
-
-  fun generate(): String
+  fun withFoojayPlugin(): Self
 
   companion object {
 
     @JvmStatic
-    fun create(useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
-      return when (useKotlinDsl) {
-        true -> KotlinDslGradleSettingScriptBuilder()
-        else -> GroovyDslGradleSettingScriptBuilder()
+    fun create(gradleVersion: GradleVersion, useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
+      return create(gradleVersion, GradleDsl.valueOf(useKotlinDsl))
+    }
+
+    @JvmStatic
+    fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleSettingScriptBuilder<*> {
+      return when (gradleDsl) {
+        GradleDsl.GROOVY -> GroovyDslGradleSettingScriptBuilder.Impl(gradleVersion)
+        GradleDsl.KOTLIN -> KotlinDslGradleSettingScriptBuilder.Impl(gradleVersion)
+      }
+    }
+
+    @JvmStatic
+    fun settingsScript(gradleVersion: GradleVersion, gradleDsl: GradleDsl, configure: GradleSettingScriptBuilder<*>.() -> Unit): String {
+      return create(gradleVersion, gradleDsl)
+        .apply(configure)
+        .generate()
+    }
+
+    @JvmStatic
+    fun getSettingsScriptName(gradleDsl: GradleDsl): String {
+      return when (gradleDsl) {
+        GradleDsl.GROOVY -> GradleConstants.SETTINGS_FILE_NAME
+        GradleDsl.KOTLIN -> GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
       }
     }
   }

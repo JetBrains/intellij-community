@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   private static final Logger LOG = Logger.getInstance(PySignatureCacheManagerImpl.class.getName());
 
-  private final static boolean SHOULD_OVERWRITE_TYPES = false;
+  private static final boolean SHOULD_OVERWRITE_TYPES = false;
 
   public static final FileAttribute CALL_SIGNATURES_ATTRIBUTE = new FileAttribute("call.signatures.attribute", 1, true);
 
@@ -99,7 +100,8 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     writeAttribute(file, attrString);
   }
 
-  static String changeSignatureString(@NotNull String filePath, @NotNull PySignature signature, @NotNull String oldSignatureString) {
+  @VisibleForTesting
+  public static String changeSignatureString(@NotNull String filePath, @NotNull PySignature signature, @NotNull String oldSignatureString) {
     if (SHOULD_OVERWRITE_TYPES) {
       return signatureToString(signature);
     }
@@ -127,8 +129,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Override
-  @Nullable
-  public String findParameterType(@NotNull PyAstFunction function, @NotNull String name) {
+  public @Nullable String findParameterType(@NotNull PyAstFunction function, @NotNull String name) {
     final PySignature signature = findSignature(function);
     if (signature != null) {
       return signature.getArgTypeQualifiedName(name);
@@ -137,8 +138,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Override
-  @Nullable
-  public PySignature findSignature(@NotNull PyAstFunction function) {
+  public @Nullable PySignature findSignature(@NotNull PyAstFunction function) {
     VirtualFile file = getFile((PyFunction)function);
     if (file != null) {
       return readSignatureAttributeFromFile(file, getFunctionName((PyFunction)function));
@@ -163,8 +163,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     return name;
   }
 
-  @Nullable
-  private PySignature readSignatureAttributeFromFile(@NotNull VirtualFile file, @NotNull String name) {
+  private @Nullable PySignature readSignatureAttributeFromFile(@NotNull VirtualFile file, @NotNull String name) {
     String content = readAttribute(file);
 
     if (content != null) {
@@ -180,8 +179,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     return null;
   }
 
-  @Nullable
-  private String readAttribute(@NotNull VirtualFile file) {
+  private @Nullable String readAttribute(@NotNull VirtualFile file) {
     try {
       String attrContent = mySignatureCache.get(file);
       if (!StringUtil.isEmpty(attrContent)) {
@@ -194,8 +192,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     return null;
   }
 
-  @NotNull
-  private static String readAttributeFromFile(@NotNull VirtualFile file) {
+  private static @NotNull String readAttributeFromFile(@NotNull VirtualFile file) {
     byte[] data;
     try {
       data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
@@ -215,8 +212,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
 
-  @Nullable
-  private static PySignature stringToSignature(@NotNull String path, @NotNull String string) {
+  private static @Nullable PySignature stringToSignature(@NotNull String path, @NotNull String string) {
     String[] parts = string.split("\t");
     if (parts.length > 0) {
       PySignature signature = new PySignature(path, parts[0]);
@@ -244,13 +240,11 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     return null;
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull PySignature signature) {
+  private static @Nullable VirtualFile getFile(@NotNull PySignature signature) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(signature.getFile());
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull PyFunction function) {
+  private static @Nullable VirtualFile getFile(@NotNull PyFunction function) {
     PsiFile file = function.getContainingFile();
 
     return file != null ? file.getOriginalFile().getVirtualFile() : null;

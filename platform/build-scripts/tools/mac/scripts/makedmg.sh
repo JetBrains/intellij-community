@@ -13,6 +13,7 @@ TEMP_DMG="$2.temp.dmg"
 BG_PIC="$2.png"
 CLEANUP_EXPLODED=${5:-"true"}
 CONTENT_SIGNED=${6:-"true"}
+CHECK_LAUNCHER_INTEGRITY=${7:-"true"}
 
 function log() {
   echo "$(date '+[%H:%M:%S]') [$RESULT_DMG] $*"
@@ -110,7 +111,21 @@ fi
 
 
 if [ "$CONTENT_SIGNED" = "true" ]; then
+  log "Checking the signature"
   codesign --verify --deep --strict --verbose "$MOUNT_POINT/$BUILD_NAME"
+fi
+
+if [ "$CHECK_LAUNCHER_INTEGRITY" = "true" ]; then
+  log "Checking the launcher integrity"
+  LAUNCHER="$(ls "$MOUNT_POINT/$BUILD_NAME/Contents/MacOS")"
+  LAUNCHER_PATH="$MOUNT_POINT/$BUILD_NAME/Contents/MacOS/$LAUNCHER"
+  LAUNCHER_ARCH="$(lipo -archs "$LAUNCHER_PATH")"
+  HOST_ARCH="$(arch)"
+  if [ "$LAUNCHER_ARCH" = "$HOST_ARCH" ]; then
+    "$LAUNCHER_PATH" --version
+  else
+    log "The launcher arch is $LAUNCHER_ARCH, the host arch is $HOST_ARCH, integrity may not be checked"
+  fi
 fi
 
 function detach_disk() {

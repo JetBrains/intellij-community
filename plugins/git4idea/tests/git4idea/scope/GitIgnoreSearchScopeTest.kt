@@ -2,7 +2,7 @@
 package git4idea.scope
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
@@ -54,7 +54,7 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
     getGitIgnoreSearchScope().assertScope(shouldContain = notTxtFiles, shouldNotContain = txtFiles)
 
     runBlocking {
-      writeAction {
+      edtWriteAction {
         gitIgnore.delete(this)
       }
     }
@@ -100,7 +100,7 @@ class GitIgnoreSearchScopeTest : GitSingleRepoTest() {
     getGitIgnoreSearchScope().assertScope(shouldContain = includedFiles, shouldNotContain = ignoredFiles)
 
     runBlocking {
-      writeAction {
+      edtWriteAction {
         nestedGitIgnore.delete(this)
       }
     }

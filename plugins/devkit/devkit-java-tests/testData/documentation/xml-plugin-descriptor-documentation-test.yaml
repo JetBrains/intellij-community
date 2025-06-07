@@ -28,6 +28,11 @@ elements:
             #language=Markdown
             description: |
               The `secondAttribute` description. And a [link](https://example.com).
+        - attribute:
+            # should not be included in doc_provider and parent content
+            name: notIncludedAttribute
+            renderContexts: [sdk_docs]
+            description: any
       children:
         - element:
             name: first-level-child-1
@@ -123,3 +128,192 @@ elements:
               The `deprecatedElement` description.
             requirement:
               required: no
+        - element:
+            name: elementWithDeprecatedAttribute
+            #language=Markdown
+            description: |
+              The `elementWithDeprecatedAttribute` description.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: deprecated-attribute
+                  #language=Markdown
+                  description: The `deprecated-attribute` description.
+                  deprecatedSince: "2005.1"
+                  #language=Markdown
+                  deprecationNote: Use [`new-attribute`](#attribute:root__elementWithDeprecatedAttribute__new-attribute) instead.
+              - attribute:
+                  name: new-attribute
+                  #language=Markdown
+                  description: The `new-attribute` description.
+        - element:
+            name: elementWithCallouts
+            #language=Markdown
+            description: |
+              Dummy text 1.
+              
+              > This is a 1st callout without style.
+              
+              Dummy text 2.
+              
+              > This is a 2nd callout - note.
+              > Checking multiline.
+              >
+              {style="warning"}
+              
+              
+              Dummy text 3.
+              
+              > This is a 3rd callout - warning.
+              >
+              > New paragraph.
+              >
+              {style="warning"}
+              
+              Dummy text 4.
+              
+              > This is a 4th callout - warning with a custom title at the end.
+              >
+              > New paragraph.
+              >
+              {style="warning" title="Custom Title"}
+              
+              Dummy text 5.
+              
+              > This is a 5th callout - warning with a custom title at the start.
+              >
+              > New paragraph.
+              >
+              {title="Custom Title" style="warning"}
+              
+              Dummy text 6.
+              
+              > This is a 6th callout - the implicit tip style and a custom title.
+              >
+              > New paragraph.
+              >
+              {title="Custom Title"}
+            requirement:
+              required: no
+
+        - element:
+            name: elementNotIncludedInDocumentationProvider
+            # should not be rendered in doc_provider
+            renderContexts: [sdk_docs]
+            description: any
+            childrenDescription: any
+            attributes:
+              # should not be rendered as the parent is not included in doc_provider
+              - attribute:
+                  name: attributeIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+            children:
+              - element:
+                  name: childNotIncludedInDocumentationProvider
+                  description: any
+              - element:
+                  # should not be included because the parent is not included in doc_provider
+                  name: childIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+                  attributes:
+                  - attribute:
+                      name: attributeIncludedInDocumentationProvider
+                      renderContexts: [doc_provider]
+                      description: any
+        - element:
+            name: elementWithNotIncludedAttribute
+            # should not be rendered as the parent is not included in doc_provider
+            attributes:
+              - attribute:
+                  # should not be included in doc_provider
+                  name: notIncludedAttribute
+                  renderContexts: [sdk_docs]
+                  description: any
+
+        - element:
+            name: elementWithChildrenDescription
+            description: any
+            #language=Markdown
+            childrenDescription: Test children description.
+            # should not be rendered
+            children:
+              - element:
+                  name: child1
+              - element:
+                  name: child2
+        - element:
+            name: internalElement
+            #language=Markdown
+            description: An internal element description.
+            #language=Markdown
+            internalNote: An internal note for the element.
+            attributes:
+              - attribute:
+                  name: internalAttribute
+                  #language=Markdown
+                  description: Description of `internalAttribute`.
+                  #language=Markdown
+                  internalNote: An internal note for the attribute.
+            children:
+              - element:
+                  name: internalChildElement
+                  #language=Markdown
+                  description: Description of `internalChildElement`.
+        - element:
+            name: elementWithInternalLinks
+            #language=Markdown
+            description: |
+              [First](https://example.com) and [`second` internal](https://example.com){internal}.
+            #language=Markdown
+            internalNote: |
+              An [internal link note](https://example.com/2){internal} for the [`element`](#element:root__any).
+            attributes:
+              - attribute:
+                  name: attributeWithInternalLinks
+                  #language=Markdown
+                  description: |
+                    [First](https://example.com) and [`second` internal](https://example.com){internal}.
+                  #language=Markdown
+                  internalNote: |
+                    An [internal link note](https://example.com/2){internal} for the [`attribute`](#attribute:root__any).
+            children:
+              - element:
+                  name: internalChildElement
+                  #language=Markdown
+                  description: Description of `internalChildElement`.
+        - element:
+            name: xi:include
+            namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+            #language=Markdown
+            description: Description of `xi:include`.
+            attributes:
+              - attribute:
+                  name: href
+                  #language=Markdown
+                  description: Description of `xi:include@href`.
+            children:
+              - element:
+                  name: xi:fallback
+                  namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+                  #language=Markdown
+                  description: Description of `xi:fallback`.
+        - element:
+            name: "*"
+            attributes:
+              - attribute:
+                  name: attributeUnderWildcard
+                  #language=Markdown
+                  description: Description of `attributeUnderWildcard`.
+            children:
+              - element:
+                  name: childUnderWildcard
+                  #language=Markdown
+                  description: Description of `childUnderWildcard`.
+                  attributes:
+                    - attribute:
+                        name: attributeOfElementUnderWildcard
+                        #language=Markdown
+                        description: Description of `attributeOfElementUnderWildcard`.

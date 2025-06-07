@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ public class PackageEntry {
     return false;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PackageEntry entry)) {
       return false;
@@ -51,6 +53,7 @@ public class PackageEntry {
            && Objects.equals(entry.myPackageName, myPackageName);
   }
 
+  @Override
   public int hashCode() {
     return myPackageName.hashCode();
   }
@@ -74,8 +77,16 @@ public class PackageEntry {
     }
   };
 
+  @ApiStatus.Experimental
+  public static final PackageEntry ALL_MODULE_IMPORTS = new PackageEntry(false, "<all module imports>", true){
+    @Override
+    public boolean matchesPackageName(String packageName) {
+      return false;
+    }
+  };
+
   public boolean isSpecial() {
-    return this == BLANK_LINE_ENTRY || this == ALL_OTHER_IMPORTS_ENTRY || this == ALL_OTHER_STATIC_IMPORTS_ENTRY;
+    return this == BLANK_LINE_ENTRY || this == ALL_OTHER_IMPORTS_ENTRY || this == ALL_OTHER_STATIC_IMPORTS_ENTRY || this == ALL_MODULE_IMPORTS;
   }
 
   public boolean isBetterMatchForPackageThan(@Nullable PackageEntry entry, @NotNull String packageName, boolean isStatic) {
@@ -92,9 +103,8 @@ public class PackageEntry {
     return StringUtil.countChars(entry.getPackageName(), '.') < StringUtil.countChars(getPackageName(), '.');
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return (isStatic() ? "static " : "") + getPackageName();
   }
 }

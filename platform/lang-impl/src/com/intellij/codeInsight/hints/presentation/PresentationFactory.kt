@@ -34,10 +34,6 @@ import java.util.*
 import javax.swing.Icon
 import kotlin.math.max
 
-/**
- * Contains non-stable and not well-designed API. Will be changed in 2020.2
- */
-@ApiStatus.Experimental
 class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
   private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
@@ -71,7 +67,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return MouseHandlingPresentation(base, clickListener, hoverListener)
   }
 
-  @ApiStatus.Experimental
   @Contract(pure = true)
   fun textSpacePlaceholder(length: Int, isSmall: Boolean) : InlayPresentation {
     return TextPlaceholderPresentation(length, textMetricsStorage, isSmall)
@@ -120,6 +115,23 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
 
   @ApiStatus.Internal
   @Contract(pure = true)
+  fun opaqueBorderedRoundWithBackgroundAndSmallInset(base: InlayPresentation, borderColor: Color): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundBorderedPresentation(
+      RoundWithBackgroundPresentation(
+        InsetPresentation(
+          base,
+          left = base.height / 2,
+          right = base.height / 2,
+          top = 0,
+          down = 0
+        ), base.height, base.height, editor.colorsScheme.defaultBackground, 1f
+      ), borderColor
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
   fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
@@ -160,7 +172,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
 
   /**
    * Creates node, that can be collapsed/expanded by clicking on prefix/suffix.
-   * If presentation is collapsed, clicking to content will expand it.
+   * If presentation is collapsed, clicking on content will expand it.
    */
   @Contract(pure = true)
   fun collapsible(
@@ -201,7 +213,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   /**
-   * On hover of any of [presentations] changes all the presentations with a given decorator.
+   * On hover of [presentations] changes all the presentations with a given decorator.
    * This presentation is stateless.
    */
   @Contract(pure = true)
@@ -477,7 +489,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
   }
-
 
   companion object {
     var customToStringProvider: ((PsiElement) -> String)? = null

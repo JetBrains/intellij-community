@@ -1,0 +1,46 @@
+### auto-generated section `build kotlin.gradle.code-insight-groovy` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "code-insight-groovy_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "code-insight-groovy",
+  module_name = "kotlin.gradle.code-insight-groovy",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/migration",
+    "//plugins/kotlin/inspections",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/gradle/code-insight-common",
+    "//platform/projectModel-api:projectModel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/java-impl:impl",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/gradle/gradle-java",
+  ],
+  runtime_deps = [":code-insight-groovy_resources"]
+)
+### auto-generated section `build kotlin.gradle.code-insight-groovy` end

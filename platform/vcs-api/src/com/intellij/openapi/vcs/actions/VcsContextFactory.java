@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -82,7 +82,7 @@ public interface VcsContextFactory {
   FilePath createFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory);
 
   @NotNull
-  LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull @NlsSafe final String name);
+  LocalChangeList createLocalChangeList(@NotNull Project project, final @NotNull @NlsSafe String name);
 
   @NotNull FilePath createFilePath(@NotNull @NonNls String path, boolean isDirectory);
 

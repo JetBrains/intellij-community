@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.DataManager;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import java.util.*;
 
@@ -151,7 +152,7 @@ final class TBPanelActionGroup extends TBPanel {
   }
 
   @Override
-  synchronized void release() {
+  public synchronized void release() {
     super.release();
 
     final long startNs = myStats != null ? System.nanoTime() : 0;

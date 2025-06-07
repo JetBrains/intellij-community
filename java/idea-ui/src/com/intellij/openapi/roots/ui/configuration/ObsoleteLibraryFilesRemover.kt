@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.ui.configuration
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil

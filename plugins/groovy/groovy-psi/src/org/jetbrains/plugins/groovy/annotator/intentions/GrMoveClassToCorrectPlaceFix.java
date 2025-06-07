@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -30,20 +30,18 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
     LOG.assertTrue(!myClass.isAnonymous());
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("move.class.0.from.method", myClass.getName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("move.class.from.method.family.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myClass.isValid();
   }
 
@@ -55,7 +53,7 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
 
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myClass, GrTypeDefinition.class);
     PsiNamedElement target;
     if (containingClass != null) {
@@ -85,9 +83,8 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
     myClass.delete();
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.ide.PowerSaveMode;
@@ -20,9 +21,8 @@ public class StopPowerSave extends AbstractCommand implements Disposable {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     final MessageBusConnection busConnection = context.getProject().getMessageBus().connect();
     busConnection.subscribe(PowerSaveMode.TOPIC, () -> actionCallback.setDone());

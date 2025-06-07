@@ -2,6 +2,7 @@
 package git4idea.commit.signing
 
 import java.security.SecureRandom
+import kotlin.math.max
 
 object PinentryTestUtil {
   private const val UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -14,7 +15,8 @@ object PinentryTestUtil {
   private val RANDOM = SecureRandom()
 
   fun generatePassword(length: Int): String {
-    val password = StringBuilder(length)
+    val passwordLength = max(length, 4)
+    val password = StringBuilder(passwordLength)
 
     //fill first 4 char
     password.append(UPPERCASE_LETTERS[RANDOM.nextInt(UPPERCASE_LETTERS.length)])
@@ -23,11 +25,11 @@ object PinentryTestUtil {
     password.append(SPECIAL_CHARACTERS[RANDOM.nextInt(SPECIAL_CHARACTERS.length)])
 
     //fill last characters randomly
-    repeat(length - 4) {
+    repeat(passwordLength - 4) {
       password.append(ALL_CHARACTERS[RANDOM.nextInt(ALL_CHARACTERS.length)])
     }
 
-    require(password.length == length)
+    require(password.length == passwordLength)
 
     return password.toString().shuffle()
   }

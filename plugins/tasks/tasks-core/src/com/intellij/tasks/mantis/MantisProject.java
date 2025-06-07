@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.mantis.model.ProjectData;
@@ -48,8 +48,7 @@ public final class MantisProject {
   }
 
   @Attribute("name")
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -70,8 +69,7 @@ public final class MantisProject {
    * are opened or user hit "Login" button. Thus they are not persisted in settings.
    */
   @Transient
-  @NotNull
-  public List<MantisFilter> getFilters() {
+  public @NotNull List<MantisFilter> getFilters() {
     return myFilters == null ? Collections.emptyList() : myFilters;
   }
 

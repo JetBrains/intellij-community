@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -15,7 +17,8 @@ import java.awt.*;
  *
  * @see TextAttributes#TextAttributes(Element)
  */
-class TextAttributesReader extends ValueElementReader {
+@ApiStatus.Internal
+public final class TextAttributesReader extends ValueElementReader {
   private static final @NonNls String NAME = "name";
   private static final @NonNls String OPTION = "option";
   private static final @NonNls String BACKGROUND = "BACKGROUND";
@@ -36,22 +39,42 @@ class TextAttributesReader extends ValueElementReader {
    */
   @Override
   public <T> T read(Class<T> type, Element element) {
-    if (!TextAttributes.class.equals(type)) {
-      return super.read(type, element);
+    if (TextAttributes.class.equals(type)) {
+      //noinspection unchecked
+      return (T)readAttributes(element, null);
     }
 
+    return super.read(type, element);
+  }
+
+  public TextAttributes readAttributes(@Nullable Element element, @Nullable String keyName) {
     TextAttributes attributes = new TextAttributes();
     if (element != null) {
-      attributes.setAttributes(
-        readChild(Color.class, element, FOREGROUND),
-        readChild(Color.class, element, BACKGROUND),
-        readChild(Color.class, element, EFFECT_COLOR),
-        readChild(Color.class, element, ERROR_STRIPE),
-        Effect.read(this, element),
-        FontStyle.read(this, element));
+      Color foregroundColor = readChild(Color.class, element, FOREGROUND);
+      Color backgroundColor = readChild(Color.class, element, BACKGROUND);
+      Color effectColor = readChild(Color.class, element, EFFECT_COLOR);
+      Color errorStripeColor = readChild(Color.class, element, ERROR_STRIPE);
+      EffectType effectType = Effect.read(this, element);
+      int fontType = FontStyle.read(this, element);
+
+      if (keyName != null) {
+        if (foregroundColor != null) {
+          foregroundColor = new TextAttributeKeyColor(foregroundColor, keyName, TextAttributeKeyColorType.FOREGROUND);
+        }
+        if (backgroundColor != null) {
+          backgroundColor = new TextAttributeKeyColor(backgroundColor, keyName, TextAttributeKeyColorType.BACKGROUND);
+        }
+        if (effectColor != null) {
+          effectColor = new TextAttributeKeyColor(effectColor, keyName, TextAttributeKeyColorType.EFFECT_COLOR);
+        }
+        if (errorStripeColor != null) {
+          errorStripeColor = new TextAttributeKeyColor(errorStripeColor, keyName, TextAttributeKeyColorType.ERROR_STRIPE);
+        }
+      }
+
+      attributes.setAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, fontType);
     }
-    //noinspection unchecked
-    return (T)attributes;
+    return attributes;
   }
 
   /**
@@ -79,7 +102,8 @@ class TextAttributesReader extends ValueElementReader {
     WAVE(EffectType.WAVE_UNDERSCORE),
     STRIKEOUT(EffectType.STRIKEOUT),
     BOLD_LINE(EffectType.BOLD_LINE_UNDERSCORE),
-    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE);
+    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE),
+    FADED(EffectType.FADED);
 
     private final EffectType myType;
 

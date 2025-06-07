@@ -48,8 +48,15 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             else emptyList()
 
         val artifactTask = origin.artifactsTaskName?.let { importingContext.project.tasks.findByName(it) }
-
         val jar = artifactTask?.let { KotlinTargetJarReflection(it) }?.let { jarReflection ->
+            val kgpSupportsIsolatedProjects =
+                importingContext.kotlinGradlePluginVersion
+                    ?.toKotlinToolingVersion()
+                    ?.let { it >= KotlinGradlePluginVersionKeyVersion.KGP_WITH_ISOLATED_PROJECTS_SUPPORT.version } == true
+
+            if (kgpSupportsIsolatedProjects && importingContext.getProperty(GradleImportProperties.GRADLE_ISOLATED_PROJECTS)) {
+                return@let KotlinTargetJarImpl(jarReflection.archiveFile, emptySet())
+            }
             val compileKotlinTaskNames = origin.compilations?.map { it.compileKotlinTaskName }?.toSet().orEmpty()
             val taskDependenciesClosureFromThisProject = artifactTask.closure { task ->
                 // getDependencies may throw in case of project misconfiguration, consider task dependencies empty in this case
@@ -145,7 +152,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
          * This target can be identified checking the 'presetName' here.
          * The External Android target will not have any presetName as it is using the external target API instead of presets.
          */
-        if (target.presetName ==  "android") {
+        if (target.presetName == "android") {
             val androidUnitTestClass = gradleTarget.testTaskClass("com.android.build.gradle.tasks.factory.AndroidUnitTest")
                 ?: return emptyList()
 

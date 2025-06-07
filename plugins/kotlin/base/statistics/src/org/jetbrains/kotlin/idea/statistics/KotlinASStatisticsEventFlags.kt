@@ -15,6 +15,11 @@ object KotlinASStatisticsEventFlags {
         // please register your events here
     }
 
+    fun calculateAndPackEventsFlagsToLong(kmpModule: Boolean): Long = Builder().build {
+        registerEvent(IS_KMP_MODULE, kmpModule)
+        // please register your events here
+    }
+
     private class Builder {
         private val events = mutableMapOf<Int, Boolean>()
 

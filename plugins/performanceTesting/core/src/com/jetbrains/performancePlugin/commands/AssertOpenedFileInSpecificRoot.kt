@@ -1,6 +1,8 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -21,8 +23,10 @@ class AssertOpenedFileInSpecificRoot(text: String, line: Int) : PlaybackCommandC
       val filePath = text.replace(PREFIX, "").trim()
       val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
       val index = ProjectFileIndex.getInstance(project)
-      if (!index.isInSource(file) && !index.isInTestSourceContent(file)) {
-        throw IllegalStateException("File $file not in test/source root")
+      readAction {
+        if (!index.isInSource(file) && !index.isInTestSourceContent(file)) {
+          throw IllegalStateException("File $file not in test/source root")
+        }
       }
     }
   }

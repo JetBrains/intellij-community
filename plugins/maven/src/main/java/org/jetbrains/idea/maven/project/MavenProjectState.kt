@@ -9,7 +9,7 @@ import java.io.Serializable
 import java.util.*
 
 @ApiStatus.Experimental
-data class MavenPluginInfo(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
+data class MavenPluginWithArtifact(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
 
 @ApiStatus.Internal
 data class MavenProjectState(
@@ -44,11 +44,11 @@ data class MavenProjectState(
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
   // do not use nio.Path here, it's not serializable
   val localRepository: File? = null,
-  val pluginInfos: List<MavenPluginInfo> = emptyList(),
+  val pluginInfos: List<MavenPluginWithArtifact> = emptyList(),
   val readingProblems: Collection<MavenProjectProblem> = emptySet(),
 ) : Serializable {
   val plugins: List<MavenPlugin> get() = pluginInfos.map { it.plugin }
-  val declaredPluginInfos: List<MavenPluginInfo> get() = pluginInfos.filter { !it.plugin.isDefault }
+  val declaredPluginInfos: List<MavenPluginWithArtifact> get() = pluginInfos.filter { !it.plugin.isDefault }
   val declaredPlugins: List<MavenPlugin> get() = declaredPluginInfos.map { it.plugin }
 
   val isParentResolved: Boolean

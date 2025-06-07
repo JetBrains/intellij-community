@@ -108,8 +108,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
   private void validateOKButton() {
     final String fileName = myNameField.getText().trim();
-    setOKActionEnabled(myTargetDirectoryField.getText().trim().length() > 0 &&
-                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0 &&
+    setOKActionEnabled(!myTargetDirectoryField.getText().trim().isEmpty() &&
+                       !fileName.isEmpty() && fileName.indexOf(File.separatorChar) < 0 &&
                        !StringUtil.containsAnyChar(fileName, "*?><\":;|") && fileName.indexOf(".") != 0);
   }
 

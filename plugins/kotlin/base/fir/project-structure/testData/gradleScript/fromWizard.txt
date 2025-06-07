@@ -4,10 +4,10 @@ KaScriptModule:
   regularDependencies:
     KaLibraryModule(SDK)
     KaLibraryModule(annotations-13.0.jar, scriptDependency)
-    KaLibraryModule(classes.2, scriptDependency)
-    KaLibraryModule(classes.3, scriptDependency)
-    KaLibraryModule(classes.4, scriptDependency)
-    KaLibraryModule(gradle-api-8.11-rc-1.jar, scriptDependency)
+    KaLibraryModule(dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, scriptDependency)
+    KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-groovy-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)
@@ -38,6 +38,8 @@ KaScriptModule:
     KaLibraryModule(kotlin-compiler-runner-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-daemon-client-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-daemon-embeddable-2.0.20.jar, scriptDependency)
+    KaLibraryModule(kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes, scriptDependency)
+    KaLibraryModule(kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes, scriptDependency)
     KaLibraryModule(kotlin-gradle-plugin-2.0.20-gradle85.jar, scriptDependency)
     KaLibraryModule(kotlin-gradle-plugin-annotations-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-gradle-plugin-api-2.0.20-gradle85.jar, scriptDependency)
@@ -49,8 +51,7 @@ KaScriptModule:
     KaLibraryModule(kotlin-native-utils-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-reflect-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-sam-with-receiver-2.0.20-gradle85.jar, scriptDependency)
-    KaLibraryModule(kotlin-stdlib-2.0.20.jar, scriptDependency)
-    KaLibraryModule(kotlin-stdlib-2.0.20.jar.2, scriptDependency)
+    KaLibraryModule(kotlin-stdlib dependencies, scriptDependency)
     KaLibraryModule(kotlin-tooling-core-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-util-io-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-util-klib-2.0.20.jar, scriptDependency)
@@ -74,9 +75,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library classes.2
+  description: Library dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
   targetPlatform: JVM (1.8)
-  libraryName: classes.2
+  libraryName: dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes
   isSdk: false
   regularDependencies:
     <empty>
@@ -86,9 +87,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library classes.3
+  description: Library gradle-api-8.11.jar
   targetPlatform: JVM (1.8)
-  libraryName: classes.3
+  libraryName: gradle-api-8.11.jar
   isSdk: false
   regularDependencies:
     <empty>
@@ -98,9 +99,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library classes.4
+  description: Library gradle-base-services-8.11.jar
   targetPlatform: JVM (1.8)
-  libraryName: classes.4
+  libraryName: gradle-base-services-8.11.jar
   isSdk: false
   regularDependencies:
     <empty>
@@ -110,9 +111,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library gradle-api-8.11-rc-1.jar
+  description: Library gradle-base-services-groovy-8.11.jar
   targetPlatform: JVM (1.8)
-  libraryName: gradle-api-8.11-rc-1.jar
+  libraryName: gradle-base-services-groovy-8.11.jar
   isSdk: false
   regularDependencies:
     <empty>
@@ -482,6 +483,30 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
+  description: Library kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
+  targetPlatform: JVM (1.8)
+  libraryName: kotlin-dsl/accessors/67e0e34578eb78fe1de6071a11242124/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
+  targetPlatform: JVM (1.8)
+  libraryName: kotlin-dsl/accessors/713d72c97915090755fbad209f3188cd-PS/classes
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
   description: Library kotlin-gradle-plugin-2.0.20-gradle85.jar
   targetPlatform: JVM (1.8)
   libraryName: kotlin-gradle-plugin-2.0.20-gradle85.jar
@@ -614,21 +639,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library kotlin-stdlib-2.0.20.jar
+  description: Library kotlin-stdlib dependencies
   targetPlatform: JVM (1.8)
-  libraryName: kotlin-stdlib-2.0.20.jar
-  isSdk: false
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaLibraryModule:
-  description: Library kotlin-stdlib-2.0.20.jar.2
-  targetPlatform: JVM (1.8)
-  libraryName: kotlin-stdlib-2.0.20.jar.2
+  libraryName: kotlin-stdlib dependencies
   isSdk: false
   regularDependencies:
     <empty>
@@ -714,8 +727,9 @@ KaScriptModule:
   targetPlatform: JVM (1.8)
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(classes, scriptDependency)
-    KaLibraryModule(gradle-api-8.11-rc-1.jar, scriptDependency)
+    KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-groovy-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)
@@ -737,17 +751,18 @@ KaScriptModule:
     KaLibraryModule(groovy-test-3.0.22.jar, scriptDependency)
     KaLibraryModule(groovy-xml-3.0.22.jar, scriptDependency)
     KaLibraryModule(javaparser-core-3.17.0.jar, scriptDependency)
+    KaLibraryModule(kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes, scriptDependency)
     KaLibraryModule(kotlin-reflect-2.0.20.jar, scriptDependency)
-    KaLibraryModule(kotlin-stdlib-2.0.20.jar, scriptDependency)
+    KaLibraryModule(kotlin-stdlib dependencies, scriptDependency)
   friendDependencies:
     <empty>
   dependsOnDependencies:
     <empty>
 
 KaLibraryModule:
-  description: Library classes
+  description: Library kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes
   targetPlatform: JVM (1.8)
-  libraryName: classes
+  libraryName: kotlin-dsl/accessors/045fae15c156631da085875c7a614413/classes
   isSdk: false
   regularDependencies:
     <empty>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -41,8 +41,11 @@ public final class JpsPathUtil {
     return new File(urlToOsPath(url));
   }
 
-  @NotNull
-  public static String urlToOsPath(@NotNull String url) {
+  public static @NotNull Path urlToNioPath(@NotNull String url) {
+    return Path.of(urlToOsPath(url));
+  }
+
+  public static @NotNull String urlToOsPath(@NotNull String url) {
     return FileUtilRt.toSystemDependentName(urlToPath(url));
   }
 
@@ -65,7 +68,7 @@ public final class JpsPathUtil {
     return FILE_URL_PREFIX + path;
   }
 
-  public static String getLibraryRootUrl(File file) {
+  public static @NotNull String getLibraryRootUrl(File file) {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
     return file.isDirectory() ? FILE_URL_PREFIX + path : JAR_URL_PREFIX + path + "!/";
   }
@@ -97,16 +100,4 @@ public final class JpsPathUtil {
   }
 
   private static final String UNNAMED_PROJECT = "<unnamed>";
-
-  @ApiStatus.Internal
-  public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
-    Path parent = projectDir.getParent();
-    if (parent != null) {
-      Path name = parent.getFileName();  // `null` when parent is a Windows disk root
-      return name != null ? name.toString() : parent.toString();
-    }
-    else {
-      return UNNAMED_PROJECT;
-    }
-  }
 }

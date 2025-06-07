@@ -1,3 +1,5 @@
+// ERROR: Multiple labels per statement are forbidden.
+// ERROR: Label does not denote a reachable loop.
 object TestClass {
     @JvmStatic
     fun main(args: Array<String>) {

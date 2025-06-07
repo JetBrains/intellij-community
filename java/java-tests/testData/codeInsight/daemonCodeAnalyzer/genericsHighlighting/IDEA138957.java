@@ -6,6 +6,6 @@ class MyClass<T>
 
   public static void main(String[] args)
   {
-    <error descr="Incompatible types. Found: 'MyClass<java.util.List>', required: 'MyClass<java.util.List<java.lang.String>>'">MyClass<List<String>> myClass = new MyClass<>(List.class);</error>
+    MyClass<List<String>> myClass = new <error descr="Incompatible types. Found: 'MyClass<java.util.List>', required: 'MyClass<java.util.List<java.lang.String>>'">MyClass<></error>(List.class);
   }
 }

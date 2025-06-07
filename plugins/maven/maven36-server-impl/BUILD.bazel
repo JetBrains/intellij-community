@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.maven.server.m36.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "server-m36-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "server-m36-impl",
+  module_name = "intellij.maven.server.m36.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/maven-server-api:maven-server",
+    "@lib//:commons-logging",
+    "//plugins/maven/maven3-server-common:server-m3-common",
+    "//plugins/maven/maven3-server-impl:server-m3-impl",
+    "@lib//:maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0-provided",
+    "@lib//:maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1-provided",
+    "@lib//:maven-server-m36-impl-org-apache-maven-maven-core-3-6-0-provided",
+    "@lib//:maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0-provided",
+    "@lib//:maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+  ],
+  runtime_deps = [":server-m36-impl_resources"]
+)
+### auto-generated section `build intellij.maven.server.m36.impl` end

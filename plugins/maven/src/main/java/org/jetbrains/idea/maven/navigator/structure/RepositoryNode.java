@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,12 +14,10 @@ import javax.swing.*;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 
-class RepositoryNode extends MavenSimpleNode {
-  
-  @NlsSafe
-  private final String myId;
-  @NlsSafe
-  private final String myUrl;
+@ApiStatus.Internal
+public final class RepositoryNode extends MavenSimpleNode {
+  private final @NlsSafe String myId;
+  private final @NlsSafe String myUrl;
   private final boolean myLocal;
 
   RepositoryNode(MavenProjectsStructure structure, RepositoriesNode parent, String id, String url, boolean local) {
@@ -31,8 +30,7 @@ class RepositoryNode extends MavenSimpleNode {
     setNameAndTooltip(presentation, myId, null, myLocal ? getPresentablePath(myUrl) : myUrl);
   }
 
-  @NotNull
-  private Icon getDefaultIcon() {
+  private @NotNull Icon getDefaultIcon() {
     return myLocal ? MavenIcons.MavenRepoLocal : MavenIcons.MavenRepoRemote;
   }
 
@@ -46,8 +44,7 @@ class RepositoryNode extends MavenSimpleNode {
   }
 
   @Override
-  @NonNls
-  protected String getMenuId() {
+  protected @NonNls String getMenuId() {
     return "Maven.RepositoryMenu";
   }
 
@@ -63,9 +60,8 @@ class RepositoryNode extends MavenSimpleNode {
     return myLocal;
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return null;
   }
 }

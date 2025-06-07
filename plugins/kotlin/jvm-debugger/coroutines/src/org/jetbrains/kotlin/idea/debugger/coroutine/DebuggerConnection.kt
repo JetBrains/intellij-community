@@ -24,6 +24,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
@@ -32,7 +33,7 @@ class DebuggerConnection(
     val project: Project,
     val configuration: RunConfigurationBase<*>?,
     val params: JavaParameters?,
-    modifyArgs: Boolean = true,
+    shouldAttachCoroutineAgent: Boolean,
     // Used externally on the Android Studio side
     @Suppress("MemberVisibilityCanBePrivate")
     val alwaysShowPanel: Boolean = false
@@ -46,9 +47,9 @@ class DebuggerConnection(
     private var isDisposed = false
 
     init {
-        if (params is JavaParameters && modifyArgs) {
+        if (params is JavaParameters && shouldAttachCoroutineAgent) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
-            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params, configuration)
+            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params)
         } else {
             coroutineAgentAttached = false
             log.debug("Coroutine debugger disabled.")
@@ -59,6 +60,7 @@ class DebuggerConnection(
     }
 
     override fun processStarted(debugProcess: XDebugProcess) {
+        if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
         DebuggerInvocationUtil.swingInvokeLater(project) {
             val session = debugProcess.session
             if (debugProcess is JavaDebugProcess &&

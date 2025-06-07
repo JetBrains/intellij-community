@@ -244,7 +244,7 @@ public class MyTestInjector {
           if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
           StringBuilder paramList = new StringBuilder();
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            if (paramList.length() > 0) paramList.append(",");
+            if (!paramList.isEmpty()) paramList.append(",");
             paramList.append(parameter.getName());
           }
           @NonNls String header = "function " + method.getName() + "("+paramList+") {";
@@ -269,6 +269,9 @@ public class MyTestInjector {
         }
         if ("xml".equals(variable.getName())) {
           placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), null, null);
+        }
+        if ("xmlWithLongPrefixSuffix".equals(variable.getName())) {
+          placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), "<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa><bbbbbbbbbbbbb><cccccccccccc>", "</cccccccccccc></bbbbbbbbbbbbb></aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>");
         }
         if ("js".equals(variable.getName())) { // with prefix/suffix
           placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");

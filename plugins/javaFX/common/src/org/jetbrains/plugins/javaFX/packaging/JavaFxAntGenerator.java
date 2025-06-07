@@ -157,8 +157,7 @@ public final class JavaFxAntGenerator {
     }
   }
 
-  @NotNull
-  private static List<JavaFxManifestAttribute> getManifestAttributes(@NotNull AbstractJavaFxPackager packager) {
+  private static @NotNull List<JavaFxManifestAttribute> getManifestAttributes(@NotNull AbstractJavaFxPackager packager) {
     final List<JavaFxManifestAttribute> manifestAttributes = new ArrayList<>();
     final String title = packager.getTitle();
     if (title != null) {

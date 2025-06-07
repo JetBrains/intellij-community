@@ -3,15 +3,23 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
+import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -77,8 +85,8 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     get() {
       val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
       val shellPath = when {
-        isProjectLevelShellPath(workingDirectoryLazy::value) && project.isTrusted() -> state.shellPath
-        else -> TerminalOptionsProvider.instance.shellPath
+        isProjectLevelShellPath(workingDirectoryLazy::value) && TrustedProjects.isProjectTrusted(project) -> state.shellPath
+        else -> TerminalLocalOptions.getInstance().shellPath
       }
       if (shellPath.isNullOrBlank()) {
         return findDefaultShellPath(workingDirectoryLazy::value)
@@ -92,17 +100,28 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         state.shellPath = valueToStore
       }
       else {
-        TerminalOptionsProvider.instance.shellPath = valueToStore
+        TerminalLocalOptions.getInstance().shellPath = valueToStore
       }
     }
 
   private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
-    return SystemInfo.isWindows && findWslDistributionName(workingDirectory()) != null
+    val eelDescriptor = toEelDescriptor(workingDirectory)
+    return eelDescriptor !== LocalEelDescriptor
+  }
+
+  private fun toEelDescriptor(workingDirectory: () -> String?): EelDescriptor {
+    val path = workingDirectory()?.let {
+      NioFiles.toPath(it)
+    }
+    return path?.getEelDescriptor() ?: LocalEelDescriptor
   }
 
   fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
 
   private fun findDefaultShellPath(workingDirectory: () -> String?): String {
+    if (shouldUseEelApi()) {
+      return findDefaultShellPath(toEelDescriptor(workingDirectory))
+    }
     if (SystemInfo.isWindows) {
       val wslDistributionName = findWslDistributionName(workingDirectory())
       if (wslDistributionName != null) {
@@ -125,6 +144,14 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   private fun findWslDistributionName(directory: String?): String? {
     return if (directory == null) null else WslPath.parseWindowsUncPath(directory)?.distributionId
+  }
+
+  private fun findDefaultShellPath(eelDescriptor: EelDescriptor): String {
+    if (eelDescriptor.platform.isWindows) {
+      return "powershell.exe"
+    }
+    val eelApi = eelDescriptor.toEelApiBlocking()
+    return eelApi.exec.fetchLoginShellEnvVariablesBlocking()["SHELL"] ?: "/bin/sh"
   }
 
   companion object {

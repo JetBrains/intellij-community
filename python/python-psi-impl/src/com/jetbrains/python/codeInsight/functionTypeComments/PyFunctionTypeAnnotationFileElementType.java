@@ -29,9 +29,8 @@ public class PyFunctionTypeAnnotationFileElementType extends PyFileElementType {
     super(instance);
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "PyFunctionTypeComment.ID";
   }
 }

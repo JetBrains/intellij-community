@@ -4,6 +4,8 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -53,5 +55,25 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
                          public class List {}
                          """);
     doTest();
+  }
+
+  public void testConflictModuleImportDemandOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("""
+                           package test;
+                           public class List {}
+                           """);
+      doTest();
+    });
+  }
+
+  public void testWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.enableInspections(new ImplicitToExplicitClassBackwardMigrationInspection());
+      myFixture.testHighlighting(true, false, true, "foo/before" + getTestName(false) + ".java");
+      myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(
+        JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.fix.name")));
+      myFixture.checkResultByFile("foo/after" + getTestName(false) + ".java");
+    });
   }
 }

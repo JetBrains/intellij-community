@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -94,8 +94,7 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
     };
   }
 
-  @Nullable
-  public static ConstructorSimplifier createCtorSimplifier(@NotNull PsiMethod ctor) {
+  public static @Nullable ConstructorSimplifier createCtorSimplifier(@NotNull PsiMethod ctor) {
     if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return null;
     PsiCodeBlock body = ctor.getBody();
     if (body == null) return null;
@@ -153,7 +152,7 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
     return components.length - unprocessed.size();
   }
 
-  public static abstract class ConstructorSimplifier extends PsiUpdateModCommandQuickFix {
+  public abstract static class ConstructorSimplifier extends PsiUpdateModCommandQuickFix {
     public abstract void simplify(@NotNull PsiMethod ctor);
 
     @Override
@@ -179,9 +178,8 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
 
   private static class MakeCtorCompactSimplifier extends ConstructorSimplifier {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
-    public @NotNull String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.record.constructor.fix.family.name");
     }
 

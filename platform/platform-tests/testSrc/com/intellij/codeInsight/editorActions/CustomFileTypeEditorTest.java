@@ -154,12 +154,9 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
   }
 
   public void testReplaceQuoteDontSurroundSelection() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean oldValue = settings.SURROUND_SELECTION_ON_QUOTE_TYPED;
-    settings.SURROUND_SELECTION_ON_QUOTE_TYPED = false;
-    boolean oldValuePairQuote = settings.AUTOINSERT_PAIR_QUOTE;
-    settings.AUTOINSERT_PAIR_QUOTE = false;
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = false;
+      settings.AUTOINSERT_PAIR_QUOTE = false;
       checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "'<caret>a\"");
       checkTyping("a.cs", "<caret><selection>\"</selection>a'", '\'', "'<caret>a'");
       checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a'<caret>");
@@ -169,18 +166,13 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
       checkTyping("a.cs", "<caret><selection>'</selection>a'", '\"', "\"<caret>a'");
       checkTyping("a.cs", "\"a<caret><selection>'</selection>", '\"', "\"a\"<caret>");
       checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "'a\"<caret>");
-    }
-    finally {
-      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = oldValue;
-      settings.AUTOINSERT_PAIR_QUOTE = oldValuePairQuote;
-    }
+      return null;
+    });
   }
 
   public void testReplaceQuoteDontInsertPair() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean oldValue = settings.AUTOINSERT_PAIR_QUOTE;
-    settings.AUTOINSERT_PAIR_QUOTE = false;
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.AUTOINSERT_PAIR_QUOTE = false;
       checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "'<selection><caret>\"</selection>'a\"");
       checkTyping("a.cs", "<caret><selection>\"</selection>a'", '\'', "'<selection><caret>\"</selection>'a'");
       checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a'<selection><caret>\"</selection>'");
@@ -189,10 +181,8 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
       checkTyping("a.cs", "<caret><selection>'</selection>a'", '\"', "\"<selection><caret>'</selection>\"a'");
       checkTyping("a.cs", "\"a<caret><selection>'</selection>", '\"', "\"a\"<selection><caret>'</selection>\"");
       checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "'a\"<selection><caret>'</selection>\"");
-    }
-    finally {
-      settings.AUTOINSERT_PAIR_QUOTE = oldValue;
-    }
+      return null;
+    });
   }
 
   public void testReplaceQuote() {

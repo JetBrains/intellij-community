@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task.event;
 
 import com.intellij.build.events.BuildEvent;
@@ -13,15 +13,14 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public class ExternalSystemBuildEvent extends ExternalSystemTaskNotificationEvent {
 
-  @NotNull private final BuildEvent myBuildEvent;
+  private final @NotNull BuildEvent myBuildEvent;
 
   public ExternalSystemBuildEvent(@NotNull ExternalSystemTaskId id, @NotNull BuildEvent buildEvent) {
     super(id, buildEvent.getMessage());
     myBuildEvent = buildEvent;
   }
 
-  @NotNull
-  public BuildEvent getBuildEvent() {
+  public @NotNull BuildEvent getBuildEvent() {
     return myBuildEvent;
   }
 }

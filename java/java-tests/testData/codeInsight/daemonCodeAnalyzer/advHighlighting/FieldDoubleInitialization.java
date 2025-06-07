@@ -5,7 +5,7 @@ class Foo {
     final int k;
     final int ff = 5;
     Foo(int i) {
-        <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+        <error descr="Final field 'k' is already initialized in a class initializer">k</error> =1;
     }
     {
         k=0;
@@ -21,7 +21,7 @@ class c2 {
       int i = k;
     }
     static {
-       <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+       <error descr="Final field 'k' is already initialized in a class initializer">k</error> =1;
     }
 }
 
@@ -34,7 +34,7 @@ class c3 {
       int i = k;
     }
     {
-       <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+       <error descr="Final field 'k' is already initialized in a class initializer">k</error> =1;
     }
 }
 
@@ -45,22 +45,22 @@ class c4 {
     }
     c4(int i) {
       if (false)
-        <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+        <error descr="Final field 'k' is already initialized in a class initializer">k</error> =1;
     }
     c4() {
       this(0);
-      <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+      <error descr="Cannot assign final field 'k' after chained constructor call">k</error> =1;
     }
 }
 // redirected ctrs
 class c5 {
-    <error descr="Variable 'k' might not have been initialized">final int k</error>;
+    <error descr="Field 'k' might not have been initialized">final int k</error>;
     c5(int i) {
       k =1;
     }
     c5() {
       this(0);
-      <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+      <error descr="Cannot assign final field 'k' after chained constructor call">k</error> =1;
     }
 
 
@@ -68,11 +68,11 @@ class c5 {
     }
     c5(int i, int j) {
       this('c');
-      <error descr="Variable 'k' might already have been assigned to">k</error> = 5;
+      <error descr="Cannot assign final field 'k' after chained constructor call">k</error> = 5;
     }
     c5(String s) {
       this(0,0);
-      <error descr="Variable 'k' might already have been assigned to">k</error> =1;
+      <error descr="Cannot assign final field 'k' after chained constructor call">k</error> =1;
     }
 }
 
@@ -113,6 +113,6 @@ class c7 {
  }
 
  {
-   <error descr="Variable 'y' might already have been assigned to">y</error> = ""+i;
+   <error descr="Final field 'y' is already initialized in a class initializer">y</error> = ""+i;
  }
 }

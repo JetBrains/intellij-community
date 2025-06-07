@@ -23,11 +23,9 @@ import java.util.List;
 
 final class QuickListPanel {
   private final CollectionListModel<String> myActionsModel;
-  private JPanel myPanel;
+  private final QuickListContent content;
   private final JBList<String> myActionsList;
-  JTextField myName;
-  private JTextField myDescription;
-  private JPanel myListPanel;
+  final JTextField myName;
   QuickList item;
 
   QuickListPanel(final @NotNull CollectionListModel<QuickList> model) {
@@ -37,7 +35,7 @@ final class QuickListPanel {
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(true);
 
-    myListPanel.add(ToolbarDecorator.createDecorator(myActionsList)
+    content = new QuickListContent(ToolbarDecorator.createDecorator(myActionsList)
                       .setAddAction(new AnActionButtonRunnable() {
                         @Override
                         public void run(AnActionButton button) {
@@ -76,7 +74,8 @@ final class QuickListPanel {
                         CommonActionsPanel.Buttons.REMOVE.getText(),
                         CommonActionsPanel.Buttons.UP.getText(),
                         CommonActionsPanel.Buttons.DOWN.getText())
-                      .createPanel(), BorderLayout.CENTER);
+                      .createPanel());
+    myName = content.name;
   }
 
   public void apply() {
@@ -85,7 +84,7 @@ final class QuickListPanel {
     }
 
     item.setName(myName.getText().trim());
-    item.setDescription(myDescription.getText().trim());
+    item.setDescription(content.description.getText().trim());
 
     ListModel<String> model = myActionsList.getModel();
     int size = model.getSize();
@@ -113,7 +112,7 @@ final class QuickListPanel {
 
     myName.setText(item.getDisplayName());
     myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
-    myDescription.setText(item.getDescription());
+    content.description.setText(item.getDescription());
 
     myActionsModel.removeAll();
     for (String id : item.getActionIds()) {
@@ -128,7 +127,7 @@ final class QuickListPanel {
   }
 
   public JPanel getPanel() {
-    return myPanel;
+    return content.getContent();
   }
 
   private static final class MyCollectionListModel extends CollectionListModel<String> {

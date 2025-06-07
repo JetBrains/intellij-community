@@ -55,4 +55,12 @@ class JavaSupportTest : GrazieTestBase() {
       myFixture.checkHighlighting()
     }.setup { psiManager.dropPsiCaches() }.start()
   }
+
+  fun `test spellchecking normalization`() {
+    runHighlightTestForFile("ide/language/java/Normalization.java")
+  }
+
+  fun testCommentIsNotHighlightedIfThereIsReference() {
+    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+  }
 }

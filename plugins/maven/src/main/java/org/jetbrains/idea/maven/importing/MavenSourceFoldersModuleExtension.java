@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -11,8 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import com.intellij.project.model.impl.module.content.JpsSourceFolder;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SmartList;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.jetbrains.idea.maven.importing.MavenRootModelAdapter.getMavenExternalSource;
 
@@ -42,6 +47,16 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   private JpsRootModel myDummyJpsRootModel;
   private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<>(ContentFolderComparator.INSTANCE);
   private boolean isJpsSourceFoldersChanged;
+  private final Project myProject;
+
+  MavenSourceFoldersModuleExtension(Module module) {
+    this(module.getProject());
+  }
+
+  @NonInjectable
+  MavenSourceFoldersModuleExtension(Project project) {
+    this.myProject = project;
+  }
 
   public void init(@NotNull Module module, @NotNull ModifiableRootModel modifiableRootModel) {
     myRootModel = modifiableRootModel;
@@ -70,10 +85,9 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     }
   }
 
-  @NotNull
   @Override
-  public ModuleExtension getModifiableModel(boolean writable) {
-    return new MavenSourceFoldersModuleExtension();
+  public @NotNull ModuleExtension getModifiableModel(boolean writable) {
+    return new MavenSourceFoldersModuleExtension(myProject);
   }
 
   @Override
@@ -132,27 +146,11 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   }
 
   @Override
-  public void dispose() {
-    for (JpsSourceFolder folder : myJpsSourceFolders) {
-      Disposer.dispose(folder);
-    }
-    myJpsSourceFolders.clear();
-  }
-
-  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-  }
-
-  public void clearSourceFolders() {
-    for (JpsSourceFolder folder : myJpsSourceFolders) {
-      Disposer.dispose(folder);
-    }
-    myJpsSourceFolders.clear();
-    isJpsSourceFoldersChanged = true;
   }
 
   public <P extends JpsElement> void addSourceFolder(final @NotNull Url url,
@@ -174,33 +172,7 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     isJpsSourceFoldersChanged = true;
   }
 
-  public boolean hasRegisteredSourceSubfolder(@NotNull String url) {
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (VfsUtilCore.isEqualOrAncestor(url, eachFolder.getUrl())) return true;
-    }
-    return false;
-  }
-
-  @Nullable
-  public SourceFolder getSourceFolder(@NotNull String url) {
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (eachFolder.getUrl().equals(url)) return eachFolder;
-    }
-    return null;
-  }
-
-  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<>();
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (includingTests || !eachFolder.isTestSource()) {
-        result.add(eachFolder.getUrl());
-      }
-    }
-    return ArrayUtilRt.toStringArray(result);
-  }
-
-  @Nullable
-  private ContentEntry getContentRootFor(@NotNull Url url) {
+  private @Nullable ContentEntry getContentRootFor(@NotNull Url url) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
       if (VfsUtilCore.isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
     }
@@ -226,6 +198,8 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     myJpsSourceFolders.add(jpsSourceFolder);
     // since dummyJpsContentEntry created for each source folder, we will dispose it on that source folder disposal
     Disposer.register(jpsSourceFolder, dummyJpsContentEntry);
+    Disposable parentDisposable = myProject.getService(ProjectLevelDisposableService.class);
+    Disposer.register(parentDisposable, jpsSourceFolder);
   }
 
   private static final class ContentFolderComparator implements Comparator<ContentFolder> {
@@ -234,6 +208,13 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     @Override
     public int compare(@NotNull ContentFolder o1, @NotNull ContentFolder o2) {
       return StringUtil.naturalCompare(o1.getUrl(), o2.getUrl());
+    }
+  }
+
+  @Service(Service.Level.PROJECT)
+  static final class ProjectLevelDisposableService implements Disposable {
+    @Override
+    public void dispose() {
     }
   }
 }

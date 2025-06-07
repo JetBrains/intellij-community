@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -26,9 +26,9 @@ import java.util.Objects;
 
 /**
  * Implementation of the markup element for the editor and document.
- * @author max
  */
-sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
+@ApiStatus.Internal
+public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
@@ -80,7 +80,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
 
-    registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+    registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isDebugEnabled()) {
       LOG.debug("RangeHighlighterImpl: create " + this);
     }
@@ -156,7 +156,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
   @Override
   public void setVisibleIfFolded(boolean value) {
-    putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    if (isVisibleIfFolded() != value) {
+      putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    }
   }
 
   @Override
@@ -357,7 +359,8 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     }
   }
 
-  private void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+  @Override
+  public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
@@ -436,7 +439,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   }
 
   @Override
-  protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  protected void registerInTree(@NotNull DocumentEx document, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     // we store highlighters in MarkupModel
     myModel.addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -37,7 +37,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = ConcurrentCollectionFactory.createConcurrentSet();
 
-  public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
+  public void registerBuildMessageHandler(final @NotNull RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {
       @Override
       protected BuilderMessageHandler getDelegateHandler() {
@@ -58,8 +58,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     mySessionDescriptors.put(sessionId, new SessionData(sessionId, wrappedHandler, params));
   }
 
-  @Nullable
-  public BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
+  public @Nullable BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
     myCanceledSessions.remove(sessionId);
     final SessionData data = mySessionDescriptors.remove(sessionId);
     if (data == null) {
@@ -82,19 +81,17 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     }
   }
 
-  @Nullable
-  public Channel getConnectedChannel(@NotNull UUID sessionId) {
+  public @Nullable Channel getConnectedChannel(@NotNull UUID sessionId) {
     final Channel channel = getAssociatedChannel(sessionId);
     return channel != null && channel.isActive()? channel : null;
   }
 
-  @Nullable
-  public Channel getAssociatedChannel(@NotNull UUID sessionId) {
+  public @Nullable Channel getAssociatedChannel(@NotNull UUID sessionId) {
     final SessionData data = mySessionDescriptors.get(sessionId);
     return data != null? data.channel : null;
   }
 
-  public boolean sendBuildParameters(@NotNull final UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
+  public boolean sendBuildParameters(final @NotNull UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
     boolean succeeded = false;
     final SessionData sessionData = mySessionDescriptors.get(preloadedSessionId);
     if (sessionData != null) {
@@ -227,10 +224,8 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       INITIAL, WAITING_PARAMS, RUNNING
     }
 
-    @NotNull
-    final UUID sessionId;
-    @NotNull
-    final BuilderMessageHandler handler;
+    final @NotNull UUID sessionId;
+    final @NotNull BuilderMessageHandler handler;
     volatile CmdlineRemoteProto.Message.ControllerMessage params;
     volatile Channel channel;
     State state = State.INITIAL;

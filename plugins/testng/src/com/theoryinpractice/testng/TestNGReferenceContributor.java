@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng;
 
@@ -49,7 +49,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       getElementPattern(GROUP_CLASSES, "groups"),
       new PsiReferenceProvider() {
         @Override
-        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
           return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
         }
       });
@@ -57,7 +57,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       getElementPattern(GROUP_CLASSES, "dependsOnMethods"),
       new PsiReferenceProvider() {
         @Override
-        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
           return new MethodReference[]{new MethodReference((PsiLiteral)element)};
         }
       });
@@ -65,7 +65,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       getElementPattern(GROUP_CLASSES, "dependsOnGroups"),
       new PsiReferenceProvider() {
         @Override
-        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
           return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
         }
       });
@@ -74,7 +74,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       getElementPattern(List.of(ORG_TESTNG_ANNOTATIONS_TEST, ORG_TESTNG_ANNOTATIONS_FACTORY), "dataProvider"),
       new PsiReferenceProvider() {
         @Override
-        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
           return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
         }
       });
@@ -95,8 +95,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       @NonNls String val = getValue();
       final String methodName = StringUtil.getShortName(val);
       PsiClass cls = getDependsClass(val);
@@ -111,8 +110,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
-    @Nullable
-    private PsiClass getDependsClass(String val) {
+    private @Nullable PsiClass getDependsClass(String val) {
       final String className = StringUtil.getPackageName(val);
       final PsiLiteral element = getElement();
       return StringUtil.isEmpty(className) ? PsiUtil.getTopLevelClass(element)
@@ -156,8 +154,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 

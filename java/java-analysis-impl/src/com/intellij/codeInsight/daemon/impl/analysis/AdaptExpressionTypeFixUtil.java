@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -29,8 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utilities to register fixes for mismatching type
@@ -39,8 +38,7 @@ final class AdaptExpressionTypeFixUtil {
 
   private AdaptExpressionTypeFixUtil() { }
 
-  private static void registerPatchParametersFixes(@NotNull HighlightInfo.Builder info,
-                                                   @NotNull TextRange textRange,
+  private static void registerPatchParametersFixes(@NotNull Consumer<? super CommonIntentionAction> info,
                                                    @NotNull PsiMethodCallExpression call,
                                                    @NotNull PsiMethod method,
                                                    @NotNull PsiType expectedTypeByParent,
@@ -57,7 +55,7 @@ final class AdaptExpressionTypeFixUtil {
     Set<PsiTypeParameter> set = Set.of(typeParameter);
 
     if (!PsiTreeUtil.isAncestor(method, typeParameter, true)) {
-      registerPatchQualifierFixes(info, textRange, call, method, typeParameter, expectedTypeValue, parameters, set);
+      registerPatchQualifierFixes(info, call, method, typeParameter, expectedTypeValue, parameters, set);
       return;
     }
 
@@ -81,21 +79,20 @@ final class AdaptExpressionTypeFixUtil {
         psiClassType.rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         typeParameter == getSoleTypeParameter(parameterType)) {
       if (expectedTypeValue instanceof PsiClassType classType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
-        ReplaceExpressionAction fix = new ReplaceExpressionAction(
+        info.accept(new ReplaceExpressionAction(
           arg, classType.rawType().getCanonicalText() + ".class",
-          classType.rawType().getPresentableText() + ".class");
-        info.registerFix(fix, null, null, null, null);
+          classType.rawType().getPresentableText() + ".class"));
       }
     }
     PsiType expectedArgType = desiredSubstitutor.substitute(parameterType);
     if (arg instanceof PsiLambdaExpression && parameterType instanceof PsiClassType) {
-      registerLambdaReturnFixes(info, textRange, (PsiLambdaExpression)arg, (PsiClassType)parameterType, expectedArgType, typeParameter);
+      registerLambdaReturnFixes(info, (PsiLambdaExpression)arg, (PsiClassType)parameterType, expectedArgType, typeParameter);
       return;
     }
     PsiType actualArgType = PsiPolyExpressionUtil.isPolyExpression(arg) ?
                             substitutor.put(typeParameter, substitution.myActualType).substitute(parameterType) :
                             arg.getType();
-    registerExpectedTypeFixes(info, textRange, arg, expectedArgType, actualArgType);
+    registerExpectedTypeFixes(info, false, arg, expectedArgType, actualArgType);
   }
 
   private static @Nullable PsiParameter findWrongParameter(@NotNull PsiMethodCallExpression call,
@@ -113,7 +110,7 @@ final class AdaptExpressionTypeFixUtil {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(x)null", call);
       PsiTypeElement typeElement = factory.createTypeElement(substituted);
       try {
-        Objects.requireNonNull(cast.getCastType()).replace(typeElement);
+        requireNonNull(cast.getCastType()).replace(typeElement);
       }
       catch (IncorrectOperationException ignored) {
         // Malformed type
@@ -131,8 +128,7 @@ final class AdaptExpressionTypeFixUtil {
     return ContainerUtil.getOnlyItem(candidates);
   }
 
-  private static void registerPatchQualifierFixes(@NotNull HighlightInfo.Builder info,
-                                                  @NotNull TextRange textRange,
+  private static void registerPatchQualifierFixes(@NotNull Consumer<? super CommonIntentionAction> info,
                                                   @NotNull PsiMethodCallExpression call,
                                                   @NotNull PsiMethod method,
                                                   @NotNull PsiTypeParameter typeParameter,
@@ -154,12 +150,11 @@ final class AdaptExpressionTypeFixUtil {
       .createType(qualifierClass, classResolveResult.getSubstitutor().put(typeParameter, expectedTypeValue));
     PsiType actualType = qualifierCall.getType();
     if (actualType != null && !expectedQualifierType.equals(actualType)) {
-      registerPatchParametersFixes(info, textRange, qualifierCall, qualifierMethod, expectedQualifierType, actualType);
+      registerPatchParametersFixes(info, qualifierCall, qualifierMethod, expectedQualifierType, actualType);
     }
   }
 
-  private static void registerLambdaReturnFixes(@NotNull HighlightInfo.Builder info,
-                                                @NotNull TextRange textRange,
+  private static void registerLambdaReturnFixes(@NotNull Consumer<? super CommonIntentionAction> info,
                                                 @NotNull PsiLambdaExpression arg,
                                                 @NotNull PsiClassType parameterType,
                                                 @Nullable PsiType expectedArgType,
@@ -188,7 +183,7 @@ final class AdaptExpressionTypeFixUtil {
     }
     PsiType expectedFnReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expectedArgType);
     if (expectedFnReturnType == null) return;
-    registerExpectedTypeFixes(info, textRange, lambdaBody, expectedFnReturnType);
+    registerExpectedTypeFixes(info, false, lambdaBody, expectedFnReturnType);
   }
 
   /**
@@ -198,7 +193,16 @@ final class AdaptExpressionTypeFixUtil {
    * @param expression   expression whose type is incorrect
    * @param expectedType desired expression type.
    */
-  static void registerExpectedTypeFixes(@NotNull HighlightInfo.Builder info, @NotNull TextRange textRange,@NotNull PsiExpression expression, @Nullable PsiType expectedType) {
+  static void registerExpectedTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info,
+                                        @NotNull PsiExpression expression,
+                                        @Nullable PsiType expectedType) {
+    registerExpectedTypeFixes(info, true, expression, expectedType);
+  }
+
+  private static void registerExpectedTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info,
+                                                boolean wholeRange,
+                                                @NotNull PsiExpression expression,
+                                                @Nullable PsiType expectedType) {
     PsiType actualType;
     if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
       actualType = ((PsiExpression)expression.copy()).getType();
@@ -206,7 +210,7 @@ final class AdaptExpressionTypeFixUtil {
     else {
       actualType = expression.getType();
     }
-    registerExpectedTypeFixes(info, textRange, expression, expectedType, actualType);
+    registerExpectedTypeFixes(info, wholeRange, expression, expectedType, actualType);
   }
 
   /**
@@ -217,35 +221,40 @@ final class AdaptExpressionTypeFixUtil {
    * @param expectedType desired expression type
    * @param actualType   actual expression type
    */
-  static void registerExpectedTypeFixes(@NotNull HighlightInfo.Builder info,
-                                        @NotNull TextRange textRange,
+  static void registerExpectedTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info,
+                                        @NotNull PsiExpression expression,
+                                        @Nullable PsiType expectedType,
+                                        @Nullable PsiType actualType) {
+    registerExpectedTypeFixes(info, true, expression, expectedType, actualType);
+  }
+
+  private static void registerExpectedTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info,
+                                                boolean wholeRange,
                                         @NotNull PsiExpression expression,
                                         @Nullable PsiType expectedType,
                                         @Nullable PsiType actualType) {
     if (actualType == null || expectedType == null) return;
+    HighlightFixUtil.registerChangeVariableTypeFixes(info, expression, expectedType);
+    if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(expectedType))) {
+      info.accept(HighlightFixUtil.createChangeReturnTypeFix(expression, expectedType));
+    }
     boolean mentionsTypeArgument = mentionsTypeArgument(expression, actualType);
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
-    TextRange range = expression.getTextRange();
-    String role = textRange.equals(range) ? null : getRole(expression);
+    String role = wholeRange ? null : getRole(expression);
     if (!mentionsTypeArgument) {
-      IntentionAction action3 = new WrapWithAdapterMethodCallFix(expectedType, expression, role);
-      info.registerFix(action3, null, null, null, null);
-      IntentionAction action2 = QuickFixFactory.getInstance().createWrapWithOptionalFix(expectedType, expression);
-      info.registerFix(action2, null, null, null, null);
-      var action1 = new WrapExpressionFix(expectedType, expression, role);
-      info.registerFix(action1, null, null, null, null);
+      info.accept(new WrapWithAdapterMethodCallFix(expectedType, expression, role));
+      info.accept(QuickFixFactory.getInstance().createWrapWithOptionalFix(expectedType, expression));
+      info.accept(new WrapExpressionFix(expectedType, expression, role));
       PsiType castToType = suggestCastTo(expression, expectedType, actualType);
       if (castToType != null) {
-        ModCommandAction action = new AddTypeCastFix(castToType, expression, role);
-        info.registerFix(action, null, null, null, null);
+        info.accept(new AddTypeCastFix(castToType, expression, role));
       }
     }
     if (expectedType instanceof PsiArrayType arrayType) {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
-      if (erasedValueType != null &&
+      if (erasedValueType != null && !PsiTypes.nullType().equals(erasedValueType) &&
           TypeConversionUtil.isAssignable(arrayType.getComponentType(), erasedValueType)) {
-        IntentionAction action = QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression);
-        info.registerFix(action, null, null, null, null);
+        info.accept(QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression));
       }
     }
     HighlightFixUtil.registerCollectionToArrayFixAction(info, actualType, expectedType, expression);
@@ -254,12 +263,12 @@ final class AdaptExpressionTypeFixUtil {
       if (qualifier != null) {
         PsiType type = qualifier.getType();
         if (type != null && expectedType.isAssignableFrom(type)) {
-          info.registerFix(new ReplaceWithQualifierFix(call, role), null, null, null, null);
+          info.accept(new ReplaceWithQualifierFix(call, role));
         }
       }
       PsiMethod argMethod = call.resolveMethod();
       if (argMethod != null) {
-        registerPatchParametersFixes(info, textRange, call, argMethod, expectedType, actualType);
+        registerPatchParametersFixes(info, call, argMethod, expectedType, actualType);
       }
     }
   }
@@ -271,8 +280,7 @@ final class AdaptExpressionTypeFixUtil {
     return PsiTypesUtil.mentionsTypeParameters(type, Set.of(method.getTypeParameters()));
   }
 
-  @Nls
-  private static String getRole(@NotNull PsiExpression expression) {
+  private static @Nls String getRole(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiExpressionList list) {
       int count = list.getExpressionCount();
@@ -416,8 +424,19 @@ final class AdaptExpressionTypeFixUtil {
 
   static @Nullable PsiType suggestCastTo(@NotNull PsiExpression expression,
                                          @Nullable PsiType expectedTypeByParent, @Nullable PsiType actualType) {
-    if (expectedTypeByParent == null || actualType == null) return null;
-    if (TypeConversionUtil.isAssignable(expectedTypeByParent, actualType)) return null;
+    PsiExpression origExpression = expression;
+    while (expression instanceof PsiTypeCastExpression || expression instanceof PsiParenthesizedExpression) {
+      if (expression instanceof PsiTypeCastExpression castExpression) {
+        expression = castExpression.getOperand();
+        if (expression == null) return null;
+        actualType = expression.getType();
+      }
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+        expression = parenthesizedExpression.getExpression();
+      }
+    }
+    if (expression == null || expectedTypeByParent == null || actualType == null) return null;
+    if (origExpression == expression && TypeConversionUtil.isAssignable(expectedTypeByParent, actualType)) return null;
     boolean convertible = expression instanceof PsiNewExpression ? expectedTypeByParent.isAssignableFrom(actualType) : 
                           TypeConversionUtil.areTypesConvertible(actualType, expectedTypeByParent);
     if (convertible) return expectedTypeByParent;

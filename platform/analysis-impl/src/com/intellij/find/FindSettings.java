@@ -109,4 +109,8 @@ public abstract class FindSettings {
   public abstract boolean isShowResultsInSeparateView();
 
   public abstract void setShowResultsInSeparateView(boolean selected);
+
+  public abstract boolean isScrollToResultsDuringTyping();
+
+  public abstract void setScrollToResultsDuringTyping(boolean selected);
 }

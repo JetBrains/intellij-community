@@ -1,31 +1,37 @@
-/*
- * Copyright 2000-2021 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupReferencingConverter;
 
 import java.util.List;
 import java.util.function.Function;
 
 public interface ActionOrGroup extends DomElement {
 
+  /**
+   * @return possibly fallback ID if {@link #getId()} is not specified
+   * @see #getEffectiveIdAttribute()
+   */
+  @Nullable
+  default String getEffectiveId() {
+    return getId().getStringValue();
+  }
+
+  /**
+   * @return underlying attribute for {@link #getEffectiveId()}, used for navigation purposes
+   */
+  default GenericAttributeValue<?> getEffectiveIdAttribute() {
+    return getId();
+  }
+
+  /**
+   * @see #getEffectiveId()
+   */
   @NotNull
   @NameValue
   @Stubbed
@@ -58,8 +64,8 @@ public interface ActionOrGroup extends DomElement {
   GenericAttributeValue<String> getDescription();
 
   @NotNull
-  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+  @Referencing(ActionOrGroupReferencingConverter.OnlyActions.class)
+  GenericAttributeValue<String> getUseShortcutOf();
 
   @NotNull
   List<OverrideText> getOverrideTexts();
@@ -110,18 +116,17 @@ public interface ActionOrGroup extends DomElement {
     }
 
     public String getMessageKey(ActionOrGroup actionOrGroup) {
-      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getId().getStringValue() +
+      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getEffectiveId() +
              myPropertyKeySuffix;
     }
 
     public String getMessageKey(ActionOrGroup actionOrGroup, @NotNull OverrideText overrideText) {
-      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getId().getStringValue() +
+      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getEffectiveId() +
              "." + overrideText.getPlace().getStringValue() +
              myPropertyKeySuffix;
     }
 
-    @NotNull
-    private static String getMessageKeyPrefix(ActionOrGroup actionOrGroup) {
+    private static @NotNull String getMessageKeyPrefix(ActionOrGroup actionOrGroup) {
       return actionOrGroup instanceof Action ? "action." : "group.";
     }
   }

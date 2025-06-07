@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -65,8 +65,7 @@ public final class JvmPsiRangeSetUtil {
    * @return the set of possible values, according to the annotation; complete set (all possible long numbers) if not annotated via
    * range annotation.
    */
-  @NotNull
-  public static LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
+  public static @NotNull LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return LongRangeSet.all();
     return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
                    .nonNull()

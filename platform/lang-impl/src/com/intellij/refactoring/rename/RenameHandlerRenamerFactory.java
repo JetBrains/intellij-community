@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeEventQueue;
@@ -12,6 +12,7 @@ import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,7 +48,7 @@ public final class RenameHandlerRenamerFactory implements RenamerFactory {
   }
 
   @Override
-  public @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext) {
+  public @Unmodifiable @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext) {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return Collections.emptyList();

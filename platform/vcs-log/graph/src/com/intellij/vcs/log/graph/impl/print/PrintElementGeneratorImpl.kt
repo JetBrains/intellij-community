@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.SLRUMap
 import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
@@ -119,7 +120,7 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return Math.round(average + deviation).toInt()
   }
 
-  override fun getPrintElements(rowIndex: Int): Collection<GraphPrintElement> {
+  override fun getPrintElements(rowIndex: VcsLogVisibleGraphIndex): Collection<GraphPrintElement> {
     val result = mutableListOf<GraphPrintElement>()
     val nodes = mutableListOf<GraphPrintElement>() // nodes at the end, to be drawn over the edges
 
@@ -168,7 +169,7 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return result
   }
 
-  private fun createEndPositionFunction(visibleRowIndex: Int, up: Boolean): (GraphEdge) -> Int? {
+  private fun createEndPositionFunction(visibleRowIndex: VcsLogVisibleGraphIndex, up: Boolean): (GraphEdge) -> Int? {
     if (visibleRowIndex < 0 || visibleRowIndex >= linearGraph.nodesCount()) return { null }
 
     val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
@@ -185,7 +186,7 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     }
   }
 
-  private fun getArrowType(edge: GraphEdge, rowIndex: Int): EdgePrintElement.Type? {
+  private fun getArrowType(edge: GraphEdge, rowIndex: VcsLogVisibleGraphIndex): EdgePrintElement.Type? {
     val normalEdge = asNormalEdge(edge)
     if (normalEdge != null) {
       return getArrowType(normalEdge, rowIndex)
@@ -207,7 +208,7 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return null
   }
 
-  private fun getArrowType(normalEdge: NormalEdge, rowIndex: Int): EdgePrintElement.Type? {
+  private fun getArrowType(normalEdge: NormalEdge, rowIndex: VcsLogVisibleGraphIndex): EdgePrintElement.Type? {
     val edgeSize = normalEdge.down - normalEdge.up
     val upOffset = rowIndex - normalEdge.up
     val downOffset = normalEdge.down - rowIndex
@@ -230,16 +231,16 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return null
   }
 
-  private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: Int): Boolean {
+  private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: VcsLogVisibleGraphIndex): Boolean {
     val normalEdge = asNormalEdge(edge) ?: return false // e.d. edge is special. See addSpecialEdges
     return isEdgeVisibleInRow(normalEdge, visibleRowIndex)
   }
 
-  private fun isEdgeVisibleInRow(normalEdge: NormalEdge, visibleRowIndex: Int): Boolean {
+  private fun isEdgeVisibleInRow(normalEdge: NormalEdge, visibleRowIndex: VcsLogVisibleGraphIndex): Boolean {
     return normalEdge.down - normalEdge.up < longEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= visiblePartSize
   }
 
-  private fun getSortedVisibleElementsInRow(rowIndex: Int): List<GraphElement> {
+  private fun getSortedVisibleElementsInRow(rowIndex: VcsLogVisibleGraphIndex): List<GraphElement> {
     val graphElements = cache.get(rowIndex)
     if (graphElements != null) {
       return graphElements
@@ -263,7 +264,7 @@ internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private 
     return result
   }
 
-  private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
+  private fun getAttachmentDistance(e1: NormalEdge, rowIndex: VcsLogVisibleGraphIndex): Int {
     return min(rowIndex - e1.up, e1.down - rowIndex)
   }
 

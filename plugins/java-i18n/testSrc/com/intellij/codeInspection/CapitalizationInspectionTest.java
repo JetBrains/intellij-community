@@ -4,6 +4,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention;
 import com.intellij.codeInspection.i18n.TitleCapitalizationInspection;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -118,11 +120,12 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
   public void testIntention() {
     myFixture.configureByFile("Intention.java");
     AnnotateCapitalizationIntention intention = new AnnotateCapitalizationIntention();
-    assertTrue(intention.isAvailable(getProject(), getEditor(), getFile()));
-    intention.invoke(getProject(), getEditor(), getFile());
+    ActionContext context = ActionContext.from(getEditor(), getFile());
+    assertNotNull(intention.getPresentation(context));
+    ModCommandExecutor.executeInteractively(context, "", getEditor(), () -> intention.perform(context));
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile("Intention_after.java");
-    assertFalse(intention.isAvailable(getProject(), getEditor(), getFile()));
+    assertNull(intention.getPresentation(context));
   }
 
   private void doTest(boolean fix) {

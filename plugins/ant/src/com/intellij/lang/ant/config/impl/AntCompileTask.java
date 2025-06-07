@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,8 +18,7 @@ import static com.intellij.ide.macro.CompilerContextMakeMacro.COMPILER_CONTEXT_M
 
 abstract class AntCompileTask implements CompileTask {
 
-  @NotNull
-  protected static DataContext createDataContext(CompileContext context) {
+  protected static @NotNull DataContext createDataContext(CompileContext context) {
     Project project = context.getProject();
     CompileScope scope = context.getCompileScope();
     Module[] modules = ReadAction.compute(() -> scope.getAffectedModules());

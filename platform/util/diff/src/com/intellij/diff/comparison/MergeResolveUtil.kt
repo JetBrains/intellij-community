@@ -8,6 +8,7 @@ import com.intellij.diff.util.MergeConflictType.Type
 import com.intellij.diff.util.Side.LEFT
 import com.intellij.diff.util.Side.RIGHT
 import com.intellij.util.text.MergingCharSequence
+import kotlin.jvm.JvmStatic
 import kotlin.math.max
 import kotlin.math.min
 
@@ -210,7 +211,7 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
 
         break
       }
-      assert(index1 != end1 || index2 != end2)
+      check(index1 != end1 || index2 != end2)
 
       val inserted1 = getInsertedContent(fragments1, index1, end1, LEFT)
       val inserted2 = getInsertedContent(fragments2, index2, end2, RIGHT)

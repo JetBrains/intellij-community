@@ -5,6 +5,7 @@ fun foo() {
     }
 }
 
-// IGNORE_K2
-// TOOL: org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ConstantConditionIfInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ConstantConditionIfInspection
+// FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix
 // FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

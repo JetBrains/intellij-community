@@ -34,7 +34,7 @@ import java.util.Set;
 
 
 public final class RootVisitorHost {
-  public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
+  public static void visitRoots(final @NotNull PsiElement elt, final @NotNull RootVisitor visitor) {
     // real search
     final Module module = ModuleUtilCore.findModuleForPsiElement(elt);
     if (module != null) {
@@ -85,7 +85,7 @@ public final class RootVisitorHost {
     if (elt_vfile != null) { // reality TODO: check this reality
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
       orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
-      if (orderEntries.size() > 0) {
+      if (!orderEntries.isEmpty()) {
         for (OrderEntry entry : orderEntries) {
           if (!visitOrderEntryRoots(visitor, entry)) break;
         }

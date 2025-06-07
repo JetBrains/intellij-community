@@ -11,12 +11,18 @@ import com.intellij.cce.interpreter.InterpretationOrder
 interface EvaluationChunk {
   val datasetName: String
   val name: String
-  val presentationText: String
+
+  val sessionsExist: Boolean get() = true
 
   fun evaluate(
     handler: InterpretationHandler,
     filter: InterpretFilter,
     order: InterpretationOrder,
     sessionHandler: (Session) -> Unit
-  ): List<Session>
+  ): Result
+
+  data class Result(
+    val sessions: List<Session>,
+    val presentationText: String?
+  )
 }

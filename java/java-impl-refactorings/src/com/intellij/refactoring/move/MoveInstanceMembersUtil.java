@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,8 +76,7 @@ public final class MoveInstanceMembersUtil {
     members.add(member);
   }
 
-  @Nullable
-  private static Pair<PsiMember, PsiClass> getMemberAndClassReferencedByThis(final PsiExpression expression) {
+  private static @Nullable Pair<PsiMember, PsiClass> getMemberAndClassReferencedByThis(final PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
@@ -104,8 +103,7 @@ public final class MoveInstanceMembersUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiClass getReferencedClass(final PsiMember member, final PsiExpression exprQualifier, final PsiExpression expression) {
+  private static @Nullable PsiClass getReferencedClass(final PsiMember member, final PsiExpression exprQualifier, final PsiExpression expression) {
     if (exprQualifier != null) {
       final PsiType type = exprQualifier.getType();
       if (type instanceof PsiClassType) {
@@ -124,8 +122,7 @@ public final class MoveInstanceMembersUtil {
     }
   }
 
-  @Nullable
-  public static PsiClass getClassReferencedByThis(final PsiExpression expression) {
+  public static @Nullable PsiClass getClassReferencedByThis(final PsiExpression expression) {
     PsiClass enclosingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     if (enclosingClass == null) return null;
     final Pair<PsiMember, PsiClass> pair = getMemberAndClassReferencedByThis(expression);

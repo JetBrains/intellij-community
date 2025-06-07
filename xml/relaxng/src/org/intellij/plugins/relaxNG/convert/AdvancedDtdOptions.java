@@ -129,7 +129,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
     map.put(GENERATE_START, myGenerateStartCheckBox.isSelected());
 
-    if (myDefaultNS.getText().trim().length() > 0) {
+    if (!myDefaultNS.getText().trim().isEmpty()) {
       map.put(XMLNS, myDefaultNS.getText() );
     }
 
@@ -143,7 +143,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
   private static void setText(HashMap<String, Object> map, String option, JTextField field) {
     final String colonReplacement = field.getText();
-    if (colonReplacement != null && colonReplacement.trim().length() > 0) {
+    if (colonReplacement != null && !colonReplacement.trim().isEmpty()) {
       map.put(option, colonReplacement);
     }
   }

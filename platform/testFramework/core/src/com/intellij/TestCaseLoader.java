@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
@@ -20,6 +20,7 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -268,7 +269,7 @@ public class TestCaseLoader {
     }
   }
 
-  private static List<String> getTestGroups() {
+  private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
@@ -278,6 +279,9 @@ public class TestCaseLoader {
     if (!myTestClassesFilter.matches(className, moduleName)) return false;
     if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
     if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
+    // Ignore those classes even if they're not set as myFirstTestClass and myLastTestClass
+    if (className.equals("_FirstInSuiteTest")) return false;
+    if (className.equals("_LastInSuiteTest")) return false;
     return true;
   }
 
@@ -520,7 +524,7 @@ public class TestCaseLoader {
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(testClasses,
                                     Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }

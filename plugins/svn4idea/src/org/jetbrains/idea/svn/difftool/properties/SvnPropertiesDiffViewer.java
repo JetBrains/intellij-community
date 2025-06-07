@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContentFactory;
@@ -47,23 +47,21 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   private static final @NonNls String HELP_ID = "topicId758145";
 
-  @NotNull private final List<DiffChange> myDiffChanges;
+  private final @NotNull List<DiffChange> myDiffChanges;
 
   private boolean myFirstRediff = true;
 
-  @NotNull
-  public static SvnPropertiesDiffViewer create(@NotNull DiffContext context, @NotNull SvnPropertiesDiffRequest request) {
+  public static @NotNull SvnPropertiesDiffViewer create(@NotNull DiffContext context, @NotNull SvnPropertiesDiffRequest request) {
     return create(context, request, false);
   }
 
-  @NotNull
-  public static SvnPropertiesDiffViewer create(@NotNull DiffContext context, @NotNull SvnPropertiesDiffRequest request, boolean embedded) {
+  public static @NotNull SvnPropertiesDiffViewer create(@NotNull DiffContext context, @NotNull SvnPropertiesDiffRequest request, boolean embedded) {
     Pair<ContentDiffRequest, List<DiffChange>> pair = convertRequest(request, embedded);
     return new SvnPropertiesDiffViewer(context, pair.first, pair.second);
   }
@@ -109,9 +107,8 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     myContentPanel.setPainter(new MyDividerPainter());
   }
 
-  @NotNull
   @Override
-  protected Runnable performRediff(@NotNull ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(@NotNull ProgressIndicator indicator) {
     if (!myFirstRediff) return new EmptyRunnable();
     myFirstRediff = false;
 
@@ -183,13 +180,12 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  @NotNull
-  private static List<? extends LineFragment> createEverythingChanged(int length1, int length2, int lines1, int lines2) {
+  private static @NotNull List<? extends LineFragment> createEverythingChanged(int length1, int length2, int lines1, int lines2) {
     return Collections.singletonList(new LineFragmentImpl(0, lines1, 0, lines2, 0, length1, 0, length2));
   }
 
   private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
-    @NotNull private final JBLabel myLabel;
+    private final @NotNull JBLabel myLabel;
 
     MyDividerPainter() {
       myLabel = new JBLabel();
@@ -267,8 +263,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       }
     }
 
-    @Nullable
-    private Color getRecordTitleColor(@NotNull DiffChange change) {
+    private @Nullable Color getRecordTitleColor(@NotNull DiffChange change) {
       TextDiffType type = getDiffType(change);
       if (type == TextDiffType.INSERTED) return FileStatus.ADDED.getColor();
       if (type == TextDiffType.DELETED) return FileStatus.DELETED.getColor();
@@ -276,8 +271,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       return JBColor.black; // unchanged
     }
 
-    @Nullable
-    public TextDiffType getDiffType(@NotNull DiffChange change) {
+    public @Nullable TextDiffType getDiffType(@NotNull DiffChange change) {
       if (change.getRecord().getBefore() == null) return TextDiffType.INSERTED;
       if (change.getRecord().getAfter() == null) return TextDiffType.DELETED;
       if (change.getFragments() != null && !change.getFragments().isEmpty()) return TextDiffType.MODIFIED;
@@ -295,9 +289,8 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   //
 
 
-  @Nullable
   @Override
-  protected SyncScrollSupport.SyncScrollable getSyncScrollable() {
+  protected @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable() {
     return new SyncScrollSupport.SyncScrollable() {
       @Override
       public boolean isSyncScrollEnabled() {
@@ -309,9 +302,8 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
         return line;
       }
 
-      @NotNull
       @Override
-      public Range getRange(@NotNull Side baseSide, int line) {
+      public @NotNull Range getRange(@NotNull Side baseSide, int line) {
         return BaseSyncScrollable.idRange(line);
       }
     };
@@ -327,8 +319,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   // Initial step
   //
 
-  @NotNull
-  private static Pair<ContentDiffRequest, List<DiffChange>> convertRequest(@NotNull SvnPropertiesDiffRequest request, boolean embedded) {
+  private static @NotNull Pair<ContentDiffRequest, List<DiffChange>> convertRequest(@NotNull SvnPropertiesDiffRequest request, boolean embedded) {
     List<PropertyRecord> records = collectRecords(request);
 
     StringBuilder builder1 = new StringBuilder();
@@ -366,8 +357,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     return Pair.create(proxyRequest, diffChanges);
   }
 
-  @NotNull
-  private static List<PropertyRecord> collectRecords(@NotNull SvnPropertiesDiffRequest request) {
+  private static @NotNull List<PropertyRecord> collectRecords(@NotNull SvnPropertiesDiffRequest request) {
     List<DiffContent> originalContents = request.getContents();
     List<PropertyData> properties1 = getProperties(originalContents.get(0));
     List<PropertyData> properties2 = getProperties(originalContents.get(1));
@@ -395,16 +385,14 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     return records;
   }
 
-  @Nullable
-  private static List<PropertyData> getProperties(@NotNull DiffContent content) {
+  private static @Nullable List<PropertyData> getProperties(@NotNull DiffContent content) {
     if (content instanceof SvnPropertiesDiffRequest.PropertyContent) {
       return ((SvnPropertiesDiffRequest.PropertyContent)content).getProperties();
     }
     return null;
   }
 
-  @NotNull
-  private static PropertyRecord createRecord(@NotNull String name, @Nullable PropertyValue value1, @Nullable PropertyValue value2) {
+  private static @NotNull PropertyRecord createRecord(@NotNull String name, @Nullable PropertyValue value1, @Nullable PropertyValue value2) {
     assert value1 != null || value2 != null;
 
     String text1 = value1 != null ? value1.toString() : null;
@@ -422,9 +410,9 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   //
 
   private static class PropertyRecord {
-    @NotNull private final String myName;
-    @Nullable private final String myBefore;
-    @Nullable private final String myAfter;
+    private final @NotNull String myName;
+    private final @Nullable String myBefore;
+    private final @Nullable String myAfter;
 
     PropertyRecord(@NotNull String name, @Nullable String before, @Nullable String after) {
       assert before != null || after != null;
@@ -438,25 +426,23 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       return myName;
     }
 
-    @Nullable
-    public String getBefore() {
+    public @Nullable String getBefore() {
       return myBefore;
     }
 
-    @Nullable
-    public String getAfter() {
+    public @Nullable String getAfter() {
       return myAfter;
     }
   }
 
   private static class DiffChange {
-    @NotNull private final PropertyRecord myRecord;
+    private final @NotNull PropertyRecord myRecord;
     private final int myStartLine1;
     private final int myEndLine1;
     private final int myStartLine2;
     private final int myEndLine2;
 
-    @Nullable private List<? extends LineFragment> myFragments;
+    private @Nullable List<? extends LineFragment> myFragments;
 
     DiffChange(@NotNull PropertyRecord record, int startLine1, int endLine1, int startLine2, int endLine2) {
       myRecord = record;
@@ -466,8 +452,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       myEndLine2 = endLine2;
     }
 
-    @NotNull
-    public PropertyRecord getRecord() {
+    public @NotNull PropertyRecord getRecord() {
       return myRecord;
     }
 
@@ -483,8 +468,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       myFragments = fragments;
     }
 
-    @Nullable
-    public List<? extends LineFragment> getFragments() {
+    public @Nullable List<? extends LineFragment> getFragments() {
       return myFragments;
     }
   }

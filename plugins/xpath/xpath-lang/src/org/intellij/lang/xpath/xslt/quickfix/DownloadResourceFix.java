@@ -41,8 +41,7 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XPathBundle.message("intention.family.name.download.external.resource");
   }
 
@@ -52,7 +51,7 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     boolean tryAgain = true;
 
     final DownloadManager.DownloadException[] ex = new DownloadManager.DownloadException[1];

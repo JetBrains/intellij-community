@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -38,8 +24,7 @@ public class GrDummyIdentifierProvider {
     myContext = context;
   }
 
-  @Nullable
-  public String getIdentifier() {
+  public @Nullable String getIdentifier() {
     if (myContext.getCompletionType() == CompletionType.BASIC && myContext.getFile() instanceof GroovyFile) {
       PsiElement position = myContext.getFile().findElementAt(myContext.getStartOffset());
       if (position != null &&
@@ -68,8 +53,7 @@ public class GrDummyIdentifierProvider {
     return null;
   }
 
-  @NotNull
-  private String setCorrectCase() {
+  private @NotNull String setCorrectCase() {
     final PsiElement element = myContext.getFile().findElementAt(myContext.getStartOffset());
     if (element == null) return DUMMY_IDENTIFIER_DECAPITALIZED;
 
@@ -90,8 +74,7 @@ public class GrDummyIdentifierProvider {
     return node != null && node.getElementType() == GroovyTokenTypes.mLPAREN;
   }
 
-  @Nullable
-  private static ASTNode findNodeAfterIdent(@Nullable PsiElement position) {
+  private static @Nullable ASTNode findNodeAfterIdent(@Nullable PsiElement position) {
     if (position == null) {
       return null;
     }

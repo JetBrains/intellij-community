@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.*
 
 internal class TestFixtureImpl<T>(
@@ -19,8 +20,12 @@ internal class TestFixtureImpl<T>(
 
   override fun get(): T {
     try {
-      @Suppress("UNCHECKED_CAST")
-      val deferred = _state as Deferred<ScopedValue<T>>
+      @Suppress("UNCHECKED_CAST", "TestOnlyProblems")
+      val deferred = _state as? Deferred<ScopedValue<T>> ?: error("""
+        Fixture framework seems not be initialized. Make sure that:
+        1. A test is written in Kotlin
+        2. There is an annotation ${TestApplication::class.java.name} on top of your file. 
+      """.trimIndent())
       @OptIn(ExperimentalCoroutinesApi::class)
       return deferred.getCompleted().first
     }
@@ -32,17 +37,17 @@ internal class TestFixtureImpl<T>(
     }
   }
 
-  fun init(testScope: CoroutineScope, uniqueId: String): Deferred<ScopedValue<T>> {
+  fun init(testScope: CoroutineScope, context: TestContext): Deferred<ScopedValue<T>> {
     val state = _state
     if (state !is TestFixtureInitializer<*>) {
       @Suppress("UNCHECKED_CAST")
       return state as Deferred<ScopedValue<T>>
     }
-    return initSync(testScope, uniqueId)
+    return initSync(testScope, context)
   }
 
   @Synchronized // for simplicity; can be made atomic if needed
-  private fun initSync(testScope: CoroutineScope, uniqueId: String): Deferred<ScopedValue<T>> {
+  private fun initSync(testScope: CoroutineScope, context: TestContext): Deferred<ScopedValue<T>> {
     val state = _state
     if (state !is TestFixtureInitializer<*>) {
       @Suppress("UNCHECKED_CAST")
@@ -58,10 +63,10 @@ internal class TestFixtureImpl<T>(
     testScope.launch(CoroutineName(debugString)) {
       @Suppress("UNCHECKED_CAST")
       val initializer = state as TestFixtureInitializer<T>
-      val scope = TestFixtureInitializerReceiverImpl<T>(testScope, uniqueId)
+      val scope = TestFixtureInitializerReceiverImpl<T>(testScope, context)
       val (fixture, tearDown) = try {
         with(initializer) {
-          scope.initFixture(uniqueId) as InitializedTestFixtureData<T>
+          scope.initFixture(context) as InitializedTestFixtureData<T>
         }
       }
       catch (t: Throwable) {
@@ -95,7 +100,7 @@ private typealias ScopedValue<T> = Pair<T, CoroutineScope>
 
 private class TestFixtureInitializerReceiverImpl<T>(
   private val testScope: CoroutineScope,
-  private val uniqueId: String,
+  private val context: TestContext,
 ) : TestFixtureInitializer.R<T> {
 
   /**
@@ -104,7 +109,7 @@ private class TestFixtureInitializerReceiverImpl<T>(
   private val _dependencies = LinkedHashSet<CoroutineScope>()
 
   override suspend fun <T> TestFixture<T>.init(): T {
-    val (fixture, fixtureScope) = (this as TestFixtureImpl<T>).init(testScope, uniqueId).await()
+    val (fixture, fixtureScope) = (this as TestFixtureImpl<T>).init(testScope, context).await()
     _dependencies.add(fixtureScope)
     return fixture
   }

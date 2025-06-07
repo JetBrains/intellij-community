@@ -163,18 +163,6 @@ class DialogPanel : JBPanel<DialogPanel> {
       validationsOnInput = value.mapValues { listOf(validation(it.value)) }
     }
 
-  @Deprecated("Use validationRequestors instead")
-  @get:Deprecated("Use validationRequestors instead")
-  @set:Deprecated("Use validationRequestors instead")
-  @get:ScheduledForRemoval
-  @set:ScheduledForRemoval
-  @Suppress("DEPRECATION")
-  var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
-    get() = validationRequestors.mapValues { it.value.map(::customValidationRequestor) }
-    set(value) {
-      validationRequestors = value.mapValues { it.value.map(::validationRequestor) }
-    }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Migration function")
   @ScheduledForRemoval

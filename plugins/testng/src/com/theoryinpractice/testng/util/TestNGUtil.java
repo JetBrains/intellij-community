@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -93,8 +93,7 @@ public final class TestNGUtil {
       AfterTest.class.getName()
   };
 
-  @NonNls
-  private static final String[] CONFIG_JAVADOC_TAGS = {
+  private static final @NonNls String[] CONFIG_JAVADOC_TAGS = {
       "testng.configuration",
       "testng.before-class",
       "testng.before-groups",
@@ -111,8 +110,7 @@ public final class TestNGUtil {
   private static final List<String> JUNIT_ANNOTATIONS =
       Arrays.asList("org.junit.Test", "org.junit.Before", "org.junit.BeforeClass", "org.junit.After", "org.junit.AfterClass");
 
-  @NonNls
-  private static final String SUITE_TAG_NAME = "suite";
+  private static final @NonNls String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
     return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
@@ -251,7 +249,7 @@ public final class TestNGUtil {
     return attributeValue != null && attributeValue.textMatches("false");
   }
 
-  private static PsiDocTag getTextJavaDoc(@NotNull final PsiDocCommentOwner element) {
+  private static PsiDocTag getTextJavaDoc(final @NotNull PsiDocCommentOwner element) {
     final PsiDocComment docComment = element.getDocComment();
     if (docComment != null) {
       return docComment.findTagByName("testng.test");
@@ -359,7 +357,7 @@ public final class TestNGUtil {
       final PsiManager manager = PsiManager.getInstance(filter.getProject());
       final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
       final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
-      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject()).asIterable()) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
             indicator.setText2(TestngBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));
@@ -483,8 +481,7 @@ public final class TestNGUtil {
     return version.isOrGreaterThan(major, minor, bugfix);
   }
 
-  @Nullable
-  private static Version detectVersion(@NotNull Project project, @NotNull Module module) {
+  private static @Nullable Version detectVersion(@NotNull Project project, @NotNull Module module) {
     return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
       String version = null;
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

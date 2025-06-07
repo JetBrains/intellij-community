@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
@@ -19,14 +19,15 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
-  public NewScriptAction() {
-    super(GroovyBundle.messagePointer("new.script.action.text"), GroovyBundle.messagePointer("new.script.action.description"),
-          () -> JetgroovyIcons.Groovy.GroovyFile, null);
+final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+
+  NewScriptAction() {
+    super(null);
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.script.dialog.title"))
       .addKind(GroovyBundle.message("new.script.list.item.script"), JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
@@ -34,13 +35,13 @@ public final class NewScriptAction extends JavaCreateTemplateInPackageAction<Gro
   }
 
   @Override
-  protected boolean isAvailable(DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("new.script.action.text");
+    return GroovyBundle.message("action.Groovy.NewScript.text");
   }
 
   @Override
@@ -49,8 +50,7 @@ public final class NewScriptAction extends JavaCreateTemplateInPackageAction<Gro
   }
 
   @Override
-  @NotNull
-  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
+  protected @NotNull GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     String fileName = newName + "." + extractExtension(templateName);
     PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, fileName, templateName, true);
     if (file instanceof GroovyFile) return (GroovyFile)file;

@@ -26,8 +26,7 @@ public interface AsyncVfsEventsPostProcessor {
    */
   void addListener(@NotNull AsyncVfsEventsListener listener, @NotNull CoroutineScope coroutineScope);
 
-  @NotNull
-  static AsyncVfsEventsPostProcessor getInstance() {
+  static @NotNull AsyncVfsEventsPostProcessor getInstance() {
     return ApplicationManager.getApplication().getService(AsyncVfsEventsPostProcessor.class);
   }
 }

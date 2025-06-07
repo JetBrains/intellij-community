@@ -3,34 +3,35 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Options related only to the Block terminal.
  */
+@ApiStatus.Internal
 @Service
-@State(name = "BlockTerminalOptions", storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
-internal class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOptions.State> {
-  private var state: State = State()
-  private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
+@State(name = BlockTerminalOptions.COMPONENT_NAME,
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "terminal.xml")])
+class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOptions.State> {
+  private val state: State = State()
+  private val dispatcher = EventDispatcher.create(BlockTerminalOptionsListener::class.java)
 
   override fun getState(): State = state
 
-  @Suppress("DEPRECATION")
-  override fun loadState(state: State) {
-    this.state = state
+  override fun loadState(newState: State) {
+    // Set the values using properties, so listeners will be fired on change.
+    // It is important in the case of RemDev when changes are synced from the backend to frontend using this method.
+    promptStyle = newState.promptStyle
+    showSeparatorsBetweenBlocks = newState.showSeparatorsBetweenBlocks
+  }
 
-    // Migrate the value from the previously existing setting if it was non default.
-    // So, if 'useShellPrompt' was set to true, we need to follow it.
-    val options = TerminalOptionsProvider.instance
-    if (options.useShellPrompt) {
-      // Access state directly, no need to fire settings changed event now.
-      this.state.promptStyle = TerminalPromptStyle.SHELL
-      options.useShellPrompt = false
-    }
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   var promptStyle: TerminalPromptStyle
@@ -38,27 +39,32 @@ internal class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOpti
     set(value) {
       if (state.promptStyle != value) {
         state.promptStyle = value
-        fireSettingsChanged()
+        dispatcher.multicaster.promptStyleChanged(value)
       }
     }
 
-  /** [listener] is invoked when any option is changed */
-  fun addListener(parentDisposable: Disposable, listener: () -> Unit) {
-    TerminalUtil.addItem(listeners, listener, parentDisposable)
-  }
-
-  private fun fireSettingsChanged() {
-    for (listener in listeners) {
-      listener()
+  var showSeparatorsBetweenBlocks: Boolean
+    get() = state.showSeparatorsBetweenBlocks
+    set(value) {
+      if (state.showSeparatorsBetweenBlocks != value) {
+        state.showSeparatorsBetweenBlocks = value
+        dispatcher.multicaster.showSeparatorsBetweenBlocksChanged(value)
+      }
     }
+
+  fun addListener(parentDisposable: Disposable, listener: BlockTerminalOptionsListener) {
+    dispatcher.addListener(listener, parentDisposable)
   }
 
   class State {
     var promptStyle: TerminalPromptStyle = TerminalPromptStyle.DOUBLE_LINE
+    var showSeparatorsBetweenBlocks: Boolean = true
   }
 
   companion object {
     @JvmStatic
     fun getInstance(): BlockTerminalOptions = service()
+
+    internal const val COMPONENT_NAME: String = "BlockTerminalOptions"
   }
 }

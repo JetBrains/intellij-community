@@ -18,8 +18,9 @@ public final class NaturalComparator implements Comparator<String> {
 
   @Override
   public int compare(String s1, String s2) {
-    //noinspection StringEquality
-    if (s1 == s2) return 0;
+    if (Strings.areSameInstance(s1, s2)) {
+      return 0;
+    }
     if (s1 == null) return -1;
     if (s2 == null) return +1;
     return naturalCompare(s1, s2, s1.length(), s2.length(), true, false);

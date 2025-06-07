@@ -2,15 +2,15 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.actionSystem.DataMap;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class PasteTargetRule implements GetDataRule {
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    return CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT;
+
+final class PasteTargetRule {
+  static @Nullable PsiElement getData(@NotNull DataMap dataProvider) {
+    return dataProvider.get(PSI_ELEMENT);
   }
 }

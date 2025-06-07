@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -55,8 +55,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
   /**
    * The name of the run configuration group in a configuration file. The same rules as for id. Useful when id cannot be changed.
    */
-  @NotNull @NonNls
-  default String getTag() {
+  default @NotNull @NonNls String getTag() {
     return getId();
   }
 
@@ -74,9 +73,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the help topic, or {@code null} if no help is available
    */
-  @NonNls
-  @Nullable
-  default String getHelpTopic() {
+  default @NonNls @Nullable String getHelpTopic() {
     return null;
   }
 

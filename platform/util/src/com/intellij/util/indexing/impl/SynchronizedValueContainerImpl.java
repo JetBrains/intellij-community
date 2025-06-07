@@ -51,8 +51,7 @@ public final class SynchronizedValueContainerImpl<Value> extends ValueContainerI
   }
 
   @Override
-  @NotNull
-  protected synchronized String getDebugMessage() {
+  protected synchronized @NotNull String getDebugMessage() {
     return super.getDebugMessage();
   }
 }

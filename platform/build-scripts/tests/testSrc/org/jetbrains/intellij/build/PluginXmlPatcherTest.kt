@@ -168,41 +168,6 @@ class PluginXmlPatcherTest {
   )
 
   @Test
-  fun patchDatabasePluginInWebStorm() = assertTransform(
-    """
-      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-        <name>Database Tools and SQL</name>
-        <id>com.intellij.database</id>
-        <product-descriptor code="PDB" release-date="__DATE__" release-version="__VERSION__"/>
-        <description>
-            <![CDATA[
-              The Database Tools and SQL plugin for IntelliJ-based IDEs allows you to query, create, and manage databases and provides full SQL language support.
-              <br><br>
-              The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
-              <br><br>
-            ]]>
-        </description>
-      </idea-plugin>
-    """.trimIndent(),
-    """
-    <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-      <name>Database Tools and SQL for WebStorm</name>
-      <id>com.intellij.database</id>
-      <version>x-plugin-version</version>
-      <idea-version since-build="new-since" until-build="new-until" />
-      <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
-      <description>The Database Tools and SQL plugin for WebStorm allows you to query, create, and manage databases and provides full SQL language support.
-            &lt;br&gt;&lt;br&gt;
-            The plugin provides all the same features as &lt;a href=&quot;https://www.jetbrains.com/datagrip/&quot;&gt;DataGrip&lt;/a&gt;, the standalone JetBrains IDE for databases.
-    Owners of an active DataGrip subscription can download the plugin for free.
-    The plugin is also included in &lt;a href=&quot;https://www.jetbrains.com/all/&quot;&gt;All Products Pack&lt;/a&gt; and &lt;a href=&quot;https://www.jetbrains.com/community/education/&quot;&gt;Student Pack&lt;/a&gt;.
-            &lt;br&gt;&lt;br&gt;</description>
-    </idea-plugin>
-    """.trimIndent(),
-    toPublish = true,
-  )
-
-  @Test
   fun doNotPatchDatabasePluginIfBundled() = assertTransform(
     """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">

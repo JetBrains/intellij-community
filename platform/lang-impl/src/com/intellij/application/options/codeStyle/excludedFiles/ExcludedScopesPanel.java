@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.CodeStyleBundle;
@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.awt.*;
 /**
  * Legacy panel for excluded scopes. Shown only if a user has already defined scope-based exclusions.
  */
+@ApiStatus.Internal
 public final class ExcludedScopesPanel extends ExcludedFilesPanelBase {
 
   private final ExcludedFilesList myExcludedFilesList;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -39,9 +39,8 @@ public final class ConditionalBreakInInfiniteLoopInspection extends AbstractBase
                JavaBundle.message("inspection.conditional.break.in.infinite.loop.suggest.conversion.when.if.is.single.stmt.in.loop")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -102,10 +101,9 @@ public final class ConditionalBreakInInfiniteLoopInspection extends AbstractBase
                          boolean conditionInTheBeginning,
                          boolean conditionInThen,
                          boolean isInfiniteLoop) {
-    @Nullable
-    private static Context from(@NotNull PsiConditionalLoopStatement loopStatement,
-                                boolean noConversionToDoWhile,
-                                boolean suggestConversionWhenIfIsASingleStmtInLoop) {
+    private static @Nullable Context from(@NotNull PsiConditionalLoopStatement loopStatement,
+                                          boolean noConversionToDoWhile,
+                                          boolean suggestConversionWhenIfIsASingleStmtInLoop) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
         if (loopStatement instanceof PsiForStatement forStatement) {
@@ -162,10 +160,9 @@ public final class ConditionalBreakInInfiniteLoopInspection extends AbstractBase
     }
 
     @Contract("null, _, _ -> null")
-    @Nullable
-    private static PsiExpression extractBreakCondition(@Nullable PsiIfStatement ifStatement,
-                                                       @NotNull PsiLoopStatement loopStatement,
-                                                       Ref<? super @NotNull Boolean> isBreakInThen) {
+    private static @Nullable PsiExpression extractBreakCondition(@Nullable PsiIfStatement ifStatement,
+                                                                 @NotNull PsiLoopStatement loopStatement,
+                                                                 Ref<? super @NotNull Boolean> isBreakInThen) {
       if (ifStatement == null) return null;
       if (ControlFlowUtils.statementBreaksLoop(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()), loopStatement)) {
         if (hasVariableNameConflict(loopStatement, ifStatement, ifStatement.getElseBranch())) return null;
@@ -231,10 +228,8 @@ public final class ConditionalBreakInInfiniteLoopInspection extends AbstractBase
       this.noConversionToDoWhile = noConversionToDoWhile;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.conditional.break.in.infinite.loop");
     }
 

@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface Splitter {
-  void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer);
+  void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer);
 }

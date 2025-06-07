@@ -1,6 +1,6 @@
 // LANGUAGE_VERSION: 1.4
 // PROBLEM: none
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 interface Foo
 

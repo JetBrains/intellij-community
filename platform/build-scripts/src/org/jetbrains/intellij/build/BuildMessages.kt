@@ -42,6 +42,8 @@ interface BuildMessages: System.Logger {
 
   fun reportBuildProblem(description: String, identity: String? = null)
 
+  fun reportBuildNumber(value: String)
+
   fun cancelBuild(reason: String)
 
   fun getDebugLog(): String?

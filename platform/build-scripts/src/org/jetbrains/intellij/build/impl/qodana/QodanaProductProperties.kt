@@ -16,7 +16,12 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dscanning.in.smart.mode=false",
   "-Deap.login.enabled=false",
   "-Dsdk.download.consent=true",
-  "-Deslint.service.expiration.timeout.ms=5000"
+  "-Dide.activity.tracking.enable.debug=true",
+  "-Deslint.service.expiration.timeout.ms=5000",
+  "-Dphp.additional.library.manager.new.updater=true",
+  "-Dide.region.url.mapping.expiration.timeout=7200",
+  "-Dexternal.system.auto.import.headless.async=true",
+  "-Dmaven.default.headless.import=true",
   )
 
 private const val IS_EAP = true

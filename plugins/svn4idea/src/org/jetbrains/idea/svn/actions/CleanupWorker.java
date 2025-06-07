@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -29,9 +29,9 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CleanupWorker extends Task.Backgroundable {
 
-  @NotNull protected final List<VirtualFile> myRoots;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final List<Pair<VcsException, VirtualFile>> myExceptions = new ArrayList<>();
+  protected final @NotNull List<VirtualFile> myRoots;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull List<Pair<VcsException, VirtualFile>> myExceptions = new ArrayList<>();
 
   public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots) {
     this(vcs, roots, null);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.openapi.components.*;
@@ -39,9 +39,8 @@ public final class TerminalArrangementManager implements PersistentStateComponen
     myWorkingDirectoryManager.init(terminalToolWindow);
   }
 
-  @Nullable
   @Override
-  public TerminalArrangementState getState() {
+  public @Nullable TerminalArrangementState getState() {
     if (!isAvailable() || myTerminalToolWindow == null) {
       // do not save state, reuse previously stored state
       return null;
@@ -58,18 +57,15 @@ public final class TerminalArrangementManager implements PersistentStateComponen
     }
   }
 
-  @NotNull
-  private static List<String> getCommandHistoryFileNames(@NotNull TerminalArrangementState state) {
+  private static @NotNull List<String> getCommandHistoryFileNames(@NotNull TerminalArrangementState state) {
     return ContainerUtil.mapNotNull(state.myTabStates, tabState -> tabState.myCommandHistoryFileName);
   }
 
-  @Nullable
-  public TerminalArrangementState getArrangementState() {
+  public @Nullable TerminalArrangementState getArrangementState() {
     return myState;
   }
 
-  @NotNull
-  private TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
+  private @NotNull TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
     TerminalArrangementState arrangementState = new TerminalArrangementState();
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {

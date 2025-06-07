@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -51,7 +51,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final boolean needStaticQualifier = isExternal(match, myMethod);
     final boolean nameConflicts = nameConflicts(match);
     final String methodName = myMethod.isConstructor() ? "this" : myMethod.getName();
-    @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
+    final @NonNls String text = needQualifier || needStaticQualifier || nameConflicts
                                 ?  "q." + methodName + "()": methodName + "()";
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
     methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
@@ -164,8 +164,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  @Nullable
-  public String getConfirmDuplicatePrompt(final Match match) {
+  public @Nullable String getConfirmDuplicatePrompt(final Match match) {
     return myConfirmDuplicatePrompts.get(match);
   }
 

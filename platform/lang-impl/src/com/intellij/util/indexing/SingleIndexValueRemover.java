@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class SingleIndexValueRemover {
   public final @NotNull ID<?, ?> indexId;
+  public final int shardNo;
 
   private final @NotNull FileBasedIndexImpl indexImpl;
 
@@ -24,6 +25,7 @@ public final class SingleIndexValueRemover {
 
   SingleIndexValueRemover(@NotNull FileBasedIndexImpl indexImpl,
                           @NotNull ID<?, ?> indexId,
+                          int shardNo,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
@@ -31,6 +33,7 @@ public final class SingleIndexValueRemover {
     this.indexImpl = indexImpl;
     this.indexId = indexId;
     this.inputId = inputId;
+    this.shardNo = shardNo;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
     this.applicationMode = applicationMode;
   }

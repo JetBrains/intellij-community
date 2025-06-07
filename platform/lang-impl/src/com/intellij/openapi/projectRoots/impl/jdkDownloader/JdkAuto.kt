@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -28,8 +28,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.getEelApi
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.suspendingLazy
@@ -97,7 +97,7 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
 
 private val LOG = logger<JdkAuto>()
 
-class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
+class JdkAuto : UnknownSdkResolver {
   override fun supportsResolution(sdkTypeId: SdkTypeId): Boolean = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
 
   override fun createResolver(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
@@ -128,7 +128,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
       }
 
       val eel = coroutineScope.suspendingLazy {
-        project?.getEelApi() ?: localEel
+        (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApi()
       }
 
       @Deprecated("Remove when EelApi is stabilized")
@@ -265,7 +265,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           val jdkInstaller = JdkInstaller.getInstance()
           val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, eel.getValue(), projectWslDistribution)
           val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
-          JdkDownloaderBase.newDownloadTask(jdkToDownload, request, project)
+          JdkDownloadTask(jdkToDownload, request, project)
         }
 
         override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
@@ -288,9 +288,13 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         override fun createTask(indicator: ProgressIndicator): SdkDownloadTask = runBlockingCancellable {
           val jdkInstaller = JdkInstaller.getInstance()
-          val path = homeDir ?: jdkInstaller.defaultInstallDir(item, eel.getValue(), projectWslDistribution)
+          val path = homeDir ?: jdkInstaller.defaultInstallDir(
+            item,
+            if (Registry.`is`("java.home.finder.use.eel")) eel.getValue() else null,
+            projectWslDistribution,
+          )
           val request = jdkInstaller.prepareJdkInstallation(item, path)
-          JdkDownloaderBase.newDownloadTask(item, request, project)
+          JdkDownloadTask(item, request, project)
         }
 
         override fun toString() = "UnknownSdkMultipleDownloadsFix{${items.joinToString(" / ") { it.fullPresentationText }}, wsl=${projectWslDistribution}}"

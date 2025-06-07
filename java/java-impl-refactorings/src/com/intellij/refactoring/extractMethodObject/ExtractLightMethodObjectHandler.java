@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -20,6 +21,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.reflect.ReflectionAccessorToEverything;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -32,12 +34,11 @@ import java.util.List;
 public final class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
 
-  @Nullable
-  public static LightMethodObjectExtractedData extractLightMethodObject(final Project project,
-                                                                        @Nullable PsiElement originalContext,
-                                                                        @NotNull final PsiCodeFragment fragment,
-                                                                        @NotNull String methodName,
-                                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+  public static @Nullable LightMethodObjectExtractedData extractLightMethodObject(final Project project,
+                                                                                  @Nullable PsiElement originalContext,
+                                                                                  final @NotNull PsiCodeFragment fragment,
+                                                                                  @NotNull String methodName,
+                                                                                  @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -55,6 +56,11 @@ public final class ExtractLightMethodObjectHandler {
 
     final PsiFile copy = PsiFileFactory.getInstance(project)
       .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+
+    if (copy instanceof PsiJavaFile copyJavaFile && file instanceof PsiJavaFile originalJavaFile) {
+      LanguageLevel level = PsiUtil.getLanguageLevel(originalJavaFile);
+      PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(copyJavaFile, level);
+    }
 
     if (originalContext instanceof PsiKeyword && PsiModifier.PRIVATE.equals(originalContext.getText())) {
       final PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(originalContext, PsiNameIdentifierOwner.class);
@@ -121,21 +127,18 @@ public final class ExtractLightMethodObjectHandler {
     if (elementsCopy.length == 0) {
       return null;
     }
-    if (elementsCopy[elementsCopy.length - 1] instanceof PsiExpressionStatement) {
-      final PsiExpression expr = ((PsiExpressionStatement)elementsCopy[elementsCopy.length - 1]).getExpression();
-      if (!(expr instanceof PsiAssignmentExpression)) {
-        PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
-        if (expressionType instanceof PsiDisjunctionType) {
-          expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
-        }
-        if (isValidVariableType(expressionType)) {
-          final String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
-          final String statementText = expressionType.getCanonicalText() + " " + uniqueResultName + " = " + expr.getText() + ";";
-          elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
-            .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));
-        }
+    PsiElement lastElement = ArrayUtil.getLastElement(elementsCopy);
+    if (lastElement instanceof PsiExpressionStatement expressionStatement) {
+      PsiExpression expr = expressionStatement.getExpression();
+      generateResult(project, expr, elementsCopy, elementFactory);
+    }
+    else if (lastElement instanceof PsiReturnStatement returnStatement) {
+      PsiExpression expr = returnStatement.getReturnValue();
+      if (expr != null) {
+        generateResult(project, expr, elementsCopy, elementFactory);
       }
     }
+
 
     LOG.assertTrue(elementsCopy[0].getParent() == container, "element: " +  elementsCopy[0].getText() + "; container: " + container.getText());
     final int startOffsetInContainer = elementsCopy[0].getStartOffsetInParent();
@@ -259,8 +262,24 @@ public final class ExtractLightMethodObjectHandler {
                                               originalAnchor, useMagicAccessor);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
+  private static void generateResult(@NotNull Project project,
+                                     @NotNull PsiExpression expr,
+                                     PsiElement[] elementsCopy,
+                                     @NotNull PsiElementFactory elementFactory) {
+    PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
+    if (expressionType instanceof PsiDisjunctionType) {
+      expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
+    }
+    if (isValidVariableType(expressionType)) {
+      String uniqueResultName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("result", elementsCopy[0], true);
+      String text = PsiTypes.nullType().equals(expressionType) ? CommonClassNames.JAVA_LANG_OBJECT : expressionType.getCanonicalText();
+      String statementText = text + " " + uniqueResultName + " = " + expr.getText() + ";";
+      elementsCopy[elementsCopy.length - 1] = elementsCopy[elementsCopy.length - 1]
+        .replace(elementFactory.createStatementFromText(statementText, elementsCopy[elementsCopy.length - 1]));
+    }
+  }
+
+  private static @Nullable PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
     PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -313,17 +332,15 @@ public final class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
-    @NotNull
-    private final String myMethodName;
+    private final @NotNull String myMethodName;
 
     LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
-    @NotNull
     @Override
-    public String getChosenMethodName() {
+    public @NotNull String getChosenMethodName() {
       return myMethodName;
     }
 
@@ -333,9 +350,8 @@ public final class ExtractLightMethodObjectHandler {
       return inputVariables.getInputVariables().toArray(new VariableData[0]);
     }
 
-    @NotNull
     @Override
-    public String getVisibility() {
+    public @NotNull String getVisibility() {
       return PsiModifier.PACKAGE_LOCAL;
     }
 

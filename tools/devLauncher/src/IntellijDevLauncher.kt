@@ -15,7 +15,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.absolute
 import kotlin.io.path.inputStream
 import kotlin.system.exitProcess
 
@@ -50,7 +49,9 @@ fun main(args: Array<String>) {
 
   startupTimings.add("building required modules")
   startupTimings.add(System.nanoTime())
-  buildRequiredModules(productModules)
+  if (System.getProperty("intellij.build.required.modules") != "false") {
+    buildRequiredModules(productModules)
+  }
 
   IntellijLoader.launch(args, moduleRepository, startupTimings, startTimeUnixNano)
 }

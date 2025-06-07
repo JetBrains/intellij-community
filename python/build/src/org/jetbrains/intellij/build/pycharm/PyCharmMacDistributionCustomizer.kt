@@ -7,7 +7,19 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import java.nio.file.Path
 
-open class PyCharmMacDistributionCustomizer : MacDistributionCustomizer() {
+open class PyCharmMacDistributionCustomizer(projectHome: Path) : MacDistributionCustomizer() {
+  init {
+    icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
+    icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
+    bundleIdentifier = "com.jetbrains.pycharm.ce"
+    dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
+  }
+
+  override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersion} EAP" else ""
+    return "PyCharm CE${suffix}.app"
+  }
+
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     super.copyAdditionalFiles(context, targetDir, arch)
     PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")

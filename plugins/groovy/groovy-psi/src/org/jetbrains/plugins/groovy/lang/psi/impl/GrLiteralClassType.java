@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -37,12 +37,10 @@ public abstract class GrLiteralClassType extends PsiClassType {
     myGroovyPsiManager = GroovyPsiManager.getInstance(project);
   }
 
-  @NotNull
-  protected abstract String getJavaClassName();
+  protected abstract @NotNull String getJavaClassName();
 
   @Override
-  @NotNull
-  public ClassResolveResult resolveGenerics() {
+  public @NotNull ClassResolveResult resolveGenerics() {
     return new ClassResolveResult() {
       private final PsiClass myBaseClass = resolve();
 
@@ -56,8 +54,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
       }
 
       @Override
-      @NotNull
-      public PsiSubstitutor getSubstitutor() {
+      public @NotNull PsiSubstitutor getSubstitutor() {
         PsiSubstitutor substitutor = doPreventingRecursion(myResolveResultGuardKey, false, () -> mySubstitutor.getValue());
         return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
       }
@@ -78,8 +75,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
       }
 
       @Override
-      @Nullable
-      public PsiElement getCurrentFileResolveScope() {
+      public @Nullable PsiElement getCurrentFileResolveScope() {
         return null;
       }
 
@@ -90,8 +86,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     };
   }
 
-  @NotNull
-  private PsiSubstitutor inferSubstitutor(@Nullable PsiClass myBaseClass) {
+  private @NotNull PsiSubstitutor inferSubstitutor(@Nullable PsiClass myBaseClass) {
     if (myBaseClass != null) {
       final PsiType[] typeArgs = getParameters();
       final PsiTypeParameter[] typeParams = myBaseClass.getTypeParameters();
@@ -108,14 +103,12 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return getShortName(getJavaClassName());
   }
 
   @Override
-  @NotNull
-  public String getPresentableText() {
+  public @NotNull String getPresentableText() {
     String name = getClassName();
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
@@ -125,8 +118,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     String name = getJavaClassName();
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
@@ -136,20 +128,17 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
   @Override
-  @Nullable
-  public PsiClass resolve() {
+  public @Nullable PsiClass resolve() {
     return myFacade.findClass(getJavaClassName(), getResolveScope());
   }
 
   @Override
-  @NotNull
-  public PsiClassType rawType() {
+  public @NotNull PsiClassType rawType() {
     return myGroovyPsiManager.createTypeByFQClassName(getJavaClassName(), myScope);
   }
 
@@ -159,8 +148,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myScope;
   }
 
@@ -169,8 +157,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     return doPreventingRecursion(type, false, () -> type.getInternalCanonicalText());
   }
 
-  @NotNull
-  protected PsiType getLeastUpperBound(PsiType... psiTypes) {
+  protected @NotNull PsiType getLeastUpperBound(PsiType... psiTypes) {
     PsiType result = null;
     final PsiManager manager = getPsiManager();
     for (final PsiType other : psiTypes) {

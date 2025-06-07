@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.search;
 
@@ -88,5 +88,10 @@ public class AnnotatedMembersSearchTestGenerated extends AbstractAnnotatedMember
     @TestMetadata("testTypeAlias.kt")
     public void testTestTypeAlias() throws Exception {
         runTest("testData/search/annotations/testTypeAlias.kt");
+    }
+
+    @TestMetadata("useTarget.kt")
+    public void testUseTarget() throws Exception {
+        runTest("testData/search/annotations/useTarget.kt");
     }
 }

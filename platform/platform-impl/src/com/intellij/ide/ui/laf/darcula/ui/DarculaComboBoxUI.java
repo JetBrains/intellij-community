@@ -135,6 +135,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   @Override
+  protected ListCellRenderer<Object> createRenderer() {
+    if (ExperimentalUI.isNewUI()) {
+      return new DarculaComboBoxRenderer();
+    }
+
+    return super.createRenderer();
+  }
+
+  @Override
   protected void uninstallDefaults() {
     super.uninstallDefaults();
     if (comboBox.getBorder() == this) {
@@ -275,15 +284,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
-  /**
-   * @deprecated The method is not used anymore
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  protected Color getArrowButtonFillColor(Color defaultColor) {
-    return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
-  }
-
   private static Dimension getMinimumSize(@NotNull JComboBox<?> comboBox) {
     Dimension result = JBUI.CurrentTheme.ComboBox.minimumSize();
     return isBorderless(comboBox) ? new Dimension(result.width, result.height - JBUIScale.scale(4)) : result;
@@ -373,14 +373,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
               comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg :
               comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getComboBoxDisabledBackground());
     }
-  }
-
-  /**
-   * @deprecated Use {@link DarculaUIUtil#isTableCellEditor(Component)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected static boolean isTableCellEditor(JComponent c) {
-    return DarculaUIUtil.isTableCellEditor(c);
   }
 
   @Override
@@ -879,8 +871,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     public void show(Component invoker, int x, int y) {
-      if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
-        scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+      if (ExperimentalUI.isNewUI()) {
+        list.setBorder(JBUI.Borders.empty(getListVerticalInset()));
       }
 
       if (comboBox instanceof ComboBoxWithWidePopup<?> comboBoxWithWidePopup) {
@@ -910,7 +902,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     protected void customizeListRendererComponent(JComponent component) {
-      component.setBorder(JBUI.Borders.empty(2, 8));
+      if (!(component instanceof DarculaComboBoxRenderer)) {
+        component.setBorder(JBUI.Borders.empty(2, 8));
+      }
     }
 
     @Override
@@ -945,7 +939,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         result += UIUtil.updateListRowHeight(preferredSize).height;
       }
 
-      return result;
+      Insets borderInsets = ExperimentalUI.isNewUI() ? getListVerticalInset() : JBInsets.emptyInsets();
+      return result + borderInsets.top + borderInsets.bottom;
+    }
+
+    private @NotNull Insets getListVerticalInset() {
+      return ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer()) ? PopupUtil.getListInsets(false, false) : JBInsets.emptyInsets();
     }
 
     private final class MyDelegateRenderer implements ListCellRenderer {

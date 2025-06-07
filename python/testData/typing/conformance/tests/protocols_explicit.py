@@ -54,6 +54,7 @@ class RGB(Protocol):
 class Point(RGB):
     def __init__(self, red: int, green: int, blue: str) -> None:
         self.rgb = red, green, blue  # E: 'blue' must be 'int'
+        self.other = 0
 
 
 p = Point(0, 0, "")  # E: Cannot instantiate abstract class
@@ -80,7 +81,10 @@ class Proto3(Proto2, Protocol):
 
 
 class Concrete1(Proto1):
-    ...
+    def __init__(self):
+        self.cm1 = 1
+        self.im1 = 1
+        self.im3 = 3
 
 
 c1 = Concrete1()  # E: cannot instantiate abstract class
@@ -98,7 +102,9 @@ class Concrete3(Proto1, Proto3):
     cm1 = 3
 
     def __init__(self):
-        im1 = 0
+        self.im1 = 0
+        self.cm10 = 10
+        self.cm11 = 11
 
 
 c3 = Concrete3()  # E: cannot instantiate abstract class

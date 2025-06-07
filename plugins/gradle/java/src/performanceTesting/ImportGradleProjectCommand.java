@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.performanceTesting;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,9 +54,8 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     runWhenGradleImportAndIndexingFinished(context, actionCallback);
     return Promises.toPromise(actionCallback);
@@ -164,7 +163,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           context.error("Gradle resolve failed for: " + settings.getExternalProjectPath() + ":" + errorMessage + ":" + errorDetails,
                         getLine());
           synchronized (projectsWithResolveErrors) {
-            if (projectsWithResolveErrors.length() != 0) {
+            if (!projectsWithResolveErrors.isEmpty()) {
               projectsWithResolveErrors.append(", ");
             }
             projectsWithResolveErrors.append(String.format("'%s'", new File(settings.getExternalProjectPath()).getName()));

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInspection.options.*
@@ -12,18 +13,20 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
@@ -36,7 +39,10 @@ import kotlin.math.max
 @ApiStatus.Internal
 class UiDslOptPaneRenderer : OptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project) {
+    fun getOption(bindId: String): Any? = controller.getOption(bindId)
+    fun setOption(bindId: String, value: Any) = controller.setOption(bindId, value)
+  }
 
   override fun render(controller: OptionController,
                       pane: OptPane,
@@ -274,12 +280,56 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
               }
           }
         }
+      
+        is OptMultiSelector -> {
+          val list = JBList(component.elements).apply {
+            cellRenderer = listCellRenderer {
+              (value as? Iconable)?.getIcon(0)?.let {
+                icon(it)
+              }
+
+              val textAttributes = (value as? MemberChooserObject)?.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
+              text(value.text) {
+                speedSearch {}
+                attributes = textAttributes
+              }
+
+              val secondaryTextAttributes = (value as? MemberChooserObject)?.secondaryTextAttributes ?: SimpleTextAttributes.GRAYED_ATTRIBUTES
+              value.secondaryText?.let {
+                text(it) {
+                  speedSearch {}
+                  attributes = secondaryTextAttributes
+                }
+              }
+            }
+            addListSelectionListener {
+              context.setOption(component.bindId, selectedValuesList)
+            }
+            selectionMode = when (component.mode) {
+              OptMultiSelector.SelectionMode.SINGLE, OptMultiSelector.SelectionMode.SINGLE_OR_EMPTY,
+                -> ListSelectionModel.SINGLE_SELECTION
+              OptMultiSelector.SelectionMode.MULTIPLE, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY,
+                -> ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+            }
+            selectedIndices = (context.getOption(component.bindId) as? List<*>)
+                                ?.map { component.elements().indexOf(it) }
+                                ?.toList()
+                                ?.let { list -> IntArray(list.size) { n -> list[n] } }
+                              ?: IntArray(0)
+          }
+          TreeUIHelper.getInstance().installListSpeedSearch(list) { element -> "${element.text} ${element.secondaryText ?: ""}" }
+
+          val scroll = JBScrollPane(list)
+          scroll.minimumSize = JBDimension(350, 150)
+
+          cell(scroll)
+            .align(Align.FILL)
+        }
 
         is OptDropdown -> {
-          comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
+          comboBox(getComboBoxModel(component.options), textListCellRenderer { it?.label?.label() })
             .applyToComponent {
               val option = context.getOption(component.bindId)
-              @Suppress("HardCodedStringLiteral")
               model.selectedItem = if (option is Enum<*>) option.name else option.toString()
             }
             .onChanged { context.setOption(component.bindId, convertItem(
@@ -395,14 +445,6 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     tableModel.addRow(*row.toTypedArray())
   }
 
-  private fun RendererContext.getOption(bindId: String): Any? {
-    return this.controller.getOption(bindId)
-  }
-
-  private fun RendererContext.setOption(bindId: String, value: Any) {
-    this.controller.setOption(bindId, value)
-  }
-
   private fun editLastRow(table: ListTable) {
     val tableModel = table.model
     val row = tableModel.rowCount - 1
@@ -417,6 +459,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(component, true) }
   }
 
+  @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
   private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {
     override fun removeAt(index: Int): String = list.removeAt(index).also { changeListener() }
     override fun remove(element: String): Boolean = list.remove(element).also { changeListener() }
@@ -456,7 +499,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     get() = this is OptGroup || this is OptStringList || this is OptTable
 
   private val OptComponent.hasResizableRow: Boolean
-    get() = this is OptStringList || this is OptTable
+    get() = this is OptStringList || this is OptTable || this is OptMultiSelector
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
@@ -479,18 +522,6 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         else {
           super.setSelectedItem(anObject)
         }
-      }
-    }
-  }
-
-  private fun getComboBoxRenderer(): ListCellRenderer<OptDropdown.Option?> {
-    return object : SimpleListCellRenderer<OptDropdown.Option?>() {
-      override fun customize(list: JList<out OptDropdown.Option?>,
-                             value: OptDropdown.Option?,
-                             index: Int,
-                             selected: Boolean,
-                             hasFocus: Boolean) {
-        text = value?.label?.label()
       }
     }
   }

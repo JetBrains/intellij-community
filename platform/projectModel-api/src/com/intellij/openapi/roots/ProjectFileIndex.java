@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
@@ -70,10 +71,21 @@ public interface ProjectFileIndex extends FileIndex {
   Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
+   * Returns the list of modules which content roots contain the specified file or an empty list if the file does not belong to the content of any module.
+   *
+   * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @NotNull
+  @Unmodifiable Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);
+
+  /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
    */
   @RequiresReadLock
   @NotNull
+  @Unmodifiable
   List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file);
 
   /**
@@ -174,7 +186,7 @@ public interface ProjectFileIndex extends FileIndex {
    * <strong>Currently this method doesn't search for global libraries.</strong>
    */
   @ApiStatus.Experimental
-  @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
+  @NotNull @Unmodifiable Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored

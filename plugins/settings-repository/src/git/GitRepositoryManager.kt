@@ -2,7 +2,6 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
@@ -165,9 +164,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       for (attempt in 0..1) {
         transport.credentialsProvider = credentialsProvider
         try {
-          val result = blockingContext {
-            transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
-          }
+          val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
           if (LOG.isDebugEnabled) {
             printMessages(result)
 

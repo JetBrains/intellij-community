@@ -6,4 +6,3 @@ import java.io.InputStream
 class C(`in`: InputStream) : DataInputStream(`in`)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */

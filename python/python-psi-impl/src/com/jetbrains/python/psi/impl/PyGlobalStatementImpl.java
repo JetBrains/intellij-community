@@ -32,8 +32,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 

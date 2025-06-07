@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
@@ -23,8 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,25 +40,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
-import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 
 @ApiStatus.Internal
-public class LocalOptionsConfigurer {
+public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
-  private final Project myProject;
+  public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
+    final var useEel = TerminalStartupKt.shouldUseEelApi();
+    final var eelDescriptor = useEel ? EelProviderUtil.getEelDescriptor(project) : null;
 
-  public LocalOptionsConfigurer(Project project) { myProject = project; }
+    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
+    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
 
-  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    return configureStartupOptions1(baseOptions);
-  }
-
-  private @NotNull ShellStartupOptions configureStartupOptions1(@NotNull ShellStartupOptions baseOptions) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), myProject);
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir);
-
-    List<String> initialCommand = doGetInitialCommand(baseOptions);
+    List<String> initialCommand = getInitialCommand(baseOptions, project);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
@@ -65,8 +67,9 @@ public class LocalOptionsConfigurer {
 
   @VisibleForTesting
   static @NotNull String getWorkingDirectory(@Nullable String directory, Project project) {
-    if (directory != null && isDirectory(directory)) {
-      return directory;
+    String validDirectory = findValidWorkingDirectory(directory);
+    if (validDirectory != null) {
+      return validDirectory;
     }
     String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(project).getStartingDirectory();
     if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
@@ -83,11 +86,48 @@ public class LocalOptionsConfigurer {
     return SystemProperties.getUserHome();
   }
 
-  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs, @NotNull String workingDir) {
-    Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
-    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
+  /**
+   * @param path can be null, incorrect path or path to the valid file or directory.
+   * @return the provided path if it is a valid directory path or parent directory path if provided path points to a valid file.
+   */
+  private static @Nullable String findValidWorkingDirectory(@Nullable String path) {
+    if (path == null) return null;
+
+    Path directoryPath;
+    try {
+      directoryPath = Path.of(path);
+    }
+    catch (InvalidPathException e) {
+      return null;
+    }
+
+    if (Files.isDirectory(directoryPath)) {
+      return directoryPath.toString();
+    }
+
+    Path parentPath = directoryPath.getParent();
+    if (parentPath != null && Files.isDirectory(parentPath)) {
+      return parentPath.toString();
+    }
+
+    return null;
+  }
+
+  private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
+                                                                     @NotNull String workingDir,
+                                                                     @NotNull Project project,
+                                                                     @Nullable EelDescriptor eelDescriptor) {
+    final var isWindows = eelDescriptor != null ? eelDescriptor.getPlatform() instanceof EelPlatform.Windows : SystemInfo.isWindows;
+
+    Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
+    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      envs.putAll(System.getenv());
+      if (eelDescriptor != null) {
+        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
+      }
+      else {
+        envs.putAll(System.getenv());
+      }
       EnvironmentRestorer.restoreOverriddenVars(envs);
     }
     else {
@@ -95,7 +135,7 @@ public class LocalOptionsConfigurer {
     }
 
     envs.putAll(baseEnvs);
-    if (!SystemInfo.isWindows) {
+    if (!isWindows) {
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
@@ -103,8 +143,8 @@ public class LocalOptionsConfigurer {
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
-    if (TrustedProjects.isTrusted(myProject)) {
-      PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+    if (TrustedProjects.isProjectTrusted(project)) {
+      PathMacroManager macroManager = PathMacroManager.getInstance(project);
       for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
       }
@@ -115,17 +155,13 @@ public class LocalOptionsConfigurer {
     return envs;
   }
 
-  private @NotNull List<String> doGetInitialCommand(@NotNull ShellStartupOptions options) {
-    return getInitialCommandInternal(options);
+  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
+    List<String> shellCommand = options.getShellCommand();
+    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
   }
 
-  private @NotNull List<String> getInitialCommandInternal(ShellStartupOptions startupOptions) {
-    List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
-    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
-  }
-
-  private @NotNull String getShellPath() {
-    return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
+  private static @NotNull String getShellPath(@NotNull Project project) {
+    return TerminalProjectOptionsProvider.getInstance(project).getShellPath();
   }
 
   private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
@@ -137,5 +173,9 @@ public class LocalOptionsConfigurer {
     }
     String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
     resultEnvs.put(WslConstants.WSLENV, newWslEnv);
+  }
+
+  private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {
+    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.toEelApiBlocking(eelDescriptor).getExec());
   }
 }

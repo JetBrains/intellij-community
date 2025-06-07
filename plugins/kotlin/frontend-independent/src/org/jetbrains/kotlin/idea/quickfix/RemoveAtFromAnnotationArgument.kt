@@ -4,9 +4,12 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.util.firstLeaf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+
+private val LOG = Logger.getInstance(RemoveAtFromAnnotationArgument::class.java)
 
 class RemoveAtFromAnnotationArgument(
     element: KtAnnotationEntry,
@@ -20,9 +23,9 @@ class RemoveAtFromAnnotationArgument(
         updater: ModPsiUpdater,
     ) {
         val firstLeaf = element.firstLeaf()
-        assert(firstLeaf.text == "@") {
+        LOG.takeIf { firstLeaf.text != "@" }?.error(
             "Expected '@' at the beginning of the annotation argument, but found '${firstLeaf.text}'"
-        }
+        )
         firstLeaf.delete()
     }
 }

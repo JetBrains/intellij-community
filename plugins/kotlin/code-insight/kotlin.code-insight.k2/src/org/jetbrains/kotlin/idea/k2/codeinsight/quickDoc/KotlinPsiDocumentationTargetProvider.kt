@@ -3,17 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.platform.backend.documentation.DocumentationTargetProvider
-import com.intellij.platform.backend.documentation.InlineDocumentation
-import com.intellij.platform.backend.documentation.InlineDocumentationProvider
-import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
+import com.intellij.platform.backend.documentation.*
 import com.intellij.psi.PsiDocCommentBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -24,8 +19,17 @@ class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
         return if (element.language.`is`(KotlinLanguage.INSTANCE)) {
             KotlinDocumentationTarget(element, originalElement).takeUnless {
-                // show documentation based on java presentation
-                element.navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile
+                val navigationElement = element.navigationElement
+
+                // there are cases when documentation viewed from Java files
+                // should NOT be based on Kotlin representation, but on original Java
+                if (originalElement?.containingFile !is PsiJavaFile) {
+                    return@takeUnless false
+                }
+
+                // top level functions and properties are accessible via file-wrapper class
+                // `foo.kt` is represented in Java as `FooKt`.
+                navigationElement is KtFile
             }
         } else {
             null

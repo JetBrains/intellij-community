@@ -3,6 +3,7 @@ package com.intellij.grazie.text;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.jetCheck.Generator;
@@ -108,10 +109,9 @@ public class TextContentTest extends BasePlatformTestCase {
 
   public static String unknownOffsets(TextContent text) {
     StringBuilder sb = new StringBuilder(text);
-    for (int i = text.length(); i >= 0; i--) {
-      if (text.hasUnknownFragmentsIn(TextRange.from(i, 0))) {
-        sb.insert(i, "|");
-      }
+    int[] offsets = text.unknownOffsets();
+    for (int i = offsets.length - 1; i >= 0; i--) {
+      sb.insert(offsets[i], "|");
     }
     return sb.toString();
   }
@@ -137,13 +137,13 @@ public class TextContentTest extends BasePlatformTestCase {
 
   public void testBatchRangeExclusionIsEquivalentToSequential() {
     PropertyChecker
-      .checkScenarios(() -> env -> {
+      .checkScenarios(() -> MadTestingUtil.assertNoErrorLoggedIn(env -> {
         String text = env.generateValue(Generator.stringsOf("abc"), "Text %s");
         List<TextContent.Exclusion> ranges = generateSortedRanges(env, text);
         env.logMessage("Ranges " + ranges);
 
         checkBatchSequentialExclusion(text, ranges);
-      });
+      }));
   }
 
   private void checkBatchSequentialExclusion(String text, List<TextContent.Exclusion> ranges) {

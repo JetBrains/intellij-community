@@ -3,9 +3,9 @@
 
 fun breakContinueInWhen(i: Int) {
     loop@ for (x in 0..10) {
-        loop1@ for (y in 0..10) {
+        loop2@ for (y in 0..10) {
             when(i) {
-                0 -> co<caret>ntinue@loop1
+                0 -> co<caret>ntinue@loop2
                 2 -> {
                 for(z in 0..10) {
                     break
@@ -18,6 +18,6 @@ fun breakContinueInWhen(i: Int) {
         }
     }
 }
-/* IGNORE_K2 */
+// IGNORE_K2
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix

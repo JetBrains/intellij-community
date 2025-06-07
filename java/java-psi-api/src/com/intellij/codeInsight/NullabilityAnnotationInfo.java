@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Represents a particular nullability annotation instance
@@ -32,16 +35,14 @@ public class NullabilityAnnotationInfo {
   /**
    * @return annotation object (might be synthetic)
    */
-  @NotNull
-  public PsiAnnotation getAnnotation() {
+  public @NotNull PsiAnnotation getAnnotation() {
     return myAnnotation;
   }
 
   /**
    * @return nullability this annotation represents
    */
-  @NotNull
-  public Nullability getNullability() {
+  public @NotNull Nullability getNullability() {
     return myNullability;
   }
 
@@ -75,6 +76,40 @@ public class NullabilityAnnotationInfo {
 
   @NotNull NullabilityAnnotationInfo withInheritedFrom(@Nullable PsiModifierListOwner owner) {
     return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer);
+  }
+
+  /**
+   * Converts this object to {@link TypeNullability}. Inheritance information is lost, as it's not applicable to type nullability. 
+   */
+  @ApiStatus.Experimental
+  public @NotNull TypeNullability toTypeNullability() {
+    NullabilitySource source;
+    if (myContainer) {
+      source = new NullabilitySource.ContainerAnnotation(myAnnotation);
+    } else {
+      source = new NullabilitySource.ExplicitAnnotation(myAnnotation);
+    }
+    return new TypeNullability(myNullability, source);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    NullabilityAnnotationInfo info = (NullabilityAnnotationInfo)o;
+    return myContainer == info.myContainer &&
+           myAnnotation.equals(info.myAnnotation) &&
+           myNullability == info.myNullability &&
+           Objects.equals(myInheritedFrom, info.myInheritedFrom);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myAnnotation.hashCode();
+    result = 31 * result + myNullability.hashCode();
+    result = 31 * result + Objects.hashCode(myInheritedFrom);
+    result = 31 * result + Boolean.hashCode(myContainer);
+    return result;
   }
 
   @Override

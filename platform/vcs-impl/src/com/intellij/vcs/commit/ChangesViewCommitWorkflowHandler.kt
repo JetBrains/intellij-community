@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -9,14 +9,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.CommitMessageI
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import java.util.*
 
@@ -24,7 +25,8 @@ private fun Collection<Change>.toPartialAwareSet() =
   CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
     .also { it.addAll(this) }
 
-internal class ChangesViewCommitWorkflowHandler(
+@ApiStatus.Internal
+class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
@@ -45,11 +47,12 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
+  private var knownActiveResolvedConflicts: Set<Any> = emptySet()
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi, currentChangeList)
 
   init {
     Disposer.register(this, inclusionModel)
@@ -79,15 +82,17 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    commitMessagePolicy.init(currentChangeList, this)
+    commitMessagePolicy.init()
+    Disposer.register(this, commitMessagePolicy)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    if (!isActive) return
-    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
-    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = ui
-    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = ui.commitMessageUi as? CommitMessageI
+    if (!isActive) {
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_UI)
+      sink.setNull(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+    }
   }
 
   override fun commitOptionsCreated() {
@@ -100,8 +105,15 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
-    if (!inclusionModel.isInclusionEmpty()) {
+    val resolvedConflictsInclusion = getResolvedConflictsInclusion()
+    if (resolvedConflictsInclusion.isNotEmpty()) {
+      inclusionModel.addInclusion(resolvedConflictsInclusion)
+    }
+    knownActiveResolvedConflicts = resolvedConflictsInclusion
+
+    if (!isInclusionEmpty()) {
       val possibleInclusion = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
+      possibleInclusion.addAll(resolvedConflictsInclusion)
       possibleInclusion.addAll(changeLists.asSequence().flatMap { it.changes })
       possibleInclusion.addAll(unversionedFiles)
 
@@ -115,6 +127,18 @@ internal class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
+  }
+
+  private fun getResolvedConflictsInclusion(): Set<Any> {
+    val mergeConflictManager = MergeConflictManager.getInstance(project)
+    val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList
+
+    val resolvedChanges = defaultChangeList.changes.filter(mergeConflictManager::isResolvedConflict)
+    val changesPaths = resolvedChanges.map { ChangesUtil.getFilePath(it) }.toSet()
+    val resolvedUnchanged = mergeConflictManager.getResolvedConflictPaths().filter { it !in changesPaths }
+    val included = resolvedChanges + resolvedUnchanged
+
+    return included.toSet()
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
@@ -139,9 +163,16 @@ internal class ChangesViewCommitWorkflowHandler(
       val newChanges = activeChanges - knownActiveChanges
       inclusionModel.addInclusion(newChanges)
 
-      // include all active changes if nothing is included
-      if (inclusionModel.isInclusionEmpty()) inclusionModel.addInclusion(activeChanges)
+      // include all active changes if nothing is included or the current inclusion included by default resolved conflicts
+      if (isInclusionEmpty()) {
+        inclusionModel.addInclusion(activeChanges)
+      }
     }
+  }
+
+  private fun isInclusionEmpty(): Boolean {
+    return inclusionModel.isInclusionEmpty() || (MergeConflictManager.isForceIncludeResolvedConflicts()
+                                                 && inclusionModel.getInclusion().all { it in knownActiveResolvedConflicts })
   }
 
   private fun setSelection(changeList: LocalChangeList) {
@@ -191,9 +222,8 @@ internal class ChangesViewCommitWorkflowHandler(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
-
       commitOptions.changeListChanged(newChangeList)
     }
     if (oldChangeList.data != newChangeList.data) {
@@ -242,7 +272,7 @@ internal class ChangesViewCommitWorkflowHandler(
     }
   }
 
-  private fun isToggleMode(): Boolean {
+  protected open fun isToggleMode(): Boolean {
     val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
@@ -276,12 +306,13 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
   override fun projectClosingBeforeSave(project: Project) {
+    commitMessagePolicy.saveStateOnDispose()
     saveStateBeforeDispose()
     disposeCommitOptions()
   }
@@ -295,7 +326,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
@@ -305,7 +335,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class NonModalCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList)
+      commitMessagePolicy.onAfterCommit()
       super.onSuccess()
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -29,11 +29,10 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
 
-  @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                               @Nullable Collection<String> recursiveRoots,
-                                               @Nullable Collection<String> flatRoots) {
+  public @NotNull Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+                                                        @Nullable Collection<String> recursiveRoots,
+                                                        @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
@@ -43,9 +42,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler) { }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return LocalFileSystem.PROTOCOL;
   }
 
@@ -71,30 +69,26 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) { }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     return myDelegate.createChildFile(requestor, vDir, fileName);
   }
 
   @Override
-  @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     return myDelegate.createChildDirectory(requestor, vDir, dirName);
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor,
-                              @NotNull VirtualFile virtualFile,
-                              @NotNull VirtualFile newParent,
-                              @NotNull String copyName) throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor,
+                                       @NotNull VirtualFile virtualFile,
+                                       @NotNull VirtualFile newParent,
+                                       @NotNull String copyName) throws IOException {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
   }
 
-  @NotNull
   @Override
-  protected String extractRootPath(@NotNull String normalizedPath) {
+  protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     return normalizedPath;
   }
 
@@ -113,9 +107,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return false;
   }
 
-  @NotNull
   @Override
-  public InputStream getInputStream(@NotNull VirtualFile file) {
+  public @NotNull InputStream getInputStream(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 
@@ -129,9 +122,8 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return 0;
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) {
+  public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) {
     throw new UnsupportedOperationException();
   }
 

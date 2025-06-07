@@ -16,6 +16,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_CANCELED,
       COMMIT_FAILED,
       COMMIT_FINISHED,
+      COMMIT_FINISHED_INITIAL,
       COMMIT_FINISHED_WITH_WARNINGS,
       COMMIT_CHECKS_FAILED,
       POST_COMMIT_CHECKS_FAILED,
@@ -46,7 +47,14 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       CANNOT_LOAD_ANNOTATIONS,
       SUGGESTED_PLUGIN_INSTALL_FAILED,
       OBSOLETE_PLUGIN_UNBUNDLED,
-      ADD_UNVERSIONED_ERROR
+      ADD_UNVERSIONED_ERROR,
+      SHARE_CANNOT_FIND_GIT_REPO,
+      SHARE_CANNOT_CREATE_REPO,
+      SHARE_PROJECT_SUCCESSFULLY_SHARED,
+      SHARE_EMPTY_REPO_CREATED,
+      SHARE_PROJECT_INIT_COMMIT_FAILED,
+      SHARE_PROJECT_INIT_PUSH_FAILED,
+      GIT_REPO_INIT_REPO,
     )
   }
 
@@ -59,6 +67,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val COMMIT_CANCELED = "vcs.commit.canceled"
     const val COMMIT_FAILED = "vcs.commit.failed"
     const val COMMIT_FINISHED = "vcs.commit.finished"
+    const val COMMIT_FINISHED_INITIAL = "vcs.commit.finished.initial"
     const val COMMIT_FINISHED_WITH_WARNINGS = "vcs.commit.finished.with.warnings"
     const val COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
     const val POST_COMMIT_CHECKS_FAILED = "vcs.post.commit.checks.failed"
@@ -90,6 +99,13 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val SUGGESTED_PLUGIN_INSTALL_FAILED = "vcs.suggested.plugin.install.failed"
     const val OBSOLETE_PLUGIN_UNBUNDLED = "vcs.obsolete.plugin.unbundled"
     const val ADD_UNVERSIONED_ERROR = "vcs.add.unversioned.error"
+    const val SHARE_CANNOT_FIND_GIT_REPO = "vcs.share.cannot.find.git.repo"
+    const val SHARE_CANNOT_CREATE_REPO = "vcs.share.cannot.create.repo"
+    const val SHARE_PROJECT_SUCCESSFULLY_SHARED = "vcs.share.project.successfully.shared"
+    const val SHARE_EMPTY_REPO_CREATED = "vcs.share.empty.repo.created"
+    const val SHARE_PROJECT_INIT_COMMIT_FAILED = "vcs.share.project.created.init.commit.failed"
+    const val SHARE_PROJECT_INIT_PUSH_FAILED = "vcs.share.init.push.failed"
+    const val GIT_REPO_INIT_REPO = "vcs.git.repo.init.error"
   }
 }
 

@@ -4,10 +4,7 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.indexing.IndexingBundle;
@@ -52,7 +49,7 @@ final class ToggleDumbModeAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    boolean dumb = DumbServiceImpl.getInstance(project).isDumb();
+    boolean dumb = DumbService.getInstance(project).isDumb();
     if (!dumb && isToggledDumb(project)) {
       setToggledDumb(project, false);
     }

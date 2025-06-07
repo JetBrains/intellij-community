@@ -112,6 +112,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun fromModifierListOwner(modifierListOwner: PsiModifierListOwner, allowSecond: Boolean): TaintValue {
+    if (!modifierListOwner.isValid) return TaintValue.UNKNOWN
     val annotationContext = AnnotationContext.fromModifierListOwner(modifierListOwner)
     return fromAnnotationContextInner(annotationContext, allowSecond)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.gson.*;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ import java.util.TreeMap;
 /**
  * @author Mikhail Golubev
  */
+@ApiStatus.Internal
+
 public abstract class PyAbstractPackageCache {
   private static final Logger LOG = Logger.getInstance(PyPIPackageCache.class);
 
@@ -42,7 +45,7 @@ public abstract class PyAbstractPackageCache {
                     @Override
                     public PackageInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                             throws JsonParseException {
-                      if (json.isJsonObject() && json.getAsJsonObject().size() == 0) {
+                      if (json.isJsonObject() && json.getAsJsonObject().isEmpty()) {
                         return PackageInfo.EMPTY;
                       }
                       return defaultGson.fromJson(json, typeOfT);
@@ -121,18 +124,6 @@ public abstract class PyAbstractPackageCache {
    */
   public boolean containsPackage(@NotNull String name) {
     return myPackages.containsKey(name);
-  }
-
-  /**
-   * Returns available package versions sorted in the reversed order using
-   * {@link com.intellij.webcore.packaging.PackageVersionComparator} so that the latest version is the first on the list
-   * or {@code null} if the given package is not contained in the cache or this feature is not available.
-   *
-   * @param packageName case-insensitive name of a package
-   */
-  public @Nullable List<String> getVersions(@NotNull String packageName) {
-    final PackageInfo packageInfo = myPackages.get(packageName);
-    return packageInfo != null ? packageInfo.getVersions() : null;
   }
 
   @Override

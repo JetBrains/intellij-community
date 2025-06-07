@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.find.FindModel;
@@ -6,7 +6,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.SmartList;
+import org.intellij.lang.annotations.MagicConstant;
+import org.intellij.lang.regexp.RegExpBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -156,17 +161,70 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     return result;
   }
 
+  enum RegExpFlag {
+    UNIX_LINES(Pattern.UNIX_LINES, 'd'),
+    CASE_INSENSITIVE(Pattern.CASE_INSENSITIVE, 'i'),
+    MULTILINE(Pattern.MULTILINE, 'm'),
+    DOTALL(Pattern.DOTALL, 's'),
+    UNICODE_CASE(Pattern.UNICODE_CASE, 'u'),
+    CANONICAL_EQUIVALENCE(Pattern.CANON_EQ, null),
+    UNICODE_CHARACTER_CLASS(Pattern.UNICODE_CHARACTER_CLASS, 'U'),
+    COMMENTS(Pattern.COMMENTS, 'x'),
+    LITERAL(Pattern.LITERAL, null);
+
+    public final int id;
+    public final @Nullable Character mnemonic;
+
+    RegExpFlag(int id, @Nullable Character mnemonic) {
+      this.id = id;
+      this.mnemonic = mnemonic;
+    }
+
+    public @NotNull @Nls String getText() {
+      return switch (this) {
+        case UNIX_LINES -> RegExpBundle.message("regexp.dialog.flag.unix.lines");
+        case CASE_INSENSITIVE -> RegExpBundle.message("regexp.dialog.flag.case.insensitive");
+        case MULTILINE -> RegExpBundle.message("regexp.dialog.flag.multiline");
+        case DOTALL -> RegExpBundle.message("regexp.dialog.flag.dotall");
+        case UNICODE_CASE -> RegExpBundle.message("regexp.dialog.flag.unicode.case");
+        case CANONICAL_EQUIVALENCE -> RegExpBundle.message("regexp.dialog.flag.canonical.equivalence");
+        case UNICODE_CHARACTER_CLASS -> RegExpBundle.message("regexp.dialog.flag.unicode.character.class");
+        case COMMENTS -> RegExpBundle.message("regexp.dialog.flag.comments");
+        case LITERAL -> RegExpBundle.message("regexp.dialog.flag.literal");
+      };
+    }
+
+    public @NotNull @Nls String getDescription() {
+      String description = switch (this) {
+        case UNIX_LINES -> RegExpBundle.message("regexp.dialog.flag.unix.lines.description");
+        case CASE_INSENSITIVE -> RegExpBundle.message("regexp.dialog.flag.case.insensitive.description");
+        case MULTILINE -> RegExpBundle.message("regexp.dialog.flag.multiline.description");
+        case DOTALL -> RegExpBundle.message("regexp.dialog.flag.dotall.description");
+        case UNICODE_CASE -> RegExpBundle.message("regexp.dialog.flag.unicode.case.description");
+        case CANONICAL_EQUIVALENCE -> RegExpBundle.message("regexp.dialog.flag.canonical.equivalence.description");
+        case UNICODE_CHARACTER_CLASS -> RegExpBundle.message("regexp.dialog.flag.unicode.character.class.description");
+        case COMMENTS -> RegExpBundle.message("regexp.dialog.flag.comments.description");
+        case LITERAL -> RegExpBundle.message("regexp.dialog.flag.literal.description");
+      };
+      String html = HtmlChunk.html().child(HtmlChunk.div("width: 200px").addRaw(description)).toString();
+      System.out.println("html = " + html);
+      return html;
+    }
+  }
+
   public static final class InspectionPattern {
-    public static final InspectionPattern EMPTY_REPLACE_PATTERN = new InspectionPattern("", null, FindModel.SearchContext.ANY, "");
+    public static final InspectionPattern EMPTY_REPLACE_PATTERN = new InspectionPattern("", null, 0, FindModel.SearchContext.ANY, "");
     public @NotNull String regExp;
     private @Nullable FileType fileType;
     public @Nullable String _fileType;
     public @NotNull FindModel.SearchContext searchContext;
     public @Nullable String replacement;
+    public @MagicConstant(flagsFromClass = Pattern.class) int flags;
 
     public InspectionPattern(
       @NotNull String regExp,
       @Nullable FileType fileType,
+      int flags,
       @NotNull FindModel.SearchContext searchContext,
       @Nullable String replacement
     ) {
@@ -175,6 +233,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
       if (this.fileType != null) {
         _fileType = this.fileType.getName();
       }
+      this.flags = flags;
       this.searchContext = searchContext;
       this.replacement = replacement;
     }
@@ -187,6 +246,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
       regExp = copy.regExp;
       fileType = copy.fileType;
       _fileType = copy._fileType;
+      flags = copy.flags;
       searchContext = copy.searchContext;
       replacement = copy.replacement;
     }
@@ -224,13 +284,14 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
       var that = (InspectionPattern)obj;
       return Objects.equals(regExp, that.regExp) &&
              Objects.equals(fileType, that.fileType) &&
+             Objects.equals(flags, that.flags) &&
              Objects.equals(searchContext, that.searchContext) &&
              Objects.equals(replacement, that.replacement);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(regExp, fileType, searchContext, replacement);
+      return Objects.hash(regExp, fileType, flags, searchContext, replacement);
     }
 
     @Override
@@ -238,6 +299,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
       return "InspectionPattern[" +
              "regExp=" + regExp + ", " +
              "fileType=" + fileType + ", " +
+             "flags=" + flags + ", " +
              "searchContext=" + searchContext + ", " +
              "replacement=" + replacement + ']';
     }

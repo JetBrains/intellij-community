@@ -1,12 +1,14 @@
 0(1) element: null
 1(2) element: PyIfStatement
 2(3) READ ACCESS: xs
-3(4,8) READ ACCESS: None
-4(5) element: PyStatementList. Condition: xs is None:true
-5(6) ASSERTTYPE ACCESS: xs
-6(7) element: PyAssignmentStatement
-7(9) WRITE ACCESS: xs
-8(9) ASSERTTYPE ACCESS: xs
-9(10) element: PyPrintStatement
-10(11) READ ACCESS: xs
-11() element: null
+3(4,6) READ ACCESS: None
+4(5) element: null. Condition: xs is None:false
+5(11) ASSERTTYPE ACCESS: xs
+6(7) element: null. Condition: xs is None:true
+7(8) ASSERTTYPE ACCESS: xs
+8(9) element: PyStatementList
+9(10) element: PyAssignmentStatement
+10(11) WRITE ACCESS: xs
+11(12) element: PyPrintStatement
+12(13) READ ACCESS: xs
+13() element: null

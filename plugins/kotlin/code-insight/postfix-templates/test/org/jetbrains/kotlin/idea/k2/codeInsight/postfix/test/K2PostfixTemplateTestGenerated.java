@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.postfix.test;
 
@@ -24,6 +24,32 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/expansion")
 public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTemplateTest {
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/arg")
+    public static class Arg extends AbstractK2PostfixTemplateTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @TestMetadata("arg.kt")
+        public void testArg() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("argWithReturn.kt")
+        public void testArgWithReturn() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("argWithThrow.kt")
+        public void testArgWithThrow() throws Exception {
+            performTest();
+        }
+    }
+
     @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/arrayOf")
@@ -1175,6 +1201,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("withinAssignment.kt")
+        public void testWithinAssignment() throws Exception {
             performTest();
         }
     }

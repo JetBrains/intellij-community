@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.psi.stubs.*
-import com.intellij.util.Base64
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 object IndexDataPresenter {
@@ -18,7 +18,7 @@ object IndexDataPresenter {
         getPresentableSerializedStubTree(value)
       }
       is ByteArraySequence -> {
-        Base64.encode(value.toBytes())
+        Base64.getEncoder().encodeToString(value.toBytes())
       }
       else -> value.toString()
     }
@@ -64,9 +64,13 @@ object IndexDataPresenter {
   private fun getPresentableStub(node: Stub, indent: String): String =
     buildString {
       append(indent)
-      val stubType = node.stubType
-      if (stubType != null) {
-        append(stubType.toString()).append(':')
+      val elementType = (node as? StubElement<*>)?.elementType
+      val stubSerializer = node.stubSerializer
+      if (elementType != null) {
+        append(elementType.toString()).append(':')
+      }
+      if (stubSerializer != null && stubSerializer !== elementType) {
+        append(stubSerializer.toString()).append(':')
       }
       append(node.toString())
       if (node is ObjectStubBase<*>) {

@@ -44,10 +44,12 @@ c:com.intellij.collaboration.api.dto.GraphQLErrorDTO
 - java.lang.annotation.Annotation
 - a:value():com.intellij.collaboration.api.dto.GraphQLFragment[]
 c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.util.List,java.lang.Integer):V
 - b:<init>(java.util.List,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getNodes():java.util.List
-- f:getTotalCount():java.lang.Integer
 com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 - a:getNodes():java.util.List
 - a:getPageInfo():com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
@@ -124,10 +126,6 @@ f:com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
 - java.net.http.HttpResponse$BodyHandler
 - <init>(kotlin.jvm.functions.Function2):V
 - apply(java.net.http.HttpResponse$ResponseInfo):java.net.http.HttpResponse$BodySubscriber
-f:com.intellij.collaboration.api.httpclient.LazyBodyHandler
-- java.net.http.HttpResponse$BodyHandler
-- <init>(java.net.http.HttpResponse$BodyHandler):V
-- apply(java.net.http.HttpResponse$ResponseInfo):java.net.http.HttpResponse$BodySubscriber
 c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 - com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 - <init>():V
@@ -161,12 +159,22 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:Companion:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - sf:HEADER_NAME:java.lang.String
 - <init>():V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():Z
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- bs:copy$default(com.intellij.collaboration.api.util.LinkHttpHeaderValue,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- equals(java.lang.Object):Z
 - f:getFirstLink():java.lang.String
 - f:getLastLink():java.lang.String
 - f:getNextLink():java.lang.String
 - f:getPrevLink():java.lang.String
+- hashCode():I
+- f:isDeprecated():Z
 - sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
@@ -351,9 +359,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy,java.lang.String):com.intellij.ui.EditorTextField
-- bs:create$default(com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy,java.lang.String,I,java.lang.Object):com.intellij.ui.EditorTextField
-- f:wrapWithLeftIcon(com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig,javax.swing.JComponent):javax.swing.JComponent
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig
 - sf:Companion:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig$Companion
 - <init>(javax.swing.Icon,I):V
@@ -378,29 +383,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFact
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
 - com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
-com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModel
-- a:getContent():com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- a:getDocument():com.intellij.openapi.editor.Document
-- a:getProject():com.intellij.openapi.project.Project
-a:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBase
-- com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModel
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language):V
-- b:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getContent():com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- f:getDocument():com.intellij.openapi.editor.Document
-- f:getProject():com.intellij.openapi.project.Project
-- f:isBusyValue():com.intellij.collaboration.ui.SingleValueModel
-- a:submit():V
-f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBaseKt
-- sf:getMarkdownLanguage():com.intellij.lang.Language
-com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- a:clear():V
-- a:getText():java.lang.String
-- a:isAcceptSlashR():Z
-- a:isReadOnly():Z
-- a:setAcceptSlashR(Z):V
-- a:setReadOnly(Z):V
-- a:setText(java.lang.String):V
 com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
 - a:getCanCreateReplies():kotlinx.coroutines.flow.StateFlow
 - a:getRepliesFolded():kotlinx.coroutines.flow.StateFlow
@@ -424,12 +406,14 @@ com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableIte
 - a:isResolved():kotlinx.coroutines.flow.StateFlow
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:Companion:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel$Companion
 - sf:FOLD_THRESHOLD:I
 - sf:UNFOLD_BUTTON_VERTICAL_GAP:I
 - <init>(javax.swing.ListModel,kotlin.jvm.functions.Function1,I,I):V
 - b:<init>(javax.swing.ListModel,kotlin.jvm.functions.Function1,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getFoldModel():com.intellij.collaboration.ui.SingleValueModel
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel$Companion
 - f:createUnfoldComponent(I,kotlin.jvm.functions.Function1):javax.swing.JComponent
 com.intellij.collaboration.ui.codereview.user.CodeReviewUser

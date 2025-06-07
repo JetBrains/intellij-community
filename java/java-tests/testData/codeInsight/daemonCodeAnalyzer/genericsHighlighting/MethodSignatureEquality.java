@@ -52,7 +52,7 @@ class Test {
   }*/
 
   abstract class D<T extends Throwable & Runnable> {
-    <error descr="'foo(T, D<? extends Runnable>)' clashes with 'foo(T, D<? extends Throwable>)'; both methods have same erasure">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y)</error>;
+    <error descr="'foo(T, D<? extends Runnable>)' clashes with 'foo(T, D<? extends Throwable>)'; both methods have same erasure">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y);</error>
 
     abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Throwable> y);
   }
@@ -68,9 +68,9 @@ class Test {
   }
 
   abstract class F<T extends Throwable> {
-    <error descr="'foo(F<?>)' is already defined in 'Test.F'">abstract void foo(F<?> y)</error>;
+    <error descr="'foo(F<?>)' is already defined in 'Test.F'">abstract void foo(F<?> y);</error>
 
-    <error descr="'foo(F<? extends Throwable>)' is already defined in 'Test.F'">abstract void foo(F<? extends Throwable> y)</error>;
+    <error descr="'foo(F<? extends Throwable>)' is already defined in 'Test.F'">abstract void foo(F<? extends Throwable> y);</error>
   }
 }
 

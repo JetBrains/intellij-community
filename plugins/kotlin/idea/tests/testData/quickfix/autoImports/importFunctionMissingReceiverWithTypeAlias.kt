@@ -3,6 +3,7 @@
 // ACTION: Convert to with
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 package import_intention
 

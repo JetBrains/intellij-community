@@ -5,6 +5,8 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.diff.util.Range
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vcs.ex.DocumentTracker
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
  * Changes model which uses [DocumentTracker] to track and shift changes between review head and current document state
  */
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please use com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil.trackDocumentDiffSync")
 class DocumentTrackerCodeReviewEditorGutterChangesModel(
   parentCs: CoroutineScope,
@@ -28,7 +31,7 @@ class DocumentTrackerCodeReviewEditorGutterChangesModel(
   reviewHeadContent: Flow<CharSequence?>,
   reviewChangesRanges: Flow<List<Range>?>
 ) : CodeReviewEditorGutterChangesModel {
-  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.EDT)
 
   private val _reviewRanges = MutableStateFlow<List<LstRange>?>(null)
   override val reviewRanges: StateFlow<List<LstRange>?> = _reviewRanges.asStateFlow()
@@ -53,7 +56,7 @@ class DocumentTrackerCodeReviewEditorGutterChangesModel(
   }
 
   private suspend fun trackChanges(originalContent: CharSequence, reviewRanges: List<Range>) {
-    withContext(Dispatchers.Main.immediate) {
+    withContext(Dispatchers.EdtImmediate) {
       val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(originalContent)
       ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadDocument, document) { trackerRanges ->
         _postReviewRanges.value = trackerRanges

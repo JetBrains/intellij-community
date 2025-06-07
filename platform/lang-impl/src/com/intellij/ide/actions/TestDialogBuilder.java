@@ -23,7 +23,7 @@ public final class TestDialogBuilder implements CreateFileFromTemplateDialog.Bui
   private final TestAnswers myAnswers;
   private InputValidator myValidator;
 
-  TestDialogBuilder(@NotNull TestDialogBuilder.TestAnswers answers) {
+  public TestDialogBuilder(@NotNull TestDialogBuilder.TestAnswers answers) {
     myAnswers = answers;
   }
 

@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -33,14 +34,14 @@ import java.util.function.IntConsumer;
 public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
   private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final Document myDocument;
-  @Nullable private final UndoManager myUndoManager;
+  private final @Nullable Project myProject;
+  private final @NotNull Document myDocument;
+  private final @Nullable UndoManager myUndoManager;
 
-  @NotNull private final IntList myStartLines = new IntArrayList();
-  @NotNull private final IntList myEndLines = new IntArrayList();
+  private final @NotNull IntList myStartLines = new IntArrayList();
+  private final @NotNull IntList myEndLines = new IntArrayList();
 
-  @NotNull private final IntSet myChangesToUpdate = new IntOpenHashSet();
+  private final @NotNull IntSet myChangesToUpdate = new IntOpenHashSet();
   private int myBulkChangeUpdateDepth;
 
   private boolean myInsideCommand;
@@ -135,19 +136,23 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
         reinstallHighlighters(index);
       });
       myChangesToUpdate.clear();
+      postInstallHighlighters();
     }
   }
 
   @RequiresEdt
   protected abstract void reinstallHighlighters(int index);
 
+  @RequiresEdt
+  protected void postInstallHighlighters() {
+  }
+
   //
   // Undo
   //
 
-  @NotNull
   @RequiresEdt
-  protected abstract S storeChangeState(int index);
+  protected abstract @Nullable S storeChangeState(int index);
 
   @RequiresEdt
   protected void restoreChangeState(@NotNull S state) {
@@ -155,9 +160,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     setLineEnd(state.myIndex, state.myEndLine);
   }
 
-  @Nullable
   @RequiresEdt
-  protected S processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
+  protected @Nullable S processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
     int line1 = getLineStart(index);
     int line2 = getLineEnd(index);
 
@@ -218,6 +222,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
   }
 
+
+
   public boolean executeMergeCommand(@Nullable @NlsContexts.Command String commandName,
                                      @Nullable String commandGroupId,
                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
@@ -270,8 +276,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   }
 
   private static final class MyUndoableAction extends BasicUndoableAction {
-    @NotNull private final WeakReference<MergeModelBase<?>> myModelRef;
-    @NotNull private final List<? extends State> myStates;
+    private final @NotNull WeakReference<MergeModelBase<?>> myModelRef;
+    private final @NotNull List<? extends State> myStates;
     private final boolean myUndo;
 
     MyUndoableAction(@NotNull MergeModelBase<?> model, @NotNull List<? extends State> states, boolean undo) {
@@ -386,9 +392,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
    *
    * null means all changes could be affected
    */
-  @NotNull
   @RequiresEdt
-  private IntList collectAffectedChanges(@NotNull IntList directChanges) {
+  private @NotNull IntList collectAffectedChanges(@NotNull IntList directChanges) {
     IntList result = new IntArrayList(directChanges.size());
 
     int directArrayIndex = 0;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
@@ -21,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
+public final class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private static final String META_INF = "META-INF";
   private static final String PLUGIN_XML = "plugin.xml";
   private static final String MANIFEST_MF = "manifest.mf";

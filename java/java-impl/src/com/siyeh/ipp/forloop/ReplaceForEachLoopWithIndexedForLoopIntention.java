@@ -17,12 +17,14 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -80,7 +82,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
       newStatement.append("final ");
     }
     PsiTypeElement typeElement = iterationParameter.getTypeElement();
-    newStatement.append(typeElement != null && typeElement.isInferredType() ? PsiKeyword.VAR : type.getCanonicalText());
+    newStatement.append(typeElement != null && typeElement.isInferredType() ? JavaKeywords.VAR : type.getCanonicalText());
     newStatement.append(' ');
     newStatement.append(iterationParameter.getName());
     newStatement.append('=');
@@ -215,8 +217,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
     final String variableName =
       createVariableName(variableNameRoot, iteratedValue);
     final Project project = context.getProject();
-    final PsiType iteratedValueType = iteratedValue.getType();
+    PsiType iteratedValueType = iteratedValue.getType();
     assert iteratedValueType != null;
+    iteratedValueType = PsiTypesUtil.removeExternalAnnotations(iteratedValueType);
     final PsiElementFactory elementFactory =
       JavaPsiFacade.getElementFactory(project);
     final PsiDeclarationStatement declarationStatement =

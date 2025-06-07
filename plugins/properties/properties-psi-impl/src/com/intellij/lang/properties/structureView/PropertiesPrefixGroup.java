@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -26,24 +26,20 @@ public class PropertiesPrefixGroup implements Group {
     mySeparator = separator;
   }
 
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myPresentableName;
   }
 
-  @NotNull
-  public String getSeparator() {
+  public @NotNull String getSeparator() {
     return mySeparator;
   }
 
-  @NotNull
-  public String getPrefix() {
+  public @NotNull String getPrefix() {
     return myPrefix;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {
@@ -58,11 +54,11 @@ public class PropertiesPrefixGroup implements Group {
   }
 
   @Override
-  @NotNull
-  public Collection<TreeElement> getChildren() {
+  public @NotNull Collection<TreeElement> getChildren() {
     return myProperties;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -74,6 +70,7 @@ public class PropertiesPrefixGroup implements Group {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myPrefix.hashCode();
   }

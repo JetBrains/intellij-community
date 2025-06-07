@@ -1,9 +1,0 @@
-public void m2() {
-  try {
-    m();
-  } catch(CheckedException e) {
-    e.printStackTrace();
-  }
-}
-
-public void m() throws CheckedException { }

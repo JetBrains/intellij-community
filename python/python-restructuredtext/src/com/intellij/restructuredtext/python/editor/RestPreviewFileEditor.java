@@ -12,10 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-//import com.intellij.python.reStructuredText.RestPythonPreviewProviderKt;
+import com.intellij.restructuredtext.RestBundle;
 import com.intellij.restructuredtext.python.RestPythonPreviewProviderKt;
 import com.intellij.util.Alarm;
-import com.intellij.restructuredtext.RestBundle;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,29 +23,22 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
 public class RestPreviewFileEditor extends UserDataHolderBase implements FileEditor {
-  private final static long PARSING_CALL_TIMEOUT_MS = 50L;
-  private final static String NO_PREVIEW = "<h2>No preview available.</h2><br/><br/>";
+  private static final long PARSING_CALL_TIMEOUT_MS = 50L;
+  private static final String NO_PREVIEW = "<h2>No preview available.</h2><br/><br/>";
 
-  private final static long RENDERING_DELAY_MS = 20L;
+  private static final long RENDERING_DELAY_MS = 20L;
 
-  @NotNull
-  private final RestPreviewPanel myPanel;
-  @NotNull
-  private final VirtualFile myFile;
+  private final @NotNull RestPreviewPanel myPanel;
+  private final @NotNull VirtualFile myFile;
   private final Project myProject;
-  @Nullable
-  private final Document myDocument;
-  @NotNull
-  private final Alarm myPooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  @NotNull
-  private final Alarm mySwingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final @Nullable Document myDocument;
+  private final @NotNull Alarm myPooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final @NotNull Alarm mySwingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final Object REQUESTS_LOCK = new Object();
-  @Nullable
-  private Runnable myLastRequest = null;
+  private @Nullable Runnable myLastRequest = null;
 
-  @NotNull
-  private String myLastRenderedHtml = "";
+  private @NotNull String myLastRenderedHtml = "";
 
   public RestPreviewFileEditor(@NotNull VirtualFile file, Project project) {
     myFile = file;
@@ -65,28 +57,25 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
         }
 
         @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
+        public void documentChanged(final @NotNull DocumentEvent e) {
           myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
         }
       }, this);
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPanel.getComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return RestBundle.message("restructuredtext.html.preview.editor.name");
   }
 

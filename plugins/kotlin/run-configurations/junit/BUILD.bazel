@@ -1,0 +1,37 @@
+### auto-generated section `build kotlin.run-configurations.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "junit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit",
+  module_name = "kotlin.run-configurations.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//platform/smRunner",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/lang-api:lang",
+    "//java/execution/impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/junit",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/base/plugin",
+  ],
+  runtime_deps = [":junit_resources"]
+)
+### auto-generated section `build kotlin.run-configurations.junit` end

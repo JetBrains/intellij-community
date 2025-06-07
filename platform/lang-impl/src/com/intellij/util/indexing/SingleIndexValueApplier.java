@@ -10,11 +10,13 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class SingleIndexValueApplier<FileIndexMetaData> {
   public final @NotNull ID<?, ?> indexId;
+  public final int shardNo;
 
   private final @NotNull FileBasedIndexImpl indexImpl;
 
   private final int inputId;
-  private final @Nullable FileIndexMetaData myFileIndexMetaData;
+
+  private final @Nullable FileIndexMetaData fileIndexMetaData;
   private final @NotNull StorageUpdate storageUpdate;
   private final @NotNull String fileInfo;
   private final boolean isMock;
@@ -24,6 +26,7 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
 
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
                           @NotNull ID<?, ?> indexId,
+                          int shardNo,
                           int inputId,
                           @Nullable FileIndexMetaData fileIndexMetaData,
                           @NotNull StorageUpdate update,
@@ -31,9 +34,12 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
                           @NotNull FileContent currentFC,
                           long evaluatingIndexValueApplierTime) {
     indexImpl = index;
+
     this.indexId = indexId;
+    this.shardNo = shardNo;
     this.inputId = inputId;
-    myFileIndexMetaData = fileIndexMetaData;
+
+    this.fileIndexMetaData = fileIndexMetaData;
     this.evaluatingIndexValueApplierTime = evaluatingIndexValueApplierTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
@@ -65,11 +71,14 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
         FileBasedIndexImpl.LOG.info("index " + indexId + " update finished for " + fileInfo);
       }
       if (!isMock) {
+        //TODO RC: this is the global lock, one-per-app-service -- why do we need it here?
+        //         what exactly it protects: .getIndex() or setIndexedState...()? If 2nd, then why it is a read lock,
+        //         not write lock?
         ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
             (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)indexImpl.getIndex(indexId);
-          index.setIndexedStateForFileOnFileIndexMetaData(inputId, myFileIndexMetaData, wasIndexProvidedByExtension());
+          index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileIndexMetaData, wasIndexProvidedByExtension());
         });
       }
     }

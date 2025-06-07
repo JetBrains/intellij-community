@@ -4,6 +4,7 @@ package com.intellij.dev.psiViewer;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerAction extends DumbAwareAction {
+public class PsiViewerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Duplicated {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = isForContext() ? e.getData(CommonDataKeys.EDITOR) : null;

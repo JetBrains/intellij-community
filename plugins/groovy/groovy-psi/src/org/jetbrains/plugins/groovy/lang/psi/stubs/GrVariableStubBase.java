@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
@@ -35,9 +35,8 @@ public abstract class GrVariableStubBase<V extends GrVariable> extends StubBase<
     myTypeText = text;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return StringRef.toString(myNameRef);
   }
 
@@ -45,13 +44,11 @@ public abstract class GrVariableStubBase<V extends GrVariable> extends StubBase<
     return myAnnotations;
   }
 
-  @Nullable
-  public String getTypeText() {
+  public @Nullable String getTypeText() {
     return myTypeText;
   }
 
-  @Nullable
-  public GrTypeElement getTypeElement() {
+  public @Nullable GrTypeElement getTypeElement() {
     String typeText = getTypeText();
     if (typeText == null) return null;
 

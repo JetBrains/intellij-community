@@ -102,7 +102,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     for ((key, value) in request.headers().iteratorAsString()) {
       if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
-        addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
+        addHeader("HTTP_${key.replace('-', '_').uppercase(Locale.ENGLISH)}", value)
       }
     }
   }

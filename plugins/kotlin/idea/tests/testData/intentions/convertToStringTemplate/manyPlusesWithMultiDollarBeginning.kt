@@ -1,6 +1,5 @@
-// IS_APPLICABLE: false
+// IGNORE_K1
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-// SKIP_ERRORS_BEFORE
 
 fun foo() {
     val awesomeStringMuchPlusSoWow: String =

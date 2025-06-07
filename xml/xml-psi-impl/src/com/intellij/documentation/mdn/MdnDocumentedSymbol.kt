@@ -2,11 +2,12 @@
 package com.intellij.documentation.mdn
 
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.documentation.PolySymbolDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 
-abstract class MdnDocumentedSymbol : WebSymbol {
+abstract class MdnDocumentedSymbol : PolySymbolWithDocumentation {
 
   private val mdnDoc by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getMdnDocumentation()
@@ -14,8 +15,8 @@ abstract class MdnDocumentedSymbol : WebSymbol {
 
   protected abstract fun getMdnDocumentation(): MdnSymbolDocumentation?
 
-  override val apiStatus: WebSymbolApiStatus
-    get() = mdnDoc?.apiStatus ?: WebSymbolApiStatus.Stable
+  override val apiStatus: PolySymbolApiStatus
+    get() = mdnDoc?.apiStatus ?: PolySymbolApiStatus.Stable
 
   override val description: String?
     get() = mdnDoc?.description
@@ -26,7 +27,7 @@ abstract class MdnDocumentedSymbol : WebSymbol {
   override val descriptionSections: Map<String, String>
     get() = mdnDoc?.sections ?: emptyMap()
 
-  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
     this.mdnDoc?.let { mdnDoc ->
       val documentation = super.createDocumentation(location)
       return documentation?.with(

@@ -4,13 +4,13 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -27,6 +27,13 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
   }
 
   override fun hashCode(): Int = 31 * pyClass.hashCode()
+  
+  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyLiteralType(this)
+    }
+    return visitor.visitPyClassType(this)  
+  }
 
   companion object {
     /**
@@ -36,42 +43,111 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       when (expression) {
         is PyTupleExpression -> {
           val elements = expression.elements
-          val classes = elements.mapNotNull { toLiteralType(it, context, true) }
+          val classes = elements.mapNotNull { createFromLiteralParameter(it, context) }
           if (elements.size == classes.size) PyUnionType.union(classes) else null
         }
-        else -> toLiteralType(expression, context, true)
+        else -> createFromLiteralParameter(expression, context)
       }
 
-    /**
-     * Tries to construct literal type or collection of literal types for a value that could be downcasted to `typing.Literal[...] type
-     * or its collection.
-     */
-    private fun fromLiteralValue(expression: PyExpression, context: TypeEvalContext): PyType? {
-      val value =
-        when (expression) {
-          is PyKeywordArgument -> expression.valueExpression
-          is PyParenthesizedExpression -> PyPsiUtils.flattenParens(expression)
-          else -> expression
-        } ?: return null
-      return when (value) {
-        is PyDictLiteralExpression -> {
-          val keyType = PyUnionType.union(value.elements.map { fromLiteralValue(it.key, context) })
-          val valueType = PyUnionType.union(value.elements.mapNotNull { type -> type.value?.let { fromLiteralValue(it, context) } })
-          PyCollectionTypeImpl.createTypeByQName(value, "dict", false, listOf(keyType, valueType))
+    @JvmStatic
+    fun enumMember(enumClass: PyClass, memberName: String): PyLiteralType {
+      val expression = PyElementGenerator.getInstance(enumClass.getProject())
+        .createExpressionFromText(LanguageLevel.forElement(enumClass), "${enumClass.name}.$memberName")
+      assert(expression is PyReferenceExpression)
+      return PyLiteralType(enumClass, expression)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun upcastLiteralToClass(type: PyType?): PyType? {
+      return when (type) {
+        is PyUnionType -> type.map(::upcastLiteralToClass)
+        is PyLiteralStringType -> PyClassTypeImpl(type.cls, false)
+        is PyLiteralType -> PyClassTypeImpl(type.pyClass, false)
+        else -> type
+      }
+    }
+
+    private class TypePromoter(private val context: TypeEvalContext, private val inferLiteralTypes: Boolean) {
+      fun promoteToType(expectedType: PyType?, expression: PyExpression): PyType? {
+        val value = PyUtil.peelArgument(expression) ?: return null
+        return when (value) {
+          is PyDictLiteralExpression -> {
+            promoteDictLiteral(expectedType, value)
+          }
+          is PyDictCompExpression -> {
+            promoteDictLiteralOrDictComprehension(expectedType, value, listOfNotNull(value.resultExpression as? PyKeyValueExpression))
+          }
+          is PyTupleExpression -> {
+            promoteTuple(value)
+          }
+          is PySetLiteralExpression -> {
+            promoteListOrSet(expectedType, value, value.elements.asList(), PyNames.SET)
+          }
+          is PySetCompExpression -> {
+            promoteListOrSet(expectedType, value, listOfNotNull(value.resultExpression), PyNames.SET)
+          }
+          is PyListLiteralExpression -> {
+            promoteListOrSet(expectedType, value, value.elements.asList(), "list")
+          }
+          is PyListCompExpression -> {
+            promoteListOrSet(expectedType, value, listOfNotNull(value.resultExpression), "list")
+          }
+          else -> {
+            val type = if (inferLiteralTypes) getLiteralOrLiteralStringType(value, context) else null
+            return type ?: context.getType(value)
+          }
         }
-        is PyTupleExpression -> {
-          val elementTypes = value.elements.map { fromLiteralValue(it, context) }
-          PyTupleType.create(value, elementTypes)
+      }
+
+      private fun promoteDictLiteral(expectedType: PyType?, dictLiteral: PyDictLiteralExpression): PyType? {
+        if (expectedType is PyTypedDictType) {
+          val typeCheckingResult = PyTypedDictType.TypeCheckingResult()
+          PyTypedDictType.checkExpression(expectedType, dictLiteral, context, typeCheckingResult)
+          if (!typeCheckingResult.hasErrors) {
+            return expectedType
+          }
         }
-        is PySetLiteralExpression -> {
-          val elementType = PyUnionType.union(value.elements.map { fromLiteralValue(it, context) })
-          PyCollectionTypeImpl.createTypeByQName(value, "set", false, listOf(elementType))
+        return promoteDictLiteralOrDictComprehension(expectedType, dictLiteral, dictLiteral.elements.asList())
+      }
+
+      private fun promoteDictLiteralOrDictComprehension(
+        expectedType: PyType?,
+        anchor: PyElement,
+        elements: Collection<PyKeyValueExpression>
+      ): PyType? {
+        val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && expectedType.classQName == PyNames.DICT) {
+          expectedType.elementTypes[0] to expectedType.elementTypes[1]
         }
-        is PyListLiteralExpression -> {
-          val elementType = PyUnionType.union(value.elements.map { fromLiteralValue(it, context) })
-          PyCollectionTypeImpl.createTypeByQName(value, "list", false, listOf(elementType))
+        else {
+          null to null
         }
-        else -> toLiteralType(value, context, false) ?: context.getType(value)
+        val keyType = PyUnionType.union(elements.map { promoteToType(expectedKeyType, it.key) })
+        val valueType = PyUnionType.union(
+          elements.mapNotNull { keyValue -> keyValue.value?.let { promoteToType(expectedValueType, it) } }
+        )
+        return PyCollectionTypeImpl.createTypeByQName(anchor, PyNames.DICT, false, listOf(keyType, valueType))
+      }
+
+      private fun promoteTuple(tupleExpression: PyTupleExpression): PyTupleType? {
+        val elementTypes = tupleExpression.elements.map { promoteToType(/*TODO*/null, it) }
+        return PyTupleType.create(tupleExpression, elementTypes)
+      }
+
+      private fun promoteListOrSet(
+        expectedType: PyType?,
+        expr: PyExpression,
+        elements: Collection<PyExpression>,
+        className: String,
+      ): PyType? {
+        val expectedElementType = if (expectedType is PyCollectionType && expectedType.classQName == className) {
+          expectedType.elementTypes.firstOrNull()
+        }
+        else {
+          null
+        }
+        val elementType = PyUnionType.union(elements.map { promoteToType(expectedElementType, it) })
+        return PyCollectionTypeImpl.createTypeByQName(expr, className, false, listOf(elementType))
       }
     }
 
@@ -96,15 +172,10 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
                          expected: PyType?,
                          context: TypeEvalContext,
                          substitutions: PyTypeChecker.GenericSubstitutions?): PyType? {
-      if (expected is PyTypedDictType) {
-        return null
-      }
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
-      val substitutionOrBound = if (substitution is PyTypeVarType) substitution.bound else substitution
-      if (containsLiteral(substitutionOrBound)) {
-        return fromLiteralValue(expression, context)
-      }
-      return null
+      val substitutionOrBound = if (substitution is PyTypeVarType) PyTypeUtil.getEffectiveBound(substitution) else substitution
+      if (substitutionOrBound == null) return null
+      return TypePromoter(context, containsLiteral(substitutionOrBound)).promoteToType(substitutionOrBound, expression)
     }
 
     private fun containsLiteral(type: PyType?): Boolean {
@@ -113,35 +184,40 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
     }
 
-    private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
-      if (expression is PyNoneLiteralExpression && !expression.isEllipsis ||
-          expression is PyReferenceExpression &&
-          expression.name == PyNames.NONE &&
-          LanguageLevel.forElement(expression).isPython2) return PyNoneType.INSTANCE
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isNone(expression: PyExpression): Boolean {
+      return expression is PyNoneLiteralExpression ||
+             expression is PyReferenceExpression &&
+             expression.name == PyNames.NONE &&
+             LanguageLevel.forElement(expression).isPython2
+    }
 
-      if (index && (expression is PyReferenceExpression || expression is PySubscriptionExpression)) {
+    private fun createFromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? {
+      if (isNone(expression)) return PyBuiltinCache.getInstance(expression).noneType
+
+      if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
         if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
       }
 
-      if (expression is PyReferenceExpression && expression.isQualified) {
-        PyUtil
-          .multiResolveTopPriority(expression, PyResolveContext.defaultContext(context))
-          .asSequence()
-          .filterIsInstance<PyTargetExpression>()
-          .mapNotNull { ScopeUtil.getScopeOwner(it) as? PyClass }
-          .firstOrNull { owner -> PyStdlibTypeProvider.isEnum(owner, context) }
-          ?.let {
-            return PyLiteralType(it, expression)
-          }
-      }
+      return literalType(expression, context, true)
+    }
 
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (expression is PyConditionalExpression) {
-        return PyUnionType.union(listOf(expression.truePart, expression.falsePart).map { expr ->
-          expr?.let { classOfAcceptableLiteral(expr, context, index)?.let { cls -> PyLiteralType(cls, expr) } }
-        })
+        return PyUnionType.union(
+          listOf(expression.truePart, expression.falsePart).map {
+            it?.let { getLiteralType(it, context) }
+          }
+        )
       }
+      return literalType(expression, context, false)
+    }
 
+    private fun getLiteralOrLiteralStringType(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (expression is PyStringLiteralExpression && expression.isInterpolated) {
         val allLiteralStringFragments = expression.stringElements
           .filterIsInstance<PyFormattedStringElement>()
@@ -153,7 +229,18 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           return PyLiteralStringType.create(expression)
         }
       }
+      return getLiteralType(expression, context)
+    }
 
+    private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {
+      if (expression is PyReferenceExpression && expression.isQualified) {
+        val type = PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
+          PyStdlibTypeProvider.getEnumMemberType(it, context)
+        }
+        if (type != null) {
+          return type
+        }
+      }
       return classOfAcceptableLiteral(expression, context, index)?.let { PyLiteralType(it, expression) }
     }
 
@@ -164,16 +251,16 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         expression is PyStringLiteralExpression ->
           if (isAcceptableStringLiteral(expression, index)) getPyClass(expression, context) else null
 
+        expression is PyEllipsisLiteralExpression -> null
+
         expression is PyLiteralExpression -> getPyClass(expression, context)
 
-        expression is PyPrefixExpression && expression.operator == PyTokenTypes.MINUS -> {
+        expression is PyPrefixExpression && (expression.operator == PyTokenTypes.PLUS || expression.operator == PyTokenTypes.MINUS) -> {
           val operand = expression.operand
           if (operand is PyNumericLiteralExpression && operand.isIntegerLiteral) getPyClass(operand, context) else null
         }
 
-        expression is PyReferenceExpression &&
-        expression.name.let { it == PyNames.TRUE || it == PyNames.FALSE } &&
-        LanguageLevel.forElement(expression).isPython2 -> getPyClass(expression, context)
+        PyEvaluator.getBooleanLiteralValue(expression) != null -> getPyClass(expression, context)
 
         else -> null
       }

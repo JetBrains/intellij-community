@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
+public final class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationProcessor.class);
   private final PsiClass myClass;
   private final String myInnerClassName;
@@ -131,8 +131,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InheritanceToDelegationViewDescriptor(myClass);
   }
 
@@ -730,7 +729,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     // find overriding/implementing method
     {
-      class InnerClassOverridingMethod extends InnerClassMethod {
+      final class InnerClassOverridingMethod extends InnerClassMethod {
         InnerClassOverridingMethod(PsiMethod method) {
           super(method);
         }
@@ -757,7 +756,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     // fix abstract methods
     {
-      class InnerClassAbstractMethod extends InnerClassMethod {
+      final class InnerClassAbstractMethod extends InnerClassMethod {
         private final boolean myImplicitImplementation;
 
         InnerClassAbstractMethod(PsiMethod method, final boolean implicitImplementation) {
@@ -863,8 +862,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  @Nullable
-  private PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
+  private @Nullable PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       PsiClass containingClass = superMethod.getContainingClass();
@@ -880,8 +878,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 

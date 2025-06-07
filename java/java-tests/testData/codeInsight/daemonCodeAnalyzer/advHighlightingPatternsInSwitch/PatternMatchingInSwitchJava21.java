@@ -244,6 +244,9 @@ class Main {
     str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
       case MONDAY, TUESDAY -> System.out.println("ok");
     };
+    str = switch (<error descr="'switch' expression does not cover all possible input values">d</error>) {
+      case MONDAY, TUESDAY -> "ok";
+    };
     str = switch (d) {
       case MONDAY, TUESDAY, WEDNESDAY -> "ok";
     };

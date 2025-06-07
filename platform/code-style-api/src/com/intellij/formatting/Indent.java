@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 
 /**
  * The indent setting for a formatting model block. Indicates how the block is indented
@@ -68,8 +68,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental;
  */
 
 public abstract class Indent {
-  @NotNull
-  public abstract Type getType();
+  public abstract @NotNull Type getType();
 
   /**
    * Returns an instance of a regular indent, with the width specified
@@ -286,7 +285,7 @@ public abstract class Indent {
     private final String myName;
 
 
-    private Type(@NonNls final String name) {
+    private Type(final @NonNls String name) {
       myName = name;
     }
 
@@ -309,6 +308,7 @@ public abstract class Indent {
     @Experimental
     public static final Type OUTDENT_SPACES = new Type("OUTDENT_SPACES");
 
+    @Override
     public String toString() {
       return myName;
     }

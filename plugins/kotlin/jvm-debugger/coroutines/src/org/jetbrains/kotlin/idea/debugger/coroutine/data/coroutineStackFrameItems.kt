@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
+import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.JavaValue
@@ -9,12 +10,19 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
+import com.sun.jdi.ObjectReference
+import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.findPosition
+import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
+import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.findOrCreateLocation
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.toXSourcePosition
 
 /**
  * Creation frame of coroutine either in RUNNING or SUSPENDED state.
@@ -24,11 +32,11 @@ class CreationCoroutineStackFrameItem(
     val first: Boolean
 ) : CoroutineStackFrameItem(location, emptyList()) {
 
-    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = location.findPosition(debugProcess)
-        return CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
+        val position = sourcePosition.toXSourcePosition()
+        return CreationCoroutineStackFrame(frame, position, withSeparator = first, location)
     }
 }
 
@@ -37,10 +45,11 @@ class CreationCoroutineStackFrameItem(
  */
 class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<JavaValue>) :
     CoroutineStackFrameItem(location, spilledVariables) {
-    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
+
+    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = location.findPosition(debugProcess)
+        val position = sourcePosition.toXSourcePosition()
         return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 }
@@ -62,9 +71,9 @@ open class RunningCoroutineStackFrameItem(
     location: Location,
     spilledVariables: List<JavaValue> = emptyList()
 ) : CoroutineStackFrameItem(location, spilledVariables) {
-    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
-        val position = location.findPosition(debugProcess)
+        val position = sourcePosition.toXSourcePosition()
         return CoroutineStackFrame(frame, position)
     }
 }
@@ -73,16 +82,51 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
     StackFrameItem(location, spilledVariables) {
     val log by logger
 
-    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
+    override fun createFrame(debugProcess: DebugProcessImpl, sourcePosition: SourcePosition?): XStackFrame? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
-        val position = location.findPosition(debugProcess)
+        val position = sourcePosition.toXSourcePosition()
         return CoroutineStackFrame(frame, position, spilledVariables, false, location)
     }
 
     fun uniqueId() =
         location.safeSourceName() + ":" + location.safeMethod().toString() + ":" +
                 location.safeLineNumber() + ":" + location.safeKotlinPreferredLineNumber()
+
+    companion object {
+        fun create(
+            stackTraceElement: StackTraceElement?,
+            fieldVariables: List<FieldVariable>,
+            continuation: ObjectReference,
+            context: DefaultExecutionContext
+        ): CoroutineStackFrameItem? {
+            if (stackTraceElement == null) return null
+            val generatedLocation = findOrCreateLocation(context, stackTraceElement)
+            val spilledVariables = fieldVariables.filterOutSyntheticLocalVariables().map { it.toJavaValue(continuation, context) }
+            return DefaultCoroutineStackFrameItem(generatedLocation, spilledVariables)
+        }
+
+        private fun List<FieldVariable>.filterOutSyntheticLocalVariables() =
+            filterNot {
+                it.variableName.isInlineFunctionMarkerVariableName || it.variableName.isInlineLambdaMarkerVariableName
+            }
+
+        private fun FieldVariable.toJavaValue(continuation: ObjectReference, context: DefaultExecutionContext): JavaValue {
+            val valueDescriptor = ContinuationVariableValueDescriptorImpl(
+                context,
+                continuation,
+                fieldName,
+                dropInlineSuffix(variableName)
+            )
+            return JavaValue.create(
+                null,
+                valueDescriptor,
+                context.evaluationContext,
+                context.debugProcess.xdebugProcess!!.nodeManager,
+                false
+            )
+        }
+    }
 }
 
 fun DebugProcessImpl.findFirstFrame(): StackFrameProxyImpl? = suspendManager.pausedContext.thread?.frame(0)

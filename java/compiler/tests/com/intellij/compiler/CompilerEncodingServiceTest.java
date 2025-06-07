@@ -25,6 +25,25 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
   private static final Charset WINDOWS_1251 = Charset.forName("windows-1251");
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("properties.file.encoding.legacy.support").setValue(false);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Registry.get("properties.file.encoding.legacy.support").resetToDefault();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   private Collection<Charset> projectDefaultPlus(Charset @NotNull ... charsets) {
     Set<Charset> result = new HashSet<>();
     result.add(getProjectDefault());
@@ -100,9 +119,58 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
 
     LoadTextUtil.loadText(file, 1024);
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
-
   }
 
+  public void testCheckEncodingStability() throws IOException {
+    final VirtualFile file = createFile("test.properties");
+    {
+      byte[] bytes = """
+        one=eins
+        two=zwei
+        three=drei
+        four=vier
+        """.getBytes(StandardCharsets.ISO_8859_1);
+      WriteAction.run(() -> {
+        file.setBinaryContent(bytes);
+      });
+
+      for (int i = 1; i < bytes.length; i++) {
+        CharSequence text = LoadTextUtil.loadText(file, i);
+        assertEquals("Text encoding mismatch: expected UTF-8 the entire file. " +
+                     "Found: " + file.getCharset() + " in part of content: '" + text + "'",
+                     StandardCharsets.UTF_8,
+                     file.getCharset());
+      }
+    }
+
+    // rewrite content
+    {
+      @SuppressWarnings("NonAsciiCharacters")
+      byte[] bytes = """
+        one=eins
+        two=zwei
+        three=drei
+        four=vier
+        five=fünf
+        six=sechs
+        seven=sieben
+        eight=acht
+        nine=neun
+        ten=zehn
+        """.getBytes(StandardCharsets.ISO_8859_1);
+      WriteAction.run(() -> {
+        file.setBinaryContent(bytes);
+      });
+
+      for (int i = 1; i < bytes.length; i++) {
+        CharSequence text = LoadTextUtil.loadText(file, i);
+        assertEquals("Text encoding mismatch: expected ISO-8859-1 for the entire file. " +
+                     "Found: " + file.getCharset() + " in part of content: '" + text + "'",
+                     StandardCharsets.ISO_8859_1,
+                     file.getCharset());
+      }
+    }
+  }
 
   public void testPropertiesEncodingFeatureFlagTest() {
     RegistryValue registryValue = Registry.get("properties.file.encoding.legacy.support");

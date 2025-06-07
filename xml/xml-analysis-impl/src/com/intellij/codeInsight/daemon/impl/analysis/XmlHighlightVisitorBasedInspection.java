@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -14,24 +14,23 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
-  @NotNull
   @Override
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  public void checkFile(@NotNull final PsiFile file,
-                        @NotNull final InspectionManager manager,
+  public void checkFile(final @NotNull PsiFile psiFile,
+                        final @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        @NotNull final GlobalInspectionContext globalContext,
-                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    HighlightInfoHolder myHolder = new HighlightInfoHolder(file) {
+                        final @NotNull GlobalInspectionContext globalContext,
+                        final @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    HighlightInfoHolder myHolder = new HighlightInfoHolder(psiFile) {
       @Override
       public boolean add(@Nullable HighlightInfo info) {
         if (info != null) {
           GlobalInspectionUtil.createProblem(
-            file,
+            psiFile,
             info,
             new TextRange(info.startOffset, info.endOffset),
             null,
@@ -44,10 +43,10 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
       }
     };
     final XmlHighlightVisitor highlightVisitor = new XmlHighlightVisitor();
-    highlightVisitor.analyze(file, true, myHolder, new Runnable() {
+    highlightVisitor.analyze(psiFile, true, myHolder, new Runnable() {
       @Override
       public void run() {
-        file.accept(new XmlRecursiveElementVisitor() {
+        psiFile.accept(new XmlRecursiveElementVisitor() {
           @Override
           public void visitElement(@NotNull PsiElement element) {
             highlightVisitor.visit(element);
@@ -59,16 +58,13 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
 
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return getGeneralGroupName();
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "XmlHighlighting";
   }
 }

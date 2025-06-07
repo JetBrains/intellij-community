@@ -34,6 +34,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,27 +43,23 @@ import java.util.List;
 public final class VarargParameterInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "VariableArgumentMethod";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("variable.argument.method.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new VarargParameterFix();
   }
 
   private static class VarargParameterFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("variable.argument.method.quickfix");
     }
 
@@ -90,8 +87,7 @@ public final class VarargParameterInspection extends BaseInspection {
       performModification(method, parameters, lastParameter, typeElement, refElements);
     }
 
-    @NotNull
-    private static List<PsiElement> getReferences(@NotNull PsiMethod method) {
+    private static @NotNull @Unmodifiable List<PsiElement> getReferences(@NotNull PsiMethod method) {
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())
           .filter(ref -> ref instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)ref).isReferenceTo(method) ||
@@ -144,7 +140,7 @@ public final class VarargParameterInspection extends BaseInspection {
         return;
       }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      @NonNls final StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
+      final @NonNls StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         builder.append(firstArgument.getText());

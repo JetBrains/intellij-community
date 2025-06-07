@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.ToolWindowId
@@ -25,7 +24,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import com.intellij.vcs.commit.CommitNotification
-import git4idea.actions.branch.GitNewBranchAction
+import git4idea.actions.GitCreateNewBranchAction
 import git4idea.i18n.GitBundle
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
@@ -38,7 +37,6 @@ import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnCheckout
@@ -68,7 +66,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   override val lessonContent: LessonContext.() -> Unit = {
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     task {
@@ -174,7 +171,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
            LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().treeItem { _, path ->
         val action = (path.lastPathComponent as? PopupFactoryImpl.ActionItem)?.action
-        action is GitNewBranchAction
+        action is GitCreateNewBranchAction
       }
       test {
         val widget = previous.ui ?: error("Not found VCS widget")
@@ -191,7 +188,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
       test {
-        clickTreeRow { item -> (item as? PopupFactoryImpl.ActionItem)?.action is GitNewBranchAction }
+        clickTreeRow { item -> (item as? PopupFactoryImpl.ActionItem)?.action is GitCreateNewBranchAction }
       }
     }
 

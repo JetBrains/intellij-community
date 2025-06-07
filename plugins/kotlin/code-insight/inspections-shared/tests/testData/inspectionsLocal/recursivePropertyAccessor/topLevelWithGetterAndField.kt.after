@@ -1,0 +1,5 @@
+var p: Int = 0
+    get() {
+        val base = field
+        return base + 1
+    }

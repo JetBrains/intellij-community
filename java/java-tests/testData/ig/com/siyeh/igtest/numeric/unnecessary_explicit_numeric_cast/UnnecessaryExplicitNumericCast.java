@@ -132,6 +132,6 @@ class S {
 
   void noWarnOnRedCode() {
     foo<error descr="'foo(int)' in 'com.siyeh.igtest.numeric.unnecessary_explicit_numeric_cast.S' cannot be applied to '(long)'">((long)0)</error>;
-    <error descr="Incompatible types. Found: 'long', required: 'int'">int x = (long)0;</error>
+    int x = <error descr="Incompatible types. Found: 'long', required: 'int'">(long)0;</error>
   }
 }

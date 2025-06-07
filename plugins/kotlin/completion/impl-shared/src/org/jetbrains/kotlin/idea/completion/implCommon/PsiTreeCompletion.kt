@@ -14,11 +14,11 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -173,7 +173,7 @@ class PsiTreeCompletion {
 
     private fun KtExpression.getTypeIfPossible(): String? = when (this) {
         is KtStringTemplateExpression -> "String"
-        is KtConstantExpression -> getClassId()?.shortClassName?.asString()
+        is KtConstantExpression -> inferClassIdByPsi()?.shortClassName?.asString()
         else -> null
     }
 

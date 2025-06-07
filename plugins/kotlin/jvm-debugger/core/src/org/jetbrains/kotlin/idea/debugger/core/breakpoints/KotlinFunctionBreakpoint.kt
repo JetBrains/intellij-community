@@ -2,44 +2,35 @@
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint.MethodDescriptor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task.Backgroundable
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
+import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.base.util.runSmartReadActionIfUnderProgressElseDumb
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
-import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.debugger.core.methodName
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getJvmSignature
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 interface SourcePositionRefiner {
     fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
@@ -50,14 +41,8 @@ open class KotlinFunctionBreakpoint(
     breakpoint: XBreakpoint<*>
 ) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
     override fun getPsiClass(): PsiClass? {
-        val sourcePosition = sourcePosition
-        val declaration = PositionUtil.getPsiElementAt(
-            myProject,
-            KtClassOrObject::class.java,
-            sourcePosition
-        ) ?: return null
-
-        return DumbService.getInstance(myProject).runReadActionInSmartMode<KtLightClass?> {
+        val declaration = getKtClass() ?: return null
+        return runSmartReadActionIfUnderProgressElseDumb(myProject, null) {
             declaration.toLightClass()
         }
     }
@@ -72,59 +57,28 @@ open class KotlinFunctionBreakpoint(
         return sourcePosition
     }
 
-    @RequiresBackgroundThread
-    override fun reload() {
-        super.reload()
-
-        // We can't wait for a smart mode under a read access. It would result to exceptions
-        // or a possible deadlock. So return here.
-        if (ApplicationManager.getApplication().isReadAccessAllowed && DumbService.isDumb(myProject)) {
-            return
-        }
-
-        invalidateMethodData()
-        val descriptor = sourcePosition?.getMethodDescriptor(myProject)
-        ProgressIndicatorProvider.checkCanceled()
-        updateMethodData(descriptor)
-        updateClassPattern()
+    override fun computeMethodDescriptor(sourcePosition: SourcePosition): MethodBreakpoint.MethodDescriptor? {
+        ProgressManager.checkCanceled()
+        return sourcePosition.getMethodDescriptor(myProject)
     }
 
-    private fun invalidateMethodData() {
-        methodName = null
-        mySignature = null
+    override fun computeClassPattern(): String? {
+        val declaration = getKtClass() ?: return null
+        val pattern = ClassNameCalculator.getInstance().getClassName(declaration)
+        if (pattern != null) return pattern
+        // fallback to java
+        return psiClass?.qualifiedName
     }
 
-    private fun updateMethodData(descriptor: MethodDescriptor?) {
-        methodName = descriptor?.methodName
-        mySignature = descriptor?.methodSignature
-        if (descriptor != null && descriptor.isStatic) {
-            isInstanceFiltersEnabled = false
-        }
-    }
-
-    private fun updateClassPattern() {
-        ProgressIndicatorProvider.checkCanceled()
-        val task = object : Backgroundable(myProject, message("function.breakpoint.initialize")) {
-            override fun run(indicator: ProgressIndicator) {
-                val psiClass = psiClass
-                if (psiClass != null) {
-                    properties.myClassPattern = runReadAction { psiClass.qualifiedName }
-                }
-            }
-        }
-        val progressManager = ProgressManager.getInstance()
-        if (isDispatchThread() && !isUnitTestMode()) {
-            progressManager.runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
-        } else {
-            val progressIndicator = EmptyProgressIndicator()
-            progressManager.runProcess({ task.run(progressIndicator) }, progressIndicator)
-        }
+    private fun getKtClass(): KtClassOrObject? {
+        val sourcePosition = sourcePosition
+        return PositionUtil.getPsiElementAt(myProject, KtClassOrObject::class.java, sourcePosition)
     }
 }
 
 fun SourcePosition.getMethodDescriptor(project: Project): MethodDescriptor? =
-    DumbService.getInstance(project).runReadActionInSmartMode<MethodDescriptor?> {
-        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@runReadActionInSmartMode null
+    runSmartReadActionIfUnderProgressElseDumb(project, null) f@{
+        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@f null
         val descriptor = getMethodDescriptorInReadActionInSmartMode(project, this, document)
         descriptor?.takeIf { it.methodName != null && it.methodSignature != null }
     }
@@ -134,70 +88,48 @@ private fun getMethodDescriptorInReadActionInSmartMode(
     sourcePosition: SourcePosition,
     document: Document
 ): MethodDescriptor? {
-    val method = resolveJvmMethodFromKotlinDeclaration(project, sourcePosition) ?: return null
-    if (!method.hasAppropriateKotlinOrigin(sourcePosition, document)) {
-        return null
-    }
+    val declaration = findDeclaration(project, sourcePosition) ?: return null
+    createMethodDescriptor(declaration, sourcePosition, document)?.let { return it }
 
-    return method.getMethodDescriptor()
+    // fallback to java way signature extraction
+    val psiMethod = declaration.toLightElements().firstIsInstanceOrNull<PsiMethod>() ?: return null
+    return MethodBreakpoint.getMethodDescriptor(sourcePosition, psiMethod, document)
 }
 
-private fun PsiMethod.hasAppropriateKotlinOrigin(sourcePosition: SourcePosition, document: Document): Boolean {
-    val kotlinOrigin = this.safeAs<KtLightMethod>()?.getSourceOrigin() ?: return true
-    val offset = kotlinOrigin.textOffset
-    return DocumentUtil.isValidOffset(offset, document) && document.getLineNumber(offset) >= sourcePosition.line
-}
-
-private fun PsiMethod.getMethodDescriptor(): MethodDescriptor? =
-    try {
-        val descriptor = MethodDescriptor()
-        descriptor.methodName = JVMNameUtil.getJVMMethodName(this)
-        descriptor.methodSignature = JVMNameUtil.getJVMSignature(this)
-        descriptor.isStatic = hasModifierProperty(PsiModifier.STATIC)
-        descriptor
-    } catch (ignored: IndexNotReadyException) {
-        null
-    }
-
-private fun KtLightMethod.getSourceOrigin(): KtDeclaration? {
-    val lightMemberOrigin = lightMemberOrigin ?: return null
-    val originalElement = lightMemberOrigin.auxiliaryOriginalElement
-        ?: lightMemberOrigin.originalElement
+private fun findDeclaration(project: Project, sourcePosition: SourcePosition): KtDeclaration? {
+    var declaration = PositionUtil.getPsiElementAt(project, KtDeclaration::class.java, sourcePosition)
         ?: return null
-    val sourceOrigin = originalElement.fetchNavigationElement() as? KtDeclaration ?: return null
-    if (sourceOrigin.containingFile is KtClsFile) {
-        return null
-    }
-
-    return sourceOrigin
-}
-
-private fun resolveJvmMethodFromKotlinDeclaration(project: Project, sourcePosition: SourcePosition): PsiMethod? {
-    var declaration = PositionUtil.getPsiElementAt(project, KtDeclaration::class.java, sourcePosition) ?: return null
     if (declaration.isExpectDeclaration()) {
         declaration = declaration.getActualJvmDeclaration() ?: return null
     }
 
-    if (declaration is KtClass) {
-        val constructor = declaration.primaryConstructor
-        if (constructor == null) {
-            val lightClass = declaration.safeAs<KtClassOrObject>()?.toLightClass()
-            return lightClass?.constructors?.firstOrNull()
-        }
-        declaration = constructor
-    }
+    return declaration
+}
 
-    val originalDeclaration = declaration.fetchOriginalElement() ?: return null
-    return originalDeclaration.toLightElements().firstIsInstanceOrNull()
+private fun isValidDeclaration(declaration: KtDeclaration, sourcePosition: SourcePosition, document: Document): Boolean {
+    val offset = declaration.textOffset
+    return DocumentUtil.isValidOffset(offset, document) && document.getLineNumber(offset) >= sourcePosition.line
+}
+
+private fun createMethodDescriptor(declaration: KtDeclaration, sourcePosition: SourcePosition, document: Document): MethodDescriptor? {
+    if (!isValidDeclaration(declaration, sourcePosition, document)) return null
+    return analyze(declaration) { createMethodDescriptor(document, declaration) }
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun KaSession.createMethodDescriptor(document: Document, declaration: KtDeclaration): MethodDescriptor? {
+    var symbol = declaration.symbol
+    val lineNumber = document.getLineNumber(declaration.textOffset)
+    if (symbol is KaNamedClassSymbol) {
+        symbol = symbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary } ?: return null
+    }
+    if (symbol !is KaFunctionSymbol) return null
+    val jvmSignature = getJvmSignature(symbol, isConstructor = symbol is KaConstructorSymbol) ?: return null
+    val methodName = methodName(symbol) ?: return null
+    return MethodDescriptor(methodName, jvmSignature, false, lineNumber)
 }
 
 private fun KtDeclaration.getActualJvmDeclaration(): KtDeclaration? =
     KotlinDebuggerLegacyFacade.getInstance()
         ?.actualDeclarationProvider
         ?.getActualJvmDeclaration(this)
-
-private fun KtDeclaration.fetchNavigationElement(): KtElement? =
-    serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getNavigationElement(this)
-
-private fun KtDeclaration.fetchOriginalElement(): KtElement? =
-    serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getOriginalElement(this)

@@ -103,7 +103,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            managerWithABOrder.allDefinitions
+            managerWithABOrder.getDefinitions()
         )
 
         val managerWithBAOrder = ScriptDefinitionsManagerUnderTest(project).apply {
@@ -128,7 +128,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB),
-            manager.allDefinitions
+            manager.getDefinitions()
         )
 
         manager.definitionSources = listOf(
@@ -138,14 +138,14 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB), /* still the same list */
-            manager.allDefinitions
+            manager.getDefinitions()
         )
 
         manager.reloadDefinitions()
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC /* now */),
-            manager.allDefinitions
+            manager.getDefinitions()
         )
     }
 
@@ -158,7 +158,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.allDefinitions
+            manager.getDefinitions()
         )
 
         manager.settings = KotlinScriptingSettings(project).apply {
@@ -169,7 +169,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC), /* no effect */
-            manager.allDefinitions
+            manager.getDefinitions()
         )
 
         assertEquals(
@@ -194,7 +194,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.allDefinitions
+            manager.getDefinitions()
         )
 
         assertEquals(
@@ -309,8 +309,6 @@ private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDe
     override fun getKotlinScriptingSettings(): KotlinScriptingSettings = settings
 
     override fun applyDefinitionsUpdate() {}
-
-    override fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? = null
 
     override fun isScratchFile(script: SourceCode): Boolean = false
 

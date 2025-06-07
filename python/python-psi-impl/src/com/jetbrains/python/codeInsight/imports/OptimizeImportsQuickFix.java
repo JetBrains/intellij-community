@@ -19,26 +19,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, HighPriorityAction {
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.optimize.imports");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof PyFile;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return psiFile instanceof PyFile;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    optimizeImports(project, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    optimizeImports(project, psiFile);
   }
 
   @Override
@@ -47,7 +45,7 @@ public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, 
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) {  // stale PSI
       return;

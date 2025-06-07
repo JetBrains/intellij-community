@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.openapi.diff.DiffBundle;
@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class TextDiffTypeFactory {
-  @NotNull public static final TextDiffTypeImpl INSERTED =
+  public static final @NotNull TextDiffTypeImpl INSERTED =
     new TextDiffTypeImpl(DiffColors.DIFF_INSERTED, DiffBundle.message("diff.type.inserted.name"));
-  @NotNull public static final TextDiffTypeImpl DELETED =
+  public static final @NotNull TextDiffTypeImpl DELETED =
     new TextDiffTypeImpl(DiffColors.DIFF_DELETED, DiffBundle.message("diff.type.deleted.name"));
-  @NotNull public static final TextDiffTypeImpl MODIFIED =
+  public static final @NotNull TextDiffTypeImpl MODIFIED =
     new TextDiffTypeImpl(DiffColors.DIFF_MODIFIED, DiffBundle.message("diff.type.changed.name"));
-  @NotNull public static final TextDiffTypeImpl CONFLICT =
+  public static final @NotNull TextDiffTypeImpl CONFLICT =
     new TextDiffTypeImpl(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
 
   public static @NotNull List<TextDiffTypeImpl> getAllDiffTypes() {
@@ -34,23 +34,20 @@ public final class TextDiffTypeFactory {
   }
 
   public static class TextDiffTypeImpl implements TextDiffType {
-    @NotNull private final TextAttributesKey myKey;
-    @NotNull private final @Nls String myName;
+    private final @NotNull TextAttributesKey myKey;
+    private final @NotNull @Nls String myName;
 
     public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull @Nls String name) {
       myKey = key;
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
-    public TextAttributes getAttributes(@Nullable Editor editor) {
+    public @NotNull TextAttributes getAttributes(@Nullable Editor editor) {
       if (editor == null) {
         return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myKey);
       }
@@ -59,15 +56,13 @@ public final class TextDiffTypeFactory {
       }
     }
 
-    @NotNull
     @Override
-    public Color getColor(@Nullable Editor editor) {
+    public @NotNull Color getColor(@Nullable Editor editor) {
       return ObjectUtils.notNull(getAttributes(editor).getBackgroundColor(), JBColor.DARK_GRAY);
     }
 
-    @NotNull
     @Override
-    public Color getIgnoredColor(@Nullable Editor editor) {
+    public @NotNull Color getIgnoredColor(@Nullable Editor editor) {
       Color color = getAttributes(editor).getForegroundColor();
       if (color != null) return color;
 
@@ -78,14 +73,12 @@ public final class TextDiffTypeFactory {
       return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
     }
 
-    @Nullable
     @Override
-    public Color getMarkerColor(@Nullable Editor editor) {
+    public @Nullable Color getMarkerColor(@Nullable Editor editor) {
       return getAttributes(editor).getErrorStripeColor();
     }
 
-    @NotNull
-    public TextAttributesKey getKey() {
+    public @NotNull TextAttributesKey getKey() {
       return myKey;
     }
 
@@ -97,8 +90,7 @@ public final class TextDiffTypeFactory {
 
   private static final double MIDDLE_COLOR_FACTOR = 0.6;
 
-  @NotNull
-  public static Color getMiddleColor(@NotNull Color fg, @NotNull Color bg) {
+  public static @NotNull Color getMiddleColor(@NotNull Color fg, @NotNull Color bg) {
     return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
   }
 }

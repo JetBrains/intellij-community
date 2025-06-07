@@ -1,0 +1,36 @@
+### auto-generated section `build kotlin.run-configurations.testng` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "testng_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testng",
+  module_name = "kotlin.run-configurations.testng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//platform/smRunner",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/execution/impl",
+    "//plugins/testng",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/plugin",
+  ],
+  runtime_deps = [":testng_resources"]
+)
+### auto-generated section `build kotlin.run-configurations.testng` end

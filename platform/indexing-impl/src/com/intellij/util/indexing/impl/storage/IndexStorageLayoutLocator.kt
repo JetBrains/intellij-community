@@ -9,9 +9,9 @@ import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator.getLayo
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import kotlin.Throws
 
 
 /**
@@ -42,17 +42,22 @@ object IndexStorageLayoutLocator {
     val prioritizedLayoutProviders = prioritizedLayoutProviders(forceTopProviderBean = customIndexLayoutProviderBean)
     val applicableLayoutProviders = prioritizedLayoutProviders.filter { it.layoutProvider.isApplicable(indexExtension) }
 
-    val providerBeanForExtension = applicableLayoutProviders.firstOrNull()
-    if (providerBeanForExtension == null) {
+    val primaryProviderBeanForExtension = applicableLayoutProviders.firstOrNull()
+    if (primaryProviderBeanForExtension == null) {
       //default provider should be applicable to anything, so this is an exceptional case:
       throw UnsupportedOperationException(
         "${indexExtension}: no suitable index storage provider was found in a " + prioritizedLayoutProviders.joinToString(separator = "\n")
       )
     }
 
-    log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
-             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}]) ")
-    return providerBeanForExtension.layoutProvider.getLayout(indexExtension)
+    log.info("Layout '${primaryProviderBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
+             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}])" +
+             ((indexExtension as? ShardableIndexExtension)?.let {", shards = ${it.shardsCount()}"} ?: ""))
+    
+    val otherApplicableProviders = applicableLayoutProviders
+      .filterNot { it === primaryProviderBeanForExtension }
+      .map { it.layoutProvider }
+    return primaryProviderBeanForExtension.layoutProvider.getLayout(indexExtension, otherApplicableProviders)
   }
 
   /** Layout providers beans supported on the current platform/IDE, ordered by priority (desc) */

@@ -92,8 +92,7 @@ public class TextContentBuilder {
    * If the root has an {@link ElementManipulator}, only its value range is traversed.
    * @return the resulting text content or {@code null} if it's empty.
    */
-  @Nullable
-  public TextContent build(PsiElement root, TextContent.TextDomain domain) {
+  public @Nullable TextContent build(PsiElement root, TextContent.TextDomain domain) {
     ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(root);
     int length = root.getTextLength();
     if (manipulator != null) {
@@ -111,8 +110,7 @@ public class TextContentBuilder {
     return build(root, domain, new TextRange(0, length));
   }
 
-  @Nullable
-  public TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
+  public @Nullable TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
     TextRange rootRange = root.getTextRange();
     if (isWrongRange(valueRange, rootRange.getLength())) {
       LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootRange.getLength());

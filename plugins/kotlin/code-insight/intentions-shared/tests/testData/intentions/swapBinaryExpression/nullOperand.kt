@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun new(x: Int, y: Int): Int {
     return y <caret>-
 }

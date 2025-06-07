@@ -2,18 +2,20 @@
 package com.intellij.cce.workspace
 
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.fus.FusLogsSaver
 import com.intellij.cce.workspace.storages.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.createDirectories
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 
 class EvaluationWorkspace private constructor(private val basePath: Path,
                                               statsLogsPath: Path) {
@@ -48,6 +50,8 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
 
   val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
 
+  val individualScoresStorage: CompositeIndividualScoresStorage = CompositeIndividualScoresStorage(sessionsDir.toString())
+
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
 
   val statLogsSaver: StatLogsSaver = StatLogsSaver(statsLogsPath, subdir("logs"))
@@ -74,7 +78,19 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
     ConfigFactory.load(pathToConfig, strategySerializer)
 
   fun saveAdditionalStats(name: String, stats: Map<String, Any>) {
-    FileWriter(basePath.resolve("$name.json").toString()).use { it.write(gson.toJson(stats)) }
+    saveAdditionalStats(name, gson.toJsonTree(stats).asJsonObject)
+  }
+
+  fun saveAdditionalStats(name: String, stats: JsonObject) {
+    FileWriter(basePath.resolve("$name.json").toString()).use { it.write(stats.toString()) }
+  }
+
+  fun readAdditionalStats(name: String): JsonObject? {
+    val path = basePath.resolve("$name.json")
+    if (!path.isRegularFile()) {
+      return null
+    }
+    return gson.fromJson(path.readText(), JsonObject::class.java)
   }
 
   fun addReport(reportType: String, filterName: String, comparisonFilterName: String, reportPath: Path) {

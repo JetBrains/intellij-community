@@ -63,6 +63,7 @@ public class DummyTestBean extends Config implements Serializable {
     }
 
 
+    @Override
     public String toString() {
         return "DummyTestBean{" +
                 "tran='" + tran + '\'' +

@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.workspace.storage.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
+    "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+  ]
+)
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = ["//platform/workspace/storage"],
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/storage/testEntities:testEntities_test_lib",
+    "@lib//:guava",
+    "@lib//:kotlin-reflect",
+    "@lib//:fastutil-min",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlin-test",
+    "@lib//:kryo5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlinx-collections-immutable",
+  ],
+  runtime_deps = [":tests_test_resources"]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.workspace.storage.tests` end

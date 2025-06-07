@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -15,15 +15,13 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class GraphChangesUtil {
   public static final GraphChanges<Integer> SOME_CHANGES = new GraphChanges<>() {
-    @NotNull
     @Override
-    public Collection<Node<Integer>> getChangedNodes() {
+    public @NotNull Collection<Node<Integer>> getChangedNodes() {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<Edge<Integer>> getChangedEdges() {
+    public @NotNull Collection<Edge<Integer>> getChangedEdges() {
       return Collections.emptyList();
     }
   };

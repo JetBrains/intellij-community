@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.COMMENTS;
 
-public class PropertyTextExtractor extends TextExtractor {
+final class PropertyTextExtractor extends TextExtractor {
   private static final Pattern apostrophes = Pattern.compile("'(?=')");
   private static final Pattern continuationIndent = Pattern.compile("(?<=\n)[ \t]+");
   private static final Pattern trailingSlash = Pattern.compile("\\\\\n");

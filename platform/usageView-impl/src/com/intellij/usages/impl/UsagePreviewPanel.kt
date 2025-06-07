@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.find.FindBundle
@@ -382,7 +382,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   private class BalloonPositionTracker(private val myProject: Project,
                                        private val myEditor: Editor,
                                        private val myRange: TextRange,
-                                       private val myBalloonText: String) : PositionTracker<Balloon?>(myEditor.contentComponent) {
+                                       private val myBalloonText: String,
+                                       private val myPosition: Balloon.Position) : PositionTracker<Balloon?>(myEditor.contentComponent) {
     override fun recalculateLocation(balloon: Balloon): RelativePoint {
       val startOffset = myRange.startOffset
       val endOffset = myRange.endOffset
@@ -410,13 +411,17 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       }
       val startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset))
       val endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset))
-      val point = Point((startPoint.x + endPoint.x) / 2, endPoint.y + myEditor.lineHeight)
+      val delta = if (myPosition == Balloon.Position.below) myEditor.lineHeight else 0
+      val point = Point((startPoint.x + endPoint.x) / 2, endPoint.y + delta)
       return RelativePoint(myEditor.contentComponent, point)
     }
   }
 
   @Internal
   companion object {
+
+    val DO_NOT_ADJUST_NAME_RANGE: Key<Boolean> = Key.create<Boolean>("UsageViewPanel.DO_NOT_ADJUST_NAME_RANGE")
+
     const val LINE_HEIGHT_PROPERTY = "UsageViewPanel.lineHeightProperty"
     private val LOG = Logger.getInstance(UsagePreviewPanel::class.java)
 
@@ -475,9 +480,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (infos.size == 1 && infoRange != null) {
           var balloonText: String? = null
           if (findModel != null) {
-            val replacementText =
+            val replacementText = try {
               FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel,
                                                                   rangeToHighlight.startOffset, editor.document.text) ?: return
+            }
+            catch (_: MalformedReplacementStringException) {
+              return
+            }
             val previewText = createPreviewHtml(replacementText)
             if (previewText != findModel.stringToReplace || Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp")) {
               balloonText = previewText
@@ -499,6 +508,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
      */
     @JvmStatic
     fun getNameElementTextRange(psiElement: PsiElement): TextRange {
+      if (psiElement.getUserData(DO_NOT_ADJUST_NAME_RANGE) == true)
+        return psiElement.textRange
       val psiFile = psiElement.containingFile
       val nameElement = psiFile.findElementAt(psiElement.textOffset)
       return if (nameElement != null) {
@@ -526,11 +537,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       ThreadingAssertions.assertEventDispatchThread()
       try {
         val balloon = createPreviewBalloon(balloonText)
+        val lineNumber = editor.document.getLineNumber(range.endOffset)
+        val position = if (lineNumber > editor.document.lineCount - 3) Balloon.Position.above else Balloon.Position.below
         EditorUtil.disposeWithEditor(editor, balloon)
-        balloon.show(BalloonPositionTracker(project, editor, range, balloonText), Balloon.Position.below)
+        balloon.show(BalloonPositionTracker(project, editor, range, balloonText, position), position)
         editor.putUserData(PREVIEW_BALLOON_KEY, balloon)
       }
-      catch (e: MalformedReplacementStringException) {
+      catch (_: MalformedReplacementStringException) {
         //Not a problem, just don't show balloon in this case
       }
     }
@@ -631,7 +644,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       if (r.startOffset > textLength) return false
       if (r.endOffset > textLength) return false
       val visibleArea = e.scrollingModel.visibleArea
-      visibleArea.height -= 2 * e.lineHeight
+      visibleArea.height += 2 * e.lineHeight
       visibleArea.y -= e.lineHeight
       val point = e.logicalPositionToXY(e.offsetToLogicalPosition(r.startOffset))
       return visibleArea.contains(point)

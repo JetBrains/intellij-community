@@ -102,7 +102,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
                                    boolean focus) {
     int result = rowGetter.apply(myVisiblePack, commitId);
     if (result >= 0) {
-      getTable().jumpToRow(result, focus);
+      getTable().jumpToGraphRow(result, focus);
     }
 
     JumpResult jumpResult = JumpResult.fromInt(result);
@@ -145,14 +145,14 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
 
     int result = rowGetter.apply(myVisiblePack, commitId);
     if (result >= 0) {
-      getTable().jumpToRow(result, focus);
+      getTable().jumpToGraphRow(result, focus);
       future.set(JumpResult.SUCCESS);
     }
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
       VcsLogUtil.requestToLoadMore(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myLogData.getDataPack() != myVisiblePack.getDataPack() ||
-             (myVisiblePack.canRequestMore() && VcsLogUtil.isMoreRequested(myVisiblePack))) {
+             (myVisiblePack.getCanRequestMore() && VcsLogUtil.isMoreRequested(myVisiblePack))) {
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||

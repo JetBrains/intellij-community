@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -33,13 +34,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -53,13 +54,17 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+@ApiStatus.Internal
 
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
@@ -164,7 +169,8 @@ public final class PyPackageUtil {
     return result;
   }
 
-  private static @Nullable Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra, @Nullable PyExpression requires) {
+  private static @Nullable Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra,
+                                                                              @Nullable PyExpression requires) {
     if (extra instanceof PyStringLiteralExpression) {
       final List<String> requiresValue = resolveRequiresValue(requires);
 
@@ -321,7 +327,9 @@ public final class PyPackageUtil {
       return false;
     }
     // Temporary fix because old UI doesn't support non-local conda
-    var data = calledFromInspection ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class)) :  PySdkExtKt.getOrCreateAdditionalData(sdk);
+    var data = calledFromInspection
+               ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class))
+               : PySdkExtKt.getOrCreateAdditionalData(sdk);
     if (!newUi
         && data != null
         && data.getFlavor() instanceof CondaEnvSdkFlavor
@@ -363,10 +371,15 @@ public final class PyPackageUtil {
 
     final Ref<List<PyPackage>> packagesRef = Ref.create();
     final Throwable callStacktrace = new Throwable();
+    var lock = new AtomicBoolean(false);
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       if (PythonSdkUtil.isDisposed(sdk)) {
         packagesRef.set(Collections.emptyList());
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
         return;
       }
 
@@ -374,13 +387,33 @@ public final class PyPackageUtil {
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
         packagesRef.set(manager.refreshAndGetPackages(false));
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
       }
       catch (ExecutionException e) {
         packagesRef.set(Collections.emptyList());
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
         e.initCause(callStacktrace);
         LOG.warn(e);
       }
     });
+    if (!SwingUtilities.isEventDispatchThread()) {
+      synchronized (lock) {
+        while (!lock.get()) {
+          try {
+            lock.wait();
+          }
+          catch (InterruptedException e) {
+            throw new ProcessCanceledException(e);
+          }
+        }
+      }
+    }
     return packagesRef.get();
   }
 
@@ -417,6 +450,7 @@ public final class PyPackageUtil {
            PyPsiPackageUtil.findPackage(packages, PIP) != null;
   }
 
+  @RequiresReadLock(generateAssertion = false)
   public static @Nullable List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
     final VirtualFile requirementsTxt = findRequirementsTxt(module);
     if (requirementsTxt != null) {
@@ -571,9 +605,7 @@ public final class PyPackageUtil {
     }
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
-    result.removeIf(vf -> vf.equals(skeletonsRoot) ||
-                          vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||
-                          PyTypeShed.INSTANCE.isInside(vf));
+    result.removeIf(vf -> vf.equals(skeletonsRoot) || PyTypeShed.INSTANCE.isInside(vf));
     return result;
   }
 

@@ -5,4 +5,4 @@ fun foo(a: Any) {
 }
 
 // FILE: after.kt
-public class <caret>Int private constructor() : Number(), Comparable<Int> {
+public actual class <caret>Int private constructor() : Number(), Comparable<Int> {

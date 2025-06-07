@@ -180,7 +180,8 @@ public class CheckboxTreeHelper {
 
         if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
-        if (checkBounds.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
+        Rectangle clickableArea = myCheckPolicy.checkByRowClick? rowBounds: checkBounds;
+        if (clickableArea.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
           if (node.isEnabled()) {
             toggleNode(tree, node);
             tree.setSelectionRow(row);

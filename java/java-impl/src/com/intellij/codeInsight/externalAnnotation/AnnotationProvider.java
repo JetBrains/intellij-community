@@ -2,8 +2,9 @@
 package com.intellij.codeInsight.externalAnnotation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -46,9 +47,9 @@ public interface AnnotationProvider {
    * @param owner annotation target
    * @return a fix that could be used to add the annotation provided by this provider
    */
-  default @NotNull AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner) {
+  default @NotNull ModCommandAction createFix(@NotNull PsiModifierListOwner owner) {
     Project project = owner.getProject();
-    return new AddAnnotationFix(getName(project), owner, getAnnotationsToRemove(project));
+    return new AddAnnotationModCommandAction(getName(project), owner, getAnnotationsToRemove(project));
   }
 
   /**
@@ -56,8 +57,9 @@ public interface AnnotationProvider {
    * @param place where to add the annotation
    * @return a fix that could be used to add the annotation provided by this provider
    */
-  default @NotNull AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner, @NotNull ExternalAnnotationsManager.AnnotationPlace place) {
+  default @NotNull ModCommandAction createFix(@NotNull PsiModifierListOwner owner, @NotNull ExternalAnnotationsManager.AnnotationPlace place) {
     Project project = owner.getProject();
-    return new AddAnnotationFix(getName(project), owner, PsiNameValuePair.EMPTY_ARRAY, place, getAnnotationsToRemove(project));
+    String name = getName(project);
+    return new AddAnnotationModCommandAction(name, owner, PsiNameValuePair.EMPTY_ARRAY, place, name, getAnnotationsToRemove(project));
   }
 }

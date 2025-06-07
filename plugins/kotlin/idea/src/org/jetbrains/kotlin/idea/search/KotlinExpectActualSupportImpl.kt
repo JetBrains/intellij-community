@@ -7,10 +7,10 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 
 class KotlinExpectActualSupportImpl: ExpectActualSupport {
-    override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
+    override fun actualsForExpect(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
         declaration.actualsForExpected(module)
 
-    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
+    override fun expectDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
         declaration.expectedDeclarationIfAny()
 
 }

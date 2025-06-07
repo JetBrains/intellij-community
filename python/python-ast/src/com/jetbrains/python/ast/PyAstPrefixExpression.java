@@ -19,32 +19,27 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstReferenceOwner, PyAstCallSiteExpression {
-  @Nullable
   @Override
-  default PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
+  default @Nullable PyAstExpression getReceiver(@Nullable PyAstCallable resolvedCallee) {
     return getOperand();
   }
 
-  @NotNull
   @Override
-  default List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Collections.emptyList();
   }
 
-  @Nullable
-  default PyAstExpression getOperand() {
+  default @Nullable PyAstExpression getOperand() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  @Nullable
-  default PsiElement getPsiOperator() {
+  default @Nullable PsiElement getPsiOperator() {
     final ASTNode node = getNode();
     final ASTNode child = node.findChildByType(PyTokenTypes.UNARY_OPS);
     return child != null ? child.getPsi() : null;
   }
 
-  @NotNull
-  default PyElementType getOperator() {
+  default @NotNull PyElementType getOperator() {
     final PsiElement op = getPsiOperator();
     assert op != null;
     return (PyElementType)op.getNode().getElementType();
@@ -55,9 +50,8 @@ public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstRe
     return getOperand();
   }
 
-  @Nullable
   @Override
-  default QualifiedName asQualifiedName() {
+  default @Nullable QualifiedName asQualifiedName() {
     return PyPsiUtilsCore.asQualifiedName(this);
   }
 

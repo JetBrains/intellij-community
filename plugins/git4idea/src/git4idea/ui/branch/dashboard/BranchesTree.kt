@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -7,6 +7,7 @@ import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -20,29 +21,34 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.ThreeState
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
+import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
+import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil
+import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
-import git4idea.branch.calcTooltip
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.GitBranchesMatcherWrapper
-import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
-import git4idea.ui.branch.tree.createIncomingLabel
-import git4idea.ui.branch.tree.createOutgoingLabel
-import git4idea.ui.branch.tree.updateIncomingCommitLabel
-import git4idea.ui.branch.tree.updateOutgoingCommitLabel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Graphics
@@ -54,7 +60,6 @@ import javax.swing.JTree
 import javax.swing.TransferHandler
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
-import javax.swing.tree.TreePath
 
 internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
@@ -76,10 +81,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val branchManager = project.service<GitBranchManager>()
 
-    private val iconProvider = GitBranchesTreeIconProvider(project)
-
-    private val incomingLabel = createIncomingLabel()
-    private val outgoingLabel = createOutgoingLabel()
+    private val incomingLabel = GitIncomingOutgoingUi.createIncomingLabel()
+    private val outgoingLabel = GitIncomingOutgoingUi.createOutgoingLabel()
 
     override fun customizeCellRenderer(
       tree: JTree,
@@ -94,14 +97,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val descriptor = value.getNodeDescriptor()
 
       icon = when(descriptor) {
-        is BranchNodeDescriptor.Ref -> iconProvider.forRef(
+        is BranchNodeDescriptor.Ref -> GitBranchesTreeIconProvider.forRef(
           descriptor.refInfo.ref,
           current = descriptor.refInfo.isCurrent,
           favorite = descriptor.refInfo.isFavorite,
           selected = selected
         )
-        is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> iconProvider.forGroup()
-        is BranchNodeDescriptor.Repository -> iconProvider.forRepository(descriptor.repository)
+        is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> GitBranchesTreeIconProvider.forGroup()
+        is BranchNodeDescriptor.Repository ->
+          GitBranchesTreeIconProvider.forRepository(descriptor.repository.project, descriptor.repository.rpcId)
         else -> null
       }
 
@@ -121,8 +125,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           else null
 
         val incomingOutgoingState = refInfo.incomingOutgoingState
-        updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
-        updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
+        GitIncomingOutgoingUi.updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
+        GitIncomingOutgoingUi.updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
 
         val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
         incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
@@ -180,13 +184,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 }
 
-internal abstract class FilteringBranchesTreeBase(
-  tree: Tree,
-  protected val project: Project,
-) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, BranchTreeNode(BranchNodeDescriptor.Root())) {
-  private val nodeDescriptorsModel = NodeDescriptorsModel(root.getNodeDescriptor() as BranchNodeDescriptor.Root, project)
-
-  protected abstract val groupingConfig: Map<GroupingKey, Boolean>
+internal abstract class FilteringBranchesTreeBase(val model: BranchesTreeModel, tree: Tree)
+  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, BranchTreeNode(model.root)) {
 
   final override fun getNodeClass() = BranchTreeNode::class.java
 
@@ -209,45 +208,48 @@ internal abstract class FilteringBranchesTreeBase(
   fun isEmptyModel() = root.children().asSequence().all {
     searchModel.isLeaf(it)
   }
-
-  internal fun refreshNodeDescriptorsModel(refs: RefsCollection, showOnlyMy: Boolean) {
-    nodeDescriptorsModel.rebuildFrom(
-      refs,
-      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
-      groupingConfig,
-    )
-  }
 }
 
 internal class FilteringBranchesTree(
-  project: Project,
+  private val project: Project,
+  model: BranchesTreeModel,
   val component: BranchesTreeComponent,
-  private val uiController: BranchesDashboardController,
   place: @NonNls String,
-  private val disposable: Disposable
-) : FilteringBranchesTreeBase(component, project) {
+  private val disposable: Disposable,
+) : FilteringBranchesTreeBase(model, component) {
 
-  private val expandedPaths = HashSet<TreePath>()
+  init {
+    UiNotifyConnector.installOn(tree, object : Activatable {
+      private val listener = object : BranchesTreeModel.Listener {
+        override fun onTreeChange() {
+          updateTree()
+        }
+      }
+
+      override fun showNotify() {
+        updateTree()
+        model.addListener(listener)
+      }
+
+      override fun hideNotify() {
+        model.removeListener(listener)
+      }
+
+      private fun updateTree() {
+        runPreservingTreeState(!initialUpdateDone) {
+          searchModel.updateStructure()
+        }
+        initialUpdateDone = true
+      }
+    })
+  }
+
+  private var initialUpdateDone = false
 
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
   private val treeStateHolder: BranchesTreeStateHolder get() =
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
-
-  override val groupingConfig: MutableMap<GroupingKey, Boolean> =
-    with(project.service<GitBranchManager>()) {
-      hashMapOf(
-        GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
-        GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
-      )
-    }
-
-  fun toggleGrouping(key: GroupingKey, state: Boolean) {
-    groupingConfig[key] = state
-    refreshTree()
-  }
-
-  fun isGroupingEnabled(key: GroupingKey) = groupingConfig[key] == true
 
   init {
     runInEdt {
@@ -265,49 +267,21 @@ internal class FilteringBranchesTree(
   private fun setupTreeListeners() {
     component.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
-        expandedPaths.add(event.path)
         treeStateHolder.setStateProvider(treeStateProvider)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
-        expandedPaths.remove(event.path)
         treeStateHolder.setStateProvider(treeStateProvider)
       }
     })
     component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
-  private fun restorePreviouslyExpandedPaths() {
-    TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
-  }
-
-  override fun expandTreeOnSearchUpdateComplete(pattern: String?) {
-    restorePreviouslyExpandedPaths()
-  }
-
-  override fun onSpeedSearchUpdateComplete(pattern: String?) {
-    updateSpeedSearchBackground()
-  }
-
-  private fun updateSpeedSearchBackground() {
-    val speedSearch = searchModel.speedSearch as? SpeedSearch ?: return
-    val textEditor = component.searchField?.textEditor ?: return
-    if (isEmptyModel()) {
-      textEditor.isOpaque = true
-      speedSearch.noHits()
-    }
-    else {
-      textEditor.isOpaque = false
-      textEditor.background = UIUtil.getTextFieldBackground()
-    }
-  }
-
-  fun update(initial: Boolean) {
-    val branchesReloaded = uiController.reloadBranches()
+  fun update(initial: Boolean, repaint: Boolean) {
     runPreservingTreeState(initial) {
       searchModel.updateStructure()
     }
-    if (branchesReloaded) {
+    if (repaint) {
       tree.revalidate()
       tree.repaint()
     }
@@ -340,18 +314,6 @@ internal class FilteringBranchesTree(
     else {
       TreeUtil.expandAll(tree)
     }
-  }
-
-  fun refreshTree() {
-    runPreservingTreeState(false) {
-      tree.selectionModel.clearSelection()
-      refreshNodeDescriptorsModel()
-      searchModel.updateStructure()
-    }
-  }
-
-  fun refreshNodeDescriptorsModel() {
-    refreshNodeDescriptorsModel(uiController.refs, uiController.showOnlyMy, )
   }
 }
 
@@ -418,37 +380,72 @@ internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable
   }
 }
 
-private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTreeBase, searchTextField: SearchTextField):
-  FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>(tree, searchTextField) {
-  private var matcher = BranchesTreeMatcher(searchTextField.text)
+@OptIn(FlowPreview::class)
+private class BranchesFilteringSpeedSearch(
+  private val tree: FilteringBranchesTreeBase,
+  private val searchTextField: SearchTextField,
+) : FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>(tree, searchTextField) {
+  // null is the initial state - actual value is usually a non-null string
+  private val filterPattern = MutableStateFlow<String?>(null)
+
   private var bestMatch: BestMatch? = null
+
+  init {
+    tree.tree.launchOnShow("Branches Tree Filterer") {
+      // need EDT because of RA in TreeUtil.promiseVisit
+      withContext(Dispatchers.EDT) {
+        filterPattern.filterNotNull().debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collect(::refilter)
+      }
+    }
+  }
 
   override fun checkMatching(node: BranchTreeNode): FilteringTree.Matching =
     if (node.getNodeDescriptor() is BranchNodeDescriptor.Group) FilteringTree.Matching.NONE
     else super.checkMatching(node)
 
   override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: FilteringTree.Matching) {
+    val matcher = matcher ?: return
     if (result == FilteringTree.Matching.NONE) return
     val text = tree.getText(userObject) ?: return
     val singleMatch = matchingFragments?.singleOrNull() ?: return
 
-    val matchingDegree = matcher.matchingDegree(text, valueStartCaseMatch = false, fragments = FList.singleton(singleMatch))
+    val matchingDegree = matcher.matchingDegree(text, false, FList.singleton(singleMatch))
     if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
       val node = tree.searchModel.getNode(userObject)
       bestMatch = BestMatch(matchingDegree, node)
     }
   }
 
-  override fun getMatcher(): MinusculeMatcher = matcher
+  override fun createNewMatcher(searchText: String?): MinusculeMatcher = BranchesTreeMatcher(searchText)
 
-  override fun updatePattern(string: String?) {
-    super.updatePattern(string)
-    onUpdatePattern(string)
+  override fun getMatcher(): MinusculeMatcher? = super.getMatcher() as MinusculeMatcher?
+
+  override fun onSearchPatternUpdated(pattern: String?) {
+    filterPattern.tryEmit(pattern.orEmpty())
+  }
+
+  override fun refilter(pattern: String?) {
+    bestMatch = null
+    super.refilter(pattern)
+    updateSpeedSearchBackground()
+  }
+
+  private fun updateSpeedSearchBackground() {
+    val textEditor = searchTextField.textEditor ?: return
+    if (tree.isEmptyModel()) {
+      textEditor.isOpaque = true
+      noHits()
+    }
+    else {
+      textEditor.isOpaque = false
+      textEditor.background = UIUtil.getTextFieldBackground()
+    }
   }
 
   override fun updateSelection() {
+    val matcher = matcher
     val bestMatch = bestMatch
-    if (bestMatch == null) {
+    if (matcher == null || bestMatch == null) {
       super.updateSelection()
     }
     else {
@@ -467,11 +464,6 @@ private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTr
   private fun scrollToSelected() {
     val innerTree = tree.tree
     innerTree.selectionPath?.let { TreeUtil.scrollToVisible(innerTree, it, false) }
-  }
-
-  override fun onUpdatePattern(text: String?) {
-    matcher = BranchesTreeMatcher(text)
-    bestMatch = null
   }
 }
 

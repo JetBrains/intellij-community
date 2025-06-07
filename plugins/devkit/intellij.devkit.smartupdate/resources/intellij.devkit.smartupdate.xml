@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.idea.devkit.smartupdate">
+  <dependencies>
+    <plugin id="com.intellij.smartUpdate"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <smartUpdateStep implementation="org.jetbrains.idea.devkit.smartupdate.UpdateFromSourcesStep"/>
+  </extensions>
+</idea-plugin>

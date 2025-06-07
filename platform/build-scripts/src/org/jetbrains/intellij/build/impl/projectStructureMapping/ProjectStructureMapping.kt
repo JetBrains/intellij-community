@@ -1,28 +1,31 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("IO_FILE_USAGE")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
-import org.apache.commons.io.output.ByteArrayOutputStream
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.ByteBuffer
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  zipFileWriter.uncompressedData("platform.yaml", ByteBuffer.wrap(buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null))))
-  zipFileWriter.uncompressedData("bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.bundledPlugins, buildPaths)))
-  zipFileWriter.uncompressedData("non-bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths)))
+  zipFileWriter.uncompressedData("platform.yaml", buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null, libcImpl = null)))
+  zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
+  zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
 
 private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
@@ -30,7 +33,14 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
   val writer = createYamlGenerator(out)
 
   writer.writeStartArray()
+  val written = HashSet<String>()
   for ((plugin, entries) in pluginToEntries) {
+    val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+    if (!written.add(key)) {
+      // duplicate, e.g. OS-specific plugin
+      continue
+    }
+
     val fileToPresentablePath = HashMap<Path, String>()
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
@@ -58,16 +68,24 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
     for ((filePath, fileEntries) in fileToEntry) {
       writer.writeStartObject()
       writer.writeStringField("name", filePath)
-      writeProjectLibs(fileEntries, writer, buildPaths)
+      writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = false)
+
+      if (fileEntries.all { it is ModuleLibraryFileEntry }) {
+        writeSeparatePackedModuleLibrary(fileEntries = fileEntries, writer = writer, buildPaths = buildPaths)
+        writer.writeEndObject()
+        continue
+      }
 
       writeModules(
         writer = writer,
-        fileEntries = fileEntries.asSequence().filter { it !is ModuleOutputEntry || it.reason != contentModuleReason },
-        buildPaths = buildPaths
+        fileEntries = fileEntries,
+        buildPaths = buildPaths,
+        reasonFilter = { it.reason != contentModuleReason },
       )
       writeModules(
         writer = writer,
-        fileEntries = fileEntries.asSequence().filter { it !is ModuleOutputEntry || it.reason == contentModuleReason },
+        fileEntries = fileEntries,
+        reasonFilter = { it.reason == contentModuleReason },
         buildPaths = buildPaths,
         fieldName = "contentModules",
         writeReason = false,
@@ -106,8 +124,8 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
   for ((filePath, fileEntries) in fileToEntry) {
     writer.writeStartObject()
     writer.writeStringField("name", filePath)
-    writeProjectLibs(fileEntries, writer, buildPaths)
-    writeModules(writer = writer, fileEntries = fileEntries.asSequence(), buildPaths = buildPaths)
+    writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = true)
+    writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths)
     writer.writeEndObject()
   }
 
@@ -117,22 +135,31 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
     writer.writeStringField("name", item.relativePath)
     item.os?.let { writer.writeStringField("os", it.osId) }
     item.arch?.let { writer.writeStringField("arch", it.dirName) }
+    item.libcImpl?.let { writer.writeStringField("libc", it.toString()) }
 
     writer.writeEndObject()
   }
 
   writer.writeStartObject()
 
+  fun writeWithoutDuplicates(pairs: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>) {
+    val written = HashSet<String>()
+    for ((plugin, _) in pairs) {
+      val key = plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+      if (!written.add(key)) {
+        // duplicate, e.g. OS-specific plugin
+        continue
+      }
+      writer.writeString(plugin.layout.mainModule)
+    }
+  }
+
   writer.writeObjectField("name", "plugins")
   writer.writeArrayFieldStart("bundled")
-  for (p in contentReport.bundledPlugins) {
-    writer.writeString(p.first.layout.mainModule)
-  }
+  writeWithoutDuplicates(contentReport.bundledPlugins)
   writer.writeEndArray()
   writer.writeArrayFieldStart("nonBundled")
-  for (p in contentReport.nonBundledPlugins) {
-    writer.writeString(p.first.layout.mainModule)
-  }
+  writeWithoutDuplicates(contentReport.nonBundledPlugins)
   writer.writeEndArray()
 
   writer.writeEndObject()
@@ -167,14 +194,15 @@ private fun shortenAndNormalizePath(file: Path, buildPaths: BuildPaths, extraRoo
 
 private fun writeModules(
   writer: JsonGenerator,
-  fileEntries: Sequence<DistributionFileEntry>,
+  fileEntries: List<DistributionFileEntry>,
   buildPaths: BuildPaths,
   fieldName: String = "modules",
   writeReason: Boolean = true,
+  reasonFilter: (ModuleOutputEntry) -> Boolean = { true },
 ) {
   var opened = false
   for (entry in fileEntries) {
-    if (entry !is ModuleOutputEntry) {
+    if (entry !is ModuleOutputEntry || !reasonFilter(entry)) {
       continue
     }
 
@@ -204,11 +232,15 @@ private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry, wri
   }
 }
 
-private fun writeModuleLibraries(fileEntries: Sequence<DistributionFileEntry>, moduleName: String, writer: JsonGenerator, buildPaths: BuildPaths) {
-  val entriesGroupedByLibraryName = fileEntries
-    .filterIsInstance<ModuleLibraryFileEntry>()
-    .filter { it.moduleName == moduleName }
-    .groupBy { it.libraryName }
+private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>, moduleName: String, writer: JsonGenerator, buildPaths: BuildPaths) {
+  val entriesGroupedByLibraryName = LinkedHashMap<String, MutableList<ModuleLibraryFileEntry>>()
+  for (entry in fileEntries) {
+    if (entry is ModuleLibraryFileEntry) {
+      if (entry.moduleName == moduleName) {
+        entriesGroupedByLibraryName.computeIfAbsent(entry.libraryName) { ArrayList() }.add(entry)
+      }
+    }
+  }
 
   if (entriesGroupedByLibraryName.isEmpty()) {
     return
@@ -216,19 +248,46 @@ private fun writeModuleLibraries(fileEntries: Sequence<DistributionFileEntry>, m
 
   writer.writeObjectFieldStart("libraries")
   for ((libName, entries) in entriesGroupedByLibraryName) {
-    writer.writeArrayFieldStart(libName)
-    for (entry in entries) {
-      writer.writeStartObject()
-      writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
-      writer.writeNumberField("size", entry.size)
-      writer.writeEndObject()
-    }
-    writer.writeEndArray()
+    writeFiles(writer = writer, entries = entries, buildPaths = buildPaths, arrayFieldName = libName)
   }
   writer.writeEndObject()
 }
 
-private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {
+private fun writeSeparatePackedModuleLibrary(fileEntries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {
+  val entriesGroupedByLibraryName = LinkedHashMap<String, MutableList<ModuleLibraryFileEntry>>()
+  for (entry in fileEntries) {
+    if (entry is ModuleLibraryFileEntry) {
+      entriesGroupedByLibraryName.computeIfAbsent(entry.libraryName) { ArrayList() }.add(entry)
+    }
+  }
+
+  require(entriesGroupedByLibraryName.size == 1) {
+    "Expected only one library, but got: $entriesGroupedByLibraryName"
+  }
+
+  val (libName, entries) = entriesGroupedByLibraryName.iterator().next()
+  writer.writeObjectField("library", libName)
+  writer.writeObjectField("module", entries.first().moduleName)
+  writeFiles(writer = writer, entries = entries, buildPaths = buildPaths)
+}
+
+private fun writeFiles(
+  writer: JsonGenerator,
+  entries: List<LibraryFileEntry>,
+  buildPaths: BuildPaths,
+  arrayFieldName: String = "files",
+) {
+  writer.writeArrayFieldStart(arrayFieldName)
+  for (entry in entries) {
+    writer.writeStartObject()
+    writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
+    writer.writeNumberField("size", entry.size)
+    writer.writeEndObject()
+  }
+  writer.writeEndArray()
+}
+
+private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths, isInner: Boolean) {
   // group by library
   val map = TreeMap<ProjectLibraryData, MutableList<ProjectLibraryEntry>> { o1, o2 ->
     o1.libraryName.compareTo(o2.libraryName)
@@ -240,6 +299,14 @@ private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonG
   }
 
   if (map.isEmpty()) {
+    return
+  }
+
+  if (!isInner && map.size == 1) {
+    val (libraryData, entries) = map.iterator().next()
+    writer.writeObjectField("library", libraryData.libraryName)
+    writeFiles(writer = writer, entries = entries, buildPaths = buildPaths)
+    writer.writeObjectField("reason", libraryData.reason)
     return
   }
 

@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
@@ -113,10 +113,10 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
                myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
-    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+    var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
       .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
-    myOutputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
@@ -208,7 +208,6 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
 
   @Override
   protected void applyEditorTo(final @NotNull RunConfigurationBase configuration) throws ConfigurationException {
-    myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
 

@@ -67,7 +67,7 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : 
 internal data class EelUnixFileKey(val dev: Long, val ino: Long)
 
 class IjentNioPosixFileAttributes(
-  private val fileInfo: EelPosixFileInfo,
+  internal val fileInfo: EelPosixFileInfo,
 ) : CaseSensitivityAttribute, PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
   override fun owner(): UserPrincipal =
     EelPosixUserPrincipal(fileInfo.permissions.owner)
@@ -107,6 +107,12 @@ class EelPosixUserPrincipal(val uid: Int) : UserPrincipal {
     // TODO Here should be returned a user name
     return uid.toString()
   }
+
+  override fun toString(): String = "EelPosixUserPrincipal(uid=$uid)"
+
+  override fun equals(other: Any?): Boolean = other is EelPosixUserPrincipal && uid == other.uid
+
+  override fun hashCode(): Int = uid.hashCode()
 }
 
 class EelPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
@@ -114,4 +120,10 @@ class EelPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
     // TODO Here should be returned a user name
     return gid.toString()
   }
+
+  override fun toString(): String = "EelPosixGroupPrincipal(gid=$gid)"
+
+  override fun equals(other: Any?): Boolean = other is EelPosixGroupPrincipal && gid == other.gid
+
+  override fun hashCode(): Int = gid.hashCode()
 }

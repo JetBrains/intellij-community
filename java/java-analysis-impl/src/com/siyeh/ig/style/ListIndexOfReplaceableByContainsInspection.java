@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ListIndexOfReplaceableByContainsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final String text;
@@ -48,8 +47,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new IndexOfReplaceableByContainsFix();
   }
 
@@ -79,8 +77,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "indexOf()", "contains()");
     }
   }
@@ -97,7 +94,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression expression = argumentList.getExpressions()[0];
-    @NonNls final String newExpressionText = qualifierText + ".contains(" + tracker.text(expression) + ')';
+    final @NonNls String newExpressionText = qualifierText + ".contains(" + tracker.text(expression) + ')';
     if (tokenType.equals(JavaTokenType.EQEQ)) {
       return '!' + newExpressionText;
     }

@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.project.getProjectStoreDirectory
 import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
@@ -181,12 +180,10 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
     }
   }
 
-  private fun findStoreDir(project: Project): VirtualFile? {
-    val projectBasePath = project.basePath ?: return null
-    val projectBaseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath) ?: return null
-
-    return getProjectStoreDirectory(projectBaseDir)
-  }
+  private fun findStoreDir(project: Project): VirtualFile? =
+    project.stateStore.directoryStorePath?.let {
+      LocalFileSystem.getInstance().findFileByNioFile(it)
+    }
 
   private fun VirtualFile.underProjectStoreDir(storeDir: VirtualFile): Boolean {
     return VfsUtilCore.isAncestor(storeDir, this, true)

@@ -10,21 +10,18 @@ public class PythonQuoteHandler extends BaseQuoteHandler {
     super(PyTokenTypes.STRING_NODES, new char[]{'}', ']', ')', ',', ':', ';', ' ', '\t', '\n'});
   }
 
-  @NotNull
   @Override
-  protected TokenSet getOpeningQuotesTokens() {
+  protected @NotNull TokenSet getOpeningQuotesTokens() {
     return TokenSet.orSet(super.getOpeningQuotesTokens(), TokenSet.create(PyTokenTypes.FSTRING_START));
   }
 
-  @NotNull
   @Override
-  protected TokenSet getClosingQuotesTokens() {
+  protected @NotNull TokenSet getClosingQuotesTokens() {
     return TokenSet.orSet(super.getClosingQuotesTokens(), TokenSet.create(PyTokenTypes.FSTRING_END));
   }
 
-  @NotNull
   @Override
-  protected TokenSet getLiteralContentTokens() {
+  protected @NotNull TokenSet getLiteralContentTokens() {
     return TokenSet.orSet(super.getLiteralContentTokens(), TokenSet.create(PyTokenTypes.FSTRING_TEXT));
   }
 }

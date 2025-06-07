@@ -1,0 +1,31 @@
+LineBreakpoint created at nestedLaunches.kt:32
+Run Java
+Connected to the target VM
+nestedLaunches.kt:32
+vvv stack trace vvv
+  bar:32, NestedLaunchesKt
+  invokeSuspend:21, NestedLaunchesKt$main$2$1$2$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, NestedLaunchesKt$main$2$1$2
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:17, NestedLaunchesKt$main$2$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:10, NestedLaunchesKt$main$2
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, NestedLaunchesKt
+  invoke:-1, NestedLaunchesKt$main$3
+  invoke:-1, NestedLaunchesKt$main$3
+  <hidden frames>
+  main:-1, NestedLaunchesKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

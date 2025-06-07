@@ -157,9 +157,7 @@ public final class HighlightDisplayKey {
     return key;
   }
 
-  @Nls(capitalization = Sentence)
-  @Nullable
-  public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
+  public static @Nls(capitalization = Sentence) @Nullable String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
     if (key == null) {
       return null;
     }
@@ -196,6 +194,7 @@ public final class HighlightDisplayKey {
     }
   }
 
+  @Override
   public String toString() {
     return myShortName;
   }

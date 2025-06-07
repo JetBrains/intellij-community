@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageAnnotator;
+import com.intellij.coverage.CoverageBundle;
+import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -59,8 +62,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     }
   }
 
-  @Nullable
-  protected VirtualFile extractFile(@NotNull AbstractTreeNode<?> node) {
+  protected @Nullable VirtualFile extractFile(@NotNull AbstractTreeNode<?> node) {
     if (node instanceof CoverageListNode coverageNode) {
       return coverageNode.getFile();
     }
@@ -77,9 +79,8 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     return null;
   }
 
-  @NotNull
   @Override
-  public AbstractTreeNode<?> createRootNode() {
+  public @NotNull AbstractTreeNode<?> createRootNode() {
     VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
     if (baseDir == null) {
       final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
@@ -98,7 +99,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
+  public @Unmodifiable List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();

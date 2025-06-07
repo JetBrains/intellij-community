@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -33,10 +33,10 @@ import java.util.Map;
 
 public final class MavenSelectProjectPopup {
 
-  public static void attachToWorkingDirectoryField(@NotNull final MavenProjectsManager projectsManager,
+  public static void attachToWorkingDirectoryField(final @NotNull MavenProjectsManager projectsManager,
                                                    final JTextField workingDirectoryField,
                                                    final JButton showModulesButton,
-                                                   @Nullable final JComponent focusAfterSelection) {
+                                                   final @Nullable JComponent focusAfterSelection) {
     attachToButton(projectsManager, showModulesButton, project -> {
       workingDirectoryField.setText(project.getDirectory());
 
@@ -62,9 +62,9 @@ public final class MavenSelectProjectPopup {
     });
   }
 
-  public static void attachToButton(@NotNull final MavenProjectsManager projectsManager,
-                                    @NotNull final JButton button,
-                                    @NotNull final Consumer<? super MavenProject> callback) {
+  public static void attachToButton(final @NotNull MavenProjectsManager projectsManager,
+                                    final @NotNull JButton button,
+                                    final @NotNull Consumer<? super MavenProject> callback) {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -10,10 +10,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -38,10 +35,9 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     myVariable = variable;
   }
 
-  @NotNull
   @Override
-  public String toString() {
-    return String.valueOf(myVariable.getName());
+  public @NotNull String toString() {
+    return PsiFormatUtil.formatVariable(myVariable, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
   @Override
@@ -64,16 +60,22 @@ public final class PlainDescriptor extends PsiVarDescriptor {
            (myVariable.hasModifierProperty(PsiModifier.FINAL) && !hasInitializationHacks(myVariable));
   }
 
-  @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
       return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
     }
     if (PsiUtil.isJvmLocalVariable(myVariable) ||
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
+      if (qualifier != null && qualifier != factory.getUnknown()) return factory.getUnknown();
       return factory.getVarFactory().createVariableValue(this);
+    }
+    if (qualifier instanceof DfaTypeValue typeValue) {
+      PsiField field = typeValue.getDfType().getConstantOfType(PsiField.class);
+      if (field != null) {
+        qualifier = factory.getVarFactory().createVariableValue(new PlainDescriptor(field));
+      }
     }
     return super.createValue(factory, qualifier);
   }
@@ -88,8 +90,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     return obj == this || obj instanceof PlainDescriptor && ((PlainDescriptor)obj).myVariable == myVariable;
   }
 
-  @NotNull
-  public static DfaVariableValue createVariableValue(@NotNull DfaValueFactory factory, @NotNull PsiVariable variable) {
+  public static @NotNull DfaVariableValue createVariableValue(@NotNull DfaValueFactory factory, @NotNull PsiVariable variable) {
     DfaVariableValue qualifier = null;
     if (variable instanceof PsiField && !(variable.hasModifierProperty(PsiModifier.STATIC))) {
       qualifier = ThisDescriptor.createThisValue(factory, ((PsiField)variable).getContainingClass());
@@ -218,8 +219,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
    * @param method       The method to look for within the context class.
    * @return The found method call expression, or null if not found.
    */
-  @Nullable
-  private static TargetCallInfo findTargetCallIn(@NotNull PsiField field,
+  private static @Nullable TargetCallInfo findTargetCallIn(@NotNull PsiField field,
                                                  @NotNull PsiClass contextClass,
                                                  @NotNull PsiMethod method) {
     ConstructorMethodInfo constructorMethodInfo = getConstructorMethodInfo(contextClass);
@@ -244,8 +244,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     return null;
   }
 
-  @NotNull
-  private static ConstructorMethodInfo getConstructorMethodInfo(@NotNull PsiClass contextClass) {
+  private static @NotNull ConstructorMethodInfo getConstructorMethodInfo(@NotNull PsiClass contextClass) {
     return CachedValuesManager.getCachedValue(contextClass, () -> {
       CachedValueProvider.Result<ConstructorMethodInfo> emptyResult =
         CachedValueProvider.Result.create(new ConstructorMethodInfo(Map.of(), null, false), PsiModificationTracker.MODIFICATION_COUNT);
@@ -298,8 +297,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
    * @param contextClass The context class to search for constructors.
    * @return The found constructor, or null if not found.
    */
-  @Nullable
-  private static PsiMethod findOnlyOneNotChainConstructor(@NotNull PsiClass contextClass) {
+  private static @Nullable PsiMethod findOnlyOneNotChainConstructor(@NotNull PsiClass contextClass) {
     List<PsiMethod> notChainConstructors = new ArrayList<>();
     for (PsiMethod constructor : contextClass.getConstructors()) {
       PsiMethodCallExpression callInConstructor = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);

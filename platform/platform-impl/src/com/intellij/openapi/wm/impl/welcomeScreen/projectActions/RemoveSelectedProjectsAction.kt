@@ -22,10 +22,18 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = getSelectedItem(event) != null
+    val selectedItem = getSelectedItem(event)
+    event.presentation.isEnabled = selectedItem != null && canRemoveItem(selectedItem)
   }
 
   companion object {
+    private fun canRemoveItem(item: RecentProjectTreeItem): Boolean {
+      return item is ProjectsGroupItem ||
+             item is RecentProjectItem ||
+             item is ProviderRecentProjectItem ||
+             item is CloneableProjectItem
+    }
+
     fun removeItems(items: List<RecentProjectTreeItem>) {
       if (items.isEmpty()) return
 
@@ -54,7 +62,8 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
             is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
             is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
             is CloneableProjectItem -> cloneableProjectsService.removeCloneableProject(item.cloneableProject)
-            is RootItem -> {}
+            is ProviderRecentProjectItem -> item.removeFromRecent()
+            is RootItem -> Unit
           }
         }
       }

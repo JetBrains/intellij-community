@@ -32,40 +32,33 @@ public abstract class DocStringBuilder<This extends DocStringBuilder> {
     myLines = new ArrayList<>();
   }
 
-  @NotNull
-  public This addLine(@NotNull String line) {
+  public @NotNull This addLine(@NotNull String line) {
     return addLine(line, myLines.size());
   }
 
-  @NotNull
-  public This addLine(@NotNull String line, int index) {
+  public @NotNull This addLine(@NotNull String line, int index) {
     myLines.add(index, line);
     //noinspection unchecked
     return (This)this;
   }
 
-  @NotNull
-  public This addEmptyLine() {
+  public @NotNull This addEmptyLine() {
     return addLine("", myLines.size());
   }
 
-  @NotNull
-  public This addEmptyLine(int index) {
+  public @NotNull This addEmptyLine(int index) {
     return addLine("", index);
   }
 
-  @NotNull
-  public List<String> getLines() {
+  public @NotNull List<String> getLines() {
     return Collections.unmodifiableList(myLines);
   }
 
-  @NotNull
-  public String buildContent(int indent, boolean indentFirst) {
+  public @NotNull String buildContent(int indent, boolean indentFirst) {
     return buildContent(StringUtil.repeatSymbol(' ', indent), indentFirst);
   }
 
-  @NotNull
-  public String buildContent(@NotNull String indentation, boolean indentFirst) {
+  public @NotNull String buildContent(@NotNull String indentation, boolean indentFirst) {
     final StringBuilder result = new StringBuilder();
     boolean first = true;
     for (String line : myLines) {

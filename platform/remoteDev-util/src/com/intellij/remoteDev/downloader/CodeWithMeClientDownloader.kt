@@ -2,8 +2,8 @@ package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -108,7 +110,9 @@ object CodeWithMeClientDownloader {
   }
 
   private val minimumClientBuildWithBundledJre = BuildNumber("", 223, 4374)
-  fun isClientWithBundledJre(clientBuildNumber: BuildNumber) = clientBuildNumber.isSnapshot || clientBuildNumber > minimumClientBuildWithBundledJre
+  fun isClientWithBundledJre(clientBuildNumber: BuildNumber): Boolean {
+    return clientBuildNumber.isSnapshot || clientBuildNumber > minimumClientBuildWithBundledJre
+  }
 
   @ApiStatus.Internal
   class DownloadableFileData(
@@ -248,14 +252,22 @@ object CodeWithMeClientDownloader {
 
   private fun getLatestBuild(hostBuildNumber: BuildNumber): BuildNumber {
     val latestBuildTxtFileName = "${hostBuildNumber.baselineVersion}-LAST-BUILD.txt"
-    val latestBuildTxtUri = "${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName"
+    val latestBuildTxtUri = URI("${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName")
 
     val tempFile = Files.createTempFile(latestBuildTxtFileName, "")
     return try {
-      downloadWithRetries(URI(latestBuildTxtUri), tempFile, EmptyProgressIndicator()).let {
-        val buildNumberString = tempFile.readText().trim()
-        BuildNumber.fromStringOrNull(buildNumberString) ?: error("Invalid build number: $buildNumberString")
+      if (application.isDispatchThread) {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), RemoteDevUtilBundle.getMessage("launcher.get.client.info")) {
+          coroutineToIndicator {
+            downloadWithRetries(latestBuildTxtUri, tempFile, ProgressManager.getInstance().progressIndicator)
+          }
+        }
       }
+      else {
+        downloadWithRetries(latestBuildTxtUri, tempFile, EmptyProgressIndicator())
+      }
+      val buildNumberString = tempFile.readText().trim()
+      BuildNumber.fromStringOrNull(buildNumberString) ?: error("Invalid build number: $buildNumberString")
     }
     finally {
       Files.deleteIfExists(tempFile)
@@ -275,6 +287,10 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadFrontend(clientBuildNumber: BuildNumber, progressIndicator: ProgressIndicator): FrontendInstallation? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val customSnapshotInstallation = createCustomFrontendSnapshotInstallation(clientBuildNumber)
+    if (customSnapshotInstallation != null) {
+      return customSnapshotInstallation
+    }
 
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
     val jdkBuild = if (isClientWithBundledJre(clientBuildNumber)) {
@@ -579,6 +595,13 @@ object CodeWithMeClientDownloader {
     }
     return null
   }
+  
+  internal fun createCustomFrontendSnapshotInstallation(hostBuildNumber: BuildNumber): FrontendInstallation? {
+    if (!hostBuildNumber.isSnapshot) return null
+    val path = Registry.stringValue("rdct.path.to.custom.snapshot.frontend.installation").trim()
+    if (path.isEmpty()) return null
+    return StandaloneFrontendInstallation(Path(path), hostBuildNumber, jreDir = null)
+  }
 
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
     val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, config.modifiedDateInManifestIncluded, fileData.includeInManifest)
@@ -724,12 +747,16 @@ object CodeWithMeClientDownloader {
   fun runFrontendProcess(
     lifetime: Lifetime,
     url: String,
-    frontendInstallation: FrontendInstallation
+    frontendInstallation: FrontendInstallation,
+    enableBeforeRunHooks: Boolean = true,
   ): Lifetime {
-    try {
-      processBeforeRunHooks(frontendInstallation)
-    } catch (e: Throwable) {
-      LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+    if (enableBeforeRunHooks) {
+      try {
+        processBeforeRunHooks(frontendInstallation)
+      }
+      catch (e: Throwable) {
+        LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+      }
     }
     when (frontendInstallation) {
       is EmbeddedFrontendInstallation -> {
@@ -847,7 +874,7 @@ object CodeWithMeClientDownloader {
           override fun readerOptions(): BaseOutputReader.Options = BaseOutputReader.Options.forMostlySilentProcess()
         }
 
-        val listener = object : ProcessAdapter() {
+        val listener = object : ProcessListener {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
             super.onTextAvailable(event, outputType)
             LOG.info("GUEST OUTPUT: ${event.text}")

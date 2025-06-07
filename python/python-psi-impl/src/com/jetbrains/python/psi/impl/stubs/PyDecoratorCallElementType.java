@@ -28,8 +28,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyDecoratorImpl(node);
   }
 
@@ -39,8 +38,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   @Override
-  @NotNull
-  public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
+  public @NotNull PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
     return new PyDecoratorStubImpl(psi.getQualifiedName(), psi.hasArgumentList(), parentStub, createCustomStub(psi));
   }
 
@@ -58,7 +56,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   @Override
-  public void indexStub(@NotNull final PyDecoratorStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PyDecoratorStub stub, final @NotNull IndexSink sink) {
     // Index decorators stub by name (todo: index by FQDN as well!)
     final QualifiedName qualifiedName = stub.getQualifiedName();
     if (qualifiedName != null) {
@@ -67,8 +65,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   @Override
-  @NotNull
-  public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName q_name = QualifiedName.deserialize(dataStream);
     boolean hasArgumentList = dataStream.readBoolean();
     PyCustomDecoratorStub customStub = deserializeCustomStub(dataStream);

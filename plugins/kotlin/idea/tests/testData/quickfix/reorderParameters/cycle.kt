@@ -7,6 +7,7 @@
 // ACTION: Put parameters on one line
 // ACTION: Specify return type explicitly
 // ERROR: Parameter 'y' is uninitialized here
+// K2_AFTER_ERROR: Parameter 'y' is uninitialized here.
 fun foo(
     x: String = y<caret>,
     y: String = x

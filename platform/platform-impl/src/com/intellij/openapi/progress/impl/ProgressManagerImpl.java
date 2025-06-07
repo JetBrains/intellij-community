@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -21,12 +21,11 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
@@ -85,19 +84,6 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     }
   }
 
-  @TestOnly
-  public static void __testWhileAlwaysCheckingCanceled(@NotNull Runnable runnable) {
-    @SuppressWarnings("InstantiatingAThreadWithDefaultRunMethod")
-    Thread fake = new Thread("fake");
-    try {
-      threadsUnderCanceledIndicator.add(fake);
-      runnable.run();
-    }
-    finally {
-      threadsUnderCanceledIndicator.remove(fake);
-    }
-  }
-
   @Override
   public boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     long start = System.currentTimeMillis();
@@ -150,7 +136,8 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   }
 
   @Override
-  void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {
+  @ApiStatus.Internal
+  public void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {
     Task.NotificationInfo notificationInfo = task.notifyFinished();
     if (notificationInfo != null && elapsed > 5000) { // snow notification if process took more than 5 secs
       Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
@@ -202,13 +189,17 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
    * An absolutely guru method, very dangerous, don't use unless you're desperate,
    * because hooks will be executed on every checkCanceled and can dramatically slow down everything in the IDE.
    */
-  void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
     if (myHooks.add(hook)) {
       updateShouldCheckCanceled();
     }
   }
 
-  void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
     if (myHooks.remove(hook)) {
       updateShouldCheckCanceled();
     }

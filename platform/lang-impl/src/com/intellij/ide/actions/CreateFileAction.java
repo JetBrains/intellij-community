@@ -8,13 +8,10 @@ import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -34,9 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static com.intellij.ide.actions.FileNameStateKt.checkFileNameInput;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
   public CreateFileAction() {
@@ -86,14 +84,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       }
     }
     else {
-      if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
-      }
-      else {
-        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
-                                 IdeBundle.message("title.new.file"), null, null, validator);
-        elementsConsumer.accept(validator.getCreatedElements());
-      }
+      createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
     }
   }
 
@@ -130,6 +121,27 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   public static @NotNull PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
     final PsiDirectory sub = parent.findSubdirectory(subdirName);
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
+  }
+
+  @Override
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
+    return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
+  }
+
+  @Override
+  protected String getErrorTitle() {
+    return IdeBundle.message("title.cannot.create.file");
+  }
+
+  protected String getFileName(String newName) {
+    if (getDefaultExtension() == null || !FileUtilRt.getExtension(newName).isEmpty()) {
+      return newName;
+    }
+    return newName + "." + getDefaultExtension();
+  }
+
+  protected @Nullable String getDefaultExtension() {
+    return null;
   }
 
   public static final class MkDirs {
@@ -170,27 +182,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
-  @Override
-  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
-    return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
-  }
-
-  @Override
-  protected String getErrorTitle() {
-    return IdeBundle.message("title.cannot.create.file");
-  }
-
-  protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || !FileUtilRt.getExtension(newName).isEmpty()) {
-      return newName;
-    }
-    return newName + "." + getDefaultExtension();
-  }
-
-  protected @Nullable String getDefaultExtension() {
-    return null;
-  }
-
   protected class MyValidator extends MyInputValidator implements InputValidatorEx {
     private @NlsContexts.DetailedDescription String myErrorText;
 
@@ -200,55 +191,11 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
     @Override
     public boolean checkInput(String inputString) {
-      final StringTokenizer tokenizer = new StringTokenizer(inputString, "\\/");
-      VirtualFile vFile = getDirectory().getVirtualFile();
-      boolean firstToken = true;
-      while (tokenizer.hasMoreTokens()) {
-        final String token = tokenizer.nextToken();
-        if ((token.equals(".") || token.equals("..")) && !tokenizer.hasMoreTokens()) {
-          myErrorText = IdeBundle.message("error.invalid.file.name", token);
-          return false;
-        }
-        if (vFile != null) {
-          if (firstToken && "~".equals(token)) {
-            final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
-            if (userHomeDir == null) {
-              myErrorText = IdeBundle.message("error.user.home.directory.not.found");
-              return false;
-            }
-            vFile = userHomeDir;
-          }
-          else if ("..".equals(token)) {
-            final VirtualFile parent = vFile.getParent();
-            if (parent == null) {
-              myErrorText = IdeBundle.message("error.invalid.directory", vFile.getPresentableUrl() + File.separatorChar + "..");
-              return false;
-            }
-            vFile = parent;
-          }
-          else if (!".".equals(token)) {
-            final VirtualFile child = vFile.findChild(token);
-            if (child != null) {
-              if (!child.isDirectory()) {
-                myErrorText = IdeBundle.message("error.file.with.name.already.exists", token);
-                return false;
-              }
-              else if (!tokenizer.hasMoreTokens()) {
-                myErrorText = IdeBundle.message("error.directory.with.name.already.exists", token);
-                return false;
-              }
-            }
-            vFile = child;
-          }
-        }
-        if (FileTypeManager.getInstance().isFileIgnored(getFileName(token))) {
-          myErrorText = IdeBundle.message("warning.create.directory.with.ignored.name", token);
-          return true;
-        }
-        firstToken = false;
-      }
-      myErrorText = null;
-      return true;
+      PsiDirectory directory = getDirectory();
+      String fileName = getFileName(inputString);
+      String error = checkFileNameInput(inputString, fileName, directory);
+      myErrorText = error;
+      return error == null;
     }
 
     @Override

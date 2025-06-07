@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -12,7 +12,6 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubInconsistencyReporter.InconsistencyType;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -96,21 +95,21 @@ public final class StubTextInconsistencyException extends RuntimeException imple
       return;
     }
 
-    IStubFileElementType<?> fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
-    if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) {
+    LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)bindingRoot).getStubDescriptor();
+    if (stubDescriptor == null || !stubDescriptor.getStubDefinition().shouldBuildStubFor(viewProvider.getVirtualFile())) {
       return;
     }
 
     List<PsiFileStub<?>> fromText = restoreStubsFromText(viewProvider);
 
     List<PsiFileStub<?>> fromPsi = ContainerUtil
-      .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> ((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
+      .map(StubTreeBuilder.getStubbedRootDescriptors(viewProvider), p -> ((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
 
     if (fromPsi.size() != fromText.size()) {
       reportInconsistency(file, reason, InconsistencyType.DifferentNumberOfPsiTrees);
       throw new StubTextInconsistencyException("Inconsistent stub roots: " +
-                                               "PSI says it's " + ContainerUtil.map(fromPsi, s -> s.getType()) +
-                                               " but re-parsing the text gives " + ContainerUtil.map(fromText, s -> s.getType()),
+                                               "PSI says it's " + ContainerUtil.map(fromPsi, s -> s.getElementType()) +
+                                               " but re-parsing the text gives " + ContainerUtil.map(fromText, s -> s.getElementType()),
                                                file, fromText, fromPsi);
     }
 

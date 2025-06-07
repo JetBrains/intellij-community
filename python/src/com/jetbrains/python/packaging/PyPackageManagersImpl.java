@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -9,14 +9,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.packaging.common.PackageManagerHolder;
+import com.jetbrains.python.packaging.management.PythonPackageManagerService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+@ApiStatus.Internal
 
 public class PyPackageManagersImpl extends PyPackageManagers {
   private static final Logger LOG = Logger.getInstance(PyPackageManagersImpl.class);
@@ -53,21 +54,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        // TODO:
-        // * There should be no difference between local and "Remote" package manager
-        // * But python flavor makes the difference.
-        // So one must check flavor and execute appropriate command on SDK target
-        // (be it localRequest or target request)
-
-        // This is a temporary solution to support local conda
-        if (PythonSdkUtil.isConda(sdk) &&
-            sdk.getHomePath() != null &&
-            PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
-          manager = new PyCondaPackageManagerImpl(sdk);
-        }
-        else {
-          manager = new PyTargetEnvironmentPackageManager(sdk);
-        }
+        manager = new PyPackageManagerBridge(sdk);
       }
       cache.put(key, manager);
       if (sdk instanceof Disposable) {
@@ -89,7 +76,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    return project.getService(PackageManagerHolder.class).bridgeForSdk(project, sdk);
+    return project.getService(PythonPackageManagerService.class).bridgeForSdk(project, sdk);
   }
 
   @Override

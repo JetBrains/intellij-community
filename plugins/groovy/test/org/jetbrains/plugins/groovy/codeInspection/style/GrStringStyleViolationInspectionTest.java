@@ -116,7 +116,7 @@ public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
     }
     else {
       List<IntentionAction> availableIntentionList = myFixture.getAvailableIntentions();
-      IntentionAction action = ContainerUtil.find(availableIntentionList, it -> it.getFamilyName().startsWith("Convert to") || it.getFamilyName().contains("Change quotes"));
+      IntentionAction action = ContainerUtil.find(availableIntentionList, it -> it.getText().startsWith("Convert to") || it.getText().contains("Change quotes"));
       myFixture.launchAction(action);
       myFixture.checkResult(after);
     }

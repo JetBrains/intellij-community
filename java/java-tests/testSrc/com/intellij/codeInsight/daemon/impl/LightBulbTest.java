@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -233,7 +234,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     AtomicInteger updateCount = new AtomicInteger();
     IntentionAction longLongUpdate = new AbstractIntentionAction() {
       @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+      public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
       }
 
       @Nls
@@ -244,7 +245,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
         updateCount.incrementAndGet();
         ApplicationManager.getApplication().assertIsNonDispatchThread();
         return true;
@@ -265,9 +266,9 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         myDaemonCodeAnalyzer.restart();
-        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()));
+        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)));
         long daemonStartDeadline = System.currentTimeMillis() + 5000;
-        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
+        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
         if (System.currentTimeMillis() > daemonStartDeadline) {
@@ -339,7 +340,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
         DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressIndicatorProvider.getGlobalProgressIndicator();
         Throwable alreadyCalled = isAvailableCalled.put(indicator, new Throwable());
         if (alreadyCalled != null) {
@@ -350,7 +351,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       }
     };
     IntentionManager.getInstance().addAction(action);
@@ -376,7 +377,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       }
 
       @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       }
     }
     class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
@@ -386,8 +387,8 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       }
 
       class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
-        TestDumbAwareHighlightingPassesStartEvenInDumbModePass(Editor editor, PsiFile file) {
-          super(editor, file, false);
+        TestDumbAwareHighlightingPassesStartEvenInDumbModePass(Editor editor, PsiFile psiFile) {
+          super(editor, psiFile, false);
         }
 
         @Override

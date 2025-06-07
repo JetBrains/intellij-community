@@ -22,7 +22,7 @@ class MyTest {
 
     {
         Bar1 b1 = MyTest :: foo;
-        bar(MyTest :: <error descr="Reference to 'foo' is ambiguous, both 'foo(int)' and 'foo(String)' match">foo</error>);
+        bar(MyTest :: <error descr="Reference to 'foo' is ambiguous, both 'foo(String)' and 'foo(int)' match">foo</error>);
     }
 }
 

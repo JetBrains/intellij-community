@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.idea.debugger.core.withCustomConfiguration
 import org.jetbrains.kotlin.idea.test.*
 import org.junit.Assert
 
+/**
+ * See also [KotlinDebuggerEvaluatorTest].
+ */
 sealed class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()

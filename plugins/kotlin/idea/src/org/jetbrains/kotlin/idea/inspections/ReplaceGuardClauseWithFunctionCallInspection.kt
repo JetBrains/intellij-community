@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
@@ -116,7 +117,7 @@ class ReplaceGuardClauseWithFunctionCallInspection : AbstractApplicabilityBasedI
         return if (elseBranch != null) {
             val added = parent.addBefore(newExpression, this) as KtExpression
             parent.addBefore(psiFactory.createNewLine(), this)
-            replaceWithBranch(elseBranch, isUsedAsExpression = false, keepBraces = false)
+            replaceWithBranchAndMoveCaret(elseBranch, isUsedAsExpression = false, keepBraces = false)
             added
         } else {
             replaced(newExpression)

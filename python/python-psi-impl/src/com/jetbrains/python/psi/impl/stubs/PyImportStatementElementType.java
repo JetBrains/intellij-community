@@ -29,9 +29,8 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     super(debugName);
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportStatementImpl(node);
   }
 
@@ -40,9 +39,8 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     return new PyImportStatementImpl(stub);
   }
 
-  @NotNull
   @Override
-  public PyImportStatementStub createStub(@NotNull PyImportStatement psi, StubElement parentStub) {
+  public @NotNull PyImportStatementStub createStub(@NotNull PyImportStatement psi, StubElement parentStub) {
     final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
     return new PyImportStatementStubImpl(parentStub, getStubElementType(), versions);
   }
@@ -53,8 +51,7 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
   }
 
   @Override
-  @NotNull
-  public PyImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
     return new PyImportStatementStubImpl(parentStub, getStubElementType(), versions);
   }

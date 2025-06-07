@@ -6,9 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
-import com.intellij.openapi.observable.util.whenMouseMoved
-import com.intellij.openapi.ui.isComponentUnderMouse
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
@@ -17,36 +14,28 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 
 internal class StructureViewFloatingToolbar(
-  private val ownerComponent: JComponent,
-  private val parentDisposable: Disposable,
+  ownerComponent: JComponent,
+  parentDisposable: Disposable,
 ) : AbstractFloatingToolbarComponent(
   DefaultActionGroup(MergeableActions((ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR) as ActionGroup))),
+  ownerComponent,
   parentDisposable
 ) {
 
-  override val autoHideable: Boolean = false
-
   private var boundsWithoutScrolling: Rectangle? = null
 
-  override fun isComponentOnHold(): Boolean {
-    return isComponentUnderMouse() || isFocusAncestor()
-  }
-
-  override fun installMouseMotionWatcher() {
-    ownerComponent.whenMouseMoved(parentDisposable) {
-      scheduleShow()
-    }
-  }
-
   fun repaintOnYWithDy(y: Int, scrollingDy: Int) {
-    hideImmediately()
-    boundsWithoutScrolling = bounds
     boundsWithoutScrolling = Rectangle(0, y, minimumButtonSize.width, minimumButtonSize.height)
-    if (scrollingDy <= 0)
-      bounds = boundsWithoutScrolling!!
+    val newBounds = if (scrollingDy <= 0)
+      boundsWithoutScrolling!!
     else
-      setBounds(0, y - scrollingDy, minimumButtonSize.width, minimumButtonSize.height)
-    scheduleShow()
+      Rectangle(0, y - scrollingDy, minimumButtonSize.width, minimumButtonSize.height)
+    if (newBounds != bounds) {
+      hideImmediately()
+      bounds = newBounds
+      scheduleShow()
+      actionsUpdated(true, listOf(actionGroup))
+    }
   }
 
   fun setScrollingDy(scrollingDy: Int) {
@@ -55,14 +44,17 @@ internal class StructureViewFloatingToolbar(
   }
 
   init {
-    init(ownerComponent)
     val oneDimension = UIUtil.getTreeFont().size + UIUtil.getTreeRightChildIndent()
     minimumButtonSize = Dimension(oneDimension, oneDimension)
     showingTime = 150
     hidingTime = 50
-    backgroundAlpha = 1F
+    backgroundAlpha = 0F
     border = BorderFactory.createEmptyBorder()
     layoutStrategy = MyToolbarLayoutStrategy()
+  }
+
+  init {
+    scheduleShow()
   }
 
   private class MyToolbarLayoutStrategy: ToolbarLayoutStrategy {
@@ -83,6 +75,5 @@ internal class StructureViewFloatingToolbar(
     override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
       return JBUI.emptySize()
     }
-
   }
 }

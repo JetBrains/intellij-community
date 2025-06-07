@@ -40,7 +40,7 @@ object RelaxedSimilarityUtils {
     val prefixMatch = missingCode.trim().startsWith(completion.trim())
 
     val matchingLines = completionLines.map { predicate(it, middleLines) }
-    val hasFirstLineMatching = matchingLines[0] == true
+    val hasFirstLineMatching = matchingLines.isNotEmpty() && matchingLines[0] == true
     val multilineMatch = matchingLines.all { it == true }
 
     return when {
@@ -129,7 +129,7 @@ class RelaxedEditDistance(
 ) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed edit distance"
   override val description: String =
-    "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance less than $threshold."
+    "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance larger than $threshold."
   override val onlyValuable: Boolean = false
   override val metric: RelaxedSimilarityUtils.RelaxedMetric = RelaxedSimilarityUtils.RelaxedEditDistance(threshold)
 }

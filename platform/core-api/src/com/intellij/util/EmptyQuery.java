@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -10,7 +11,7 @@ public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery<?> EMPTY_QUERY_INSTANCE = new EmptyQuery<>();
 
   @Override
-  public @NotNull Collection<R> findAll() {
+  public @NotNull @Unmodifiable Collection<R> findAll() {
     return Collections.emptyList();
   }
 

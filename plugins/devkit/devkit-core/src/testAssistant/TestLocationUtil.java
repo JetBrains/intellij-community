@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,8 +26,7 @@ import java.util.*;
 
 public final class TestLocationUtil {
 
-  @NotNull
-  static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
+  static @NotNull List<Location> collectRelativeLocations(Project project, VirtualFile file) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     final List<Location> locations = new ArrayList<>();
@@ -39,9 +38,8 @@ public final class TestLocationUtil {
         final String relativePath = VfsUtilCore.getRelativePath(parent, contentRoot, '/');
         if (relativePath != null) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
-          final List<String> words = StringUtil.getWordsIn(relativePath);
+          final List<String> words = ContainerUtil.sorted(StringUtil.getWordsIn(relativePath), (o1, o2) -> o2.length() - o1.length());
           // put longer strings first
-          words.sort((o1, o2) -> o2.length() - o1.length());
 
           final GlobalSearchScope testScope = GlobalSearchScopesCore.projectTestScope(project);
           Set<PsiFile> resultFiles = null;
@@ -85,11 +83,10 @@ public final class TestLocationUtil {
     return locations;
   }
 
-  @Nullable
-  private static Location getLocation(Project project,
-                                      String fileName,
-                                      String nameWithoutExtension,
-                                      PsiClass aClass) {
+  private static @Nullable Location getLocation(Project project,
+                                                String fileName,
+                                                String nameWithoutExtension,
+                                                PsiClass aClass) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
     if (annotation != null) {
       final Location parameterizedLocation =

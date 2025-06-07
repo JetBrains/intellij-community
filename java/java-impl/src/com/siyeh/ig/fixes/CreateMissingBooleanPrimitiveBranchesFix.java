@@ -1,28 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
 
 public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissingSwitchBranchesFix {
-  private static final List<String> ALL_BOOLEAN_BRANCHES = List.of(PsiKeyword.TRUE, PsiKeyword.FALSE);
+  private static final List<String> ALL_BOOLEAN_BRANCHES = List.of(JavaKeywords.TRUE, JavaKeywords.FALSE);
 
   private CreateMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
     super(block, names);
   }
 
-  @Nullable
-  public static CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
+  public static @Nullable CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
     PsiExpression selectorExpression = block.getExpression();
     if (selectorExpression == null) return null;
     PsiType selectorExpressionType = selectorExpression.getType();
@@ -30,8 +31,8 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     PsiPrimitiveType selectorPrimitiveType = PsiPrimitiveType.getOptionallyUnboxedType(selectorExpressionType);
     if (selectorPrimitiveType == null) return null;
     if (!PsiTypes.booleanType().equals(selectorPrimitiveType)) return null;
-    if (SwitchUtils.findDefaultElement(block) != null) return null;
-    List<PsiElement> branches = SwitchUtils.getSwitchBranches(block);
+    if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return null;
+    List<PsiElement> branches = JavaPsiSwitchUtil.getSwitchBranches(block);
     PsiClassType boxedBooleanType = selectorPrimitiveType.getBoxedType(block);
     if (boxedBooleanType == null) return null;
     Set<String> existed = new HashSet<>();
@@ -56,8 +57,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
   }
 
-  @Nullable
-  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
     return createWithNull(block, () -> createFix(block));
   }
 
@@ -72,7 +72,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> {
       PsiCaseLabelElementList list = label.getCaseLabelElementList();
       if (list == null) return Collections.emptyList();

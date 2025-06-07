@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -410,7 +411,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
    * in a header
    */
   @VisibleForTesting
-  static int[] slotIndexesForSegment(int segmentHashSuffix,
+  public static int[] slotIndexesForSegment(int segmentHashSuffix,
                                      byte segmentHashSuffixDepth,
                                      byte globalHashSuffixDepth) {
     assert (segmentHashSuffix & ~suffixMask(segmentHashSuffixDepth)) == 0;
@@ -703,7 +704,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     public int segmentIndexByHash(int hash) throws IOException {
       int hashSuffixDepth = globalHashSuffixDepth();
       int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-      return segmentIndex(segmentSlotIndex);
+      int segmentIndex = segmentIndex(segmentSlotIndex);
+      if (segmentIndex < 1) {
+        throw new CorruptedException(
+          "segmentIndex[hash: " + hash + ", suffix: " + hashSuffixDepth + ", slotIndex: " + segmentSlotIndex + "](= " + segmentIndex + ")" +
+          " must be >=1 => .segmentsTable is corrupted"
+        );
+      }
+      return segmentIndex;
     }
 
     public void updateSegmentIndex(int slotIndex,
@@ -740,9 +748,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @VisibleForTesting
-  record HashMapSegmentLayout(int segmentIndex,
-                              int segmentSize,
-                              @NotNull ByteBuffer segmentBuffer) implements HashTableData {
+  @ApiStatus.Internal
+  public record HashMapSegmentLayout(int segmentIndex, int segmentSize, @NotNull ByteBuffer segmentBuffer) implements HashTableData {
     //@formatter:off
     private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
     private static final int HASH_SUFFIX_OFFSET         =  4; //int32
@@ -753,13 +760,14 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
     //@formatter:on
 
-    HashMapSegmentLayout {
+    public HashMapSegmentLayout {
       if (segmentIndex < 1) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
       }
     }
 
-    HashMapSegmentLayout(@NotNull BufferSource bufferSource,
+    @VisibleForTesting
+    public HashMapSegmentLayout(@NotNull BufferSource bufferSource,
                          int segmentIndex,
                          int segmentSize) throws IOException {
       this(segmentIndex, segmentSize,
@@ -876,7 +884,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         int key = entryKey(i);
         int value = entryValue(i);
         if (key != 0) {
-          sb.append("\t[" + i + "]=(" + key + ", " + value + ")\n");
+          sb.append("\t[").append(i).append("]=(").append(key).append(", ").append(value).append(")\n");
         }
       }
       return sb.toString();

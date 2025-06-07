@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.openapi.externalSystem.test.compileModules
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -17,7 +17,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test build script errors on Build`(gradleVersion: GradleVersion) {
     val fixtureBuilder = GradleTestFixtureBuilder.create("GradleExecutionOutputTest.test build script errors on Build") {
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("project")
         include("api", "impl", "brokenProject")
       }
@@ -93,7 +93,13 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
       assertBuildViewTree {
         assertNode("failed") {
           assertNode(":brokenProject:compileJava") {
-            assertNode("App2.java", skipIf = !isPerTaskOutputSupported()) {
+            assertNode("App2.java", skipIf = !isOrderBasedBuildCompilationReportSupported()) {
+              assertNode("';' expected")
+              assertNode("invalid method declaration; return type required")
+              assertNode("invalid method declaration; return type required")
+              assertNode("';' expected")
+            }
+            assertNode("App2.java", skipIf = isOrderBasedBuildCompilationReportSupported() || !isPerTaskOutputSupported()) {
               assertNode("';' expected")
               assertNode("invalid method declaration; return type required")
               assertNode("';' expected", skipIf = !isBuildCompilationReportSupported())

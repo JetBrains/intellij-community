@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.ide.startup.impl
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.diagnostic.*
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -22,7 +23,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
@@ -81,12 +81,14 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           val startupManager = getInstance(project) as StartupManagerImpl
           when (extension) {
             is ProjectActivity -> {
-              startupManager.coroutineScope.launch {
+              val pluginScope = createActivityScope(project, extension.javaClass)
+              pluginScope.launch {
                 extension.execute(project)
               }
             }
             is DumbAware -> {
-              startupManager.coroutineScope.launch {
+              val pluginScope = createActivityScope(project, extension.javaClass)
+              pluginScope.launch {
                 @Suppress("UsagesOfObsoleteApi")
                 startupManager.runOldActivity(extension as StartupActivity)
               }
@@ -162,10 +164,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   suspend fun runPostStartupActivities() {
-    // opened on startup
-    LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
-    // opened from the welcome screen
-    LoadingState.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
+    LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
 
     coroutineContext.ensureActive()
 
@@ -198,36 +197,50 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   private suspend fun runInitProjectActivities() {
-    runActivities(initProjectStartupActivities)
-
     val extensionPoint = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<InitProjectActivity>("com.intellij.initProjectActivity")
-    // do not create an extension if not allow-listed
-    for (adapter in extensionPoint.sortedAdapters) {
-      coroutineContext.ensureActive()
+    coroutineScope {
+      // do not create an extension if not allow-listed
+      for (adapter in extensionPoint.sortedAdapters) {
+        val idString = adapter.pluginDescriptor.pluginId.idString
+        if (!isCorePlugin(adapter.pluginDescriptor) &&
+            idString != "com.jetbrains.performancePlugin" &&
+            idString != "com.jetbrains.performancePlugin.yourkit" &&
+            idString != "com.intellij.clion-swift" &&
+            idString != "com.intellij.clion.performanceTesting" &&
+            idString != "com.intellij.appcode" &&
+            idString != "com.jetbrains.kmm" &&
+            idString != "com.jetbrains.codeWithMe" &&
+            idString != "intellij.rider.plugins.cwm" &&
+            idString != "org.jetbrains.plugins.clion.radler") {
+          if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
+            LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
+            continue
+          }
+        }
 
-      val pluginId = adapter.pluginDescriptor.pluginId
-      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
-          && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
-          && pluginId.idString != "com.intellij.clion-swift"
-          && pluginId.idString != "com.intellij.clion.performanceTesting"
-          && pluginId.idString != "com.intellij.appcode"
-          && pluginId.idString != "com.intellij.kmm"
-          && pluginId.idString != "com.intellij.clion.plugin"
-          && pluginId.idString != "com.jetbrains.codeWithMe"
-          && pluginId.idString != "intellij.rider.plugins.cwm"
-          && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
-        LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
-        continue
-      }
+        val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
+        if (project is LightEditCompatible && activity !is LightEditCompatible) {
+          continue
+        }
 
-      val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
-      if (project !is LightEditCompatible || activity is LightEditCompatible) {
-        withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
-          activity.run(project)
+        val fqn = activity.javaClass.name
+        val context = tracer.span("run init activity ${fqn.substringAfterLast('.')}", arrayOf("class", fqn, "plugin", idString))
+        if (activity.isParallelExecution) {
+          launch(context) {
+            activity.run(project)
+          }
+        }
+        else {
+          withContext(context) {
+            activity.run(project)
+          }
         }
       }
     }
+
+    // execute programmatically registered init activities after declarative ones
+    runActivities(initProjectStartupActivities)
   }
 
   // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.
@@ -252,22 +265,20 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (ApplicationManager.getApplication().isUnitTestMode) {
-            blockingContext {
-              // We propagate modality only in unit tests
-              // because in unit tests, activities are often started in a modal context (see TestProjectManager).
-              // Thus, any "invokeAndWait" will hang without modality propagation.
-              // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
-              @Suppress("DEPRECATION")
-              val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
-              val job = launchActivity(
-                activity = activity,
-                project = project,
-                pluginId = pluginDescriptor.pluginId,
-                additionalContext = modalityContext,
-              )
-              runningProjectActivities.put(activity.javaClass, job)
-              job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
-            }
+            // We propagate modality only in unit tests
+            // because in unit tests, activities are often started in a modal context (see TestProjectManager).
+            // Thus, any "invokeAndWait" will hang without modality propagation.
+            // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
+            @Suppress("DEPRECATION")
+            val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
+            val job = launchActivity(
+              activity = activity,
+              project = project,
+              pluginId = pluginDescriptor.pluginId,
+              additionalContext = modalityContext,
+            )
+            runningProjectActivities.put(activity.javaClass, job)
+            job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
           }
           else {
             launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
@@ -282,19 +293,15 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           }
           dumbService.runWithWaitForSmartModeDisabled().use {
-            blockingContext {
-              runOldActivity(activity as StartupActivity)
-            }
+            runOldActivity(activity as StartupActivity)
           }
         }
         else if (!isProjectLightEditCompatible) {
           LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
-          blockingContext {
-            dumbService.runWhenSmart {
-              runOldActivity(activity as StartupActivity)
-            }
+          dumbService.runWhenSmart {
+            runOldActivity(activity as StartupActivity)
           }
         }
       }
@@ -359,9 +366,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         val pluginId = PluginUtil.getPluginId(runnableClass.classLoader)
         launch(tracer.span("run activity", arrayOf("class", runnableClass.name, "plugin", pluginId.idString))) {
           runCatching {
-            blockingContext {
-              runnable.run()
-            }
+            runnable.run()
           }.getOrLogException(LOG)
         }
       }
@@ -382,7 +387,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     if (!freezePostStartupActivities) {
       synchronized(lock) {
         if (!freezePostStartupActivities) {
-          postStartupActivities.add(runnable)
+          postStartupActivities.add(captureThreadContext(runnable))
           return
         }
       }
@@ -460,10 +465,8 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
 
   createActivityScope(project, activity.javaClass).launch {
     try {
-      blockingContext {
-        @Suppress("UsagesOfObsoleteApi")
-        (activity as StartupActivity).runActivity(project)
-      }
+      @Suppress("UsagesOfObsoleteApi")
+      (activity as StartupActivity).runActivity(project)
     }
     catch (e: CancellationException) {
       throw e

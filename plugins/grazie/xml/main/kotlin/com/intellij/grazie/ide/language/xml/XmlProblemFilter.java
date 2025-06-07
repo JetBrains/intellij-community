@@ -6,7 +6,8 @@ import com.intellij.grazie.text.TextProblem;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 
-class XmlProblemFilter extends ProblemFilter {
+@SuppressWarnings("SSBasedInspection")
+final class XmlProblemFilter extends ProblemFilter {
   @Override
   public boolean shouldIgnore(@NotNull TextProblem problem) {
     if (isAfterPossibleEscape(problem)) return true;

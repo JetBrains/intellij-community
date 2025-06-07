@@ -1,18 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.*;
+import com.intellij.java.syntax.element.JavaSyntaxTokenType;
+import com.intellij.java.syntax.lexer.JavaLexer;
+import com.intellij.java.syntax.parser.JavaParser;
+import com.intellij.java.syntax.parser.ReferenceParser;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lang.java.parser.BasicJavaParser;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
-import com.intellij.lang.java.parser.BasicReferenceParser;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.TokenList;
+import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.syntax.lexer.Lexer;
+import com.intellij.platform.syntax.lexer.TokenList;
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
+import com.intellij.platform.syntax.psi.ParsingDiagnostics;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
+import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -30,6 +38,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
+//todo remove and merge with standard
+/**
+ * @see com.intellij.java.syntax.element.JavaSyntaxElementType
+ */
 public interface BasicJavaElementType {
 
   IElementType BASIC_CLASS = new IJavaElementType("CLASS");
@@ -236,9 +248,8 @@ public interface BasicJavaElementType {
       myParentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return myConstructor.get();
     }
 
@@ -250,31 +261,24 @@ public interface BasicJavaElementType {
 
   final class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType, ParentProviderElementType {
     private static final Set<IElementType> PARENT_ELEMENT_TYPES = Collections.singleton(BASIC_DUMMY_ELEMENT);
-    private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, ? extends Lexer> javaLexer;
 
-    public JavaDummyElementType(@NotNull Function<LanguageLevel, JavaDocLexer> lexer,
-                                @NotNull Function<LanguageLevel, Lexer> javaLexer) {
+    public JavaDummyElementType() {
       super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
-      javaDocLexer = lexer;
-      this.javaLexer = javaLexer;
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new CompositePsiElement(this) {
       };
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
       assert chameleon instanceof BasicJavaDummyElement : chameleon;
       final BasicJavaDummyElement dummyElement = (BasicJavaDummyElement)chameleon;
       return BasicJavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(),
-                                               dummyElement.getLanguageLevel(),
-                                               javaDocLexer, javaLexer);
+                                               dummyElement.getLanguageLevel()
+      );
     }
 
     @Override
@@ -283,44 +287,54 @@ public interface BasicJavaElementType {
     }
   }
 
-
   abstract class FrontBackICodeBlockElementType extends IErrorCounterReparseableElementType
     implements ICompositeElementType, ILightLazyParseableElementType, ParentProviderElementType {
     private static final Set<IElementType> PARENT_ELEMENT_TYPES = Collections.singleton(BASIC_CODE_BLOCK);
-    private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
     private final Function<PsiElement, LanguageLevel> languageLevelFunction;
-    private final Function<LanguageLevel, BasicJavaLexer> myLexerFunction;
     private final Function<PsiFile, TokenList> psiAsLexer;
 
-    public FrontBackICodeBlockElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
-                                          @NotNull Function<PsiElement, LanguageLevel> function,
-                                          @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
+    public FrontBackICodeBlockElementType(@NotNull Function<PsiElement, LanguageLevel> function,
                                           @NotNull Function<PsiFile, TokenList> lexer) {
       super("CODE_BLOCK", JavaLanguage.INSTANCE);
-      myJavaThinParser = parser;
       languageLevelFunction = function;
-      myLexerFunction = lexerFunction;
       psiAsLexer = lexer;
     }
 
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      final PsiBuilder builder = BasicJavaParserUtil.createBuilder(chameleon, languageLevelFunction, myLexerFunction, psiAsLexer);
-      myJavaThinParser.get().getStatementParser().parseCodeBlockDeep(builder, true);
-      return builder.getTreeBuilt().getFirstChildNode();
+    public ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      PsiSyntaxBuilderWithLanguageLevel
+        builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer);
+      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
+      LanguageLevel level = builderAndLevel.getLanguageLevel();
+      long startTime = System.nanoTime();
+      SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
+      new JavaParser(level).getStatementParser().parseCodeBlockDeep(builder, true);
+      ASTNode node = psiSyntaxBuilder.getTreeBuilt().getFirstChildNode();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return node;
     }
 
     @Override
     public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(final @NotNull LighterLazyParseableNode chameleon) {
-      final PsiBuilder builder = BasicJavaParserUtil.createBuilder(chameleon, languageLevelFunction, myLexerFunction);
-      myJavaThinParser.get().getStatementParser().parseCodeBlockDeep(builder, true);
-      return builder.getLightTree();
+      PsiSyntaxBuilderWithLanguageLevel builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction);
+      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
+      LanguageLevel level = builderAndLevel.getLanguageLevel();
+      long startTime = System.nanoTime();
+      SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
+      new JavaParser(level).getStatementParser().parseCodeBlockDeep(builder, true);
+      FlyweightCapableTreeStructure<LighterASTNode> tree = psiSyntaxBuilder.getLightTree();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return tree;
     }
 
     @Override
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
-      Lexer lexer = myLexerFunction.apply(LanguageLevel.HIGHEST);
-      return PsiBuilderUtil.hasProperBraceBalance(seq, lexer, JavaTokenType.LBRACE, JavaTokenType.RBRACE) ? NO_ERRORS : FATAL_ERROR;
+      Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      boolean hasProperBraceBalance = SyntaxBuilderUtil.hasProperBraceBalance(
+        seq, lexer, JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE,
+        () -> ProgressManager.checkCanceled()
+      );
+      return hasProperBraceBalance ? NO_ERRORS : FATAL_ERROR;
     }
 
     @Override
@@ -334,40 +348,27 @@ public interface BasicJavaElementType {
     }
   }
 
-
   class FrontBackTypeTextElementType extends ICodeFragmentElementType implements ParentProviderElementType {
     private final int myFlags;
-    private final @NotNull Supplier<? extends BasicJavaParser> myParserInstance;
-
-    private final Function<LanguageLevel, JavaDocLexer> myDocLexerFunction;
-    private final Function<LanguageLevel, BasicJavaLexer> myLexerFunction;
     private final Set<IElementType> myParentElementTypes;
 
-    public FrontBackTypeTextElementType(@NonNls String debugName, int flags,
-                                        @NotNull Supplier<? extends BasicJavaParser> parser,
-                                        @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                        @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
-                                        @NotNull IElementType parentElementType) {
+    public FrontBackTypeTextElementType(@NonNls String debugName, int flags, @NotNull IElementType parentElementType) {
       super(debugName, JavaLanguage.INSTANCE);
       myFlags = flags;
-      myParserInstance = parser;
-      myDocLexerFunction = docLexerFunction;
-      myLexerFunction = lexerFunction;
       myParentElementTypes = Collections.singleton(parentElementType);
     }
 
     private final BasicJavaParserUtil.ParserWrapper myParser = new BasicJavaParserUtil.ParserWrapper() {
       @Override
-      public void parse(final PsiBuilder builder) {
-        int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD | myFlags;
-        myParserInstance.get().getReferenceParser().parseType(builder, flags);
+      public void parse(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel) {
+        int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | myFlags;
+        new JavaParser(languageLevel).getReferenceParser().parseType(builder, flags);
       }
     };
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragment(chameleon, myParser, myDocLexerFunction, myLexerFunction);
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
     }
 
     @Override
@@ -377,70 +378,52 @@ public interface BasicJavaElementType {
   }
 
   class StatementThinCodeFragmentElementType extends ThinCodeFragmentElementType {
-
-    public StatementThinCodeFragmentElementType(@NotNull Supplier<? extends BasicJavaParser> javaThinParser,
-                                                @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                                @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
-      super("STATEMENTS", builder -> javaThinParser.get().getStatementParser().parseStatements(builder), docLexerFunction, lexerFunction,
-            BASIC_STATEMENTS);
+    public StatementThinCodeFragmentElementType() {
+      super("STATEMENTS", (builder, languageLevel) -> {
+        new JavaParser(languageLevel).getStatementParser().parseStatements(builder);
+      }, BASIC_STATEMENTS);
     }
   }
 
   class MemberThinCodeFragmentElementType extends ThinCodeFragmentElementType {
-
-    public MemberThinCodeFragmentElementType(@NotNull Supplier<? extends BasicJavaParser> javaThinParser,
-                                             @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                             @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
-      super("MEMBERS", builder -> javaThinParser.get().getDeclarationParser().parseClassBodyDeclarations(builder, false), docLexerFunction,
-            lexerFunction,
-            BASIC_MEMBERS);
+    public MemberThinCodeFragmentElementType() {
+      super("MEMBERS", (builder, languageLevel) -> {
+        new JavaParser(languageLevel).getDeclarationParser().parseClassBodyDeclarations(builder, false);
+      }, BASIC_MEMBERS);
     }
   }
 
   class ExpressionThinCodeFragmentElementType extends ThinCodeFragmentElementType {
-
-    public ExpressionThinCodeFragmentElementType(@NotNull Supplier<? extends BasicJavaParser> javaThinParser,
-                                                 @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                                 @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
-      super("EXPRESSION_TEXT", builder -> javaThinParser.get().getExpressionParser().parse(builder), docLexerFunction, lexerFunction,
-            BASIC_EXPRESSION_TEXT);
+    public ExpressionThinCodeFragmentElementType() {
+      super("EXPRESSION_TEXT", (builder, languageLevel) -> {
+        new JavaParser(languageLevel).getExpressionParser().parse(builder);
+      }, BASIC_EXPRESSION_TEXT);
     }
   }
 
   class ReferenceThinCodeFragmentElementType extends ThinCodeFragmentElementType {
-
-    public ReferenceThinCodeFragmentElementType(@NotNull Supplier<? extends BasicJavaParser> javaThinParser,
-                                                @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                                @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
-      super("REFERENCE_TEXT",
-            builder -> javaThinParser.get().getReferenceParser().parseJavaCodeReference(builder, false, true, false, false),
-            docLexerFunction, lexerFunction,
-            BASIC_REFERENCE_TEXT);
+    public ReferenceThinCodeFragmentElementType() {
+      super("REFERENCE_TEXT", (builder, languageLevel) -> {
+        new JavaParser(languageLevel).getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
+      }, BASIC_REFERENCE_TEXT);
     }
   }
 
   class ThinCodeFragmentElementType extends ICodeFragmentElementType implements ParentProviderElementType {
     private final BasicJavaParserUtil.ParserWrapper myParser;
-    private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
     private final Set<IElementType> parentElementTypes;
 
     private ThinCodeFragmentElementType(@NotNull String debugName,
                                         @NotNull BasicJavaParserUtil.ParserWrapper parser,
-                                        @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                        @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
                                         @NotNull IElementType parentElementType) {
       super(debugName, JavaLanguage.INSTANCE);
       myParser = parser;
-      javaDocLexer = docLexerFunction;
-      this.javaLexer = lexerFunction;
       this.parentElementTypes = Collections.singleton(parentElementType);
     }
 
-    @Nullable
     @Override
-    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragment(chameleon, myParser, javaDocLexer, javaLexer);
+    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
     }
 
     @Override

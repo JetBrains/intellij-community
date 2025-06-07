@@ -181,8 +181,7 @@ interface JdiValueInfo {
     return null;
   }
 
-  @NotNull
-  private static ObjectWithSpecialField collectionWithSize(ReferenceType type, int size) {
+  private static @NotNull ObjectWithSpecialField collectionWithSize(ReferenceType type, int size) {
     PrimitiveConstant length = new PrimitiveConstant(DfTypes.intValue(size));
     return new ObjectWithSpecialField(type, SpecialField.COLLECTION_SIZE, length);
   }

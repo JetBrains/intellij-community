@@ -1,15 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorInputMethodSupport
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -25,23 +35,29 @@ import java.text.AttributedString
 import java.text.CharacterIterator
 import javax.swing.SwingUtilities
 
-internal class TerminalOutputEditorInputMethodSupport(
+@ApiStatus.Internal
+class TerminalOutputEditorInputMethodSupport(
   private val editor: EditorEx,
-  private val session: BlockTerminalSession,
-  private val caretModel: TerminalCaretModel
+  private val coroutineScope: CoroutineScope,
+  private val getCaretPosition: () -> LogicalPosition?,
+  private val cursorOffsetFlow: StateFlow<Int>?,
+  private val sendInputString: (String) -> Unit,
 ) {
 
   private val inputMethodRequests = MyInputMethodRequests()
 
-  private var inlay: Inlay<*>? = null
+  // should be accessed in EDT only
+  private var composedTextInlayTracker: ComposedTextInlayTracker? = null
 
-  fun install(parentDisposable: Disposable) {
+  init {
     check(editor.isViewer)
 
     val mouseListener = object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent?) {
-        if (inlay != null && !editor.isDisposed) {
+        if (composedTextInlayTracker != null && !editor.isDisposed) {
           editor.contentComponent.getInputContext()?.endComposition()
+          composedTextInlayTracker?.cancel()
+          composedTextInlayTracker = null
         }
       }
     }
@@ -62,32 +78,30 @@ internal class TerminalOutputEditorInputMethodSupport(
 
     (editor as EditorImpl).setInputMethodSupport(EditorInputMethodSupport(inputMethodRequests, inputMethodListener))
 
-    Disposer.register(parentDisposable) {
-      editor.contentComponent.removeMouseListener(mouseListener)
-      editor.setInputMethodSupport(null)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      runInEdt(ModalityState.any()) {
+        editor.contentComponent.removeMouseListener(mouseListener)
+        editor.setInputMethodSupport(null)
+      }
     }
   }
 
   private fun handleInputMethodTextChanged(event: InputMethodEvent) {
-    inlay?.let {
-      Disposer.dispose(it)
-    }
-    inlay = null
+    composedTextInlayTracker?.cancel()
+    composedTextInlayTracker = null
 
     val text: AttributedCharacterIterator? = event.text
     if (text != null) {
       text.first() // set iterator to the text beginning
       val committedString = collectString(text, event.committedCharacterCount)
-      val cursorPosition = caretModel.getCaretPosition() // capture cursor position before sending committed string
       if (committedString.isNotEmpty()) {
-        session.terminalStarterFuture.getNow(null)?.sendString(committedString, true)
+        sendInputString(committedString)
       }
-      cursorPosition ?: return
       val composedString = collectString(text)
       if (composedString.isNotEmpty()) {
-        val cursorOffset = editor.logicalPositionToOffset(cursorPosition)
-        inlay = editor.getInlayModel().addInlineElement<InputMethodInlayRenderer>(cursorOffset, true, -IME_INLAY_PRIORITY,
-                                                                                  InputMethodInlayRenderer(composedString))
+        composedTextInlayTracker = ComposedTextInlayTracker(composedString).also {
+          it.start()
+        }
       }
     }
   }
@@ -111,7 +125,7 @@ internal class TerminalOutputEditorInputMethodSupport(
 
     override fun getTextLocation(offset: TextHitInfo?): Rectangle {
       if (editor.isDisposed()) return Rectangle()
-      val cursorPosition = caretModel.getCaretPosition() ?: return Rectangle()
+      val cursorPosition = getCaretPosition() ?: return Rectangle()
       val caret: Point = editor.logicalPositionToXY(cursorPosition)
       val r = Rectangle(caret, Dimension(1, editor.getLineHeight()))
       val p = getLocationOnScreen(editor.getContentComponent())
@@ -122,7 +136,7 @@ internal class TerminalOutputEditorInputMethodSupport(
     override fun getLocationOffset(x: Int, y: Int): TextHitInfo? = null
 
     override fun getInsertPositionOffset(): Int {
-      val cursorLogicalPosition = caretModel.getCaretPosition() ?: return 0
+      val cursorLogicalPosition = getCaretPosition() ?: return 0
       return editor.logicalPositionToOffset(cursorLogicalPosition)
     }
 
@@ -138,7 +152,59 @@ internal class TerminalOutputEditorInputMethodSupport(
 
     override fun getSelectedText(attributes: Array<out AttributedCharacterIterator.Attribute>?): AttributedCharacterIterator? = null
   }
+
+  private inner class ComposedTextInlayTracker(private val composedText: String) {
+    private var inlay: Inlay<*>? = null
+    private var cursorOffset: Int = -1
+    private var job: Job? = null
+
+    @RequiresEdt
+    fun start() {
+      val initialCaretPosition = getCaretPosition() ?: return
+      showInlayAt(editor.logicalPositionToOffset(initialCaretPosition))
+      if (cursorOffsetFlow != null) {
+        job = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          cursorOffsetFlow.collect { newCursorOffset ->
+            if (newCursorOffset != cursorOffset) {
+              showInlayAt(newCursorOffset)
+            }
+          }
+        }
+      }
+    }
+
+    private fun showInlayAt(newCursorOffset: Int) {
+      hideInlay()
+      inlay = editor.getInlayModel().addInlineElement<InputMethodInlayRenderer>(newCursorOffset, true, -IME_INLAY_PRIORITY,
+                                                                                InputMethodInlayRenderer(composedText))
+      LOG.debug {
+        val msg = if (cursorOffset == -1) {
+          "Initialized composed text inlay, offset: $newCursorOffset, composed text: $composedText"
+        }
+        else {
+          "Repositioned composed text inlay, new offset: $newCursorOffset"
+        }
+        if (inlay != null) msg else "$msg (INLAY NOT SHOWN)"
+      }
+      cursorOffset = newCursorOffset
+    }
+
+    private fun hideInlay() {
+      inlay?.let {
+        Disposer.dispose(it)
+      }
+      inlay = null
+    }
+
+    @RequiresEdt
+    fun cancel() {
+      job?.cancel()
+      hideInlay()
+    }
+  }
 }
+
+private val LOG: Logger = logger<TerminalOutputEditorInputMethodSupport>()
 
 private fun getLocationOnScreen(component: Component): Point {
   return Point().also {

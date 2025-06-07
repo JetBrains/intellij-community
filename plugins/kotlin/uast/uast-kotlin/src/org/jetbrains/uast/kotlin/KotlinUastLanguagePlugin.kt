@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -23,6 +24,7 @@ import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
+@InternalIgnoreDependencyViolation
 class KotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority = 10
 
@@ -33,22 +35,22 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         return fileName.endsWith(".kt", false) || fileName.endsWith(".kts", false)
     }
 
-    private val PsiElement.isJvmElement: Boolean
+    private val PsiElement.isJvmOrCommonElement: Boolean
         get() {
             val resolveProvider: KotlinUastResolveProviderService = project.getService(KotlinUastResolveProviderService::class.java)!!
-            return resolveProvider.isJvmElement(this)
+            return resolveProvider.isJvmOrCommonElement(this)
         }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         val requiredTypes = elementTypes(requiredType)
-        return if (!canConvert(element, requiredTypes) || !element.isJvmElement) null
+        return if (!canConvert(element, requiredTypes) || !element.isJvmOrCommonElement) null
         else convertDeclarationOrElement(element, parent, requiredTypes)
     }
 
     override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
         val requiredTypes = elementTypes(requiredType)
         return when {
-            !canConvert(element, requiredTypes) || !element.isJvmElement -> null
+            !canConvert(element, requiredTypes) || !element.isJvmOrCommonElement -> null
             element is PsiFile || element is KtLightClassForFacade -> convertDeclaration(element, null, requiredTypes)
             else -> convertDeclarationOrElement(element, null, requiredTypes)
         }
@@ -109,7 +111,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
     @Suppress("UNCHECKED_CAST")
     private fun <T : UElement> convertElement(element: PsiElement, parent: UElement?, expectedTypes: Array<out Class<out T>>): T? {
         val nonEmptyExpectedTypes = expectedTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
-        return if (!canConvert(element, nonEmptyExpectedTypes) || !element.isJvmElement) null
+        return if (!canConvert(element, nonEmptyExpectedTypes) || !element.isJvmOrCommonElement) null
         else convertDeclarationOrElement(element, parent, nonEmptyExpectedTypes) as? T
     }
 
@@ -119,7 +121,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-        if (!element.isJvmElement) emptySequence() else when {
+        if (!element.isJvmOrCommonElement) emptySequence() else when {
             element is KtFile -> KotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>
             (element is KtProperty && !element.isLocal) ->
                 KotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>

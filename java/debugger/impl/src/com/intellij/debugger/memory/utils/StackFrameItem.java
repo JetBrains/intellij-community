@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -18,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
@@ -74,13 +74,11 @@ public class StackFrameItem {
     return myLocation;
   }
 
-  @NotNull
-  public String path() {
+  public @NotNull String path() {
     return myLocation.declaringType().name();
   }
 
-  @NotNull
-  public String method() {
+  public @NotNull String method() {
     return DebuggerUtilsEx.getLocationMethodName(myLocation);
   }
 
@@ -88,15 +86,14 @@ public class StackFrameItem {
     return DebuggerUtilsEx.getLineNumber(myLocation, false);
   }
 
-  @NotNull
-  public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
+  public static @NotNull List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameProxyImpl> frameProxies = threadReferenceProxy.forceFrames();
       List<StackFrameItem> res = new ArrayList<>(frameProxies.size());
       for (StackFrameProxyImpl frame : frameProxies) {
         try {
-          List<XNamedValue> vars = null;
+          final List<XNamedValue> vars;
           Location location = frame.location();
           if (withVars) {
             if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
@@ -152,6 +149,9 @@ public class StackFrameItem {
                 }
               }
             }
+          }
+          else {
+            vars = null;
           }
 
           StackFrameItem frameItem = new StackFrameItem(location, vars);
@@ -213,9 +213,8 @@ public class StackFrameItem {
                                                           : AllIcons.Debugger.Value;
       if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
-          @Nullable
           @Override
-          public String getType() {
+          public @Nullable String getType() {
             return classRenderer.SHOW_STRINGS_TYPE ? type : null;
           }
         }, false);
@@ -225,8 +224,16 @@ public class StackFrameItem {
     }
   }
 
-  public XStackFrame createFrame(DebugProcessImpl debugProcess) {
-    return new CapturedStackFrame(debugProcess, this);
+  /**
+   * @deprecated Use {@link #createFrame(DebugProcessImpl, SourcePosition)} instead
+   */
+  @Deprecated
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess) {
+    return createFrame(debugProcess, debugProcess.getPositionManager().getSourcePosition(myLocation));
+  }
+
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess, @Nullable SourcePosition sourcePosition) {
+    return new CapturedStackFrame(debugProcess, this, sourcePosition);
   }
 
   public static boolean hasSeparatorAbove(XStackFrame frame) {
@@ -240,8 +247,7 @@ public class StackFrameItem {
     }
   }
 
-  @Nls
-  public static String getAsyncStacktraceMessage() {
+  public static @Nls String getAsyncStacktraceMessage() {
     return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
   }
 
@@ -260,7 +266,7 @@ public class StackFrameItem {
 
     private volatile boolean myWithSeparator;
 
-    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
+    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item, SourcePosition sourcePosition) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myPath = item.path();
       myMethodName = item.method();
@@ -268,7 +274,7 @@ public class StackFrameItem {
       myVariables = item.myVariables;
 
       Location location = item.myLocation;
-      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(location));
+      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(sourcePosition);
       myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
@@ -277,9 +283,8 @@ public class StackFrameItem {
                      (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(location));
     }
 
-    @Nullable
     @Override
-    public XSourcePosition getSourcePosition() {
+    public @Nullable XSourcePosition getSourcePosition() {
       return mySourcePosition;
     }
 
@@ -322,6 +327,10 @@ public class StackFrameItem {
       else if (myVariables != null) {
         children = new XValueChildrenList(myVariables.size());
         myVariables.forEach(children::add);
+      }
+      else {
+        node.setMessage(JavaDebuggerBundle.message("debugger.variables.not.available.in.async"), AllIcons.General.Information,
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
       }
       node.addChildren(children, true);
     }

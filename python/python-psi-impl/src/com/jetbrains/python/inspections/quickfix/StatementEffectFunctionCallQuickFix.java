@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.statement.effect");
   }
 
@@ -41,7 +40,7 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
     }
   }
 
-  private static void replaceExec(@NotNull final PsiElement expression) {
+  private static void replaceExec(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
@@ -91,7 +90,7 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
                                                        stringBuilder.toString()));
   }
 
-  private static String getComment(@Nullable final PsiElement next) {
+  private static String getComment(final @Nullable PsiElement next) {
     String commentText = null;
     if (next != null) {
       final PsiElement lastChild = next.getLastChild();
@@ -102,7 +101,7 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
     return commentText;
   }
 
-  private static void addInArguments(@NotNull final StringBuilder stringBuilder, @NotNull final PyBinaryExpression binaryExpression) {
+  private static void addInArguments(final @NotNull StringBuilder stringBuilder, final @NotNull PyBinaryExpression binaryExpression) {
     stringBuilder.append(binaryExpression.getLeftExpression().getText());
     stringBuilder.append(", ");
     final PyExpression rightExpression = binaryExpression.getRightExpression();
@@ -110,7 +109,7 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
       stringBuilder.append(rightExpression.getText());
   }
 
-  private static void replacePrint(@NotNull final PsiElement expression) {
+  private static void replacePrint(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
@@ -131,7 +130,7 @@ public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuic
                                                        stringBuilder.toString()));
   }
 
-  private static PsiElement getNextElement(@NotNull final PsiElement expression) {
+  private static PsiElement getNextElement(final @NotNull PsiElement expression) {
     final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
     if (whiteSpace instanceof PsiWhiteSpace) {

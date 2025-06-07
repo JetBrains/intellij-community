@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
@@ -19,7 +20,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -44,6 +44,10 @@ public class ContentTabLabel extends ContentLabel {
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      if (e.isAltDown()) {
+        closeAllOtherTabs();
+        return;
+      }
       if (handleActionsClick(e)) return;
       selectContent();
       handleDoubleClick(e);
@@ -55,11 +59,14 @@ public class ContentTabLabel extends ContentLabel {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       for (AnAction action : myLayout.doubleClickActions) {
         AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-        }
+        ActionUtil.performAction(action, event);
       }
     }
+  }
+
+  @Override
+  boolean showLabelText(@NotNull Content content) {
+    return !Boolean.FALSE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_TAB_LABEL_TEXT));
   }
 
   @Override
@@ -233,7 +240,11 @@ public class ContentTabLabel extends ContentLabel {
         content.setPinned(false);
         return;
       }
-      closeContent();
+      if (Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() == InputEvent.ALT_DOWN_MASK) {
+        closeAllOtherTabs();
+      } else {
+        closeContent();
+      }
     }
 
     @Override
@@ -251,6 +262,15 @@ public class ContentTabLabel extends ContentLabel {
       return text.isEmpty() || !isSelected()
              ? IdeBundle.message("tooltip.close.tab")
              : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
+    }
+  }
+
+  private void closeAllOtherTabs() {
+    ContentManager contentManager = getContentManager();
+    for (Content content : contentManager.getContents()) {
+      if (content != myContent && content.isCloseable()) {
+        contentManager.removeContent(content, true);
+      }
     }
   }
 }

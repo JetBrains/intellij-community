@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.openapi.project.Project;
@@ -42,8 +42,7 @@ public class DClassElement implements DNamedElement {
     }
   }
 
-  @Nullable
-  public DPropertyElement getPropertyByName(String propertyName) {
+  public @Nullable DPropertyElement getPropertyByName(String propertyName) {
     for (final DPropertyElement property : myProperties) {
       if (propertyName.equals(property.getName())) {
         return property;
@@ -78,6 +77,7 @@ public class DClassElement implements DNamedElement {
     return myMethods.remove(methodElement);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -89,6 +89,7 @@ public class DClassElement implements DNamedElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);
@@ -97,8 +98,7 @@ public class DClassElement implements DNamedElement {
     return result;
   }
 
-  @Nullable
-  public DMethodElement getMethod(String methodName, String[] parametersTypes) {
+  public @Nullable DMethodElement getMethod(String methodName, String[] parametersTypes) {
     for (DMethodElement method : myMethods) {
       final List<ParamInfo> myPairList = method.getPairs();
       if (method.getName().equals(methodName)

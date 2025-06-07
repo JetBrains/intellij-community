@@ -32,8 +32,8 @@ public final class ConfigurationErrorEventProcessor extends AbstractTestEventPro
   }
 
   @Override
-  public void process(@NotNull final TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
-    @NlsSafe final String errorTitle = xml.getEventTitle();
+  public void process(final @NotNull TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
+    final @NlsSafe String errorTitle = xml.getEventTitle();
     final String configurationErrorMsg = xml.getEventMessage();
     final boolean openSettings = xml.isEventOpenSettings();
     final Project project = getProject();
@@ -62,8 +62,7 @@ public final class ConfigurationErrorEventProcessor extends AbstractTestEventPro
   }
 
 
-  @Nls
-  private static String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
+  private static @Nls String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
     if (openSettings) {
       return new HtmlBuilder()
         .append(HtmlChunk.br())

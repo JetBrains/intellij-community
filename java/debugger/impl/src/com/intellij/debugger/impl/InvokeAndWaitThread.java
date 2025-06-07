@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class InvokeAndWaitThread<E extends DebuggerTask> extends InvokeThread<E> {
 
-  public void invokeAndWait(@NotNull final E runnable) {
+  public void invokeAndWait(final @NotNull E runnable) {
     runnable.hold();
     schedule(runnable);
     runnable.waitFor();

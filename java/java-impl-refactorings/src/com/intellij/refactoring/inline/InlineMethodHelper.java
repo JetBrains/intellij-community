@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,8 +55,7 @@ class InlineMethodHelper {
     return mySubstitutor;
   }
 
-  @NotNull
-  private PsiSubstitutor createSubstitutor() {
+  private @NotNull PsiSubstitutor createSubstitutor() {
     JavaResolveResult resolveResult = myCall.resolveMethodGenerics();
     PsiSubstitutor origSubstitutor = resolveResult.getSubstitutor();
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -169,7 +168,7 @@ class InlineMethodHelper {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).asIterable()) {
       final PsiElement refElement = reference.getElement();
       final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
       if (anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true)) {

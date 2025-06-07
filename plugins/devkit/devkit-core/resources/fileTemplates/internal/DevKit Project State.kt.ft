@@ -1,0 +1,27 @@
+#set($lowercasedName = $NAME.toLowerCase())
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+
+#end
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
+
+#parse("File Header.java")
+@Service(Service.Level.PROJECT)
+@State(name = "${NAME}", storages = [Storage("${lowercasedName}.xml")])
+internal class ${NAME}(private val project: Project): SerializablePersistentStateComponent<${NAME}State>(${NAME}State()) {
+    companion object {
+        fun getInstance(project: Project): ${NAME} = project.service()
+    }
+
+    var value: String?
+        get() = state.storeValue
+        set(value) {
+            updateState {
+                it.copy(storeValue = value)
+            }
+        }
+}
+
+internal data class ${NAME}State(
+    @JvmField val storeValue: String? = null
+)

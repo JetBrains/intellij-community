@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -16,7 +16,6 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
@@ -36,7 +35,7 @@ import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
-class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
+internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val sampleFilePath = "git/sphinx_cat.yml"
   override val branchName = "feature"
   private val textToFind = "sphinx"
@@ -58,7 +57,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     prepareRuntimeTask l@{
       val property = SHOW_GIT_BRANCHES_LOG_PROPERTY
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: return@l
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties ?: return@l
       showGitBranchesBackup = logUiProperties[property]
       logUiProperties[property] = true
     }
@@ -88,7 +87,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties
       val choice = if (logUiProperties == null || !logUiProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) 1 else 0
       text(GitLessonsBundle.message("git.project.history.apply.branch.filter", choice))
       text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
@@ -146,8 +145,8 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         }
       }
       triggerUI().component l@{ ui: VcsLogGraphTable ->
-        val model = ui.model as? GraphTableModel ?: return@l false
-        model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
+        val model = ui.model
+        model.rowCount > 0 && model.getCommitMetadata(0)?.fullMessage?.contains(textToFind) ?: false
       }
       showWarningIfGitWindowClosed()
       test {
@@ -164,7 +163,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         ui.selectedRow == 0
       }
       restoreState {
-        val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi ?: return@restoreState false
+        val vcsLogUi = VcsProjectLog.getInstance(project).mainUi ?: return@restoreState false
         vcsLogUi.filterUi.textFilterComponent.text == ""
       }
       showWarningIfGitWindowClosed()
@@ -218,7 +217,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
   override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     if (showGitBranchesBackup != null) {
-      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
+      val logUiProperties = VcsProjectLog.getInstance(project).mainUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
       logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!
     }
   }

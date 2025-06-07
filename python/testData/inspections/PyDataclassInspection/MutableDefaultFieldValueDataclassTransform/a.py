@@ -6,19 +6,19 @@ from decorator import my_dataclass, field
 
 @my_dataclass()
 class A:
-    a: list[int] = <error descr="Mutable default '[]' is not allowed. Use 'default_factory'">[]</error>
-    b: list[int] = <error descr="Mutable default 'list()' is not allowed. Use 'default_factory'">list()</error>
-    c: set[int] = <error descr="Mutable default '{1}' is not allowed. Use 'default_factory'">{1}</error>
-    d: set[int] = <error descr="Mutable default 'set()' is not allowed. Use 'default_factory'">set()</error>
+    a: list[int] = []
+    b: list[int] = list()
+    c: set[int] = {1}
+    d: set[int] = set()
     e: tuple[int, ...] = ()
     f: tuple[int, ...] = tuple()
     g: ClassVar[list[int]] = []
     h: ClassVar = []
-    i: dict[int, int] = <error descr="Mutable default '{1: 2}' is not allowed. Use 'default_factory'">{1: 2}</error>
-    j: dict[int, int] = <error descr="Mutable default 'dict()' is not allowed. Use 'default_factory'">dict()</error>
+    i: dict[int, int] = {1: 2}
+    j: dict[int, int] = dict()
     k = []
     l = list()
-    m: dict[int, int] = <error descr="Mutable default 'OrderedDict()' is not allowed. Use 'default_factory'">OrderedDict()</error>
+    m: dict[int, int] = OrderedDict()
     n: frozenset[int] = frozenset()
     o: list = field(default_factory=list)
     a2: type[list[int]] = list

@@ -1,7 +1,13 @@
 <!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="kotlin_multiplatform_project">
-<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M9 9H16V16H15V10H9V9ZM14 11H9V12H13V16H14V11ZM12 13H9V16H12V13Z" fill="#9AA7B0"/>
-<path id="Vector" d="M8 7.8L15 1H1V15H8V7.8Z" fill="#B99BF8"/>
-</g>
+    <g transform="scale(0.3333)">
+        <radialGradient id="a" cx="0" cy="0" gradientTransform="matrix(-43.5000071 43.5000071 -43.5000071 -43.5000071 43.5 4.5)"
+                        gradientUnits="userSpaceOnUse" r="1">
+            <stop offset="0" stop-color="#37bcfd"/>
+            <stop offset=".580197" stop-color="#7f52ff"/>
+            <stop offset="1" stop-color="#c711e1"/>
+        </radialGradient>
+        <path d="m0 22.5629v-22.4793688l22.4794 22.4793688zm0 2.8743v22.5628h.0572568l22.5628432-22.5628zm25.9906-3.4278 22.0094-22.0094h-44.01872zm.0287 4.0934-21.8972 21.8972h43.7943z"
+              fill="url(#a)"/>
+    </g>
 </svg>

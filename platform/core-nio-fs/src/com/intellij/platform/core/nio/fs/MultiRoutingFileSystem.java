@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.WatchService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,15 +19,15 @@ import java.util.function.BiFunction;
 /**
  * @see MultiRoutingFileSystemProvider
  */
-public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
+public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
   private final MultiRoutingFileSystemProvider myProvider;
   private final FileSystem myLocalFS;
 
-  private static class Backend {
-    @NotNull final String root;
+  private static final class Backend {
+    final @NotNull String root;
     final boolean prefix;
     final boolean caseSensitive;
-    @NotNull final FileSystem fileSystem;
+    final @NotNull FileSystem fileSystem;
 
     Backend(@NotNull String root, boolean prefix, boolean caseSensitive, @NotNull FileSystem fileSystem) {
       this.root = sanitizeRoot(root, caseSensitive);
@@ -45,7 +49,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
       return root;
     }
 
-    private static int trimEndSlashes(final @NotNull String root) {
+    private static int trimEndSlashes(@NotNull String root) {
       int i = root.length() - 1;
       while (i >= 0 && root.charAt(i) == '/') {
         --i;
@@ -90,7 +94,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   /**
    * @see MultiRoutingFileSystemProvider#computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
    */
-  void computeBackend(
+  @VisibleForTesting
+  public void computeBackend(
     @NotNull String root,
     boolean isPrefix,
     boolean caseSensitive,
@@ -98,13 +103,13 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   ) {
     myBackends.updateAndGet(oldList -> {
       String sanitizedRoot = Backend.sanitizeRoot(root, caseSensitive);
-      List<@NotNull Backend> newList = new ArrayList<>(oldList);
-      ListIterator<@NotNull Backend> iter = newList.listIterator();
+      List<Backend> newList = new ArrayList<>(oldList);
+      ListIterator<Backend> iterator = newList.listIterator();
       FileSystem newFs = null;
-      while (iter.hasNext()) {
-        Backend current = iter.next();
+      while (iterator.hasNext()) {
+        Backend current = iterator.next();
         if (current.root.equals(sanitizedRoot)) {
-          iter.remove();
+          iterator.remove();
           newFs = compute.apply(myProvider.myLocalProvider, current.fileSystem);
           if (newFs == null) {
             return newList;
@@ -120,7 +125,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
         }
       }
 
-      iter.add(new Backend(sanitizedRoot, isPrefix, caseSensitive, newFs));
+      iterator.add(new Backend(sanitizedRoot, isPrefix, caseSensitive, newFs));
 
       // To ease finding the appropriate backend for a specific root, the roots should be ordered by their lengths in the descending order.
       // This operation is quite rare and the list is quite small. There's no reason to deal with error-prone bisecting.
@@ -145,7 +150,9 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     if (MultiRoutingFileSystemProvider.ourForceDefaultFs) {
       return myLocalFS;
     }
-    return getBackend(root);
+    FileSystem result = getBackend(root);
+    myProvider.myPathSpy.accept(root, result != myLocalFS);
+    return result;
   }
 
   @Override
@@ -186,8 +193,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     return myLocalFS.supportedFileAttributeViews();
   }
 
-  @NotNull
-  FileSystem getBackend(@NotNull String path) {
+  @VisibleForTesting
+  public @NotNull FileSystem getBackend(@NotNull String path) {
     // It's important that the backends are sorted by the path length in the reverse order. Otherwise, prefixes won't work correctly.
     for (Backend backend : myBackends.get()) {
       if (backend.matchPath(path)) {
@@ -195,6 +202,25 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
       }
     }
     return myLocalFS;
+  }
+
+  /**
+   * Returns {@code true} if this path will be handled by a registered backend.
+   * It is reasonable to assume that if this method returns {@code false}, then the path will be handled by the local NIO file system.
+   * In some sense, this method is an approximation of a predicate "is this path remote?"
+   */
+  public boolean isRoutable(@NotNull Path path) {
+    Path root = path.getRoot();
+    if (root == null) {
+      return false;
+    }
+    String rootRepresentation = root.toString();
+    for (Backend backend : myBackends.get()) {
+      if (backend.matchPath(rootRepresentation)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

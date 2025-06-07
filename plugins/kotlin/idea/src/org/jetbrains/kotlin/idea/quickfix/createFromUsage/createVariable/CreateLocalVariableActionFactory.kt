@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateLocalVariableUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
@@ -58,7 +58,7 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
 
             val actualContainer = when (container) {
                 is KtBlockExpression -> container
-                else -> ConvertToBlockBodyIntention.Holder.convert(container as KtDeclarationWithBody, true).bodyExpression!!
+                else -> CreateLocalVariableUtil.convert(container as KtDeclarationWithBody, true).bodyExpression!!
             } as KtBlockExpression
 
             if (actualContainer != container) {

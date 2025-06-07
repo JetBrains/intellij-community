@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.*;
@@ -56,8 +56,8 @@ public class BaseCompletionService extends CompletionService {
   public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
 
-    if (apiCompletionProcess instanceof CompletionProcessEx) {
-      ((CompletionProcessEx)apiCompletionProcess).addAdvertisement(text, null);
+    if (apiCompletionProcess instanceof CompletionProcessEx processEx) {
+      processEx.addAdvertisement(text, null);
     }
   }
 
@@ -81,7 +81,8 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  protected CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
+  @ApiStatus.Internal
+  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
                                                 @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
@@ -172,7 +173,7 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public @NotNull CompletionResultSet caseInsensitive() {
       PrefixMatcher matcher = getPrefixMatcher();
-      boolean typoTolerant = matcher instanceof CamelHumpMatcher && ((CamelHumpMatcher)matcher).isTypoTolerant();
+      boolean typoTolerant = matcher instanceof CamelHumpMatcher camelHumpMatcher && camelHumpMatcher.isTypoTolerant();
       return withPrefixMatcher(createMatcher(matcher.getPrefix(), false, typoTolerant));
     }
 

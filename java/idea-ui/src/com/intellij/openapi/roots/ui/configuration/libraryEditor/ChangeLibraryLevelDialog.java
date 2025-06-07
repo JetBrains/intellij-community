@@ -94,8 +94,7 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     return myNameField.getText().trim();
   }
 
-  @Nullable
-  public String getDirectoryForFilesPath() {
+  public @Nullable String getDirectoryForFilesPath() {
     if (!myCopyFilesCheckBox.isSelected()) {
       return null;
     }

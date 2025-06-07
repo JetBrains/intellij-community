@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -22,9 +23,8 @@ public class JqlSimpleClauseImpl extends JqlTerminalClauseImpl implements JqlSim
     visitor.visitJqlSimpleClause(this);
   }
 
-  @NotNull
   @Override
-  public Type getType() {
+  public @NotNull Type getType() {
     if (findChildByType(JqlTokenTypes.IN_KEYWORD) != null) {
       return findChildByType(JqlTokenTypes.NOT_KEYWORD) != null ? Type.NOT_IN : Type.IN;
     }
@@ -41,9 +41,8 @@ public class JqlSimpleClauseImpl extends JqlTerminalClauseImpl implements JqlSim
   /**
    * Operand can be missing in malformed query.
    */
-  @Nullable
   @Override
-  public JqlOperand getOperand() {
+  public @Nullable JqlOperand getOperand() {
     return findChildByClass(JqlOperand.class);
   }
 }

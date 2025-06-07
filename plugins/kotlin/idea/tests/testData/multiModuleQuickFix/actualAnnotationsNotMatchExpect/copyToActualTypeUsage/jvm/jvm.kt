@@ -1,6 +1,6 @@
 // "Copy mismatched annotation 'Ann' from 'expect' to 'actual' declaration (may change semantics)" "true"
 // IGNORE_K1
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // FIR_COMPARISON
 // Diagnostic reporting on types is supported only starting from K2
 

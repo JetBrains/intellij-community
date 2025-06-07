@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,13 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtTreeVisitor
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 
 
 abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
@@ -92,7 +86,6 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
         fun Set<CallableId>.toShortNames() = mapTo(mutableSetOf()) { it.callableName.asString() }
 
-        context(KaSession)
         fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
             return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
         }

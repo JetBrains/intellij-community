@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
@@ -31,7 +32,8 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
+@ApiStatus.Internal
+public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
 
   public boolean CHECK_ACTIONS = true;
@@ -149,7 +151,7 @@ final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClas
     }
 
     final Query<PsiReference> search = ReferencesSearch.search(actionClass, actionClass.getUseScope());
-    for (PsiReference reference : search) {
+    for (PsiReference reference : search.asIterable()) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
 
       final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);

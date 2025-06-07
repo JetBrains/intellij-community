@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -52,10 +52,10 @@ import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -69,9 +69,9 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -348,7 +348,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonRunConfigurationExtensionsManager.Companion.getInstance()
       .attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         targetEnvironment.shutdown();
@@ -879,15 +879,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                               boolean shouldAddContentRoots,
                                                               boolean shouldAddSourceRoots,
                                                               boolean isDebug) {
-    final HashSet<String> pythonPath = Sets.newLinkedHashSet(collectPythonPath(module, shouldAddContentRoots, shouldAddSourceRoots));
 
-    if (isDebug && PythonSdkFlavor.getFlavor(sdkHome) instanceof JythonSdkFlavor) {
-      //that fixes Jython problem changing sys.argv on execfile, see PY-8164
-      pythonPath.add(PythonHelpersLocator.findPathStringInHelpers("pycharm"));
-      pythonPath.add(PythonHelpersLocator.findPathStringInHelpers("pydev"));
-    }
-
-    return pythonPath;
+    return Sets.newLinkedHashSet(collectPythonPath(module, shouldAddContentRoots, shouldAddSourceRoots));
   }
 
   private static @Nullable Module getModule(Project project, PythonRunParams config) {
@@ -1069,6 +1062,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                                        @NotNull Path scriptPath) {
     return PySdkTargetPaths.getTargetPathForPythonScriptExecution(myConfig.getProject(), myConfig.getSdk(), createRemotePathMapper(),
                                                                   scriptPath);
+  }
+
+  /**
+   * Decides whether the configuration should run.
+   * This check happens at the moment that the run configuration is set to run (e.g., when the
+   * user presses the green arrow button to run the configuration).
+   * @return Returns `true` if the configuration should be allowed to run, `false` otherwise.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  public boolean canRun() {
+    return true;
   }
 
   /**

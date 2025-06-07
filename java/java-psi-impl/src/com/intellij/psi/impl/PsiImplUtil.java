@@ -370,6 +370,9 @@ public final class PsiImplUtil {
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
+    if (aClass instanceof PsiImplicitClass) {
+      return new LocalSearchScope(aClass);
+    }
     if (aClass instanceof PsiAnonymousClass && !(aClass instanceof PsiEnumConstantInitializer &&
                                                  member instanceof PsiMethod &&
                                                  member.hasModifierProperty(PsiModifier.PUBLIC) &&
@@ -391,12 +394,13 @@ public final class PsiImplUtil {
 
     if (aClass != null) {
       PsiElement parent = aClass.getParent();
-      while (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+      while (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass) && !(parent instanceof PsiImplicitClass)) {
         parent = parent.getParent();
       }
       // members of local classes or of classes contained in anonymous or local classes have a small scope
       if (parent instanceof PsiAnonymousClass) return new LocalSearchScope(parent);
       if (parent instanceof PsiDeclarationStatement) return new LocalSearchScope(parent.getParent());
+      if (parent instanceof PsiImplicitClass) return new LocalSearchScope(parent);
     }
 
     PsiModifierList modifierList = (member instanceof PsiRecordComponent && aClass != null) ?

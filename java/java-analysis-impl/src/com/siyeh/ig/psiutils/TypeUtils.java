@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -247,9 +248,8 @@ public final class TypeUtils {
     return type;
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static String resolvedClassName(@Nullable PsiType type) {
+  public static @Nullable String resolvedClassName(@Nullable PsiType type) {
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass == null ? null : aClass.getQualifiedName();
   }
@@ -301,8 +301,7 @@ public final class TypeUtils {
    * @param type type to get the default value for
    * @return the textual representation of default value
    */
-  @NonNls
-  public static @NotNull String getDefaultValue(PsiType type) {
+  public static @NonNls @NotNull String getDefaultValue(PsiType type) {
     if (PsiTypes.intType().equals(type)) {
       return "0";
     }
@@ -322,11 +321,11 @@ public final class TypeUtils {
       return "(byte)0";
     }
     else if (PsiTypes.booleanType().equals(type)) {
-      return PsiKeyword.FALSE;
+      return JavaKeywords.FALSE;
     }
     else if (PsiTypes.charType().equals(type)) {
       return "'\0'";
     }
-    return PsiKeyword.NULL;
+    return JavaKeywords.NULL;
   }
 }

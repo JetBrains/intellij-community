@@ -3,11 +3,8 @@ package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
-import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -32,7 +29,6 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
 import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
-import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -60,11 +56,6 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
         override var addSampleCode by addSampleCodeProperty
 
-        override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
-            .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
-
-        override var generateOnboardingTips by generateOnboardingTipsProperty
-
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
                 checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
@@ -74,22 +65,10 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             }
         }
 
-        private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
-            builder.indent {
-                row {
-                    checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-                        .bindSelected(generateOnboardingTipsProperty)
-                        .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
-                        .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
-                }
-            }.enabledIf(addSampleCodeProperty)
-        }
-
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
-            setupSampleCodeWithOnBoardingTipsUI(builder)
             if (context.isCreatingNewProject) {
                 addMultiPlatformLink(builder)
             }
@@ -142,10 +121,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
 
             if (parent.addSampleCode) {
-                if (parent.generateOnboardingTips) {
-                    prepareKotlinSampleOnboardingTips(project)
-                }
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, parent.generateOnboardingTips, shouldOpenFile = false)
+                withKotlinSampleCode(project, SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldOpenFile = false)
             }
         }
     }

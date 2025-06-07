@@ -102,7 +102,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     assertTrue(trackerState().isEmpty())
 
     val file = projectRoot.findChild(fileName)!!
-    val indexFile = project.service<GitIndexFileSystemRefresher>().getFile(projectRoot, VcsUtil.getFilePath(file))!!
+    val indexFile = project.service<GitIndexFileSystemRefresher>().createFile(projectRoot, VcsUtil.getFilePath(file))!!
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
 
     runWithTrackerUpdate("setText") {

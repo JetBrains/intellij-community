@@ -33,8 +33,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     myFlags = flags;
   }
 
-  @NotNull
-  private static JavaImportStatementElementType getImportType(final byte flags) {
+  private static @NotNull JavaImportStatementElementType getImportType(final byte flags) {
     if (isStatic(flags)) return JavaStubElementTypes.IMPORT_STATIC_STATEMENT;
     if (isModule(flags)) return JavaStubElementTypes.IMPORT_MODULE_STATEMENT;
     return JavaStubElementTypes.IMPORT_STATEMENT;

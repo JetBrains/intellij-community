@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -15,8 +15,10 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
@@ -24,11 +26,12 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
-class TBItemButton extends TBItem {
+@ApiStatus.Internal
+public class TBItemButton extends TBItem {
   private static final int TEST_DELAY_MS = Integer.getInteger("touchbar.test.delay", 0);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Touchbar buttons updater", 2);
 
-  protected final @Nullable TouchBarStats.AnActionStats actionStats;
+  final @Nullable TouchBarStats.AnActionStats actionStats;
 
   private @Nullable String myText;
   private @Nullable String myHint;
@@ -75,7 +78,8 @@ class TBItemButton extends TBItem {
     }
   }
 
-  TBItemButton setIcon(Icon icon) {
+  @VisibleForTesting
+  public TBItemButton setIcon(Icon icon) {
     if (!Objects.equals(icon, originIcon) || isGetDisabledIconNeeded) {
       originIcon = icon;
       isGetDisabledIconNeeded = false;
@@ -136,7 +140,8 @@ class TBItemButton extends TBItem {
     }
   }
 
-  TBItemButton setText(String text) {
+  @VisibleForTesting
+  public TBItemButton setText(String text) {
     if (!Objects.equals(text, myText)) {
       myText = text;
       updateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
@@ -158,7 +163,8 @@ class TBItemButton extends TBItem {
     this.modality = modality;
   }
 
-  TBItemButton setAction(Runnable action, boolean executeOnEDT) {
+  @VisibleForTesting
+  public TBItemButton setAction(Runnable action, boolean executeOnEDT) {
     if (action == this.action && this.executeOnEdt == executeOnEDT) {
       return this;
     }
@@ -197,7 +203,8 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setWidth(int width) { return setLayout(width, 0, 2, 8); }
+  @VisibleForTesting
+  public TBItemButton setWidth(int width) { return setLayout(width, 0, 2, 8); }
 
   TBItemButton setLayout(int width, int widthFlags, int margin, int border) {
     if (width < 0) {
@@ -222,7 +229,8 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  void setToggle() { _setFlag(NSTLibrary.BUTTON_FLAG_TOGGLE, true); }
+  @VisibleForTesting
+  public void setToggle() { _setFlag(NSTLibrary.BUTTON_FLAG_TOGGLE, true); }
 
   void setColored() { _setFlag(NSTLibrary.BUTTON_FLAG_COLORED, true); }
 

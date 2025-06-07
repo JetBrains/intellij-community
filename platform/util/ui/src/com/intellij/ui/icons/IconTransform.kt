@@ -109,7 +109,7 @@ class IconTransform
       var contextClassLoader = patcher.getContextClassLoader(pathWithLeadingSlash, classLoader)
       if (contextClassLoader == null) {
         @Suppress("DEPRECATION")
-        contextClassLoader = patcher.getContextClass(pathWithLeadingSlash).getClassLoader()
+        contextClassLoader = patcher.getContextClass(pathWithLeadingSlash)?.getClassLoader()
       }
       return Pair(newPath, contextClassLoader)
     }

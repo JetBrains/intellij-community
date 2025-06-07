@@ -8,7 +8,7 @@ package com.intellij.platform.experiment.ab.impl.option
  *
  * The group size must be agreed with the analysts so that the result of the experiment is statistically significant.
  *
- * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.TOTAL_NUMBER_OF_GROUPS
+ * @see com.intellij.platform.experiment.ab.impl.experiment.TOTAL_NUMBER_OF_GROUPS
  */
 @JvmInline
 value class ABExperimentOptionGroupSize(val groupCount: Int) {

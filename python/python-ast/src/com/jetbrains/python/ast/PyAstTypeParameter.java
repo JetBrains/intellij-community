@@ -42,8 +42,7 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     }
   }
 
-  @Nullable
-  default PyAstExpression getBoundExpression() {
+  default @Nullable PyAstExpression getBoundExpression() {
     PsiElement element = StreamEx.of(getChildren())
       .findFirst(child -> {
         PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
@@ -56,8 +55,7 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     return null;
   }
 
-  @Nullable
-  default PyAstExpression getDefaultExpression() {
+  default @Nullable PyAstExpression getDefaultExpression() {
     PsiElement element = StreamEx.of(getChildren())
       .findFirst(child -> {
         PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
@@ -75,8 +73,7 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
    * <p>
    * The text is taken from stub if the stub is presented.
    */
-  @Nullable
-  default String getBoundExpressionText() {
+  default @Nullable String getBoundExpressionText() {
     PyAstExpression boundExpression = getBoundExpression();
     if (boundExpression != null) {
       return boundExpression.getText();
@@ -85,8 +82,7 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     return null;
   }
 
-  @Nullable
-  default String getDefaultExpressionText() {
+  default @Nullable String getDefaultExpressionText() {
     PyAstExpression defaultExpression = getDefaultExpression();
     if (defaultExpression != null) {
       return defaultExpression.getText();
@@ -95,8 +91,7 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     return null;
   }
 
-  @NotNull
-  default Kind getKind() {
+  default @NotNull Kind getKind() {
     String paramText = getText();
     if (paramText.startsWith("**")) {
       return Kind.ParamSpec;
@@ -108,15 +103,13 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
   }
 
   @Override
-  @Nullable
-  default String getName() {
+  default @Nullable String getName() {
     PsiElement identifier = getNameIdentifier();
     return identifier != null ? identifier.getText() : null;
   }
 
   @Override
-  @Nullable
-  default PsiElement getNameIdentifier() {
+  default @Nullable PsiElement getNameIdentifier() {
     ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     return nameNode != null ? nameNode.getPsi() : null;
   }

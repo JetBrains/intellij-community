@@ -84,7 +84,7 @@ public final class ShuffleNamesAction extends DumbAwareAction {
             }
           }
 
-          boolean isQuoted = quote.length() > 0;
+          boolean isQuoted = !quote.isEmpty();
           boolean isNumber = false;
           if (isQuoted || type.equals("ID") || type.equals("word") || type.contains("IDENT") && !"ts".equals(text) || //NON-NLS
               (isNumber = text.matches("[0-9]+"))) {

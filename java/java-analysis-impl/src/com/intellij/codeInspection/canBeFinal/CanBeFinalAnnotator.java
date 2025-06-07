@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +156,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                 instanceInitializerInitializedFields.remove(psiVariable);
               }
             }
-            List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
+            List<PsiMethod> redirectedConstructors = JavaPsiConstructorUtil.getChainedConstructors(constructor);
             if (redirectedConstructors.isEmpty()) {
               List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
               ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);

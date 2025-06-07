@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.Executor;
@@ -36,8 +36,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
     return TestHistoryConfiguration.getInstance(project).getIcon(name);
   }
 
-  @NotNull
-  private static @NlsSafe String getPresentableText(Project project, String name) {
+  private static @NotNull @NlsSafe String getPresentableText(Project project, String name) {
     String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(name);
     final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");
     if (lastIndexOf > 0) {
@@ -53,9 +52,8 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
     return nameWithoutExtension;
   }
 
-  @Nullable
   @Override
-  protected VirtualFile getFile(@NotNull Project project) {
+  protected @Nullable VirtualFile getFile(@NotNull Project project) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(TestStateStorage.getTestHistoryRoot(project).getPath() + "/" + myFileName);
   }
 }

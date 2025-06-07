@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
   public static final PyUnpackedTupleType UNSPECIFIED = new PyUnpackedTupleTypeImpl(Collections.singletonList(null), true);
@@ -22,12 +23,24 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
       if (elementTypes.size() != 1) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type can have only one type parameter");
       }
-      if (elementTypes.get(0) instanceof PyVariadicType) {
+      if (elementTypes.get(0) instanceof PyPositionalVariadicType) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type of a TypeVarTuple or another unpacked tuple type is now allowed");
       }
+      myElementTypes = new ArrayList<>(elementTypes);
+    } else {
+      myElementTypes = unpackElementTypes(elementTypes).toList();
     }
-    myElementTypes = new ArrayList<>(elementTypes);
     myIsHomogeneous = isUnbound;
+  }
+
+  private static @NotNull Stream<PyType> unpackElementTypes(@NotNull List<? extends PyType> types) {
+    return types.stream().flatMap(type -> {
+      if (type instanceof PyUnpackedTupleType unpackedTupleType && !unpackedTupleType.isUnbound()) {
+        return unpackElementTypes(unpackedTupleType.getElementTypes());
+      } else {
+        return Stream.of(type);
+      }
+    });
   }
 
   public static @NotNull PyUnpackedTupleType create(@NotNull List<? extends PyType> elementTypes) {
@@ -84,5 +97,13 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
     else {
       return PyTupleType.create(anchor, getElementTypes());
     }
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyUnpackedTupleType(this);
+    }
+    return visitor.visitPyType(this);
   }
 }

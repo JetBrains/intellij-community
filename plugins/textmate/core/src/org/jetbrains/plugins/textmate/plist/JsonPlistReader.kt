@@ -2,31 +2,31 @@ package org.jetbrains.plugins.textmate.plist
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
-import java.io.InputStream
 
-class JsonPlistReader : PlistReader {
+class JsonPlistReader : PlistReaderCore {
   companion object {
     @OptIn(ExperimentalSerializationApi::class)
-    val textmateJson by lazy {
+    val textmateJson: Json by lazy {
       Json {
         isLenient = true
         allowTrailingComma = true
+        allowComments = true
         ignoreUnknownKeys = true
       }
     }
   }
 
   @OptIn(ExperimentalSerializationApi::class)
-  override fun read(inputStream: InputStream): Plist {
-    val json = textmateJson.decodeFromStream(JsonElement.serializer(), inputStream) as JsonObject
+  override fun read(bytes: ByteArray): Plist {
+    val json = textmateJson.decodeFromString(JsonElement.serializer(), bytes.decodeToString()) as JsonObject
     val dict = readDict(json)
     return dict.value as Plist
   }
 
   private fun readDict(map: Map<String, JsonElement>): PListValue {
-    return PListValue.value(Plist.fromMap(map.mapValues {
-      readValue(it.value)
-    }), PlistValueType.DICT)
+    return PListValue.value(Plist(map.mapNotNull { (key, value) ->
+      readValue(value)?.let { key to it }
+    }.toMap()), PlistValueType.DICT)
   }
 
   private fun readValue(value: JsonElement): PListValue? {
@@ -39,9 +39,6 @@ class JsonPlistReader : PlistReader {
       }
       is JsonPrimitive -> {
         readBasicValue(value)
-      }
-      else -> {
-        error("Unexpected value $value")
       }
     }
   }

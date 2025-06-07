@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.icons.AllIcons;
@@ -14,6 +14,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -26,30 +27,26 @@ final class TestDataNavigationElementFactory {
   private TestDataNavigationElementFactory() {
   }
 
-  @NotNull
-  public static TestDataNavigationElement createForNonExistingFile(@NotNull Project project, @NotNull TestDataFile path) {
+  public static @NotNull TestDataNavigationElement createForNonExistingFile(@NotNull Project project, @NotNull TestDataFile path) {
     return new NonExistingTestDataFileNavigationElement(project, path);
   }
 
-  @NotNull
-  public static TestDataNavigationElement createForFile(@NotNull Project project, @NotNull TestDataFile file) {
+  public static @NotNull TestDataNavigationElement createForFile(@NotNull Project project, @NotNull TestDataFile file) {
     return new TestDataFileNavigationElement(project, file);
   }
 
-  @NotNull
-  public static TestDataNavigationElement createForGroup(@NotNull Project project, @NotNull TestDataGroupVirtualFile group) {
+  public static @NotNull TestDataNavigationElement createForGroup(@NotNull Project project, @NotNull TestDataGroupVirtualFile group) {
     return new TestDataGroupNavigationElement(project, group);
   }
 
-  @NotNull
-  public static TestDataNavigationElement createForCreateMissingFilesOption(@NotNull List<TestDataFile> filePaths) {
+  public static @NotNull TestDataNavigationElement createForCreateMissingFilesOption(@NotNull @Unmodifiable List<TestDataFile> filePaths) {
     return new CreateMissingTestDataFilesNavigationElement(filePaths);
   }
 
   private static final class CreateMissingTestDataFilesNavigationElement implements TestDataNavigationElement {
-    private final List<TestDataFile> myFilePaths;
+    private final @Unmodifiable List<TestDataFile> myFilePaths;
 
-    private CreateMissingTestDataFilesNavigationElement(List<TestDataFile> filePaths) {
+    private CreateMissingTestDataFilesNavigationElement(@Unmodifiable List<TestDataFile> filePaths) {
       myFilePaths = filePaths;
     }
 
@@ -88,9 +85,8 @@ final class TestDataNavigationElementFactory {
       return null;
     }
 
-    @NotNull
     @Override
-    public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
+    public @NotNull List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       return Collections.singletonList(new Pair<>(
         DevKitBundle.message("testdata.create.missing.files"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES));
     }
@@ -110,15 +106,13 @@ final class TestDataNavigationElementFactory {
       PsiNavigationSupport.getInstance().createNavigatable(project, myGroup, -1).navigate(true);
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return AllIcons.Nodes.TestSourceFolder;
     }
 
-    @NotNull
     @Override
-    public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
+    public @NotNull List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       VirtualFile beforeFile = myGroup.getBeforeFile();
       VirtualFile afterFile = myGroup.getAfterFile();
       String beforeName = beforeFile.getName();
@@ -177,15 +171,13 @@ final class TestDataNavigationElementFactory {
       TestDataUtil.openOrAskToCreateFile(project, myPath);
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return FileTypes.UNKNOWN.getIcon();
     }
 
-    @NotNull
     @Override
-    public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
+    public @NotNull List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath.getPath());
       Pair<String, SimpleTextAttributes>[] elements =
         new Pair[]{new Pair<>(myPath.getName() + FontUtil.spaceAndThinSpace(), SimpleTextAttributes.GRAYED_ATTRIBUTES),
@@ -209,17 +201,15 @@ final class TestDataNavigationElementFactory {
       TestDataUtil.openOrAskToCreateFile(project, myFile);
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       VirtualFile file = myFile.getVirtualFile();
       assert file != null;
       return file.getFileType().getIcon();
     }
 
-    @NotNull
     @Override
-    public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
+    public @NotNull List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       VirtualFile file = myFile.getVirtualFile();
       assert file != null;
       Pair<String, String> relativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, myFile.getVirtualFile());

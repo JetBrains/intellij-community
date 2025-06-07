@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 public class JavacOutputParser extends OutputParser {
   private final int myTabSize;
-  @NonNls private String WARNING_PREFIX = "warning:"; // default value
+  private @NonNls String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {
     myTabSize = CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
@@ -176,7 +176,7 @@ public class JavacOutputParser extends OutputParser {
     }
   }
 
-  private void addJavacPattern(@NonNls final String line) {
+  private void addJavacPattern(final @NonNls String line) {
     final int dividerIndex = line.indexOf(JavacResourcesReader.CATEGORY_VALUE_DIVIDER);
     if (dividerIndex < 0) {
       // by reports it may happen for some IBM JDKs (empty string?)
@@ -201,7 +201,7 @@ public class JavacOutputParser extends OutputParser {
       });
       case JavacResourcesReader.MSG_NOTE -> myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         @Override
-        protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
+        protected void doExecute(final String line, final @Nullable String filePath, final Callback callback) {
           final boolean fileExists = filePath != null &&
                                      ReadAction
                                        .compute(() -> LocalFileSystem.getInstance().findFileByPath(filePath) != null);
@@ -229,7 +229,7 @@ public class JavacOutputParser extends OutputParser {
   /**
    * made public for Tests, do not use this method directly
    */
-  public static Matcher createMatcher(@NonNls final String resourceBundleValue) {
+  public static Matcher createMatcher(final @NonNls String resourceBundleValue) {
     @NonNls String regexp = resourceBundleValue.replaceAll("([\\[\\]\\(\\)\\.\\*])", "\\\\$1");
     regexp = regexp.replaceAll("\\{\\d+\\}", "(.+)");
     return Pattern.compile(regexp, Pattern.CASE_INSENSITIVE).matcher("");

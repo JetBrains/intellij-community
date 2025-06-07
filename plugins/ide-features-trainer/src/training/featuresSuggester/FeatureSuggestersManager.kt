@@ -54,17 +54,22 @@ internal class FeatureSuggestersManager(private val project: Project, private va
 
   private fun processSuggester(suggester: FeatureSuggester, action: Action) {
     val suggestion = suggester.getSuggestion(action)
-    if (suggestion is PopupSuggestion) {
+    if (suggestion is UiSuggestion) {
       suggester.logStatisticsThatSuggestionIsFound(suggestion)
       if (suggester.isEnabled() && (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded())) {
-        suggestionPresenter.showSuggestion(project, suggestion, coroutineScope = coroutineScope)
+        when(suggestion) {
+          is PopupSuggestion ->
+            suggestionPresenter.showSuggestion(project, suggestion, coroutineScope = coroutineScope)
+          is CustomSuggestion ->
+            suggestion.activate()
+        }
         fireSuggestionFound(suggestion)
         FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
     }
   }
 
-  private fun fireSuggestionFound(suggestion: PopupSuggestion) {
+  private fun fireSuggestionFound(suggestion: UiSuggestion) {
     // send event for testing
     project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
   }

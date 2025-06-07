@@ -55,7 +55,7 @@ class RescanIndexesAction : RecoveryAction {
         return false;
       }
       val fileId = (it.file as VirtualFileWithId).id
-      if (fileBasedIndex.getIndexingState(it, stubIndex, indexingStamp) == FileIndexingState.UP_TO_DATE &&
+      if (fileBasedIndex.getIndexingState(it, stubIndex, indexingStamp).isUpToDate &&
           stubIndex.getIndexedFileData(fileId).isEmpty() &&
           isAbleToBuildStub(it.file)) {
         stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))

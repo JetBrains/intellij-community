@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -186,8 +186,7 @@ public final class MoveClassesOrPackagesImpl {
     return name;
   }
 
-  @Nullable
-  private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
+  private static @Nullable PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
     PsiDirectory commonDirectory = null;
 
     for (PsiElement movedElement : movedElements) {
@@ -267,8 +266,7 @@ public final class MoveClassesOrPackagesImpl {
     return initialTargetDirectory;
   }
 
-  @Nullable
-  public static PsiDirectory getContainerDirectory(final PsiElement psiElement) {
+  public static @Nullable PsiDirectory getContainerDirectory(final PsiElement psiElement) {
     if (psiElement instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage)psiElement).getDirectories();
       return directories.length == 1 ? directories[0] : null; //??

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.IfThenToSafeAccessFix
-import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
 import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationStrategy
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -45,16 +45,13 @@ internal class IfThenToSafeAccessInspection :
         if (data.negatedClause?.isNullExpression() == false) return false
 
         val condition = data.condition
-        if (condition is KtIsExpression && condition.typeReference == null) return false
-
-        // there are no usages of expression, except possibly at nested levels, which are currently not supported
-        if (data.checkedExpression !is KtThisExpression && IfThenTransformationUtils.collectTextBasedUsages(data).isEmpty()) return false
-
-        return true
+        return condition !is KtIsExpression || condition.typeReference != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
+    override fun KaSession.prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
+        val data = IfThenTransformationUtils.buildTransformationData(element) ?: return null
+        // there are no usages of expression, except possibly at nested levels, which are currently not supported
+        if (data.checkedExpression !is KtThisExpression && IfThenTransformationUtils.collectCheckedExpressionUsages(data).isEmpty()) return null
         return IfThenTransformationUtils.prepareIfThenTransformationStrategy(element, false)
     }
 

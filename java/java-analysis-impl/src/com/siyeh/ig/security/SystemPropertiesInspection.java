@@ -25,14 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public final class SystemPropertiesInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "AccessOfSystemProperties";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean isGetSystemProperty =
       ((Boolean)infos[0]).booleanValue();
     final boolean isIntegerGetInteger =
@@ -79,7 +77,7 @@ public final class SystemPropertiesInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       if (!"getProperty".equals(methodName)
           && !"getProperties".equals(methodName)
@@ -108,7 +106,7 @@ public final class SystemPropertiesInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       if (!"getInteger".equals(methodName)) {
         return false;
@@ -132,7 +130,7 @@ public final class SystemPropertiesInspection extends BaseInspection {
       PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       if (!"getBoolean".equals(methodName)) {
         return false;

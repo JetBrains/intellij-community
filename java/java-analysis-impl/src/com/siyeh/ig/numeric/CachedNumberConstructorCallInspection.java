@@ -53,8 +53,7 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
   public boolean reportOnlyWhenDeprecated = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
   }
@@ -95,14 +94,12 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", className + ".valueOf()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", ".valueOf()");
     }
 

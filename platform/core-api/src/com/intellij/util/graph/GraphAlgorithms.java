@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +18,7 @@ public abstract class GraphAlgorithms {
     return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
 
-  public abstract <Node> @NotNull Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
+  public abstract @Unmodifiable <Node> @NotNull Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
     @NotNull Graph<Node> graph,
     @NotNull Node start,
     @NotNull Node finish
@@ -29,12 +30,12 @@ public abstract class GraphAlgorithms {
     int levelBound
   );
 
-  public abstract @Nullable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
+  public abstract @Nullable @Unmodifiable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
-  public abstract @NotNull <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
+  public abstract @NotNull @Unmodifiable <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
                                                                       @NotNull ProgressIndicator progressIndicator);
 
-  public abstract @NotNull <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
+  public abstract @NotNull @Unmodifiable <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
 
   public abstract <Node> void iterateOverAllSimpleCycles(
     @NotNull Graph<Node> graph,

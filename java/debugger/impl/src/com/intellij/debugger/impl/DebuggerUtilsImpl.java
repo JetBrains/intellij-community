@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -25,6 +25,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.pom.java.LanguageLevel;
@@ -143,8 +145,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return PositionUtil.getContextElement(context);
   }
 
-  @NotNull
-  public static Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+  public static @NotNull Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
     PsiElement contextClass = null;
     PsiType contextType = null;
     if (!StringUtil.isEmpty(className)) {
@@ -249,40 +250,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     action.accept(wrapIntoThrowable ? new Throwable(e) : e);
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
-                                                              T defaultValue) throws E {
-    return suppressExceptions(supplier, defaultValue, true, null);
-  }
-
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
-                                                              T defaultValue,
-                                                              boolean ignorePCE,
-                                                              Class<E> rethrow) throws E {
-    try {
-      return supplier.compute();
-    }
-    catch (ProcessCanceledException e) {
-      if (!ignorePCE) {
-        throw e;
-      }
-    }
-    catch (VMDisconnectedException | ObjectCollectedException e) {
-      throw e;
-    }
-    catch (InternalException e) {
-      LOG.info(e);
-    }
-    catch (Exception | AssertionError e) {
-      if (rethrow != null && rethrow.isInstance(e)) {
-        throw e;
-      }
-      else {
-        LOG.error(e);
-      }
-    }
-    return defaultValue;
-  }
-
   public static @NlsContexts.Label String getConnectionWaitStatus(@NotNull RemoteConnection connection) {
     String connectionName = ObjectUtils.doIfNotNull(connection, DebuggerUtilsImpl::getConnectionDisplayName);
     return connection instanceof RemoteConnectionStub
@@ -305,12 +272,42 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     if (type == null) {
       return false;
     }
-    if (superType.equals(type) || CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
+    if (superType.equals(type) || (!(type instanceof InterfaceType) && CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name()))) {
       return true;
     }
-    if (type instanceof ArrayType) {
-      String superName = superType.name();
-      return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+    if (type instanceof ArrayType arrayType) {
+      if (superType instanceof ArrayType superArrayType) {
+        try {
+          Type componentType = arrayType.componentType();
+          Type superComponentType = superArrayType.componentType();
+          if (componentType instanceof PrimitiveType) {
+            return componentType.equals(superComponentType);
+          }
+          else {
+            if (superComponentType instanceof PrimitiveType) {
+              return false;
+            }
+            return instanceOf((ReferenceType)componentType, (ReferenceType)superComponentType);
+          }
+        }
+        catch (ClassNotLoadedException e) {
+          LOG.info(e);
+          return false;
+        }
+      }
+      else {
+        String superName = superType.name();
+        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+      }
+    }
+    if (superType instanceof ClassType) { // may check superclass only
+      if (type instanceof InterfaceType) {
+        return false;
+      }
+      if (type instanceof ClassType classType) {
+        ClassType superclass = classType.superclass();
+        return superclass != null && instanceOf(superclass, superType);
+      }
     }
     return supertypes(type).anyMatch(t -> instanceOf(t, superType));
   }
@@ -361,21 +358,111 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
-          LOG.error("Retries exhausted, apply suspend-all evaluation");
-          if (evaluationContext.getSuspendContext() instanceof SuspendContextImpl suspendContextImpl) {
-            VirtualMachineProxyImpl virtualMachineProxy = suspendContextImpl.getVirtualMachineProxy();
-            virtualMachineProxy.suspend();
-            try {
-              return processor.apply(valueComputable.compute());
-            } finally {
-              virtualMachineProxy.resume();
-            }
-          }
-          else {
-            throw oce;
-          }
+          return suspendAllAndEvaluate(valueComputable, processor, evaluationContext);
         }
       }
+      catch (EvaluateException e) {
+        if (e.getCause() instanceof ObjectCollectedException) {
+          if (--retries < 0) {
+            return suspendAllAndEvaluate(valueComputable, processor, evaluationContext);
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+  }
+
+  private static <R, T> R suspendAllAndEvaluate(@NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+                                                @NotNull Function<? super T, ? extends R> processor,
+                                                @NotNull EvaluationContext evaluationContext) throws EvaluateException {
+    if (Registry.is("debugger.collectible.value.retries.error", true)) {
+      LOG.error("Retries exhausted, applying suspend-all evaluation");
+    }
+    VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getSuspendContext().getVirtualMachineProxy();
+    virtualMachineProxy.suspend();
+    try {
+      return processor.apply(valueComputable.compute());
+    }
+    finally {
+      virtualMachineProxy.resume();
+    }
+  }
+
+  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
+
+  @Override
+  protected String getValueAsStringImpl(@NotNull EvaluationContext evaluationContext, @Nullable Value value) throws EvaluateException {
+    try {
+      if (value == null) {
+        return "null";
+      }
+      if (value instanceof StringReference) {
+        ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
+        return ((StringReference)value).value();
+      }
+      if (isInteger(value)) {
+        return String.valueOf(((PrimitiveValue)value).longValue());
+      }
+      if (value instanceof FloatValue) {
+        return String.valueOf(((FloatValue)value).floatValue());
+      }
+      if (value instanceof DoubleValue) {
+        return String.valueOf(((DoubleValue)value).doubleValue());
+      }
+      if (value instanceof BooleanValue) {
+        return String.valueOf(((PrimitiveValue)value).booleanValue());
+      }
+      if (value instanceof CharValue) {
+        return String.valueOf(((PrimitiveValue)value).charValue());
+      }
+      if (value instanceof ObjectReference objRef) {
+        // We can not pretty print arrays here, otherwise evaluation may fail unexpectedly, check IDEA-358202
+        //if (value instanceof ArrayReference arrayRef) {
+        //  final StringJoiner joiner = new StringJoiner(",", "[", "]");
+        //  for (final Value element : arrayRef.getValues()) {
+        //    joiner.add(getValueAsString(evaluationContext, element));
+        //  }
+        //  return joiner.toString();
+        //}
+
+        EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+        VirtualMachineProxyImpl virtualMachineProxy = evaluationContextImpl.getVirtualMachineProxy();
+        Method toStringMethod = virtualMachineProxy.getUserData(TO_STRING_METHOD_KEY);
+        if (toStringMethod == null) {
+          try {
+            ReferenceType refType = getObjectClassType(objRef.virtualMachine());
+            toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
+            virtualMachineProxy.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
+          }
+          catch (Exception ignored) {
+            throw EvaluateExceptionUtil.createEvaluateException(
+              JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+          }
+        }
+        if (toStringMethod == null) {
+          throw EvaluateExceptionUtil.createEvaluateException(
+            JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
+        }
+        Method finalToStringMethod = toStringMethod;
+        return processCollectibleValue(
+          () -> evaluationContextImpl.getDebugProcess()
+            .invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0, true),
+          result -> {
+            // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
+            // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
+            if (result == null) {
+              return "null";
+            }
+            return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
+          },
+          evaluationContext);
+      }
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
+    }
+    catch (ObjectCollectedException ignored) {
+      throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
 
@@ -407,8 +494,10 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return !allScope.equals(scope) ? allScope : null;
   }
 
-  @NotNull
-  public static String getIdeaRtPath() {
+  /**
+   * Searches for rt.jar path preferring the source version to the installation version.
+   */
+  public static @NotNull String getIdeaRtPath() {
     if (PluginManagerCore.isRunningFromSources()) {
       Class<?> aClass = CommandLineWrapper.class;
       try {
@@ -419,8 +508,8 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
           // prefer dir
           if (url.getProtocol().equals(URLUtil.FILE_PROTOCOL)) {
             String path = URLUtil.urlToFile(url).getPath();
-            String testPath = path.replace('\\', '/');
-            String testResourcePath = resourcePath.replace('\\', '/');
+            String testPath = FileUtil.toSystemIndependentName(path);
+            String testResourcePath = FileUtil.toSystemIndependentName(resourcePath);
             if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
               return path.substring(0, path.length() - resourcePath.length() - 1);
             }
@@ -461,14 +550,12 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     });
   }
 
-  @NotNull
-  public static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
+  public static @NotNull CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return getFirstApplicableRenderer(ContainerUtil.map(renderers, r -> r.isApplicableAsync(type)), 0, renderers);
   }
 
-  @NotNull
-  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
+  public static @NotNull CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     CompletableFuture<Boolean>[] futures = renderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
     return CompletableFuture.allOf(futures).thenApply(__ -> {
@@ -487,8 +574,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     });
   }
 
-  @Nullable
-  public static XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
+  public static @Nullable XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
     if (process instanceof DebugProcessImpl) {
       XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
       if (session instanceof XDebugSessionImpl) {
@@ -515,37 +601,16 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
   }
 
-  // do not catch VMDisconnectedException
-  public static <T, R> R computeSafeIfAny(ExtensionPointName<T> ep, @NotNull Function<? super T, ? extends R> processor) {
-    for (T t : ep.getIterable()) {
-      if (t == null) {
-        return null;
-      }
-
-      try {
-        R result = processor.apply(t);
-        if (result != null) {
-          return result;
-        }
-      }
-      catch (VMDisconnectedException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    return null;
-  }
-
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
                                                   @NotNull ClassType type,
                                                   @NotNull String methodName,
-                                                  @Nullable String signature) throws EvaluateException {
-    Method method = findMethodOrLogError(type, methodName, signature);
-    if (method == null) return null;
-    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, Collections.emptyList());
+                                                  @Nullable String signature,
+                                                  @NotNull List<Value> arguments) throws EvaluateException {
+    Method method = findMethod(type, methodName, signature);
+    if (method == null) {
+      throw new MethodNotFoundException("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
+    }
+    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, arguments);
   }
 
   public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
@@ -554,37 +619,49 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                                    @Nullable String signature,
                                                    @NotNull List<Value> arguments) throws EvaluateException {
     ReferenceType type = value.referenceType();
-    Method method = findMethodOrLogError(type, methodName, signature);
-    if (method == null) return null;
+    Method method = findMethod(type, methodName, signature);
+    if (method == null) {
+      throw new MethodNotFoundException("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
+    }
     return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, arguments);
   }
 
-  private static @Nullable Method findMethodOrLogError(ReferenceType type, @NotNull String methodName, @Nullable String signature) {
-    Method method = findMethod(type, methodName, signature);
-    if (method == null) {
-      LOG.error("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
-    }
-    return method;
-  }
-
+  /**
+   * Invokes a specified helper method from a given class
+   *
+   * @return the result of the invoked helper method as a {@link Value} object
+   * @throws HelperClassNotAvailableException if the helper class cannot be loaded
+   * @throws MethodNotFoundException if the method is not found in the helper class
+   * @throws EvaluateException any other exception during the evaluation
+   */
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
                                          Class<?> cls,
                                          String methodName,
                                          List<Value> arguments,
-                                         boolean keepResult) throws EvaluateException {
-    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);
-    if (helperClass != null) {
-      Method method = findMethod(helperClass, methodName, null);
-      if (method != null) {
-        DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-        ThrowableComputable<Value, EvaluateException> invoker =
-          () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-        return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
-      }
+                                         boolean keepResult,
+                                         String... additionalClassesToLoad) throws EvaluateException {
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
+    if (helperClass == null) {
+      throw new HelperClassNotAvailableException("Unable to load helper class " + cls.getName());
     }
-    return null;
+    Method method = findMethod(helperClass, methodName, null);
+    if (method == null) {
+      throw new MethodNotFoundException("Unable to find helper class " + cls.getName() + " method " + methodName);
+    }
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    ThrowableComputable<Value, EvaluateException> invoker =
+      () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+    return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
   }
 
+  /**
+   * Invokes a specified helper method from a given class
+   *
+   * @return the result of the invoked helper method as a {@link Value} object
+   * @throws HelperClassNotAvailableException if the helper class cannot be loaded
+   * @throws MethodNotFoundException if the method is not found in the helper class
+   * @throws EvaluateException any other exception during the evaluation
+   */
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
                                          Class<?> cls,
                                          String methodName,
@@ -592,13 +669,32 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return invokeHelperMethod(evaluationContext, cls, methodName, arguments, true);
   }
 
-  @Nullable
-  public static String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
+  public static @Nullable String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
     throws EvaluateException {
-    Value value = invokeHelperMethod(evaluationContext,
-                                     ExceptionDebugHelper.class,
-                                     "getThrowableText",
-                                     Collections.singletonList(exceptionObject));
-    return value != null ? ((StringReference)value).value() : null;
+    try {
+      Value value = invokeHelperMethod(evaluationContext,
+                                 ExceptionDebugHelper.class,
+                                 "getThrowableText",
+                                 Collections.singletonList(exceptionObject));
+      return ((StringReference)value).value();
+    }
+    catch (HelperClassNotAvailableException | MethodNotFoundException e) {
+      LOG.error(e);
+    }
+    // fallback to slow impl
+    return MethodInvokeUtils.getExceptionTextViaArray(evaluationContext, exceptionObject);
+  }
+
+  public static @Nullable ArrayReference invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
+                                                                      @NotNull EvaluationContextImpl evaluationContext,
+                                                                      boolean keepResult) throws EvaluateException {
+    if (instanceOf(exceptionObj.type(), "java.lang.Throwable")) {
+      Method method = findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
+      DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+      ThrowableComputable<ArrayReference, EvaluateException> invoker = () -> (ArrayReference)debugProcess.invokeInstanceMethod(
+        evaluationContext, exceptionObj, Objects.requireNonNull(method), Collections.emptyList(), 0, true);
+      return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
+    }
+    return null;
   }
 }

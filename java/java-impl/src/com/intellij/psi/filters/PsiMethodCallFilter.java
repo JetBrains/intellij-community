@@ -41,6 +41,7 @@ public class PsiMethodCallFilter implements ElementFilter {
     return PsiMethodCallExpression.class.isAssignableFrom(hintClass);
   }
 
+  @Override
   public @NonNls String toString() {
     return "methodcall(" + myClassName + "." + myMethodNames + ")";
   }

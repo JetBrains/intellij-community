@@ -50,6 +50,7 @@ public final class RestoreViewAction extends DumbAwareToggleAction implements Vi
     e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
   }
 
+  @Override
   public @NotNull Content getContent() {
     return myContent;
   }

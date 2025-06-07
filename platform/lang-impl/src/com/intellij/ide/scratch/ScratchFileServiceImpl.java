@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.FileIconPatcher;
@@ -66,6 +66,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -247,7 +248,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
   private static final class MyLanguages extends PerFileMappingsBase<String> {
     @Override
-    public @NotNull List<String> getAvailableValues() {
+    public @Unmodifiable @NotNull List<String> getAvailableValues() {
       return ContainerUtil.map(LanguageUtil.getFileLanguages(), Language::getID);
     }
 

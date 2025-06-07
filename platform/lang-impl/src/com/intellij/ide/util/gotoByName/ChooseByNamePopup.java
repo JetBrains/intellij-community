@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -25,16 +26,15 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
@@ -176,7 +176,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     String adText = getAdText();
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
-      builder.setFocusable(false)
+      builder.setFocusable(ScreenReader.isActive())
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
         .setCancelKeyEnabled(false)
@@ -189,6 +189,25 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setSize(preferredScrollPaneSize);
       myDropdownPopup.showInScreenCoordinates(layeredPane, location);
+      if (ScreenReader.isActive()) {
+        Window window = SwingUtilities.getWindowAncestor(myDropdownPopup.getContent());
+        window.setFocusableWindowState(true);
+        window.setFocusable(true);
+        window.setFocusTraversalKeysEnabled(false);
+        window.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {});
+        window.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyReleased(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_TAB) {
+              if (e.isShiftDown()) {
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+              } else {
+                IdeFocusManager.getInstance(myProject).requestFocus(myCheckBox.isVisible() ? myCheckBox : myTextField, true);
+              }
+            }
+          }
+        });
+      }
     }
     else {
       myDropdownPopup.setLocation(location);

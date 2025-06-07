@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ExceptionBreakpointPropertiesPanel
@@ -22,6 +8,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -47,16 +34,15 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
   //  return null;
   //}
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     myNotifyCaughtCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
     myNotifyUncaughtCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
     DialogUtil.registerMnemonic(myNotifyCaughtCheckBox);
     DialogUtil.registerMnemonic(myNotifyUncaughtCheckBox);
 
 
-    Box notificationsBox = Box.createVerticalBox();
+    JBBox notificationsBox = JBBox.createVerticalBox();
     JPanel _panel = new JPanel(new BorderLayout());
     _panel.add(myNotifyCaughtCheckBox, BorderLayout.NORTH);
     notificationsBox.add(_panel);

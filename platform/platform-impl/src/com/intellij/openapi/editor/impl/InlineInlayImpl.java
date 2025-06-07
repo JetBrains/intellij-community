@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -29,7 +29,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   }
 
   @Override
-  RangeMarkerTree<InlineInlayImpl<?>> getTree() {
+  public RangeMarkerTree<InlineInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myInlineElementsTree;
   }
 

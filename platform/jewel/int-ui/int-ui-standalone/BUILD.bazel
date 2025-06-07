@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.jewel.intUi.standalone` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "jewel-intUi-standalone_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "jewel-intUi-standalone",
+  module_name = "intellij.platform.jewel.intUi.standalone",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//libraries/skiko",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/ui",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/foundation",
+  ],
+  runtime_deps = [":jewel-intUi-standalone_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.intUi.standalone` end

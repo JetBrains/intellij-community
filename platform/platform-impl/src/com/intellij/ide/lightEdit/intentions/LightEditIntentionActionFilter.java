@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class LightEditIntentionActionFilter implements IntentionActionFilter {
   @Override
-  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-    if (file != null && LightEdit.owns(file.getProject())) {
+  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile) {
+    if (psiFile != null && LightEdit.owns(psiFile.getProject())) {
       IntentionAction originalIntentionAction = getOriginalAction(intentionAction);
       return originalIntentionAction instanceof LightEditCompatible;
     }

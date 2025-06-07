@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -30,15 +30,13 @@ import java.util.Objects;
 public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToThreadLocalIntention.class);
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return TypeMigrationBundle.message("convert.to.threadlocal.family.name");
   }
 
@@ -79,8 +77,8 @@ public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaret
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, file), PsiField.class);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, psiFile), PsiField.class);
     if (psiField == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = psiField.getType();
     if (type == PsiTypes.nullType()) return IntentionPreviewInfo.EMPTY;
@@ -95,8 +93,7 @@ public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaret
                                                "ThreadLocal<" + genericArg + "> " + fieldName + " = ThreadLocal.withInitial(...)");
   }
 
-  @Nullable
-  private static PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
+  private static @Nullable PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass threadLocalClass = psiFacade.findClass(ThreadLocal.class.getName(), GlobalSearchScope.allScope(project));
     if (threadLocalClass == null) {//show warning

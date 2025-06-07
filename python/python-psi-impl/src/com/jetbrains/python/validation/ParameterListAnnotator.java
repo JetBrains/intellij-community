@@ -15,13 +15,17 @@
  */
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.jetbrains.python.PyNamesKt.isPrivate;
 
 /**
  * Checks for anomalies in parameter lists of function declarations.
@@ -30,6 +34,8 @@ public class ParameterListAnnotator extends PyAnnotator {
   @Override
   public void visitPyParameterList(final @NotNull PyParameterList paramlist) {
     final LanguageLevel languageLevel = LanguageLevel.forElement(paramlist);
+    final var hasImplicit = paramlist.getParent() instanceof PyFunction function && PyFunctionImpl.isMethod(function);
+
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),
       new ParamHelper.ParamVisitor() {
@@ -37,12 +43,23 @@ public class ParameterListAnnotator extends PyAnnotator {
         boolean hadPositionalContainer = false;
         boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;
+        boolean hadKeyword = false;
         boolean hadSlash = false;
         boolean hadSingleStar = false;
         boolean hadParamsAfterSingleStar = false;
         int inTuple = 0;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
+          final var name = parameter.getName();
+          if (!hadKeyword && name != null && !(hasImplicit && first) && !isPrivate(name)) {
+            hadKeyword = true;
+          }
+          else if (hadKeyword && !hadPositionalContainer && !hadSingleStar && name != null && !hadSlash && isPrivate(name)) {
+            getHolder()
+              .newAnnotation(HighlightSeverity.WARNING, PyPsiBundle.message("ANN.positional.only.param.after.keyword"))
+              .range(parameter)
+              .create();
+          }
           if (parameterNames.contains(parameter.getName())) {
             markError(parameter, PyPsiBundle.message("ANN.duplicate.param.name"));
           }

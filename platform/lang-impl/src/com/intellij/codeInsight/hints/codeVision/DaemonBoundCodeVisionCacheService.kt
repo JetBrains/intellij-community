@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
@@ -40,8 +40,7 @@ internal class DaemonBoundCodeVisionCacheService {
 
   private fun getFileCache(editor: Editor): FileCache {
     // needed to avoid races in cache creation
-    val userDataHolderEx = editor as UserDataHolderEx
-    return userDataHolderEx.putUserDataIfAbsent(key, FileCache())
+    return ConcurrencyUtil.computeIfAbsent(editor, key) { FileCache() }
   }
 
   // methods are protected with application RW lock (update under W, get under R)

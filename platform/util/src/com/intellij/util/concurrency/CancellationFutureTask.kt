@@ -3,9 +3,9 @@ package com.intellij.util.concurrency
 
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
-import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.FutureTask
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A FutureTask, which cancels the given job when it's cancelled.
@@ -13,7 +13,9 @@ import java.util.concurrent.FutureTask
 @OptIn(InternalCoroutinesApi::class)
 internal class CancellationFutureTask<V>(
   private val job: Job,
-  callable: Callable<V>,
+  callable: ContextCallable<V>,
+  val executionTracker: AtomicBoolean,
+  val context: ChildContext,
 ) : FutureTask<V>(callable) {
 
   init {
@@ -27,8 +29,12 @@ internal class CancellationFutureTask<V>(
   }
 
   override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+    val isCurrentlyRunning = executionTracker.getAndSet(true)
     val result = super.cancel(mayInterruptIfRunning)
     job.cancel(null)
+    if (!isCurrentlyRunning) {
+      context.cancelAllIntelliJElements()
+    }
     return result
   }
 }

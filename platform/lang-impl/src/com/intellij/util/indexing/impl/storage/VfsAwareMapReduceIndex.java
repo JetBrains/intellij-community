@@ -204,39 +204,42 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   }
 
   @Override
-  public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    FileIndexingState baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, indexId());
-    if (baseState != FileIndexingState.UP_TO_DATE) {
+  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    FileIndexingStateWithExplanation baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, indexId());
+    if (baseState.updateRequired()) {
       return baseState;
     }
 
-    if (mySubIndexerRetriever == null) return FileIndexingState.UP_TO_DATE;
+    if (mySubIndexerRetriever == null) return FileIndexingStateWithExplanation.upToDate();
 
     if (!(file instanceof FileContent)) {
       if (((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
-        FileIndexingState indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
+        FileIndexingStateWithExplanation indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
         // baseState == UP_TO_DATE => no need to reindex this file
-        return indexConfigurationState == FileIndexingState.OUT_DATED ? FileIndexingState.OUT_DATED : FileIndexingState.UP_TO_DATE;
+        return indexConfigurationState.isIndexedButOutdated()
+               ? FileIndexingStateWithExplanation.outdated(
+          () -> "indexConfigurationState is outdated: " + indexConfigurationState.getExplanationAsString())
+               : FileIndexingStateWithExplanation.upToDate();
       }
     }
 
     try {
-      FileIndexingState subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
-      if (subIndexerState == FileIndexingState.UP_TO_DATE) {
+      FileIndexingStateWithExplanation subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
+      if (subIndexerState.isUpToDate()) {
         if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
           setIndexConfigurationUpToDate(fileId, file);
         }
-        return FileIndexingState.UP_TO_DATE;
+        return FileIndexingStateWithExplanation.upToDate();
       }
-      if (subIndexerState == FileIndexingState.NOT_INDEXED) {
+      if (subIndexerState.isNotIndexed()) {
         // baseState == UP_TO_DATE => no need to reindex this file
-        return FileIndexingState.UP_TO_DATE;
+        return FileIndexingStateWithExplanation.upToDate();
       }
       return subIndexerState;
     }
     catch (IOException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("IOException");
     }
   }
 
@@ -253,8 +256,8 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     return false;
   }
 
-  protected FileIndexingState isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    return FileIndexingState.OUT_DATED;
+  protected FileIndexingStateWithExplanation isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+    return FileIndexingStateWithExplanation.outdated("default implementation");
   }
 
   protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) { }

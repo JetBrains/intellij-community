@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +40,10 @@ public interface PyTargetExpressionStub
 
   @Nullable
   QualifiedName getInitializer();
+
+  @ApiStatus.Internal
+  @Nullable
+  PyLiteralKind getAssignedLiteralKind();
 
   boolean isQualified();
 

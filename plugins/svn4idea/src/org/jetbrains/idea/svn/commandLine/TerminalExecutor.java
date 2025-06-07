@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.CommandLineUtil;
@@ -54,18 +40,16 @@ public class TerminalExecutor extends CommandExecutor {
     super.startHandlingStreams();
   }
 
-  @NotNull
   @Override
-  protected SvnProcessHandler createProcessHandler() {
+  protected @NotNull SvnProcessHandler createProcessHandler() {
     return new TerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), false);
   }
 
   /**
    * TODO: remove this when separate streams for output and errors are implemented for Unix.
    */
-  @NotNull
   @Override
-  public ByteArrayOutputStream getBinaryOutput() {
+  public @NotNull ByteArrayOutputStream getBinaryOutput() {
     if (this instanceof WinTerminalExecutor) {
       return super.getBinaryOutput();
     }
@@ -78,27 +62,23 @@ public class TerminalExecutor extends CommandExecutor {
     return result;
   }
 
-  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() {
+  protected @NotNull GeneralCommandLine createCommandLine() {
     return new PtyCommandLine();
   }
 
-  @NotNull
   @Override
-  protected Process createProcess() throws ExecutionException {
+  protected @NotNull Process createProcess() throws ExecutionException {
     List<String> parameters = escapeArguments(buildParameters());
 
     return createProcess(parameters);
   }
 
-  @NotNull
-  protected List<String> buildParameters() {
+  protected @NotNull List<String> buildParameters() {
     return CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList());
   }
 
-  @NotNull
-  protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
+  protected @NotNull Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
     try {
       return ((PtyCommandLine)myCommandLine).withConsoleMode(false).startProcessWithPty(parameters);
     }
@@ -114,8 +94,7 @@ public class TerminalExecutor extends CommandExecutor {
     LOG.info("Terminal output " + ((TerminalProcessHandler)myHandler).getTerminalOutput());
   }
 
-  @NotNull
-  protected List<String> escapeArguments(@NotNull List<String> arguments) {
+  protected @NotNull List<String> escapeArguments(@NotNull List<String> arguments) {
     return arguments;
   }
 }

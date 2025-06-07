@@ -1,6 +1,5 @@
 fun localFun() { /// M
-    // We don't support function breakpoints for local functions yet
-    fun local() { /// L
+    fun local() { /// L, M
         println() /// L
     } /// L
 } /// L
@@ -35,5 +34,14 @@ fun lambdaLiteralOneLine() { /// M
 } /// L
 
 fun defaultArgumentLambda() { /// M
-    fun local(block: () -> Unit = { println() }) {} /// *, L, λ
+    fun local(block: () -> Unit = { println() }) {} /// *, L, M, λ
+} /// L
+
+fun localClass() { /// M
+    class Local { /// M
+        fun foo() { /// L, M
+            println() /// L
+        } /// L
+    }
+    Local().foo() /// L
 } /// L

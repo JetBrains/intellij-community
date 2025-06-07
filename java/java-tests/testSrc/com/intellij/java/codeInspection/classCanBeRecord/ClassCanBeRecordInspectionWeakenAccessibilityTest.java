@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true)};
+    return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.SHOW_AFFECTED_MEMBERS, true)};
   }
 
   @Override
@@ -24,5 +25,14 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
   @Override
   protected String getBasePath() {
     return "/inspection/classCanBeRecord/weakenAccessibility";
+  }
+
+  @Override
+  public void runSingle() throws Throwable {
+    // Run and abort (because of conflicts), and then verify that no content was changed. See IDEA-371645.
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, () -> super.runSingle());
+    checkResultByFile(getTestName(false) + ".java", getBasePath() + "/before" + getTestName(false), false);
+    
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }

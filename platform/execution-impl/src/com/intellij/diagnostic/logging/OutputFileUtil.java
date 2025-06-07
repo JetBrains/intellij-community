@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -35,7 +35,7 @@ public final class OutputFileUtil {
   private OutputFileUtil() {
   }
 
-  public static File getOutputFile(final @NotNull RunConfigurationBase configuration) {
+    public static File getOutputFile(final @NotNull RunConfigurationBase configuration) {
     String outputFilePath = configuration.getOutputFilePath();
     if (outputFilePath != null) {
       final String filePath = FileUtil.toSystemDependentName(outputFilePath);
@@ -58,7 +58,7 @@ public final class OutputFileUtil {
 
     final File file = getOutputFile(configuration);
     if (file != null) {
-      startedProcess.addProcessListener(new ProcessAdapter() {
+      startedProcess.addProcessListener(new ProcessListener() {
         private PrintStream myOutput;
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {

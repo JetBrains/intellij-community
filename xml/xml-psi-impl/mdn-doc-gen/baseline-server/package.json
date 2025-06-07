@@ -1,0 +1,14 @@
+{
+  "name": "baseline-server",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "compute-baseline": "0.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.10.0"
+  }
+}

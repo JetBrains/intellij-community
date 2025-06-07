@@ -1,0 +1,3 @@
+// My: to be implemented
+// DISABLE_ERRORS
+expect enum class <selection><caret></selection>My { FIRST, SECOND, LAST }

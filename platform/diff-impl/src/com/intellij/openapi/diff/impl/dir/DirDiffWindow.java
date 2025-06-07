@@ -17,15 +17,14 @@ public interface DirDiffWindow {
 
 
   class Dialog implements DirDiffWindow {
-    @NotNull private final DirDiffDialog myDialog;
+    private final @NotNull DirDiffDialog myDialog;
 
     public Dialog(@NotNull DirDiffDialog dialog) {
       myDialog = dialog;
     }
 
-    @NotNull
     @Override
-    public Disposable getDisposable() {
+    public @NotNull Disposable getDisposable() {
       return myDialog.getDisposable();
     }
 
@@ -36,15 +35,14 @@ public interface DirDiffWindow {
   }
 
   class Frame implements DirDiffWindow {
-    @NotNull private final DirDiffFrame myFrame;
+    private final @NotNull DirDiffFrame myFrame;
 
     public Frame(@NotNull DirDiffFrame frame) {
       myFrame = frame;
     }
 
-    @NotNull
     @Override
-    public Disposable getDisposable() {
+    public @NotNull Disposable getDisposable() {
       return myFrame;
     }
 

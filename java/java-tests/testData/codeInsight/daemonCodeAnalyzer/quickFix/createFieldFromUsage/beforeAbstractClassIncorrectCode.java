@@ -1,4 +1,4 @@
-// "Create field 'x' in 'SampleClass'" "false"
+// "Create field 'x' in 'SampleClass'" "true-preview"
 
 abstract public class SampleClass {
 

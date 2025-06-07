@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler.computePresentationInBackground
@@ -27,7 +27,7 @@ abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixt
         val declarationAtCaret = myFixture.elementAtCaret.parentOfType<KtDeclaration>(withSelf = true)
             ?: error("No declaration found at caret")
 
-        val result = ActionUtil.underModalProgress(project, "") { DefinitionsScopedSearch.search(declarationAtCaret).toList() }
+        val result = ActionUtil.underModalProgress(project, "") { DefinitionsScopedSearch.search(declarationAtCaret).asIterable().toList() }
         val hasDifferentNames = result.mapNotNull { (it as? PsiNamedElement)?.name }.distinct().size > 1
         val presentations = computePresentationInBackground(project, result.toTypedArray(), hasDifferentNames)
         val actual = render(presentations)

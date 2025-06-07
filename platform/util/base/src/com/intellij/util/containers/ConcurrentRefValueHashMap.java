@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -17,7 +19,8 @@ import java.util.function.BiConsumer;
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+@ApiStatus.Internal
+public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V>, ReferenceQueueable {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
   private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super K> myEvictionListener;
@@ -35,7 +38,10 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   // returns true if some refs were tossed
-  boolean processQueue() {
+  @Override
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public boolean processQueue() {
     boolean processed = false;
 
     while (true) {

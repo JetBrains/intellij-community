@@ -1,7 +1,6 @@
-// ERROR: Initializer type mismatch: expected 'kotlin.Int', actual 'kotlin.Unit'.
+// ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 // ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
-// ERROR: Argument type mismatch: actual type is 'kotlin.Unit', but 'kotlin.Int' was expected.
-// ERROR: Type mismatch: inferred type is 'kotlin.Unit', but 'kotlin.Int' was expected.
+// ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
 object C {
     @JvmStatic
     fun main(args: Array<String>) {

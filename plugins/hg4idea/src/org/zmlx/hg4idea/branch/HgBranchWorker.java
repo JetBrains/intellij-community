@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -31,19 +31,18 @@ import java.util.List;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.COMPARE_WITH_BRANCH_ERROR;
 
 public class HgBranchWorker {
-  private final static String CURRENT_REVISION = ".";
+  private static final String CURRENT_REVISION = ".";
   private static final Logger LOG = Logger.getInstance(HgBranchWorker.class);
-  @NotNull private final Project myProject;
-  @SuppressWarnings("unused")
-  @NotNull private final ProgressIndicator myIndicator;
+  private final @NotNull Project myProject;
+  @SuppressWarnings("unused") private final @NotNull ProgressIndicator myIndicator;
 
   HgBranchWorker(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myIndicator = indicator;
   }
 
-  public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
-                      @NotNull final HgRepository selectedRepository) {
+  public void compare(final @NotNull String branchName, final @NotNull List<HgRepository> repositories,
+                      final @NotNull HgRepository selectedRepository) {
     try {
       final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
       ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
@@ -67,8 +66,7 @@ public class HgBranchWorker {
     }
   }
 
-  @NotNull
-  private static String getCurrentBranchOrRev(@NotNull Collection<HgRepository> repositories) {
+  private static @NotNull String getCurrentBranchOrRev(@NotNull Collection<HgRepository> repositories) {
     String currentBranch;
     if (repositories.size() > 1) {
       HgMultiRootBranchConfig multiRootBranchConfig = new HgMultiRootBranchConfig(repositories);
@@ -82,8 +80,7 @@ public class HgBranchWorker {
     return currentBranch == null ? CURRENT_REVISION : currentBranch;
   }
 
-  @NotNull
-  private CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) throws VcsException {
+  private @NotNull CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) throws VcsException {
     CommitCompareInfo compareInfo = new CommitCompareInfo();
     for (HgRepository repository : repositories) {
       List<VcsFullCommitDetails> headToBranch = loadCommitsBetween(repository, CURRENT_REVISION, branchName);
@@ -94,14 +91,12 @@ public class HgBranchWorker {
     return compareInfo;
   }
 
-  @NotNull
-  private List<VcsFullCommitDetails> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
+  private @NotNull List<VcsFullCommitDetails> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
     List<String> parameters = Arrays.asList("-r", "reverse(\"" + toRev + "\"%\"" + fromRev + "\")");
     return HgHistoryUtil.history(myProject, repository.getRoot(), -1, parameters, true);
   }
 
-  @NotNull
-  private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) throws VcsException {
+  private static @NotNull Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) throws VcsException {
     // return diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
     HgRevisionNumber branchRevisionNumber = HgCompareWithBranchAction.getBranchRevisionNumber(repository, branchName);
     VirtualFile root = repository.getRoot();

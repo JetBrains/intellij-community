@@ -10,6 +10,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -17,13 +18,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.settingLink;
 
+@ApiStatus.Internal
 public final class LongLineInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<LongLineInspectionPolicy> POLICY_EP_NAME = ExtensionPointName.create("com.intellij.longLineInspectionPolicy");
+
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(settingLink(LangBundle.message("link.label.edit.code.style.settings"), CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
@@ -46,8 +51,8 @@ public final class LongLineInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        final TextRange range = restrictRange.intersection(file.getTextRange());
+      public void visitFile(@NotNull PsiFile psiFile) {
+        final TextRange range = restrictRange.intersection(psiFile.getTextRange());
         if (range == null || range.isEmpty()) return;
 
         int line = document.getLineNumber(range.getStartOffset());
@@ -64,7 +69,7 @@ public final class LongLineInspection extends LocalInspectionTool {
               String message =
                 LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin);
               final TextRange problemRange = new TextRange(i, lineEnd);
-              final PsiElement element = findElementInRange(file, problemRange);
+              final PsiElement element = findElementInRange(psiFile, problemRange);
               if (!ignoreFor(element)) {
                 holder.registerProblem(element, problemRange.shiftLeft(element.getTextRange().getStartOffset()), message);
               }
@@ -88,6 +93,6 @@ public final class LongLineInspection extends LocalInspectionTool {
 
   private static boolean ignoreFor(@Nullable PsiElement element) {
     if (element == null) return true;
-    return ContainerUtil.exists(LongLineInspectionPolicy.EP_NAME.getExtensionList(), policy -> policy.ignoreLongLineFor(element));
+    return ContainerUtil.exists(POLICY_EP_NAME.getExtensionList(), policy -> policy.ignoreLongLineFor(element));
   }
 }

@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.InternalFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
@@ -20,9 +18,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.FilesScanExecutor.runOnAllThreads
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.TaskFactory
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
@@ -34,8 +30,9 @@ import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -51,11 +48,13 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
@@ -116,10 +115,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
           }
         }
         else {
-          val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(event.childName)
-          val isProjectOrWorkspaceFile = fileType is InternalFileType ||
-                                         VfsUtilCore.findContainingDirectory(event.parent,
-                                                                             Project.DIRECTORY_STORE_FOLDER) != null
+          val isProjectOrWorkspaceFile = ProjectCoreUtil.isProjectOrWorkspaceFile(event.parent, event.childName)
           if (!isProjectOrWorkspaceFile) {
             createRecursivePushTask(event, pushers)?.let { recursiveTask ->
               delayedTasks.add(TaskFactory { listOf(recursiveTask) })
@@ -235,9 +231,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       try {
         coroutineScope {
           task.getTasks().forEachConcurrent(SCANNING_PARALLELISM) { subtask ->
-            blockingContext {
-              subtask.run()
-            }
+            subtask.run()
           }
         }
         hadTasks = true
@@ -314,6 +308,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
   }
 
+  @RequiresReadLock
   private fun doApplyPushersToFile(fileOrDir: VirtualFile,
                                    pushers: List<FilePropertyPusher<*>>,
                                    moduleValues: Array<Any?>?) {
@@ -513,7 +508,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
 
     private fun reloadPsi(file: VirtualFile, project: Project) {
-      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx
       if (fileManager.findCachedViewProvider(file) != null) {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.disposed
         ) { WriteAction.run<RuntimeException> { fileManager.forceReload(file) } }

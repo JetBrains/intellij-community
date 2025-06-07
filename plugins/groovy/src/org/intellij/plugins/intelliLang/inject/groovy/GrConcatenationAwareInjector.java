@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -42,7 +41,7 @@ import java.util.*;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
@@ -57,9 +56,10 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
                                       List<InjectionInfo> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
-        InjectorUtils.registerInjection(language, file, list, registrar);
-        InjectorUtils.registerSupport(support, settingsAvailable, list.get(0).host(), language);
-        InjectorUtils.putInjectedFileUserData(list.get(0).host(), language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
+        InjectorUtils.registerInjection(language, file, list, registrar, registrar -> {
+          InjectorUtils.registerSupport(registrar, support, settingsAvailable);
+          registrar.frankensteinInjection(unparsable);
+        });
       }
 
       @Override
@@ -77,8 +77,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }.processInjections();
   }
 
-  @NotNull
-  private static String getStringPresentation(@Nullable PsiElement operand) {
+  private static @NotNull String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }

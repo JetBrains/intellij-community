@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -14,9 +14,9 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -110,18 +109,25 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       setupNewProject(project);
     }
 
+    // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+    // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+    StartupManager.getInstance(project).runAfterOpened(
+      () -> postCommit(project, root)
+    );
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
-      configure(project, root);
+      waitForSdkDownload();
+      configureProject(project, projectDir);
     });
   }
 
-  private void configure(Project project, VirtualFile root) {
-    if (myEnvironmentForm != null) {
-      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-    }
-
+  private void waitForSdkDownload() {
     var future = sdkDownloadedFuture;
-    if (null != future) {
+    if (future != null) {
       try {
         future.get(); // maven sync uses project JDK
       }
@@ -129,10 +135,18 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
         MavenLog.LOG.error(e);
       }
     }
+  }
 
-    new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                 myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
-                                 MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    if (myEnvironmentForm != null) {
+      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+    }
+
+    new MavenModuleBuilderHelper(
+      myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+      myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+      MavenProjectBundle.message("command.name.create.new.maven.module")
+    ).configure(project, projectDir, false);
   }
 
   protected static void setupNewProject(Project project) {
@@ -312,9 +326,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return "Maven";
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
     if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
       nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
@@ -325,18 +338,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return super.modifySettingsStep(settingsStep);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
-  }
-
-  @Override
-  public @Nullable Consumer<Module> createModuleConfigurator() {
-    return module -> {
-      VirtualFile root = ModuleRootManager.getInstance(module).getContentEntries()[0].getFile();
-      configure(module.getProject(), root);
-    };
   }
 }

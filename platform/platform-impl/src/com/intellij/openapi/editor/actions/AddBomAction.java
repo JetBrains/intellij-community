@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,14 +17,7 @@ import java.nio.charset.Charset;
 /**
  * Adds <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> to files with UTF-XXX encoding.
  */
-@ApiStatus.Internal
-public final class AddBomAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(AddBomAction.class);
-
-  public AddBomAction() {
-    super(IdeBundle.messagePointer("add.BOM"));
-  }
-
+final class AddBomAction extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -67,7 +59,7 @@ public final class AddBomAction extends AnAction implements DumbAware {
       WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithAddedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred in file " + virtualFile, ex);
+      Logger.getInstance(AddBomAction.class).warn("Unexpected exception occurred in file " + virtualFile, ex);
     }
   }
 }

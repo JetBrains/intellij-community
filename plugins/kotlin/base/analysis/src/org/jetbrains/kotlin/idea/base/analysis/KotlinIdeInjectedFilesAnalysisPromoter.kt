@@ -6,6 +6,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter.Companion.EP_NAME
 
 /**
@@ -21,7 +22,8 @@ interface KotlinIdeInjectedFilesAnalysisPromoter {
     fun shouldRunOnlyEssentialHighlightingForInjectedFile(psiFile: PsiFile): Boolean
 
     companion object {
-        internal val EP_NAME: ExtensionPointName<KotlinIdeInjectedFilesAnalysisPromoter> =
+        @VisibleForTesting
+        val EP_NAME: ExtensionPointName<KotlinIdeInjectedFilesAnalysisPromoter> =
             ExtensionPointName.Companion.create("org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider")
     }
 }

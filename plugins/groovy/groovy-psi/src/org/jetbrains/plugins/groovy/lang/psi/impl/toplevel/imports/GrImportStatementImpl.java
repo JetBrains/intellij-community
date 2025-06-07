@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
@@ -48,8 +48,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return "Import statement";
   }
 
-  @Nullable
-  private PsiClass resolveQualifier() {
+  private @Nullable PsiClass resolveQualifier() {
     return CachedValuesManager.getCachedValue(this, () -> {
       GrCodeReferenceElement reference = getImportReference();
       GrCodeReferenceElement qualifier = reference == null ? null : reference.getQualifier();
@@ -64,9 +63,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
-  @Nullable
   @Override
-  public String getImportFqn() {
+  public @Nullable String getImportFqn() {
     GrImportStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.getFqn();
@@ -76,8 +74,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   @Override
-  @Nullable
-  public String getImportedName() {
+  public @Nullable String getImportedName() {
     if (isOnDemand()) return null;
 
     GrImportStatementStub stub = getStub();
@@ -133,8 +130,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   @Override
-  @NotNull
-  public GrModifierList getAnnotationList() {
+  public @NotNull GrModifierList getAnnotationList() {
     GrImportStatementStub stub = getStub();
     if (stub != null) {
       return Objects.requireNonNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
@@ -142,9 +138,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return findNotNullChildByClass(GrModifierList.class);
   }
 
-  @Nullable
   @Override
-  public PsiClass resolveTargetClass() {
+  public @Nullable PsiClass resolveTargetClass() {
     final GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return null;
 
@@ -159,15 +154,13 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     return resolved instanceof PsiClass ? (PsiClass)resolved : null;
   }
 
-  @Nullable
   @Override
-  public GrImportAlias getAlias() {
+  public @Nullable GrImportAlias getAlias() {
     return findChildByClass(GrImportAlias.class);
   }
 
-  @Nullable
   @Override
-  public GroovyImport getImport() {
+  public @Nullable GroovyImport getImport() {
     return createImportFromStatement(this);
   }
 }

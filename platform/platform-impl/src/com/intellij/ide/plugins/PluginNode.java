@@ -33,10 +33,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private boolean licenseOptional;
   private String version;
   private String vendor;
-  private String organization;
-  private String verifiedName;
-  private boolean verified;
-  private boolean trader;
+  private @Nullable PluginNodeVendorDetails vendorDetails = null;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -115,7 +112,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #getDefaultTrialPeriod()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Integer getTrialPeriod() {
     return defaultTrialPeriod;
   }
@@ -123,7 +120,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTrialPeriod(@Nullable Integer trialPeriod) {
     this.defaultTrialPeriod = trialPeriod;
   }
@@ -240,37 +237,29 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.vendor = vendor;
   }
 
+  @ApiStatus.Internal
+  public @Nullable PluginNodeVendorDetails getVendorDetails() {
+    return vendorDetails;
+  }
+
+  @ApiStatus.Internal
+  public void setVendorDetails(@Nullable PluginNodeVendorDetails vendorDetails) {
+    this.vendorDetails = vendorDetails;
+  }
+
+  public void setVendorDetails(@NlsSafe @NotNull String vendorName, @Nullable String url, @Nullable Boolean isTrader, @Nullable Boolean isVerified) {
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, url, isTrader, isVerified);
+  }
+
+  public void setVendorDetails(@NlsSafe @Nullable String vendorName) {
+    if (vendorName == null) return;
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, null, null, null);
+  }
+
   @Override
   public @Nullable String getOrganization() {
-    return organization;
-  }
-
-  public void setOrganization(@Nullable String organization) {
-    this.organization = organization;
-  }
-
-  public String getVerifiedName() {
-    return verifiedName;
-  }
-
-  public void setVerifiedName(String verifiedName) {
-    this.verifiedName = verifiedName;
-  }
-
-  public boolean isVerified() {
-    return verified;
-  }
-
-  public void setVerified(boolean verified) {
-    this.verified = verified;
-  }
-
-  public boolean isTrader() {
-    return trader;
-  }
-
-  public void setTrader(boolean trader) {
-    this.trader = trader;
+    if (vendorDetails == null) return null;
+    return vendorDetails.getName();
   }
 
   @Override
@@ -483,6 +472,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myDependencies.add(new PluginNodeDependency(PluginId.getId(id), optional));
   }
 
+  public void addDepends(@NotNull PluginId id, boolean optional) {
+    myDependencies.add(new PluginNodeDependency(id, optional));
+  }
+
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
     return myDependencies;
@@ -537,11 +530,13 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.untilBuild = untilBuild;
   }
 
+  @Deprecated
   @Override
   public boolean isEnabled() {
     return myEnabled;
   }
 
+  @Deprecated
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
@@ -717,6 +712,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
     @Override
     public boolean isOptional() {
       return myOptional;
+    }
+
+    @Override
+    public String toString() {
+      return "PluginNodeDependency{pluginId=" + myPluginId + ", optional=" + myOptional + '}';
     }
   }
 }

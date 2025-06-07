@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.project.Project
@@ -17,14 +17,21 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -41,12 +48,14 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 private val primaryElementsKey = Key.create<List<KtNamedDeclaration>>("expectActual")
 
@@ -56,7 +65,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val psiMethod = changeInfo.method
             val containingClass = psiMethod.containingClass
             if (containingClass != null && LambdaUtil.isFunctionalClass(containingClass)) {
-                return ReferencesSearch.search(containingClass).mapNotNull {ref ->
+                return ReferencesSearch.search(containingClass).asIterable().mapNotNull {ref ->
                     val ktElement = ref.element as? KtElement ?: return@mapNotNull null
                     val ktCallExpression = ktElement.parent as? KtCallExpression ?: return@mapNotNull null
                     if (ktCallExpression.calleeExpression == ktElement && ktCallExpression.lambdaArguments.size == 1) {
@@ -73,14 +82,14 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val ktCallableDeclaration = changeInfo.method
 
         if (ktCallableDeclaration is KtNamedFunction && !ktCallableDeclaration.hasBody()) {
-            ktCallableDeclaration.toLightMethods().forEach {
-                FunctionalExpressionSearch.search(it).forEach { functionalExpression ->
+            ktCallableDeclaration.toLightMethods().forEach { lightMethod ->
+                FunctionalExpressionSearch.search(lightMethod).asIterable().forEach { functionalExpression ->
                     val provider = ChangeSignatureUsageProviders.findProvider(functionalExpression.language)
                     if (provider != null) {
                         val usageInfo = provider.createOverrideUsageInfo(
                             changeInfo,
                             functionalExpression,
-                            it,
+                            lightMethod,
                             true,
                             true,
                             true,
@@ -98,17 +107,17 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             primaryElements
         )
         ExpectActualUtils.withExpectedActuals(ktCallableDeclaration).forEach { ktCallableDeclaration ->
-            if (ktCallableDeclaration is KtNamedDeclaration) {
-                primaryElements.add(ktCallableDeclaration)
-                findUsages(ktCallableDeclaration, changeInfo, result)
-            }
-
             if (ktCallableDeclaration is KtCallableDeclaration) {
                 KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
             }
 
             if (ktCallableDeclaration is KtPrimaryConstructor) {
                 findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+            }
+
+            if (ktCallableDeclaration is KtNamedDeclaration) {
+                primaryElements.add(ktCallableDeclaration)
+                findUsages(ktCallableDeclaration, changeInfo, result)
             }
         }
 
@@ -128,15 +137,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             true
         }
 
-        result.sortWith { u1, u2 ->
-            if (u1.javaClass == u2.javaClass) {
-                PsiUtilCore.compareElementsByPosition(u1.element, u2.element)
-            } else {
-                result.indexOf(u1) - result.indexOf(u2)
-            }
-        }
-
-        return result.toTypedArray()
+        return result.groupBy { it.javaClass }
+            .values
+            .flatMap { it.sortedWith { u1, u2 -> PsiUtilCore.compareElementsByPosition(u1.element, u2.element) } }
+            .toTypedArray()
     }
 
     private fun findUsages(
@@ -225,7 +229,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     ): Boolean {
         val element = usageInfo.element?.unwrapped ?: return false
         if (!element.language.`is`(KotlinLanguage.INSTANCE)) return false
-        val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo) ?: return false
+        val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo, beforeMethodChange) ?: return false
         if (!beforeMethodChange) {
             if (usageInfo is KotlinBaseChangeSignatureUsage) {
                 usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it, ShortenOptions.ALL_ENABLED) }
@@ -270,18 +274,23 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun processPrimaryMethod(changeInfo: ChangeInfo): Boolean {
-        if (changeInfo !is KotlinChangeInfo) return false
-        val element = changeInfo.method
+        val unwrapped = changeInfo.method.unwrapped
+        val kotlinChangeInfo =
+            (if (changeInfo !is KotlinChangeInfo && unwrapped is KtNamedDeclaration) {
+                fromJavaChangeInfo(changeInfo, UsageInfo(unwrapped), true)
+            } else changeInfo) as? KotlinChangeInfoBase ?: return false
+        val element = unwrapped as? KtNamedDeclaration ?: return false
 
-        val namedDeclarations = changeInfo.getUserData(primaryElementsKey)?.reversed() ?: listOf(element)
+        val namedDeclarations = (kotlinChangeInfo as? KotlinChangeInfo)?.getUserData(primaryElementsKey)?.reversed() ?: listOf(element)
         val refactoringSupport = KotlinRenameRefactoringSupport.getInstance()
         for (declaration in namedDeclarations) {
-            updatePrimaryMethod(declaration, changeInfo)
+            updatePrimaryMethod(declaration, kotlinChangeInfo)
             refactoringSupport.dropOverrideKeywordIfNecessary(declaration)
         }
         return true
     }
 
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     fun updatePrimaryMethod(
         element: KtNamedDeclaration,
         changeInfo: KotlinChangeInfoBase,
@@ -303,7 +312,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         changeReturnTypeIfNeeded(changeInfo, element)
 
         if (changeInfo.isParameterSetOrOrderChanged) {
-            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited, isCaller)
+            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.valueParameterList, psiFactory, changeInfo.method, isInherited, isCaller)
         }
         else {
             val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
@@ -311,7 +320,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val offset = if (element.receiverTypeReference != null) 1 else 0
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
-                    val parameterInfo = changeInfo.newParameters[paramIndex + offset]
+                    val parameterInfo = changeInfo.newParameters.filterNot { it.isContextParameter }[paramIndex + offset]
                     if (!(element.isEffectivelyActual() && changeInfo.method is KtNamedDeclaration && (changeInfo.method as KtNamedDeclaration).isExpectDeclaration())) {
                         parameter.setValOrVar(if (element.isExpectDeclaration()) KotlinValVar.None else parameterInfo.valOrVar)
                     }
@@ -335,6 +344,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
+        if (!isCaller && element !is KtFunctionLiteral) {
+            val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
+            updateContextParametersList(contextParams, element, changeInfo.method, isInherited, psiFactory)
+        }
+
         if (changeInfo.isReceiverTypeChanged()) {
             val receiverTypeText = changeInfo.receiverParameterInfo?.typeText
             val receiverTypeRef = if (receiverTypeText != null) psiFactory.createType(
@@ -351,10 +365,18 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             changeVisibility(changeInfo, element)
         }
 
-        if (changeInfo.newName == OperatorNameConventions.GET.asString() || changeInfo.newName == OperatorNameConventions.INVOKE.asString()) {
-            val method = changeInfo.method
-            if (changeInfo.receiverParameterInfo == null && method.parent is KtFile) {
-                (method as? KtNamedDeclaration)?.removeModifier(KtTokens.OPERATOR_KEYWORD)
+        val newName = changeInfo.newName
+        if (newName != null && OperatorConventions.isConventionName(Name.identifier(newName)) && element.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+            val brokenSignature = allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(element) {
+                        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                            .any { it.diagnosticClass == KaFirDiagnostic.InapplicableOperatorModifier::class }
+                    }
+                }
+            }
+            if (brokenSignature) {
+                element.removeModifier(KtTokens.OPERATOR_KEYWORD)
             }
         }
 
@@ -397,7 +419,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         isCaller: Boolean
     ) {
         var parameterList = originalParameterList
-        val parametersCount = changeInfo.newParameters.filter { it != changeInfo.receiverParameterInfo }.count()
+        val parametersCount = changeInfo.newParameters.count { it != changeInfo.receiverParameterInfo && !it.isContextParameter }
         val isLambda = element is KtFunctionLiteral
         var canReplaceEntireList = false
 
@@ -406,12 +428,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (parametersCount == 0) {
                 if (parameterList != null) {
                     parameterList.delete()
-                    val arrow = (element as KtFunctionLiteral).arrow
-                    arrow?.delete()
+                    element.arrow?.delete()
                     parameterList = null
                 }
             } else {
-                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element as KtFunctionLiteral, baseFunction, isInherited))
+                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited))
                 canReplaceEntireList = true
             }
         } else if (!(element is KtProperty || element is KtParameter)) {
@@ -457,7 +478,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val oldParameterList = constructor.valueParameterList ?: error("Primary constructor has to have parameter list")
                 newParameterList = oldParameterList.replace(newParameterList) as KtParameterList
             } else if (isLambda) {
-                val functionLiteral = element as KtFunctionLiteral
+                val functionLiteral = element
                 val anchor = functionLiteral.lBrace
                 newParameterList = element.addAfter(newParameterList, anchor) as KtParameterList
                 if (functionLiteral.arrow == null) {
@@ -468,6 +489,34 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         shortenReferences(newParameterList)
+    }
+
+    private fun updateContextParametersList(
+        contextParams: List<KotlinParameterInfo>,
+        element: KtDeclaration,
+        baseFunction: PsiElement,
+        isInherited: Boolean,
+        psiFactory: KtPsiFactory
+    ) {
+        if (contextParams.isNotEmpty()) {
+            val list = contextParams.joinToString { it.getDeclarationSignature(element, baseFunction, isInherited).text }
+            val newModifierList = psiFactory.createFunction("context($list) fun test() {}").modifierList!!
+            val modifierList = element.modifierList
+            if (modifierList != null) {
+                val contextReceiverList = modifierList.contextReceiverList
+                val contextReceivers = if (contextReceiverList == null) {
+                    modifierList.addBefore(newModifierList.contextReceiverList!!, modifierList.firstChild)
+                } else {
+                    contextReceiverList.replace(newModifierList.contextReceiverList!!)
+                }
+                shortenReferences(contextReceivers as KtElement)
+            } else {
+                element.setModifierList(newModifierList)
+                shortenReferences(element.modifierList!!)
+            }
+        } else {
+            (element as? KtTypeParameterListOwnerStub<*>)?.contextReceiverList?.delete()
+        }
     }
 
     private fun isReturnTypeRequired(element: KtNamedDeclaration): Boolean {

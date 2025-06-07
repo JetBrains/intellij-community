@@ -2,6 +2,7 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
@@ -37,7 +38,8 @@ internal class SearchEverywhereOptionFeaturesProvider :
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
     val optionDescription = value as? OptionDescription ?: return emptyList()
 

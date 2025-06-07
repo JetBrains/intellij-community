@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,9 +30,8 @@ abstract class SourceOperation extends Operation {
     return true;
   }
 
-  @NotNull
   @Override
-  final String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
+  final @NotNull String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
     // Cannot inline "result" as wrap may register more beforeSteps
     String result = wrap(outVar, code, context);
     return context.drainBeforeSteps() + result + context.drainAfterSteps();
@@ -40,8 +39,7 @@ abstract class SourceOperation extends Operation {
 
   abstract String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context);
 
-  @Nullable
-  static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
+  static @Nullable SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
     if(callType == null || PsiTypes.voidType().equals(callType)) return null;
@@ -351,7 +349,7 @@ abstract class SourceOperation extends Operation {
     private @NotNull PsiExpression myArray;
     private @NotNull PsiExpression myOrigin;
     private @NotNull PsiExpression myBound;
-    private @NotNull final PsiType myArrayType;
+    private final @NotNull PsiType myArrayType;
 
     ArraySliceSource(@NotNull PsiExpression array, @NotNull PsiExpression origin, @NotNull PsiExpression bound) {
       myOrigin = origin;

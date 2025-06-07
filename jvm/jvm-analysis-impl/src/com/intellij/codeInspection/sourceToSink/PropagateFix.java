@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -32,8 +32,7 @@ import java.util.function.Consumer;
 
 public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
-  @NotNull
-  private final TaintValueFactory myTaintValueFactory;
+  private final @NotNull TaintValueFactory myTaintValueFactory;
 
   private final boolean supportRefactoring;
 
@@ -63,7 +62,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     List<TaintNode> roots = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), ()->{
@@ -111,7 +110,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(
       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.preview")
     );

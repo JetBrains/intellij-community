@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,8 +22,7 @@ public abstract class GrTypeConverter {
 
   public static final ExtensionPointName<GrTypeConverter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.typeConverter");
 
-  @Nullable
-  protected static GrLiteral getLiteral(@NotNull GroovyPsiElement context) {
+  protected static @Nullable GrLiteral getLiteral(@NotNull GroovyPsiElement context) {
     final GrExpression expression;
     if (context instanceof GrTypeCastExpression) {
       expression = ((GrTypeCastExpression)context).getOperand();
@@ -50,17 +49,15 @@ public abstract class GrTypeConverter {
   /**
    * Checks if {@code actualType} can be converted to {@code targetType} in given {@code position}.
    */
-  @Nullable
-  public abstract ConversionResult isConvertible(@NotNull PsiType targetType,
+  public abstract @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
                                                  @NotNull PsiType actualType,
                                                  @NotNull Position position,
                                                  @NotNull GroovyPsiElement context);
 
-  @Nullable
-  public Collection<ConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
-                                                            @NotNull PsiType rightType,
-                                                            @NotNull Position position,
-                                                            @NotNull PsiElement context) {
+  public @Nullable Collection<ConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
+                                                                      @NotNull PsiType rightType,
+                                                                      @NotNull Position position,
+                                                                      @NotNull PsiElement context) {
     return null;
   }
 

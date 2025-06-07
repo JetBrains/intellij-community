@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -16,16 +16,11 @@ import java.util.Set;
 public class War extends Jar {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final String webAppDirName;
-  @NotNull
-  private final File webAppDir;
-  @Nullable
-  private File webXml;
-  @NotNull
-  private List<WebResource> webResources;
-  @NotNull
-  private Set<File> classpath;
+  private final @NotNull String webAppDirName;
+  private final @NotNull File webAppDir;
+  private @Nullable File webXml;
+  private @NotNull List<WebResource> webResources;
+  private @NotNull Set<File> classpath;
 
   @PropertyMapping({"name", "webAppDirName", "webAppDir"})
   public War(@NotNull String name, @NotNull String webAppDirName, @NotNull File webAppDir) {
@@ -36,13 +31,11 @@ public class War extends Jar {
     classpath = Collections.emptySet();
   }
 
-  @NotNull
-  public String getWebAppDirName() {
+  public @NotNull String getWebAppDirName() {
     return webAppDirName;
   }
 
-  @NotNull
-  public File getWebAppDir() {
+  public @NotNull File getWebAppDir() {
     return webAppDir;
   }
 
@@ -50,8 +43,7 @@ public class War extends Jar {
     this.webXml = webXml;
   }
 
-  @Nullable
-  public File getWebXml() {
+  public @Nullable File getWebXml() {
     return webXml;
   }
 
@@ -59,8 +51,7 @@ public class War extends Jar {
     this.webResources = webResources == null ? Collections.emptyList() : webResources;
   }
 
-  @NotNull
-  public List<WebResource> getWebResources() {
+  public @NotNull List<WebResource> getWebResources() {
     return webResources;
   }
 
@@ -68,8 +59,7 @@ public class War extends Jar {
     this.classpath = classpath == null ? Collections.emptySet() : classpath;
   }
 
-  @NotNull
-  public Set<File> getClasspath() {
+  public @NotNull Set<File> getClasspath() {
     return classpath;
   }
 

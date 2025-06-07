@@ -62,8 +62,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
  */
 public final class PyCompatibilityInspection extends PyInspection {
 
-  @NotNull
-  public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
+  public static final @NotNull List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
     .add("enum")
     .add("typing")
     .add("dataclasses")
@@ -73,17 +72,14 @@ public final class PyCompatibilityInspection extends PyInspection {
 
   public static final int LATEST_INSPECTION_VERSION = 3;
 
-  @NotNull
-  public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
+  public static final @NotNull List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
-  @NotNull
-  public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
+  public static final @NotNull List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
     .filter(v -> v == LanguageLevel.PYTHON27 || v.isAtLeast(LanguageLevel.PYTHON37))
     .toImmutableList();
 
-  @NotNull
-  private static final List<@NlsSafe String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
+  private static final @NotNull List<@NlsSafe String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
@@ -97,8 +93,7 @@ public final class PyCompatibilityInspection extends PyInspection {
     }
   }
   
-  @Nullable
-  public static PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
+  public static @Nullable PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyCompatibilityInspection.class.getSimpleName();
     return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
@@ -138,9 +133,8 @@ public final class PyCompatibilityInspection extends PyInspection {
       });
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder, updateVersionsToProcess());
   }
 
@@ -187,7 +181,7 @@ public final class PyCompatibilityInspection extends PyInspection {
       if (resolvedCallee instanceof PyFunction function) {
         final PyClass containingClass = function.getContainingClass();
 
-        final String functionName = PyUtil.isInitOrNewMethod(function) ? callee.getText() : function.getName();
+        final String functionName = PyUtil.isConstructorLikeMethod(function) ? callee.getText() : function.getName();
 
         if (containingClass != null) {
           final String className = containingClass.getName();
@@ -252,8 +246,7 @@ public final class PyCompatibilityInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
+    private static @Nullable QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
       final QualifiedName importedQName = importElement.getImportedQName();
       if (importedQName == null) return null;
 

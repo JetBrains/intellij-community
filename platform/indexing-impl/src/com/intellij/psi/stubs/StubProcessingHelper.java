@@ -84,7 +84,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
   Set<VirtualFile> takeAccumulatedFilesWithIndexProblems() {
     if (SKIP_INDEX_REPAIR_ON_ERROR) return null;
     Set<VirtualFile> filesWithProblems = myFilesHavingProblems.get();
-    if (filesWithProblems != null) myFilesHavingProblems.set(null);
+    if (filesWithProblems != null) myFilesHavingProblems.remove();
     return filesWithProblems;
   }
 

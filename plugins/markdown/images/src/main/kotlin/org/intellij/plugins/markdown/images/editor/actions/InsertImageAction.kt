@@ -25,7 +25,7 @@ internal class InsertImageAction: DumbAwareAction() {
   }
 
   override fun update(event: AnActionEvent) {
-    val editor = MarkdownActionUtil.findMarkdownEditor(event)
+    val editor = MarkdownActionUtil.findMarkdownEditor(event, strictMarkdown = true)
     event.presentation.apply {
       isVisible = editor != null
       isEnabled = editor?.document?.isWritable == true
@@ -37,7 +37,7 @@ internal class InsertImageAction: DumbAwareAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
+    val editor = MarkdownActionUtil.findMarkdownEditor(event, strictMarkdown = true) ?: return
     val project = editor.project
     ConfigureImageDialog(project, MarkdownImagesBundle.message("markdown.insert.image.dialog.title")).show { imageData ->
       val document = editor.document

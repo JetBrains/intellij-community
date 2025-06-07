@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -51,8 +50,8 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
   }
 
 
-  internal class Builder(result: SubsetSealedClassEntityData?) : ModifiableWorkspaceEntityBase<SubsetSealedClassEntity, SubsetSealedClassEntityData>(
-    result), SubsetSealedClassEntity.Builder {
+  internal class Builder(result: SubsetSealedClassEntityData?) :
+    ModifiableWorkspaceEntityBase<SubsetSealedClassEntity, SubsetSealedClassEntityData>(result), SubsetSealedClassEntity.Builder {
     internal constructor() : this(SubsetSealedClassEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -149,7 +148,8 @@ internal class SubsetSealedClassEntityData : WorkspaceEntityData<SubsetSealedCla
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClassEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetSealedClassEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

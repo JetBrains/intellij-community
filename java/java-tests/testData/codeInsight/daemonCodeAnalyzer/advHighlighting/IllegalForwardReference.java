@@ -13,7 +13,7 @@ public class a  {
   int k = 1 + <error descr="Cannot read value of field 'ki' before the field's definition">ki</error>;
   int ki;
 
-  final int fi5 = <error descr="Cannot read value of field 'fi5' from inside the fields's definition">fi5</error> + 1;
+  final int fi5 = <error descr="Cannot read value of field 'fi5' from inside the field's definition">fi5</error> + 1;
 }
 
 class a1 {

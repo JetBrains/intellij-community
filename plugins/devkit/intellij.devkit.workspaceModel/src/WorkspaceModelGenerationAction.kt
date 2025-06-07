@@ -2,6 +2,8 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 
@@ -39,7 +41,7 @@ internal class WorkspaceModelGenerateAllModulesAction: AnAction() {
 
     val modules = ModuleManager.getInstance(project).modules
     val modulesSize = modules.size
-    println("Updating $modulesSize modules")
+    log.info("Updating $modulesSize modules")
     WorkspaceModelGenerator.getInstance(project).generate(modules)
   }
 
@@ -48,5 +50,9 @@ internal class WorkspaceModelGenerateAllModulesAction: AnAction() {
       event.presentation.isEnabledAndVisible = false
       return
     }
+  }
+  
+  companion object {
+    val log: Logger = logger<WorkspaceModelGenerateAllModulesAction>()
   }
 }

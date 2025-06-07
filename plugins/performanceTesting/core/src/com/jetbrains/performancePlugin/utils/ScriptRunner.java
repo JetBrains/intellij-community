@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.utils;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +27,7 @@ public final class ScriptRunner {
     return this;
   }
 
-  public void doRunScript(@NotNull final Project project, @NotNull String text, @Nullable File workingDir) {
+  public void doRunScript(final @NotNull Project project, @NotNull String text, @Nullable File workingDir) {
     PlaybackRunnerExtended runner = new PlaybackRunnerExtended(text, new CommandLogger(), project);
     runner.setScriptDir(workingDir);
 

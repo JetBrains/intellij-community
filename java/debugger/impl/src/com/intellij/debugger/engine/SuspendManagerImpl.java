@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -16,9 +16,14 @@ import com.sun.jdi.request.EventRequest;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
 
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance(SuspendManager.class);
@@ -41,9 +46,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public SuspendManagerImpl(@NotNull DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
-    myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
+    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myEventContexts.forEach(Disposer::dispose);
         myEventContexts.clear();
         myPausedContexts.forEach(Disposer::dispose);
@@ -53,9 +58,8 @@ public class SuspendManagerImpl implements SuspendManager {
     });
   }
 
-  @NotNull
   @Override
-  public SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
+  public @NotNull SuspendContextImpl pushSuspendContext(@MagicConstant(flagsFromClass = EventRequest.class) final int suspendPolicy, int nVotes) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, suspendPolicy, nVotes, null, mySuspendContextNextId.incrementAndGet()) {
       @Override
       protected void resumeImpl() {
@@ -83,9 +87,8 @@ public class SuspendManagerImpl implements SuspendManager {
     return suspendContext;
   }
 
-  @NotNull
   @Override
-  public SuspendContextImpl pushSuspendContext(final @NotNull EventSet set) {
+  public @NotNull SuspendContextImpl pushSuspendContext(final @NotNull EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set, mySuspendContextNextId.incrementAndGet()) {
       @Override
       protected void resumeImpl() {
@@ -204,8 +207,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public List<SuspendContextImpl> getEventContexts() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return new ArrayList<>(myEventContexts);
+    return List.copyOf(myEventContexts);
   }
 
   @Override
@@ -317,7 +319,7 @@ public class SuspendManagerImpl implements SuspendManager {
       }
       else {
         LOG.debug("vote paused");
-        myDebugProcess.cancelRunToCursorBreakpoint();
+        myDebugProcess.cancelSteppingBreakpoints();
         if (!Registry.is("debugger.keep.step.requests")) {
           ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(),
@@ -348,14 +350,14 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
     suspendContext.myIsGoingToResume = true;
-    myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
+    suspendContext.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
   }
 
   private void notifyPaused(@NotNull SuspendContextImpl suspendContext, boolean pushPaused) {
     if (pushPaused) {
       pushPausedContext(suspendContext);
     }
-    myDebugProcess.myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
+    forEachSafe(myDebugProcess.myDebugProcessListeners, it -> it.paused(suspendContext));
   }
 
   @Override
@@ -374,7 +376,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public @NotNull List<SuspendContextImpl> getPausedContexts() {
-    return new ArrayList<>(myPausedContexts);
+    return List.copyOf(myPausedContexts);
   }
 
   public boolean hasPausedContext(SuspendContextImpl suspendContext) {

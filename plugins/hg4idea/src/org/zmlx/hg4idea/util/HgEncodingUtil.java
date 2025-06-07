@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ import static org.zmlx.hg4idea.HgVcs.HGENCODING;
 public final class HgEncodingUtil {
 
   public static @NotNull Charset getDefaultCharset(@NotNull Project project) {
-    if (HGENCODING != null && HGENCODING.length() > 0 && Charset.isSupported(HGENCODING)) {
+    if (HGENCODING != null && !HGENCODING.isEmpty() && Charset.isSupported(HGENCODING)) {
       return Charset.forName(HGENCODING);
     }
     Charset defaultCharset = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -30,14 +30,12 @@ public final class AntImportsIndex extends ScalarIndexExtension<Integer>{
   }
 
   @Override
-  @NotNull
-  public ID<Integer, Void> getName() {
+  public @NotNull ID<Integer, Void> getName() {
     return INDEX_NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<Integer, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Integer, Void, FileContent> getIndexer() {
     return inputData -> {
       AtomicBoolean importFound = new AtomicBoolean();
 
@@ -64,15 +62,13 @@ public final class AntImportsIndex extends ScalarIndexExtension<Integer>{
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {

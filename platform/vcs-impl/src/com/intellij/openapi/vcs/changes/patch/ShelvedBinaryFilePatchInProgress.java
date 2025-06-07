@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.project.Project;
@@ -19,15 +19,13 @@ public final class ShelvedBinaryFilePatchInProgress extends CommonBinaryFilePatc
     super(ShelvedBinaryFilePatch.patchCopy(patch), autoBases, baseDir);
   }
 
-  @NotNull
   @Override
-  protected BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
+  protected @NotNull BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
     return new ShelvedBinaryContentRevision(newFilePath, myPatch.getShelvedBinaryFile().SHELVED_PATH);
   }
 
   @Override
-  @NotNull
-  protected Change createChange(Project project) {
+  protected @NotNull Change createChange(Project project) {
     return myPatch.getShelvedBinaryFile().createChange(project);
   }
 }

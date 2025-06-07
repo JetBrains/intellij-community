@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -89,11 +90,11 @@ public final class SwitchExpressionCanBePushedDownInspection extends AbstractBas
     if (selector == null) return false;
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
     if (selectorClass == null || !selectorClass.isEnum()) {
-      return SwitchUtils.findDefaultElement(statement) == null;
+      return JavaPsiSwitchUtil.findDefaultElement(statement) == null;
     }
     Set<PsiEnumConstant> missingConstants = StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toMutableSet();
     for (PsiSwitchLabelStatementBase child : PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class)) {
-      if (SwitchUtils.findDefaultElement(child) != null) return false;
+      if (JavaPsiSwitchUtil.findDefaultElement(child) != null) return false;
       for (PsiEnumConstant constant : SwitchUtils.findEnumConstants(child)) {
         missingConstants.remove(constant);
         if (missingConstants.isEmpty()) return false;
@@ -103,8 +104,7 @@ public final class SwitchExpressionCanBePushedDownInspection extends AbstractBas
     return true;
   }
 
-  @Nullable
-  private static List<PsiExpression> extractBranches(PsiSwitchBlock block) {
+  private static @Nullable List<PsiExpression> extractBranches(PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return null;
     PsiStatement[] statements = body.getStatements();

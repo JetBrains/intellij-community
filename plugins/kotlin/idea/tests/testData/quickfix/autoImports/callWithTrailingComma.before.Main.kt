@@ -15,5 +15,3 @@ class X {
         foo(<caret>p, )
     }
 }
-
-/* IGNORE_K2 */

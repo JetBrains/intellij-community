@@ -45,6 +45,10 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()
     }
 
+    override fun ignoreTestData(fileName: String): Boolean {
+        return fileName.contains("ContextParameter")
+    }
+
     private class ChangeSignatureContext(
         val callableDescriptor: CallableDescriptor,
         val context: KtElement,

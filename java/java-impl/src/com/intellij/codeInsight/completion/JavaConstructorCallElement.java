@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -22,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +57,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
         }
       }
       if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, type)) {
-        return new Arguments(PsiKeyword.NULL, PsiKeyword.NULL);
+        return new Arguments(JavaKeywords.NULL, JavaKeywords.NULL);
       }
     }
     return null;
@@ -161,13 +163,13 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return aClass;
   }
 
-  static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
+  static @Unmodifiable List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
     PsiClass psiClass = classItem.getObject();
     return wrap(classItem, psiClass, position, () -> JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
   }
 
-  static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
-                                            @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
+  static @Unmodifiable List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
+                                                          @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
     if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) &&
         isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));

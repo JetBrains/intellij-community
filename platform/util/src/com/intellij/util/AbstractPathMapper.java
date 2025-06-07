@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,5 +72,5 @@ public abstract class AbstractPathMapper implements PathMapper {
     return false;
   }
 
-  protected abstract @NotNull Collection<PathMappingSettings.PathMapping> getAvailablePathMappings();
+  protected abstract @NotNull @Unmodifiable Collection<PathMappingSettings.PathMapping> getAvailablePathMappings();
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.testFrameworks;
 
 import java.io.*;
@@ -64,6 +50,10 @@ public abstract class ForkedByModuleSplitter {
     return result;
   }
 
+  protected ProcessBuilder initProcessBuilder() {
+    return new ProcessBuilder();
+  }
+
   //read output from wrappers
   protected int startChildFork(final List<String> args,
                                File workingDir,
@@ -73,7 +63,7 @@ public abstract class ForkedByModuleSplitter {
     List<String> vmParameters = new ArrayList<>(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
-    final ProcessBuilder builder = new ProcessBuilder();
+    final ProcessBuilder builder = initProcessBuilder();
     builder.add(vmParameters);
 
     //copy encoding from first VM, as encoding is added into command line explicitly and vm options do not contain it
@@ -83,13 +73,14 @@ public abstract class ForkedByModuleSplitter {
     }
 
     builder.add("-classpath");
-    if (myDynamicClasspath.length() > 0) {
+    if (!myDynamicClasspath.isEmpty()) {
       try {
         if ("ARGS_FILE".equals(myDynamicClasspath)) {
           File argFile = File.createTempFile("arg_file", null);
           argFile.deleteOnExit();
           try (FileOutputStream writer = new FileOutputStream(argFile)) {
-            writer.write(classpath.getBytes(Charset.defaultCharset()));
+            String quotedArg = quoteArg(classpath);
+            writer.write(quotedArg.getBytes(Charset.defaultCharset()));
           }
           builder.add("@" + argFile.getAbsolutePath());
         }
@@ -120,6 +111,38 @@ public abstract class ForkedByModuleSplitter {
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start();
     new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start();
     return exec.waitFor();
+  }
+
+  /**
+   * WARNING: Due to compatibility reasons, this method has duplicate: {@link com.intellij.execution.CommandLineWrapperUtil#quoteArg(String)}
+   * If you modify this method, consider also changing its copy.
+   */
+  private static String quoteArg(String arg) {
+    String specialCharacters = " #'\"\n\r\t\f";
+    boolean containsSpecialCharacter = false;
+
+    for (int i = 0; i < arg.length(); i++ ) {
+      char ch = arg.charAt(i);
+      if (specialCharacters.indexOf(ch) >= 0) {
+        containsSpecialCharacter = true;
+        break;
+      }
+    }
+
+    if (!containsSpecialCharacter) return arg;
+
+    StringBuilder sb = new StringBuilder(arg.length() * 2);
+    for (int i = 0; i < arg.length(); i++) {
+      char c = arg.charAt(i);
+      if (c == ' ' || c == '#' || c == '\'') sb.append('"').append(c).append('"');
+      else if (c == '"') sb.append("\"\\\"\"");
+      else if (c == '\n') sb.append("\"\\n\"");
+      else if (c == '\r') sb.append("\"\\r\"");
+      else if (c == '\t') sb.append("\"\\t\"");
+      else if (c == '\f') sb.append("\"\\f\"");
+      else sb.append(c);
+    }
+    return sb.toString();
   }
 
   private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
@@ -154,7 +177,7 @@ public abstract class ForkedByModuleSplitter {
         final String classpath = perDirReader.readLine();
         List<String> moduleOptions = new ArrayList<>();
         String modulePath = perDirReader.readLine();
-        if (modulePath != null && modulePath.length() > 0) {
+        if (modulePath != null && !modulePath.isEmpty()) {
           moduleOptions.add("-p");
           moduleOptions.add(modulePath);
         }

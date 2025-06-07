@@ -45,10 +45,10 @@ internal class PhmVcsLogStorageBackend(
   useDurableEnumerator: Boolean,
   disposable: Disposable,
 ) : VcsLogStorageBackend, Disposable {
-  private val messages: PersistentHashMap<Int, String>
-  private val parents: PersistentHashMap<Int, IntArray>
-  private val committers: PersistentHashMap<Int, Int>
-  private val timestamps: PersistentHashMap<Int, LongArray>
+  private val messages: PersistentHashMap<VcsLogCommitStorageIndex, String>
+  private val parents: PersistentHashMap<VcsLogCommitStorageIndex, IntArray>
+  private val committers: PersistentHashMap<VcsLogCommitStorageIndex, Int>
+  private val timestamps: PersistentHashMap<VcsLogCommitStorageIndex, LongArray>
 
   private val renames: PersistentHashMap<IntArray, IntArray>
 
@@ -149,7 +149,7 @@ internal class PhmVcsLogStorageBackend(
 
   override fun createWriter(): VcsLogWriter {
     return object : VcsLogWriter {
-      override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails) {
+      override fun putCommit(commitId: VcsLogCommitStorageIndex, details: VcsLogIndexer.CompressedDetails) {
         users.update(commitId, details)
         paths.update(commitId, details)
         trigrams.update(commitId, details)
@@ -198,7 +198,7 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override fun containsCommit(commitId: Int) = messages.containsMapping(commitId)
+  override fun containsCommit(commitId: VcsLogCommitStorageIndex) = messages.containsMapping(commitId)
 
   override fun collectMissingCommits(commitIds: IntSet): IntSet {
     val missing = IntOpenHashSet()
@@ -220,11 +220,11 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
+  override fun getTimestamp(commitId: VcsLogCommitStorageIndex): LongArray? = timestamps.get(commitId)
 
-  override fun getParents(commitId: Int): IntArray? = parents.get(commitId)
+  override fun getParents(commitId: VcsLogCommitStorageIndex): IntArray? = parents.get(commitId)
 
-  override fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> {
+  override fun getParents(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, List<Hash>> {
     return commitIds.mapNotNull { commitId ->
       val parents = getParents(commitId) ?: return@mapNotNull null
       val parentHashes = storage.getHashes(parents) ?: return@mapNotNull null
@@ -232,7 +232,7 @@ internal class PhmVcsLogStorageBackend(
     }.toMap()
   }
 
-  override fun getMessage(commitId: Int): String? = messages.get(commitId)
+  override fun getMessage(commitId: VcsLogCommitStorageIndex): String? = messages.get(commitId)
 
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
@@ -262,11 +262,11 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override fun getAuthorForCommit(commitId: Int): VcsUser? {
+  override fun getAuthorForCommit(commitId: VcsLogCommitStorageIndex): VcsUser? {
     return users.getAuthorForCommit(commitId)
   }
 
-  override fun getCommitterForCommit(commitId: Int): VcsUser? {
+  override fun getCommitterForCommit(commitId: VcsLogCommitStorageIndex): VcsUser? {
     val committer = committers.get(commitId)
     if (committer != null) {
       return users.getUserById(committer)
@@ -281,7 +281,7 @@ internal class PhmVcsLogStorageBackend(
   }
 
   @Throws(IOException::class)
-  override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
+  override fun findRename(parent: VcsLogCommitStorageIndex, child: VcsLogCommitStorageIndex, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
     val renames = renames.get(intArrayOf(parent, child))
     if (renames == null || renames.isEmpty()) {
       return null

@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInspection.StaticImportCanBeUsedInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -15,6 +16,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,6 +39,10 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
       if (elementType == JavaElementType.REFERENCE_EXPRESSION) {
         PsiReferenceExpression ref = (PsiReferenceExpression)element.getPsi();
         if (ImportUtils.isAlreadyStaticallyImported(ref)) {
+          deQualifyImpl((PsiQualifiedReferenceElement)element);
+          return element;
+        }
+        if (tryAutoStaticallyImport(ref)) {
           deQualifyImpl((PsiQualifiedReferenceElement)element);
           return element;
         }
@@ -128,6 +134,21 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
 
     return element;
+  }
+
+  private static boolean tryAutoStaticallyImport(@NotNull PsiReferenceExpression reference) {
+    StaticImportCanBeUsedInspection.StaticImportContext context =
+      StaticImportCanBeUsedInspection.findOnDemandImportContext(reference);
+    if (context == null) return false;
+    PsiClass qualifierClass = context.psiClass();
+    PsiFile file = reference.getContainingFile();
+    if (!(file instanceof PsiJavaFile javaFile)) return false;
+    PsiImportList importList = javaFile.getImportList();
+    if (importList == null) return false;
+    String referenceName = reference.getReferenceName();
+    if (referenceName == null) return false;
+    PsiReferenceExpressionImpl.bindToElementViaStaticImport(qualifierClass, referenceName, importList);
+    return true;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -14,12 +14,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -41,25 +39,6 @@ import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
-    fun testDisableInlineClasses() {
-        configureRuntime("mockRuntime11")
-        resetProjectSettings(LanguageVersion.KOTLIN_1_3)
-        myFixture.configureByText("foo.kt", "inline class My(val n: Int)")
-
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, inlineClassesSupport)
-        assertTrue(myFixture.availableIntentions.none { it.text == "Disable inline classes support in the project" })
-    }
-
-    fun testEnableInlineClasses() {
-        configureRuntime("mockRuntime11")
-        resetProjectSettings(LanguageVersion.KOTLIN_1_3)
-        myFixture.configureByText("foo.kt", "inline class My(val n: Int)")
-
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, inlineClassesSupport)
-        myFixture.launchAction(myFixture.findSingleIntention("Enable inline classes support in the project"))
-        assertEquals(LanguageFeature.State.ENABLED, inlineClassesSupport)
-    }
-
     fun testModuleLanguageVersion() {
         configureRuntime("mockRuntime11")
         resetProjectSettings(LanguageVersion.KOTLIN_1_0)
@@ -185,9 +164,6 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         }
     }
 
-    private val inlineClassesSupport: LanguageFeature.State
-        get() = project.languageVersionSettings.getFeatureSupport(LanguageFeature.InlineClasses)
-
     override fun tearDown() {
         runAll(
             ThrowableRunnable { resetProjectSettings(KotlinPluginLayout.standaloneCompilerVersion.languageVersion) },
@@ -201,7 +177,6 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
                     ConfigLibraryUtil.removeLibrary(module, it.name!!)
                 }
             },
-            ThrowableRunnable { ZipHandler.clearFileAccessorCache() },
             ThrowableRunnable { JarFileSystemImpl.cleanupForNextTest() },
             ThrowableRunnable { super.tearDown() }
         )

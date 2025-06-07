@@ -18,7 +18,7 @@ internal class MarkdownFileRenameHandler: RenameHandler {
   }
 
   override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-    val mdFile = elements.find { it.containingFile.virtualFile.hasMarkdownType() } ?: return
+    val mdFile = elements.find { it is MarkdownFile } ?: return
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, arrayOf(mdFile), dataContext)
   }
 

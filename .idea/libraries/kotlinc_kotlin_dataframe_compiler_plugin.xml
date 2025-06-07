@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-dataframe-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dataframe-compiler-plugin-for-ide:2.2.20-dev-4912">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-4912/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-4912.jar">
+          <sha256sum>976b721107b032857685bb5899a0bd50738408f14ea8cc2efb0d09fdabba827d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-4912/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-4912.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.20-dev-4912/kotlin-dataframe-compiler-plugin-for-ide-2.2.20-dev-4912-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

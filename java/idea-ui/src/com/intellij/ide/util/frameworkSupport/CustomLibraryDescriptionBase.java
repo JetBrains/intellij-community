@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.framework.library.LibraryVersionProperties;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -37,9 +24,10 @@ public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescript
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
-    descriptor.setTitle(JavaUiBundle.message("new.library.file.chooser.title"));
-    descriptor.setDescription(JavaUiBundle.message("new.library.file.chooser.description"));
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor()
+      .withExtensionFilter("jar")
+      .withTitle(JavaUiBundle.message("new.library.file.chooser.title"))
+      .withDescription(JavaUiBundle.message("new.library.file.chooser.description"));
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, parentComponent, null, contextDirectory);
     if (files.length == 0) {
       return null;

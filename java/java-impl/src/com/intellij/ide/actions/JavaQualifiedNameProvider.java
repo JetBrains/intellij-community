@@ -170,7 +170,7 @@ public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
       PsiClass aClass = member.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
-      if (toInsert.length() != 0) toInsert += "#";
+      if (!toInsert.isEmpty()) toInsert += "#";
       toInsert += member.getName();
       if (member instanceof PsiMethod) {
         toInsert += getParameterString((PsiMethod)member, true);
@@ -203,7 +203,8 @@ public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
           // pasting reference to default constructor of the class after new
           suffix = "()";
         }
-        else if (toInsert != null && toInsert.length() != 0 && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
+        else if (toInsert != null &&
+                 !toInsert.isEmpty() && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
           //separate identifiers with space
           suffix = " ";
         }

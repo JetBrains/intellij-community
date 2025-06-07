@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: delegate
+// CHOSEN_OPTION: PROPERTY_DELEGATE_FIELD|Add use-site target 'delegate'
 // WITH_STDLIB
 
 annotation class A

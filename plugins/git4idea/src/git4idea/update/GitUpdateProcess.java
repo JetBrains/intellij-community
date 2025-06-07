@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,9 +40,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.*;
 import git4idea.util.GitPreservingProcess;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -58,13 +56,14 @@ import static git4idea.util.GitUIUtil.code;
  *
  * The class is not thread-safe and is stateful. It is intended to be used only once.
  */
+@ApiStatus.Internal
 public final class GitUpdateProcess {
   private static final Logger LOG = Logger.getInstance(GitUpdateProcess.class);
 
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
 
-  private final @NotNull List<GitRepository> myRepositories;
+  private final @Unmodifiable @NotNull List<GitRepository> myRepositories;
   private final @NotNull Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
@@ -78,7 +77,7 @@ public final class GitUpdateProcess {
 
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull @Unmodifiable Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           @Nullable Map<GitRepository, GitBranchPair> updateConfig,
                           boolean checkRebaseOverMergeProblem,
@@ -99,7 +98,7 @@ public final class GitUpdateProcess {
     mySubmodulesInDetachedHead = collectDetachedSubmodules(myRepositories);
   }
 
-  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull List<GitRepository> repositories) {
+  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull @Unmodifiable List<GitRepository> repositories) {
     Map<GitRepository, GitSubmodule> detachedSubmodules = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       if (repository.isOnBranch()) continue;
@@ -455,7 +454,7 @@ public final class GitUpdateProcess {
   }
 
   @VisibleForTesting
-  static @NlsContexts.NotificationContent @NotNull String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
+  public static @NlsContexts.NotificationContent @NotNull String getDetachedHeadErrorNotificationContent(@NotNull GitRepository repository) {
     return GitBundle.message("notification.content.detached.state.in.root.checkout.branch", mention(repository));
   }
 
@@ -464,7 +463,7 @@ public final class GitUpdateProcess {
   }
 
   @VisibleForTesting
-  static @NlsContexts.NotificationContent @NotNull String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
+  public static @NlsContexts.NotificationContent @NotNull String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull @NlsSafe String branchName) {
     return GitBundle.message("notification.content.branch.in.repo.has.no.tracked.branch", code(branchName), mention(repository));
   }
 

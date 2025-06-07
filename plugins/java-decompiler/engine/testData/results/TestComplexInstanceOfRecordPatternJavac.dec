@@ -5,43 +5,43 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(R(Object s1))) {
+      if (o instanceof R(R(Object s1))) {// 9
          System.out.println(s1);// 10
          System.out.println(s1);// 11
       }
 
       System.out.println("1");// 13
-   }// 9
+   }
 
    public static void instanceOfTest2(Object o) {
-      if (o instanceof R(R(String s1))) {
+      if (o instanceof R(R(String s1))) {// 17
          System.out.println(s1);// 18
          System.out.println(s1);// 19
       }
 
       System.out.println("4");// 21
-   }// 17
+   }
 
    public static void instanceOfTest3(Object o) {
-      if (o instanceof R2(String s1, Object var9)) {
+      if (o instanceof R2(String s1, Object var9)) {// 25
          System.out.println(s1);// 26
          System.out.println(s1);// 27
       }
 
       System.out.println("12");// 29
-   }// 25
+   }
 
    public static void instanceOfTest3_2(Object o) {
-      if (o instanceof R2(Object var9, String s1)) {
+      if (o instanceof R2(Object var9, String s1)) {// 33
          System.out.println(s1);// 34
          System.out.println(s1);// 35
       }
 
       System.out.println("3");// 37
-   }// 33
+   }
 
    public static void instanceOfTest4(Object o) {
-      if (o instanceof R2(String s1, R(String s))) {
+      if (o instanceof R2(String s1, R(String s))) {// 41
          System.out.println(s1);// 42
          System.out.println(s);// 43
          if (o instanceof R2(String s2, R(String s3))) {// 45
@@ -51,7 +51,7 @@ public class TestComplexInstanceOfRecordPatternJavac {
       }
 
       System.out.println("1");// 50
-   }// 41
+   }
 
    static record R(Object o) {
       R(Object o) {
@@ -111,22 +111,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      12
       3e      12
       3f      13
-      40      13
-      41      13
-      42      13
-      43      13
-      44      13
-      45      13
-      46      13
-      47      13
-      48      13
-      49      13
-      4a      13
-      4b      13
-      4c      13
-      4d      13
-      4e      13
-      4f      13
    }
 
    method 'instanceOfTest2 (Ljava/lang/Object;)V' {
@@ -156,22 +140,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       48      21
       49      21
       4a      22
-      4b      22
-      4c      22
-      4d      22
-      4e      22
-      4f      22
-      50      22
-      51      22
-      52      22
-      53      22
-      54      22
-      55      22
-      56      22
-      57      22
-      58      22
-      59      22
-      5a      22
    }
 
    method 'instanceOfTest3 (Ljava/lang/Object;)V' {
@@ -201,22 +169,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      30
       3e      30
       3f      31
-      40      31
-      41      31
-      42      31
-      43      31
-      44      31
-      45      31
-      46      31
-      47      31
-      48      31
-      49      31
-      4a      31
-      4b      31
-      4c      31
-      4d      31
-      4e      31
-      4f      31
    }
 
    method 'instanceOfTest3_2 (Ljava/lang/Object;)V' {
@@ -246,22 +198,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      39
       3e      39
       3f      40
-      40      40
-      41      40
-      42      40
-      43      40
-      44      40
-      45      40
-      46      40
-      47      40
-      48      40
-      49      40
-      4a      40
-      4b      40
-      4c      40
-      4d      40
-      4e      40
-      4f      40
    }
 
    method 'instanceOfTest4 (Ljava/lang/Object;)V' {
@@ -313,22 +249,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       bd      52
       be      52
       bf      53
-      c0      53
-      c1      53
-      c2      53
-      c3      53
-      c4      53
-      c5      53
-      c6      53
-      c7      53
-      c8      53
-      c9      53
-      ca      53
-      cb      53
-      cc      53
-      cd      53
-      ce      53
-      cf      53
    }
 }
 
@@ -385,23 +305,23 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac$R2' {
 
 Lines mapping:
 6 <-> 5
-9 <-> 14
+9 <-> 8
 10 <-> 9
 11 <-> 10
 13 <-> 13
-17 <-> 23
+17 <-> 17
 18 <-> 18
 19 <-> 19
 21 <-> 22
-25 <-> 32
+25 <-> 26
 26 <-> 27
 27 <-> 28
 29 <-> 31
-33 <-> 41
+33 <-> 35
 34 <-> 36
 35 <-> 37
 37 <-> 40
-41 <-> 54
+41 <-> 44
 42 <-> 45
 43 <-> 46
 45 <-> 47

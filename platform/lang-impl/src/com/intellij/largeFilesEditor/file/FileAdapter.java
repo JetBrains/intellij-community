@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.file;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.EOFException;
 import java.io.FileNotFoundException;
@@ -15,7 +17,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReentrantLock;
 
-final class FileAdapter {
+@ApiStatus.Internal
+public final class FileAdapter {
   private static final Logger logger = Logger.getInstance(FileAdapter.class);
   private static final int UNDEFINED = -1;
 
@@ -28,7 +31,8 @@ final class FileAdapter {
 
   private volatile long cashedFileSize = UNDEFINED; // in bytes
 
-  FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
+  @VisibleForTesting
+  public FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
     this.pageSize = pageSize;
     this.maxPageBorderShift = maxPageBorderShift;
     this.vFile = vFile;
@@ -42,7 +46,8 @@ final class FileAdapter {
     }
   }
 
-  void setCharset(Charset newCharset) {
+  @VisibleForTesting
+  public void setCharset(Charset newCharset) {
     randomAccessFileLock.lock();
     try {
       vFile.setCharset(newCharset);
@@ -52,7 +57,8 @@ final class FileAdapter {
     }
   }
 
-  void closeFile() throws IOException {
+  @VisibleForTesting
+  public void closeFile() throws IOException {
     randomAccessFileLock.lock();
     try {
       if (randomAccessFile != null) {
@@ -68,7 +74,8 @@ final class FileAdapter {
     return vFile.getCharset().name();
   }
 
-  long getPagesAmount() throws IOException {
+  @VisibleForTesting
+  public long getPagesAmount() throws IOException {
     return (getFileSize() + pageSize - 1) / pageSize;
   }
 
@@ -119,7 +126,8 @@ final class FileAdapter {
    * @return text of the page if page exists or null if page doesn't
    * @throws NullPointerException - when access to physical file was not established
    */
-  String getPageText(long pageNumber) throws IOException {
+  @VisibleForTesting
+  public String getPageText(long pageNumber) throws IOException {
     randomAccessFileLock.lock();
     try {
       long pagesAmount = getPagesAmount();

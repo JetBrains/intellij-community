@@ -3,26 +3,35 @@
 2(3) WRITE ACCESS: var
 3(4) element: PyIfStatement
 4(5) READ ACCESS: a
-5(6,9) READ ACCESS: b
-6(7) element: PyStatementList. Condition: a == b:true
-7(8) element: PyAssignmentStatement
-8(25) WRITE ACCESS: var
-9(10) element: PyIfPartElif. Condition: a == b:false
-10(11) READ ACCESS: aa
-11(12,22) READ ACCESS: bb
-12(13) element: PyStatementList. Condition: aa == bb:true
-13(14) element: PyAssignmentStatement
-14(15) READ ACCESS: same_changet_expression
-15(16) WRITE ACCESS: bbb
-16(17) element: PyIfStatement
-17(18,25) READ ACCESS: bbb
-18(19) element: PyStatementList. Condition: bbb:true
-19(20) ASSERTTYPE ACCESS: bbb
+5(6,8) READ ACCESS: b
+6(7) element: null. Condition: a == b:false
+7(13) ASSERTTYPE ACCESS: a
+8(9) element: null. Condition: a == b:true
+9(10) ASSERTTYPE ACCESS: a
+10(11) element: PyStatementList
+11(12) element: PyAssignmentStatement
+12(34) WRITE ACCESS: var
+13(14) READ ACCESS: aa
+14(15,17) READ ACCESS: bb
+15(16) element: null. Condition: aa == bb:false
+16(31) ASSERTTYPE ACCESS: aa
+17(18) element: null. Condition: aa == bb:true
+18(19) ASSERTTYPE ACCESS: aa
+19(20) element: PyStatementList
 20(21) element: PyAssignmentStatement
-21(25) WRITE ACCESS: var
-22(23) element: PyStatementList. Condition: aa == bb:false
-23(24) element: PyAssignmentStatement
-24(25) WRITE ACCESS: var
-25(26) element: PyReturnStatement
-26(27) READ ACCESS: var
-27() element: null
+21(22) READ ACCESS: same_changet_expression
+22(23) WRITE ACCESS: bbb
+23(24) element: PyIfStatement
+24(25,26) READ ACCESS: bbb
+25(34) element: null. Condition: bbb:false
+26(27) element: null. Condition: bbb:true
+27(28) ASSERTTYPE ACCESS: bbb
+28(29) element: PyStatementList
+29(30) element: PyAssignmentStatement
+30(34) WRITE ACCESS: var
+31(32) element: PyStatementList
+32(33) element: PyAssignmentStatement
+33(34) WRITE ACCESS: var
+34(35) element: PyReturnStatement
+35(36) READ ACCESS: var
+36() element: null

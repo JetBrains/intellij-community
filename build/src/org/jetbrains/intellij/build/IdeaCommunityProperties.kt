@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
@@ -14,16 +15,12 @@ import java.nio.file.Path
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions = BuildOptions(),
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
-): BuildContext {
-  return BuildContextImpl.createContext(projectHome = projectHome,
-                                        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-                                        setupTracer = true,
-                                        options = options)
-}
+): BuildContext = BuildContextImpl.createContext(
+  projectHome, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot), setupTracer = true, options = options)
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
-    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
+    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
       "intellij.tools.jps.build.standalone",
       "intellij.devkit.runtimeModuleRepository.jps",
       "intellij.devkit.jps",
@@ -34,11 +31,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.maven.testFramework",
       "intellij.tools.reproducibleBuilds.diff",
       "intellij.space.java.jps",
+      *JewelMavenArtifacts.STANDALONE.keys.toTypedArray(),
     )
   }
 
-  override val baseFileName: String
-    get() = "idea"
+  override val baseFileName: String = "idea"
 
   init {
     platformPrefix = "Idea"
@@ -51,7 +48,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
-    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf("intellij.javaFX.community", "intellij.vcs.github.community")
+    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
+      "intellij.javaFX.community",
+      "intellij.vcs.github.community",
+      "intellij.vcs.gitlab.community"
+    )
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
@@ -65,19 +66,41 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       layout.withModule("intellij.platform.duplicates.analysis")
       layout.withModule("intellij.platform.structuralSearch")
     }
+    
+    productLayout.skipUnresolvedContentModules = true
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(MAVEN_ARTIFACTS_ADDITIONAL_MODULES)
     mavenArtifacts.squashedModules = mavenArtifacts.squashedModules.addAll(persistentListOf(
       "intellij.platform.util.base",
+      "intellij.platform.util.base.multiplatform",
       "intellij.platform.util.zip",
     ))
+    mavenArtifacts.patchCoordinates = { module, coordinates ->
+      when {
+        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
+        else -> coordinates
+      }
+    }
+    mavenArtifacts.addPomMetadata = { module, model ->
+      when {
+        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+      }
+    }
+    mavenArtifacts.isJavadocJarRequired = {
+      JewelMavenArtifacts.isJewel(it)
+    }
+    mavenArtifacts.validate = { context, artifacts ->
+      JewelMavenArtifacts.validate(context, artifacts)
+    }
 
     versionCheckerConfig = CE_CLASS_VERSIONS
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
     buildDocAuthoringAssets = true
 
+    @Suppress("SpellCheckingInspection")
     qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
     enableKotlinPluginK2ByDefault()
   }
 
@@ -91,15 +114,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
       targetDir = targetDir.resolve("bin"),
     )
+
     bundleExternalPlugins(context, targetDir)
   }
 
-  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {
-    //temporary unbundle VulnerabilitySearch
-    //ExternalPluginBundler.bundle('VulnerabilitySearch',
-    //                             "$buildContext.paths.communityHome/build/dependencies",
-    //                             buildContext, targetDirectory)
-  }
+  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) { }
 
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer = CommunityWindowsDistributionCustomizer()
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer = CommunityLinuxDistributionCustomizer()
@@ -113,13 +132,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
     }
 
-    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
+    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
 
-    override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
+    override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
 
-    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
-      return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
-    }
+    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String =
+      "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
   }
 
   protected open inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
@@ -132,13 +150,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
         "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
-      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl): Sequence<String> =
+      super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
-    }
   }
 
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
@@ -152,27 +169,20 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      return if (appInfo.isEAP) {
-        "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-      }
-      else {
-        "IntelliJ IDEA CE.app"
-      }
-    }
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+      if (appInfo.isEAP) "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
+      else "IntelliJ IDEA CE.app"
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
-      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
+      super.generateExecutableFilesPatterns(context, includeRuntime, arch)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
-    }
   }
 
-  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
-  }
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
-  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String) = "ideaIC-$buildNumber"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
 
-  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "idea-ce"
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
 }

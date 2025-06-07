@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,8 @@ import java.awt.*;
 public abstract class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final DiffDialogHints myHints;
+  private final @Nullable Project myProject;
+  private final @NotNull DiffDialogHints myHints;
 
   private MergeRequestProcessor myProcessor;
   private WindowWrapper myWrapper;
@@ -47,6 +48,7 @@ public abstract class MergeWindow {
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
+      .setInitialSize(JBUI.DialogSizes.extraLarge())
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
       .setOnShowCallback(() -> initProcessor(myProcessor))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
@@ -67,8 +69,7 @@ public abstract class MergeWindow {
     myWrapper.show();
   }
 
-  @NotNull
-  private MergeRequestProcessor createProcessor() {
+  private @NotNull MergeRequestProcessor createProcessor() {
     return new MergeRequestProcessor(myProject) {
       @Override
       public void closeDialog() {
@@ -80,9 +81,8 @@ public abstract class MergeWindow {
         myWrapper.setTitle(title);
       }
 
-      @Nullable
       @Override
-      protected JRootPane getRootPane() {
+      protected @Nullable JRootPane getRootPane() {
         RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
         return container != null ? container.getRootPane() : null;
       }
@@ -106,7 +106,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForRequest extends MergeWindow {
-    @NotNull private final MergeRequest myMergeRequest;
+    private final @NotNull MergeRequest myMergeRequest;
 
     public ForRequest(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
       super(project, hints);
@@ -121,7 +121,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForProducer extends MergeWindow {
-    @NotNull private final MergeRequestProducer myMergeRequestProducer;
+    private final @NotNull MergeRequestProducer myMergeRequestProducer;
 
     public ForProducer(@Nullable Project project, @NotNull MergeRequestProducer mergeRequestProducer, @NotNull DiffDialogHints hints) {
       super(project, hints);

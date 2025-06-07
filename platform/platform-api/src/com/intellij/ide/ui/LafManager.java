@@ -50,14 +50,6 @@ public abstract class LafManager {
   @ApiStatus.Internal
   public abstract @NotNull JComponent createSettingsToolbar();
 
-  /**
-   * @deprecated Use {@link LafManager#setCurrentUIThemeLookAndFeel(UIThemeLookAndFeelInfo)}
-   */
-  @Deprecated(forRemoval = true)
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    setCurrentLookAndFeel((UIThemeLookAndFeelInfo)lookAndFeelInfo, false);
-  }
-
   public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
   }
@@ -67,6 +59,10 @@ public abstract class LafManager {
   public abstract void updateUI();
 
   public abstract void repaintUI();
+
+  @ApiStatus.Internal
+  public void checkRestart() {
+  }
 
   /**
    * @return if autodetect is supported and enabled

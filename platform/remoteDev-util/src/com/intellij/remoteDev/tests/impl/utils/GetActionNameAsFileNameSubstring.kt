@@ -14,11 +14,13 @@ fun getAsPartOfArtifactsFileName(text: String): String =
     .replace("_+".toRegex(), "_")
 
 @ApiStatus.Internal
-fun getArtifactsFileName(actionName: String, suffix: String? = null, extension: String, timeStamp: LocalTime = LocalTime.now()): String =
+fun getArtifactsFileName(actionName: String, suffix: String? = null, extension: String? = null, timeStamp: LocalTime = LocalTime.now()): String =
   buildString {
     append(getAsPartOfArtifactsFileName(actionName)
              .take(maxActionLength))
     append(suffix?.let { "-$it" }.orEmpty())
     append("-at_${timeStamp.format(ofPattern("HHmmss"))}")
-    append(".$extension")
+    if (extension != null) {
+      append(".$extension")
+    }
   }

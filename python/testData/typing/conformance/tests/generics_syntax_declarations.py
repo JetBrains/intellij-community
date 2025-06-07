@@ -7,13 +7,11 @@ Validates the type parameter syntax introduced in PEP 695.
 
 # This generic class is parameterized by a TypeVar T, a
 # TypeVarTuple Ts, and a ParamSpec P.
-from typing import Generic, ParamSpec, Protocol, TypeVar, TypeVarTuple, assert_type
+from typing import Generic, Protocol
 
 
 class ChildClass[T, *Ts, **P]:
-    assert_type(T, TypeVar)
-    assert_type(Ts, TypeVarTuple)
-    assert_type(P, ParamSpec)
+    pass
 
 
 class ClassA[T](Generic[T]):  # E: Runtime error

@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -14,6 +16,11 @@ class KtThisDescriptor(val descriptor: DeclarationDescriptor, private val dfType
 
     override fun isImplicitReadPossible(): Boolean {
         return true
+    }
+
+    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
+        if (qualifier != null) return factory.unknown
+        return factory.varFactory.createVariableValue(this)
     }
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = dfType

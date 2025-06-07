@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.frame;
 
@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +29,7 @@ public abstract class XStackFrame extends XValueContainer {
    *
    * @return an object which will be used to determine if the stack frame changed after stepping
    */
-  @Nullable
-  public Object getEqualityObject() {
+  public @Nullable Object getEqualityObject() {
     return null;
   }
 
@@ -42,16 +42,22 @@ public abstract class XStackFrame extends XValueContainer {
    *   <li>watches
    * </ul>
    */
-  @Nullable
-  public XDebuggerEvaluator getEvaluator() {
+  public @Nullable XDebuggerEvaluator getEvaluator() {
     return null;
+  }
+
+  /**
+   * @return whether {@link #getEvaluator()} returns instance of XDebuggerDocumentOffsetEvaluator
+   */
+  @ApiStatus.Internal
+  public boolean isDocumentEvaluator() {
+    return false;
   }
 
   /**
    * @return the current executing point in the stack frame
    */
-  @Nullable
-  public XSourcePosition getSourcePosition() {
+  public @Nullable XSourcePosition getSourcePosition() {
     return null;
   }
 

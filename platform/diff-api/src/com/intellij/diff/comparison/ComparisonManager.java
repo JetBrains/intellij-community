@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.fragments.DiffFragment;
@@ -18,8 +18,7 @@ import java.util.List;
  * It's good idea not to compare String due to expensive subSequence() implementation. Use CharSequenceSubSequence.
  */
 public abstract class ComparisonManager {
-  @NotNull
-  public static ComparisonManager getInstance() {
+  public static @NotNull ComparisonManager getInstance() {
     return ApplicationManager.getApplication().getService(ComparisonManager.class);
   }
 
@@ -28,8 +27,7 @@ public abstract class ComparisonManager {
   /**
    * Compare two texts by-line
    */
-  @NotNull
-  public abstract List<LineFragment> compareLines(@NotNull CharSequence text1,
+  public abstract @NotNull List<LineFragment> compareLines(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) throws DiffTooBigException;
@@ -37,8 +35,7 @@ public abstract class ComparisonManager {
   /**
    * Compare two texts by-line and then compare changed fragments by-word
    */
-  @NotNull
-  public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
+  public abstract @NotNull List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                                        @NotNull CharSequence text2,
                                                        @NotNull ComparisonPolicy policy,
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException;
@@ -46,8 +43,7 @@ public abstract class ComparisonManager {
   /**
    * Compare three texts by-line (LEFT - BASE - RIGHT)
    */
-  @NotNull
-  public abstract List<MergeLineFragment> compareLines(@NotNull CharSequence text1,
+  public abstract @NotNull List<MergeLineFragment> compareLines(@NotNull CharSequence text1,
                                                        @NotNull CharSequence text2,
                                                        @NotNull CharSequence text3,
                                                        @NotNull ComparisonPolicy policy,
@@ -86,8 +82,7 @@ public abstract class ComparisonManager {
   /**
    * Compare two texts by-word
    */
-  @NotNull
-  public abstract List<DiffFragment> compareWords(@NotNull CharSequence text1,
+  public abstract @NotNull List<DiffFragment> compareWords(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) throws DiffTooBigException;
@@ -95,8 +90,7 @@ public abstract class ComparisonManager {
   /**
    * Compare two texts by-char
    */
-  @NotNull
-  public abstract List<DiffFragment> compareChars(@NotNull CharSequence text1,
+  public abstract @NotNull List<DiffFragment> compareChars(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ProgressIndicator indicator) throws DiffTooBigException;
@@ -116,16 +110,14 @@ public abstract class ComparisonManager {
    * ex: "A\nB" vs "A X\nB Y" will result to two LineFragments: [0, 1) - [0, 1) and [1, 2) - [1, 2)
    *     squash will produce a single fragment: [0, 2) - [0, 2)
    */
-  @NotNull
-  public abstract List<LineFragment> squash(@NotNull List<LineFragment> oldFragments);
+  public abstract @NotNull List<LineFragment> squash(@NotNull List<LineFragment> oldFragments);
 
   /**
    * @see #squash
    * @param trim - if leading/trailing LineFragments with equal contents should be skipped
    */
-  @NotNull
-  public abstract List<LineFragment> processBlocks(@NotNull List<LineFragment> oldFragments,
-                                                   @NotNull final CharSequence text1, @NotNull final CharSequence text2,
-                                                   @NotNull final ComparisonPolicy policy,
+  public abstract @NotNull List<LineFragment> processBlocks(@NotNull List<LineFragment> oldFragments,
+                                                   final @NotNull CharSequence text1, final @NotNull CharSequence text2,
+                                                   final @NotNull ComparisonPolicy policy,
                                                    final boolean squash, final boolean trim);
 }

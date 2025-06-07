@@ -51,6 +51,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
+           actionText.matches("(?i)Create \\w+ from usage") || // produces uncompilable code by design
            actionText.matches("Surround with 'if \\(.+\\)'") || // might produce uninitialized variable or missing return statement problem
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
            actionText.startsWith("Create missing branches ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
@@ -91,6 +92,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                       intentionText.startsWith("Replace with block comment") ||
                                       intentionText.equals("Replace with Javadoc comment") ||
+                                      intentionText.equals("Convert to Markdown documentation comment") ||
                                       intentionText.startsWith("Remove //noinspection") ||
                                       intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
@@ -98,6 +100,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.equals("Remove 'while' statement") ||
                                       intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
                                       intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                      intentionText.equals("Suppress all inspections for class") || // While suppress 'all' adds an annotation, it may remove individual suppressions from comments
                                       intentionText.startsWith("Suppress for ") || // Suppressions often modify comments 
                                       intentionText.startsWith("Move comment to separate line") ||//merge comments on same line
                                       intentionText.startsWith("Remove redundant arguments to call") ||//removes arg with all comments inside
@@ -123,6 +126,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches("Remove '.*' from '.*' throws list") ||
                                       intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
                                       intentionText.matches("Remove .+ suppression") ||
+                                      intentionText.startsWith("Add import for ") || // Add import for may shorten references from Javadoc
                                       familyName.equals("Fix typo") ||
                                       familyName.equals("Remove annotation") || // may remove comment inside annotation
                                       familyName.equals("Reformat the whole file"); // may update @noinspection lines

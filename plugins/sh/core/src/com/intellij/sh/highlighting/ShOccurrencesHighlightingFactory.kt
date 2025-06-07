@@ -9,10 +9,10 @@ import com.intellij.psi.PsiFile
 
 class ShOccurrencesHighlightingFactory : HighlightUsagesHandlerFactoryBase() {
   override fun createHighlightUsagesHandler(editor: Editor,
-                                            file: PsiFile,
+                                            psiFile: PsiFile,
                                             target: PsiElement): HighlightUsagesHandlerBase<PsiElement>? {
-    if (ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, file)) {
-      return ShOccurrencesHighlightUsagesHandler(editor, file)
+    if (ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, psiFile)) {
+      return ShOccurrencesHighlightUsagesHandler(editor, psiFile)
     }
     return null
   }

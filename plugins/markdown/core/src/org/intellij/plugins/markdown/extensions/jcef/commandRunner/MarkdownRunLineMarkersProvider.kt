@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -20,17 +21,19 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
+internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
     if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
       return null
     }
+
     if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {
       val lang = element.text?.trim()
       if (!lang.isNullOrEmpty()) {
         return processBlock(lang, element)
       }
     }
+
     val inCodeSpan = (element.hasType(MarkdownTokenTypes.BACKTICK)
                       && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
                       && element.parent.firstChild == element)
@@ -45,7 +48,6 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
       return null
     }
 
-
     val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
       AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
@@ -53,7 +55,6 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
       }
     }
     return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
-
   }
 
   private fun collectFenceText(element: MarkdownCodeFence): String? {

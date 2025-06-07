@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.util.cmd
 
 import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.ApiStatus
 
-internal class GradleCommandLineTokenizer(commandLine: List<String>) {
+@ApiStatus.Internal
+class GradleCommandLineTokenizer(commandLine: List<String>) {
 
   private val commandLine = commandLine.filter { it.isNotEmpty() }
   private var index = -1

@@ -55,7 +55,7 @@ abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtur
         myFixture.doHighlighting()
         // have to analyze file before any change to support incremental analysis
         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-        checkForUnexpectedErrors(ktFile, diagnosticsProvider)
+        checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
         val wolf = WolfTheProblemSolver.getInstance(project)
         val virtualFile = ktFile.virtualFile
         val initialWolfErrors = wolfErrors(myFixture)

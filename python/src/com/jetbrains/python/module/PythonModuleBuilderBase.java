@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.jetbrains.python.newProject.PythonProjectGenerator.NO_SETTINGS;
 
 
 public class PythonModuleBuilderBase extends ModuleBuilder {
@@ -92,7 +90,7 @@ public class PythonModuleBuilderBase extends ModuleBuilder {
       if (contentRoots.length > 0 && contentRoots[0] != null) {
         dir = contentRoots[0];
       }
-      myGenerator.generateProject(project, dir, NO_SETTINGS, module);
+      myGenerator.generateProject(project, dir, new Object(), module);
     }
     return module;
   }

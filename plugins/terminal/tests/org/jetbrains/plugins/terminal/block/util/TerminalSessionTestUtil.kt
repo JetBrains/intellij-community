@@ -17,9 +17,11 @@ import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TerminalCustomCommandListener
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.block.session.*
 import org.jetbrains.plugins.terminal.block.testApps.LINE_SEPARATOR
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert
 import org.junit.Assume
@@ -41,7 +43,7 @@ internal object TerminalSessionTestUtil {
     disableSavingHistory: Boolean = true,
     terminalCustomCommandListener: TerminalCustomCommandListener = TerminalCustomCommandListener {}
   ): BlockTerminalSession {
-    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
+    TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.NEW_TERMINAL, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY).setValue(true, parentDisposable)
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY).setValue(true, parentDisposable)

@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 package foo.www.ddd
 
 class Check {

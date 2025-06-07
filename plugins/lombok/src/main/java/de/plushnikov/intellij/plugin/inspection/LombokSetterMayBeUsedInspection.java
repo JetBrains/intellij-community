@@ -15,33 +15,28 @@ import java.util.List;
 
 public final class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterMayBeUsedInspection {
   @Override
-  @NotNull
-  protected String getTagName() {
+  protected @NotNull String getTagName() {
     return "param";
   }
 
   @Override
-  @NotNull
-  protected String getJavaDocMethodMarkup() {
+  protected @NotNull String getJavaDocMethodMarkup() {
     return "SETTER";
   }
 
   @Override
-  @NotNull
-  protected @NonNls String getAnnotationName() {
+  protected @NotNull @NonNls String getAnnotationName() {
     return LombokClassNames.SETTER;
   }
 
   @Override
-  @NotNull
-  protected @Nls String getFieldErrorMessage(String fieldName) {
+  protected @NotNull @Nls String getFieldErrorMessage(String fieldName) {
     return LombokBundle.message("inspection.lombok.setter.may.be.used.display.field.message",
                                 fieldName);
   }
 
   @Override
-  @NotNull
-  protected @Nls String getClassErrorMessage(String className) {
+  protected @NotNull @Nls String getClassErrorMessage(String className) {
     return LombokBundle.message("inspection.lombok.setter.may.be.used.display.class.message",
                                 className);
   }
@@ -118,14 +113,12 @@ public final class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterM
   }
 
   @Override
-  @NotNull
-  protected @Nls String getFixName(String text) {
+  protected @NotNull @Nls String getFixName(String text) {
     return LombokBundle.message("inspection.lombok.setter.may.be.used.display.fix.name", text);
   }
 
   @Override
-  @NotNull
-  protected @Nls String getFixFamilyName() {
+  protected @NotNull @Nls String getFixFamilyName() {
     return LombokBundle.message("inspection.lombok.setter.may.be.used.display.fix.family.name");
   }
 }

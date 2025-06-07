@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
@@ -9,6 +10,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.impl.UnknownBeforeRunTaskProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,11 +32,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +76,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     DnDManager.getInstance().registerTarget(this, this, this);
   }
 
-  private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+  private @Unmodifiable List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
     Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
                                 provider -> provider.createTask(myConfiguration) != null && (!provider.isSingleton() || !existing.contains(provider.getId())));
@@ -179,7 +183,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     s.getManager().setBeforeRunTasks(s.getConfiguration(), getEnabledTasks());
   }
 
-  private @NotNull List<BeforeRunTask<?>> getEnabledTasks() {
+  public @NotNull List<BeforeRunTask<?>> getEnabledTasks() {
     return myTags.stream()
       .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
@@ -289,6 +293,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
       });
       DnDManager.getInstance().registerSource(this, myButton, this);
       myButton.setToolTipText(ExecutionBundle.message("run.configuration.before.run.tooltip"));
+      myButton.getAccessibleContext().setAccessibleDescription(ExecutionBundle.message("run.configuration.before.run.tag.button.accessible.description"));
       layoutButtons();
     }
 
@@ -351,5 +356,19 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     public boolean isDumbAware() {
       return DumbService.isDumbAware(myProvider);
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibilityUtils.GROUPED_ELEMENTS;
+        }
+      };
+      accessibleContext.setAccessibleName(IdeBundle.message("before.run.component.accessible.name"));
+    }
+    return accessibleContext;
   }
 }

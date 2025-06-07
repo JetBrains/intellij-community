@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.util.ArrayUtilRt;
@@ -92,7 +92,8 @@ public class JBZipFile implements Closeable {
 
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
-  private final boolean myIsReadonly;
+  final boolean myIsReadonly;
+  private final long mySize;
 
 
   /**
@@ -178,16 +179,11 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
     this(f, encoding, readonly, ThreeState.NO);
   }
 
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly,
-                   @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     this(getFileChannel(f, readonly), encoding, readonly, isZip64);
   }
 
@@ -199,16 +195,20 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(SeekableByteChannel channel,
-                    @NotNull Charset encoding,
-                    boolean readonly,
-                    @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
+    long channelSize = channel.size();
+    if (readonly) {
+      mySize = channelSize;
+    }
+    else {
+      mySize = -1;
+    }
     myArchive = channel;
 
     try {
-      if (myArchive.size() > 0) {
+      if (channelSize > 0) {
         populateFromCentralDirectory(isZip64);
       }
       else {
@@ -221,7 +221,7 @@ public class JBZipFile implements Closeable {
         myArchive.close();
       }
       catch (IOException e2) {
-        // swallow, throw the original exception instead
+        e.addSuppressed(e2);
       }
       throw e;
     }
@@ -234,9 +234,7 @@ public class JBZipFile implements Closeable {
 
   @Override
   public String toString() {
-    return "JBZipFile{" +
-           "readonly=" + myIsReadonly +
-           '}';
+    return "JBZipFile{readonly=" + myIsReadonly + '}';
   }
 
   /**
@@ -336,7 +334,7 @@ public class JBZipFile implements Closeable {
       instead gaining a performance boost.
      */
     ByteBuffer centralDirectoryCached = ByteBuffer.allocate(
-      Math.min((int)(myArchive.size() - myArchive.position()),
+      Math.min((int)(getSize() - myArchive.position()),
                // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
                64 * 1024) // seems enough
     );
@@ -576,6 +574,8 @@ public class JBZipFile implements Closeable {
     /* central directory               */ + DWORD
     /* size of the central directory   */ + DWORD;
 
+  private static final int EOCD_OPTIMIZATION_BUFFER_SIZE = 64 * 1024;
+
   /**
    * Searches for the &quot;End of central dir record&quot;, parses
    * it and positions the stream at the first central directory
@@ -583,27 +583,40 @@ public class JBZipFile implements Closeable {
    */
   private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
-    long off = myArchive.size() - MIN_EOCD_SIZE;
+    long off = getSize() - MIN_EOCD_SIZE;
     if (off >= 0) {
       myArchive.position(off);
-      byte[] sig = JBZipOutputStream.EOCD_SIG;
-      int curr = readByte();
-      while (curr != -1) {
-        if (curr == sig[0]) {
-          curr = readByte();
-          if (curr == sig[1]) {
-            curr = readByte();
-            if (curr == sig[2]) {
-              curr = readByte();
-              if (curr == sig[3]) {
-                found = true;
-                break;
-              }
+      byte[] attempt = new byte[WORD];
+      myArchive.read(ByteBuffer.wrap(attempt));
+      found = Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG);
+      if (!found) {
+
+        int limit = Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE, (int)off);
+
+        ByteBuffer buffer = ByteBuffer.allocate(limit);
+        off -= limit - WORD;
+        outer:
+        while (true) {
+          buffer.clear();
+          myArchive.position(off);
+          myArchive.read(buffer);
+          int bufferLocalPosition = limit - WORD; // position just before possible central directory
+          while (bufferLocalPosition >= 0) {
+            buffer.position(bufferLocalPosition);
+            buffer.get(attempt);
+            if (Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG)) {
+              off += bufferLocalPosition;
+              myArchive.position(off);
+              found = true;
+              break outer;
             }
+            bufferLocalPosition -= 1;
           }
+          if (off <= 0) {
+            break;
+          }
+          off -= Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE - WORD, off);
         }
-        myArchive.position(--off);
-        curr = readByte();
       }
     }
     if (!found) {
@@ -644,6 +657,16 @@ public class JBZipFile implements Closeable {
       currentCfdOffset = ZipLong.getValue(cfdOffset);
       myArchive.position(currentCfdOffset);
     }
+  }
+
+  private boolean hasMatchForEocd(SeekableByteChannel channel) throws IOException {
+    byte[] byteArray = new byte[MIN_EOCD_SIZE];
+    int read = channel.read(ByteBuffer.wrap(byteArray));
+    if (read < 0) {
+      return false;
+    }
+    return byteArray[0] == JBZipOutputStream.EOCD_SIG[0] && byteArray[1] == JBZipOutputStream.EOCD_SIG[1] &&
+           byteArray[2] == JBZipOutputStream.EOCD_SIG[2] && byteArray[3] == JBZipOutputStream.EOCD_SIG[3];
   }
 
   /**
@@ -729,5 +752,14 @@ public class JBZipFile implements Closeable {
 
   void ensureFlushed(long end) throws IOException {
     if (myOutputStream != null) myOutputStream.ensureFlushed(end);
+  }
+
+  long getSize() throws IOException {
+    if (mySize == -1) {
+      return myArchive.size();
+    }
+    else {
+      return mySize;
+    }
   }
 }

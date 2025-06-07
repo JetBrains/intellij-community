@@ -1,0 +1,28 @@
+<html>
+<body>
+Reports redundant labels that cannot be referenced from 'break', 'continue' or 'return' statements.
+<p>
+Such labels can be safely removed.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+fun foo(c: Boolean) {
+    b@ while (true) a@ {
+        while (true) {
+            break@b
+        }
+    }
+}
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code>
+fun foo(c: Boolean) {
+    b@ while (true) {
+        while (true) {
+            break@b
+        }
+    }
+}
+</code></pre>
+</body>
+</html>

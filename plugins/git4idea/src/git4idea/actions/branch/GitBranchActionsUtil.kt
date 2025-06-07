@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
-import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.tail
 import git4idea.GitBranch
+import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
@@ -49,7 +48,7 @@ object GitBranchActionsUtil {
   fun getRepositoriesForTopLevelActions(e: AnActionEvent, isTopLevelAction: (AnActionEvent) -> Boolean): List<GitRepository> {
     val project = e.project ?: return emptyList()
 
-    if (isTopLevelAction(e) && !userWantsSyncControl(project)) {
+    if (isTopLevelAction(e) && !GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) {
       return e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY)?.let(::listOf).orEmpty()
     }
 
@@ -71,11 +70,11 @@ object GitBranchActionsUtil {
       return repositoriesInContext
     }
 
-    if (userWantsSyncControl(project)) return GitRepositoryManager.getInstance(project).repositories
+    val allRepositories = GitRepositoryManager.getInstance(project).repositories
+    if (allRepositories.size == 1 || GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots()) {
+      return allRepositories
+    }
 
     return GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)?.let(::listOf).orEmpty()
   }
-
-  @JvmStatic
-  fun userWantsSyncControl(project: Project) = GitVcsSettings.getInstance(project).syncSetting != DvcsSyncSettings.Value.DONT_SYNC
 }

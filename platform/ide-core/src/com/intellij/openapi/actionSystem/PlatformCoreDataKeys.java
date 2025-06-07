@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.SlowOperations;
 import kotlin.jvm.functions.Function0;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * @see CommonDataKeys
@@ -25,13 +25,6 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * @see com.intellij.openapi.actionSystem.PlatformDataKeys#LAST_ACTIVE_FILE_EDITOR
    */
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
-
-  /**
-   * Returns the text of currently selected file/file revision
-   * @deprecated Use {@link com.intellij.openapi.editor.Document} from {@link #VIRTUAL_FILE} or {@link #EDITOR}.
-   */
-  @Deprecated(forRemoval = true)
-  public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
 
   /**
    * Returns {@link Boolean#TRUE} if action is executed in modal context and
@@ -87,7 +80,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    *
    * @deprecated Use {@link DataSink#lazy(DataKey, Function0)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
 
   /**

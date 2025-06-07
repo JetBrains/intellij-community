@@ -203,7 +203,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     private val NO_NAME_PROVIDED: String = "NO_NAME_PROVIDED"
 }
 
-private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider) : JavaElementVisitor() {
+private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider) : JavaElementVisitor(),PsiRecursiveVisitor {
     override fun visitElement(element: PsiElement) {
         element.acceptChildren(this)
     }

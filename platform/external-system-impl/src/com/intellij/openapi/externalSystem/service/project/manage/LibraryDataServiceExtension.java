@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,5 +15,9 @@ public interface LibraryDataServiceExtension {
   @Nullable
   PersistentLibraryKind<?> getLibraryKind(@NotNull LibraryData libraryData);
 
-  void prepareNewLibrary(@NotNull LibraryData libraryData, @NotNull Library.ModifiableModel libraryModel);
+  void prepareNewLibrary(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull Library library,
+    @NotNull LibraryData libraryData
+  );
 }

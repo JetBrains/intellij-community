@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.application.ModalityState
@@ -8,6 +8,12 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+@RequiresOptIn(
+  message = "By using this API I confirm that I understand that the scope will not be able to complete normally and I understand that the cleaner coroutine is non-cancellable.",
+  level = RequiresOptIn.Level.WARNING,
+)
+annotation class AwaitCancellationAndInvoke
 
 /**
  * Awaits cancellation of [this] scope, and executes [action] in the context dispatcher of the scope after the scope is canceled.
@@ -19,6 +25,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * @param ctx additional context for the cleaner-coroutine, e.g. [CoroutineName]
  */
+@AwaitCancellationAndInvoke
 @ApiStatus.Experimental
 fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit) {
   requireNoJob(ctx)

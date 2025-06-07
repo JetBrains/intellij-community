@@ -3,11 +3,8 @@ package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
-import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.xdebugger.frame.XNamedValue
-import com.intellij.xdebugger.frame.XValueChildrenList
 
 /**
  * A debugger extension that allows plugins to contribute to the debugger variable view

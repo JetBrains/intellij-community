@@ -14,16 +14,5 @@ public final class NotebooksVisualizationIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, NotebooksVisualizationIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  public static final class Actions {
-    /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/actions/runAndSelect.svg", -994379967, 2);
-  }
-
-  public static final class Graphics {
-    /** 16x16 */ public static final @NotNull Icon ConstraintProportions = load("icons/graphics/constraintProportions.svg", -501427623, 2);
-  }
-
-  public static final class Table {
-    /** 16x16 */ public static final @NotNull Icon Pagination = load("icons/table/pagination.svg", -1428227815, 2);
-  }
+  /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/actions/runAndSelect.svg", -994379967, 2);
 }

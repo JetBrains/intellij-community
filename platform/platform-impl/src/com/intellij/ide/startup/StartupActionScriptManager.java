@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class StartupActionScriptManager {
-  public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
   public static final String ACTION_SCRIPT_FILE = "action.script";
 
   private StartupActionScriptManager() { }
@@ -53,32 +52,38 @@ public final class StartupActionScriptManager {
   }
 
   public static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
-    if (Boolean.getBoolean(STARTUP_WIZARD_MODE)) {
-      for (ActionCommand command : commands) {
-        command.execute();
-      }
-    }
-    else {
-      List<ActionCommand> script = new ArrayList<>(), originalScript = null;
-      Path scriptFile = getActionScriptFile();
-      if (Files.exists(scriptFile)) {
-        originalScript = loadActionScript(scriptFile);
-        script.addAll(originalScript);
-      }
-      script.addAll(commands);
+    addActionCommands(commands, true);
+  }
 
-      try {
-        saveActionScript(script, scriptFile);
-      }
-      catch (Throwable t) {
-        if (originalScript != null) {
-          try {
-            saveActionScript(originalScript, scriptFile);
-          }
-          catch (Throwable tt) { t.addSuppressed(tt); }
+  public static synchronized void addActionCommandsToBeginning(@NotNull List<? extends ActionCommand> commands) throws IOException {
+    addActionCommands(commands, false);
+  }
+
+  private static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands, boolean toEndOfScript)
+    throws IOException {
+    List<ActionCommand> script = new ArrayList<>(), originalScript = null;
+    Path scriptFile = getActionScriptFile();
+    if (Files.exists(scriptFile)) {
+      originalScript = loadActionScript(scriptFile);
+      script.addAll(originalScript);
+    }
+    if (toEndOfScript) {
+      script.addAll(commands);
+    } else {
+      script.addAll(0, commands);
+    }
+
+    try {
+      saveActionScript(script, scriptFile);
+    }
+    catch (Throwable t) {
+      if (originalScript != null) {
+        try {
+          saveActionScript(originalScript, scriptFile);
         }
-        throw t;
+        catch (Throwable tt) { t.addSuppressed(tt); }
       }
+      throw t;
     }
   }
 

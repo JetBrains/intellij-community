@@ -105,6 +105,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
   }
 
   internal fun notification(content: String): Notification {
+    @Suppress("UnresolvedPluginConfigReference")
     return Notification("Test", "", content, NotificationType.INFORMATION)
   }
 

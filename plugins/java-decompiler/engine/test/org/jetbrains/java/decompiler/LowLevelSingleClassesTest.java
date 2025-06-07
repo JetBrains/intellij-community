@@ -14,7 +14,7 @@ public class LowLevelSingleClassesTest extends SingleClassesTestBase {
   public Timeout globalTimeout = Timeout.seconds(60);
 
   @Override
-  protected Map<String, String> getDecompilerOptions() {
+  protected Map<String, Object> getDecompilerOptions() {
     return Map.ofEntries(Map.entry(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1"),
                          Map.entry(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"),
                          Map.entry(IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1"),
@@ -44,7 +44,10 @@ public class LowLevelSingleClassesTest extends SingleClassesTestBase {
                          Map.entry(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION, "1"),
                          Map.entry(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS, "0"),
                          Map.entry(IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1"),
-                         Map.entry(IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "0"));
+                         Map.entry(IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "0"),
+                         Map.entry(IFernflowerPreferences.MAX_DIRECT_NODES_COUNT, 20000),
+                         Map.entry(IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT, 30000)
+    );
   }
 
   @Test

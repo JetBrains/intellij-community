@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -27,9 +28,8 @@ import java.util.Set;
  */
 public final class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.problem.descriptor");
   }
 
@@ -40,10 +40,8 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
 
   private static class UtilityClassCanBeEnumFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.quickfix");
     }
 
@@ -73,7 +71,7 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
       final PsiStatement statement = factory.createStatementFromText(";", element);
       final PsiElement token = statement.getChildren()[0];
       aClass.addAfter(token, aClass.getLBrace());
-      final PsiKeyword newKeyword = factory.createKeyword(PsiKeyword.ENUM);
+      final PsiKeyword newKeyword = factory.createKeyword(JavaKeywords.ENUM);
       keywords.get(0).replace(newKeyword);
     }
   }
@@ -106,7 +104,7 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
             scope = new LocalSearchScope(new PsiElement[]{aClass}, null, true);
           }
           // It's a compile error when non-constant is accessed from initializer or constructor in an enum
-          for (PsiReference reference : ReferencesSearch.search(field, scope)) {
+          for (PsiReference reference : ReferencesSearch.search(field, scope).asIterable()) {
             // no need to check constructors, or instance field, because utility classes only have empty constructors and static fields
             final PsiClassInitializer initializer =
               PsiTreeUtil.getParentOfType(reference.getElement(), PsiClassInitializer.class, true, PsiClass.class);
@@ -116,7 +114,7 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
           }
         }
       }
-      for (PsiReference reference : ReferencesSearch.search(aClass)) {
+      for (PsiReference reference : ReferencesSearch.search(aClass).asIterable()) {
         if (reference.getElement().getParent() instanceof PsiNewExpression) {
           return;
         }

@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
-import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
@@ -51,6 +50,21 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/compose.kt");
     }
 
+    @TestMetadata("composeAgainstOldBinaries.kt")
+    public void testComposeAgainstOldBinaries() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/composeAgainstOldBinaries.kt");
+    }
+
+    @TestMetadata("dataframe.kt")
+    public void testDataframe() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframe.kt");
+    }
+
+    @TestMetadata("dataframe_from_KOTLIN_BUNDLED.kt")
+    public void testDataframe_from_KOTLIN_BUNDLED() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframe_from_KOTLIN_BUNDLED.kt");
+    }
+
     @TestMetadata("lombok.kt")
     public void testLombok() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");
@@ -79,5 +93,15 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
     @TestMetadata("serialize_importFromGeneratedCompanion.kt")
     public void testSerialize_importFromGeneratedCompanion() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_importFromGeneratedCompanion.kt");
+    }
+
+    @TestMetadata("serialize_non_existing_jar_from_kotlinDistForIde.kt")
+    public void testSerialize_non_existing_jar_from_kotlinDistForIde() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_non_existing_jar_from_kotlinDistForIde.kt");
+    }
+
+    @TestMetadata("violationViaPrimaryConstructorPointer.kt")
+    public void testViolationViaPrimaryConstructorPointer() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/violationViaPrimaryConstructorPointer.kt");
     }
 }

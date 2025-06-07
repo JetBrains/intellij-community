@@ -91,7 +91,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     for (T t : ts) {
       final String s = toString(t);
       if (s != null) {
-        if (buffer.length() != 0) {
+        if (!buffer.isEmpty()) {
           buffer.append(delimiter);
         }
         buffer.append(s);

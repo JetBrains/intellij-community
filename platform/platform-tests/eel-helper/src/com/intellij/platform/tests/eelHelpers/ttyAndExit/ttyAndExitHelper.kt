@@ -42,14 +42,24 @@ internal fun startTtyAndExitHelper() {
   // Exit once SIGINT sent with terminal
   terminal.handle(Terminal.Signal.INT, OnSigint)
 
-  // First thing to do is to print this to the stderr
-  System.err.print(HELLO + "\n")
+  // The first thing to do is to print this to the stderr
+  // print as chunks to emulate a slow process
+  for (part in HELLO.chunked(2)) {
+    System.err.print(part)
+    System.err.flush()
+    Thread.sleep(10)
+  }
+  System.err.print('\n')
   System.err.flush()
 
-  val ttyState = TTYState(terminalSize?.let { Size(cols = it.columns, rows = it.rows) })
+  val ttyState = TTYState(terminalSize?.let { Size(cols = it.columns, rows = it.rows) }, termName = System.getenv("TERM"))
 
-  // Then, print terminal info to the stdout
-  println(ttyState.serialize())
+  // Then, print terminal info to the stdout, again in chunks as in a slow process
+  for (chunk in ttyState.serialize().chunked(2)) {
+    print(chunk)
+    System.out.flush()
+  }
+  println()
   System.out.flush()
 
   when (Command.valueOf(readln().trim().uppercase())) {

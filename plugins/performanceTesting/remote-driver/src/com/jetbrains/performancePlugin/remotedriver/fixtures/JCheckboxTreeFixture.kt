@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
 import com.intellij.driver.model.TreePathToRowListWithCheckboxState
@@ -30,13 +31,15 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
   }
 
   private fun TreePath.toStringList(): List<String> {
-    val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
+    return computeOnEdt {
+      val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
 
-    if (!component.isRootVisible) {
-      nodes.removeAt(0)
+      if (!component.isRootVisible) {
+        nodes.removeAt(0)
+      }
+
+      return@computeOnEdt nodes
     }
-
-    return nodes
   }
 
   fun collectCheckboxes(): TreePathToRowListWithCheckboxStateList {

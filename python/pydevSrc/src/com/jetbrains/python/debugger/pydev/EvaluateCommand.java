@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -15,16 +17,18 @@ public class EvaluateCommand extends AbstractFrameCommand {
   private final boolean myTrimResult;
   private PyDebugValue myValue = null;
   private final String myTempName;
+  private final int myEvaluationTimeout;
 
 
   public EvaluateCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String expression,
-                         final boolean execute, final boolean trimResult) {
+                         final boolean execute, final boolean trimResult, final int evaluationTimeout) {
     super(debugger, (execute ? EXECUTE : EVALUATE), threadId, frameId);
     myExpression = expression;
     myExecute = execute;
     myDebugProcess = debugger.getDebugProcess();
     myTrimResult = trimResult;
-    myTempName = myDebugProcess.canSaveToTemp(expression)? debugger.generateSaveTempName(threadId, frameId): "";
+    myTempName = myDebugProcess.canSaveToTemp(expression) ? debugger.generateSaveTempName(threadId, frameId) : "";
+    myEvaluationTimeout = evaluationTimeout;
   }
 
   @Override
@@ -39,13 +43,18 @@ public class EvaluateCommand extends AbstractFrameCommand {
   }
 
   @Override
-  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugProcess);
     myValue = new PyDebugValue(value, myExecute ? "" : myExpression);
     if (!myTempName.isEmpty()) {
       myValue.setTempName(myTempName);
     }
+  }
+
+  @Override
+  protected long getResponseTimeout() {
+    return myEvaluationTimeout;
   }
 
   public PyDebugValue getValue() {

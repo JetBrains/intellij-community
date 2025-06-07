@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiElement;
@@ -26,12 +26,11 @@ public final class GrStringConverter extends GrTypeConverter {
            position == Position.METHOD_PARAMETER;
   }
 
-  @Nullable
   @Override
-  public ConversionResult isConvertible(@NotNull PsiType lType,
-                                        @NotNull PsiType rType,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType lType,
+                                                  @NotNull PsiType rType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (!isClassType(lType, JAVA_LANG_STRING)) return null;
     if (position == Position.EXPLICIT_CAST || position == Position.METHOD_PARAMETER) {
       return isClassType(rType, GROOVY_LANG_GSTRING)
@@ -41,12 +40,11 @@ public final class GrStringConverter extends GrTypeConverter {
     return ConversionResult.OK;
   }
 
-  @Nullable
   @Override
-  public Collection<ConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
-                                                            @NotNull PsiType rightType,
-                                                            @NotNull Position position,
-                                                            @NotNull PsiElement context) {
+  public @Nullable Collection<ConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
+                                                                      @NotNull PsiType rightType,
+                                                                      @NotNull Position position,
+                                                                      @NotNull PsiElement context) {
     if (position == Position.METHOD_PARAMETER &&
         isClassType(leftType, JAVA_LANG_STRING) &&
         isClassType(rightType, GROOVY_LANG_GSTRING)) {

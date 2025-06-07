@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -59,8 +59,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertEquals("Usage of constructor <b><code>Super.Super()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -70,8 +69,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertEquals("Usage of constructor <b><code>Super.Super()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -83,67 +81,26 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
-  public void testUsageInExtendsList() {
-    doSingleFileTest();
-  }
+  public void testUsageInExtendsList() { doSingleFileTest(); }
+  public void testDeepDeleteParameterSimple() { doSingleFileTest(); }
+  public void testDeepDeleteParameterOtherTypeInBinaryExpression() { doSingleFileTest(); }
+  public void testDeepDeleteFieldAndAssignedParameter() { doSingleFileTest(); }
+  public void testImpossibleToDeepDeleteParameter() { doSingleFileTest(); }
+  public void testNoDeepDeleteParameterUsedInCallQualifier() { doSingleFileTest(); }
+  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() { doSingleFileTest(); }
+  public void testToDeepDeleteParameterOverriders() { doSingleFileTest(); }
+  public void testDeleteParameterOfASiblingMethod() { doSingleFileTest(); }
+  public void testDeleteMethodCascade() { doSingleFileTest(); }
+  public void testDeleteMethodKeepEnumValues() { doSingleFileTest(); }
+  public void testDeleteMethodCascadeRecursive() { doSingleFileTest(); }
+  public void testDeleteMethodCascadeOverridden() { doSingleFileTest(); }
+  public void testDeleteParameterAndUpdateJavadocRef() { doSingleFileTest(); }
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() { doSingleFileTest(); }
+  public void testAccidentalPropertyRef() { doSingleFileTest(); }
+  public void testMethodCannotBePrivate() { doSingleFileTest(); }
 
-  public void testDeepDeleteParameterSimple() {
-    doSingleFileTest();
-  }
-
-  public void testDeepDeleteParameterOtherTypeInBinaryExpression() {
-    doSingleFileTest();
-  }
-
-  public void testDeepDeleteFieldAndAssignedParameter() {
-    doSingleFileTest();
-  }
-
-  public void testImpossibleToDeepDeleteParameter() {
-    doSingleFileTest();
-  }
-
-  public void testNoDeepDeleteParameterUsedInCallQualifier() {
-    doSingleFileTest();
-  }
-
-  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() {
-    doSingleFileTest();
-  }
-
-  public void testToDeepDeleteParameterOverriders() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteParameterOfASiblingMethod() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascade() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodKeepEnumValues() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascadeRecursive() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascadeOverridden() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteParameterAndUpdateJavadocRef() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteConstructorParameterWithAnonymousClassUsage() {
-    doSingleFileTest();
-  }
-
-  public void testAccidentalPropertyRef() {
+  public void testRecordAccessorCannotBePrivate() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
     doSingleFileTest();
   }
 
@@ -159,7 +116,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
-        return element instanceof PsiNamedElement && ((PsiNamedElement)element).getName().equals("a.b.c");
+        return element instanceof PsiNamedElement named && named.getName().equals("a.b.c");
       }
 
       @Override
@@ -238,7 +195,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of method <b><code>Super.foo()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -249,7 +206,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of interface <b><code>SAM</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -260,7 +217,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of interface <b><code>SAM</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -270,7 +227,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", e.getMessage());
+      assertEquals("Method <b><code>foo()</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
     }
   }
 
@@ -301,7 +258,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of local variable <b><code>varName</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -311,12 +268,58 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of parameter <b><code>i</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
   public void testUsageInGenerated() {
     doTest("A");
+  }
+
+  public void testImplicitClass() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
+        performAction();
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("""
+                     Usage of method <b><code>ImplicitClass.gasdfasdf()</code></b> that is not safe to delete.
+                     Usage of method <b><code>ImplicitClass.gasdfasdf()</code></b> that is not safe to delete.""", e.getMessage());
+    }
+  }
+
+  public void testImplicitClass2() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
+        performAction();
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Usage of method <b><code>Inner.x()</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testFileWithTwoClasses() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/TwoClasses.java"));
+        SafeDeleteHandler.invoke(getProject(), new PsiElement[]{myFile}, true);
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("""
+                     Usage of class <b><code>p.Next</code></b> that is not safe to delete.
+                     Usage of class <b><code>p.TwoClasses</code></b> that is not safe to delete.""", e.getMessage());
+    }
   }
 
   public void testLastResourceVariable() {
@@ -370,7 +373,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of class <b><code>Test.Foo</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -380,7 +383,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", e.getMessage());
+      assertEquals("Method <b><code>foo()</code></b> is already defined in class <b><code>B</code></b>", e.getMessage());
     }
   }
 
@@ -470,8 +473,9 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method Point(int, int) is already defined in the record <b><code>Point</code></b>\n" +
-                   "Record component <b><code>z</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("""
+                     Constructor <b><code>Point(int, int)</code></b> is already defined in record <b><code>Point</code></b>
+                     Usage of record component <b><code>z</code></b> that is not safe to delete.""", e.getMessage());
     }
   }
 
@@ -481,7 +485,27 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of class <b><code>foo.Parent</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testMethodReference1() {
+    try{
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Usage of method <b><code>Safe.x(int)</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testMethodReference2() {
+    try{
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method reference will be converted to a lambda expression", e.getMessage());
     }
   }
 
@@ -495,8 +519,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("pack1.First");
   }
 
-  private void doTest(@NonNls final String qClassName) {
-    doTest((rootDir, rootAfter) -> this.performAction(qClassName));
+  private void doTest(@NonNls String qClassName) {
+    doTest((rootDir, rootAfter) -> performAction(qClassName));
   }
 
   @Override
@@ -526,7 +550,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  private void performAction(final String qClassName) {
+  private void performAction(String qClassName) {
     final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
     configureByExistingFile(aClass.getContainingFile().getVirtualFile());

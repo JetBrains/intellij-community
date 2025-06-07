@@ -1,10 +1,10 @@
-fun xyzzy(): String {
-    // this one is about xyzzy
-    val s = "xyzzy ${xyzzy()} \n good\tbad\n"
-    /* xyzzy in a block comment */
-    /** xyzzy in a documentation comment */
+fun xxyyzz(): String {
+    // this one is about xyzzyy
+    val s = "xyzzyy ${spelling()} \n good\tbad\n"
+    /* xyzzyy in a block comment */
+    /** xyzzyy in a documentation comment */
     fun bar() {}
-    return """xyzzy in a triple quoted string"""
+    return """xyzzyy in a triple quoted string"""
 }
 
 fun injectedLanguage(choice: Boolean): String {

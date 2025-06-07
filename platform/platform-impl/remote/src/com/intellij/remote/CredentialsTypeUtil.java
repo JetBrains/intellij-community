@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.remote.ext.CredentialsLanguageContribution;
@@ -8,6 +8,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public final class CredentialsTypeUtil {
     return false;
   }
 
-  public static @NotNull <T> List<CredentialsLanguageContribution> getContributions(@NotNull Class<T> languageContributionMarkerInterface) {
+  public static @Unmodifiable @NotNull <T> List<CredentialsLanguageContribution> getContributions(@NotNull Class<T> languageContributionMarkerInterface) {
     return ContainerUtil.filter(CredentialsLanguageContribution.EP_NAME.getExtensions(),
                                 FilteringIterator.instanceOf(languageContributionMarkerInterface));
   }

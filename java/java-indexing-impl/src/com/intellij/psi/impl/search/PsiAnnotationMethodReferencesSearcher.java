@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     boolean isAnnotation = ReadAction.compute(() -> PsiUtil.isAnnotationMethod(refElement));
     if (isAnnotation) {
@@ -34,8 +34,7 @@ public final class PsiAnnotationMethodReferencesSearcher implements QueryExecuto
     return true;
   }
 
-  @NotNull
-  static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
+  static @NotNull ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
     return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference reference) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder;
 
@@ -546,6 +546,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             protected void setUp() {
                 compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget");
                 super.setUp();
+            }
+
+            @TestMetadata("All.kt")
+            public void testAll() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget/All.kt"));
             }
 
             @TestMetadata("DelegateTarget.kt")

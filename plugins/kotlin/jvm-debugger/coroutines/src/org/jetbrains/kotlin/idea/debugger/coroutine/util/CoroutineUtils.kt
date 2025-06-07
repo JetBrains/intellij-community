@@ -1,21 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
+import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
-import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import java.util.concurrent.Callable
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
@@ -32,19 +33,39 @@ fun Method.isSuspendLambda() =
 fun Method.hasContinuationParameter() =
     signature().contains("Lkotlin/coroutines/Continuation;)")
 
-fun StackFrameProxyImpl.getSuspendExitMode(): SuspendExitMode {
-    return safeLocation()?.getSuspendExitMode() ?: return SuspendExitMode.NONE
-}
+fun StackFrameProxyImpl.getSuspendExitMode(): SuspendExitMode =
+    safeLocation()?.getSuspendExitMode() ?: SuspendExitMode.NONE
 
 fun Location.getSuspendExitMode(): SuspendExitMode {
     val method = safeMethod() ?: return SuspendExitMode.NONE
-    if (method.isSuspendLambda())
-        return SuspendExitMode.SUSPEND_LAMBDA
-    else if (method.hasContinuationParameter())
-        return SuspendExitMode.SUSPEND_METHOD_PARAMETER
-    else if ((method.isInvokeSuspend() || method.isInvoke()) && safeCoroutineExitPointLineNumber())
-        return SuspendExitMode.SUSPEND_METHOD
-    return SuspendExitMode.NONE
+    return when {
+        method.isSuspendLambda() -> SuspendExitMode.SUSPEND_LAMBDA
+        method.hasContinuationParameter() -> SuspendExitMode.SUSPEND_METHOD_PARAMETER
+        (method.isInvokeSuspend() || method.isInvoke()) && safeCoroutineExitPointLineNumber() -> SuspendExitMode.SUSPEND_METHOD
+        else -> return SuspendExitMode.NONE
+    }
+}
+
+internal fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
+    val suspendExitMode = frameProxy.location().getSuspendExitMode()
+    return when (suspendExitMode) {
+        SuspendExitMode.SUSPEND_LAMBDA -> {
+            frameProxy.thisVariableValue()?.let { return it }
+            // Extract the previous stack frame at BaseContinuationImpl#resumeWith where invokeSuspend is invoked
+            // and extract `this` reference to the current SuspendLambda there.
+            // This is a WA for this problem: IDEA-349851, KT-67136.
+            val prevStackFrame = frameProxy.threadProxy().frames().getOrNull(frameProxy.frameIndex + 1)
+            if (prevStackFrame == null) {
+                logger.thisLogger().error("[coroutine filtering]: Could not extract the previous stack frame for the frame ${frameProxy.stackFrame}:\n" +
+                                           "thread = ${frameProxy.threadProxy().name()} \n" +
+                                           "frames = ${frameProxy.threadProxy().frames()}")
+                return null
+            }
+            prevStackFrame.thisObject()
+        }
+        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue()
+        else -> null
+    }
 }
 
 fun Location.safeCoroutineExitPointLineNumber() =
@@ -92,26 +113,29 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className.startsWith(CREATION_STACK_TRACE_SEPARATOR) ||
     className == CREATION_CLASS_NAME
 
-fun Location.findPosition(debugProcess: DebugProcessImpl) = ReadAction.nonBlocking(Callable {
-    DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
-}).executeSynchronously()
+fun Location.findPosition(debugProcess: DebugProcessImpl): XSourcePosition? = ReadAction.nonBlocking<SourcePosition> {
+    debugProcess.positionManager.getSourcePosition(this)
+}.executeSynchronously()?.toXSourcePosition()
 
-fun SuspendContextImpl.executionContext() = invokeInManagerThread { DefaultExecutionContext(this, this.frameProxy) }
+fun SourcePosition?.toXSourcePosition(): XSourcePosition? = ReadAction.nonBlocking<XSourcePosition> {
+    DebuggerUtilsEx.toXSourcePosition(this@toXSourcePosition)
+}.executeSynchronously()
 
-fun <T : Any> SuspendContextImpl.invokeInManagerThread(f: () -> T?): T? =
-    debugProcess.invokeInManagerThread { f() }
+fun SuspendContextImpl.executionContext(): DefaultExecutionContext {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    return DefaultExecutionContext(this, this.frameProxy)
+}
 
 fun ThreadReferenceProxyImpl.supportsEvaluation(): Boolean =
     threadReference?.isSuspended ?: false
 
-fun SuspendContextImpl.supportsEvaluation() =
-    this.debugProcess.canRunEvaluation || isUnitTestMode()
+private fun SuspendContextImpl.supportsEvaluation() =
+    debugProcess.isEvaluationPossible(this) || isUnitTestMode()
 
-fun threadAndContextSupportsEvaluation(suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl?) =
-    suspendContext.invokeInManagerThread {
-        suspendContext.supportsEvaluation() && frameProxy?.threadProxy()?.supportsEvaluation() ?: false
-    } ?: false
-
+fun threadAndContextSupportsEvaluation(suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl?): Boolean {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    return suspendContext.supportsEvaluation() && frameProxy?.threadProxy()?.supportsEvaluation() ?: false
+}
 
 fun Location.sameLineAndMethod(location: Location?): Boolean =
     location != null && location.safeMethod() == safeMethod() && location.safeLineNumber() == safeLineNumber()

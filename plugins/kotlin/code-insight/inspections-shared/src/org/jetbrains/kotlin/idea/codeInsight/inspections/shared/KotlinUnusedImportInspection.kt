@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.command.undo.UndoManager
@@ -32,10 +33,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -46,6 +49,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
 
         val problems = data.unusedImports.map {
             val fixes = arrayListOf<LocalQuickFix>()
+            fixes.add(RemoveAllUnusedImportsFix)
             fixes.add(KotlinOptimizeImportsQuickFix(file))
             if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) {
                 fixes.add(EnableOptimizeImportsOnTheFlyFix(file))
@@ -164,10 +168,29 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
     }
 
+    private object RemoveAllUnusedImportsFix : KotlinModCommandQuickFix<KtImportDirective>() {
+        override fun getFamilyName(): String = KotlinBundle.message("remove.unused.imports.quickfix.text")
+
+        override fun applyFix(
+            project: Project,
+            importDirective: KtImportDirective,
+            updater: ModPsiUpdater
+        ) {
+            val data = KotlinOptimizeImportsFacility.getInstance().analyzeImports(importDirective.containingKtFile) ?: return
+            for (importDirective in data.unusedImports) {
+                importDirective.delete()
+            }
+        }
+    }
+
     private class EnableOptimizeImportsOnTheFlyFix(file: KtFile) : LocalQuickFixOnPsiElement(file), LowPriorityAction {
         override fun getText(): String = QuickFixBundle.message("enable.optimize.imports.on.the.fly")
 
         override fun getFamilyName() = name
+
+        override fun startInWriteAction(): Boolean {
+            return false
+        }
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)

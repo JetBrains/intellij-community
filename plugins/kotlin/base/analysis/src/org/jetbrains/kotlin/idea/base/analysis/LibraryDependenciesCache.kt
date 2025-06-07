@@ -181,8 +181,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         val filteredLibraries = filterForBuiltins(libraryInfo, libraryDependencyCandidatesAndSdkInfos.libraryDependencyCandidates)
 
         libraryDependencyCandidatesAndSdkInfos.sdkInfos.takeIf { it.isEmpty() }?.apply {
-            val scriptConfigurationManager = ScriptConfigurationManager.getInstance(project)
-            scriptConfigurationManager.getScriptDependingOn(libraryInfo.getLibraryRoots())
+            val scriptConfigurationManager = ScriptConfigurationManager.getInstanceSafe(project)
+            scriptConfigurationManager?.getScriptDependingOn(libraryInfo.getLibraryRoots())
                 ?.let { script -> scriptConfigurationManager.getScriptSdk(script) }
                 ?.let { sdk -> add(SdkInfo(project, sdk)) }
         }

@@ -5,7 +5,6 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public abstract class SubstrateRef {
-  private static final Logger LOG = Logger.getInstance(SubstrateRef.class);
-
   public abstract @NotNull ASTNode getNode();
 
   public @Nullable Stub getStub() {

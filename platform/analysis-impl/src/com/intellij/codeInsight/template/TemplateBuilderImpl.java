@@ -12,13 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -42,7 +38,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker myEndElement;
   private RangeMarker mySelection;
   private final Document myDocument;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private Comparator<? super Variable> myVariableComparator;
 
   private boolean scrollToTemplate = true;
@@ -50,8 +46,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
-    myDocument = myFile.getViewProvider().getDocument();
+    myPsiFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
+    myDocument = myPsiFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
 
@@ -77,7 +73,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker wrapReference(final PsiReference ref) {
     PsiElement element = ref.getElement();
     return myDocument.createRangeMarker(ref.getRangeInElement().shiftRight(
-      InjectedLanguageManager.getInstance(myFile.getProject()).injectedToHost(element, element.getTextRange().getStartOffset())
+      InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(element, element.getTextRange().getStartOffset())
     ));
   }
 
@@ -197,7 +193,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public Template initInlineTemplate(Template template) {
     template.setInline(true);
 
-    if (myFile.isPhysical()) {
+    if (myPsiFile.isPhysical()) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
@@ -214,7 +210,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   public Template buildTemplate() {
-    TemplateManager manager = TemplateManager.getInstance(myFile.getProject());
+    TemplateManager manager = TemplateManager.getInstance(myPsiFile.getProject());
     final Template template = manager.createTemplate("", "");
     return initTemplate(template);
   }
@@ -226,7 +222,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
       if (start > offset) {
-        LOG.error("file: " + myFile +
+        LOG.error("file: " + myPsiFile +
                   " container: " + myContainerElement +
                   " markers: " + StringUtil.join(myElements, rangeMarker -> {
                     final String docString = myDocument.getText(rangeMarker.getTextRange());
@@ -330,7 +326,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
       template = initTemplate(template);
       myDocument.replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     }
-    NonInteractiveTemplateUtil.runNonInteractively(myFile, myDocument, template, myContainerElement);
+    NonInteractiveTemplateUtil.runNonInteractively(myPsiFile, myDocument, template, myContainerElement);
   }
 
   @Override
@@ -344,7 +340,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
       editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     }
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
-    TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
+    TemplateManager.getInstance(myPsiFile.getProject()).startTemplate(editor, template);
   }
 
   public void replaceElement(PsiElement element, @NonNls String varName, Expression expression, boolean alwaysStopAt, boolean skipOnStart) {

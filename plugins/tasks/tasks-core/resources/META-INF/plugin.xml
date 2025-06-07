@@ -16,8 +16,9 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.tasks.impl"/>
   </dependencies>
-  <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
     see com.intellij.tasks.generic.ResponseType.XML
@@ -32,7 +33,7 @@
     </action>
 
     <group id="task.actions">
-      <reference id="tasks.switch"/>
+      <reference ref="tasks.switch"/>
       <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
       </action>
@@ -85,7 +86,7 @@
 
     <group id="tasks.toolbar">
       <separator/>
-      <reference id="tasks.switch"/>
+      <reference ref="tasks.switch"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
       <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
     </group>

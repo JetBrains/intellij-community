@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -124,7 +124,7 @@ internal class OrphanService(
           val needToUpdateOrphanage = adders.any { it.hasUpdatesForOrphanage() }
           val needToUpdateWorkspaceModel = adders.any { it.hasUpdates() }
           if (needToUpdateWorkspaceModel || needToUpdateOrphanage) {
-            writeAction {
+            edtWriteAction {
               if (needToUpdateOrphanage) {
                 EntitiesOrphanage.getInstance(project).update {
                   adders.forEach { adder -> adder.cleanOrphanage(it) }

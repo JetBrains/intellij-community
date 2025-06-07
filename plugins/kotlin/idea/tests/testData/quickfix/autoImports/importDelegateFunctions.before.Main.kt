@@ -11,4 +11,4 @@ fun test() {
     var x by <caret>Some("OK")
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2

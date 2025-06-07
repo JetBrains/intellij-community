@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.python.grazie` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grazie_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "grazie",
+  module_name = "intellij.python.grazie",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/grazie",
+    "//python:python-community-impl",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":grazie_resources"]
+)
+### auto-generated section `build intellij.python.grazie` end

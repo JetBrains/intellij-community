@@ -1,5 +1,5 @@
 // IGNORE_K1
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun bar(n: Int, m: Int): Int = n + 1
 
 fun

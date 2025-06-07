@@ -5,8 +5,7 @@ import com.intellij.cce.report.BasicFileReportGenerator
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
-import com.intellij.cce.workspace.storages.FeaturesStorage
-import com.intellij.cce.workspace.storages.FullLineLogsStorage
+import com.intellij.cce.workspace.EvaluationWorkspace
 
 abstract class StandaloneFeature<T : EvaluationStrategy>(
   override val name: String
@@ -19,8 +18,10 @@ abstract class StandaloneFeature<T : EvaluationStrategy>(
   override fun getFileReportGenerator(
     filterName: String,
     comparisonFilterName: String,
-    featuresStorages: List<FeaturesStorage>,
-    fullLineStorages: List<FullLineLogsStorage>,
+    inputWorkpaces: List<EvaluationWorkspace>,
     dirs: GeneratorDirectories
-  ): FileReportGenerator = BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+  ): FileReportGenerator {
+    val featuresStorages = inputWorkpaces.map { it.featuresStorage }
+    return BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+  }
 }

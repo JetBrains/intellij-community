@@ -14,6 +14,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
@@ -28,18 +29,17 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,8 +50,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -83,17 +84,23 @@ public final class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      getTemplatePresentation().setText(myActionText.getValue());
-
       Project project = e.getProject();
       String place = e.getPlace();
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
+        ActionPlaces.EDITOR_POPUP.equals(place) && hasSelection(editor) ||
         e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());
+    }
+
+    private static boolean hasSelection(@Nullable Editor editor) {
+      if (editor == null) return false;
+      return StringUtil.isNotEmpty(editor.getSelectionModel().getSelectedText(true));
     }
 
     @Override
@@ -111,12 +118,15 @@ public final class ScratchFileActions {
         StringUtil.isNotEmpty(context.text) ? new LanguageItem(
           null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
-      // extract text from the focused component, e.g. a tree or a list
+      // extract text from the focused component, e.g., a tree or a list
       ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
       LanguageItem extractItem =
         textExtractor != null && StringUtil.isEmpty(context.text) &&
         !EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR)) ?
         new LanguageItem(null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
+
+      boolean isFromConsole = e.getPlace().equals(ActionPlaces.EDITOR_POPUP)
+                              && hasSelection(e.getData(CommonDataKeys.EDITOR));
 
       Consumer<LanguageItem> consumer = o -> {
         context.language = o.language();
@@ -125,7 +135,7 @@ public final class ScratchFileActions {
           context.text = StringUtil.notNullize(textExtractor.extractText());
           context.caretOffset = 0;
         }
-        else if (o != selectionItem) {
+        else if (o != selectionItem && !isFromConsole) {
           context.text = "";
           context.caretOffset = 0;
         }
@@ -160,7 +170,7 @@ public final class ScratchFileActions {
       if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
         presentation.setText(ActionsBundle.actionText(ACTION_ID));
       }
-      else {
+      else if (!e.getPlace().equals(ActionPlaces.EDITOR_POPUP)) {
         presentation.setText(myActionText.getValue());
       }
 
@@ -228,6 +238,15 @@ public final class ScratchFileActions {
 
   @IntellijInternalApi
   public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+    return doCreateNewScratch(project, context, DataContext.EMPTY_CONTEXT);
+  }
+
+  @IntellijInternalApi
+  public static @Nullable PsiFile doCreateNewScratch(
+    @NotNull Project project,
+    @NotNull ScratchFileCreationHelper.Context context,
+    @NotNull DataContext dataContext
+  ) {
     if (context.fileExtension == null && context.language != null) {
       LanguageFileType fileType = context.language.getAssociatedFileType();
       if (fileType != null) {
@@ -237,22 +256,23 @@ public final class ScratchFileActions {
     if (context.language != null) {
       ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
       if (StringUtil.isEmpty(context.text)) {
-        helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+        helper.prepareText(project, context, dataContext);
       }
       helper.beforeCreate(project, context);
     }
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
     RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
-    String relativePath = rootType != ScratchRootType.getInstance() ? "" :
+    String relativePath = rootType != context.defaultRootType ? "" :
                           FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
 
     String fileName = (StringUtil.isEmpty(relativePath) ? "" : relativePath + "/") +
                       PathUtil.makeFileName(ObjectUtils.notNull(context.filePrefix, "scratch") +
                                             (context.fileCounter != null ? context.fileCounter.create() : ""),
                                             context.fileExtension);
-    VirtualFile file = ScratchRootType.getInstance().createScratchFile(
-      project, fileName, context.language, context.text, context.createOption);
+    VirtualFile file = createScratchFile(
+      project, fileName, context.language, context.text, context.createOption, context.defaultRootType
+    );
     if (file == null) return null;
 
     Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset);
@@ -262,6 +282,36 @@ public final class ScratchFileActions {
       context.ideView.selectElement(psiFile);
     }
     return psiFile;
+  }
+
+  static @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                 @NotNull String fileName,
+                                                 @Nullable Language language,
+                                                 @NotNull String text,
+                                                 @NotNull ScratchFileService.Option option,
+                                                 @NotNull RootType rootType) {
+    try {
+      return
+        WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
+          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
+          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
+            ScratchFileService fileService = ScratchFileService.getInstance();
+            VirtualFile file = fileService.findFile(rootType, fileName, option);
+            // save text should go before any other manipulations that load document,
+            // otherwise undo will be broken
+            VfsUtil.saveText(file, text);
+            if (language != null) {
+              Language fileLanguage = LanguageUtil.getFileLanguage(file);
+              fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
+            }
+            return file;
+          });
+    }
+    catch (IOException e) {
+      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
+                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+      return null;
+    }
   }
 
   private static void checkLanguageAndTryToFixText(@NotNull Project project,

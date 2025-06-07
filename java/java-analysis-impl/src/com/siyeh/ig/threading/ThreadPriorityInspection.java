@@ -25,14 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ThreadPriorityInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToThreadSetPriority";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.priority.problem.descriptor");
   }
@@ -63,7 +61,7 @@ public final class ThreadPriorityInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      @NonNls final String setPriority = "setPriority";
+      final @NonNls String setPriority = "setPriority";
       if (!setPriority.equals(methodName)) {
         return false;
       }
@@ -92,7 +90,7 @@ public final class ThreadPriorityInspection extends BaseInspection {
         return false;
       }
       final String referenceName = referenceExpression.getReferenceName();
-      @NonNls final String normPriority = "NORM_PRIORITY";
+      final @NonNls String normPriority = "NORM_PRIORITY";
       if (!normPriority.equals(referenceName)) {
         return false;
       }

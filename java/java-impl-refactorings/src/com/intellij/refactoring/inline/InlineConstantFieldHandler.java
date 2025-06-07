@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -65,7 +65,7 @@ public final class InlineConstantFieldHandler extends JavaInlineActionHandler {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       final Ref<Boolean> hasWriteUsages = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
-        for (PsiReference reference : ReferencesSearch.search(field)) {
+        for (PsiReference reference : ReferencesSearch.search(field).asIterable()) {
           if (isAccessedForWriting(reference.getElement())) {
             hasWriteUsages.set(true);
             break;
@@ -144,7 +144,7 @@ public final class InlineConstantFieldHandler extends JavaInlineActionHandler {
       if (containingClass != null) {
         PsiMethod[] constructors = containingClass.getConstructors();
         final List<PsiExpression> result = new ArrayList<>();
-        for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors))) {
+        for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(constructors)).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
             PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class);

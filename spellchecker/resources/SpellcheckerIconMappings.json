@@ -1,6 +1,7 @@
 {
   "icons": {
     "newui": {
+      "addToDictionary.svg": "icons/spellcheck.svg",
       "dictionary.svg": "icons/dictionary.svg"
     }
   }

@@ -203,12 +203,12 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      if (FileDocumentManager.getInstance().isFileModified(file.getVirtualFile())) return;
-      super.invoke(project, file, editor, startElement, endElement);
+      if (FileDocumentManager.getInstance().isFileModified(psiFile.getVirtualFile())) return;
+      super.invoke(project, psiFile, editor, startElement, endElement);
     }
   }
 
@@ -234,11 +234,11 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      VirtualFile virtualFile = file.getVirtualFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
       DataContext dataContext = createDataContext(project, editor, virtualFile);
       ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext, null);
       if (popup != null) {

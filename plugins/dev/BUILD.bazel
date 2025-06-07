@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.dev.noJava.plugin.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "dev-noJava-plugin-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//plugins/dev/intellij.dev:dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+    "//platform/statistics/devkit",
+  ]
+)
+### auto-generated section `build intellij.dev.noJava.plugin.main` end
+
+### auto-generated section `build intellij.dev.plugin.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "dev-plugin-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//plugins/dev:dev-noJava-plugin-main",
+    "//plugins/dev/intellij.java.dev:java-dev",
+    "//plugins/dev/intellij.groovy.dev:groovy-dev",
+    "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
+  ]
+)
+### auto-generated section `build intellij.dev.plugin.main` end

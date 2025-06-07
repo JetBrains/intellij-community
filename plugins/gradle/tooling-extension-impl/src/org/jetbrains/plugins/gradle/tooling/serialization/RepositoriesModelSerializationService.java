@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -95,8 +95,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
     });
   }
 
-  @Nullable
-  private static RepositoryModels read(final IonReader reader, final ReadContext context) {
+  private static @Nullable RepositoryModels read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -125,8 +124,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
     return list;
   }
 
-  @Nullable
-  private static MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
+  private static @Nullable MavenRepositoryModel readRepositoryModel(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     MavenRepositoryModel dependency =

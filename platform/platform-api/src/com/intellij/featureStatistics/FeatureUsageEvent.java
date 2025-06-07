@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-abstract class FeatureUsageEvent {
+@ApiStatus.Internal
+public abstract class FeatureUsageEvent {
   protected final String myFeatureId;
 
   protected FeatureUsageEvent(@NonNls @NotNull String featureId) {
     myFeatureId = featureId;
   }
 
-  @NotNull String featureId() {
+  public @NotNull String featureId() {
     return myFeatureId;
   }
 
@@ -23,7 +25,8 @@ abstract class FeatureUsageEvent {
     return new Intention(featureId, intentionClassName);
   }
 
-  static class Action extends FeatureUsageEvent {
+  @ApiStatus.Internal
+  public static final class Action extends FeatureUsageEvent {
     private final String myActionId;
 
     private Action(@NotNull String featureId, @NotNull String actionId) {
@@ -31,12 +34,14 @@ abstract class FeatureUsageEvent {
       myActionId = actionId;
     }
 
-    @NotNull String getActionId() {
+    @ApiStatus.Internal
+    public @NotNull String getActionId() {
       return myActionId;
     }
   }
 
-  static class Intention extends FeatureUsageEvent {
+  @ApiStatus.Internal
+  public static final class Intention extends FeatureUsageEvent {
     private final String myIntentionClassName;
 
     private Intention(@NotNull String featureId, @NotNull String intentionClassName) {
@@ -44,7 +49,7 @@ abstract class FeatureUsageEvent {
       myIntentionClassName = intentionClassName;
     }
 
-    @NotNull String getIntentionClassName() {
+    public @NotNull String getIntentionClassName() {
       return myIntentionClassName;
     }
   }

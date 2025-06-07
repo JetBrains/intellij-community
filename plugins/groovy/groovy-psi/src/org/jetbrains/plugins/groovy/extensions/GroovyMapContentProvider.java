@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -28,9 +29,12 @@ public abstract class GroovyMapContentProvider {
   /**
    * Computes the type for a map key.
    */
-  @Nullable
-  public PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, @NotNull String key) {
+  public @Nullable PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, @NotNull String key) {
     return null;
   }
 
+  @ApiStatus.Internal
+  public static Collection<String> getKeyVariants(@NotNull GroovyMapContentProvider provider, @NotNull GrExpression qualifier, @Nullable PsiElement resolved) {
+    return provider.getKeyVariants(qualifier, resolved);
+  }
 }

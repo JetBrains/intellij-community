@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,91 +21,67 @@ public abstract class PackagingElementFactory {
     return ApplicationManager.getApplication().getService(PackagingElementFactory.class);
   }
 
-  @NotNull
-  public abstract ArtifactRootElement<?> createArtifactRootElement();
+  public abstract @NotNull ArtifactRootElement<?> createArtifactRootElement();
 
-  @NotNull
-  public abstract CompositePackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
+  public abstract @NotNull CompositePackagingElement<?> createDirectory(@NotNull @NonNls String directoryName);
 
-  @NotNull
-  public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
+  public abstract @NotNull CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
 
   public abstract PackagingElement<?> createFileCopy(@NotNull @NonNls String filePath, @Nullable @NonNls String outputFileName);
 
-  @NotNull
-  public abstract PackagingElement<?> createModuleOutput(@NotNull @NonNls String moduleName, @NotNull Project project);
+  public abstract @NotNull PackagingElement<?> createModuleOutput(@NotNull @NonNls String moduleName, @NotNull Project project);
 
-  @NotNull
-  public abstract PackagingElement<?> createModuleOutput(@NotNull Module module);
+  public abstract @NotNull PackagingElement<?> createModuleOutput(@NotNull Module module);
 
-  @NotNull
-  public abstract PackagingElement<?> createModuleSource(@NotNull Module module);
+  public abstract @NotNull PackagingElement<?> createModuleSource(@NotNull Module module);
 
-  @NotNull
-  public abstract PackagingElement<?> createTestModuleOutput(@NotNull String moduleName, @NotNull Project project);
+  public abstract @NotNull PackagingElement<?> createTestModuleOutput(@NotNull String moduleName, @NotNull Project project);
 
-  @NotNull
-  public abstract PackagingElement<?> createTestModuleOutput(@NotNull Module module);
+  public abstract @NotNull PackagingElement<?> createTestModuleOutput(@NotNull Module module);
 
-  @NotNull
-  public abstract List<PackagingElement<?>> createLibraryElements(@NotNull Library library);
+  public abstract @NotNull List<PackagingElement<?>> createLibraryElements(@NotNull Library library);
 
-  @NotNull
-  public abstract List<? extends PackagingElement<?>> createLibraryElements(@NotNull LibraryEntity libraryEntity, String moduleName);
+  public abstract @NotNull List<? extends PackagingElement<?>> createLibraryElements(@NotNull LibraryEntity libraryEntity, String moduleName);
 
-  @NotNull
-  public abstract PackagingElement<?> createArtifactElement(@NotNull ArtifactPointer artifactPointer, @NotNull Project project);
+  public abstract @NotNull PackagingElement<?> createArtifactElement(@NotNull ArtifactPointer artifactPointer, @NotNull Project project);
 
-  @NotNull
-  public abstract PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
+  public abstract @NotNull PackagingElement<?> createArtifactElement(@NotNull Artifact artifact, @NotNull Project project);
 
-  @NotNull
-  public abstract PackagingElement<?> createArtifactElement(@NotNull String artifactName, @NotNull Project project);
+  public abstract @NotNull PackagingElement<?> createArtifactElement(@NotNull String artifactName, @NotNull Project project);
 
-  @NotNull
-  public abstract PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull @NonNls String level, @NonNls String moduleName);
+  public abstract @NotNull PackagingElement<?> createLibraryFiles(@NotNull String libraryName, @NotNull @NonNls String level, @NonNls String moduleName);
 
 
-  @NotNull
-  public abstract PackagingElement<?> createDirectoryCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath);
+  public abstract @NotNull PackagingElement<?> createDirectoryCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath);
 
-  @NotNull
-  public abstract PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull @NonNls String jarPath, @NotNull @NonNls String pathInJar,
-                                                                                    @NotNull @NonNls String relativeOutputPath);
+  public abstract @NotNull PackagingElement<?> createExtractedDirectoryWithParentDirectories(@NotNull @NonNls String jarPath, @NotNull @NonNls String pathInJar,
+                                                                                             @NotNull @NonNls String relativeOutputPath);
 
-  @NotNull
-  public abstract PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry);
+  public abstract @NotNull PackagingElement<?> createExtractedDirectory(@NotNull VirtualFile jarEntry);
 
-  @NotNull
-  public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath,
-                                                                          @Nullable @NonNls String outputFileName);
+  public abstract @NotNull PackagingElement<?> createFileCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath,
+                                                                                   @Nullable @NonNls String outputFileName);
 
-  @NotNull
-  public abstract PackagingElement<?> createFileCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath);
+  public abstract @NotNull PackagingElement<?> createFileCopyWithParentDirectories(@NotNull @NonNls String filePath, @NotNull @NonNls String relativeOutputPath);
 
 
-  @NotNull
-  public abstract CompositePackagingElement<?> getOrCreateDirectory(@NotNull CompositePackagingElement<?> parent, @NotNull @NonNls String relativePath);
+  public abstract @NotNull CompositePackagingElement<?> getOrCreateDirectory(@NotNull CompositePackagingElement<?> parent, @NotNull @NonNls String relativePath);
 
-  @NotNull
-  public abstract CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull @NonNls String relativePath);
+  public abstract @NotNull CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull @NonNls String relativePath);
 
   public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull @NonNls String outputDirectoryPath,
                                    @NotNull @NonNls String sourceFilePath, @NonNls String outputFileName, boolean addAsFirstChild);
 
   public abstract void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull @NonNls String outputDirectoryPath, @NotNull @NonNls String sourceFilePath);
 
-  @NotNull
-  public abstract PackagingElement<?> createParentDirectories(@NotNull @NonNls String relativeOutputPath, @NotNull PackagingElement<?> element);
+  public abstract @NotNull PackagingElement<?> createParentDirectories(@NotNull @NonNls String relativeOutputPath, @NotNull PackagingElement<?> element);
 
 
-  @NotNull
-  public abstract List<? extends PackagingElement<?>> createParentDirectories(@NotNull @NonNls String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements);
+  public abstract @NotNull List<? extends PackagingElement<?>> createParentDirectories(@NotNull @NonNls String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements);
 
   public abstract CompositePackagingElementType<?> @NotNull [] getCompositeElementTypes();
 
-  @Nullable
-  public abstract PackagingElementType<?> findElementType(@NonNls String id);
+  public abstract @Nullable PackagingElementType<?> findElementType(@NonNls String id);
 
   public abstract PackagingElementType<?> @NotNull [] getNonCompositeElementTypes();
 

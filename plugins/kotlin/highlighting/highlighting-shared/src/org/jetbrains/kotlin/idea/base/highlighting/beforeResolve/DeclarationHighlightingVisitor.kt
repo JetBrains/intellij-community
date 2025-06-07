@@ -21,7 +21,11 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
     }
 
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
-        highlightNamedDeclaration(declaration, KotlinHighlightInfoTypeSemanticNames.OBJECT)
+        if (declaration.isData()) {
+            highlightNamedDeclaration(declaration, KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT)
+        } else {
+            highlightNamedDeclaration(declaration, KotlinHighlightInfoTypeSemanticNames.OBJECT)
+        }
         super.visitObjectDeclaration(declaration)
     }
 

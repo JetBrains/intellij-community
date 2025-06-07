@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class PyRootTypeProvider {
   public static final ExtensionPointName<PyRootTypeProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyRootTypeProvider");
   protected final VirtualFilePointerListener DUMMY_LISTENER = new VirtualFilePointerListener() {

@@ -17,7 +17,6 @@ import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
-import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -57,18 +56,22 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
   private val treeContent: List<Any> = listOf(
     Group("Components", children = listOf(
+      ComboBoxPanel(),
+      ComboBoxWithWidePopupPanel(),
       JBIntSpinnerPanel(),
       JButtonPanel(),
       JBOptionButtonPanel(),
+      JBPasswordFieldPanel(),
+      JBTabsPanel(),
       JBTextAreaPanel(),
       JCheckBoxPanel(),
       JComboBoxPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
+      OnOffButtonPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel(),
-      JBTabsPanel())),
+      ThreeStateCheckBoxPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
       Group("ListCellRenderer", children = listOf(
@@ -101,7 +104,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     )),
 
     Group("Tests", children = listOf(
-      Group("Components", children = listOf(JBTextAreaTestPanel())),
       Group("Accessibility", children = listOf(
         AccessibilityFailedInspectionsPanel())
       )

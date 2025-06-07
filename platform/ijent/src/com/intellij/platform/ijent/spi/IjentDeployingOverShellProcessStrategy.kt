@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
@@ -15,7 +17,14 @@ import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
+
+private val EP_NAME = ExtensionPointName<IjentDeploymentListener>("com.intellij.ijent.deploymentListener")
+interface IjentDeploymentListener {
+  fun shellInitialized(initializationTime: Duration)
+}
 
 abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentDeployingStrategy.Posix {
   protected abstract val ijentLabel: String
@@ -31,24 +40,32 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(start = CoroutineStart.LAZY) {
-      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel))
+      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
-        // The timeout is taken at random.
-        withTimeout(10.seconds) {
-          write("set -ex")
-          ensureActive()
-          filterOutBanners()
+        val initializationTime = measureTime {
+          withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
+            val debugOption = if (LOG.isDebugEnabled) "x" else ""
+            write("set -e$debugOption")
+            ensureActive()
+            filterOutBanners()
+          }
         }
+
+        EP_NAME.forEachExtensionSafe { extension -> extension.shellInitialized(initializationTime) }
       })
     }
     context
   }
 
-  override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myContext.await().execCommand {
+  private val myTargetPlatform = scope.async(start = CoroutineStart.LAZY) {
+    myContext.await().execCommand {
       getTargetPlatform()
     }
+  }
+
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
+    return myTargetPlatform.await()
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
@@ -288,8 +305,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> EelPlatform.X8664Linux
-    "aarch64" in arch -> EelPlatform.Aarch64Linux
+    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.Arch.X86_64)
+    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.Arch.ARM_64)
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform

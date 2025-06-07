@@ -3,21 +3,26 @@ package com.intellij.ui.util
 
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
 
-val Insets.width: Int get() = left + right
-val Insets.height: Int get() = top + bottom
+val Insets.width: Int
+  get() = left + right
+val Insets.height: Int
+  get() = top + bottom
 
 var JBPopup.width: Int
   get() = size.width
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using [JBPopup.setSize] explicitly")
   set(newValue) {
     size = Dimension(newValue, size.height)
   }
 var JBPopup.height: Int
   get() = size.height
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using [JBPopup.setSize] explicitly")
   set(newValue) {
     size = Dimension(size.width, newValue)
@@ -28,6 +33,8 @@ var JBPopup.height: Int
  *
  * Using these setters will permanently fix the second dimension as well.
  * That is: the `minimumHeight = 20` call will prevent `minimumWidth` from being updated on content changes.
+ *
+ * Remember to use [com.intellij.util.ui.JBUI.scale(int)] when setting a hardcoded constant.
  */
 var JComponent.minimumWidth: Int
   get() = minimumSize.width

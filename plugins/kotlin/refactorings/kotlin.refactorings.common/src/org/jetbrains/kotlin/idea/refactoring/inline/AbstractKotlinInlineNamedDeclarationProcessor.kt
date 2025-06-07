@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -56,10 +56,10 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
     open fun postAction() = Unit
     open fun postDeleteAction() = Unit
 
-    final override fun findUsages(): Array<UsageInfo> {
+    protected final override fun findUsages(): Array<UsageInfo> {
         if (inlineThisOnly && reference != null) return arrayOf(UsageInfo(reference))
         val usages = hashSetOf<UsageInfo>()
-        for (usage in ReferencesSearchScopeHelper.search(declaration, myRefactoringScope)) {
+        for (usage in ReferencesSearchScopeHelper.search(declaration, myRefactoringScope).asIterable()) {
             usages += UsageInfo(usage)
         }
 
@@ -80,7 +80,7 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
 
     open fun additionalPreprocessUsages(usages: Array<out UsageInfo>, conflicts: MultiMap<PsiElement, String>) = Unit
 
-    final override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected final override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usagesInfo = refUsages.get()
         if (inlineThisOnly) {
             val element = usagesInfo.singleOrNull()?.element

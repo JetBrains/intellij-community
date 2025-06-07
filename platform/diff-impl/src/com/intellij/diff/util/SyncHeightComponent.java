@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.openapi.util.Conditions;
@@ -23,8 +23,7 @@ public class SyncHeightComponent extends JPanel {
   }
 
 
-  @NotNull
-  public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
+  public static @NotNull List<JComponent> createSyncHeightComponents(final @NotNull List<JComponent> components) {
     if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
 
     SyncHeightHolder syncHeightHolder = new SyncHeightHolder(components);
@@ -45,8 +44,7 @@ public class SyncHeightComponent extends JPanel {
     syncHeightLayout.getSyncHeightHolder().revalidateAll();
   }
 
-  @NotNull
-  private static Dimension getPreferredSize(@Nullable Component component) {
+  private static @NotNull Dimension getPreferredSize(@Nullable Component component) {
     return component != null && component.isVisible() ? component.getPreferredSize() : new Dimension();
   }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.lang.ASTNode;
@@ -12,12 +13,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class JqlParser implements PsiParser {
+public final class JqlParser implements PsiParser {
   private static final Logger LOG = Logger.getInstance(JqlParser.class);
 
-  @NotNull
   @Override
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
     //builder.setDebugMode(true);
     PsiBuilder.Marker rootMarker = builder.mark();
     // Parser should accept empty string

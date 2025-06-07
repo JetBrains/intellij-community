@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.psi.PsiMethodCallExpression;
@@ -16,9 +16,8 @@ public final class BigDecimalMethodWithoutRoundingCalledInspection extends BaseI
   static final CallMatcher JAVA_MATH_BIG_DECIMAL =
     CallMatcher.instanceCall("java.math.BigDecimal", "setScale", "divide").parameterCount(1);
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("big.decimal.method.without.rounding.called.problem.descriptor");
   }
 

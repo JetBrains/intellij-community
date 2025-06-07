@@ -28,8 +28,7 @@ class FromDemo {
 
   public void test(@Nullable Integer t1, @Nullable Integer t2) {
     Integer o = new FromDemo().oneOfTwo(t1, t2);
-    // TODO: should not warn
-    if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+    if (o == null) {
       System.out.println("1");
     }
   }

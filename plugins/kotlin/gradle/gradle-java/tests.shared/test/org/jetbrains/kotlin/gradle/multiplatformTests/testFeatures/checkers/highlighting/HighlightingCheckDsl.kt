@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hig
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 
 interface HighlightingCheckDsl {

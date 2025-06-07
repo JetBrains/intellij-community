@@ -29,23 +29,19 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class PyInspection extends LocalInspectionTool {
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     //noinspection PatternValidation
     return getShortName(super.getID());
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return PyPsiBundle.message("INSP.GROUP.python");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return getClass().getSimpleName();
   }
 

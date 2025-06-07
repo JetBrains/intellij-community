@@ -3,18 +3,15 @@ package training.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
@@ -28,14 +25,15 @@ import training.util.enableLessonsAndPromoters
 import training.util.getActionById
 import java.awt.Color
 import java.util.concurrent.TimeUnit
-import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.MatteBorder
 
-class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
-  : SimpleToolWindowPanel(true, true), DataProvider {
+class LearnToolWindow internal constructor(
+  val project: Project,
+  private val wholeToolWindow: ToolWindow
+) : SimpleToolWindowPanel(true, true) {
   internal val parentDisposable: Disposable = wholeToolWindow.disposable
 
   internal val learnPanel: LearnPanel = LearnPanel(this)

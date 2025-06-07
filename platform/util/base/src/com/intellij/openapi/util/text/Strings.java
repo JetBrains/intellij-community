@@ -474,12 +474,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars) {
-    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
-      // we know for sure these classes have conformant (and maybe faster) hashCode()
-      return chars.hashCode();
-    }
-
-    return stringHashCode(chars, 0, chars.length());
+    return StringsKmp.stringHashCode(chars);
   }
 
   @Contract(pure = true)
@@ -489,11 +484,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to, int prefixHash) {
-    int h = prefixHash;
-    for (int off = from; off < to; off++) {
-      h = 31 * h + chars.charAt(off);
-    }
-    return h;
+    return StringsKmp.stringHashCode(chars, from, to, prefixHash);
   }
 
   @Contract(pure = true)
@@ -556,6 +547,7 @@ public final class Strings {
     return count;
   }
 
+  @Contract(mutates = "param2")
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
@@ -663,6 +655,7 @@ public final class Strings {
     return result.toString();
   }
 
+  @Contract(mutates = "param4")
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
@@ -692,6 +685,7 @@ public final class Strings {
     return result.toString();
   }
 
+  @Contract(mutates = "param3")
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (String string : strings) {
@@ -738,14 +732,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCodeIgnoreWhitespaces(@NotNull CharSequence chars) {
-    int h = 0;
-    for (int off = 0; off < chars.length(); off++) {
-      char c = chars.charAt(off);
-      if (!isWhiteSpace(c)) {
-        h = 31 * h + c;
-      }
-    }
-    return h;
+    return StringsKmp.stringHashCodeIgnoreWhitespaces(chars);
   }
 
   @Contract(pure = true)
@@ -758,76 +745,12 @@ public final class Strings {
       return true;
     }
 
-    int len1 = s1.length();
-    int len2 = s2.length();
-
-    int index1 = 0;
-    int index2 = 0;
-    while (index1 < len1 && index2 < len2) {
-      if (s1.charAt(index1) == s2.charAt(index2)) {
-        index1++;
-        index2++;
-        continue;
-      }
-
-      boolean skipped = false;
-      while (index1 != len1 && isWhiteSpace(s1.charAt(index1))) {
-        skipped = true;
-        index1++;
-      }
-      while (index2 != len2 && isWhiteSpace(s2.charAt(index2))) {
-        skipped = true;
-        index2++;
-      }
-
-      if (!skipped) return false;
-    }
-
-    for (; index1 != len1; index1++) {
-      if (!isWhiteSpace(s1.charAt(index1))) return false;
-    }
-    for (; index2 != len2; index2++) {
-      if (!isWhiteSpace(s2.charAt(index2))) return false;
-    }
-
-    return true;
+    return StringsKmp.equalsIgnoreWhitespaces(s1, s2);
   }
 
   @Contract(pure = true)
   public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
-    int start1 = 0;
-    int end1 = s1.length();
-    int end2 = s2.length();
-
-    while (start1 < end1) {
-      char c = s1.charAt(start1);
-      if (!isWhiteSpace(c)) break;
-      start1++;
-    }
-
-    while (start1 < end1) {
-      char c = s1.charAt(end1 - 1);
-      if (!isWhiteSpace(c)) break;
-      end1--;
-    }
-
-    int start2 = 0;
-    while (start2 < end2) {
-      char c = s2.charAt(start2);
-      if (!isWhiteSpace(c)) break;
-      start2++;
-    }
-
-    while (start2 < end2) {
-      char c = s2.charAt(end2 - 1);
-      if (!isWhiteSpace(c)) break;
-      end2--;
-    }
-
-    CharSequence ts1 = new CharSequenceSubSequence(s1, start1, end1);
-    CharSequence ts2 = new CharSequenceSubSequence(s2, start2, end2);
-
-    return StringUtilRt.equal(ts1, ts2, true);
+    return StringsKmp.equalsTrimWhitespaces(s1, s2);
   }
 
   @Contract(pure = true)
@@ -845,6 +768,7 @@ public final class Strings {
     return StringUtilRt.convertLineSeparators(text, newSeparator);
   }
 
+  @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
@@ -858,6 +782,7 @@ public final class Strings {
    * </ul>
    */
   @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
+  @Contract(pure = true)
   public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
     return s1 == s2;
   }

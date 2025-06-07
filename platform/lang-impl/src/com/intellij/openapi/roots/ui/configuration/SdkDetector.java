@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,6 +44,15 @@ public class SdkDetector {
    */
   public interface DetectedSdkListener {
     void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home);
+
+    /**
+     * Provides detailed information about a detected SDK.
+     * @param entry additional metadata associated with the detected SDK.
+     */
+    default void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+      onSdkDetected(type, entry.versionString(), entry.homePath());
+    }
+
     default void onSearchStarted() { }
     default void onSearchCompleted() { }
   }
@@ -127,6 +137,13 @@ public class SdkDetector {
     }
 
     @Override
+    public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+      synchronized (myPublicationLock) {
+        logEvent(listener -> listener.onSdkDetected(type, entry));
+      }
+    }
+
+    @Override
     public void onSearchCompleted() {
       synchronized (myPublicationLock) {
         myIsRunning.set(false);
@@ -175,7 +192,7 @@ public class SdkDetector {
     }
   }
 
-  private static void detectAllSdks(@NotNull Project project, @NotNull ProgressIndicator indicator, @NotNull DetectedSdkListener callback) {
+  private static void detectAllSdks(@Nullable Project project, @NotNull ProgressIndicator indicator, @NotNull DetectedSdkListener callback) {
     try {
       callback.onSearchStarted();
       indicator.setIndeterminate(false);
@@ -198,36 +215,22 @@ public class SdkDetector {
                              @NotNull ProgressIndicator indicator,
                              @NotNull DetectedSdkListener callback) {
     try {
-      Collection<String> suggestedPaths = type.suggestHomePaths(project);
-      for (String path : suggestedPaths) {
+      Collection<SdkType.SdkEntry> suggestedPaths = type.collectSdkEntries(project);
+      for (SdkType.SdkEntry entry : suggestedPaths) {
         indicator.checkCanceled();
 
-        if (path == null) continue;
-
+        final String home = entry.homePath();
+        final Path path = Paths.get(home);
         try {
-          //a sanity check first
-          if (!Files.exists(Paths.get(path))) continue;
-          if (!type.isValidSdkHome(path)) continue;
+          if (!Files.exists(path)) continue;
+          if (!type.isValidSdkHome(home)) continue;
         }
         catch (Exception e) {
-          LOG.warn("Failed to process detected SDK for " + type + " at " + path + ". " + e.getMessage(), e);
+          LOG.warn("Failed to process detected SDK for " + type + " at " + home + ". " + e.getMessage(), e);
           continue;
         }
 
-        String version;
-        try {
-          version = type.getVersionString(path);
-        }
-        catch (Exception e) {
-          LOG.warn("Failed to get the detected SDK version for " + type + " at " + path + ". " + e.getMessage(), e);
-          continue;
-        }
-        if (version == null) {
-          LOG.warn("No version is returned for detected SDK " + type + " at " + path);
-          continue;
-        }
-
-        callback.onSdkDetected(type, version, path);
+        callback.onSdkDetected(type, entry);
       }
     }
     catch (ProcessCanceledException e) {
@@ -255,6 +258,11 @@ public class SdkDetector {
     @Override
     public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
       dispatch(() -> myTarget.onSdkDetected(type, version, home));
+    }
+
+    @Override
+    public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry info) {
+      dispatch(() -> myTarget.onSdkDetected(type, info));
     }
 
     @Override

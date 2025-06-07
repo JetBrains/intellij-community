@@ -35,11 +35,10 @@ import java.util.List;
  */
 public final class PyListCreationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -64,8 +63,7 @@ public final class PyListCreationInspection extends PyInspection {
     }
   }
 
-  @NotNull
-  public static List<PyExpressionStatement> collectSubsequentListAppendCalls(@NotNull PyAssignmentStatement assignment) {
+  public static @NotNull List<PyExpressionStatement> collectSubsequentListAppendCalls(@NotNull PyAssignmentStatement assignment) {
     ArrayList<PyExpressionStatement> result = new ArrayList<>();
     final PyExpression[] targets = assignment.getTargets();
     assert targets.length == 1;

@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
@@ -68,7 +69,7 @@ object K2CreateLocalVariableFromUsageBuilder {
                 analyze(refExpr) {
                     if (assignment == null) {
                         val expressionForTypeGuess = originalElement.getAssignmentByLHS()?.right ?: originalElement
-                        expressionForTypeGuess.getExpectedKotlinType()?.ktType?.defaultInitializer
+                        expressionForTypeGuess.getExpectedKotlinType()?.kaType?.defaultInitializer
                     }
                     else {
                         "x"
@@ -83,7 +84,7 @@ object K2CreateLocalVariableFromUsageBuilder {
             if (!ReadonlyStatusHandler.ensureFilesWritable(project, PsiUtil.getVirtualFile(container))) {
                 return
             }
-            WriteCommandAction.writeCommandAction(project).run<Throwable> {
+            val insertedElement = WriteCommandAction.writeCommandAction(project).compute<PsiElement, Throwable> {
                 val (actualContainer, actualAnchor) = when (container) {
                     is KtBlockExpression -> container to refExpr
                     is KtDeclarationWithBody -> {
@@ -102,6 +103,13 @@ object K2CreateLocalVariableFromUsageBuilder {
                 else {
                     createdDeclaration.initializer!!.replace(assignment.right!!)
                     assignment.replace(createdDeclaration)
+                }
+            }
+            if (insertedElement is KtProperty && insertedElement.isValid) {
+                val range = insertedElement.initializer?.range
+                if (range != null) {
+                    editor?.selectionModel?.setSelection(range.startOffset, range.endOffset)
+                    editor?.caretModel?.moveToOffset(range.endOffset)
                 }
             }
         }

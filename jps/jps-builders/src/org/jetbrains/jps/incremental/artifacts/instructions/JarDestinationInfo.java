@@ -31,6 +31,7 @@ public final class JarDestinationInfo extends DestinationInfo {
     return myJarInfo;
   }
 
+  @Override
   public String toString() {
     return myPathInJar + "(" + getOutputPath() + ")";
   }

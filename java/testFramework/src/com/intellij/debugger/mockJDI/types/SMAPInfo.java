@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.mockJDI.types;
 
@@ -17,17 +15,17 @@ import java.util.List;
 import java.util.Map;
 
 public final class SMAPInfo {
-  @NonNls private static final String SMAP_ID = "SMAP";
-  @NonNls private static final String STRATUM_SECTION_PREFIX = "*S ";
+  private static final @NonNls String SMAP_ID = "SMAP";
+  private static final @NonNls String STRATUM_SECTION_PREFIX = "*S ";
   private final BufferedReader myReader;
   private String myOutputFileName;
   private String myDefaultStratum;
   private final Map<String, StratumInfo> myId2Stratum = new HashMap<>();
-  @NonNls private static final String END_SECTION_HEADER = "*E";
-  @NonNls private static final String FILE_SECTION_HEADER = "*F";
-  @NonNls private static final String LINE_SECTION_HEADER = "*L";
-  @NonNls private static final String OPEN_EMBEDDED_STRATUM_HEADER = "*O";
-  @NonNls private static final String CLOSE_EMBEDDED_STRATUM_HEADER = "*C";
+  private static final @NonNls String END_SECTION_HEADER = "*E";
+  private static final @NonNls String FILE_SECTION_HEADER = "*F";
+  private static final @NonNls String LINE_SECTION_HEADER = "*L";
+  private static final @NonNls String OPEN_EMBEDDED_STRATUM_HEADER = "*O";
+  private static final @NonNls String CLOSE_EMBEDDED_STRATUM_HEADER = "*C";
   private String myLastFileID;
 
   public static @Nullable SMAPInfo parse(final Reader SMAPReader) {

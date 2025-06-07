@@ -1383,6 +1383,36 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON312);
   }
 
+  // PY-79967
+  public void testTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testTemplateStringWithFragment() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testEmptyTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testNestedTemplateStrings() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testTemplateStringInsideFString() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-79967
+  public void testFStringInsideTemplateString() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

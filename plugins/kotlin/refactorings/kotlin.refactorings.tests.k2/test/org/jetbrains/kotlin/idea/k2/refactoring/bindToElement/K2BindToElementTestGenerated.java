@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.bindToElement;
 
@@ -266,6 +266,40 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             @TestMetadata("UnQualified.kt")
             public void testUnQualified() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToFqn/objectProperty/UnQualified.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision")
+        public static class PackageVsDeclarationCollision extends AbstractK2BindToElementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("PackageVsPropertyOnCallableReference.kt")
+            public void testPackageVsPropertyOnCallableReference() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnCallableReference.kt");
+            }
+
+            @TestMetadata("PackageVsPropertyOnFunctionCall.kt")
+            public void testPackageVsPropertyOnFunctionCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnFunctionCall.kt");
+            }
+
+            @TestMetadata("PackageVsPropertyOnFunctionCallFailedImport.kt")
+            public void testPackageVsPropertyOnFunctionCallFailedImport() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnFunctionCallFailedImport.kt");
+            }
+
+            @TestMetadata("PackageVsPropertyOnNameReference.kt")
+            public void testPackageVsPropertyOnNameReference() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnNameReference.kt");
             }
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
@@ -23,8 +24,7 @@ import java.util.regex.Pattern;
 
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
-public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
-
+public final class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static final String ONE = "one";
   private static final Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*(?:added|pushed) (\\d+|" + ONE + ") changeset.*");
@@ -87,7 +87,8 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
     }
   }
 
-  static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
+  @VisibleForTesting
+  public static int getNumberOfPushedCommits(@NotNull HgCommandResult result) {
     int numberOfCommitsInAllSubrepos = 0;
     final List<String> outputLines = result.getOutputLines();
     for (String outputLine : outputLines) {

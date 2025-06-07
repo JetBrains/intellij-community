@@ -48,8 +48,8 @@ import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
@@ -96,6 +96,12 @@ public final class ComponentPropertiesCollector {
   public static @NotNull List<PropertyBean> collect(@NotNull Object propertiesHolder, @NotNull List<@NotNull String> methodList) {
     ComponentPropertiesCollector collector = new ComponentPropertiesCollector();
     collector.addProperties("", propertiesHolder, methodList);
+    return collector.myProperties;
+  }
+
+  public static @NotNull List<PropertyBean> collect(@NotNull Accessible a) {
+    ComponentPropertiesCollector collector = new ComponentPropertiesCollector();
+    collector.collectAccessibleProperties(a);
     return collector.myProperties;
   }
 
@@ -153,6 +159,13 @@ public final class ComponentPropertiesCollector {
         myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
     }
+  }
+
+  private void collectAccessibleProperties(@NotNull Accessible a) {
+    myProperties.add(new PropertyBean("accessible", true));
+    AccessibleContext context = a.getAccessibleContext();
+    myProperties.add(new PropertyBean("accessibleContext", context));
+    addProperties("  ", a.getAccessibleContext(), ACCESSIBLE_CONTEXT_PROPERTIES);
   }
 
   private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
@@ -307,6 +320,7 @@ public final class ComponentPropertiesCollector {
     else if (component instanceof SquareStripeButton stripeButton) {
       // new UI
       window = stripeButton.getToolWindow();
+      myProperties.add(new PropertyBean("Stripe Button Icon", stripeButton.getIcon()));
     }
     else {
       return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -172,6 +172,11 @@ public class AddImportAction implements QuestionAction {
         @Override
         public Icon getIconFor(PsiClass value) {
           return maps.icons.get(value);
+        }
+
+        @Override
+        public boolean isLazyUiSnapshot() {
+          return true;
         }
       };
     JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, superRenderer -> {

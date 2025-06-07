@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
@@ -18,6 +19,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitEelExecutableDetectionHelper;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
@@ -28,7 +30,11 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -102,13 +108,20 @@ public class GitTagDialog extends DialogWrapper {
 
   public void runAction() {
     final String message = myMessageTextArea.getText();
-    final boolean hasMessage = message.trim().length() != 0;
-    final File messageFile;
+    final boolean hasMessage = !message.trim().isEmpty();
+    final Path messageFile;
     if (hasMessage) {
       try {
-        messageFile = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
-        messageFile.deleteOnExit();
-        try (Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING)) {
+        if (GitEelExecutableDetectionHelper.canUseEel()) {
+          messageFile = EelPathUtils.createTemporaryFile(myProject, MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX, true);
+        }
+        else {
+          var file = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
+          file.deleteOnExit();
+          messageFile = file.toPath();
+        }
+
+        try (Writer out = new OutputStreamWriter(Files.newOutputStream(messageFile), MESSAGE_FILE_ENCODING)) {
           out.write(message);
         }
       }
@@ -133,11 +146,11 @@ public class GitTagDialog extends DialogWrapper {
       }
       if (hasMessage) {
         h.addParameters("-F");
-        h.addAbsoluteFile(messageFile);
+        h.addAbsoluteFile(messageFile.toFile());
       }
       h.addParameters(myTagNameTextField.getText());
       String object = myCommitTextField.getText().trim();
-      if (object.length() != 0) {
+      if (!object.isEmpty()) {
         h.addParameters(object);
       }
 
@@ -165,8 +178,12 @@ public class GitTagDialog extends DialogWrapper {
     }
     finally {
       if (messageFile != null) {
-        //noinspection ResultOfMethodCallIgnored
-        messageFile.delete();
+        try {
+          Files.delete(messageFile);
+        }
+        catch (IOException e) {
+          // ignored
+        }
       }
     }
   }
@@ -190,7 +207,7 @@ public class GitTagDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (text.length() == 0) {
+    if (text.isEmpty()) {
       setErrorText(null);
       setOKActionEnabled(false);
       return;

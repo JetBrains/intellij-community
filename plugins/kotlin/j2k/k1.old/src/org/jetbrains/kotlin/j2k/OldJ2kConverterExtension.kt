@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.j2k.copyPaste.*
 import org.jetbrains.kotlin.psi.KtFile
 
 class OldJ2kConverterExtension : J2kConverterExtension() {
@@ -32,4 +35,21 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
 
     override fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
         true
+
+    override fun createPlainTextPasteImportResolver(
+        conversionData: ConversionData,
+        targetKotlinFile: KtFile
+    ): PlainTextPasteImportResolver {
+        ThreadingAssertions.assertBackgroundThread()
+        return K1PlainTextPasteImportResolver(conversionData, targetKotlinFile)
+    }
+
+    override fun createCopyPasteConverter(
+        project: Project,
+        editor: Editor,
+        conversionData: ConversionData,
+        targetData: TargetData
+    ): J2KCopyPasteConverter {
+        return K1J2KCopyPasteConverter(project, editor, conversionData, targetData, kind)
+    }
 }

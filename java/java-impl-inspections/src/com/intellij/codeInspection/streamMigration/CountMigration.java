@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 
-class CountMigration extends BaseStreamApiMigration {
+final class CountMigration extends BaseStreamApiMigration {
 
   CountMigration(boolean shouldWarn) {
     super(shouldWarn, "count");

@@ -3,7 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.dashboard.BranchNodeDescriptor.Ref
 import javax.swing.tree.TreePath
 
 internal class BranchesTreeSelection(selectionPaths: Array<TreePath>?) {

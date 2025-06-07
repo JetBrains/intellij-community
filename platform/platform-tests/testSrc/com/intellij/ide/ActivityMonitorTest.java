@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.mock.MockProject;
@@ -138,7 +138,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
       ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
       LaterInvocator.leaveModal(popup);
 
-      assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
+      assertFalse("m1: " + m1 + "; m2:" + m2, m2.accepts(m1));
 
       myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);

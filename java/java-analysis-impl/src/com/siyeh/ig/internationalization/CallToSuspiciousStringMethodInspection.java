@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
@@ -20,9 +20,8 @@ import java.util.List;
  */
 public final class CallToSuspiciousStringMethodInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.suspicious.string.method.problem.descriptor");
   }
 
@@ -38,12 +37,12 @@ public final class CallToSuspiciousStringMethodInspection extends BaseInspection
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     if (annotatableQualifier != null) {
-      final LocalQuickFix fix = new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier);
+      final LocalQuickFix fix = LocalQuickFix.from(new AddAnnotationModCommandAction(AnnotationUtil.NON_NLS, annotatableQualifier));
       result.add(fix);
     }
     final PsiModifierListOwner annotatableArgument = NonNlsUtils.getAnnotatableArgument(methodCallExpression);
     if (annotatableArgument != null) {
-      final LocalQuickFix fix = new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableArgument);
+      final LocalQuickFix fix = LocalQuickFix.from(new AddAnnotationModCommandAction(AnnotationUtil.NON_NLS, annotatableArgument));
       result.add(fix);
     }
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);

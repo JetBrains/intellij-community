@@ -45,8 +45,7 @@ public final class IndexOfReplaceableByContainsInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final String text;
@@ -66,8 +65,7 @@ public final class IndexOfReplaceableByContainsInspection
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new IndexOfReplaceableByContainsFix();
   }
 
@@ -98,8 +96,7 @@ public final class IndexOfReplaceableByContainsInspection
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "indexOf()", "contains()");
     }
   }
@@ -116,7 +113,7 @@ public final class IndexOfReplaceableByContainsInspection
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression expression = argumentList.getExpressions()[0];
-    @NonNls final String newExpressionText =
+    final @NonNls String newExpressionText =
       qualifierText + ".contains(" + commentTracker.text(expression) + ')';
     if (tokenType.equals(JavaTokenType.EQEQ)) {
       return '!' + newExpressionText;

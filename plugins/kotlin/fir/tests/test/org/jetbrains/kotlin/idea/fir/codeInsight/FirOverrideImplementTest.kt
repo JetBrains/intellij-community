@@ -29,7 +29,7 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
     }
 
     override fun testNoCallToAbstractSuper2() {
-        // KTIJ-23012
+        super.testNoCallToAbstractSuper2()
     }
 
     override fun testAndroidxNotNull() {
@@ -38,6 +38,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testEmptyClassBodyFunctionMethod() {
         super.testEmptyClassBodyFunctionMethod()
+    }
+
+    fun testContextParameters() {
+         doImplementFileTest()
     }
 
     override fun testFunctionMethod() {
@@ -54,6 +58,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testGenericTypesSeveralMethods() {
         super.testGenericTypesSeveralMethods()
+    }
+
+    fun testImplementContextFunction() {
+        doImplementFileTest()
     }
 
     override fun testSuspendOverride() {
@@ -230,6 +238,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testNoAnyMembersInInterface() {
         super.testNoAnyMembersInInterface()
+    }
+
+    override fun testNoAnyMembersInAnnotation() {
+        super.testNoAnyMembersInAnnotation()
     }
 
     override fun testNoAnyMembersInValueClass() {

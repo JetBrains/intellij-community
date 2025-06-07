@@ -1,0 +1,7 @@
+<idea-plugin package="com.intellij.python.community.services.internal.impl">
+  <dependencies>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk"/>
+  </dependencies>
+</idea-plugin>

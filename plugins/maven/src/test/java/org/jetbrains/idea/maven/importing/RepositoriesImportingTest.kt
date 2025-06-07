@@ -3,27 +3,10 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
-
-
-  @Test
-  fun importSimpleProject() = runBlocking {
-    importProjectAsync("""
-                      <groupId>test</groupId>
-                      <artifactId>project</artifactId>
-                      <packaging>pom</packaging>
-                      <version>1</version>
-                      """.trimIndent())
-    val mavenProject = projectsManager.findProject(projectPom)
-    assertNotNull(mavenProject)
-    UsefulTestCase.assertSameElements(mavenProject!!.remoteRepositories.map { it.url }, "https://repo.maven.apache.org/maven2")
-  }
-
   @Test
   fun testMirrorCentralImport() = runBlocking {
     val oldSettingsFile = mavenGeneralSettings.userSettingsFile

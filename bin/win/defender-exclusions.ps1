@@ -23,20 +23,29 @@ try {
         $expanded = [System.Environment]::ExpandEnvironmentVariables($exclusion)
         $resolvedPaths = Resolve-Path -Path $expanded -ErrorAction Stop
         foreach ($resolved in $resolvedPaths) {
-          $result += $resolved.ProviderPath.ToString()
+          $result += $resolved.ProviderPath
         }
       } catch [System.Management.Automation.ItemNotFoundException] {
       } catch [System.Management.Automation.DriveNotFoundException] {
       } catch [System.Management.Automation.WildcardPatternException] {
+      } catch [System.UnauthorizedAccessException] {
       }
     }
     return $result
   }
 
+  # returns `$true` when the given path is a sub-path of the given parent
+  function Test-StartsWith ([string] $path, [string] $parent) {
+    $pathNorm = $path.Trim('\') + '\'
+    $parentNorm = $parent.Trim('\') + '\'
+    return $pathNorm.Equals($parentNorm, [StringComparison]::OrdinalIgnoreCase) -or `
+           $pathNorm.StartsWith($parentNorm, [StringComparison]::OrdinalIgnoreCase)
+  }
+
   # returns `$true` when a path is already covered by the exclusion list
   function Test-Excluded ([string] $path, [string[]] $exclusions) {
     foreach ($exclusion in $exclusions) {
-      if ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $exclusion, @("IgnoreCase"))) {
+      if (Test-StartsWith $path $exclusion) {
         return $true
       }
     }

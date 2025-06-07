@@ -6,7 +6,8 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -17,7 +18,7 @@ import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 
-class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPresentationAware {
+class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return emptyArray()
@@ -46,9 +47,8 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, MainMenuPr
       val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return@let null
       RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 14, projectName = "", colorIndex = null)
     }
+    e.presentation.putClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU, true)
   }
-
-  override fun alwaysShowIconInMainMenu(): Boolean = true
 }
 
 class ChangeProjectColorAction(val projectPath: String, val name: @NlsSafe String, val index: Int, val projectName: String?) : AnAction(

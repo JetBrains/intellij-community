@@ -24,15 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.introduce.variable.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -64,8 +62,8 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = getElement(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = getElement(editor, psiFile);
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);
@@ -100,9 +98,8 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -131,8 +128,7 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
     return null;
   }
 
-  @Nullable
-  private static PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
+  private static @Nullable PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
     if (element.getParent() instanceof PsiExpressionList && element.getParent().getParent() instanceof PsiMethodCallExpression) {
       PsiJavaToken leftBoundary = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaToken.class);
       PsiJavaToken rightBoundary = element instanceof PsiJavaToken ? (PsiJavaToken)element

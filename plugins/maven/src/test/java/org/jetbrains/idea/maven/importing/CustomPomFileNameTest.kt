@@ -133,7 +133,7 @@ class CustomPomFileNameTest : MavenDomTestCase() {
                     </modules>
                     """.trimIndent())
 
-    val m2 = createProjectSubFile("m1/m2/pom.xml", createPomXml(
+    val m2 = updateProjectSubFile("m1/m2/pom.xml", createPomXml(
       """
         <artifactId>m2</artifactId>
         <version>1</version>
@@ -181,7 +181,7 @@ class CustomPomFileNameTest : MavenDomTestCase() {
 
     enableAutoReload()
 
-    val m1 = createProjectSubFile("m1/customName.xml", createPomXml(
+    val m1 = updateProjectSubFile("m1/customName.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
         <version>1</version>

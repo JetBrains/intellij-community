@@ -67,10 +67,8 @@ public class WindowResizeListener extends WindowMouseListener {
     Rectangle bounds = view.getBounds();
     boolean isWayland = StartupUiUtil.isWaylandToolkit();
     if (isWayland) {
-      // The location of the window on the screen is not known, so whatever those
-      // numbers are, disregard ethem for the purpose of the comparisons below.
-      bounds.x = 0;
-      bounds.y = 0;
+      // The view needs to be in the same coordinate space as the location of the mouse event.
+      bounds.setLocation(view.getLocationOnScreen());
     }
     JBInsets.removeFrom(bounds, getResizeOffset(view));
 

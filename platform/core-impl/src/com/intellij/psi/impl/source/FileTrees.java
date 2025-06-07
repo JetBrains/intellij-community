@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -217,7 +217,7 @@ final class FileTrees {
       if (cachedPsi != null) {
         if (stubList != null) {
           // noinspection unchecked
-          ((StubBase)stubList.get(i)).setPsi(cachedPsi);
+          ((StubBase<StubBasedPsiElementBase<?>>)stubList.get(i)).setPsi(cachedPsi);
         }
         if (nodeList != null) {
           nodeList.get(i).setPsi(cachedPsi);
@@ -230,7 +230,7 @@ final class FileTrees {
     for (int i = firstNonFilePsiIndex; i < stubList.size(); i++) {
       StubElement<?> stub = stubList.get(i);
       CompositeElement node = nodeList.get(i);
-      assert stub.getStubType() == node.getElementType() : "Stub type mismatch: " + stub.getStubType() + "!=" + node.getElementType() + " in #" + node.getElementType().getLanguage();
+      assert stub.getElementType() == node.getElementType() : "Stub type mismatch: " + stub.getElementType() + "!=" + node.getElementType() + " in #" + node.getElementType().getLanguage();
 
       PsiElement psi = Objects.requireNonNull(srcSpine.get(i));
       if (takePsiFromStubs) {
@@ -238,7 +238,7 @@ final class FileTrees {
       }
       else {
         //noinspection unchecked
-        ((StubBase)stub).setPsi(psi);
+        ((StubBase<PsiElement>)stub).setPsi(psi);
       }
     }
   }

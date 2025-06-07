@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // IS_APPLICABLE: false
+// PROBLEM: none
 
 fun <T> Iterable<T>.intersect(other: Iterable<T>): Set<T> = other.toSet()
 

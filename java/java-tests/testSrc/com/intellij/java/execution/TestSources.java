@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.openapi.module.Module;
@@ -18,13 +18,13 @@ import com.intellij.testFramework.VfsTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-final class TestSources {
+public final class TestSources {
   private final Project myProject;
   private final TemporaryDirectory tempDir;
   private VirtualFile mySrc;
   private Module myModule;
 
-  TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
+  public TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
     myProject = project;
     tempDir = temporaryDirectory;
   }

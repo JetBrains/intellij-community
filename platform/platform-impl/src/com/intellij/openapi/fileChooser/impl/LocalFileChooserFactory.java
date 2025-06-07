@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelDescriptorWithoutNativeFileChooserSupport;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +73,12 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
 
   @Override
   public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return canUseNativeDialog(descriptor) ? new NativeFileSaverDialogImpl(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
+    return canUseNativeDialog(descriptor, project) ? new NativeFileSaverDialogImpl(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @Override
   public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return canUseNativeDialog(descriptor) ? new NativeFileSaverDialogImpl(descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
+    return canUseNativeDialog(descriptor, null) ? new NativeFileSaverDialogImpl(descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 
   static @Nullable PathChooserDialog createNativePathChooserIfEnabled(
@@ -84,10 +86,18 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     @Nullable Project project,
     @Nullable Component parent
   ) {
-    return canUseNativeDialog(descriptor) ? new NativeFileChooserDialogImpl(descriptor, parent, project) : null;
+    return canUseNativeDialog(descriptor, project) ? new NativeFileChooserDialogImpl(descriptor, parent, project) : null;
   }
 
-  private static boolean canUseNativeDialog(FileChooserDescriptor descriptor) {
+  private static boolean canUseNativeDialog(FileChooserDescriptor descriptor, @Nullable Project project) {
+    if (project != null) {
+      var eelDescriptor = EelProviderUtil.getEelDescriptor(project);
+
+      if (eelDescriptor instanceof EelDescriptorWithoutNativeFileChooserSupport) {
+        return false;
+      }
+    }
+
     return !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemInfo.isJetBrainsJvm &&
            (SystemInfo.isWindows || SystemInfo.isMac) &&

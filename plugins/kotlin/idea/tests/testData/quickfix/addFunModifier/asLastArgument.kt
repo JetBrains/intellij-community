@@ -9,5 +9,5 @@ fun test() {
     val x = foo(<caret>I {})
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

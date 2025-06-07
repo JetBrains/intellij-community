@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
 import com.intellij.util.containers.LinkedListWithSum;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,9 +88,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public void removeContent(Transferable t) {
     ClientCopyPasteManager.getCurrentInstance().removeContent(t);
   }
-  boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
+
+  @ApiStatus.Internal
+  public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
     return ClientCopyPasteManager.getCurrentInstance().removeIf(predicate);
   }
+
   public void moveContentToStackTop(Transferable t) {
     ClientCopyPasteManager.getCurrentInstance().moveContentToStackTop(t);
   }

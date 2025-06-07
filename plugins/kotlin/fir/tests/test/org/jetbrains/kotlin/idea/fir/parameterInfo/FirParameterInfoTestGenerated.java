@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.parameterInfo;
 
@@ -135,9 +135,24 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenLambdaArgument.kt")
+        public void testBrokenLambdaArgument() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/brokenLambdaArgument.kt");
+        }
+
+        @TestMetadata("brokenLambdaArgument2.kt")
+        public void testBrokenLambdaArgument2() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/brokenLambdaArgument2.kt");
+        }
+
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Conflicting.kt");
+        }
+
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
         }
 
         @TestMetadata("DataClassComponentFunction.kt")
@@ -333,6 +348,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
         }
 
         @TestMetadata("NoShadowedDeclarations.kt")
@@ -543,6 +563,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("UnresolvedCurrent.kt")
         public void testUnresolvedCurrent() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiver.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiver() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiver.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiverWithOverloads() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt");
         }
 
         @TestMetadata("UpdateOnTyping.kt")
@@ -769,6 +799,25 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("useJavaSAMFromLib.kt")
         public void testUseJavaSAMFromLib() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractFirParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
         }
     }
 }

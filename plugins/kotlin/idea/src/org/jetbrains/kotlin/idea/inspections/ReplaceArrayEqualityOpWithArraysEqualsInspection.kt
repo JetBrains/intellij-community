@@ -45,11 +45,11 @@ class ReplaceArrayEqualityOpWithArraysEqualsInspection : AbstractApplicabilityBa
 
     override fun inspectionText(element: KtBinaryExpression) = KotlinBundle.message("dangerous.array.comparison")
 
-    override val defaultFixText: String get() = KotlinBundle.message("replace.with.contentequals3")
+    override val defaultFixText: String get() = KotlinBundle.message("replace.with.content.equals")
 
     override fun fixText(element: KtBinaryExpression): String = when (element.operationToken) {
-        KtTokens.EQEQ -> KotlinBundle.message("replace.with.contentequals2")
-        KtTokens.EXCLEQ -> KotlinBundle.message("replace.with.contentequals")
+        KtTokens.EQEQ -> KotlinBundle.message("replace.equal.with.content.equals")
+        KtTokens.EXCLEQ -> KotlinBundle.message("replace.not.equal.with.content.equals")
         else -> ""
     }
 }

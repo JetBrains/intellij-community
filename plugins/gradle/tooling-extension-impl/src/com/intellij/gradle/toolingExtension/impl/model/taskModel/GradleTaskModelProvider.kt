@@ -12,11 +12,11 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModel
 @ApiStatus.Internal
 class GradleTaskModelProvider : ProjectImportModelProvider {
 
-  override fun populateBuildModels(
+  override fun populateModels(
     controller: BuildController,
-    buildModel: GradleBuild,
+    buildModels: Collection<GradleBuild>,
     modelConsumer: GradleModelConsumer,
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel::class.java, modelConsumer)
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleTaskModel::class.java, modelConsumer)
   }
 }

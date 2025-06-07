@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.project
 
 import com.intellij.ide.GeneralSettings
@@ -20,8 +20,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -30,21 +33,26 @@ import java.io.File
 import java.io.FileFilter
 import java.io.IOException
 import java.io.PrintWriter
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
-import kotlin.io.path.exists
-import kotlin.io.path.getLastModifiedTime
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
+  private val protectedDirNames = hashSetOf(Project.DIRECTORY_STORE_FOLDER, ".git", "git", "venv")
+
+
+  @ApiStatus.Internal
+  @Volatile
+  var customSystemPath: Path? = null
+    @TestOnly
+    set
 
   val learningProjectsPath: Path
-    get() = Paths.get(PathManager.getSystemPath(), "demo")
+    get() = Paths.get(customSystemPath?.pathString ?: PathManager.getSystemPath(), "demo")
+
 
   /**
    * For example:
@@ -134,10 +142,12 @@ object ProjectUtils {
            ?: error("Cannot to convert $projectPath to virtual file")
   }
 
-  fun simpleInstallAndOpenLearningProject(contentRoot: Path,
-                                          langSupport: LangSupport,
-                                          openProjectTask: OpenProjectTask,
-                                          postInitCallback: (learnProject: Project) -> Unit) {
+  fun simpleInstallAndOpenLearningProject(
+    contentRoot: Path,
+    langSupport: LangSupport,
+    openProjectTask: OpenProjectTask,
+    postInitCallback: (learnProject: Project) -> Unit,
+  ) {
     val actualContentRoot = copyLearningProjectFiles(contentRoot, langSupport)
     if (actualContentRoot == null) return
     createVersionFile(actualContentRoot)
@@ -151,10 +161,12 @@ object ProjectUtils {
     PropertiesComponent.getInstance(it).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
   }
 
-  private fun openOrImportLearningProject(contentRoot: Path,
-                                          openProjectTask: OpenProjectTask,
-                                          langSupport: LangSupport,
-                                          postInitCallback: (learnProject: Project) -> Unit) {
+  private fun openOrImportLearningProject(
+    contentRoot: Path,
+    openProjectTask: OpenProjectTask,
+    langSupport: LangSupport,
+    postInitCallback: (learnProject: Project) -> Unit,
+  ) {
     val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(
       langSupport.getLearningProjectPath(contentRoot)
     ) ?: error("Copied Learn project folder is null")
@@ -270,6 +282,7 @@ object ProjectUtils {
     project.save()
   }
 
+  @RequiresBackgroundThread
   fun restoreProject(languageSupport: LangSupport, project: Project) {
     val done = CompletableFuture<Boolean>()
     AppUIExecutor.onWriteThread().withDocumentsCommitted(project).submit {
@@ -280,29 +293,44 @@ object ProjectUtils {
         val directories = mutableListOf<Path>()
         val root = getProjectRoot(languageSupport)
         val contentRootPath = languageSupport.getContentRootPath(root.toNioPath())
+        val protectedPaths = languageSupport.getProtectedDirs(project)
 
-        for (path in Files.walk(contentRootPath)) {
-          if (contentRootPath.relativize(path).any { file ->
-              file.name == ".idea" ||
-              file.name == "git" ||
-              file.name == ".git" ||
-              file.name == ".gitignore" ||
-              file.name == "venv" ||
-              file.name == FEATURE_TRAINER_VERSION ||
-              file.name.endsWith(".iml")
-            }) continue
-          if (path.isDirectory()) {
-            directories.add(path)
-          }
-          else {
-            if (path.getLastModifiedTime().toMillis() > stamp) {
-              needReplace.add(path)
+
+        Files.walkFileTree(contentRootPath, object : FileVisitor<Path> {
+          override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+            if (dir == contentRootPath) {
+              return FileVisitResult.CONTINUE
+            }
+            return if (dir.name in protectedDirNames || protectedPaths.any { it.startsWith(dir) }) {
+              FileVisitResult.SKIP_SUBTREE
             }
             else {
-              validContent.add(path)
+              directories.add(dir)
+              FileVisitResult.CONTINUE
             }
           }
-        }
+
+          override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+            val fileName = file.name
+            if (fileName == FEATURE_TRAINER_VERSION ||
+                fileName.startsWith(".git") ||
+                protectedPaths.contains(file) ||
+                fileName.endsWith(".iml")) {
+              return FileVisitResult.CONTINUE
+            }
+            if (file.getLastModifiedTime().toMillis() > stamp) {
+              needReplace.add(file)
+            }
+            else {
+              validContent.add(file)
+            }
+            return FileVisitResult.CONTINUE
+          }
+
+          override fun visitFileFailed(file: Path?, exc: IOException): FileVisitResult = FileVisitResult.CONTINUE
+
+          override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult = FileVisitResult.CONTINUE
+        })
 
         var modified = false
 
@@ -349,3 +377,4 @@ object ProjectUtils {
     return false
   }
 }
+

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
@@ -131,9 +131,19 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
             runTest("testData/codeInsight/generate/toString/singleTemplate/abstractSuper.kt");
         }
 
+        @TestMetadata("anonym.kt")
+        public void testAnonym() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/anonym.kt");
+        }
+
         @TestMetadata("arrays.kt")
         public void testArrays() throws Exception {
             runTest("testData/codeInsight/generate/toString/singleTemplate/arrays.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/companionObject.kt");
         }
 
         @TestMetadata("customAccessors.kt")

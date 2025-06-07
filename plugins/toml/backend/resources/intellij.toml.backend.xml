@@ -1,0 +1,36 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.toml.core"/>
+        <module name="intellij.platform.backend"/>
+    </dependencies>
+
+    <resource-bundle>messages.TomlBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <lang.findUsagesProvider language="TOML" implementationClass="org.toml.ide.search.TomlFindUsagesProvider"/>
+
+        <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
+        <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
+
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
+
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
+
+        <localInspection language="TOML"
+                         groupKey="inspection.group.toml"
+                         key="inspection.toml.unresolved.reference.display.name"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
+
+
+        <!-- Folding -->
+        <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
+
+        <intentionAction>
+            <language>TOML</language>
+            <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
+            <categoryKey>intention.category.toml</categoryKey>
+        </intentionAction>
+    </extensions>
+</idea-plugin>

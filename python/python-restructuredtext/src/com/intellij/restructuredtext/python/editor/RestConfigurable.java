@@ -6,8 +6,8 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.restructuredtext.RestBundle;
+import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,15 +33,13 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
     myPanel.add(component, BorderLayout.NORTH);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return RestBundle.message("configurable.RestConfigurable.display.name");
   }
 

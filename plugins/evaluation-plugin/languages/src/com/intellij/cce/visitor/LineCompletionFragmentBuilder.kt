@@ -5,15 +5,21 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.openapi.project.Project
 
-class LineCompletionFragmentBuilder(project: Project,
-                                    language: Language,
-                                    private val featureName: String,
-                                    private val completionGolfMode: CompletionGolfMode)
-  : CodeFragmentFromPsiBuilder(project, language) {
+class LineCompletionFragmentBuilder(
+  project: Project,
+  language: Language,
+  private val featureName: String,
+  private val completionGolfMode: CompletionGolfMode,
+  private val fallbackToDefaultIfNotFound: Boolean = true,
+) : CodeFragmentFromPsiBuilder(project, language) {
   override fun getVisitors(): List<LineCompletionEvaluationVisitor> {
-    return LineCompletionVisitorFactory.EP_NAME.extensionList
-             .filter { it.language == language }.takeIf { it.isNotEmpty() }
-             ?.map { it.createVisitor(featureName, completionGolfMode) }
-           ?: listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language))
+    val knownVisitors = LineCompletionVisitorFactory.EP_NAME.extensionList
+      .filter { it.language == language }.takeIf { it.isNotEmpty() }
+      ?.map { it.createVisitor(featureName, completionGolfMode) }
+    if (knownVisitors != null) return knownVisitors
+    if (fallbackToDefaultIfNotFound) return listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language))
+
+    val registeredLanguages = LineCompletionVisitorFactory.EP_NAME.extensionList.map { it.language.displayName }
+    throw IllegalStateException("No known visitors found for $language and $featureName. Registered languages: $registeredLanguages")
   }
 }

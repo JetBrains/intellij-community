@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -29,6 +29,7 @@ import com.intellij.util.xml.DomService;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -134,12 +135,12 @@ public final class PluginDescriptorChooser {
     return extensions;
   }
 
-  private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
-                                                                  List<? extends DomFileElement<IdeaPlugin>> elements) {
+  private static @Unmodifiable List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
+                                                                                @Unmodifiable List<? extends DomFileElement<IdeaPlugin>> elements) {
     ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());
     final List<String> groupPath = grouper.getGroupPath(currentModule);
 
-    elements.sort((o1, o2) -> {
+    elements = ContainerUtil.sorted(elements, (o1, o2) -> {
       // current module = first group
       final Module module1 = o1.getModule();
       final Module module2 = o2.getModule();
@@ -158,7 +159,7 @@ public final class PluginDescriptorChooser {
       }
       return ModulesAlphaComparator.INSTANCE.compare(module1, module2);
     });
-    elements.sort((o1, o2) -> {
+    elements = ContainerUtil.sorted(elements, (o1, o2) -> {
       if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
       String pluginId1 = o1.getRootElement().getPluginId();
       String pluginId2 = o2.getRootElement().getPluginId();

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.ui.IdeUICustomization
 
-class CloseProjectAction : CloseProjectsActionBase() {
+open class CloseProjectAction : CloseProjectsActionBase() {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.project.text"))
@@ -18,7 +18,7 @@ class CloseProjectAction : CloseProjectsActionBase() {
 
   override fun canClose(project: Project, currentProject: Project): Boolean = project === currentProject
 
-  override fun shouldShow(e: AnActionEvent): Boolean = e.project != null
+  override fun shouldShow(e: AnActionEvent): Boolean = true
 
   override fun update(e: AnActionEvent) {
     super.update(e)

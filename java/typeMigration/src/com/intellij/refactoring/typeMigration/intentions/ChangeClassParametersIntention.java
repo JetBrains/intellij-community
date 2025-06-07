@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -30,15 +31,13 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
 
   private static final Logger LOG = Logger.getInstance(ChangeClassParametersIntention.class);
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return TypeMigrationBundle.message("change.class.type.parameter.family.name");
   }
 
@@ -60,7 +59,7 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(element, PsiTypeElement.class);
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(typeElement, PsiReferenceParameterList.class);
     if (parameterList != null) {
@@ -107,7 +106,7 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
                 if (!(targetParam instanceof PsiClassType classType)) {
                   HintManager.getInstance().showErrorHint(editor,
-                                                          JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type"));
+                                                          JavaCompilationErrorBundle.message("type.argument.primitive"));
                   return;
                 }
                 final PsiClass target = classType.resolve();

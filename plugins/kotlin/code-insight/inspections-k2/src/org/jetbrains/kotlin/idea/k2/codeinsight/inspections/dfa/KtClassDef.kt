@@ -101,9 +101,11 @@ class KtClassDef(
             buildClassType(classLikeSymbol).asPsiType(psi, true)
         }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KtClassDef && other.pointer.pointsToTheSameSymbolAs(pointer)
-    }
+    override fun equals(other: Any?): Boolean =
+        other === this ||
+                other is KtClassDef &&
+                other.hash == hash &&
+                other.pointer.pointsToTheSameSymbolAs(pointer)
 
     override fun hashCode(): Int = hash
 

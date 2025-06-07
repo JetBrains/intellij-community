@@ -29,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public final class CastToIncompatibleInterfaceInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Boolean isInterface = (Boolean)infos[0];
     final String className = (String)infos[1];
     return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor", isInterface ? 1 : 2, className);

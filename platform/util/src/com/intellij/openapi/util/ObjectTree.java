@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -22,7 +21,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-final class ObjectTree {
+@ApiStatus.Internal
+public final class ObjectTree {
   // map of Disposable -> ObjectNode which has myChildren with ObjectNode.myObject == key
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Map<Disposable, ObjectNode> myObject2ParentNode = new Reference2ObjectOpenHashMap<>(); // guarded by treeLock
@@ -190,29 +190,36 @@ final class ObjectTree {
       return;
     }
 
-    ProcessCanceledException processCanceledException = null;
     for (Throwable exception : exceptions) {
-      if (!(exception instanceof ProcessCanceledException)) {
+      if (Logger.shouldRethrow(exception)) {
+        // wrap with RuntimeException to avoid logger warning about logging ControlFlowException
+        // we don't want to rethrow PCEs as well because it may fail a pipeline of disposals
+        getLogger().error(new RuntimeException("CE must not be thrown from a dispose() implementation", exception));
+      }
+      else {
         getLogger().error(exception);
       }
-      else if (processCanceledException == null) {
-        processCanceledException = (ProcessCanceledException)exception;
-      }
-    }
-
-    if (processCanceledException != null) {
-      throw processCanceledException;
     }
   }
 
   @TestOnly
-  void assertNoReferenceKeptInTree(@NotNull Disposable disposable) {
+  public void assertNoReferenceKeptInTree(@NotNull Disposable disposable) {
     synchronized (getTreeLock()) {
       for (ObjectNode node : myObject2ParentNode.values()) {
         node.assertNoReferencesKept(disposable);
       }
     }
   }
+
+  @TestOnly
+  public void assertNoReferenceKeptInTree(@NotNull Class<Disposable> disposableClass) {
+    synchronized (getTreeLock()) {
+      for (ObjectNode node : myObject2ParentNode.values()) {
+        node.assertNoReferencesKept(disposableClass);
+      }
+    }
+  }
+
 
   @ApiStatus.Internal
   void assertIsEmpty(boolean throwError) {

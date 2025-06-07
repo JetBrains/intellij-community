@@ -22,7 +22,7 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
     val contextProvider: (T).(context: VelocityContext) -> Unit
 ) {
     companion object {
-        fun getGenerators() = listOf(
+        fun getGenerators(): List<WizardDefaultDataGeneratorSettings<out IdeVersionedDataState>> = listOf(
             WizardDefaultDataGeneratorSettings(
                 jsonPath = "/compatibility/dependencies.json",
                 ktFileName = "DependencyDefaultData.kt",

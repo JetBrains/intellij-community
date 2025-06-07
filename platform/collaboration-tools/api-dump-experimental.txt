@@ -290,11 +290,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:hideWhenNoVisibleChildren(javax.swing.JComponent):V
 - f:installValidator(javax.swing.JComponent,com.intellij.collaboration.ui.SingleValueModel):V
 - f:isDefault(javax.swing.JButton):Z
-- f:isFocusParent(javax.swing.JComponent):Z
 - f:moveToCenter(javax.swing.JComponent):javax.swing.JComponent
 - f:overrideUIDependentProperty(javax.swing.JComponent,kotlin.jvm.functions.Function1):V
 - f:registerFocusActions(javax.swing.JComponent):V
-- f:setComponentPreservingFocus(com.intellij.ui.content.Content,javax.swing.JComponent):V
 - f:setDefault(javax.swing.JButton,Z):V
 - f:wrapWithLimitedSize(javax.swing.JComponent,com.intellij.collaboration.ui.util.DimensionRestrictions):javax.swing.JComponent
 - f:wrapWithLimitedSize(javax.swing.JComponent,java.lang.Integer,java.lang.Integer):javax.swing.JComponent
@@ -319,7 +317,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:VerticalListPanel$default(I,I,java.lang.Object):javax.swing.JPanel
 - sf:jbColorFromHex(java.lang.String,java.lang.String):com.intellij.ui.JBColor
 - sf:jbColorFromHex(java.lang.String,java.lang.String,java.lang.String):com.intellij.ui.JBColor
+- sf:requestFocusPreferred(javax.swing.JComponent):V
 - sf:selectFirst(javax.swing.ComboBoxModel):V
+- sf:setContentPreservingFocus(com.intellij.ui.components.panels.Wrapper,javax.swing.JComponent):V
 *f:com.intellij.collaboration.ui.ComponentListPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.ComponentListPanelFactory
 - f:createHorizontal(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.functions.Function2):javax.swing.JPanel
@@ -327,9 +327,11 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:createVertical(javax.swing.ListModel,I,kotlin.jvm.functions.Function1):javax.swing.JPanel
 - f:createVertical(kotlinx.coroutines.CoroutineScope,javax.swing.ListModel,I,kotlin.jvm.functions.Function2):javax.swing.JPanel
 - f:createVertical(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.functions.Function2):javax.swing.JPanel
+- f:createVertical(kotlinx.coroutines.flow.Flow,I,kotlin.jvm.functions.Function2):javax.swing.JPanel
 - bs:createVertical$default(com.intellij.collaboration.ui.ComponentListPanelFactory,javax.swing.ListModel,I,kotlin.jvm.functions.Function1,I,java.lang.Object):javax.swing.JPanel
 - bs:createVertical$default(com.intellij.collaboration.ui.ComponentListPanelFactory,kotlinx.coroutines.CoroutineScope,javax.swing.ListModel,I,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JPanel
 - bs:createVertical$default(com.intellij.collaboration.ui.ComponentListPanelFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JPanel
+- bs:createVertical$default(com.intellij.collaboration.ui.ComponentListPanelFactory,kotlinx.coroutines.flow.Flow,I,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JPanel
 *f:com.intellij.collaboration.ui.EditableComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.EditableComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,javax.swing.JComponent,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):javax.swing.JComponent
@@ -359,13 +361,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - <init>(Z):V
 - p:paintComponent(java.awt.Graphics):V
 *f:com.intellij.collaboration.ui.ListenableProgressIndicator
-- com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
-- com.intellij.openapi.progress.StandardProgressIndicator
+- com.intellij.openapi.progress.util.ProgressIndicatorBase
 - <init>():V
 - f:addAndInvokeListener(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - f:addAndInvokeListener(kotlin.jvm.functions.Function0):V
-- cancel():V
-- isCanceled():Z
 *:com.intellij.collaboration.ui.SimpleEventListener
 - java.util.EventListener
 - *sf:Companion:com.intellij.collaboration.ui.SimpleEventListener$Companion
@@ -870,24 +869,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - getTooltipText():java.lang.String
 - getVisibleIcon():javax.swing.Icon
 - setVisibleIcon(javax.swing.Icon):V
-*f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:createCombinedDiffModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- f:createDiffRequestProcessor(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
-*f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
-- com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
-- com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-- <init>(com.intellij.openapi.project.Project,com.intellij.collaboration.util.RefComparisonChange,com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer,kotlin.jvm.functions.Function1):V
-- b:<init>(com.intellij.openapi.project.Project,com.intellij.collaboration.util.RefComparisonChange,com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.diff.util.DiffUserDataKeysEx$DiffComputer,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- equals(java.lang.Object):Z
-- f:getChange():com.intellij.collaboration.util.RefComparisonChange
-- getFilePath():com.intellij.openapi.vcs.FilePath
-- getFileStatus():com.intellij.openapi.vcs.FileStatus
-- getName():java.lang.String
-- getScrollRequests():kotlinx.coroutines.flow.Flow
-- hashCode():I
-- process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-- f:scrollTo(kotlin.Pair):V
+*f:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
+- f:createCombinedIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+- f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
 *a:com.intellij.collaboration.ui.codereview.diff.CreateDiffCommentAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -919,32 +904,39 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *c:com.intellij.collaboration.ui.codereview.diff.EditorRangesController
 - <init>(com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory,com.intellij.openapi.editor.ex.EditorEx):V
 - pf:markCommentableLines(com.intellij.diff.util.LineRange):V
-*:com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
-- com.intellij.diff.chains.DiffRequestProducer
-- a:getScrollRequests():kotlinx.coroutines.flow.Flow
-*f:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
-- <init>(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
-- *:<init>(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
-- f:getDiffVm():kotlinx.coroutines.flow.Flow
-- f:showChanges(com.intellij.collaboration.util.ChangesSelection,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.collaboration.ui.codereview.diff.model.AsyncDiffViewModel
+- a:getRequest():kotlinx.coroutines.flow.StateFlow
+- a:reloadRequest():V
+*:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
+- a:getChanges():kotlinx.coroutines.flow.StateFlow
+- a:showChange(I,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- a:showChange(java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel,I,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel,java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+*:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel$State
+- a:getSelectedChanges():com.intellij.openapi.ListSelection
 *:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 - a:getDiscussionsViewOption():kotlinx.coroutines.flow.StateFlow
 - a:setDiscussionsViewOption(com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption):V
-*:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
-- a:getDiffVm():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModelKt
-- sf:getSelected(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-*f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
-- f:getProducers():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- f:component1():java.util.List
-- f:component2():I
-- f:copy(java.util.List,I):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- bs:copy$default(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State,java.util.List,I,I,java.lang.Object):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- equals(java.lang.Object):Z
-- f:getProducers():java.util.List
-- f:getSelectedIdx():I
-- hashCode():I
+*:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- *sf:Companion:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion
+*f:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion
+- f:toFirstChange():com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- f:toLastChange():com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- f:toLine(kotlin.Pair):com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+*:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequestProducer
+- a:getScrollRequests():kotlinx.coroutines.flow.Flow
+*:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+- *sf:Companion:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion
+- a:getChanges():kotlinx.coroutines.flow.Flow
+- a:handleSelection(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- a:showChange(java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate,java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+- a:showChanges(com.intellij.openapi.ListSelection,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChanges$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate,com.intellij.openapi.ListSelection,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+*f:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion
+- f:create(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+- bs:create$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3,I,java.lang.Object):com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
 *:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - a:sort(java.util.List):java.util.List
 *f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$Grouping
@@ -963,6 +955,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z
+- cancelNewComment(I):V
 - a:requestNewComment(I):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - f:getKEY():com.intellij.openapi.util.Key
@@ -1005,6 +998,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:toggleComments(I):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$ControlsState
 - a:getLinesWithComments():java.util.Set
+- getLinesWithNewComments():java.util.Set
 - a:isLineCommentable(I):Z
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
@@ -1148,6 +1142,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:wrapWithLazyVerticalScroll(kotlinx.coroutines.CoroutineScope,javax.swing.JList,kotlin.jvm.functions.Function0):javax.swing.JScrollPane
 *:com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 - a:refresh():V
+- reload():V
 *:com.intellij.collaboration.ui.codereview.list.TagPresentation
 - a:getColor():java.awt.Color
 - a:getName():java.lang.String
@@ -1249,17 +1244,18 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *f:com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.search.PopupConfig$Companion
 - <init>():V
-- <init>(java.lang.String,java.lang.String,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text):V
-- b:<init>(java.lang.String,java.lang.String,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,Z,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text):V
+- b:<init>(java.lang.String,java.lang.String,Z,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
 - f:component3():Z
 - f:component4():Z
 - f:component5():Z
-- f:component6():com.intellij.collaboration.ui.codereview.list.search.ShowDirection
-- f:component7():com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
-- f:copy(java.lang.String,java.lang.String,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text):com.intellij.collaboration.ui.codereview.list.search.PopupConfig
-- bs:copy$default(com.intellij.collaboration.ui.codereview.list.search.PopupConfig,java.lang.String,java.lang.String,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.search.PopupConfig
+- f:component6():Z
+- f:component7():com.intellij.collaboration.ui.codereview.list.search.ShowDirection
+- f:component8():com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
+- f:copy(java.lang.String,java.lang.String,Z,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text):com.intellij.collaboration.ui.codereview.list.search.PopupConfig
+- bs:copy$default(com.intellij.collaboration.ui.codereview.list.search.PopupConfig,java.lang.String,java.lang.String,Z,Z,Z,Z,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text,I,java.lang.Object):com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 - equals(java.lang.Object):Z
 - f:getAlwaysShowSearchField():Z
 - f:getErrorPresenter():com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter$Text
@@ -1267,6 +1263,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:getShowDirection():com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 - f:getTitle():java.lang.String
 - hashCode():I
+- f:isAutoPackHeightOnFiltering():Z
 - f:isMovable():Z
 - f:isResizable():Z
 *f:com.intellij.collaboration.ui.codereview.list.search.PopupConfig$Companion
@@ -1382,7 +1379,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - createBaseIcon(java.lang.Object,I):javax.swing.Icon
 - a:load(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - postProcess(java.awt.Image,kotlin.coroutines.Continuation):java.lang.Object
-- bs:postProcess$suspendImpl(com.intellij.collaboration.ui.icon.AsyncImageIconsProvider$AsyncImageLoader,java.awt.Image,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.collaboration.ui.icon.AsyncImageIconsProvider$Companion
 *f:com.intellij.collaboration.ui.icon.CIBuildStatusIcons
 - sf:INSTANCE:com.intellij.collaboration.ui.icon.CIBuildStatusIcons
@@ -1582,6 +1578,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindTextHtmlIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
 - sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1):V
+- sf:bindTextIn(com.intellij.ui.dsl.builder.Cell,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):com.intellij.ui.dsl.builder.Cell
 - sf:bindTextIn(javax.swing.Action,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JButton,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
@@ -1593,8 +1590,10 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:awaitClose(com.intellij.openapi.ui.popup.JBPopup,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwait(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwaitListSubmission(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
-- sf:showAndAwaitSubmission(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
-- sf:showAndAwaitSubmissions(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
+- sf:showAndAwaitSubmission(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- bs:showAndAwaitSubmission$default(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:showAndAwaitSubmissions(com.intellij.openapi.ui.popup.JBPopup,javax.swing.ListModel,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- bs:showAndAwaitSubmissions$default(com.intellij.openapi.ui.popup.JBPopup,javax.swing.ListModel,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 - a:getFullText():java.lang.String
 - a:getIcon():javax.swing.Icon

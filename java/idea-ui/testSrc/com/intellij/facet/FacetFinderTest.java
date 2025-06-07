@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet;
 
@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class FacetFinderTest extends FacetTestCase {
   private FacetFinder myFacetFinder;
@@ -65,13 +67,13 @@ public class FacetFinderTest extends FacetTestCase {
   }
 
   public void testAddRemoveModule() throws Exception {
-    final VirtualFile file = findFile("../module/src/pack/MyClass.java");
+    VirtualFile file = findFile("../module/src/pack/MyClass.java");
 
-    assertNull(findFacet(file));
+    assertThat(findFacet(file)).isNull();
     File imlFile = PathManagerEx.findFileUnderCommunityHome("java/java-tests/testData/facet/module/MyFacetModule.iml");
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).loadModule(imlFile.toPath()));
     MockFacet facet = findFacet(file);
-    assertNotNull(facet);
+    assertThat(facet).isNotNull();
     assertSame(module, facet.getModule());
 
     ModuleManager.getInstance(myProject).disposeModule(module);

@@ -12,6 +12,7 @@ import com.intellij.util.indexing.roots.IndexableSetContributorFilesIterator;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -69,7 +70,7 @@ final class IndexableSetContributorDescriptor {
     return new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, roots, projectAware, contributor);
   }
 
-  public static @NotNull List<IndexableSetContributorDescriptor> collectDescriptors(@NotNull Project project) {
+  public static @Unmodifiable @NotNull List<IndexableSetContributorDescriptor> collectDescriptors(@NotNull Project project) {
     return ContainerUtil.map(IndexableSetContributor.EP_NAME.getExtensionList(),
                              contributor -> new IndexableSetContributorDescriptor(contributor, project));
   }

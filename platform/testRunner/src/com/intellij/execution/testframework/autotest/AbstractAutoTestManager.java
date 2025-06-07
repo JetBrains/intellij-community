@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -27,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,13 +129,33 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
         clearRestarterListener(processHandler);
       }
     }
+
+    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
-  private boolean hasEnabledAutoTests() {
+  /**
+   * Disable all enabled auto-test configurations for the project.
+   */
+  public void disableAllAutoTests() {
+    deactivateWatcher();
+    for (RunContentDescriptor descriptor : RunContentManager.getInstance(myProject).getAllDescriptors()) {
+      if (!isAutoTestEnabled(descriptor)) continue;
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      if (processHandler != null) {
+        clearRestarterListener(processHandler);
+      }
+    }
+    myEnabledRunProfiles.clear();
+    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
+  }
+
+  @ApiStatus.Internal
+  public boolean hasEnabledAutoTests() {
     return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 
-  boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+  @ApiStatus.Internal
+  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
     ExecutionEnvironment environment = getCurrentEnvironment(descriptor);
     return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
   }
@@ -178,7 +198,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     if (restarterListener != null) {
       clearRestarterListener(processHandler);
     }
-    restarterListener = new ProcessAdapter() {
+    restarterListener = new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         clearRestarterListener(processHandler);

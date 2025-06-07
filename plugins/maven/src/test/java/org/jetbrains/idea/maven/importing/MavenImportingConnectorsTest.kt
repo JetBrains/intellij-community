@@ -3,22 +3,24 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
-import java.io.File
+import java.nio.file.Files.createDirectories
+import java.nio.file.Path.of
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
@@ -26,9 +28,8 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
-    val projectDir = File(dir, "anotherProject")
-    projectDir.mkdirs()
-    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)!!
+    val projectDir = createDirectories(of(dir.toString(), "anotherProject"))
+    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)!!
   }
 
   @Test
@@ -68,7 +69,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
     assertUnorderedElementsAreEqual(
       allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(dir, File(it))
+        getRelativePath(dir, it)
       },
       listOf("project", "anotherProject")
     )
@@ -111,7 +112,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().getAllConnectors().map {
-        FileUtil.getRelativePath(dir, File(it.multimoduleDirectories.first()))
+        getRelativePath(dir, it.multimoduleDirectories.first())
       },
       listOf("project", "anotherProject")
     )
@@ -159,7 +160,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
       assertContainsElements(
         MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
-          FileUtil.getRelativePath(dir, File(it))
+          getRelativePath(dir, it)
         },
         listOf("project", "anotherProject")
       )
@@ -181,6 +182,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
         <module>../m1</module>
       </modules>""".trimIndent())
     createModulePom("m1", """
+      <artifactId>m1</artifactId>
       <parent>
         <groupId>test</groupId>
         <artifactId>project1</artifactId>
@@ -194,7 +196,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(dir, File(it))
+        getRelativePath(dir, it)
       }.map { it?.replace("\\", "/") },
       listOf("project/parent", "project/m1")
     )
@@ -280,7 +282,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                            return object : MavenServerConnectorImpl(project, jdk, vmOptions, null,
                                                                                                     mavenDistribution,
                                                                                                     multimoduleDirectory) {
-                                                             override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+                                                             override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
                                                                settingsRef.set(settings)
                                                                throw UnsupportedOperationException()
                                                              }
@@ -291,7 +293,8 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
     assertThrows(UnsupportedOperationException::class.java) {
       runBlockingMaybeCancellable {
-        MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
+        val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+        mavenEmbedderWrappers.getEmbedder(projectRoot.path).getEmbedder()
       }
     }
     assertNotNull(settingsRef.get())

@@ -46,24 +46,26 @@ f:com.intellij.openapi.actionSystem.CompositeDataProvider
 - getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
-- F:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
-- com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.actionSystem.DataKey$Companion
 - sf:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
 - f:getData(com.intellij.openapi.actionSystem.DataContext):java.lang.Object
 - f:getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-- getName():java.lang.String
+- f:getName():java.lang.String
 - f:is(java.lang.String):Z
 f:com.intellij.openapi.actionSystem.DataKey$Companion
 - f:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
+com.intellij.openapi.actionSystem.DataMap
+- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.DataProvider
 - a:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataSink
 - sf:Companion:com.intellij.openapi.actionSystem.DataSink$Companion
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSnapshotProvider):V
-- a:lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
+- lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
 - a:lazyNull(com.intellij.openapi.actionSystem.DataKey):V
+- a:lazyValue(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function1):V
 - a:set(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - a:setNull(com.intellij.openapi.actionSystem.DataKey):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V
@@ -74,7 +76,7 @@ f:com.intellij.openapi.actionSystem.DataSink$Companion
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
 com.intellij.openapi.actionSystem.DataSnapshot
-- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- com.intellij.openapi.actionSystem.DataMap
 com.intellij.openapi.actionSystem.DataSnapshotProvider
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
@@ -91,6 +93,8 @@ com.intellij.openapi.actionSystem.UiDataProvider
 - s:wrapComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.UiDataProvider):javax.swing.JComponent
 f:com.intellij.openapi.actionSystem.UiDataProvider$Companion
 - f:wrapComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.UiDataProvider):javax.swing.JComponent
+f:com.intellij.openapi.actionSystem.UiDataProviderKt
+- sf:get(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.UiDataRule
 - s:forEachRule(java.util.function.Consumer):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
@@ -320,6 +324,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - sf:STYLE_BOLD_DOTTED_LINE:I
 - sf:STYLE_BOLD_UNDERLINE:I
 - sf:STYLE_CLICKABLE:I
+- sf:STYLE_FADED:I
 - sf:STYLE_HOVERED:I
 - sf:STYLE_ITALIC:I
 - sf:STYLE_NO_BORDER:I
@@ -358,6 +363,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - s:merge(com.intellij.ui.SimpleTextAttributes,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
 - toTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - useEffectColor():Z
+- useFaded():Z
 @:com.intellij.ui.SimpleTextAttributes$StyleAttributeConstant
 - java.lang.annotation.Annotation
 f:com.intellij.ui.TableCell
@@ -435,10 +441,12 @@ f:com.intellij.util.IconUtil
 - sf:brighter(javax.swing.Icon,I):javax.swing.Icon
 - sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
 - sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
+- sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,Z):javax.swing.Icon
 - sf:colorize(javax.swing.Icon,java.awt.Color):javax.swing.Icon
 - sf:colorize(javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
-- bs:colorize$default(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
-- bs:colorize$default(javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
+- sf:colorize(javax.swing.Icon,java.awt.Color,Z,Z):javax.swing.Icon
+- bs:colorize$default(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,Z,I,java.lang.Object):javax.swing.Icon
+- bs:colorize$default(javax.swing.Icon,java.awt.Color,Z,Z,I,java.lang.Object):javax.swing.Icon
 - sf:computeBaseFileIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - sf:computeFileIcon(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
 - sf:copy(javax.swing.Icon,java.awt.Component):javax.swing.Icon

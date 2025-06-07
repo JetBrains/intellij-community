@@ -26,8 +26,7 @@ public final class StartUseVcsDialog extends DialogWrapper {
 
   private final ComboBox<AbstractVcs> myVcsCombo;
 
-  @NotNull
-  private final String myTargetDirectory;
+  private final @NotNull String myTargetDirectory;
 
   public StartUseVcsDialog(@NotNull Project project, @NotNull String targetDirectory) {
     super(project, true);
@@ -86,8 +85,7 @@ public final class StartUseVcsDialog extends DialogWrapper {
     return "reference.version.control.enable.version.control.integration";
   }
 
-  @NotNull
-  public AbstractVcs getVcs() {
+  public @NotNull AbstractVcs getVcs() {
     return myVcsCombo.getItem();
   }
 }

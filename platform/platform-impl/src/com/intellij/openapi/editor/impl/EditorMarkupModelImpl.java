@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,9 +83,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.*;
 import java.util.List;
 import java.util.Queue;
-import java.util.*;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
@@ -93,12 +94,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
 
   private static final JBValue SCROLLBAR_WIDTH = new JBValue.UIInteger("Editor.scrollBarWidth", 14);
-
-  private static final ColorKey HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
-                                                                           JBUI.CurrentTheme.ActionButton.hoverBackground());
-
-  private static final ColorKey PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
-                                                                             JBUI.CurrentTheme.ActionButton.pressedBackground());
 
   private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                           UIUtil.getContextHelpForeground());
@@ -194,100 +189,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       new TrafficLightAction(),
       new NavigationGroup(prevErrorAction, nextErrorAction));
 
-    ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
-    statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
-      @Override
-      public void addNotify() {
-        setTargetComponent(editor.getContentComponent());
-        super.addNotify();
-      }
+    InternalUICustomization service = InternalUICustomization.getInstance();
+    ActionButtonLook editorButtonLook = null;
+    if(service != null) {
+      editorButtonLook = service.getEditorToolbarButtonLook();
+    }
+    if(editorButtonLook == null) {
+      editorButtonLook = new EditorToolbarButtonLook(myEditor);
+    }
 
-      @Override
-      protected void paintComponent(Graphics g) {
-        editorButtonLook.paintBackground(g, this, myEditor.getBackgroundColor());
-      }
-
-      @Override
-      protected int getSeparatorHeight() {
-        return getStatusIconSize();
-      }
-
-      @Override
-      protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
-                                                               @NotNull String place,
-                                                               @NotNull Presentation presentation,
-                                                               Supplier<? extends @NotNull Dimension> minimumSize) {
-        if (RedesignedInspectionsManager.isAvailable()) return super.createTextButton(action, place, presentation, minimumSize);
-
-        ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
-        JBColor color = JBColor.lazy(() -> {
-          return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
-        });
-        button.setForeground(color);
-        return button;
-      }
-
-      @Override
-      protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
-                                                       @NotNull String place,
-                                                       @NotNull Presentation presentation,
-                                                       Supplier<? extends @NotNull Dimension> minimumSize) {
-        if (RedesignedInspectionsManager.isAvailable()) return super.createIconButton(action, place, presentation, minimumSize);
-
-        return new ActionButton(action, presentation, place, minimumSize) {
-          @Override
-          public void updateIcon() {
-            super.updateIcon();
-            revalidate();
-            repaint();
-          }
-
-          @Override
-          public @NotNull Insets getInsets() {
-            return myAction == nextErrorAction ? JBUI.insets(2, 1) :
-                   myAction == prevErrorAction ? JBUI.insets(2, 1, 2, 2) :
-                   JBUI.insets(2);
-          }
-
-          @Override
-          public @NotNull Dimension getPreferredSize() {
-
-            Icon icon = getIcon();
-            Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-
-            int minSize = getStatusIconSize();
-            size.width = Math.max(size.width, minSize);
-            size.height = Math.max(size.height, minSize);
-
-            JBInsets.addTo(size, getInsets());
-            return size;
-          }
-        };
-      }
-
-      @Override
-      public void doLayout() {
-        LayoutManager layoutManager = getLayout();
-        if (layoutManager != null) {
-          layoutManager.layoutContainer(this);
-        }
-        else {
-          super.doLayout();
-        }
-      }
-
-/*      @Override
-      protected Dimension updatePreferredSize(Dimension preferredSize) {
-        return preferredSize;
-      }
-
-      @Override
-      protected Dimension updateMinimumSize(Dimension minimumSize) {
-        return minimumSize;
-      }*/
-    };
+    statusToolbar = new EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction);
 
     statusToolbar.setMiniMode(true);
+    statusToolbar.setOrientation(SwingConstants.HORIZONTAL);
     statusToolbar.setCustomButtonLook(editorButtonLook);
     toolbarComponentListener = new ComponentAdapter() {
       @Override
@@ -346,7 +260,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        if (action instanceof HintManagerImpl.ActionToIgnore) {
+        if (HintManagerImpl.isActionToIgnore(action)) {
           return;
         }
         myTrafficLightPopup.hidePopup();
@@ -472,11 +386,18 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     else {
       myExtraActions.add(action);
     }
+
+    if (action instanceof Disposable) {
+      Disposer.register(resourcesDisposable, (Disposable)action);
+    }
   }
 
   @Override
   public void removeInspectionWidgetAction(@NotNull AnAction action) {
     myExtraActions.remove(action);
+    if (action instanceof Disposable) {
+      Disposer.dispose((Disposable)action);
+    }
   }
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
@@ -1552,7 +1473,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return new TrafficLightButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
+      return new TrafficLightButton(this, presentation, new EditorToolbarButtonLook(myEditor), place, myEditor.getColorsScheme());
     }
 
     @Override
@@ -1626,10 +1547,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         private void showInspectionHint(MouseEvent me) {
           DataContext context = ActionToolbar.getDataContextFor(TrafficLightButton.this);
           AnActionEvent event = AnActionEvent.createEvent(context, presentation, place, ActionUiKind.TOOLBAR, me);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+          AnActionResult result = ActionUtil.performAction(action, event);
+          if (result.isPerformed()) {
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);
-
             ActionToolbar toolbar = ActionToolbar.findToolbarBy(TrafficLightButton.this);
             if (toolbar != null) {
               toolbar.updateActionsImmediately();
@@ -1802,7 +1722,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static final class StatusComponentLayout implements LayoutManager {
+  @ApiStatus.Internal
+  public static final class StatusComponentLayout implements LayoutManager {
     private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
 
     @Override
@@ -1897,41 +1818,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private final class EditorToolbarButtonLook extends ActionButtonLook {
-    @Override
-    public void paintBorder(Graphics g, JComponent component, int state) { }
-
-    @Override
-    public void paintBorder(Graphics g, JComponent component, Color color) { }
-
-    @Override
-    public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-      if (state == ActionButtonComponent.NORMAL) return;
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      EditorColorsScheme scheme = myEditor.getColorsScheme();
-      Color color = state == ActionButtonComponent.PUSHED ? scheme.getColor(PRESSED_BACKGROUND) : scheme.getColor(HOVER_BACKGROUND);
-
-      if (color != null) {
-        ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color);
-      }
-    }
-
-    @Override
-    public void paintBackground(Graphics g, JComponent component, Color color) {
-      ActionButtonLook.SYSTEM_LOOK.paintBackground(g, component, color);
-    }
-
-    @Override
-    public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
-      if (icon != null) {
-        boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
-        super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
-      }
-    }
-  }
-
   public final class CompactViewAction extends ToggleAction {
     CompactViewAction() {
       super(EditorBundle.message("iw.compact.view"));
@@ -2018,5 +1904,172 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     StatusToolbarGroup(AnAction @NotNull ... actions) {
       super(actions);
     }
+  }
+
+  @ApiStatus.Internal
+  public static final class EditorToolbarButtonLook extends ActionButtonLook {
+    private static final ColorKey HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
+                                                                             JBUI.CurrentTheme.ActionButton.hoverBackground());
+
+    private static final ColorKey PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
+                                                                               JBUI.CurrentTheme.ActionButton.pressedBackground());
+
+    private final Editor myEditor;
+
+    public EditorToolbarButtonLook(Editor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public void paintBorder(Graphics g, JComponent component, int state) { }
+
+    @Override
+    public void paintBorder(Graphics g, JComponent component, Color color) { }
+
+    @Override
+    public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
+      if (state == ActionButtonComponent.NORMAL) return;
+      Rectangle rect = new Rectangle(component.getSize());
+      JBInsets.removeFrom(rect, component.getInsets());
+
+      EditorColorsScheme scheme = myEditor.getColorsScheme();
+      Color color = state == ActionButtonComponent.PUSHED ? scheme.getColor(PRESSED_BACKGROUND) : scheme.getColor(HOVER_BACKGROUND);
+
+      if (color != null) {
+        ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color);
+      }
+    }
+
+    @Override
+    public void paintBackground(Graphics g, JComponent component, Color color) {
+      ActionButtonLook.SYSTEM_LOOK.paintBackground(g, component, color);
+    }
+
+    @Override
+    public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+      if (icon != null) {
+        boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
+        super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public static class EditorInspectionsActionToolbar extends ActionToolbarImpl {
+    private final @NotNull EditorImpl myEditor;
+    private final ActionButtonLook myEditorButtonLook;
+    private final @Nullable AnAction myNextErrorAction;
+    private final @Nullable AnAction myPrevErrorAction;
+
+    public EditorInspectionsActionToolbar(DefaultActionGroup actions,
+                                          @NotNull EditorImpl editor,
+                                          ActionButtonLook editorButtonLook,
+                                          @Nullable AnAction nextErrorAction,
+                                          @Nullable AnAction prevErrorAction) {
+      super(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true);
+      putClientProperty(SUPPRESS_FAST_TRACK, true);
+      myEditor = editor;
+      myEditorButtonLook = editorButtonLook;
+      myNextErrorAction = nextErrorAction;
+      myPrevErrorAction = prevErrorAction;
+    }
+
+    @Override
+    public void addNotify() {
+      setTargetComponent(myEditor.getContentComponent());
+      super.addNotify();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      myEditorButtonLook.paintBackground(g, this, myEditor.getBackgroundColor());
+    }
+
+    @Override
+    protected int getSeparatorHeight() {
+      return getStatusIconSize();
+    }
+
+    @Override
+    protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
+                                                             @NotNull String place,
+                                                             @NotNull Presentation presentation,
+                                                             Supplier<? extends @NotNull Dimension> minimumSize) {
+      if (RedesignedInspectionsManager.isAvailable()) return super.createTextButton(action, place, presentation, minimumSize);
+
+      ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
+      JBColor color = JBColor.lazy(() -> {
+        return ObjectUtils.notNull(myEditor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
+      });
+      button.setForeground(color);
+      return button;
+    }
+
+    @Override
+    protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
+                                                     @NotNull String place,
+                                                     @NotNull Presentation presentation,
+                                                     Supplier<? extends @NotNull Dimension> minimumSize) {
+      if (RedesignedInspectionsManager.isAvailable()) return super.createIconButton(action, place, presentation, minimumSize);
+
+      return new ToolbarActionButton(action, presentation, place, minimumSize);
+    }
+
+    @Override
+    public void doLayout() {
+      LayoutManager layoutManager = getLayout();
+      if (layoutManager != null) {
+        layoutManager.layoutContainer(this);
+      }
+      else {
+        super.doLayout();
+      }
+    }
+
+    @ApiStatus.Internal
+    public class ToolbarActionButton extends ActionButton {
+      public ToolbarActionButton(@NotNull AnAction action,
+                                 @NotNull Presentation presentation,
+                                 @NotNull String place,
+                                 Supplier<? extends @NotNull Dimension> minimumSize) { super(action, presentation, place, minimumSize); }
+
+      @Override
+      public void updateIcon() {
+        super.updateIcon();
+        revalidate();
+        repaint();
+      }
+
+      @Override
+      public @NotNull Insets getInsets() {
+        if (myAction == myNextErrorAction) return JBUI.insets(2, 1);
+        if (myAction == myPrevErrorAction) return JBUI.insets(2, 1, 2, 2);
+        return JBUI.insets(2);
+      }
+
+      @Override
+      public @NotNull Dimension getPreferredSize() {
+
+        Icon icon = getIcon();
+        Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
+
+        int minSize = getStatusIconSize();
+        size.width = Math.max(size.width, minSize);
+        size.height = Math.max(size.height, minSize);
+
+        JBInsets.addTo(size, getInsets());
+        return size;
+      }
+    }
+
+/*      @Override
+      protected Dimension updatePreferredSize(Dimension preferredSize) {
+        return preferredSize;
+      }
+
+      @Override
+      protected Dimension updateMinimumSize(Dimension minimumSize) {
+        return minimumSize;
+      }*/
   }
 }

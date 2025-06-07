@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -14,20 +17,20 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
-class AddDataModifierFix(element: KtClass, private val fqName: String) : AddModifierFixFE10(element, KtTokens.DATA_KEYWORD) {
+internal class AddDataModifierFix(element: KtClass, private val fqName: String) : AddModifierFix(element, KtTokens.DATA_KEYWORD) {
 
-    override fun getText() = KotlinBundle.message("fix.make.data.class", fqName)
-
-    override fun getFamilyName() = text
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation =
+        Presentation.of(KotlinBundle.message("fix.make.data.class", fqName))
 
     companion object : KotlinSingleIntentionActionFactory() {
 
-        override fun createAction(diagnostic: Diagnostic): AddDataModifierFix? {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val element = diagnostic.psiElement as? KtExpression ?: return null
             val context = element.analyze()
 
@@ -58,7 +61,7 @@ class AddDataModifierFix(element: KtClass, private val fqName: String) : AddModi
 
             val klass = DescriptorToSourceUtils.descriptorToDeclaration(classDescriptor) as? KtClass ?: return null
             val fqName = DescriptorUtils.getFqName(classDescriptor).asString()
-            return AddDataModifierFix(klass, fqName)
+            return AddDataModifierFix(klass, fqName).asIntention()
         }
 
     }

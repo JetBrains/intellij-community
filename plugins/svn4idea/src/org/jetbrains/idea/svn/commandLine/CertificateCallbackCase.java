@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NonNls;
@@ -8,7 +8,7 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-public class CertificateCallbackCase extends AuthCallbackCase {
+public final class CertificateCallbackCase extends AuthCallbackCase {
 
   private static final @NonNls String CERTIFICATE_ERROR = "Error validating server certificate for";
   private static final @NonNls String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";

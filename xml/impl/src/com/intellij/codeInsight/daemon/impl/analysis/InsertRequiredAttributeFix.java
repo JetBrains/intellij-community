@@ -50,7 +50,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
 
   @Override
   public void invoke(final @NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      final @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -88,8 +88,8 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
     else {
       template.addTextSegment(" " + myAttrName);
       if (!insertShorthand) {
-        String quote = XmlEditUtil.getAttributeQuote(file);
-        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(myTag, myAttrName, quote);
+        String quote = XmlEditUtil.getAttributeQuote(psiFile);
+        AttributeValuePresentation presentation = XmlExtension.getExtension(psiFile).getAttributeValuePresentation(myTag, myAttrName, quote);
 
         valuePostfix = presentation.getPostfix();
         template.addTextSegment("=" + presentation.getPrefix());

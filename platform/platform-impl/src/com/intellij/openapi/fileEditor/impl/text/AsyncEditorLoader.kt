@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -26,10 +27,10 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
-import javax.swing.event.ChangeEvent
 import kotlin.coroutines.resume
 import kotlin.math.max
 import kotlin.time.Duration
@@ -38,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG: Logger = logger<AsyncEditorLoader>()
 
 @Internal
-class AsyncEditorLoader internal constructor(
+class  AsyncEditorLoader internal constructor(
   private val project: Project,
   private val provider: TextEditorProvider,
   @JvmField val coroutineScope: CoroutineScope,
@@ -63,6 +64,12 @@ class AsyncEditorLoader internal constructor(
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)
+      performWhenLoaded(asyncLoader, runnable)
+    }
+
+    @Internal
+    @RequiresEdt
+    fun performWhenLoaded(asyncLoader: AsyncEditorLoader?, runnable: Runnable) {
       if (asyncLoader == null || asyncLoader.isLoaded()) {
         runnable.run()
       }
@@ -208,42 +215,12 @@ private class DelayedScrollState(@JvmField val relativeCaretPosition: Int, @JvmF
 
 @RequiresEdt
 private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedScrollState, coroutineScope: CoroutineScope) {
-  fun doScroll() {
+  EditorUtil.runWhenViewportReady(editor, coroutineScope) {
     scrollToCaret(
       editor = editor,
       exactState = delayedScrollState.exactState,
       relativeCaretPosition = delayedScrollState.relativeCaretPosition,
     )
-  }
-
-  val viewport = editor.scrollPane.viewport
-
-  fun isReady(): Boolean {
-    val extentSize = viewport.extentSize
-    return extentSize.width != 0 && extentSize.height != 0
-  }
-
-  if (viewport.isShowing && isReady()) {
-    doScroll()
-  }
-  else {
-    var listenerHandle: DisposableHandle? = null
-    val listener = object : javax.swing.event.ChangeListener {
-      override fun stateChanged(e: ChangeEvent) {
-        if (!viewport.isShowing || !isReady()) {
-          return
-        }
-
-        viewport.removeChangeListener(this)
-        listenerHandle?.dispose()
-
-        doScroll()
-      }
-    }
-    listenerHandle = coroutineScope.coroutineContext.job.invokeOnCompletion {
-      viewport.removeChangeListener(listener)
-    }
-    viewport.addChangeListener(listener)
   }
 }
 

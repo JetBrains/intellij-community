@@ -98,7 +98,16 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             val builtInClassStub = builtInFileStub.childrenStubs.firstOrNull {
                 it is KotlinClassStub && it.getFqName() == classFqName
             } ?: continue
-            assertEquals("Stub mismatch for $classFqName", classStub.serializeToString(), builtInClassStub.serializeToString())
+            val classStubAsText = classStub.serializeToString()
+
+            // Built-ins properties don't have hasBackingField flag in the metadata: KT-77281
+            val adjustedClassStubAsText = classStubAsText.replace(hasBackingFieldRegex, "hasBackingField=null")
+            val builtinsClassStubText = builtInClassStub.serializeToString()
+            if (builtinsClassStubText.matches(hasBackingFieldRegex)) {
+                error("The workaround from KT-74777 has to be dropped as KT-77281 is fixed")
+            }
+
+            assertEquals("Stub mismatch for $classFqName", adjustedClassStubAsText, builtinsClassStubText)
             classesEncountered.add(classFqName)
         }
 
@@ -124,3 +133,5 @@ internal fun findDir(
     val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $classInPackage (package name $packageFqName)")
     return firstClass.containingFile.virtualFile.parent
 }
+
+private val hasBackingFieldRegex = Regex("""hasBackingField=(true|false)""")

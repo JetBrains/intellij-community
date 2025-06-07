@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -17,8 +17,6 @@ import com.intellij.testFramework.waitUntil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -42,7 +40,7 @@ class EntitiesOrphanageTest {
   @ValueSource(booleans = [true, false])
   fun `adding content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -85,7 +83,7 @@ class EntitiesOrphanageTest {
   @ValueSource(booleans = [true, false])
   fun `adding content root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -134,7 +132,7 @@ class EntitiesOrphanageTest {
   fun `adding content root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val url2 = virtualFileManager.getOrCreateFromUrl("/1234")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -178,7 +176,7 @@ class EntitiesOrphanageTest {
   @Test
   fun `adding content root to removed module`() = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
-    writeAction {
+    edtWriteAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), MySource))
@@ -211,7 +209,7 @@ class EntitiesOrphanageTest {
   @ValueSource(booleans = [true, false])
   fun `do not add orphan content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -256,7 +254,7 @@ class EntitiesOrphanageTest {
   @ValueSource(booleans = [true, false])
   fun `add content root to existing module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -301,7 +299,7 @@ class EntitiesOrphanageTest {
   fun `add content root to existing module and module remain in orphanage`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val url2 = virtualFileManager.getOrCreateFromUrl("/1233")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -350,7 +348,7 @@ class EntitiesOrphanageTest {
   fun `adding source root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val sourceUrl = virtualFileManager.getOrCreateFromUrl("/123/source")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -398,7 +396,7 @@ class EntitiesOrphanageTest {
   fun `adding source root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val sourceUrl = virtualFileManager.getOrCreateFromUrl("/123/source")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -449,7 +447,7 @@ class EntitiesOrphanageTest {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val sourceUrl1 = virtualFileManager.getOrCreateFromUrl("/123/source1")
     val sourceUrl2 = virtualFileManager.getOrCreateFromUrl("/123/source2")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -499,7 +497,7 @@ class EntitiesOrphanageTest {
   fun `adding source root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val sourceUrl = virtualFileManager.getOrCreateFromUrl("/123/source1")
-    writeAction {
+    edtWriteAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
@@ -537,7 +535,7 @@ class EntitiesOrphanageTest {
   fun `adding exclude root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val excludeUrl = virtualFileManager.getOrCreateFromUrl("/123/source")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -585,7 +583,7 @@ class EntitiesOrphanageTest {
   fun `adding exclude root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val excludeUrl = virtualFileManager.getOrCreateFromUrl("/123/source")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -636,7 +634,7 @@ class EntitiesOrphanageTest {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val excludeUrl1 = virtualFileManager.getOrCreateFromUrl("/123/exclude1")
     val excludeUrl2 = virtualFileManager.getOrCreateFromUrl("/123/exclude2")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {
@@ -685,7 +683,7 @@ class EntitiesOrphanageTest {
   fun `adding exclude root to removed module`() = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val excludeUrl = virtualFileManager.getOrCreateFromUrl("/123/source1")
-    writeAction {
+    edtWriteAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
           this.contentRoots = listOf(ContentRootEntity(url, emptyList(), OrphanageWorkerEntitySource) {
@@ -724,7 +722,7 @@ class EntitiesOrphanageTest {
     val url = virtualFileManager.getOrCreateFromUrl("/123")
     val excludeUrl = virtualFileManager.getOrCreateFromUrl("/123/source1")
     val sourceUrl = virtualFileManager.getOrCreateFromUrl("/123/source2")
-    writeAction {
+    edtWriteAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
         {

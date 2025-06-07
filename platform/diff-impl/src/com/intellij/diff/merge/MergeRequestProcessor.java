@@ -4,10 +4,9 @@ package com.intellij.diff.merge;
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffNotificationIdsHolder;
-import com.intellij.diff.actions.impl.NextDifferenceAction;
-import com.intellij.diff.actions.impl.PrevDifferenceAction;
+import com.intellij.diff.actions.impl.DiffNextDifferenceAction;
+import com.intellij.diff.actions.impl.DiffPreviousDifferenceAction;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
@@ -60,23 +59,23 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   private boolean myDisposed;
 
-  @Nullable private final Project myProject;
-  @NotNull private final MergeContext myContext;
+  private final @Nullable Project myProject;
+  private final @NotNull MergeContext myContext;
 
-  @NotNull private final List<MergeTool> myAvailableTools;
+  private final @NotNull List<MergeTool> myAvailableTools;
 
-  @NotNull private final JPanel myPanel;
-  @NotNull private final MyPanel myMainPanel;
-  @NotNull private final Wrapper myContentPanel;
-  @NotNull private final Wrapper myToolbarPanel;
-  @NotNull private final Wrapper myToolbarStatusPanel;
-  @NotNull private final Wrapper myNotificationPanel;
-  @NotNull private final Wrapper myButtonsPanel;
+  private final @NotNull JPanel myPanel;
+  private final @NotNull MyPanel myMainPanel;
+  private final @NotNull Wrapper myContentPanel;
+  private final @NotNull Wrapper myToolbarPanel;
+  private final @NotNull Wrapper myToolbarStatusPanel;
+  private final @NotNull Wrapper myNotificationPanel;
+  private final @NotNull Wrapper myButtonsPanel;
 
-  @Nullable private MergeRequest myRequest;
+  private @Nullable MergeRequest myRequest;
 
-  @NotNull private MergeTool.MergeViewer myViewer;
-  @Nullable private BooleanGetter myCloseHandler;
+  private @NotNull MergeTool.MergeViewer myViewer;
+  private @Nullable BooleanGetter myCloseHandler;
   private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project) {
@@ -157,8 +156,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     });
   }
 
-  @NotNull
-  private MergeTool.MergeViewer createViewerFor(@NotNull MergeRequest request) {
+  private @NotNull MergeTool.MergeViewer createViewerFor(@NotNull MergeRequest request) {
     try {
       return getFittedTool(request).createComponent(myContext, request);
     }
@@ -239,17 +237,18 @@ public abstract class MergeRequestProcessor implements Disposable {
     return new BorderLayoutPanel().addToRight(actionToolbar.getComponent());
   }
 
-  @NotNull
-  private static JPanel createButtonsPanel(@NotNull List<? extends Action> actions, @Nullable JRootPane rootPane) {
+  private static @NotNull JPanel createButtonsPanel(@NotNull List<? extends Action> actions, @Nullable JRootPane rootPane) {
     List<JButton> buttons = ContainerUtil.map(actions, action -> DialogWrapper.createJButtonForAction(action, rootPane));
     return DialogWrapper.layoutButtonsPanel(buttons);
   }
 
-  @NotNull
-  protected DefaultActionGroup collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
+  protected @NotNull DefaultActionGroup collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
-
-    List<AnAction> navigationActions = Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    ActionManager actionManager = ActionManager.getInstance();
+    List<AnAction> navigationActions = Arrays.asList(
+      actionManager.getAction(DiffPreviousDifferenceAction.ID),
+      actionManager.getAction(DiffNextDifferenceAction.ID)
+    );
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
@@ -274,8 +273,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     recursiveRegisterShortcutSet(group, myMainPanel, null);
   }
 
-  @NotNull
-  private MergeTool getFittedTool(@NotNull MergeRequest request) {
+  private @NotNull MergeTool getFittedTool(@NotNull MergeRequest request) {
     for (MergeTool tool : myAvailableTools) {
       try {
         if (tool.canShow(myContext, request)) return tool;
@@ -415,11 +413,9 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   public abstract void closeDialog();
 
-  @Nullable
-  protected abstract JRootPane getRootPane();
+  protected abstract @Nullable JRootPane getRootPane();
 
-  @Nullable
-  public <T> T getContextUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getContextUserData(@NotNull Key<T> key) {
     return myContext.getUserData(key);
   }
 
@@ -431,24 +427,20 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Getters
   //
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     JComponent component = myViewer.getPreferredFocusedComponent();
     return component != null ? component : myToolbarPanel.getTargetComponent();
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public MergeContext getContext() {
+  public @NotNull MergeContext getContext() {
     return myContext;
   }
 
@@ -467,72 +459,6 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   private void requestFocusInWindow() {
     DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
-  }
-
-  //
-  // Navigation
-  //
-
-  private static class MyNextDifferenceAction extends NextDifferenceAction {
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoNext()) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoNext()) {
-        iterable.goNext();
-      }
-    }
-  }
-
-  private static class MyPrevDifferenceAction extends PrevDifferenceAction {
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoPrev()) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-      if (iterable != null && iterable.canGoPrev()) {
-        iterable.goPrev();
-      }
-    }
   }
 
   //
@@ -569,17 +495,15 @@ public abstract class MergeRequestProcessor implements Disposable {
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }
 
-    @Nullable
     @Override
-    protected Project getProject() {
+    protected @Nullable Project getProject() {
       return myProject;
     }
   }
 
   private class MyDiffContext extends MergeContextEx {
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return MergeRequestProcessor.this.getProject();
     }
 

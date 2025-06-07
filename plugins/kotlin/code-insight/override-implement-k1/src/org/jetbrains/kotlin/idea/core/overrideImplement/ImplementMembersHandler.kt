@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
-import org.jetbrains.kotlin.js.descriptorUtils.hasPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -23,18 +22,20 @@ open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionActi
             .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FromTemplate) }
     }
 
-    override fun getChooserTitle() = KotlinIdeaCoreBundle.message("implement.members.handler.title")
+    override fun getChooserTitle(): String = KotlinIdeaCoreBundle.message("implement.members.handler.title")
 
-    override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
+    override fun getNoMembersFoundHint(): String = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
 
-    override fun getText() = familyName
-    override fun getFamilyName() = KotlinIdeaCoreBundle.message("implement.members.handler.family")
+    override fun getText(): String = familyName
+    override fun getFamilyName(): String = KotlinIdeaCoreBundle.message("implement.members.handler.family")
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) = isValidFor(editor, file)
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = isValidFor(editor, file)
 }
 
 class ImplementAsConstructorParameter : ImplementMembersHandler() {
-    override fun getText() = KotlinIdeaCoreBundle.message("action.text.implement.as.constructor.parameters")
+    override fun getText(): String = KotlinIdeaCoreBundle.message("action.text.implement.as.constructor.parameters")
+
+    private fun ClassDescriptor.hasPrimaryConstructor(): Boolean = unsubstitutedPrimaryConstructor != null
 
     override fun isValidForClass(classOrObject: KtClassOrObject): Boolean {
         if (classOrObject !is KtClass || classOrObject is KtEnumEntry || classOrObject.isInterface()) return false

@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaElementVisitor;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBase {
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokElementVisitor(holder);
   }
 
@@ -42,10 +41,10 @@ public final class DeprecatedLombokAnnotationInspection extends LombokJavaInspec
         final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psiAnnotation, PsiModifierListOwner.class, false);
         if (null != listOwner) {
           String message = LombokBundle.message("inspection.message.lombok.annotation.deprecated.not.supported", deprecatedFQN, newFQN);
-          holder.registerProblem(psiAnnotation, message, ProblemHighlightType.ERROR,
-                                 new AddAnnotationFix(newFQN, listOwner,
-                                                      psiAnnotation.getParameterList().getAttributes(),
-                                                      deprecatedFQN));
+          holder.problem(psiAnnotation, message).highlight(ProblemHighlightType.ERROR)
+            .fix(new AddAnnotationModCommandAction(
+              newFQN, listOwner, psiAnnotation.getParameterList().getAttributes(), deprecatedFQN))
+            .register();
         }
       }
     }

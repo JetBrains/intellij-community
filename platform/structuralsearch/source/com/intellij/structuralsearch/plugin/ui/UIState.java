@@ -9,7 +9,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;

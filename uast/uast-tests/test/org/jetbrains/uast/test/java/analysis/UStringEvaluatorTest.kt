@@ -460,7 +460,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test many assignments`() {
+  fun `test many assignments performance`() {
     val updateTimes = 500
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {

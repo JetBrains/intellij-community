@@ -26,8 +26,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
-
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
 
@@ -53,22 +51,14 @@
                  description="Add all transitive dependencies on MPP modules when Android project is imported"
                  defaultValue="true"
                  restartRequired="false"/>
-    <registryKey key="kotlin.gradle-run.enabled"
-                 description="Enable delegation of app running to gradle"
-                 defaultValue="false"
-                 restartRequired="false"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.mpp.ExternalSystemBasedStableModuleNameProvider"/>
 
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLoggingActivity"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.gradle.statistics.ComposeLibraryUsagesCollector"/>
   </extensions>
-
-  <actions>
-    <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.gradle.actions.ShowKotlinGradleDslLogs">
-    </action>
-  </actions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

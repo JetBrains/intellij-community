@@ -7,8 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl
-import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
-import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
 import com.siyeh.ig.callMatcher.CallMatcher
@@ -67,8 +65,7 @@ internal object JavaInlayHintsProvider {
     if (hints.isNotEmpty()) return hints
     
     return when (callExpression) {
-      is PsiMethodCallExpressionImpl -> mergedHints(callExpression, callExpression.methodExpression.multiResolve(false))
-      is PsiNewExpressionImpl -> mergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
+      is PsiMethodCallExpression, is PsiNewExpression -> mergedHints(callExpression, callExpression.multiResolve(false))
       else -> emptySet()
     }
   }

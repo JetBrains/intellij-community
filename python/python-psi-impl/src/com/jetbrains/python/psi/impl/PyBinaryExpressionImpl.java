@@ -41,21 +41,18 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference() {
+  public @NotNull PsiPolyVariantReference getReference() {
     return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (isOperator("and") || isOperator("or")) {
       final PyExpression left = getLeftExpression();
       final PyType leftType = left != null ? context.getType(left) : null;

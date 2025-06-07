@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
@@ -21,11 +22,12 @@ internal class InstallPackageAction : DumbAwareAction() {
     val project = e.project ?: return
     val selectedPackages = e.selectedPackages.filterIsInstance<InstallablePackage>()
     if (selectedPackages.size > 1) {
-      PyPackageCoroutine.launch(project, Dispatchers.IO) {
-        selectedPackages.forEach { pkg ->
-          val specification = pkg.repository.createPackageSpecification(pkg.name, null)
-          project.service<PyPackagingToolWindowService>().installPackage(specification)
+      PyPackageCoroutine.launch(project, Dispatchers.Default) {
+        val pyPackages = selectedPackages.mapNotNull { pkg ->
+          pkg.repository.findPackageSpecification(pkg.name, null)
         }
+        val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
+        project.service<PyPackagingToolWindowService>().installPackage(installRequest)
       }
       return
     }
@@ -33,14 +35,13 @@ internal class InstallPackageAction : DumbAwareAction() {
 
 
 
-    PyPackageCoroutine.launch(project, Dispatchers.IO) {
+    PyPackageCoroutine.launch(project, Dispatchers.Default) {
       val service = PyPackagingToolWindowService.getInstance(project)
-      val details = service.detailsForPackage(pkg)
+      val details = service.detailsForPackage(pkg) ?: return@launch
       withContext(Dispatchers.Main) {
         val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project)
         popup.show(RelativePoint(e.inputEvent as MouseEvent))
       }
-
     }
   }
 

@@ -1,3 +1,4 @@
 enum class JustKotlinEnum {
-    JustFi<caret>rstValue
+    JustFi<caret>rstValue,
+    SecondValue;
 }

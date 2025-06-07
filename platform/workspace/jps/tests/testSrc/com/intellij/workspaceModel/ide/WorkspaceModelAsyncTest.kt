@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -112,7 +112,7 @@ class WorkspaceModelAsyncTest {
       }
 
       try {
-        writeAction {
+        edtWriteAction {
           assertEquals(true, application.isWriteAccessAllowed)
           workspaceModel.updateProjectModel("Test add new module synchronously") {
             it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})

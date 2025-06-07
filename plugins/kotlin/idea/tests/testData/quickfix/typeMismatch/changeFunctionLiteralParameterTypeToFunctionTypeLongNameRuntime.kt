@@ -6,4 +6,4 @@ fun foo(f: ((java.util.LinkedHashSet<Int>) -> java.util.HashSet<Int>) -> String)
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeTypeFix
-/* IGNORE_K2 */
+// IGNORE_K2

@@ -12,7 +12,6 @@ import com.intellij.util.keyFMap.KeyFMap
 import java.awt.Graphics
 import javax.swing.JComponent
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.reflect.KProperty
 
 infix fun IntRange.hasIntersectionWith(other: IntRange): Boolean =
@@ -25,22 +24,6 @@ inline fun <T, G : Graphics> G.use(handler: (g: G) -> T): T =
   finally {
     dispose()
   }
-
-inline fun <T> trimLists(left: List<T>, right: List<T>, comparator: (T, T) -> Boolean): Pair<List<T>, List<T>> {
-  val minSize = min(left.size, right.size)
-
-  var trimLeft = 0
-  while (trimLeft < minSize && comparator(left[trimLeft], right[trimLeft])) {
-    ++trimLeft
-  }
-
-  var trimRight = 0
-  while (trimRight < minSize - trimLeft && comparator(left[left.size - trimRight - 1], right[right.size - trimRight - 1])) {
-    ++trimRight
-  }
-
-  return left.run { subList(trimLeft, size - trimRight) } to right.run { subList(trimLeft, size - trimRight) }
-}
 
 /**
  * Creates a document listener that will be automatically unregistered when the editor is disposed.
@@ -70,30 +53,14 @@ fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
   NotebookCellLines.get(this).intervals[ordinal]
 
+fun Editor.safeGetCellByOrdinal(ordinal: Int): NotebookCellLines.Interval? =
+  NotebookCellLines.get(this).intervals.getOrNull(ordinal)
+
 fun Editor.getCellByOffset(offset: Int): NotebookCellLines.Interval =
   getCell(line = document.getLineNumber(offset))
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
-
-fun NotebookCellLines.Interval.getTopMarker(document: Document): String? =
-  if (markers.hasTopLine) document.getLineText(lines.first) else null
-
-fun NotebookCellLines.Interval.getBottomMarker(document: Document): String? =
-  if (markers.hasBottomLine) document.getLineText(lines.last) else null
-
-val NotebookCellLines.Interval.firstContentLine: Int
-  get() =
-    if (markers.hasTopLine) lines.first + 1
-    else lines.first
-
-val NotebookCellLines.Interval.lastContentLine: Int
-  get() =
-    if (markers.hasBottomLine) lines.last - 1
-    else lines.last
-
-val NotebookCellLines.Interval.contentLines: IntRange
-  get() = firstContentLine..lastContentLine
 
 fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
   val markers = ArrayList<NotebookCellLinesLexer.Marker>()

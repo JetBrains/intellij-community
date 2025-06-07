@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.base.platforms` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "platforms_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "platforms",
+  module_name = "kotlin.base.platforms",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/idea-ui:ui",
+  ],
+  runtime_deps = [":platforms_resources"]
+)
+### auto-generated section `build kotlin.base.platforms` end

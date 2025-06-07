@@ -18,17 +18,17 @@ import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.parser.ParserDelegator
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service
-class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
+internal class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
 
   @Volatile
-  private var cache: Map<PyPackageRepository, List<String>> = emptyMap()
+  private var cache: Map<PyPackageRepository, Set<String>> = emptyMap()
 
   val repositories: List<PyPackageRepository>
     get() = cache.keys.toList()
-  override val packages: List<String>
-    get() = cache.values.asSequence().flatten().toList()
+  override val packages: Set<String>
+    get() = cache.values.asSequence().flatten().toSet()
 
   private val userAgent: String
     get() = "${ApplicationNamesInfo.getInstance().productName}/${ApplicationInfo.getInstance().fullVersion}"
@@ -36,7 +36,7 @@ class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
   suspend fun refresh() {
     val service = service<PyPackageRepositories>()
     withContext(Dispatchers.IO) {
-      val newCache = mutableMapOf<PyPackageRepository, List<String>>()
+      val newCache = mutableMapOf<PyPackageRepository, Set<String>>()
       service.repositories.forEach {
         try {
           newCache[it] = loadFrom(it)
@@ -50,9 +50,9 @@ class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
     }
   }
 
-  private suspend fun loadFrom(repository: PyPackageRepository): List<String> {
+  private suspend fun loadFrom(repository: PyPackageRepository): Set<String> {
     return withContext(Dispatchers.IO) {
-      val packages = mutableListOf<String>()
+      val packages = mutableSetOf<String>()
       HttpRequests.request(repository.repositoryUrl!!)
         .userAgent(userAgent)
         .withBasicAuthorization(repository)
@@ -83,7 +83,7 @@ class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
     }
   }
 
-  operator fun get(key: PyPackageRepository): List<String>? = cache[key]
+  operator fun get(key: PyPackageRepository): Set<String>? = cache[key]
 
   override fun isEmpty(): Boolean = cache.isEmpty()
 

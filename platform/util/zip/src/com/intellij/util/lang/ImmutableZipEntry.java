@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -14,16 +14,17 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import java.util.zip.ZipException;
 
+@SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
 public final class ImmutableZipEntry {
-  final static byte STORED = 0;
-  final static byte DEFLATED = 8;
+  static final byte STORED = 0;
+  static final byte DEFLATED = 8;
 
-  final int uncompressedSize;
-  final int compressedSize;
+  public final int uncompressedSize;
+  public final int compressedSize;
   private final byte method;
 
-  final String name;
+  public final String name;
 
   // headerOffset and nameLengthInBytes
   private final long offsets;
@@ -61,6 +62,7 @@ public final class ImmutableZipEntry {
     return uncompressedSize == -2;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }

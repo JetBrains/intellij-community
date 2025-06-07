@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+import org.jetbrains.java.decompiler.main.collectors.LimitContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
@@ -25,24 +26,18 @@ public class DecompilerContext {
   public static final String IN_CLASS_TYPE_PARAMS = "IN_CLASS_TYPE_PARAMS";
   public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
 
-  @NotNull
-  private final Map<String, Object> properties;
-  @NotNull
-  private final IFernflowerLogger logger;
-  @NotNull
-  private final StructContext structContext;
-  @NotNull
-  private final ClassesProcessor classProcessor;
-  @Nullable
-  private final PoolInterceptor poolInterceptor;
-  @NotNull
-  private final CancellationManager cancellationManager;
-  @NotNull
-  private final IVariableNamingFactory renamerFactory;
+  private final @NotNull Map<String, Object> properties;
+  private final @NotNull IFernflowerLogger logger;
+  private final @NotNull StructContext structContext;
+  private final @NotNull ClassesProcessor classProcessor;
+  private final @Nullable PoolInterceptor poolInterceptor;
+  private final @NotNull CancellationManager cancellationManager;
+  private final @NotNull IVariableNamingFactory renamerFactory;
   private ImportCollector importCollector;
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;
   private BytecodeSourceMapper bytecodeSourceMapper;
+  private final @NotNull LimitContainer limitsContainer;
 
   public DecompilerContext(@NotNull Map<String, Object> properties,
                            @NotNull IFernflowerLogger logger,
@@ -69,6 +64,7 @@ public class DecompilerContext {
     this.renamerFactory = renamerFactory;
     this.counterContainer = new CounterContainer();
     this.cancellationManager = cancellationManager;
+    this.limitsContainer = new LimitContainer(this.properties);
   }
 
   // *****************************************************************************
@@ -121,6 +117,10 @@ public class DecompilerContext {
 
   public static IFernflowerLogger getLogger() {
     return getCurrentContext().logger;
+  }
+
+  public static LimitContainer getLimitContainer() {
+    return getCurrentContext().limitsContainer;
   }
 
   public static StructContext getStructContext() {

@@ -254,6 +254,7 @@ ssl: 3.0-
 stat: 3.0-
 statistics: 3.4-
 string: 3.0-
+string.templatelib: 3.14
 stringprep: 3.0-
 struct: 3.0-
 subprocess: 3.0-

@@ -69,6 +69,7 @@ public final class ProgressSuspender implements AutoCloseable {
     }
     for (ProgressIndicator progress : myProgresses) {
       ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, null);
+      myPublisher.suspendableProgressRemoved(this, progress);
     }
   }
 
@@ -104,6 +105,7 @@ public final class ProgressSuspender implements AutoCloseable {
   public void attachToProgress(@NotNull ProgressIndicatorEx progress) {
     myProgresses.add(progress);
     ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, this);
+    myPublisher.suspendableProgressAppeared(this, progress);
   }
 
   public @NotNull @NlsContexts.ProgressText String getSuspendedText() {
@@ -193,8 +195,14 @@ public final class ProgressSuspender implements AutoCloseable {
   }
 
   public interface SuspenderListener {
-    /** Called (on any thread) when a new progress is created with suspension capability */
+    /** Called (on any thread) when a new suspender is created */
     default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {}
+
+    /** Called (on any thread) when a suspender (might already exist) is attached to a new progress */
+    default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender, @NotNull ProgressIndicator progressIndicator) {}
+
+    /** Called (on any thread) when a suspender is destroyed */
+    default void suspendableProgressRemoved(@NotNull ProgressSuspender suspender, @NotNull ProgressIndicator progressIndicator) {}
 
     /** Called (on any thread) when a progress is suspended or resumed */
     default void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {}

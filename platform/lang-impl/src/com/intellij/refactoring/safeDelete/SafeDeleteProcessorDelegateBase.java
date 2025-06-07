@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.module.Module;
@@ -7,6 +7,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,13 @@ public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProce
     return null;
   }
 
-  public @Nullable Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
+  /**
+   * @deprecated Override {@link SafeDeleteProcessorDelegate#findConflicts(PsiElement, PsiElement[], UsageInfo[], MultiMap)} instead
+   */
+  @Deprecated
+  public @Nullable Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element,
+                                                                   PsiElement @NotNull [] elements,
+                                                                   UsageInfo @NotNull [] usages) {
     return findConflicts(element, elements);
   }
 }

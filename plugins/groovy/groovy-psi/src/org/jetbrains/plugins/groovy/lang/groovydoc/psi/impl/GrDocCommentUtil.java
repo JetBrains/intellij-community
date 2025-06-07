@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -21,8 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author Maxim.Medvedev
  */
 public abstract class GrDocCommentUtil {
-  @Nullable
-  public static GrDocCommentOwner findDocOwner(GroovyDocPsiElement docElement) {
+  public static @Nullable GrDocCommentOwner findDocOwner(GroovyDocPsiElement docElement) {
     PsiElement element = docElement;
     while (element != null && element.getParent() instanceof GroovyDocPsiElement) element = element.getParent();
     if (element == null) return null;
@@ -39,8 +38,7 @@ public abstract class GrDocCommentUtil {
     return null;
   }
 
-  @Nullable
-  public static GrDocComment findDocComment(GrDocCommentOwner owner) {
+  public static @Nullable GrDocComment findDocComment(GrDocCommentOwner owner) {
     if (owner.getFirstChild() instanceof GrDocComment) {
       return ((GrDocComment)owner.getFirstChild());
     }

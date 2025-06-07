@@ -6,12 +6,14 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Logical elements have not implement this class, but they can if they want to add some specific logic
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface ExtendedLogicalObject {
 
   /**
+   * The method helps prevent recursion in the logical tree.
+   * @return true - if elements are not equally themselves but are the same if threat them as parents.
    * This equality can break common rules for usual "equal", for example, symmetry rule
    */
-  fun logicalEquals(other: Any?): Boolean
+  fun isTheSameParent(other: Any?): Boolean
 
 }

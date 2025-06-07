@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-object InitializePropertyQuickFixFactories {
+internal object InitializePropertyQuickFixFactories {
 
     private data class PropertyContext(
         val defaultInitializer: String,
@@ -148,9 +148,10 @@ object InitializePropertyQuickFixFactories {
             val containingClassPointer = containingClass.createSmartPointer()
 
             val validator = KotlinDeclarationNameValidator(
-                visibleDeclarationsContext = containingClass.parent as KtElement,
-                checkVisibleDeclarationsContext = false,
-                target = KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+              visibleDeclarationsContext = containingClass.parent as KtElement,
+              checkVisibleDeclarationsContext = false,
+              target = KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+              excludedDeclarations = listOf(property),
             )
 
             val existingNames = constructor?.valueParameters?.mapNotNull { it.name }?.toSet() ?: emptySet()

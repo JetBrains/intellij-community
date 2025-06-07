@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -14,8 +14,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public final class GradleSourceSetData extends ModuleData {
-  @NotNull
-  public static final Key<GradleSourceSetData> KEY = Key.create(GradleSourceSetData.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
+  public static final @NotNull Key<GradleSourceSetData> KEY = Key.create(GradleSourceSetData.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
 
   @PropertyMapping({"id", "externalName", "internalName", "moduleFileDirectoryPath", "externalConfigPath"})
   public GradleSourceSetData(
@@ -42,15 +41,13 @@ public final class GradleSourceSetData extends ModuleData {
     setModuleName(getSourceSetName());
   }
 
-  @NotNull
   @Override
-  public String getIdeGrouping() {
+  public @NotNull String getIdeGrouping() {
     return super.getIdeGrouping() + ":" + getSourceSetName();
   }
 
   @Override
-  @Nullable
-  public String getIdeParentGrouping() {
+  public @Nullable String getIdeParentGrouping() {
     return super.getIdeGrouping();
   }
 

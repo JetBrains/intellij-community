@@ -45,9 +45,8 @@ final class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValue
     }
   }
 
-  @NotNull
   @Override
-  protected IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue) {
+  protected @NotNull IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue) {
     return new MyRef<>(key, value, queue);
   }
 }

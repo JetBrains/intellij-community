@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class AddAntBuildFile extends AnAction {
+@ApiStatus.Internal
+public final class AddAntBuildFile extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -47,7 +49,7 @@ final class AddAntBuildFile extends AnAction {
     }
 
     int filesAdded = 0;
-    @Nls final StringBuilder errors = new StringBuilder();
+    final @Nls StringBuilder errors = new StringBuilder();
 
     for (VirtualFile file : files) {
       try {
@@ -86,7 +88,7 @@ final class AddAntBuildFile extends AnAction {
     if (project != null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
-        for (VirtualFile file : files) {
+        files: for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
           if (!(psiFile instanceof XmlFile xmlFile)) {
             continue;
@@ -107,6 +109,12 @@ final class AddAntBuildFile extends AnAction {
           }
           if ("http://maven.apache.org/POM/4.0.0".equals(rootTag.getNamespace())) {
             continue;
+          }
+          for (XmlTag tag : rootTag.getSubTags()) {
+            String name = tag.getName();
+            if (name.equals("modelVersion")) continue files;
+            if (name.equals("groupId")) continue files;
+            if (name.equals("artifactId")) continue files;
           }
           // found at least one candidate file
           enable(presentation);

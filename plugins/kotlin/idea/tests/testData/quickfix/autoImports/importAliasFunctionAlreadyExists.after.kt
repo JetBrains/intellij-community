@@ -6,4 +6,4 @@ fun context() {
     val funA = 42
     funA()
 }
-/* IGNORE_K2 */
+// IGNORE_K2

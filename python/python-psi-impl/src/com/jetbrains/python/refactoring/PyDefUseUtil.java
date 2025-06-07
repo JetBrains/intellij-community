@@ -22,12 +22,10 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
@@ -50,44 +48,37 @@ public final class PyDefUseUtil {
 
   private static final int MAX_CONTROL_FLOW_SIZE = 200;
 
-  @NotNull
-  public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
+  public static @NotNull List<Instruction> getLatestDefs(@NotNull ScopeOwner block,
+                                                         @NotNull String varName,
+                                                         @NotNull PsiElement anchor,
+                                                         boolean acceptTypeAssertions,
+                                                         boolean acceptImplicitImports,
+                                                         @NotNull TypeEvalContext context) {
     return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
   }
 
 
-  @NotNull
-  public static List<Instruction> getLatestDefs(ControlFlow controlFlow, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
+  public static @NotNull List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
+                                                         @NotNull String varName,
+                                                         @NotNull PsiElement anchor,
+                                                         boolean acceptTypeAssertions,
+                                                         boolean acceptImplicitImports,
+                                                         @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
-    final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
-    if (augAssignment != null) {
-      anchor = augAssignment;
-    }
-    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
-    if (instr < 0) {
+    int startNum = findStartInstructionId(anchor, instructions);
+    if (startNum < 0) {
       return Collections.emptyList();
     }
-    if (anchor instanceof PyTargetExpression) {
-      Collection<Instruction> pred = instructions[instr].allPred();
-      if (!pred.isEmpty()) {
-        instr = pred.iterator().next().num();
-      }
-    }
-    final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports, context);
-    return new ArrayList<>(result);
-  }
 
-  private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int startNum,
-                                                       final boolean acceptTypeAssertions, final boolean acceptImplicitImports,
-                                                       @NotNull final TypeEvalContext context) {
+    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(anchor.getContainingFile());
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
-                                  if (unreachableDueToVersionGuard(instruction)) {
-                                    return ControlFlowUtil.Operation.CONTINUE;
+                                  if (instruction instanceof PyWithContextExitInstruction withExit) {
+                                    if (!withExit.isSuppressingExceptions(context)) {
+                                      return ControlFlowUtil.Operation.CONTINUE;
+                                    }
                                   }
                                   if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
                                     var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
@@ -95,8 +86,8 @@ public final class PyDefUseUtil {
                                       result.add(typeGuardInstruction);
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
-                                    // not a back edge
-                                    if (instruction.num() < startNum && context.getOrigin() == callInstruction.getElement().getContainingFile()) {
+                                    if (isNotBackEdge(instruction.num(), startNum) && 
+                                        context.getOrigin() == callInstruction.getElement().getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                         ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
                                         : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
@@ -104,9 +95,8 @@ public final class PyDefUseUtil {
                                     }
                                   }
                                   final PsiElement element = instruction.getElement();
-                                  if (acceptTypeAssertions
-                                      && instruction instanceof ConditionalInstruction conditionalInstruction
-                                      && instruction.num() < startNum) {
+                                  if (isNotBackEdge(instruction.num(), startNum)
+                                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
                                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
@@ -120,35 +110,68 @@ public final class PyDefUseUtil {
                                   }
                                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                    if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                    if (access.isWriteAccess() || 
+                                        acceptTypeAssertions && access.isAssertTypeAccess() && isNotBackEdge(instruction.num(), startNum)) {
                                       final String name = elementName(element);
                                       if (Comparing.strEqual(name, varName)) {
-                                        result.add(rwInstruction);
+                                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
+                                          result.add(rwInstruction);
+                                        }
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }
                                     }
                                   }
                                   else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
                                     if (!implicit.multiResolveName(varName).isEmpty()) {
-                                      result.add(instruction);
+                                      if (isReachableWithVersionChecks(instruction, languageLevel)) {
+                                        result.add(instruction);
+                                      }
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                   }
                                   return ControlFlowUtil.Operation.NEXT;
                                 });
-    return result;
+    return new ArrayList<>(result);
   }
 
-  private static boolean unreachableDueToVersionGuard(@NotNull Instruction instruction) {
+  /**
+   * New analysis handles back edges separately.
+   * @see com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#getTypeByControlFlow(String, TypeEvalContext, PyExpression, ScopeOwner) 
+   */
+  private static boolean isNotBackEdge(int instNum, int startNum) {
+    if (Registry.is("python.use.better.control.flow.type.inference")) {
+      return true;
+    }
+    return instNum < startNum;
+  }
+
+  private static int findStartInstructionId(@NotNull PsiElement startAnchor, Instruction @NotNull [] instructions) {
+    PsiElement realCfgAnchor = startAnchor;
+    final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
+    if (augAssignment != null) {
+      realCfgAnchor = augAssignment;
+    }
+    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, realCfgAnchor);
+    if (instr < 0) {
+      return instr;
+    }
+    if (startAnchor instanceof PyTargetExpression) {
+      Collection<Instruction> pred = instructions[instr].allPred();
+      if (!pred.isEmpty()) {
+        instr = pred.iterator().next().num();
+      }
+    }
+    return instr;
+  }
+
+  private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction, @NotNull LanguageLevel languageLevel) {
     PsiElement element = instruction.getElement();
-    if (element == null) return false;
-    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(element.getContainingFile());
+    if (element == null) return true;
     Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
-    return !evaluateVersionsForElement(element).contains(version);
+    return evaluateVersionsForElement(element).contains(version);
   }
 
-  @Nullable
-  private static String elementName(PsiElement element) {
+  private static @Nullable String elementName(PsiElement element) {
     if (element instanceof PyImportElement) {
       return ((PyImportElement) element).getVisibleName();
     }
@@ -161,7 +184,7 @@ public final class PyDefUseUtil {
     return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
-  public static PsiElement @NotNull [] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
+  public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -176,11 +199,11 @@ public final class PyDefUseUtil {
     return result.toArray(PyElement.EMPTY_ARRAY);
   }
 
-  private static void getPostRefs(PyTargetExpression var,
+  private static void getPostRefs(@NotNull PyTargetExpression var,
                                   Instruction[] instructions,
                                   int instr,
-                                  boolean[] visited,
-                                  Collection<PyElement> result) {
+                                  boolean @NotNull [] visited,
+                                  @NotNull Collection<PyElement> result) {
     // TODO: Use ControlFlowUtil.process() for forwards CFG traversal
     if (visited[instr]) return;
     visited[instr] = true;
@@ -205,7 +228,7 @@ public final class PyDefUseUtil {
    *
    * @return false for elements from different scopes, true if searched is defined/imported before target
    */
-  public static boolean isDefinedBefore(@NotNull final PsiElement searched, @NotNull final PsiElement target) {
+  public static boolean isDefinedBefore(final @NotNull PsiElement searched, final @NotNull PsiElement target) {
     ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(searched);
     Ref<Boolean> definedBefore = Ref.create(false);
     if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {

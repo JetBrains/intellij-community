@@ -21,13 +21,28 @@ public final class GradleConstants {
   public static final String DECLARATIVE_SCRIPT_NAME = "build.gradle.dcl";
   public static final String DECLARATIVE_SETTINGS_FILE_NAME = "settings.gradle.dcl";
 
-  public static final String[] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION, DECLARATIVE_EXTENSION};
+  public static final String[] BUILD_FILE_EXTENSIONS = {
+    EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION, DECLARATIVE_EXTENSION
+  };
+
+  public static final String[] KNOWN_GRADLE_SETTINGS_FILES = {
+    SETTINGS_FILE_NAME, KOTLIN_DSL_SETTINGS_FILE_NAME, DECLARATIVE_SETTINGS_FILE_NAME
+  };
 
   public static final Set<String> KNOWN_GRADLE_FILES = Set.of(
     DEFAULT_SCRIPT_NAME, KOTLIN_DSL_SCRIPT_NAME, DECLARATIVE_SCRIPT_NAME,
-    SETTINGS_FILE_NAME, KOTLIN_DSL_SETTINGS_FILE_NAME, DECLARATIVE_SETTINGS_FILE_NAME);
+    SETTINGS_FILE_NAME, KOTLIN_DSL_SETTINGS_FILE_NAME, DECLARATIVE_SETTINGS_FILE_NAME
+  );
 
-  public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
+  public static final String USER_HOME_PROPERTY_KEY = "user.home";
+  public static final String GRADLE_USER_HOME_ENV_KEY = "GRADLE_USER_HOME";
+  public static final String GRADLE_USER_HOME_PROPERTY_KEY = "gradle.user.home";
+
+  /**
+   * @deprecated renamed, use GradleConstants#SYSTEM_DIRECTORY_PATH_KEY instead
+   */
+  @Deprecated
+  public static final String SYSTEM_DIRECTORY_PATH_KEY = GRADLE_USER_HOME_ENV_KEY;
 
   public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
 
@@ -40,6 +55,13 @@ public final class GradleConstants {
   public static final String TESTS_ARG_NAME = "--tests";
 
   public static final String BUILD_SRC_NAME = "buildSrc";
+
+  public static final String GRADLE_PROPERTIES_FILE_NAME = "gradle.properties";
+  public static final String GRADLE_LOCAL_PROPERTIES_FILE_NAME = "config.properties";
+  public static final String GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME = "gradle-daemon-jvm.properties";
+
+  public static final String GRADLE_DIR_NAME = "gradle";
+  public static final String GRADLE_CACHE_DIR_NAME = ".gradle";
 
   private GradleConstants() { }
 }

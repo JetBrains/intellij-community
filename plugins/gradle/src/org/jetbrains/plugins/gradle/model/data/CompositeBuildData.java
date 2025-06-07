@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -15,11 +15,10 @@ import java.util.List;
  */
 public class CompositeBuildData implements Serializable {
 
-  @NotNull
-  public static final Key<CompositeBuildData> KEY = Key.create(CompositeBuildData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
+  public static final @NotNull Key<CompositeBuildData> KEY = Key.create(CompositeBuildData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
   private final String rootProjectPath;
-  @NotNull private final List<BuildParticipant> myCompositeParticipants = new ArrayList<>();
+  private final @NotNull List<BuildParticipant> myCompositeParticipants = new ArrayList<>();
 
   @PropertyMapping({"rootProjectPath"})
   public CompositeBuildData(String rootProjectPath) {
@@ -30,8 +29,7 @@ public class CompositeBuildData implements Serializable {
     return rootProjectPath;
   }
 
-  @NotNull
-  public List<BuildParticipant> getCompositeParticipants() {
+  public @NotNull List<BuildParticipant> getCompositeParticipants() {
     return myCompositeParticipants;
   }
 }

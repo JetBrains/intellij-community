@@ -93,7 +93,8 @@ open class HeaderToolbarButtonLook(
     }
 
     if (icon is CachedImageIcon) {
-      return loadIconCustomVersionOrScale(icon = icon, size = iconSize, isDark = isDarkHeader().takeIf { it })
+      val darkHeader = isDarkHeader()
+      return loadIconCustomVersionOrScale(icon = icon, size = iconSize, isDark = darkHeader.takeIf { it }, isDarkForScale = darkHeader)
     }
 
     return if (icon is ScalableIcon) loadIconCustomVersionOrScale(icon = icon, size = iconSize) else icon

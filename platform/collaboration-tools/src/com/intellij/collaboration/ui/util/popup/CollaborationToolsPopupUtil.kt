@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Point
 import javax.swing.JList
+import javax.swing.ListModel
 import kotlin.coroutines.resume
 
 internal object CollaborationToolsPopupUtil {
@@ -65,14 +66,26 @@ suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint, showDir
   return showAndAwaitSubmission(list, point, showDirection)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmission(list: JList<T>, point: RelativePoint, showDirection: ShowDirection): T? {
+suspend fun <T> JBPopup.showAndAwaitSubmission(
+  list: JList<T>,
+  point: RelativePoint,
+  showDirection: ShowDirection,
+  afterShow: () -> Unit = { },
+): T? {
   showPopup(point, showDirection)
+  afterShow()
   return waitForChoiceAsync(list)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmissions(list: JList<SelectableWrapper<T>>, point: RelativePoint, showDirection: ShowDirection): List<T> {
+suspend fun <T> JBPopup.showAndAwaitSubmissions(
+  originalListModel: ListModel<SelectableWrapper<T>>,
+  point: RelativePoint,
+  showDirection: ShowDirection,
+  afterShow: () -> Unit = {}
+): List<T> {
   showPopup(point, showDirection)
-  return waitForMultipleChoiceAsync(list)
+  afterShow()
+  return waitForMultipleChoiceAsync(originalListModel)
 }
 
 /**
@@ -94,12 +107,12 @@ private suspend fun <T> JBPopup.waitForChoiceAsync(list: JList<T>): T {
   }
 }
 
-private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(list: JList<SelectableWrapper<T>>): List<T> {
+private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(originalListModel: ListModel<SelectableWrapper<T>>): List<T> {
   checkDisposed()
   return try {
     suspendCancellableCoroutine<List<T>> { continuation ->
       addChoicesPopupListener(continuation) {
-        list.model.items
+        originalListModel.items
           .filter { item -> item.isSelected }
           .map { item -> item.value }
       }

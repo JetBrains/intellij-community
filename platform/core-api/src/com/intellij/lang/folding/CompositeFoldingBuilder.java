@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -155,7 +156,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     }
 
     @Override
-    public @NotNull Set<Object> getDependencies() {
+    public @NotNull @Unmodifiable Set<Object> getDependencies() {
       return myFoldingDescriptor.getDependencies();
     }
 

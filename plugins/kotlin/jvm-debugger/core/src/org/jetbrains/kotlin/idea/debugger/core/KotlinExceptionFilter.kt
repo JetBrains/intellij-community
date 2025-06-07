@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.execution.filters.*
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -25,12 +25,11 @@ class KotlinExceptionFilterFactory : ExceptionFilterFactory {
 }
 
 class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : ExceptionFilter(searchScope) {
-    override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        return runReadAction {
+    override fun applyFilter(line: String, entireLength: Int): Filter.Result? =
+        ReadAction.nonBlocking<Filter.Result?> {
             val result = super.applyFilter(line, entireLength)
             if (result == null) parseNativeStackTraceLine(line, entireLength) else patchResult(result, line)
-        }
-    }
+        }.executeSynchronously()
 
     private fun patchResult(result: Filter.Result, line: String): Filter.Result {
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result

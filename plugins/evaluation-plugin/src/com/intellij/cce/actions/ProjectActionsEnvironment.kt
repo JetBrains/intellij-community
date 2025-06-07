@@ -5,7 +5,6 @@ import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.*
-import com.intellij.cce.evaluation.step.CheckProjectSdkStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
@@ -21,13 +20,16 @@ import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
+import com.intellij.configurationStore.StoreUtil.saveSettings
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.warmup.util.importOrOpenProjectAsync
 import java.nio.file.FileSystems
+import java.util.*
 import kotlin.random.Random
 
 open class ProjectActionsEnvironment(
@@ -38,6 +40,7 @@ open class ProjectActionsEnvironment(
   private val evaluationRootInfo: EvaluationRootInfo,
   val project: Project,
   val processor: GenerateActionsProcessor,
+  override val setupSteps: List<EvaluationStep>,
   private val featureName: String,
   val featureInvoker: FeatureInvoker,
 ) : EvaluationEnvironment {
@@ -50,9 +53,6 @@ open class ProjectActionsEnvironment(
     }
   }
   private var datasetRefIsHandled = false
-
-  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
-  override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
 
@@ -80,7 +80,7 @@ open class ProjectActionsEnvironment(
     if (!datasetRefIsHandled) {
       if (datasetRef != null) {
         datasetRef.prepare(datasetContext)
-        val path = datasetContext.path(datasetRef.name)
+        val path = datasetContext.path(datasetRef)
         val finalPath = DatasetRefConverter().convert(datasetRef, datasetContext, project) ?: path
         datasetContext.replaceActionsStorage(ActionsSingleFileStorage(finalPath))
      }
@@ -179,6 +179,9 @@ open class ProjectActionsEnvironment(
 
   override fun close() {
     ProjectOpeningUtils.closeProject(project)
+
+    // Guarantee saving updated registries and settings on disc
+    saveSettings(ApplicationManager.getApplication())
   }
 
   private class ActionsSummarizer {
@@ -189,7 +192,7 @@ open class ProjectActionsEnvironment(
         group("actions") {
           for (action in fileActions.actions) {
             inc("total")
-            inc(action.type.toString().toLowerCase())
+            inc(action.type.toString().lowercase(Locale.getDefault()))
           }
         }
         group("sessions") {
@@ -197,7 +200,7 @@ open class ProjectActionsEnvironment(
             inc("total")
             val properties = action.nodeProperties
             group("common (frequent expected text by token type)") {
-              countingGroup(properties.tokenType.name.toLowerCase(), 100) {
+              countingGroup(properties.tokenType.name.lowercase(Locale.getDefault()), 100) {
                 inc(action.expectedText)
               }
             }
@@ -205,8 +208,8 @@ open class ProjectActionsEnvironment(
             if (javaProperties != null) {
               group("java (frequent tokens by kind)") {
                 inc("total")
-                inc(javaProperties.tokenType.toString().toLowerCase())
-                group(action.kind().toString().toLowerCase()) {
+                inc(javaProperties.tokenType.toString().lowercase(Locale.getDefault()))
+                group(action.kind().toString().lowercase(Locale.getDefault())) {
                   inc("total")
                   if (javaProperties.isStatic) inc("static")
                   else inc("nonstatic")
@@ -242,28 +245,32 @@ open class ProjectActionsEnvironment(
 
   private inner class FileActionsChunk(
     private val fileActions: FileActions,
-    override val presentationText: String,
+    private val presentationText: String,
   ) : EvaluationChunk {
     override val datasetName: String = config.projectName
     override val name: String = fileActions.path
+    override val sessionsExist: Boolean = fileActions.sessionsCount > 0
 
     override fun evaluate(
       handler: InterpretationHandler,
       filter: InterpretFilter,
       order: InterpretationOrder,
       sessionHandler: (Session) -> Unit
-    ): List<Session> {
+    ): EvaluationChunk.Result {
       val factory = object : InvokersFactory {
         override fun createActionsInvoker(): ActionsInvoker = CommonActionsInvoker(project)
         override fun createFeatureInvoker(): FeatureInvoker = featureInvoker
       }
       val actionInterpreter = ActionInvokingInterpreter(factory, handler, filter, order)
-      return actionInterpreter.interpret(fileActions, sessionHandler)
+      return EvaluationChunk.Result(
+        actionInterpreter.interpret(fileActions, sessionHandler),
+        presentationText
+      )
     }
   }
 
   companion object {
-    fun open(projectPath: String, init: (Project) -> ProjectActionsEnvironment): ProjectActionsEnvironment {
+    fun<T> open(projectPath: String, init: (Project) -> T): T {
       println("Open and load project $projectPath. Operation may take a few minutes.")
       @Suppress("DEPRECATION")
       val project = runUnderModalProgressIfIsEdt {

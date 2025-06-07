@@ -1,25 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
+import org.jetbrains.annotations.NotNull;
 
-public class InlineVariableFixTest extends IGQuickFixesTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+
+public class InlineVariableFixTest extends LightQuickFixParameterizedTestCase {
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new UnnecessaryLocalVariableInspection());
-    myRelativePath = "inline";
-    myDefaultHint = InspectionGadgetsBundle.message("inline.variable.quickfix");
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    return new UnnecessaryLocalVariableInspection[] {new UnnecessaryLocalVariableInspection()};
   }
 
-  public void testResourceVar() { doTest(); }
-  public void testResourceVarInMiddle() { doTest(); }
-  public void testSingleResourceVar() { doTest(); }
-  public void testCastNeeded() { doTest(); }
-  public void testArrayInitializer() { doTest(); }
-  public void testCastForOverloads() { assertQuickfixNotAvailable(); }
-  public void testComment() { doTest(); }
-  public void testNewLineInInitializer() { doTest(); }
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/ig/com/siyeh/igfixes/inline";
+  }
 }

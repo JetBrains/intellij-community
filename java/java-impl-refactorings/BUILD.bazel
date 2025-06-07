@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.java.impl.refactorings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "impl-refactorings",
+  module_name = "intellij.java.impl.refactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lvcs-api:lvcs",
+    "//platform/refactoring",
+    "//platform/statistics",
+    "//java/openapi:java",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-impl:impl",
+    "//java/jsp-openapi:jsp",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/usageView",
+    "//platform/ide-core-impl",
+    "@lib//:stream_ex",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:fastutil-min",
+    "//platform/diff-impl",
+    "//platform/usageView-impl",
+    "//platform/util/jdom",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//java/codeserver/core",
+  ]
+)
+### auto-generated section `build intellij.java.impl.refactorings` end

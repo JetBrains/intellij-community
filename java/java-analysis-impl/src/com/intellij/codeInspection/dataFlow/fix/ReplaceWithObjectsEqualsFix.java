@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -25,17 +25,13 @@ public final class ReplaceWithObjectsEqualsFix extends PsiUpdateModCommandQuickF
     myReplacementText = replacementText;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", myQualifierText + ".equals(...)", "Objects.equals(" + myReplacementText + ", ...)");
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", ".equals()", "Objects.equals()");
   }
 
@@ -52,9 +48,8 @@ public final class ReplaceWithObjectsEqualsFix extends PsiUpdateModCommandQuickF
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(((PsiMethodCallExpression)replaced).getMethodExpression());
   }
 
-  @Nullable
-  public static ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
-                                                      @NotNull PsiReferenceExpression methodExpression) {
+  public static @Nullable ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
+                                                                @NotNull PsiReferenceExpression methodExpression) {
     if (!"equals".equals(methodExpression.getReferenceName()) ||
         call.getArgumentList().getExpressionCount() != 1 ||
         !PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, call)) {

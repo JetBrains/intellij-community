@@ -31,8 +31,8 @@ import java.util.Map;
 
 public class JavaReplaceHandler extends StructuralReplaceHandler {
   private final PsiElement[] patternElements;
-  @NotNull private final Project myProject;
-  @NotNull private final ReplaceOptions myReplaceOptions;
+  private final @NotNull Project myProject;
+  private final @NotNull ReplaceOptions myReplaceOptions;
 
   public JavaReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     myProject = project;
@@ -62,8 +62,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
            parent instanceof PsiLoopStatement && ((PsiLoopStatement)parent).getBody() == element;
   }
 
-  @Nullable
-  private PsiNamedElement getSymbolReplacementTarget(final PsiElement el) {
+  private @Nullable PsiNamedElement getSymbolReplacementTarget(final PsiElement el) {
     if (patternElements.length == 1 && patternElements[0] instanceof PsiExpressionStatement) {
       final PsiExpression expression = ((PsiExpressionStatement)patternElements[0]).getExpression();
 

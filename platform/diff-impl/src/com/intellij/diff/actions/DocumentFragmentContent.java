@@ -28,10 +28,10 @@ import java.util.function.IntUnaryOperator;
  */
 @ApiStatus.Internal
 public final class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
-  @NotNull private final DocumentContent myOriginal;
-  @NotNull private final RangeMarker myRangeMarker;
+  private final @NotNull DocumentContent myOriginal;
+  private final @NotNull RangeMarker myRangeMarker;
 
-  @NotNull private final MyDocumentsSynchronizer mySynchronizer;
+  private final @NotNull MyDocumentsSynchronizer mySynchronizer;
 
   private int myAssignments = 0;
 
@@ -56,29 +56,25 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     });
   }
 
-  @NotNull
-  private static RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
+  private static @NotNull RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
     RangeMarker rangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
     rangeMarker.setGreedyToLeft(true);
     rangeMarker.setGreedyToRight(true);
     return rangeMarker;
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return mySynchronizer.getDocument2();
   }
 
-  @Nullable
   @Override
-  public VirtualFile getHighlightFile() {
+  public @Nullable VirtualFile getHighlightFile() {
     return myOriginal.getHighlightFile();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull LineCol position) {
+  public @Nullable Navigatable getNavigatable(@NotNull LineCol position) {
     if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
     int originalOffset = offset + myRangeMarker.getStartOffset();
@@ -86,15 +82,13 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     return myOriginal.getNavigatable(originalPosition);
   }
 
-  @Nullable
   @Override
-  public FileType getContentType() {
+  public @Nullable FileType getContentType() {
     return myOriginal.getContentType();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getNavigatable(new LineCol(0));
   }
 
@@ -112,7 +106,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {
-    @NotNull private final RangeMarker myRangeMarker;
+    private final @NotNull RangeMarker myRangeMarker;
 
     MyDocumentsSynchronizer(@Nullable Project project,
                             @NotNull RangeMarker range,

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -44,7 +44,6 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.render.IconCompOptionalCompPanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -56,11 +55,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
@@ -91,9 +89,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     });
 
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
+    this(project, component, editor, null);
+  }
+
+  /**
+   * In case of Remote Development the component doesn't contain the full DataContext, and we have to explicitly provide the context.
+   */
+  @ApiStatus.Internal
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable DataContext dataContext) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myDataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component));
+    myDataContext = dataContext == null ? Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component)) : dataContext;
     myUpdateSession = newUpdateSession();
   }
 
@@ -176,7 +182,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   public static class MatchedValue implements MergeableElement, UiInspectorContextProvider {
     public final @NotNull Object value;
     final @NotNull MatchedValueType type;
-    final @NotNull String pattern;
+    @ApiStatus.Internal
+    public final @NotNull String pattern;
     final int matchingDegree;
 
     public @Nullable Double similarityScore = null;
@@ -332,10 +339,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   @Override
   public @NotNull ListCellRenderer<?> getListCellRenderer() {
-    return new GotoActionListCellRenderer(this::getGroupName);
+    return new GotoActionListCellRenderer();
   }
 
-  private static @NotNull LayeredIcon createLayeredIcon(@Nullable Icon icon, boolean disabled) {
+  @ApiStatus.Internal
+  public static @NotNull LayeredIcon createLayeredIcon(@Nullable Icon icon, boolean disabled) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon == null) {
@@ -363,8 +371,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, @Nullable Presentation presentation) {
+    return defaultActionForeground(isSelected, hasFocus, presentation == null || presentation.isEnabledAndVisible());
+  }
+
+  @ApiStatus.Internal
+  public static Color defaultActionForeground(boolean isSelected, boolean hasFocus, boolean isEnabledAndVisible) {
     if (isSelected) return NamedColorUtil.getListSelectionForeground(hasFocus);
-    if (presentation != null && !presentation.isEnabledAndVisible()) return NamedColorUtil.getInactiveTextColor();
+    if (!isEnabledAndVisible) return NamedColorUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
   }
 
@@ -378,11 +391,19 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  public @Nls @NotNull String getGroupName(@NotNull OptionDescription description) {
-    if (description instanceof RegistryTextOptionDescriptor) return LangBundle.message("group.registry");
-    String groupName = description.getGroupName();
+  public static @Nls @NotNull String getGroupName(@NotNull OptionDescription description) {
+    return getGroupName(description.getGroupName(),
+                        description.getHit(),
+                        description instanceof RegistryTextOptionDescriptor);
+  }
+
+  @ApiStatus.Internal
+  public static @Nls @NotNull String getGroupName(@Nullable @Nls String groupName,
+                                                  @Nullable @NlsSafe String optionHit,
+                                                  boolean isRegistry) {
+    if (isRegistry) return LangBundle.message("group.registry");
     String settings = LangBundle.message("group.settings");
-    if (groupName == null || groupName.equals(description.getHit())) return settings;
+    if (groupName == null || groupName.equals(optionHit)) return settings;
     return settings + " > " + groupName;
   }
 
@@ -442,8 +463,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return ((MatchedValue)mv).getValueText();
   }
 
-  @NotNull
-  MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
     Presentation presentation = anAction.getTemplatePresentation().clone();
     anAction.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     String text = presentation.getText();
@@ -614,15 +636,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @DirtyUI
   public static final class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
-    private final Function<? super OptionDescription, @ActionText String> myGroupNamer;
     private final boolean myUseListFont;
 
-    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
-      this(groupNamer, false);
+    public GotoActionListCellRenderer() {
+      this(false);
     }
 
-    public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer, boolean useListFont) {
-      myGroupNamer = groupNamer;
+    public GotoActionListCellRenderer(boolean useListFont) {
       myUseListFont = useListFont;
     }
 
@@ -671,7 +691,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (value instanceof ActionWrapper actionWithParentGroup) {
         AnAction anAction = actionWithParentGroup.getAction();
         boolean toggle = anAction instanceof ToggleAction;
-        String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
+        String groupName = anAction instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
         Presentation presentation = actionWithParentGroup.getPresentation();
         Color fg = defaultActionForeground(isSelected, cellHasFocus, presentation);
         boolean disabled = !isSelected && !presentation.isEnabledAndVisible();
@@ -743,7 +763,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           addOnOffButton(panel, selected);
         }
         else {
-          JLabel settingsLabel = new JLabel(myGroupNamer.fun((OptionDescription)value));
+          JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
           settingsLabel.setForeground(groupFg);
           settingsLabel.setBackground(bg);
           settingsLabel.setBorder(eastBorder);

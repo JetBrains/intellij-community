@@ -16,9 +16,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -42,14 +42,12 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "TypeParameterExplicitlyExtendsObject";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Integer type = (Integer)infos[0];
     if (type.intValue() == 1) {
       return InspectionGadgetsBundle.message(
@@ -74,8 +72,7 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
   private static class ExtendsObjectFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "extends.object.remove.quickfix");
     }

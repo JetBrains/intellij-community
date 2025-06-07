@@ -12,15 +12,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.restructuredtext.RestFileType;
 import com.intellij.restructuredtext.python.run.RestRunConfiguration;
 import com.intellij.restructuredtext.python.run.RestRunConfigurationType;
-import com.intellij.restructuredtext.RestFileType;
 import org.jetbrains.annotations.NotNull;
 
 public final class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return RestRunConfigurationType.getInstance().DOCUTILS_FACTORY;
   }
 

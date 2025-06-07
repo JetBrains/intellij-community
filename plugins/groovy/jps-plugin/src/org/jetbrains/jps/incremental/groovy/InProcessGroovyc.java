@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -8,13 +8,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -35,7 +37,8 @@ import java.util.regex.Pattern;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-final class InProcessGroovyc implements GroovycFlavor {
+@ApiStatus.Internal
+public final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d.*))?\\.jar");
@@ -217,7 +220,7 @@ final class InProcessGroovyc implements GroovycFlavor {
   }
 
   private static @Nullable ClassLoader getPlatformLoaderParentIfOnJdk9() {
-    if (JavaVersion.current().feature >= 9) {
+    if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
       // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
       try {
         return (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
@@ -229,7 +232,8 @@ final class InProcessGroovyc implements GroovycFlavor {
     return null;
   }
 
-  static @Nullable String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
+  @VisibleForTesting
+  public static @Nullable String evaluatePathToGroovyJarForParentClassloader(Collection<String> compilationClassPath) {
     if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }

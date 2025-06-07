@@ -9,14 +9,14 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import static com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection;
 
@@ -28,7 +28,7 @@ public final class ClassLoadingUtils {
       ClassType loaderClass = (ClassType)process.findClass(context, "java.security.SecureClassLoader", context.getClassLoader());
       Method ctorMethod = DebuggerUtils.findMethod(loaderClass, JVMNameUtil.CONSTRUCTOR_NAME, "(Ljava/lang/ClassLoader;)V");
       return context.computeAndKeep(() -> (ClassLoaderReference)((DebugProcessImpl)process)
-        .newInstance(context, loaderClass, ctorMethod, Collections.singletonList(context.getClassLoader()),
+        .newInstance(context, loaderClass, Objects.requireNonNull(ctorMethod), Collections.singletonList(context.getClassLoader()),
                      MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
     }
     catch (VMDisconnectedException e) {
@@ -51,7 +51,7 @@ public final class ClassLoadingUtils {
       StringReference nameString = DebuggerUtilsEx.mirrorOfString(name, context);
       ArrayReference byteArray = DebuggerUtilsEx.mirrorOfByteArray(bytes, context);
       try {
-        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
+        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, Objects.requireNonNull(defineMethod),
                                                          Arrays.asList(nameString,
                                                                        byteArray,
                                                                        proxy.mirrorOf(0),
@@ -76,33 +76,20 @@ public final class ClassLoadingUtils {
    * Finds and if necessary defines helper class
    * May modify class loader in evaluationContext
    */
-  @Nullable
-  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext) throws EvaluateException {
-    // TODO [egor]: cache and load in bootstrap class loader
-    String name = cls.getName();
-    evaluationContext = evaluationContext.withAutoLoadClasses(true);
-    DebugProcess process = evaluationContext.getDebugProcess();
-    try {
-      return (ClassType)process.findClass(evaluationContext, name, evaluationContext.getClassLoader());
-    }
-    catch (EvaluateException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof InvocationException) {
-        if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
-          // need to define
-          ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
-            if (stream == null) return null;
-            defineClass(name, stream.readAllBytes(), evaluationContext, process, classLoader);
-            evaluationContext.setClassLoader(classLoader);
-            return (ClassType)process.findClass(evaluationContext, name, classLoader);
-          }
-          catch (IOException ioe) {
-            throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
-          }
+  public static @Nullable ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
+                                                   String... additionalClassesToLoad) {
+    for (JdiHelperClassLoader loader : JdiHelperClassLoader.getLoaders(evaluationContext)) {
+      try {
+        ClassType classType = loader.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
+        if (classType != null) {
+          return classType;
         }
       }
-      throw e;
+      catch (EvaluateException ex) {
+        String message = String.format("Failed to load '%s' with %s", cls.getName(), loader.getClass().getName());
+        Logger.getInstance(ClassLoadingUtils.class).error(message, ex);
+      }
     }
+    return null;
   }
 }

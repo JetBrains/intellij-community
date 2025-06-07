@@ -118,8 +118,16 @@ public final class DebugReflectionUtil {
                                         @NotNull Class<V> lookFor,
                                         @NotNull Predicate<Object> shouldExamineValue,
                                         @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
-    IntSet visited = new IntOpenHashSet(100);
-    Deque<BackLink<?>> toVisit = new ArrayDeque<>(100);
+    return walkObjects(maxDepth, Integer.MAX_VALUE, startRoots, lookFor, shouldExamineValue, leakProcessor);
+  }
+  public static <V> boolean walkObjects(int maxDepth,
+                                        int maxQueueSize,
+                                        @NotNull Map<Object, String> startRoots,
+                                        @NotNull Class<V> lookFor,
+                                        @NotNull Predicate<Object> shouldExamineValue,
+                                        @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
+    IntSet visited = new IntOpenHashSet(1000);
+    Deque<BackLink<?>> toVisit = new ArrayDeque<>(1000);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
@@ -148,12 +156,13 @@ public final class DebugReflectionUtil {
       }
 
       if (visited.add(System.identityHashCode(value))) {
-        queueStronglyReferencedValues(toVisit, value, backLink, shouldExamineValue);
+        queueStronglyReferencedValues(toVisit, maxQueueSize, value, backLink, shouldExamineValue);
       }
     }
   }
 
   private static void queueStronglyReferencedValues(@NotNull Deque<? super BackLink<?>> queue,
+                                                    int maxQueueSize,
                                                     @NotNull Object root,
                                                     @NotNull BackLink<?> backLink,
                                                     @NotNull Predicate<Object> shouldExamineValue) {
@@ -176,14 +185,14 @@ public final class DebugReflectionUtil {
         throw new RuntimeException(e);
       }
 
-      queue(value, field, null, backLink, queue, shouldExamineValue);
+      queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
     }
     if (rootClass.isArray()) {
       try {
         Object[] objects = (Object[])root;
         for (int i = 0; i < objects.length; i++) {
           Object value = objects[i];
-          queue(value, null, "["+i+"]", backLink, queue, shouldExamineValue);
+          queue(value, null, "["+i+"]", backLink, queue, maxQueueSize, shouldExamineValue);
         }
       }
       catch (ClassCastException ignored) {
@@ -195,7 +204,7 @@ public final class DebugReflectionUtil {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
-            queue(value, field, null, backLink, queue, shouldExamineValue);
+            queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
           }
           catch (IllegalAccessException ignored) {
           }
@@ -208,11 +217,12 @@ public final class DebugReflectionUtil {
                             @Nullable String fieldName,
                             @NotNull BackLink<?> backLink,
                             @NotNull Deque<? super BackLink<?>> queue,
+                            int maxQueueSize,
                             @NotNull Predicate<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) {
       return;
     }
-    if (shouldExamineValue.test(value)) {
+    if (shouldExamineValue.test(value) && queue.size() < maxQueueSize) {
       queue.addLast(new BackLink<>(value, field, fieldName, backLink));
     }
   }

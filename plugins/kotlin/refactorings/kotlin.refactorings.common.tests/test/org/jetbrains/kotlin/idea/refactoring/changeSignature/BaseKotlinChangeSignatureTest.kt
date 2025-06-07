@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.application.options.CodeStyle
@@ -79,7 +79,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
                 ?.let { MethodReferencesSearch.search(it, it.getUseScope(), true) }
                 ?: ReferencesSearch.search(method, method.getUseScope()))
 
-            references.forEach { ref ->
+            references.asIterable().forEach { ref ->
                 val element = ref.element
                 val caller = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java, false)?.let { listOf(it) }
                     ?: PsiTreeUtil.getParentOfType(element, KtDeclaration::class.java, false)?.toLightMethods()
@@ -231,8 +231,10 @@ public @interface NotNull {
             if (configureFiles) {
                 configureFiles()
             }
-            doRefactoring(configure)
-            compareEditorsWithExpectedData()
+            withCustomCompilerOptions(file.text, project, module) {
+                doRefactoring(configure)
+                compareEditorsWithExpectedData()
+            }
         }
     }
 
@@ -403,13 +405,6 @@ public @interface NotNull {
               "test function for ${file.name} not found",
               fileName in functionNames,
             )
-        }
-    }
-
-    fun testPreferContainedInClass() {
-        configureFiles()
-        doTestWithIgnoredDirective {
-            assertEquals("param", createChangeInfo().newParameters[0].name)
         }
     }
 
@@ -592,6 +587,10 @@ public @interface NotNull {
     }
 
     fun testAddNewLastParameterWithDefaultValue3() = doTest {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddParameterToOperator() = doTest {
         addNewIntParameterWithValue(true)
     }
 

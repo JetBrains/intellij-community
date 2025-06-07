@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +23,20 @@ import static com.intellij.codeInsight.intention.CustomizableIntentionAction.Ran
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
  * <p/>
- * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
+ * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance to avoid holding too many PSI files during inspection.
  * Instead, use the {@link ProblemDescriptor#getPsiElement()}
  * in {@link QuickFix#applyFix(Project, CommonProblemDescriptor)}
  * to retrieve the PSI context the fix will work on.
  * See also {@link LocalQuickFixOnPsiElement} which uses {@link com.intellij.psi.SmartPsiElementPointer} instead of storing PSI elements.
- * <p/>
+ * <p>
  * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
- * change icon in quick fix popup menu.
- * <p/>
+ * change icon in the quick-fix popup menu.
+ * <p>
  * Implement {@link com.intellij.codeInsight.intention.HighPriorityAction HighPriorityAction} or
  * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
- *
+ * <p>
+ * To learn how to implement preview correctly, read <a href="https://plugins.jetbrains.com/docs/intellij/code-intentions-preview.html">Intention Action Preview (IntelliJ Platform Docs)</a>.
+ * 
  * @author max
  * @see ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
@@ -70,6 +73,8 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param project current project
    * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
    * @return an object that describes the action preview to display
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-intentions-preview.html">Intention Action Preview (IntelliJ Platform Docs)</a>
+   * @see <a href="https://www.jetbrains.com/help/inspectopedia/ActionIsNotPreviewFriendly.html">Field blocks intention preview (Inspectopedia)</a>
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;
@@ -89,7 +94,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param descriptor problem descriptor
    * @return list of ranges to highlight, along with highlight attributes; empty list if no specific highlighting should be done
    */
-  default @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
+  default @Unmodifiable @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
     return List.of();
   }
 
@@ -97,7 +102,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @return an array with a single element {@code fix} or an empty array if the argument is null
    */
   static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix fix) {
-    return fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
+    return fix == null ? EMPTY_ARRAY : new LocalQuickFix[]{fix};
   }
   /**
    * @return an array containing all not-null elements from {@code fixes}
@@ -105,7 +110,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
   static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix @NotNull... fixes) {
     List<LocalQuickFix> result = new ArrayList<>(fixes.length);
     ContainerUtil.addAllNotNull(result, fixes);
-    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
+    return result.isEmpty() ? EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
   }
 
   /**

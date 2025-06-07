@@ -49,6 +49,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -58,6 +59,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -653,7 +655,12 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
     val element = Element("state")
 
-    workspaceSchemeManager.save()
+    if (EDT.isCurrentThreadEdt()) {
+      runWriteAction { workspaceSchemeManager.save() }
+    }
+    else {
+      workspaceSchemeManager.save()
+    }
 
     lock.read {
       workspaceSchemeManagerProvider.writeState(element)
@@ -916,7 +923,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   }
 
   private fun runConfigurationFirstLoaded() {
-    if (project.isDefault) {
+    // Do not load run configurations for JetBrains Client, they are loaded from the backend
+    if (project.isDefault || PlatformUtils.isJetBrainsClient()) {
       return
     }
 
@@ -1184,9 +1192,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
     val uniqueId = settings.uniqueID
-    if (selectedConfiguration?.uniqueID == uniqueId) {
-      iconAndInvalidCache.checkValidity(uniqueId, project)
-    }
+    iconAndInvalidCache.checkValidity(uniqueId, project)
     var icon = iconAndInvalidCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstanceIfCreated(project)
@@ -1194,7 +1200,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
                                ?: emptyList()
       when {
         runningDescriptors.size == 1 -> icon =
-          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else ExecutionUtil.getLiveIndicator(icon)
+          ExecutionUtil.withLiveIndicator(icon)
         runningDescriptors.size > 1 -> icon =
           if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else IconUtil.addText(icon, runningDescriptors.size.toString())
       }
@@ -1305,7 +1311,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     removeConfigurations(_toRemove = toRemove, deleteFileIfStoredInArbitraryFile = true)
   }
 
-  internal fun removeConfigurations(@Suppress("LocalVariableName") _toRemove: Collection<RunnerAndConfigurationSettings>,
+  @ApiStatus.Internal
+  fun removeConfigurations(@Suppress("LocalVariableName") _toRemove: Collection<RunnerAndConfigurationSettings>,
                                     deleteFileIfStoredInArbitraryFile: Boolean = true,
                                     onSchemeManagerDeleteEvent: Boolean = false) {
     if (_toRemove.isEmpty()) {

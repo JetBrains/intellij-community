@@ -18,7 +18,7 @@ public interface ApplicationRunLineMarkerHider extends PossiblyDumbAware {
   ExtensionPointName<ApplicationRunLineMarkerHider> EP_NAME =
     ExtensionPointName.create("com.intellij.execution.applicationRunLineMarkerHider");
 
-  static boolean shouldHideRunLineMarker(@NotNull final PsiElement element) {
+  static boolean shouldHideRunLineMarker(final @NotNull PsiElement element) {
     List<ApplicationRunLineMarkerHider> extensionList = EP_NAME.getExtensionList();
     List<ApplicationRunLineMarkerHider> filtered = DumbService.getInstance(element.getProject()).filterByDumbAwareness(extensionList);
     if (extensionList.size() != filtered.size()) return true;

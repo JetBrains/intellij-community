@@ -1,34 +1,36 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.execution` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "execution_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "execution",
   module_name = "intellij.platform.execution",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@community//platform/ide-core",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util-ex",
-    "@community//platform/util/concurrency",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/core-ui",
-    "@community//platform/analysis-api:analysis",
-    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
+    "//platform/util:util-ui",
+    "//platform/util/jdom",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":execution_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.execution` end

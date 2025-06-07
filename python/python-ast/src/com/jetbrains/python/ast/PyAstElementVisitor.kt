@@ -101,6 +101,10 @@ open class PyAstElementVisitor : PsiElementVisitor() {
   open fun visitPyReturnStatement(node: PyAstReturnStatement) {
     visitPyStatement(node)
   }
+  
+  open fun visitPyPassStatement(node: PyAstPassStatement) {
+    visitPyStatement(node)
+  }
 
   open fun visitPyYieldExpression(node: PyAstYieldExpression) {
     visitPyExpression(node)
@@ -259,6 +263,10 @@ open class PyAstElementVisitor : PsiElementVisitor() {
   }
 
   open fun visitPyNoneLiteralExpression(node: PyAstNoneLiteralExpression) {
+    visitPyElement(node)
+  }
+
+  open fun visitPyEllipsisLiteralExpression(node: PyAstEllipsisLiteralExpression) {
     visitPyElement(node)
   }
 

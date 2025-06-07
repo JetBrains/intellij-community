@@ -1,28 +1,37 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.indexing` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
 )
 
-kt_jvm_library(
+jvm_resources(
+  name = "indexing_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
   name = "indexing",
   module_name = "intellij.platform.indexing",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/concurrency",
-    "@libraries//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//platform/util",
+    "//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
-  exports = ["@community//platform/core-api:core"],
-  runtime_deps = [":resources"]
+  exports = ["//platform/core-api:core"],
+  runtime_deps = [":indexing_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.indexing` end

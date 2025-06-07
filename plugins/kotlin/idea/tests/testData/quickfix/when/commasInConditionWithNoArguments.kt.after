@@ -1,6 +1,8 @@
 // "Replace ',' with '||' in when" "true"
 // ERROR: Expected condition of type Boolean
 // ERROR: Expected condition of type Boolean
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
 fun test(i: Int, j: Int) {
     var b = false
     when {

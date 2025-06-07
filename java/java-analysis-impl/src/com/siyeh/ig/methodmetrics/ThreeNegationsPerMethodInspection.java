@@ -16,7 +16,6 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -24,9 +23,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class ThreeNegationsPerMethodInspection extends BaseInspection {
 
@@ -39,8 +37,7 @@ public final class ThreeNegationsPerMethodInspection extends BaseInspection {
   public boolean ignoreInAssert = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodWithMoreThanThreeNegations";
   }
 
@@ -52,8 +49,7 @@ public final class ThreeNegationsPerMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer negationCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "three.negations.per.method.problem.descriptor", negationCount);

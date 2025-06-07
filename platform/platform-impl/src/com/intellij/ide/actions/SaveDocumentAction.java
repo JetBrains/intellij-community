@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,7 +17,10 @@ public final class SaveDocumentAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Document doc = getDocument(e);
     if (doc != null) {
-      FileDocumentManager.getInstance().saveDocument(doc);
+      // sometimes this action is invoked without any lock, like from Driver
+      WriteIntentReadAction.run((Runnable)() -> {
+        FileDocumentManager.getInstance().saveDocument(doc);
+      });
     }
   }
 

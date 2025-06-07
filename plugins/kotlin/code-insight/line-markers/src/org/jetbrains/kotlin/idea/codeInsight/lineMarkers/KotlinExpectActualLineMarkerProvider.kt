@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
@@ -106,7 +105,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION
+            IdeActions.ACTION_GOTO_RELATED
         )
         result.add(lineMarkerInfo)
 

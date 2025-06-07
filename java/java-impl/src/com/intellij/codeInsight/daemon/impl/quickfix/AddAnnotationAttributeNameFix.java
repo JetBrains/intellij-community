@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
       .withFixAllOption(this);
   }
 
-  public static @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
+  public static @Unmodifiable @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value == null || pair.getName() != null) {
       return Collections.emptyList();

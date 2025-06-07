@@ -22,25 +22,23 @@ public class ShSuppressInspectionIntention implements IntentionAction {
     myOffset = offset;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.suppress.inspection", myMessage);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return ShBundle.message("sh.shell.script");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (editor == null) return;
     Document document = editor.getDocument();
     int lineStartOffset = DocumentUtil.getLineStartOffset(myOffset, document);

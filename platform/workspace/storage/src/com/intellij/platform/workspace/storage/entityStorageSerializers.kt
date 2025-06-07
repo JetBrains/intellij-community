@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +23,7 @@ public interface EntityTypesResolver {
    *
    * Collections inside the kotlin entities are loaded by another class loader.
    *
-   * This is temporary solution until the kotlin plugin uses the same version of kotlin-stdlib as the intellij-platform.
+   * This is a temporary solution until the kotlin plugin uses the same version of kotlin-stdlib as the intellij-platform.
    * In addition, plugin developers are not recommended to use a different version of kotlin-stdlib than the version for intellij-platform.
    */
   @Obsolete

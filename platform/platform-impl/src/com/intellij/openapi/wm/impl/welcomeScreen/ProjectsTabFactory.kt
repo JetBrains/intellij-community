@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.wm.WelcomeScreenCustomization
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -195,7 +196,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun createEmptyStatePanel(): JComponent {
-    val emptyStateProjectsPanel = emptyStateProjectPanel(parentDisposable)
+    val emptyStateProjectsPanel = WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.extensionList.firstNotNullOfOrNull { it.createMainEmptyState(parentDisposable) }
+                                  ?: emptyStateProjectPanel(parentDisposable)
     initDnD(emptyStateProjectsPanel)
     return emptyStateProjectsPanel
   }
@@ -220,11 +222,9 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
           when {
             index >= getWelcomeScreenPrimaryButtonsNum() -> action
             action is ActionGroup && action is ActionsWithPanelProvider -> {
-              val p = e.updateSession.presentation(action)
-              val wrapper = p.getClientProperty(ActionUtil.INLINE_ACTIONS)?.first()
-                            ?: wrappers.getOrPut(action) { ActionGroupPanelWrapper.wrapGroups(action, parentDisposable) }.also {
-                              p.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(it))
-                            }
+              val wrapper = wrappers.getOrPut(action) {
+                ActionGroupPanelWrapper.wrapGroups(action, parentDisposable)
+              }
               e.updateSession.presentation(wrapper)
               wrapper
             }
@@ -234,7 +234,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
                 children.isEmpty() -> action
                 else -> {
                   val first = children.first()
-                  val wrapper = wrappers.getOrPut(first) { ActionGroupPanelWrapper.wrapGroups(first, parentDisposable) }
+                  val wrapper = when {
+                    first is ActionGroup && first is ActionsWithPanelProvider -> wrappers.getOrPut(first) {
+                      ActionGroupPanelWrapper.wrapGroups(first, parentDisposable)
+                    }
+                    else -> first
+                  }
                   e.updateSession.presentation(wrapper).putClientProperty(
                     ActionUtil.INLINE_ACTIONS, children.subList(1, children.size))
                   wrapper

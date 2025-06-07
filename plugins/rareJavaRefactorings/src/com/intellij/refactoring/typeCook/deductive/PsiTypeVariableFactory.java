@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive;
 
 import com.intellij.psi.*;
@@ -55,17 +55,17 @@ public class PsiTypeVariableFactory {
 
         return type.accept(new PsiTypeVisitor<Boolean>() {
           @Override
-          public Boolean visitType(@NotNull final PsiType type) {
+          public Boolean visitType(final @NotNull PsiType type) {
             return Boolean.TRUE;
           }
 
           @Override
-          public Boolean visitArrayType(@NotNull final PsiArrayType arrayType) {
+          public Boolean visitArrayType(final @NotNull PsiArrayType arrayType) {
             return arrayType.getDeepComponentType().accept(this);
           }
 
           @Override
-          public Boolean visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
+          public Boolean visitWildcardType(final @NotNull PsiWildcardType wildcardType) {
             final PsiType bound = wildcardType.getBound();
 
             if (bound != null) {
@@ -76,7 +76,7 @@ public class PsiTypeVariableFactory {
           }
 
           @Override
-          public Boolean visitClassType(@NotNull final PsiClassType classType) {
+          public Boolean visitClassType(final @NotNull PsiClassType classType) {
             final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
             final PsiClass aClass = result.getElement();
             final PsiSubstitutor aSubst = result.getSubstitutor();
@@ -130,14 +130,12 @@ public class PsiTypeVariableFactory {
       }
 
       @Override
-      @NotNull
-      public String getPresentableText() {
+      public @NotNull String getPresentableText() {
         return "$" + myIndex;
       }
 
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         return getPresentableText();
       }
 
@@ -161,11 +159,13 @@ public class PsiTypeVariableFactory {
         return EMPTY_ARRAY;
       }
 
+      @Override
       public boolean equals(Object o) {
         if (this == o) return true;
         return o instanceof PsiTypeVariable psiTypeVariable && myIndex == psiTypeVariable.getIndex();
       }
 
+      @Override
       public int hashCode() {
         return myIndex;
       }

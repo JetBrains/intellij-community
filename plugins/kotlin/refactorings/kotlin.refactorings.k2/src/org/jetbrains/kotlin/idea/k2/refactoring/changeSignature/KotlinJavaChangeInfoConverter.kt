@@ -20,13 +20,15 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.types.Variance
 
-fun fromJavaChangeInfo(changeInfo: ChangeInfo, usageInfo: UsageInfo): KotlinChangeInfoBase? {
+fun fromJavaChangeInfo(changeInfo: ChangeInfo, usageInfo: UsageInfo, beforeMethodChange: Boolean): KotlinChangeInfoBase? {
     return when (changeInfo) {
         is KotlinChangeInfoBase -> changeInfo
-        is JavaChangeInfo -> JavaChangeInfoConverters.findConverter(KotlinLanguage.INSTANCE)?.fromJavaChangeInfo(changeInfo, usageInfo) as? KotlinChangeInfoBase
+        is JavaChangeInfo -> JavaChangeInfoConverters.findConverter(KotlinLanguage.INSTANCE)?.fromJavaChangeInfo(changeInfo, usageInfo, beforeMethodChange) as? KotlinChangeInfoBase
         else -> null
     }
 }
@@ -253,41 +255,15 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         return params
     }
 
-    private fun mapJavaParameterToKotlin(
-        changeInfo: JavaChangeInfo,
-        p: JavaParameterInfo,
-        useSiteKtElement: KtElement
-    ): KotlinParameterInfo {
-        val psiMethod = changeInfo.method
-        val oldName = if (p.oldIndex >= 0) changeInfo.oldParameterNames[p.oldIndex] else p.name
-        return KotlinParameterInfo(
-            originalIndex = p.oldIndex,
-            originalType = KotlinTypeInfo(p.typeWrapper.getType(psiMethod).canonicalText, useSiteKtElement),
-            name = oldName,
-            valOrVar = KotlinValVar.None,
-            defaultValueForCall = p.defaultValue?.let {
-                try {
-                    KtPsiFactory(psiMethod.project).createExpression(it)
-                } catch (_: Throwable) {
-                    null
-                }
-            },
-            defaultValueAsDefaultParameter = false,
-            defaultValue = null,
-            context = useSiteKtElement
-        ).apply {
-            name = p.name
-        }
-    }
-
     override fun fromJavaChangeInfo(
-      changeInfo: JavaChangeInfo,
-      usageInfo: UsageInfo
+        changeInfo: JavaChangeInfo,
+        usageInfo: UsageInfo,
+        beforeMethodChanged: Boolean
     ): KotlinChangeInfoBase {
         val useSiteKtElement = usageInfo.element?.unwrapped as KtElement
 
         val kotlinParameterInfos =
-            changeInfo.newParameters.map { p -> mapJavaParameterToKotlin(changeInfo, p, useSiteKtElement) }.toTypedArray()
+            changeInfo.newParameters.map { p -> mapJavaParameterToKotlin(changeInfo, p, useSiteKtElement, beforeMethodChanged) }.toTypedArray()
 
         val returnType = changeInfo.newReturnType?.getType(changeInfo.method)?.getCanonicalText()
         return object : KotlinChangeInfoBase, ChangeInfo by changeInfo {
@@ -322,4 +298,59 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         }
     }
 
+    private fun mapJavaParameterToKotlin(
+        changeInfo: JavaChangeInfo,
+        p: JavaParameterInfo,
+        useSiteKtElement: KtElement,
+        beforeMethodChanged: Boolean
+    ): KotlinParameterInfo {
+        val psiMethod = changeInfo.method
+        val oldName = if (p.oldIndex >= 0) changeInfo.oldParameterNames[p.oldIndex] else p.name
+        val oldValVar =
+            if (p.oldIndex >= 0 && beforeMethodChanged) (psiMethod.parameterList.parameters[p.oldIndex].unwrapped as? KtParameter)?.valOrVarKeyword?.toValVar() else null
+        val originalType = createKotlinTypeInfo(p, psiMethod, useSiteKtElement)
+        return KotlinParameterInfo(
+            originalIndex = p.oldIndex,
+            originalType = originalType,
+            name = oldName,
+            valOrVar = oldValVar ?: KotlinValVar.None,
+            defaultValueForCall = p.defaultValue?.let {
+                try {
+                    KtPsiFactory(psiMethod.project).createExpression(it)
+                } catch (_: Throwable) {
+                    null
+                }
+            },
+            defaultValueAsDefaultParameter = false,
+            defaultValue = null,
+            context = useSiteKtElement
+        ).apply {
+            name = p.name
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun createKotlinTypeInfo(
+        p: JavaParameterInfo,
+        psiMethod: PsiMethod,
+        useSiteKtElement: KtElement
+    ): KotlinTypeInfo {
+        val unwrapped = psiMethod.unwrapped
+        val psiType = p.typeWrapper.getType(psiMethod)
+        val typeText = if (unwrapped is KtNamedDeclaration) {
+            allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(unwrapped) {
+                        psiType.asKaType(unwrapped)?.render(position = Variance.IN_VARIANCE)
+                    }
+                }
+            }
+        } else {
+            null
+        }
+        return KotlinTypeInfo(
+            typeText ?: psiType.getCanonicalText(),
+            useSiteKtElement
+        )
+    }
 }

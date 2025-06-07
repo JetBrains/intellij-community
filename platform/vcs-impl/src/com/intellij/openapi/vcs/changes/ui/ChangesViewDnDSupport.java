@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDActionInfo;
@@ -24,7 +24,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED
 
 @ApiStatus.Internal
 public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static void install(@NotNull Project project, @NotNull ChangesTree tree, @NotNull Disposable disposable) {
     new ChangesViewDnDSupport(project, tree).install(disposable);
@@ -35,9 +35,8 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
     myProject = project;
   }
 
-  @Nullable
   @Override
-  protected DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
+  protected @Nullable DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
     if (info.isMove()) {
       List<Change> changes = VcsTreeModelData.selected(myTree)
         .iterateUserObjects(Change.class).toList();

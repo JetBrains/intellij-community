@@ -15,45 +15,22 @@
  */
 package org.jetbrains.intellij.build.io;
 
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.util.lang.Xxh3;
-import org.assertj.core.api.AssertionsForClassTypes;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-
-import static java.nio.ByteOrder.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 final class HashFunctionTest {
   public static void test(byte[] data, long eh) {
     int len = data.length;
-    ByteBuffer bb = ByteBuffer.wrap(data).order(nativeOrder());
     testArrays(data, eh, len);
-    testByteBuffers(eh, len, bb);
   }
 
   private static void testArrays(byte[] data, long eh, int len) {
-    AssertionsForClassTypes.assertThat(Xxh3.hash(data)).isEqualTo(eh);
+    assertThat(Hashing.xxh3_64().hashBytesToLong(data)).isEqualTo(eh);
 
     byte[] data2 = new byte[len + 2];
     System.arraycopy(data, 0, data2, 1, len);
     assertThat(Xxh3.hash(data2, 1, len)).isEqualTo(eh);
-  }
-
-  private static void testByteBuffers(long eh, int len, ByteBuffer bb) {
-    bb.order(LITTLE_ENDIAN);
-    assertThat(Xxh3.hash(bb)).isEqualTo(eh);
-    ByteBuffer bb2 = ByteBuffer.allocate(len + 2).order(LITTLE_ENDIAN);
-    ((Buffer)bb2).position(1);
-    bb2.put(bb);
-    assertThat(Xxh3.hash(bb2, 1, len)).isEqualTo(eh);
-
-    ((Buffer)bb.order(BIG_ENDIAN)).clear();
-
-    assertThat(Xxh3.hash(bb)).isEqualTo(eh);
-    bb2.order(BIG_ENDIAN);
-    assertThat(Xxh3.hash(bb2, 1, len)).isEqualTo(eh);
-
-    ((Buffer)bb.order(nativeOrder())).clear();
   }
 }

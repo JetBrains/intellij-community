@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
@@ -37,8 +37,7 @@ public class VariableData extends AbstractVariableData {
     return varType;
   }
 
-  @NotNull
-  public VariableData substitute(@Nullable PsiVariable var) {
+  public @NotNull VariableData substitute(@Nullable PsiVariable var) {
     if (var == null) {
       return this;
     }

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -25,8 +25,7 @@ public final class ListenerMayUseAdapterInspection extends BaseInspection {
   public boolean checkForEmptyMethods = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
     final String adapterName = (String)infos[1];
@@ -56,14 +55,12 @@ public final class ListenerMayUseAdapterInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "extends " + adapterName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("listener.may.use.adapter.fix.family.name");
     }
 
@@ -137,7 +134,7 @@ public final class ListenerMayUseAdapterInspection extends BaseInspection {
       if (!(target instanceof PsiClass implementsClass)) {
         return;
       }
-      @NonNls final String className = implementsClass.getQualifiedName();
+      final @NonNls String className = implementsClass.getQualifiedName();
       if (className == null || !className.endsWith("Listener")) {
         return;
       }
@@ -155,7 +152,7 @@ public final class ListenerMayUseAdapterInspection extends BaseInspection {
       if (allDefault) {
         return;
       }
-      @NonNls final String adapterName = className.substring(0, className.length() - 8) + "Adapter";
+      final @NonNls String adapterName = className.substring(0, className.length() - 8) + "Adapter";
       final GlobalSearchScope scope = implementsClass.getResolveScope();
       final PsiClass adapterClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(adapterName, scope);
       if (adapterClass == null || adapterClass.equals(aClass) || !adapterClass.hasModifierProperty(PsiModifier.ABSTRACT) ||

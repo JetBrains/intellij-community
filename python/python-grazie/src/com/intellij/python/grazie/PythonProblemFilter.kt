@@ -6,7 +6,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.ProblemFilterUtil
 
-class PythonProblemFilter : ProblemFilter() {
+private class PythonProblemFilter : ProblemFilter() {
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val domain = problem.text.domain
     return domain == TextContent.TextDomain.DOCUMENTATION &&

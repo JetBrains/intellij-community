@@ -11,14 +11,14 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class CodeFenceHighlightInfoFilter: HighlightInfoFilter {
-  override fun accept(highlightInfo: HighlightInfo, file: PsiFile?): Boolean {
-    if (file == null) {
+  override fun accept(highlightInfo: HighlightInfo, psiFile: PsiFile?): Boolean {
+    if (psiFile == null) {
       return true
     }
-    val project = file.project
+    val project = psiFile.project
     val manager = InjectedLanguageManager.getInstance(project)
-    val topLevelFile = manager.getTopLevelFile(file) ?: return true
-    if (topLevelFile.fileType == MarkdownFileType.INSTANCE && manager.getInjectionHost(file) is MarkdownCodeFence) {
+    val topLevelFile = manager.getTopLevelFile(psiFile) ?: return true
+    if (topLevelFile.fileType == MarkdownFileType.INSTANCE && manager.getInjectionHost(psiFile) is MarkdownCodeFence) {
       if (highlightInfo.severity !in internalSeverities) {
         return MarkdownSettings.getInstance(project).showProblemsInCodeBlocks
       }

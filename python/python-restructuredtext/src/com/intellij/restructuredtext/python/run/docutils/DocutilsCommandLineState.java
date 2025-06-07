@@ -46,8 +46,7 @@ public class DocutilsCommandLineState extends RestCommandLineState {
   }
 
   @Override
-  @Nullable
-  protected String getKey() {
+  protected @Nullable String getKey() {
     return null;
   }
 }

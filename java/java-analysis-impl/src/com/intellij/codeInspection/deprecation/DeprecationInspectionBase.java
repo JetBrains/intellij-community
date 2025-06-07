@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -103,9 +103,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return false;
   }
 
-  @Nullable
-  public static LocalQuickFix getReplacementQuickFix(@NotNull PsiModifierListOwner deprecatedElement, 
-                                                      @NotNull PsiElement elementToHighlight) {
+  public static @Nullable LocalQuickFix getReplacementQuickFix(@NotNull PsiModifierListOwner deprecatedElement,
+                                                               @NotNull PsiElement elementToHighlight) {
     PsiMethodCallExpression methodCall = getMethodCall(elementToHighlight);
     if (deprecatedElement instanceof PsiMethod method && methodCall != null) {
       PsiMethod replacement = findReplacementInJavaDoc(method, methodCall);
@@ -204,8 +203,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .orElse(null);
   }
 
-  @NotNull
-  private static <T extends PsiDocCommentOwner> StreamEx<? extends T> getReplacementCandidatesFromJavadoc(PsiDocCommentOwner member, Class<T> clazz, PsiElement context, PsiClass qualifierClass) {
+  private static @NotNull <T extends PsiDocCommentOwner> StreamEx<? extends T> getReplacementCandidatesFromJavadoc(PsiDocCommentOwner member, Class<T> clazz, PsiElement context, PsiClass qualifierClass) {
     PsiDocComment doc = member.getDocComment();
     if (doc == null) return StreamEx.empty();
 
@@ -283,16 +281,14 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return result != null && result.isApplicable();
   }
 
-  @Nullable
-  private static PsiReferenceExpression getFieldReferenceExpression(@NotNull PsiElement element) {
+  private static @Nullable PsiReferenceExpression getFieldReferenceExpression(@NotNull PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       return (PsiReferenceExpression) element;
     }
     return ObjectUtils.tryCast(element.getParent(), PsiReferenceExpression.class);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getMethodCall(@NotNull PsiElement element) {
+  private static @Nullable PsiMethodCallExpression getMethodCall(@NotNull PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       return ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);
     }

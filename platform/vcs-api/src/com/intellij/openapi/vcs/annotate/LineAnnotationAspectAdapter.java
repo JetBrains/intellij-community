@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
@@ -12,8 +12,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
-  @Nullable private final String myId;
-  @NlsContexts.ListItem @Nullable private final String myDisplayName;
+  private final @Nullable String myId;
+  private final @NlsContexts.ListItem @Nullable String myDisplayName;
   private final boolean myShowByDefault;
 
   protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
@@ -29,8 +29,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   @Override
-  @NlsContexts.Tooltip
-  public String getTooltipText(int lineNumber) {
+  public @NlsContexts.Tooltip String getTooltipText(int lineNumber) {
     return null;
   }
 

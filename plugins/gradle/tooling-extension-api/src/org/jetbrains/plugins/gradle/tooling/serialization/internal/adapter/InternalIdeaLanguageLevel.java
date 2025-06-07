@@ -38,15 +38,18 @@ public final class InternalIdeaLanguageLevel implements IdeaLanguageLevel {
     return this.level;
   }
 
+  @Override
   public String toString() {
     return "IdeaLanguageLevel{level='" + this.level + "'}";
   }
 
+  @Override
   public boolean equals(Object o) {
     return this == o || o instanceof InternalIdeaLanguageLevel &&
                         Objects.equal(this.level, ((InternalIdeaLanguageLevel)o).level);
   }
 
+  @Override
   public int hashCode() {
     return this.level != null ? this.level.hashCode() : 0;
   }

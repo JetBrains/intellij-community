@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.UnSelectWordHandler;
@@ -19,7 +19,7 @@ public abstract class SelectWordTestBase extends LightPlatformCodeInsightTestCas
   protected void doTest(@NonNls String ext, boolean unselect) { doTest(ext, unselect, false); }
 
   protected void doTest(@NonNls String ext, boolean unselect, boolean defaultFolding) {
-    @NonNls final String path = "/codeInsight/selectWordAction/" + getTestName(true);
+    final @NonNls String path = "/codeInsight/selectWordAction/" + getTestName(true);
     configureByFile(path + "/before." + ext);
     if (defaultFolding) {
       EditorTestUtil.buildInitialFoldingsInBackground(getEditor());

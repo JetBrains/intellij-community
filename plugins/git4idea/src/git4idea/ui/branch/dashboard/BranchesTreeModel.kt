@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -7,18 +7,23 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.shared.ui.getText
 import git4idea.*
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
-import git4idea.branch.IncomingOutgoingState
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
@@ -37,7 +42,7 @@ internal data class BranchInfo(
   val branch: GitBranch,
   override val isCurrent: Boolean,
   override var isFavorite: Boolean,
-  var incomingOutgoingState: IncomingOutgoingState = IncomingOutgoingState.EMPTY,
+  var incomingOutgoingState: GitInOutCountersInProject = GitInOutCountersInProject.EMPTY,
   override val repositories: List<GitRepository>,
 ) : RefInfo {
   var isMy: ThreeState = ThreeState.UNSURE
@@ -60,7 +65,8 @@ internal data class TagInfo(
   override fun toString() = tag.name
 }
 
-internal sealed class BranchNodeDescriptor {
+@ApiStatus.Internal
+sealed class BranchNodeDescriptor {
   abstract val children: List<BranchNodeDescriptor>
   abstract val displayName: String
 
@@ -94,7 +100,7 @@ internal sealed class BranchNodeDescriptor {
     override fun toString(): String = "REMOTE:$displayName"
   }
 
-  sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
+  internal sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
   }
@@ -146,25 +152,75 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal class NodeDescriptorsModel(private val rootNode: BranchNodeDescriptor.Root, project: Project) {
-  private val incomingOutgoingManager: GitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+@ApiStatus.Internal
+interface BranchesTreeModel {
+  val root: BranchNodeDescriptor
+  val groupingConfig: Map<GroupingKey, Boolean>
+  val isLoading: Boolean
 
-  fun rebuildFrom(refs: RefsCollection, filter: (RefInfo) -> Boolean, groupingConfig: Map<GroupingKey, Boolean>) {
+  fun addListener(listener: Listener)
+  fun removeListener(listener: Listener)
+
+  interface Listener : EventListener {
+    fun onTreeChange() {}
+    fun onLoadingStateChange() {}
+  }
+}
+
+@ApiStatus.Internal
+abstract class BranchesTreeModelBase : BranchesTreeModel {
+  private val _root = BranchNodeDescriptor.Root()
+  final override val root: BranchNodeDescriptor = _root
+  private val listeners = EventDispatcher.create(BranchesTreeModel.Listener::class.java)
+
+  private val loadingCounter = AtomicInteger()
+  final override val isLoading: Boolean
+    get() = loadingCounter.get() > 0
+
+  protected fun setTree(nodes: List<BranchNodeDescriptor>) {
+    _root.children = nodes
+    listeners.multicaster.onTreeChange()
+  }
+
+  protected fun startLoading() {
+    loadingCounter.incrementAndGet()
+    listeners.multicaster.onLoadingStateChange()
+  }
+
+  protected fun finishLoading() {
+    loadingCounter.decrementAndGet()
+    listeners.multicaster.onLoadingStateChange()
+  }
+
+  final override fun addListener(listener: BranchesTreeModel.Listener) {
+    listeners.addListener(listener)
+  }
+
+  final override fun removeListener(listener: BranchesTreeModel.Listener) {
+    listeners.removeListener(listener)
+  }
+}
+
+@VisibleForTesting
+internal object NodeDescriptorsModel {
+  fun buildTreeNodes(project: Project, refs: RefsCollection, filter: (RefInfo) -> Boolean, groupingConfig: Map<GroupingKey, Boolean>): List<BranchNodeDescriptor> {
     val groupByRepository = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY]!!
     val groupByPrefix = groupingConfig[GroupingKey.GROUPING_BY_DIRECTORY]!!
 
+    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
     val topLevelGroups = mutableListOf<BranchNodeDescriptor>()
     topLevelGroups += BranchNodeDescriptor.Head
     refs.forEach { refs, group ->
-      val children = groupByRepoAndPrefixIfApplicable(refs.asSequence().filter(filter), groupByRepository, groupByPrefix)
+      val children = groupByRepoAndPrefixIfApplicable(incomingOutgoingManager, refs.asSequence().filter(filter), groupByRepository, groupByPrefix)
       if (children.isNotEmpty()) {
         topLevelGroups += BranchNodeDescriptor.TopLevelGroup(group, children)
       }
     }
-    rootNode.children = topLevelGroups
+    return topLevelGroups
   }
 
   private fun groupByRepoAndPrefixIfApplicable(
+    incomingOutgoingManager: GitBranchIncomingOutgoingManager,
     refsInfo: Sequence<RefInfo>,
     groupByRepository: Boolean,
     groupByPrefix: Boolean,
@@ -177,7 +233,7 @@ internal class NodeDescriptorsModel(private val rootNode: BranchNodeDescriptor.R
           is BranchInfo -> {
             val incomingOutgoingState =
               if (refInfo.ref is GitLocalBranch) incomingOutgoingManager.getIncomingOutgoingState(repository, refInfo.ref)
-              else IncomingOutgoingState.EMPTY
+              else GitInOutCountersInProject.EMPTY
             refInfo.copy(isCurrent = repository.isCurrentBranch(refInfo.branchName), isFavorite = isFavorite, incomingOutgoingState = incomingOutgoingState)
           }
           is TagInfo -> {

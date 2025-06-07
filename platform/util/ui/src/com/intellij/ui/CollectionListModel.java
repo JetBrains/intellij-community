@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -16,12 +14,12 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     myItems = new ArrayList<>(items);
   }
 
-  @SuppressWarnings("UnusedParameters")
-  public CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
+  @Contract(mutates = "param1")
+  public CollectionListModel(@NotNull List<T> items, @SuppressWarnings("unused") boolean useListAsIs) {
     myItems = items;
   }
 
-  public CollectionListModel(@NotNull List<? extends T> items) {
+  public CollectionListModel(@NotNull @Unmodifiable List<? extends T> items) {
     myItems = new ArrayList<>(items);
   }
 
@@ -79,8 +77,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   @SuppressWarnings("UnusedParameters")
-  protected void itemReplaced(@NotNull T existingItem, @Nullable T newItem) {
-  }
+  protected void itemReplaced(@NotNull T existingItem, @Nullable T newItem) { }
 
   public void remove(final int index) {
     T item = myItems.remove(index);
@@ -171,5 +168,4 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     }
     fireIntervalRemoved(this, fromIndex, toIndex);
   }
-
 }

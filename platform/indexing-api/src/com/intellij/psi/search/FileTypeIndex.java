@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -39,14 +40,12 @@ public final class FileTypeIndex {
   @Internal
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
-  @Nullable
-  public static FileType getIndexedFileType(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable FileType getIndexedFileType(@NotNull VirtualFile file, @NotNull Project project) {
     Map<FileType, Void> data = FileBasedIndex.getInstance().getFileData(NAME, file, project);
     return ContainerUtil.getFirstItem(data.keySet());
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
   }
 

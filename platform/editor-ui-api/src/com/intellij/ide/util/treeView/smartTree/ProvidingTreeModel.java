@@ -2,6 +2,7 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -9,7 +10,8 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public interface ProvidingTreeModel extends TreeModel {
-  @NotNull Collection<NodeProvider<?>> getNodeProviders();
+  @NotNull @Unmodifiable
+  Collection<NodeProvider<?>> getNodeProviders();
 
   boolean isEnabled(@NotNull NodeProvider<?> provider);
 }

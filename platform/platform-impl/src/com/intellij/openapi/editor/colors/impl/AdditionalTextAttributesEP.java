@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/color-scheme-management.html#providing-attributes-for-specific-schemes">Color Scheme Management (IntelliJ Platform Docs)</a>
  */
-@ApiStatus.Internal
 public final class AdditionalTextAttributesEP implements PluginAware {
   private AdditionalTextAttributesEP() {
   }
 
+  @ApiStatus.Internal
   public AdditionalTextAttributesEP(PluginDescriptor pluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor;
   }
@@ -32,6 +32,7 @@ public final class AdditionalTextAttributesEP implements PluginAware {
 
   transient PluginDescriptor pluginDescriptor;
 
+  @ApiStatus.Internal
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor value) {
     pluginDescriptor = value;

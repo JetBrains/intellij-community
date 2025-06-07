@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -77,7 +78,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
           }
         }
         if (remainsNothing) {
-          for (PsiReference reference : ReferencesSearch.search(aPackage, GlobalSearchScope.projectScope(project))) {
+          for (PsiReference reference : ReferencesSearch.search(aPackage, GlobalSearchScope.projectScope(project)).asIterable()) {
             final PsiElement element = reference.getElement();
             final PsiImportStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
             if (statementBase != null && statementBase.isOnDemand() && !isUnderRefactoring(statementBase, directoriesToMove)) {
@@ -126,7 +127,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+  public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     List<UsageInfo> usageInfosToProcess = ContainerUtil.filter(usages, usageInfo -> {
       if (usageInfo instanceof MoveRenameUsageInfo moveRenameUsageInfo) {
         final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
@@ -138,7 +139,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       }
     });
     CommonMoveUtil.retargetUsages(usageInfosToProcess.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
-    usages.removeAll(usageInfosToProcess);
+    return ContainerUtil.filter(usages, u -> !usageInfosToProcess.contains(u));
   }
 
   @Override

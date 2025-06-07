@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -58,7 +58,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   private WizardContext myWizardContext;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super(Presentation.NULL_STRING, true);
+    super("New Project", true);
     myCustomization = customization;
     myCustomization.setProjectStep(this);
     updateActions();
@@ -198,7 +198,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       builder.setNewProject(true);
       builder.setRunConfigurators(true);
       builder.setProjectCreatedWithWizard(true);
-      builder.setRefreshVfsNeeded(false);
       builder.withBeforeOpenCallback(project -> {
         if (extraUserData != null) {
           extraUserData.accept(project);
@@ -273,8 +272,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     myWizardContext = wizardContext;
   }
 
-  @Nullable
-  final WizardContext getWizardContext() {
+  final @Nullable WizardContext getWizardContext() {
     return myWizardContext;
   }
 }

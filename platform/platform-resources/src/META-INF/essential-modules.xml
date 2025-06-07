@@ -4,7 +4,11 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.ktor.client.cio"/>
 
+    <module name="intellij.libraries.kotlinx.io"/>
+
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
@@ -15,14 +19,55 @@
     <module name="intellij.platform.navbar.frontend"/>
     <module name="intellij.platform.navbar.monolith"/>
     <module name="intellij.platform.clouds"/>
-    <module name="intellij.platform.execution.dashboard"/>
+
     <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.execution.serviceView.frontend"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.dashboard.frontend"/>
+    <module name="intellij.platform.execution.dashboard.backend"/>
+
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.searchEverywhere.backend"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
+
+    <!--
+    The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
+    Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
+    the find module must also be marked as embedded to maintain proper dependency loading order.
+    This attribute can be removed once ThinClientFindAndReplaceExecutor is removed.
+    -->
+    <module name="intellij.platform.find" loading="embedded"/>
+    <module name="intellij.platform.find.backend"/>
+    <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.editor.backend"/>
+    <module name="intellij.platform.editor.frontend"/>
 
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
+
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.bookmarks.frontend"/>
 
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.monolith"/>
 
     <module name="intellij.platform.inline.completion"/>
+
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.recentFiles.backend"/>
+
+    <module name="intellij.platform.pluginManager.shared"/>
+    <module name="intellij.platform.pluginManager.backend"/>
+    <module name="intellij.platform.pluginManager.frontend"/>
+
+    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.eel.impl" loading="embedded"/> <!-- referenced from 'intellij.platform.ijent.community.impl' loaded by the core classloader -->
+
+    <module name="intellij.platform.identifiers.highlighting.shared"/>
+    <module name="intellij.platform.identifiers.highlighting.backend"/>
   </content>
 </idea-plugin>

@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 interface ExpectActualSupport {
-    fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
-    fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
+    fun expectDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
+    fun actualsForExpect(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 
     companion object {
         fun getInstance(project: Project): ExpectActualSupport = project.service()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ReflectionUtilRt;
@@ -22,8 +22,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class Maven3ModelConverter {
-  @NotNull
-  public static MavenModel convertModel(Model model, File localRepository) {
+  public static @NotNull MavenModel convertModel(Model model, File localRepository) {
     if(model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -38,11 +37,10 @@ public class Maven3ModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  @NotNull
-  public static MavenModel convertModel(Model model,
-                                        List<String> sources,
-                                        List<String> testSources,
-                                        File localRepository) {
+  public static @NotNull MavenModel convertModel(Model model,
+                                                 List<String> sources,
+                                                 List<String> testSources,
+                                                 File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -408,8 +406,7 @@ public class Maven3ModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
-  @NotNull
-  public static Model toNativeModel(MavenModel model) {
+  public static @NotNull Model toNativeModel(MavenModel model) {
     Model result = new Model();
     result.setArtifactId(model.getMavenId().getArtifactId());
     result.setGroupId(model.getMavenId().getGroupId());

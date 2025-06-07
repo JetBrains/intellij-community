@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -90,9 +90,8 @@ public final class EqualsWithItselfInspection extends BaseInspection {
         .description(HtmlChunk.raw(InspectionGadgetsBundle.message("equals.with.itself.option.description"))));
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("equals.with.itself.problem.descriptor");
   }
 
@@ -102,8 +101,7 @@ public final class EqualsWithItselfInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final Boolean canEnableOption = (Boolean)infos[0];
     return canEnableOption ? LocalQuickFix.from(new UpdateInspectionOptionFix(
       this, "ignoreNonFinalClassesInTest", InspectionGadgetsBundle.message("equals.with.itself.option"), true)) : null;
@@ -180,8 +178,7 @@ public final class EqualsWithItselfInspection extends BaseInspection {
     return false;
   }
 
-  @Nullable
-  private static PsiExpression getAssertThatArgument(@Nullable PsiExpression expression) {
+  private static @Nullable PsiExpression getAssertThatArgument(@Nullable PsiExpression expression) {
     while (expression instanceof PsiMethodCallExpression callExpression) {
       if (ASSERTJ_ASSERT_THAT.test(callExpression)) return callExpression.getArgumentList().getExpressions()[0];
       PsiReferenceExpression reference = callExpression.getMethodExpression();

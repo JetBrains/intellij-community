@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
@@ -15,7 +14,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.searchComponents.ExtendableSearchTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -98,38 +96,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     ScrollingUtil.installActions(myResultsList, getSearchField());
   }
 
-  protected static class SearchField extends ExtendableTextField {
+  protected static class SearchField extends ExtendableSearchTextField {
     public SearchField() {
-      if (ExperimentalUI.isNewUI()) {
-        setOpaque(false);
-        setBorder(PopupUtil.createComplexPopupTextFieldBorder());
-      }
-      else {
-        Border empty = new EmptyBorder(JBUI.CurrentTheme.BigPopup.searchFieldInsets());
-        Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
-        setBorder(JBUI.Borders.merge(empty, topLine, true));
-        setBackground(JBUI.CurrentTheme.BigPopup.searchFieldBackground());
-      }
-      setFocusTraversalKeysEnabled(false);
-
-      if (Registry.is("new.search.everywhere.use.editor.font")) {
-        Font editorFont = EditorUtil.getEditorFont();
-        setFont(editorFont);
-      }
-
-      int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
-      if (fontDelta != 0) {
-        Font font = getFont();
-        font = font.deriveFont((float)fontDelta + font.getSize());
-        setFont(font);
-      }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      size.height = Integer.max(JBUIScale.scale(29), size.height);
-      return size;
+      super();
     }
   }
 

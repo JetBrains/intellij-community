@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +17,8 @@ import java.awt.event.ActionEvent;
  * @author Dmitry Avdeev
  */
 class VcsConfirmationDialog extends OptionsDialog {
-  @NotNull private final @NlsContexts.Button String myOkText;
-  @NotNull private final @NlsContexts.Button String myCancelText;
+  private final @NotNull @NlsContexts.Button String myOkText;
+  private final @NotNull @NlsContexts.Button String myCancelText;
   private final VcsShowConfirmationOption myOption;
   private final @NlsContexts.Label String myMessage;
   private final @NlsContexts.Checkbox String myDoNotShowMessage;
@@ -63,9 +63,8 @@ class VcsConfirmationDialog extends OptionsDialog {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected String getDoNotShowMessage() {
+  protected @NotNull String getDoNotShowMessage() {
     return myDoNotShowMessage;
   }
 

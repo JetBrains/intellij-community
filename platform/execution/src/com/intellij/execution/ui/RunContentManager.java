@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
@@ -21,13 +21,11 @@ import java.util.List;
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
 
-  @NotNull
-  static RunContentManager getInstance(@NotNull Project project) {
+  static @NotNull RunContentManager getInstance(@NotNull Project project) {
     return project.getService(RunContentManager.class);
   }
 
-  @Nullable
-  static RunContentManager getInstanceIfCreated(@NotNull Project project) {
+  static @Nullable RunContentManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(RunContentManager.class);
   }
 
@@ -75,8 +73,7 @@ public interface RunContentManager {
   /**
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */
-  @Nullable
-  default String getContentDescriptorToolWindowId(@NotNull ExecutionEnvironment environment) {
+  default @Nullable String getContentDescriptorToolWindowId(@NotNull ExecutionEnvironment environment) {
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof RunConfiguration) {
       return getContentDescriptorToolWindowId((RunConfiguration)runProfile);

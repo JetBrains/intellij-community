@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.maven.server;
 
 import org.junit.jupiter.api.Test;
@@ -31,5 +32,6 @@ class EventInfoPrinterTest {
                                         Object type,
                                         CharSequence... objects) {
     assertEquals(expected, EventInfoPrinter.printToBuffer(type, objects).toString());
+
   }
 }

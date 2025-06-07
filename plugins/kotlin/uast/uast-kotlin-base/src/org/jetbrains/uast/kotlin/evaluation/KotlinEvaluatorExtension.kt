@@ -1,17 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.evaluation
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UastPostfixOperator
 import org.jetbrains.uast.evaluation.AbstractEvaluatorExtension
 import org.jetbrains.uast.evaluation.UEvaluationInfo
 import org.jetbrains.uast.evaluation.UEvaluationState
+import org.jetbrains.uast.evaluation.to
 import org.jetbrains.uast.kotlin.KotlinBinaryOperators
 import org.jetbrains.uast.kotlin.KotlinPostfixOperators
 import org.jetbrains.uast.values.*
-import org.jetbrains.uast.evaluation.to
 
+@InternalIgnoreDependencyViolation
 class KotlinEvaluatorExtension : AbstractEvaluatorExtension(KotlinLanguage.INSTANCE) {
 
     private data class Range(val from: UValue, val to: UValue) {

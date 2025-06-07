@@ -3,6 +3,8 @@
 // ERROR: 'else' entry must be the last one in a when-expression
 // WARNING: Unreachable code
 // WARNING: Unreachable code
+// K2_AFTER_ERROR: 'else' entry must be the last one in a 'when' expression.
+// K2_AFTER_ERROR: 'else' entry must be the last one in a 'when' expression.
 package foo
 
 fun foo() {

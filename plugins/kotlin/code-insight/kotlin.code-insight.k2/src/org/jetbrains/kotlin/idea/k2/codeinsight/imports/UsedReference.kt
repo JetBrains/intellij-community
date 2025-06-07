@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.isUnaryOperatorOnIntLiteralReference
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -67,23 +68,6 @@ private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Bo
 }
 
 /**
- * Checks if the [reference] points to unary plus or minus operator on an [Int] literal, like `-10` or `+(20)`.
- *
- * Currently, such operators are not properly resolved in K2 Mode (see KT-70774).
- */
-private fun isUnaryOperatorOnIntLiteralReference(reference: KtReference): Boolean {
-    val unaryOperationReferenceExpression = reference.element as? KtOperationReferenceExpression ?: return false
-
-    if (unaryOperationReferenceExpression.operationSignTokenType !in arrayOf(KtTokens.PLUS, KtTokens.MINUS)) return false
-
-    val prefixExpression = unaryOperationReferenceExpression.parent as? KtUnaryExpression ?: return false
-    val unwrappedBaseExpression = prefixExpression.baseExpression?.unwrapParenthesesLabelsAndAnnotations() ?: return false
-
-    return unwrappedBaseExpression is KtConstantExpression &&
-            unwrappedBaseExpression.elementType == KtNodeTypes.INTEGER_CONSTANT
-}
-
-/**
  * In K2, every call in the form of `foo()` has `KtInvokeFunctionReference` on it.
  *
  * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
@@ -113,21 +97,16 @@ private fun KaSession.adjustSymbolIfNeeded(
     target is KaConstructorSymbol -> {
         val targetClass = target.containingSymbol as? KaClassLikeSymbol
 
-        // if constructor is typealiased, it can be imported in any scenario
-        val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) }
-
         // if constructor leads to inner class, it cannot be resolved by import
-        val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
-
-        typeAlias ?: notInnerTargetClass
+        targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
     }
 
     target is KaSamConstructorSymbol -> {
-        val targetClass = findSamClassFor(target)
+        val samClass = target.constructedClass
 
-        targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) } ?: targetClass
+        resolveTypeAliasedConstructorReference(reference, samClass, containingFile) ?: samClass
     }
 
-    else -> target
+    else -> resolveTypeAliasedObjectAsInvokeCallReceiver(reference, target) ?: target
 }
 

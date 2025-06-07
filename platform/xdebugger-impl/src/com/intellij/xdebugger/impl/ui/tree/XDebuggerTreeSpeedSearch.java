@@ -45,9 +45,8 @@ final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes
         return matchingFragments(pattern, text) != null ? 1 : 0;
       }
 
-      @Nullable
       @Override
-      public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+      public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
         myRecentSearchText = pattern;
         int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
         return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
@@ -69,8 +68,7 @@ final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes
   }
 
   @Override
-  @Nullable
-  protected Object findNextElement(String s) {
+  protected @Nullable Object findNextElement(String s) {
     final int selectedIndex = getSelectedIndex();
     final ListIterator<?> it = getElementIterator(selectedIndex + 1);
     final Object current;
@@ -101,9 +99,8 @@ final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes
     return current != null && isMatchingElement(current, _s) ? current : null;
   }
 
-  @Nullable
   @Override
-  protected Object findElement(@NotNull String s) {
+  protected @Nullable Object findElement(@NotNull String s) {
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
       selectedIndex = 0;
@@ -179,9 +176,8 @@ final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes
     propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
   }
 
-  @NotNull
   @Override
-  protected JBIterable<TreePath> allPaths() {
+  protected @NotNull JBIterable<TreePath> allPaths() {
     XDebuggerTreeNode root = ObjectUtils.tryCast(myComponent.getModel().getRoot(), XDebuggerTreeNode.class);
     int initialLevel = root != null ? root.getPath().getPathCount() : 0;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -23,19 +22,20 @@ import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.isLocationFiltered
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverFilter
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverParamDefaultImplsMethodFilter
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.LocationToken
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameterList
 
 class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
     override fun getStepOverCommand(
@@ -77,7 +77,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         suspendContext: SuspendContextImpl,
         ignoreFilters: Boolean,
         smartStepFilter: MethodFilter?
-    ): DebugProcessImpl.ResumeCommand? {
+    ): DebugProcessImpl.ResumeCommand {
         return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
     }
 
@@ -85,7 +85,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
         sourcePosition: SourcePosition
-    ): DebugProcessImpl.ResumeCommand? {
+    ): DebugProcessImpl.ResumeCommand {
         return DebuggerSteppingHelper.createStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 
@@ -197,20 +197,23 @@ fun getStepOverAction(
     return KotlinStepAction.KotlinStepOver(filter)
 }
 
-private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean  =
-    runReadAction {
-        val sourcePosition = positionManager.getSourcePosition(this) ?: return@runReadAction false
+private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean {
+    val sourcePosition = positionManager.getSourcePosition(this) ?: return false
+    return runReadAction {
         val file = sourcePosition.file as? KtFile ?: return@runReadAction false
         val elementAtLine = findElementAtLine(file, sourcePosition.line)
         elementAtLine is KtNamedFunction || elementAtLine?.parentOfType<KtParameterList>() != null
     }
+}
 
-private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? =
-    runReadAction {
-        positionManager.getSourcePosition(this)
+private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? {
+    val sourcePosition = positionManager.getSourcePosition(this)
+    return runReadAction {
+        sourcePosition
             ?.elementAt
             ?.parentOfType<KtNamedFunction>(withSelf = true)
     }
+}
 
 internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
     val location = suspendContext.location ?: return null
@@ -249,29 +252,7 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
         return false
     }
 
-    val debuggerSettings = DebuggerSettings.getInstance()
-    if (!debuggerSettings.TRACING_FILTERS_ENABLED) {
-        return false
-    }
-
-    tailrec fun getDeclarationName(element: PsiElement?): FqName? {
-        val declaration = element?.getNonStrictParentOfType<KtDeclaration>() ?: return null
-        declaration.kotlinFqName?.let { return it }
-        return getDeclarationName(declaration.parent)
-    }
-
-    val fqn = runReadAction {
-        val element = positionManager.getSourcePosition(location)?.elementAt
-        getDeclarationName(element)?.takeIf { !it.isRoot }?.asString()
-    } ?: return false
-
-    for (filter in debuggerSettings.steppingFilters) {
-        if (filter.isEnabled && filter.matches(fqn)) {
-            return true
-        }
-    }
-
-    return false
+    return isLocationFiltered(location, positionManager)
 }
 
 fun PsiElement.getLineRange(): IntRange? {

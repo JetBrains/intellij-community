@@ -13,15 +13,13 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAstSingleStarParameter extends PyAstParameter {
   @NonNls String TEXT = "*";
 
-  @Nullable
   @Override
-  default PyAstNamedParameter getAsNamed() {
+  default @Nullable PyAstNamedParameter getAsNamed() {
     return null;
   }
 
-  @Nullable
   @Override
-  default PyAstTupleParameter getAsTuple() {
+  default @Nullable PyAstTupleParameter getAsTuple() {
     return null;
   }
 
@@ -35,9 +33,8 @@ public interface PyAstSingleStarParameter extends PyAstParameter {
     return false;
   }
 
-  @Nullable
   @Override
-  default String getDefaultValueText() {
+  default @Nullable String getDefaultValueText() {
     return null;
   }
 

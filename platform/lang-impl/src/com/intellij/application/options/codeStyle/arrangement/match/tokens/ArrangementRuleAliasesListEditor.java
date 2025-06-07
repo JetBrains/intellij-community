@@ -109,7 +109,7 @@ public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor
     return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
-        return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;
+        return !s.isEmpty() && findByName(s) == null && Verifier.checkElementName(s) == null;
       }
 
       @Override

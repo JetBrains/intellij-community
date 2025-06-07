@@ -86,6 +86,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
       return myName.compareTo(prop.getName());
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -98,6 +99,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = myName.hashCode();

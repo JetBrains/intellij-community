@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,7 +83,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     if (initializer instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable refTarget) {
       if (PsiUtil.isJvmLocalVariable(refTarget) && !refTarget.hasModifierProperty(PsiModifier.FINAL)) {
         PsiElement block = PsiUtil.getVariableCodeBlock(refTarget, null);
-        return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(refTarget, block, null);
+        return block == null || !ControlFlowUtil.isEffectivelyFinal(refTarget, block);
       }
     }
     return false;

@@ -9,6 +9,9 @@
 - getLocalValue():java.lang.String
 - getParts():java.util.List
 - s:targetizeParameters(java.util.List):java.util.Collection
+c:com.intellij.execution.configurations.GeneralCommandLine
+- com.intellij.openapi.util.UserDataHolder
+- *:withWrappingCommand(java.lang.String,java.lang.String[]):com.intellij.execution.configurations.GeneralCommandLine
 *:com.intellij.execution.configurations.ParameterTargetValue
 - a:getLocalValue():java.lang.String
 *a:com.intellij.execution.configurations.ParameterTargetValuePart

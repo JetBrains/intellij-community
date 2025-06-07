@@ -82,15 +82,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getInitializers().length == 0 && getNamedArguments().length == 0;
   }
 
-  @NotNull
   @Override
-  public PsiElement getLBrack() {
+  public @NotNull PsiElement getLBrack() {
     return findNotNullChildByType(GroovyTokenTypes.mLBRACK);
   }
 
-  @Nullable
   @Override
-  public PsiElement getRBrack() {
+  public @Nullable PsiElement getRBrack() {
     return findChildByType(GroovyTokenTypes.mRBRACK);
   }
 
@@ -126,9 +124,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     return getConstructorReference();
   }
 
-  @Nullable
   @Override
-  public GroovyConstructorReference getConstructorReference() {
+  public @Nullable GroovyConstructorReference getConstructorReference() {
     return myConstructorReference.resolveClass() != null ? myConstructorReference : null;
   }
 
@@ -138,9 +135,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, Ps
     myNamedArguments = null;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return PsiTreeUtil.getChildrenOfAnyType(this, GrExpression.class, GrNamedArgument.class);
   }
 }

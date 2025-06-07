@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.*
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.Location
@@ -62,16 +63,26 @@ object DebuggerSteppingHelper {
                 if (context.frameProxy?.isOnSuspensionPoint() == true && nextLocationAfterResume != null) {
                     val filterThread = context.debugProcess.requestsManager.filterThread
                     // step till the next instruction after the resume location
-                    thisLogger().debug("Stepping to the resumeLocation in method ${context.location}, filterThread = $filterThread, resumeLocationCodeIndex = ${nextLocationAfterResume.codeIndex()}, currentIndex = ${context.location?.codeIndex()}")
+                    thisLogger().debug {
+                        "Stepping to the resumeLocation in method ${context.location}," +
+                                "filterThread = $filterThread," +
+                                "resumeLocationCodeIndex = ${nextLocationAfterResume.codeIndex()}," +
+                                "currentIndex = ${context.location?.codeIndex()}"
+                    }
                     val currentLocation = context.location ?: return super.getNextStepDepth(context)
                     // Make sure that we are stepping to the nextLocationAfterResume in the correct method.
                     if (nextLocationAfterResume.safeMethod() != currentLocation.safeMethod()) {
-                        thisLogger().debug("Expected to step in the resumed method ${nextLocationAfterResume.safeMethod()}, but currently stepping in ${currentLocation.safeMethod()}")
+                        thisLogger().debug {
+                            "Expected to step in the resumed method ${nextLocationAfterResume.safeMethod()}, " +
+                                    "but currently stepping in ${currentLocation.safeMethod()}"
+                        }
                         return StepRequest.STEP_OVER
                     }
                     if (currentLocation.codeIndex() < nextLocationAfterResume.codeIndex()) return StepRequest.STEP_OVER
                     if (currentLocation.codeIndex() == nextLocationAfterResume.codeIndex()) {
-                        thisLogger().debug("Reached resumeLocation, currentIndex = ${currentLocation.codeIndex()}, filterThread = $filterThread -> STOP")
+                        thisLogger().debug {
+                            "Reached resumeLocation, currentIndex = ${currentLocation.codeIndex()}, filterThread = $filterThread -> STOP"
+                        }
                         return STOP
                     }
                 }

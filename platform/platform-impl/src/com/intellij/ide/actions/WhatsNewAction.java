@@ -27,6 +27,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     }
 
     var project = e.getProject();
-    if (project != null && JBCefApp.isSupported()) {
+    if (project != null && JBCefApp.isSupported() && !ScreenReader.isActive()) {
       openWhatsNewPage(project, url, false);
     }
     else {
@@ -78,11 +79,16 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, boolean onUpgrade) {
-    if (!JBCefApp.isSupported()) {
+    if (!JBCefApp.isSupported() ||
+        // JCEF is not accessible for screen readers (IJPL-59438), so also fallback to the notification
+        ScreenReader.isActive()) {
       var name = ApplicationNamesInfo.getInstance().getFullProductName();
       var version = ApplicationInfo.getInstance().getShortVersion();
+      String notificationText =
+        IdeBundle.message(ScreenReader.isActive() ? "whats.new.notification.text.regular.language" : "whats.new.notification.text", name,
+                          version);
       UpdateChecker.getNotificationGroupForIdeUpdateResults()
-        .createNotification(IdeBundle.message("whats.new.notification.text", name, version), NotificationType.INFORMATION)
+        .createNotification(notificationText, NotificationType.INFORMATION)
         .setIcon(AllIcons.Nodes.PpWeb)
         .setDisplayId("ide.whats.new")
         .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("whats.new.notification.action"), () -> BrowserUtil.browse(url)))

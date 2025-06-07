@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -31,7 +31,7 @@ class SpeedSearchAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
     e.presentation.isVisible = handler != null
     e.presentation.isEnabled = handler != null && handler.isSpeedSearchAvailable() && !handler.isSpeedSearchActive()
     e.presentation.putClientProperty(
-      ActionMenu.KEYBOARD_SHORTCUT_SUFFIX,
+      ActionUtil.KEYBOARD_SHORTCUT_SUFFIX,
       ActionsBundle.message("action.SpeedSearch.shortcutTextSuffix")
     )
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -28,7 +28,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
-  private final static Supplier<Set<String>> JAVA_LOCALES = NotNullLazyValue.softLazy(() -> {
+  private static final Supplier<Set<String>> JAVA_LOCALES = NotNullLazyValue.softLazy(() -> {
     final Set<String> result = new HashSet<>();
     for (Locale locale : Locale.getAvailableLocales()) {
       result.add(locale.getLanguage());
@@ -39,7 +39,7 @@ public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionT
   private final List<String> myAdditionalLanguages = new ArrayList<>();
 
   @TestOnly
-  void setAdditionalLanguages(List<String> additionalLanguages) {
+  public void setAdditionalLanguages(List<String> additionalLanguages) {
     myAdditionalLanguages.clear();
     myAdditionalLanguages.addAll(additionalLanguages);
   }

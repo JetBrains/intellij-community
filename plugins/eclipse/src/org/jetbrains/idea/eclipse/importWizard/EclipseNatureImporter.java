@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,8 +16,7 @@ public abstract class EclipseNatureImporter {
   public static final ExtensionPointName<EclipseNatureImporter> EP_NAME =
     ExtensionPointName.create("org.jetbrains.idea.eclipse.natureImporter");
 
-  @NotNull
-  public abstract String getNatureName();
+  public abstract @NotNull String getNatureName();
   public abstract Set<String> getProvidedCons();
 
   public abstract void doImport(@NotNull Project project, @NotNull List<Module> modules);

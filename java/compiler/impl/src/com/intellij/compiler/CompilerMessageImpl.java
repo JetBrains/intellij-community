@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -34,14 +20,13 @@ public final class CompilerMessageImpl implements CompilerMessage {
 
   private final Project myProject;
   private final CompilerMessageCategory myCategory;
-  @Nullable private Navigatable myNavigatable;
+  private @Nullable Navigatable myNavigatable;
   private final @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
   private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
   private final Collection<String> myModuleNames;
-  @NotNull
-  private TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
+  private @NotNull TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
   public CompilerMessageImpl(Project project, CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     this(project, category, message, null, -1, -1, null);
@@ -50,16 +35,16 @@ public final class CompilerMessageImpl implements CompilerMessage {
   public CompilerMessageImpl(Project project,
                              @NotNull CompilerMessageCategory category,
                              @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                             @Nullable final VirtualFile file,
+                             final @Nullable VirtualFile file,
                              int row,
                              int column,
-                             @Nullable final Navigatable navigatable) {
+                             final @Nullable Navigatable navigatable) {
     this(project, category, message, file, row, column, navigatable, Collections.emptyList());
   }
 
-  public CompilerMessageImpl(Project project, 
+  public CompilerMessageImpl(Project project,
                              @NotNull CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                             @Nullable final VirtualFile file, int row, int column, @Nullable final Navigatable navigatable, @NotNull Collection<String> moduleNames) {
+                             final @Nullable VirtualFile file, int row, int column, final @Nullable Navigatable navigatable, @NotNull Collection<String> moduleNames) {
     myProject = project;
     myCategory = category;
     myNavigatable = navigatable;
@@ -74,9 +59,8 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myColumnAdjuster = columnAdjuster;
   }
 
-  @NotNull
   @Override
-  public CompilerMessageCategory getCategory() {
+  public @NotNull CompilerMessageCategory getCategory() {
     return myCategory;
   }
 
@@ -134,6 +118,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return myModuleNames;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof CompilerMessage)) return false;
@@ -149,6 +134,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myCategory.hashCode();
@@ -159,6 +145,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return result;
   }
 
+  @Override
   public String toString() {
     return myMessage;
   }

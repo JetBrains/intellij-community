@@ -52,11 +52,11 @@ class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Back
   }
 
   override fun assertUninitialized(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {
-    assertEmpty("Unexpected background processes", statusBar.backgroundProcesses)
+    assertEmpty("Unexpected background processes", statusBar.backgroundProcessModels)
   }
 
   override fun assertInitialized(process: Pair<Task.Backgroundable, BackgroundableProcessIndicator>) {
-    assertContainsOrdered(statusBar.backgroundProcesses, process)
+    assertContainsOrdered(statusBar.backgroundProcessModels, process)
   }
 
   fun `test can start off EDT, already finished when processing EventQueue`(): Unit = runBlocking {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,10 +9,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
@@ -22,12 +19,13 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.dependencies.LibraryDef;
+import org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
@@ -40,11 +38,14 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class JavaBuilderUtil {
 
@@ -57,11 +58,18 @@ public final class JavaBuilderUtil {
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   private static final Key<BackendCallbackToGraphDeltaAdapter> GRAPH_DELTA_CALLBACK_KEY = Key.create("_graph_delta_");
+  private static final Key<Set<NodeSource>> ALL_AFFECTED_NODE_SOURCES_KEY = Key.create("_all_compiled_node_sources_");
+  private static final GlobalContextKey<LibraryDependenciesUpdater> LIBRARIES_STATE_UPDATER_KEY = GlobalContextKey.create("_libraries_state_updater_");
 
   private static final String MODULE_INFO_FILE = "module-info.java";
 
-  public static  boolean isDepGraphEnabled() {
+  public static boolean isDepGraphEnabled() {
     return Boolean.parseBoolean(System.getProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "false"));
+  }
+  
+  @ApiStatus.Internal
+  public static boolean isTrackLibraryDependenciesEnabled() {
+    return isDepGraphEnabled() && Boolean.parseBoolean(System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED, "false"));
   }
 
   public static void registerFileToCompile(CompileContext context, File file) {
@@ -124,32 +132,20 @@ public final class JavaBuilderUtil {
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if(isDepGraphEnabled() && graphConfig != null) {
       Delta delta = null;
-      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-
-      NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
       Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
-
-      if (callback != null) {
-        // Important: in case of errors some sources sent to recompilation might not have corresponding output classes either because a source has compilation errors
-        // or because compiler stopped compilation and has not managed to compile some sources.
-        // In this case use empty set of delta's "base sources" for dependency calculation, so that only actually recompiled sources will take part in dependency analysis and affected files calculation.
-        // Otherwise, some classes that correspond to non-compiled sources might be considered as "deleted" which might result in a large set of affected files,
-        // so the next compilation might compile much more files than is actually needed.
-        Set<File> deltaBaseSources = Utils.errorsDetected(context)? Collections.emptySet() : inputFiles;
+      Set<String> deletedFiles = getRemovedPaths(chunk, dirtyFilesHolder);
+      BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
+      if (callback != null || !inputFiles.isEmpty() || !deletedFiles.isEmpty()) {
         delta = graphConfig.getGraph().createDelta(
-          Iterators.map(deltaBaseSources, pathMapper::toNodeSource),
-          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource),
+          Iterators.map(inputFiles, graphConfig.getPathMapper()::toNodeSource),
+          Iterators.map(deletedFiles, graphConfig.getPathMapper()::toNodeSource),
           false
         );
-        for (var nodeData : callback.getNodes()) {
-          delta.associate(nodeData.getFirst(), nodeData.getSecond());
+        if (callback != null) {
+          for (var nodeData : callback.getNodes()) {
+            delta.associate(nodeData.getFirst(), nodeData.getSecond());
+          }
         }
-        // todo: consider using delta for marking additional sources for compilation
-        //for (NodeSource src : delta.getBaseSources()) {
-        //  if (!inputFiles.contains(src.getPath())) {
-        //    FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, src.getPath().toFile());
-        //  }
-        //}
       }
 
       for (Key<?> key : List.of(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
@@ -204,6 +200,17 @@ public final class JavaBuilderUtil {
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if (isDepGraphEnabled() && graphConfig != null) {
       NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+
+      boolean incremental = LIBRARIES_STATE_UPDATER_KEY.getOrCreate(context, LibraryDependenciesUpdater::new).update(context, chunk);
+      if (!incremental) {
+        // for now conservative approach; no reaction
+        LOG.warn("Libraries update for " + chunk.getPresentableShortName() + " returned non-incremental exitcode");
+      }
+
+      if (context.isCanceled()) {
+        return;
+      }
+
       Set<NodeSource> toCompile = new HashSet<>();
       dfh.processDirtyFiles((target, file, root) -> toCompile.add(mapper.toNodeSource(file)));
       if (!toCompile.isEmpty() || hasRemovedPaths(chunk, dfh)) {
@@ -326,7 +333,7 @@ public final class JavaBuilderUtil {
                   }
                 }
                 else {
-                  FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+                  FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file.toPath());
                 }
               }
 
@@ -416,9 +423,9 @@ public final class JavaBuilderUtil {
    * @return true if additional compilation pass is required, false otherwise
    */
   private static boolean updateDependencyGraph(CompileContext context, Delta delta, ModuleChunk chunk, final CompilationRound markDirtyRound, @Nullable FileFilter skipMarkDirtyFilter) throws IOException {
-    boolean performIntegrate = true;
-    boolean additionalPassRequired = false;
     final boolean errorsDetected = Utils.errorsDetected(context);
+    boolean performIntegrate = !errorsDetected;
+    boolean additionalPassRequired = false;
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     GraphConfiguration graphConfig = Objects.requireNonNull(dataManager.getDependencyGraph());
     DependencyGraph dependencyGraph = graphConfig.getGraph();
@@ -426,14 +433,32 @@ public final class JavaBuilderUtil {
     
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
+      .compiledWithErrors(errorsDetected)
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()))
+      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()));
     DifferentiateParameters differentiateParams = params.get();
     DifferentiateResult diffResult = dependencyGraph.differentiate(delta, differentiateParams);
 
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
+
+    if (compilingIncrementally && !errorsDetected && differentiateParams.isCalculateAffected() && diffResult.isIncremental()) {
+      // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
+      // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
+      // This fallback logic detects such loops and recompiles the whole module chunk instead.
+      Set<NodeSource> affectedForChunk = Iterators.collect(Iterators.filter(diffResult.getAffectedSources(), differentiateParams.belongsToCurrentCompilationChunk()::test), new HashSet<>());
+      if (!affectedForChunk.isEmpty() && !getOrCreate(context, ALL_AFFECTED_NODE_SOURCES_KEY, HashSet::new).addAll(affectedForChunk)) {
+        // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
+        LOG.info("Build cycle detected for " + chunk.getName() + "; recompiling whole module chunk");
+        // turn on non-incremental mode for all targets from the current chunk => next time the whole chunk is recompiled and affected files won't be calculated anymore
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          context.markNonIncremental(target);
+        }
+        FSOperations.markDirty(context, markDirtyRound, chunk, null);
+        return true;
+      }
+    }
 
     if (diffResult.isIncremental()) {
       final Set<File> affectedFiles = Iterators.collect(
@@ -481,7 +506,7 @@ public final class JavaBuilderUtil {
             }
           }
           else {
-            FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+            FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file.toPath());
           }
         }
 
@@ -525,8 +550,8 @@ public final class JavaBuilderUtil {
       FSOperations.markDirtyRecursively(context, markDirtyRound, chunk, toBeMarkedFilter);
     }
 
-    if (errorsDetected) {
-      return false;
+    if (!additionalPassRequired) {
+      ALL_AFFECTED_NODE_SOURCES_KEY.set(context, null); // cleanup
     }
 
     if (performIntegrate) {
@@ -558,9 +583,9 @@ public final class JavaBuilderUtil {
     };
   }
 
-  private static void removeFilesAcceptedByFilter(@NotNull Set<? extends File> files, @Nullable FileFilter filter) {
+  private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
     if (filter != null) {
-      for (final Iterator<? extends File> it = files.iterator(); it.hasNext();) {
+      for (Iterator<File> it = files.iterator(); it.hasNext();) {
         if (filter.accept(it.next())) {
           it.remove();
         }
@@ -582,7 +607,11 @@ public final class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<? extends File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static @NotNull @Unmodifiable List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(
+    CompileContext context,
+    Collection<File> affected,
+    ModulesBasedFileFilter moduleBasedFilter
+  ) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
@@ -591,28 +620,35 @@ public final class JavaBuilderUtil {
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final JavaSourceRootDescriptor moduleAndRoot = rootIndex.findJavaRootDescriptor(context, file);
-        result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
+        result.add(new Pair<>(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;
   }
 
   private static @NotNull Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
-    Set<File> files = dataKey.get(context);
-    if (files == null) {
-      files = FileCollectionFactory.createCanonicalFileSet();
-      dataKey.set(context, files);
-    }
-    return files;
+    return getOrCreate(context, dataKey, FileCollectionFactory::createCanonicalFileSet);
   }
 
-  private static Set<String> getRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
-    if (!dirtyFilesHolder.hasRemovedFiles()) {
-      return Collections.emptySet();
+  private static @NotNull <T> T getOrCreate(CompileContext context, Key<T> dataKey, Supplier<T> factory) {
+    T value = dataKey.get(context, null);
+    if (value == null) {
+      dataKey.set(context, value = factory.get());
     }
-    final Set<String> removed = CollectionFactory.createFilePathSet();
+    return value;
+  }
+
+  private static @NotNull Set<String> getRemovedPaths(ModuleChunk chunk,
+                                                      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
+    if (!dirtyFilesHolder.hasRemovedFiles()) {
+      return Set.of();
+    }
+
+    Set<String> removed = CollectionFactory.createFilePathSet();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
+      for (Path file : dirtyFilesHolder.getRemoved(target)) {
+        removed.add(file.toString());
+      }
     }
     return removed;
   }
@@ -620,7 +656,7 @@ public final class JavaBuilderUtil {
   private static boolean hasRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
     if (dirtyFilesHolder.hasRemovedFiles()) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
-        if (!dirtyFilesHolder.getRemovedFiles(target).isEmpty()) {
+        if (!dirtyFilesHolder.getRemoved(target).isEmpty()) {
           return true;
         }
       }

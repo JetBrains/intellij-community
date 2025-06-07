@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -30,8 +30,8 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement element = findMatchingElement(file, editor);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final PsiElement element = findMatchingElement(psiFile, editor);
     if (element == null) {
       return;
     }
@@ -41,8 +41,7 @@ public abstract class Intention implements IntentionAction {
 
   protected abstract void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException;
 
-  @NotNull
-  protected abstract PsiElementPredicate getElementPredicate();
+  protected abstract @NotNull PsiElementPredicate getElementPredicate();
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
@@ -106,8 +105,8 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return findMatchingElement(file, editor) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return findMatchingElement(psiFile, editor) != null;
   }
 
   @Override
@@ -134,14 +133,12 @@ public abstract class Intention implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public @IntentionName String getText() {
+  public @NotNull @IntentionName String getText() {
     return GroovyIntentionsBundle.message(getPrefix() + ".name");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyIntentionsBundle.message(getPrefix() + ".family.name");
   }
 }

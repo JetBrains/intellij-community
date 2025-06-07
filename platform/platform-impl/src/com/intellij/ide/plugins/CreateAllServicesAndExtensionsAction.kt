@@ -9,7 +9,10 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -17,8 +20,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -26,26 +28,25 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
-import com.intellij.util.getErrorsAsString
+import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.util.lang.CompoundRuntimeException
 import io.github.classgraph.*
 import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull
 
-private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
+private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {
-      logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
+      logger<ComponentManagerImpl>().error(CompoundRuntimeException(errors))
     }
     // some errors are not thrown but logged
     val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
     Notification("Error Report", "", message, NotificationType.INFORMATION).notify(null)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private fun checkLightServices(
@@ -116,21 +117,19 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
       }
 
       // check first
-      blockingContext {
-        checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-      }
+      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
 
-      val application = ApplicationManager.getApplication() as ComponentManagerImpl
+      val application = ApplicationManager.getApplication().getComponentManagerImpl()
       reporter.indeterminateStep {
         checkContainer2(application, "app", taskExecutor)
       }
 
-      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+      val project = ProjectUtil.getOpenProjects().firstOrNull()?.getComponentManagerImpl()
       if (project != null) {
         reporter.indeterminateStep {
           checkContainer2(project, "project", taskExecutor)
         }
-        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull()?.getComponentManagerImpl()
         if (module != null) {
           reporter.indeterminateStep {
             checkContainer2(module, "module", taskExecutor)
@@ -138,9 +137,7 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
         }
       }
       reporter.indeterminateStep("Checking light services...")
-      blockingContext {
-        checkLightServices(application, project, errors)
-      }
+      checkLightServices(application, project, errors)
     }
   }
   return errors
@@ -187,9 +184,7 @@ private suspend fun checkContainer2(
     createAllServices2(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   }
   reporter.indeterminateStep("Checking ${levelDescription} extensions...") {
-    blockingContext {
-      checkExtensions(container, taskExecutor)
-    }
+    checkExtensions(container, taskExecutor)
   }
 }
 
@@ -313,10 +308,10 @@ private fun loadLightServiceClass(
   fun loadClass(descriptor: IdeaPluginDescriptorImpl) =
     (descriptor.pluginClassLoader as? PluginClassLoader)?.loadClass(className, true)
 
-  for (moduleItem in mainDescriptor.content.modules) {
+  for (moduleItem in mainDescriptor.contentModules) {
     try {
       // module is not loaded - dependency is not provided
-      return loadClass(moduleItem.requireDescriptor())
+      return loadClass(moduleItem)
     }
     catch (_: PluginException) {
     }

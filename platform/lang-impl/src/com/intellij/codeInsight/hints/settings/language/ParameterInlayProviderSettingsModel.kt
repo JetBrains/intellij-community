@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.parameters.collectExcludeListConfig
 import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
@@ -48,8 +49,7 @@ class ParameterInlayProviderSettingsModel(
 
   override val component: ParameterHintsSettingsPanel by lazy {
     ParameterHintsSettingsPanel(
-      language = language,
-      excludeListSupported = provider.isBlackListSupported
+      collectExcludeListConfig(language, provider),
     )
   }
 
@@ -66,7 +66,9 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    fun createPass() = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+
+    val pass = createPass()
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
@@ -84,8 +86,10 @@ class ParameterInlayProviderSettingsModel(
                                                  setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
+
+    val passToCleanupHints = createPass()
     return Runnable {
-      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
+      passToCleanupHints.doApplyInformationToEditor()
       pass.doApplyInformationToEditor()
     }
   }

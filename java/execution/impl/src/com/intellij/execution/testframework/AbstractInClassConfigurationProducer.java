@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
@@ -44,8 +44,8 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
   }
 
   @Override
-  public void onFirstRun(@NotNull final ConfigurationFromContext configuration,
-                         @NotNull final ConfigurationContext fromContext,
+  public void onFirstRun(final @NotNull ConfigurationFromContext configuration,
+                         final @NotNull ConfigurationContext fromContext,
                          @NotNull Runnable performRunnable) {
     final PsiElement psiElement = configuration.getSourceElement();
     if (psiElement instanceof PsiMethod || psiElement instanceof PsiClass) {
@@ -207,8 +207,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     return true;
   }
 
-  @Nullable
-  private static JvmAnnotationAttribute getAnnotationValue(PsiJavaToken token) {
+  private static @Nullable JvmAnnotationAttribute getAnnotationValue(PsiJavaToken token) {
     PsiAnnotation psiAnnotation = PsiTreeUtil.getParentOfType(token, PsiAnnotation.class, true, PsiMethod.class);
     if (psiAnnotation == null) return null;
     DumbService dumbService = DumbService.getInstance(psiAnnotation.getProject());

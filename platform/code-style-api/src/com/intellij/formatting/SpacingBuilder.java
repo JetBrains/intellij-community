@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
@@ -336,8 +336,7 @@ public class SpacingBuilder {
    * @see #getSpacing(Block, Block, Block)
    */
   @Contract("_,null,_,_->null; _,_,null,_->null; _,_,_,null->null")
-  @Nullable
-  public Spacing getSpacing(@NotNull Block parentBlock,
+  public @Nullable Spacing getSpacing(@NotNull Block parentBlock,
                             @Nullable IElementType parentType,
                             @Nullable IElementType child1Type,
                             @Nullable IElementType child2Type) {
@@ -357,8 +356,7 @@ public class SpacingBuilder {
    * @see #getSpacing(Block, IElementType, IElementType, IElementType)
    */
   @Contract("null,_,_->null; _,null,_->null; _,_,null->null")
-  @Nullable
-  public Spacing getSpacing(@Nullable Block parent, @Nullable Block child1, @Nullable Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block parent, @Nullable Block child1, @Nullable Block child2) {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
       return null;
     }

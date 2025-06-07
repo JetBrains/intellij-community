@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -20,7 +21,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,9 +173,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreferLessParameters() {
     checkPreferredItems(0, "foo", "foo", "foo", "fox");
     final List<LookupElement> items = getLookup().getItems();
-    TestCase.assertEquals(0, ((PsiMethod)items.get(0).getObject()).getParameterList().getParametersCount());
-    TestCase.assertEquals(1, ((PsiMethod)items.get(1).getObject()).getParameterList().getParametersCount());
-    TestCase.assertEquals(2, ((PsiMethod)items.get(2).getObject()).getParameterList().getParametersCount());
+    assertEquals(0, ((PsiMethod)items.get(0).getObject()).getParameterList().getParametersCount());
+    assertEquals(1, ((PsiMethod)items.get(1).getObject()).getParameterList().getParametersCount());
+    assertEquals(2, ((PsiMethod)items.get(2).getObject()).getParameterList().getParametersCount());
   }
 
   @NeedsIndex.Full
@@ -222,14 +222,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
     configureSecondCompletion();
 
-    TestCase.assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(0)).getQualifiedName());
-    TestCase.assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(1)).getQualifiedName());
-    TestCase.assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(2)).getQualifiedName());
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(0)).getQualifiedName());
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(1)).getQualifiedName());
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(2)).getQualifiedName());
     incUseCount(2);
 
-    TestCase.assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(0)).getQualifiedName());// same package
-    TestCase.assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(1)).getQualifiedName());
-    TestCase.assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(2)).getQualifiedName());
+    assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(0)).getQualifiedName());// same package
+    assertEquals("zoo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(1)).getQualifiedName());
+    assertEquals("boo.Baaaaaaar", ((JavaPsiClassReferenceElement)getLookup().getItems().get(2)).getQualifiedName());
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -240,7 +240,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testDispreferInnerClasses() {
     checkPreferredItems(0);//no chosen items
-    TestCase.assertFalse(getLookup().getItems().get(0).getObject() instanceof PsiClass);
+    assertFalse(getLookup().getItems().get(0).getObject() instanceof PsiClass);
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -250,9 +250,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferInterfacesInImplements() {
     checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass");
-    assertEquals(NormalCompletionTestCase.renderElement(getLookup().getItems().get(0)).getItemTextForeground(), JBColor.foreground());
-    assertEquals(NormalCompletionTestCase.renderElement(getLookup().getItems().get(1)).getItemTextForeground(), JBColor.RED);
-    assertEquals(NormalCompletionTestCase.renderElement(getLookup().getItems().get(2)).getItemTextForeground(), JBColor.RED);
+    assertEquals(JBColor.foreground(), NormalCompletionTestCase.renderElement(getLookup().getItems().get(0)).getItemTextForeground());
+    assertEquals(JBColor.RED, NormalCompletionTestCase.renderElement(getLookup().getItems().get(1)).getItemTextForeground());
+    assertEquals(JBColor.RED, NormalCompletionTestCase.renderElement(getLookup().getItems().get(2)).getItemTextForeground());
   }
 
   public void testPreferClassesInExtends() {
@@ -341,8 +341,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.completeBasic();
     LookupImpl lookup = getLookup();
     assertPreferredItems(lookup.getList().getSelectedIndex());
-    TestCase.assertEquals("ELXaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
-    TestCase.assertEquals("ELXEMENT_A", lookup.getCurrentItem().getLookupString());
+    assertEquals("ELXaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELXEMENT_A", lookup.getCurrentItem().getLookupString());
   }
 
   public void testReallyAlphaSorting() {
@@ -385,8 +385,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.complete(CompletionType.BASIC, 2);
     assertPreferredItems(0, "Bar", "Bar");
     List<LookupElement> items = getLookup().getItems();
-    TestCase.assertEquals(((JavaPsiClassReferenceElement)items.get(0)).getQualifiedName(), "Bar");
-    TestCase.assertEquals(((JavaPsiClassReferenceElement)items.get(1)).getQualifiedName(), "bar.Bar");
+    assertEquals("Bar", ((JavaPsiClassReferenceElement)items.get(0)).getQualifiedName());
+    assertEquals("bar.Bar", ((JavaPsiClassReferenceElement)items.get(1)).getQualifiedName());
   }
 
   public void testCaseInsensitivePrefixMatch() {
@@ -645,7 +645,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
     assertPreferredItems(0, "newLinkedSet0", "newLinkedSet1", "newLinkedSet2");
-    CompletionSortingTestCase.imitateItemSelection(getLookup(), 1);
+    imitateItemSelection(getLookup(), 1);
     myFixture.complete(CompletionType.BASIC, 2);
     assertPreferredItems(0, "newLinkedSet1", "newLinkedSet0", "newLinkedSet2");
   }
@@ -686,9 +686,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     LookupElement[] items = myFixture.completeBasic();
     assertPreferredItems(0, "FOO", "GOO", "BAR");
 
-    assertEquals(NormalCompletionTestCase.renderElement(items[0]).getItemTextForeground(), JBColor.foreground());
-    assertEquals(NormalCompletionTestCase.renderElement(ContainerUtil.find(items, it -> it.getLookupString().equals("BAR")))
-                   .getItemTextForeground(), JBColor.RED);
+    assertEquals(JBColor.foreground(), NormalCompletionTestCase.renderElement(items[0]).getItemTextForeground());
+    assertEquals(JBColor.RED, NormalCompletionTestCase.renderElement(ContainerUtil.find(items, it -> it.getLookupString().equals("BAR")))
+                   .getItemTextForeground());
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -997,7 +997,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}");
     myFixture.configureByText("a.java", "class Test {void t(Cls cls) {cls.me<caret>}}");
     myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), List.of("methodB", "methodA"));
+    assertEquals(List.of("methodB", "methodA"), myFixture.getLookupElementStrings());
   }
 
 

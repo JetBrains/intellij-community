@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,12 +31,12 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class SvnFormatWorker extends Task.Backgroundable {
 
   private final List<Throwable> myExceptions;
-  @NotNull private final WorkingCopyFormat myNewFormat;
+  private final @NotNull WorkingCopyFormat myNewFormat;
   private final List<? extends WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
   private final SvnVcs myVcs;
 
-  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
+  public SvnFormatWorker(final Project project, final @NotNull WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
     super(project, message("progress.title.convert.working.copy.format"), false, DEAF);
     myNewFormat = newFormat;
     myExceptions = new ArrayList<>();
@@ -44,7 +44,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     myVcs = SvnVcs.getInstance(myProject);
   }
 
-  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
+  public SvnFormatWorker(final Project project, final @NotNull WorkingCopyFormat newFormat, final WCInfo wcInfo) {
     this(project, newFormat, Collections.singletonList(wcInfo));
   }
 
@@ -74,7 +74,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
   }
 
   @Override
-  public void run(@NotNull final ProgressIndicator indicator) {
+  public void run(final @NotNull ProgressIndicator indicator) {
     ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     final boolean supportsChangelists = myNewFormat.supportsChangelists();

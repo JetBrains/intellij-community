@@ -70,6 +70,8 @@ class RunBlockingInspectionTest: ExpectedPluginModeProvider {
 
     @AfterAll
     fun tearDown() {
+        psiFileMap.clear()
+        myTests = emptyList()
         testCase.tearDown()
     }
 

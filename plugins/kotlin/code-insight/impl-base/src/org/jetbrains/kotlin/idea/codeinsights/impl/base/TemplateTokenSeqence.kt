@@ -6,16 +6,14 @@ import com.intellij.openapi.util.text.LineTokenizer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtStringTemplateEntry
-import kotlin.text.isNotEmpty
 
 class TemplateTokenSequence(
     private val inputString: String,
     interpolationPrefixLength: Int,
 ) : Sequence<TemplateChunk> {
-    val templatePrefix = "$".repeat(interpolationPrefixLength)
-    val entryPrefixLength = maxOf(templatePrefix.length, 1)
-    val entryPrefix = "$".repeat(entryPrefixLength)
+    private val templatePrefix: String = "$".repeat(interpolationPrefixLength)
+    private val entryPrefixLength: Int = maxOf(templatePrefix.length, 1)
+    private val entryPrefix: String = "$".repeat(entryPrefixLength)
 
     private fun String.guessIsTemplateEntryStart(): Boolean = when {
         startsWith("$entryPrefix{") -> {
@@ -31,14 +29,18 @@ class TemplateTokenSequence(
 
     private fun findTemplateEntryEnd(input: String, from: Int): Int {
         val wrapped = """$templatePrefix"${input.substring(from)}""""
-        val lexer = KotlinLexer().apply { start(wrapped) }.apply { advance() }
+        val lexer = KotlinLexer().apply { start(wrapped) }.apply {
+            if (templatePrefix.isNotEmpty()) advance() // template interpolation prefix
+            advance() // opening quote
+        }
 
         when (lexer.tokenType) {
             KtTokens.SHORT_TEMPLATE_ENTRY_START -> {
                 lexer.advance()
                 val tokenType = lexer.tokenType
                 return if (tokenType == KtTokens.IDENTIFIER || tokenType == KtTokens.THIS_KEYWORD) {
-                    from + lexer.tokenEnd - 1
+                    val offsetBeforeEntry = templatePrefix.length + 1 // prefix + quote
+                    from + lexer.tokenEnd - offsetBeforeEntry
                 } else {
                     -1
                 }
@@ -76,7 +78,6 @@ class TemplateTokenSequence(
         return if (inputString.isEmpty()) emptySequence<TemplateChunk>().iterator()
         else
             iterator {
-                val likeStackTrace = isAStackTrace(inputString)
                 var from = 0
                 var to = 0
                 while (to < inputString.length) {
@@ -87,7 +88,7 @@ class TemplateTokenSequence(
                         continue
                     } else if (c == '$') {
                         val substring = inputString.substring(to)
-                        val guessIsTemplateEntryStart = !likeStackTrace && substring.guessIsTemplateEntryStart()
+                        val guessIsTemplateEntryStart = substring.guessIsTemplateEntryStart()
                         if (guessIsTemplateEntryStart) {
                             if (from < to) yieldLiteral(inputString.substring(from until to))
                             from = to
@@ -111,11 +112,6 @@ class TemplateTokenSequence(
     }
 
     override fun iterator(): Iterator<TemplateChunk> = templateChunkIterator()
-
-    private fun isAStackTrace(string: String): Boolean =
-        stacktracePlaceRegex.containsMatchIn(string)
-
-    private val stacktracePlaceRegex = Regex("\\(\\w+\\.\\w+:\\d+\\)")
 }
 
 sealed class TemplateChunk

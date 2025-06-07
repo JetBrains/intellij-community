@@ -98,22 +98,6 @@ class ActionMenu constructor(
   }
 
   companion object {
-    @Deprecated("Use ActionUtil.SUPPRESS_SUBMENU")
-    @JvmField
-    val SUPPRESS_SUBMENU = ActionUtil.SUPPRESS_SUBMENU
-
-    @Deprecated("Use ActionUtil.ALWAYS_VISIBLE_GROUP")
-    @JvmField
-    val ALWAYS_VISIBLE = ActionUtil.ALWAYS_VISIBLE_GROUP
-
-    @Deprecated("Use ActionUtil.KEYBOARD_SHORTCUT_SUFFIX")
-    @JvmField
-    val KEYBOARD_SHORTCUT_SUFFIX = ActionUtil.KEYBOARD_SHORTCUT_SUFFIX
-
-    @Deprecated("Use ActionUtil.SECONDARY_ICON")
-    @JvmField
-    val SECONDARY_ICON = ActionUtil.SECONDARY_ICON
-
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
       return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))
@@ -121,15 +105,14 @@ class ActionMenu constructor(
 
     @JvmStatic
     val isShowNoIcons: Boolean
-      get() {
-        return SystemInfoRt.isMac && (ExperimentalUI.isNewUI() ||
-                                      Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons"))
-      }
+      get() = SystemInfoRt.isMac && (
+        ExperimentalUI.isNewUI() ||
+        Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons"))
 
     @JvmStatic
-    fun isShowNoIcons(action: AnAction?): Boolean {
+    fun isShowNoIcons(action: AnAction, presentation: Presentation): Boolean {
       return when {
-        action == null -> false
+        presentation.getClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU) == true -> false
         action is MainMenuPresentationAware && (action as MainMenuPresentationAware).alwaysShowIconInMainMenu() -> false
         else -> isShowNoIcons
       }
@@ -233,8 +216,7 @@ class ActionMenu constructor(
       icon = getDarkIcon(icon, true)
     }
 
-    if (isShowNoIcons &&
-        !(group.getAction() is MainMenuPresentationAware && (group.getAction() as MainMenuPresentationAware).alwaysShowIconInMainMenu())) {
+    if (isShowNoIcons && !isShowNoIcons(group.getAction(), presentation)) {
         setIcon(null)
         setDisabledIcon(null)
     }

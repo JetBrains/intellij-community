@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.marketplace.statistics.features
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.internal.statistic.eventLog.events.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,14 +23,14 @@ object PluginManagerSearchResultsFeatureProvider {
     )
   }
 
-  fun getCommonFeatures(userQuery: String?, result: List<IdeaPluginDescriptor>) = arrayListOf<EventPair<*>>(
+  fun getCommonFeatures(userQuery: String?, result: List<PluginUiModel>) = arrayListOf<EventPair<*>>(
     IS_EMPTY_DATA_KEY.with(result.isEmpty()),
     RESULTS_COUNT_DATA_KEY.with(result.size),
     RESULTS_COUNT_LIMIT_DATA_KEY.with(RESULTS_REPORT_COUNT)
   )
 
-  fun getSearchStateFeatures(userQuery: String?, result: List<IdeaPluginDescriptor>,
-                             pluginToScore: Map<IdeaPluginDescriptor, Double>?): List<EventPair<*>> {
+  fun getSearchStateFeatures(userQuery: String?, result: List<PluginUiModel>,
+                             pluginToScore: Map<PluginUiModel, Double>?): List<EventPair<*>> {
     return getCommonFeatures(userQuery, result).apply {
       add(RESULTS_DATA_KEY.with(result.take(RESULTS_REPORT_COUNT).map {
         ObjectEventData(PluginManagerSearchResultFeatureProvider.getSearchStateFeatures(userQuery, it, pluginToScore))

@@ -46,7 +46,7 @@ public interface DfaListener {
   }
 
   /**
-   * Called for assignments
+   * Called before assignments
    *
    * @param source source value
    * @param dest target value
@@ -54,6 +54,21 @@ public interface DfaListener {
    * @param anchor PSI anchor
    */
   default void beforeAssignment(@NotNull DfaValue source,
+                                @NotNull DfaValue dest,
+                                @NotNull DfaMemoryState state,
+                                @Nullable DfaAnchor anchor) {
+
+  }
+
+  /**
+   * Called after for assignments
+   *
+   * @param source source value
+   * @param dest target value
+   * @param state memory state
+   * @param anchor PSI anchor
+   */
+  default void afterAssignment(@NotNull DfaValue source,
                                 @NotNull DfaValue dest,
                                 @NotNull DfaMemoryState state,
                                 @Nullable DfaAnchor anchor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.ide.actions.ToolwindowFusEventFields
@@ -19,7 +19,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 78)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 81)
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
@@ -37,7 +37,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
         return
       }
 
-      fuData.addData(name, StringUtil.substringBeforeLast(value, "$\$Lambda$", true))
+      fuData.addData(name, StringUtil.substringBeforeLast(value, "$\$Lambda", true))
     }
 
     override val validationRule: List<String>
@@ -127,4 +127,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
     "custom.action.invoked",
     ACTION_ID,
     EventFields.InputEvent)
+
+  @Suppress("FunctionName")
+  internal fun ActionIdField(name: String): PrimitiveEventField<String?> = ActionIdEventField(name)
 }

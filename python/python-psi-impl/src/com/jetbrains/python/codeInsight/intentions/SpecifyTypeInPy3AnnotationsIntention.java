@@ -52,15 +52,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.forElement(file).isPython2()) return false;
-    return super.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (LanguageLevel.forElement(psiFile).isPython2()) return false;
+    return super.isAvailable(project, editor, psiFile);
   }
 
   @Override

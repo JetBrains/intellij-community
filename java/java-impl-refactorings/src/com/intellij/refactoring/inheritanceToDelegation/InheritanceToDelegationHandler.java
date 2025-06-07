@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inheritanceToDelegation;
 
@@ -98,7 +98,7 @@ public class InheritanceToDelegationHandler implements PreviewableRefactoringAct
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
     PsiClass[] bases = aClass.getSupers();
-    @NonNls final String javaLangObject = CommonClassNames.JAVA_LANG_OBJECT;
+    final @NonNls String javaLangObject = CommonClassNames.JAVA_LANG_OBJECT;
 
     if (bases.length == 0 || bases.length == 1 && javaLangObject.equals(bases[0].getQualifiedName())) {
       String message = RefactoringBundle.getCannotRefactorMessage(
@@ -150,8 +150,7 @@ public class InheritanceToDelegationHandler implements PreviewableRefactoringAct
     return JavaRefactoringBundle.message("replace.inheritance.with.delegation.title");
   }
 
-  @NotNull
-  public static String suggestTargetClassName(PsiClass targetClass) {
+  public static @NotNull String suggestTargetClassName(PsiClass targetClass) {
     return "My" + targetClass.getName();
   }
 

@@ -34,11 +34,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class PyBroadExceptionInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -61,7 +60,7 @@ public final class PyBroadExceptionInspection extends PyInspection {
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), PyPsiBundle.message("INSP.too.broad.exception.clause"));
       }
-      if (exceptClass != null) {
+      if (exceptClass instanceof PyReferenceExpression) {
         final PyType type = myTypeEvalContext.getType(exceptClass);
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();

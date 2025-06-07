@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -17,7 +17,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
@@ -29,10 +28,9 @@ import java.util.stream.Stream
 @ApiStatus.Experimental
 @Suppress("DEPRECATION")
 interface MavenWorkspaceConfigurator {
-
   companion object {
     @JvmField
-    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create("org.jetbrains.idea.maven.importing.workspaceConfigurator")
+    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName("org.jetbrains.idea.maven.importing.workspaceConfigurator")
   }
 
   /**
@@ -122,7 +120,7 @@ interface MavenWorkspaceConfigurator {
    */
   interface MavenProjectWithModules<M> {
     val mavenProject: MavenProject
-    val changes: MavenProjectChanges
+    val hasChanges: Boolean
     val modules: List<ModuleWithType<M>>
   }
 
@@ -145,7 +143,7 @@ interface MavenWorkspaceConfigurator {
   }
 
   enum class FolderType {
-    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE, GENERATED_SOURCE, GENERATED_TEST_SOURCE
   }
 
   fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {
@@ -195,11 +193,9 @@ open class MavenApplicableConfigurator(private val pluginGroupId: String, privat
 }
 
 fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
-  return this.changes.hasChanges()
+  return this.hasChanges
 }
 
 
 @ApiStatus.Experimental
-interface MavenStaticSyncAware {
-  
-}
+interface MavenStaticSyncAware

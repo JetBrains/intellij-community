@@ -20,8 +20,6 @@ import com.intellij.psi.PsiTypeParameterListOwner;
 
 import java.util.List;
 
-import org.jetbrains.annotations.Nullable;
-
 public interface MakeStaticRefactoring<T extends PsiTypeParameterListOwner> extends Refactoring {
   T getMember();
 

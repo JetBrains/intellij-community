@@ -115,7 +115,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
     return candidates.get(0);
   }
 
-  protected @NotNull List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
+  protected @NotNull @Unmodifiable List<? extends VirtualFileSystem> getFileSystemsForProtocol(@NotNull String protocol) {
     return myCollector.forKey(protocol);
   }
 
@@ -192,8 +192,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   }
 
   @ApiStatus.Internal
-  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<AsyncFileListener> listeners) {
-    return ContainerUtil.concat(listeners, asyncFileListeners);
+  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<? extends AsyncFileListener> listeners) {
+    // copy to avoid modification during iteration later
+    List<AsyncFileListener> result = new ArrayList<>(listeners.size() + asyncFileListeners.size());
+    result.addAll(listeners);
+    result.addAll(asyncFileListeners);
+    return result;
   }
 
   @Override

@@ -137,11 +137,7 @@ public final class InitialInfoBuilder {
     if (isInsideFormattingRanges(textRange) || shouldCollectAlignmentsAround(textRange)) {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
-        final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
-        if (!subBlocks.isEmpty()) {
-          wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
-        }
-        return wrapper;
+        return buildLeafBlock(rootBlock, parent, false, index, parentBlock);
       }
       return buildCompositeBlock(rootBlock, parent, index, currentWrapParent);
     }

@@ -5,12 +5,14 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
  * Use these methods for creating and firing notifications instead of manually obtaining notification group.
  */
-internal object MarkdownNotifications {
+@ApiStatus.Internal
+object MarkdownNotifications {
   val group
     get() = requireNotNull(NotificationGroupManager.getInstance().getNotificationGroup("Markdown"))
 

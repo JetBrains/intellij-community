@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +22,8 @@ import java.util.Collections;
  * Caches information allowing faster offset<->logicalPosition conversions even for long lines.
  * Requests for conversion can be made from under read action, document changes and cache invalidation should be done in EDT.
  */
-final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
+@ApiStatus.Internal
+public final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
   private ArrayList<LineData> myLines = new ArrayList<>();
@@ -30,10 +33,11 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
   // will be visible for reads (happening under read action)
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myUpdateInProgress;
+  private long myDocumentStamp = Long.MIN_VALUE;
 
   LogicalPositionCache(EditorView view) {
     myView = view;
-    myDocument = view.getEditor().getDocument();
+    myDocument = view.getDocument();
     myDocument.addDocumentListener(this, this);
   }
 
@@ -44,12 +48,14 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    assert !myView.isAd();
     myUpdateInProgress = true;
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
+    assert !myView.isAd();
     try {
       int startLine = myDocument.getLineNumber(event.getOffset());
       int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
@@ -79,6 +85,7 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
   }
 
   synchronized @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
+    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     int textLength = myDocument.getTextLength();
     if (offset <= 0 || textLength == 0) {
@@ -91,6 +98,7 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
   }
 
   synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
+    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     if (line < 0 || line >= myDocument.getLineCount()) return 0;
     LineData lineData = getLineInfo(line);
@@ -98,6 +106,7 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
   }
 
   synchronized int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    resetIfOutdated();
     int line = pos.line;
     int column = pos.column;
     if (line >= myDocument.getLineCount()) return myDocument.getTextLength();
@@ -191,7 +200,8 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
 
-  synchronized void validateState() {
+  @VisibleForTesting
+  public synchronized void validateState() {
     int lineCount = myDocument.getLineCount();
     int cacheSize = myLines.size();
     if (cacheSize != lineCount) throw new IllegalStateException("Line count: " + lineCount + ", cache size: " + cacheSize);
@@ -213,6 +223,13 @@ final class LogicalPositionCache implements PrioritizedDocumentListener, Disposa
     }
     catch (Exception e) {
       return "invalid (" + e.getMessage() + ")";
+    }
+  }
+
+  private void resetIfOutdated() {
+    if (myView.isAd() && myDocumentStamp != myDocument.getModificationStamp()) {
+      reset(true);
+      myDocumentStamp = myDocument.getModificationStamp();
     }
   }
 

@@ -8,15 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@SuppressWarnings("MissingDeprecatedAnnotation")
+@Deprecated(forRemoval = true)
 @ApiStatus.Experimental
 public interface PyAstSliceExpression extends PyAstExpression {
-  @NotNull
-  default PyAstExpression getOperand() {
+  default @NotNull PyAstExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
-  @Nullable
-  default PyAstSliceItem getSliceItem() {
+  default @Nullable PyAstSliceItem getSliceItem() {
     return PsiTreeUtil.getChildOfType(this, PyAstSliceItem.class);
   }
 }

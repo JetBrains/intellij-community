@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.CopyProvider;
@@ -39,9 +25,9 @@ import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.
 import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 
 class DetailsPanel extends HtmlPanel implements UiDataProvider, CopyProvider {
-  @NotNull private final Project myProject;
-  @NotNull private final StatusText myStatusText;
-  @Nullable private List<? extends TreeNodeOnVcsRevision> mySelection;
+  private final @NotNull Project myProject;
+  private final @NotNull StatusText myStatusText;
+  private @Nullable List<? extends TreeNodeOnVcsRevision> mySelection;
 
   DetailsPanel(@NotNull Project project) {
     myProject = project;
@@ -68,9 +54,8 @@ class DetailsPanel extends HtmlPanel implements UiDataProvider, CopyProvider {
     update();
   }
 
-  @NotNull
   @Override
-  protected String getBody() {
+  protected @NotNull String getBody() {
     if (mySelection == null || mySelection.isEmpty()) {
       return "";
     }

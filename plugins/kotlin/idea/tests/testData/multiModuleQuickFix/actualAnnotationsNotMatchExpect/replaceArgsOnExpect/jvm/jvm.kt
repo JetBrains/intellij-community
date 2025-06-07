@@ -1,5 +1,5 @@
 // "Replace arguments of mismatched annotation 'Ann' on 'expect' declaration (may change semantics)" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // FIR_COMPARISON
 
 @Ann("different value")

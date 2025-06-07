@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -27,7 +25,7 @@ import java.util.function.Predicate;
  */
 @Debug.Renderer(text = "\"size = \" + myList.size()", childrenArray = "toStrongList().toArray()", hasChildren = "!isEmpty()")
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
-  protected final List<MyReference<T>> myList;
+  final List<MyReference<T>> myList;
   private final ReferenceQueue<T> myQueue = new ReferenceQueue<>();
   private int myAlive;
   private int modCount;
@@ -54,7 +52,9 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     myList = new ArrayList<>(capacity);
   }
 
-  boolean processQueue() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public boolean processQueue() {
     boolean processed = false;
     MyReference<T> reference;
     //noinspection unchecked
@@ -75,7 +75,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   private void nullizeAt(int index) {
     myList.set(index, null);
     myAlive--;
-    // do not incr modCount here because every iterator().remove() usages will throw
+    // do not increment modCount here because every iterator().remove() usages will throw
   }
 
   private void reduceCapacity() {
@@ -134,7 +134,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @TestOnly
-  int listSize() {
+  @ApiStatus.Internal
+  public int listSize() {
     return myList.size();
   }
 
@@ -225,7 +226,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return super.removeAll(c);
   }
 
-  public @NotNull List<@NotNull T> toStrongList() {
+  public @NotNull @Unmodifiable List<@NotNull T> toStrongList() {
     if (myList.isEmpty()) {
       return Collections.emptyList();
     }

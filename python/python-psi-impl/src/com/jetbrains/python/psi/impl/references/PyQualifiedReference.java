@@ -60,9 +60,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
     super(element, context);
   }
 
-  @NotNull
   @Override
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     PyPsiUtils.assertValid(myElement);
     ResolveResultList ret = new ResolveResultList();
 
@@ -129,7 +128,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   private static boolean addAssignedAttributes(ResolveResultList ret,
                                                String referencedName,
-                                               @NotNull final PyQualifiedExpression qualifier) {
+                                               final @NotNull PyQualifiedExpression qualifier) {
     final QualifiedName qName = qualifier.asQualifiedName();
     if (qName == null) {
       return false;
@@ -225,8 +224,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return variants.toArray();
   }
 
-  @Nullable
-  private PyClassType guessClassTypeByName() {
+  private @Nullable PyClassType guessClassTypeByName() {
     final PyExpression qualifierElement = myElement.getQualifier();
     if (qualifierElement instanceof PyReferenceExpression qualifier) {
       final String className = qualifier.getReferencedName();
@@ -309,9 +307,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
    * Returns expressions accessible from scope of "anchor" with names that start with  provided "qualifierQName".
    * Can be used for completion.
    */
-  @NotNull
-  public static Collection<PyTargetExpression> collectAssignedAttributes(@NotNull final QualifiedName qualifierQName,
-                                                                         @NotNull final PsiElement anchor) {
+  public static @NotNull Collection<PyTargetExpression> collectAssignedAttributes(final @NotNull QualifiedName qualifierQName,
+                                                                         final @NotNull PsiElement anchor) {
     final Set<String> names = new HashSet<>();
     final List<PyTargetExpression> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
@@ -353,7 +350,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (pyElement == null) {
       return false;
     }
-    if (Objects.equals(referencedName, pyElement.getName()) && !PyUtil.isInitOrNewMethod(element)) {
+    if (Objects.equals(referencedName, pyElement.getName()) && !PyUtil.isConstructorLikeMethod(element)) {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
@@ -374,8 +371,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return false;
   }
 
-  @NotNull
-  protected PyQualifiedReference copyWithResolveContext(PyResolveContext context) {
+  protected @NotNull PyQualifiedReference copyWithResolveContext(PyResolveContext context) {
     return new PyQualifiedReference(myElement, context);
   }
 

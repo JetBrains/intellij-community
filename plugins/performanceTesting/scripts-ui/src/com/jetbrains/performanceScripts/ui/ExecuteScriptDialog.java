@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performanceScripts.ui;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -27,7 +28,7 @@ public final class ExecuteScriptDialog extends DialogWrapper {
   private final ScriptRunner myScriptRunner;
   private final Action execute;
 
-  public ExecuteScriptDialog(@NotNull final Project project) {
+  public ExecuteScriptDialog(final @NotNull Project project) {
     super(project);
     this.project = project;
     myScriptRunner = new ScriptRunner();
@@ -74,9 +75,8 @@ public final class ExecuteScriptDialog extends DialogWrapper {
     INSPECTION
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static String generateTestScript(@NotNull PerformanceScriptType scriptType) {
+  private static @NotNull String generateTestScript(@NotNull PerformanceScriptType scriptType) {
     return switch (scriptType) {
       case TYPING -> """
         %delayType 150|Sample text for typing scenario
@@ -111,15 +111,13 @@ public final class ExecuteScriptDialog extends DialogWrapper {
     };
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return scriptText;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 

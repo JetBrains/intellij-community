@@ -57,12 +57,6 @@ public abstract class PyTestTask {
   public void doFinally() {
   }
 
-  public void useNormalTimeout() {
-  }
-
-  public void useLongTimeout() {
-  }
-
   public String getScriptName() {
     return myScriptName;
   }

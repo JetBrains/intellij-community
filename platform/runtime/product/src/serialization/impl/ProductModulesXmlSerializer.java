@@ -48,6 +48,7 @@ public final class ProductModulesXmlSerializer {
               switch (loadingRuleString) {
                 case "optional": loadingRule = RuntimeModuleLoadingRule.OPTIONAL; break;
                 case "required": loadingRule = RuntimeModuleLoadingRule.REQUIRED; break;
+                case "embedded": loadingRule = RuntimeModuleLoadingRule.EMBEDDED; break;
                 case "on-demand": loadingRule = RuntimeModuleLoadingRule.ON_DEMAND; break;
                 default: throw new XMLStreamException("Unknown loading rule '" + loadingRuleString + "'");
               }

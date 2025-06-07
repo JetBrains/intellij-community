@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +16,11 @@ public class MavenServerExecutionResult implements Serializable {
   public static final MavenServerExecutionResult EMPTY =
     new MavenServerExecutionResult(null, null, Collections.emptyList(), Collections.emptySet());
 
-  @Nullable public final File file;
-  @Nullable public final ProjectData projectData;
-  @NotNull public final Collection<MavenProjectProblem> problems;
-  @NotNull public final Set<MavenId> unresolvedArtifacts;
-  @NotNull public final Collection<MavenProjectProblem> unresolvedProblems;
+  public final @Nullable File file;
+  public final @Nullable ProjectData projectData;
+  public final @NotNull Collection<MavenProjectProblem> problems;
+  public final @NotNull Set<MavenId> unresolvedArtifacts;
+  public final @NotNull Collection<MavenProjectProblem> unresolvedProblems;
 
   public MavenServerExecutionResult(@Nullable File file,
                                     @Nullable ProjectData projectData,
@@ -56,10 +42,8 @@ public class MavenServerExecutionResult implements Serializable {
   }
 
   public static class ProjectData implements Serializable {
-    @NotNull
-    public final MavenModel mavenModel;
-    @NotNull
-    public final List<MavenId> managedDependencies;
+    public final @NotNull MavenModel mavenModel;
+    public final @NotNull List<MavenId> managedDependencies;
     public final String dependencyHash;
     public final boolean dependencyResolutionSkipped;
     public final Map<String, String> mavenModelMap;

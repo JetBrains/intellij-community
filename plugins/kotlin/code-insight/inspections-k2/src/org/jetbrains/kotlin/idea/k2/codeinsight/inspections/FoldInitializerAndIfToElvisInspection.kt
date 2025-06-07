@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -7,12 +7,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
 import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
+import org.jetbrains.kotlin.idea.codeInsight.replaceVarWithVal
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -33,15 +35,15 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
-        return prepareData(element)
+    @OptIn(KaExperimentalApi::class)
+    override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+        return prepareData(element, enforceNonNullableTypeIfPossible = true)
     }
 
     override fun createQuickFix(
         element: KtIfExpression,
         context: FoldInitializerAndIfExpressionData,
-    ) = object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.if.with.elvis.operator")
@@ -51,12 +53,21 @@ internal class FoldInitializerAndIfToElvisInspection :
             element: KtIfExpression,
             updater: ModPsiUpdater,
         ) {
+            val variableDeclaration = context.variableDeclaration.element?.let(updater::getWritable) ?: return
+            val initializer = context.initializer.element?.let(updater::getWritable) ?: return
+            val ifNullExpr = context.ifNullExpression.element?.let(updater::getWritable) ?: return
+            val typeChecked = context.typeChecked?.element?.let(updater::getWritable)
+
+            if (context.couldBeVal) {
+                variableDeclaration.replaceVarWithVal()
+            }
+
             val elvis = joinLines(
                 element,
-                updater.getWritable(context.variableDeclaration),
-                updater.getWritable(context.initializer),
-                updater.getWritable(context.ifNullExpression),
-                updater.getWritable<KtTypeReference>(context.typeChecked),
+                variableDeclaration,
+                initializer,
+                ifNullExpr,
+                typeChecked,
                 context.variableTypeString,
             )
 

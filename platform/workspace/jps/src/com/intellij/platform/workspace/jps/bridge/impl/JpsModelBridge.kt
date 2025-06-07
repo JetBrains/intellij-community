@@ -2,9 +2,7 @@
 package com.intellij.platform.workspace.jps.bridge.impl
 
 import com.intellij.platform.workspace.storage.EntityStorage
-import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
-import org.jetbrains.jps.model.JpsProject
 
 internal class JpsModelBridge(
   projectStorage: EntityStorage, 

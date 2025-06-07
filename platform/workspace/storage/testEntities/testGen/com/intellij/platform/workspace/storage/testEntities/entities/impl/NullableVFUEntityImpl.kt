@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -57,8 +56,8 @@ internal class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityDa
   }
 
 
-  internal class Builder(result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity, NullableVFUEntityData>(
-    result), NullableVFUEntity.Builder {
+  internal class Builder(result: NullableVFUEntityData?) : ModifiableWorkspaceEntityBase<NullableVFUEntity, NullableVFUEntityData>(result),
+                                                           NullableVFUEntity.Builder {
     internal constructor() : this(NullableVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -167,7 +166,8 @@ internal class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.NullableVFUEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

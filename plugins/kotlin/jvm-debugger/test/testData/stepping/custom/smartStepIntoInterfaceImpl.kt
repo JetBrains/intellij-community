@@ -84,7 +84,7 @@ fun main(args: Array<String>) {
 }
 
 fun testSmartStepInto() {
-    // TODO First time - doesn't work: should be smartStepIntoInterfaceImpl.kt:9 between smartStepIntoInterfaceImpl.kt:91 and 96
+
     // SMART_STEP_INTO_BY_INDEX: 2
     //Breakpoint!
     barI().foo()
@@ -165,3 +165,6 @@ public class MyJavaClass {
         return 1;
     }
 }
+
+// JVM_DEFAULT_MODE: disable
+// ^ After fixing IDEA-367937, please provide a copy of this test with the 'enable' mode.

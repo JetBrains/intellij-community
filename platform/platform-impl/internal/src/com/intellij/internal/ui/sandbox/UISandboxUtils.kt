@@ -61,8 +61,8 @@ internal fun getStateText(component: JComponent, vararg additionalStates: @Nls S
   return getStateText(*states)
 }
 
-internal fun Cell<AbstractButton>.applyStateText() {
-  component.text = getStateText(component)
+internal fun Cell<AbstractButton>.applyStateText(vararg additionalStates: @Nls String?) {
+  component.text = getStateText(component, additionalStates = additionalStates)
 }
 
 internal fun <T : JComponent> Panel.withStateLabel(vararg additionalStates: @Nls String?, init: Row.() -> Cell<T>) {
@@ -84,4 +84,8 @@ internal fun <T : JTextArea> Cell<T>.initWithText(): Cell<T> {
 
 internal fun <T : JTextArea> T.addText() {
   text = (1..20).joinToString(separator = "\n") { "Line $it" }
+}
+
+internal fun items(count: Int, prefix: String = "Item"): List<String> {
+  return (1..count).map { "$prefix $it" }.toList()
 }

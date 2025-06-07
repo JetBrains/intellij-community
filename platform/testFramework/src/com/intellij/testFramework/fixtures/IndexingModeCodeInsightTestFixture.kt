@@ -114,4 +114,8 @@ open class IndexingModeCodeInsightTestFixture<T : CodeInsightTestFixture> protec
   override fun getTestRootDisposable(): Disposable {
     return delegate.testRootDisposable //default method of interface is not delegated by default
   }
+
+  override fun isOpenedInMyEditor(virtualFile: VirtualFile): Boolean {
+    return delegate.isOpenedInMyEditor(virtualFile)
+  }
 }

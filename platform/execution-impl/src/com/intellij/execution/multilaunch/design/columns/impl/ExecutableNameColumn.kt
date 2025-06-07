@@ -1,25 +1,11 @@
 package com.intellij.execution.multilaunch.design.columns.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.ActionLink
-import com.intellij.util.ui.AbstractTableCellEditor
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.MultiLaunchConfigurationViewModel
-import com.intellij.execution.multilaunch.design.actions.AddExecutableAction
 import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
 import com.intellij.execution.multilaunch.design.actions.ReplaceExecutableAction
 import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
-import com.intellij.execution.multilaunch.design.components.BadgeLabel
 import com.intellij.execution.multilaunch.design.components.DropDownDecorator
 import com.intellij.execution.multilaunch.design.components.UnknownItemLabel
 import com.intellij.execution.multilaunch.design.popups.SelectorPopupProvider
@@ -27,10 +13,22 @@ import com.intellij.execution.multilaunch.design.popups.SelectorPopupsContainer
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvidersContainer
 import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.ui.components.ActionLink
+import com.intellij.util.ui.AbstractTableCellEditor
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.SwingConstants
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
@@ -89,7 +87,7 @@ class ExecutableNameColumn(
         val dataContext = ManageExecutableAction.createContext(viewModel.project, viewModel, null, bounds)
         val actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.POPUP, Presentation.newTemplatePresentation(), dataContext)
 
-        ActionManager.getInstance().getAction(AddExecutableAction.ID).actionPerformed(actionEvent)
+        ActionManager.getInstance().getAction("multilaunch.AddExecutableAction").actionPerformed(actionEvent)
       }
     }
   }

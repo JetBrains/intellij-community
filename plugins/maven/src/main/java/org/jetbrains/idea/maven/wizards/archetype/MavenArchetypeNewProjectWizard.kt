@@ -98,14 +98,11 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private lateinit var archetypeDescriptorTable: PropertiesTable
     private lateinit var archetypeDescriptorPanel: JComponent
 
-    private val moduleBuilder = MavenJavaModuleBuilder()
-
     init {
       catalogItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypes() }
       archetypeItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeVersions() }
       archetypeVersionProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeDescriptor() }
       data.putUserData(MavenArchetypeNewProjectWizardData.KEY, this)
-      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, moduleBuilder)
     }
 
     fun setupCatalogUI(builder: Panel) {
@@ -321,7 +318,7 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, moduleBuilder) { builder ->
+      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
         builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 
@@ -53,7 +53,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     if (mySourcePaths == null) {
       final List<Pair<String, String>> paths = new ArrayList<>();
       String contentEntry = Objects.requireNonNull(getContentEntryPath());
-      @NonNls final Path path = Path.of(contentEntry).resolve("src");
+      final @NonNls Path path = Path.of(contentEntry).resolve("src");
       try {
         NioFiles.createDirectories(path);
       }
@@ -95,9 +95,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     return sdkType instanceof JavaSdkType && !((JavaSdkType)sdkType).isDependent();
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return StdModuleTypes.JAVA.modifySettingsStep(settingsStep, this);
   }
 
@@ -158,9 +157,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     }
   }
 
-  @Nullable
   @Override
-  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  public @Nullable List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
     Boolean aDefault = extension.getDefault();
     LOG.debug("commit: aDefault=" + aDefault);
@@ -192,8 +190,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     myModuleLibraries.add(Pair.create(moduleLibraryPath,sourcePath));
   }
 
-  @Nullable
-  protected static String getPathForOutputPathStep() {
+  protected static @Nullable String getPathForOutputPathStep() {
     return null;
   }
 

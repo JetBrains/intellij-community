@@ -1,5 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectStructureUtils")
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KOTLIN_FILE_EXTENSIONS: Set<String> = setOf("kt", "kts")
@@ -171,11 +174,22 @@ fun PsiElement.isUnderKotlinSourceRootTypes(): Boolean {
     return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
 }
 
-private val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
+/* We use this constant in the Kotlin plugin because we can't use GradleConstants.SYSTEM_ID now because we don't have plugin.xml in this
+ module.
+ Can be fixed when there is order in module dependencies.
+ See IDEA-353391 Use correct project system ids for Gradle and Maven */
+val GRADLE_SYSTEM_ID: ProjectSystemId = ProjectSystemId("GRADLE")
 
 val Module.isGradleModule: Boolean
     get() = ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
 
+/*
+This constant should be "MAVEN" but changing it breaks the tests:
+org.jetbrains.kotlin.idea.maven.MavenUpdateConfigurationQuickFixTest12.testAddKotlinReflect
+org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManagerTest.testMavenDependencyManagerIsApplicable
+
+Should be fixed in the scope of IDEA-353391 Use correct project system ids for Gradle and Maven
+ */
 private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 
 val Module.isMavenModule: Boolean

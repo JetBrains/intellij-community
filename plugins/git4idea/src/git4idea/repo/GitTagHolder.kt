@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -25,6 +25,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitVcsSettings
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.util.StringScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -85,6 +86,7 @@ class GitTagHolder(val repository: GitRepository) {
       val tags = loadTagsForRepo()
       tagsWithHashes = tags.first
       hashToTagCache = tags.second
+      BackgroundTaskUtil.syncPublisher(repository.project, GitRepositoryFrontendSynchronizer.TOPIC).tagsLoaded(repository)
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_TAGS_LOADED).tagsLoaded(repository)
     }
     else {

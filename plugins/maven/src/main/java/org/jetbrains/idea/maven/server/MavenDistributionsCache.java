@@ -29,11 +29,11 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
+import static org.jetbrains.idea.maven.utils.MavenUtil.*;
 
 @Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
-  private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
+  private static final ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 
   private final ConcurrentMap<String, String> myWorkingDirToMultiModuleMap = CollectionFactory.createConcurrentWeakMap();
   private final ConcurrentMap<String, String> myVmSettingsMap = CollectionFactory.createConcurrentWeakMap();
@@ -63,7 +63,7 @@ public final class MavenDistributionsCache {
     if (type instanceof MavenWrapper) {
       var baseDir = myProject.getBasePath();
       var projects = projectsManager.getProjects();
-      if (projects.size() > 0) {
+      if (!projects.isEmpty()) {
         baseDir = projects.get(0).getDirectory();
       }
       if (baseDir != null) {
@@ -75,7 +75,7 @@ public final class MavenDistributionsCache {
       MavenDistribution mavenDistribution = fromPath(sp.getMavenHome(), sp.getTitle());
       if (mavenDistribution != null) return mavenDistribution;
     }
-    else if (type instanceof BundledMaven3 || type instanceof BundledMaven4) {
+    else if (type instanceof BundledMaven) {
       return resolveEmbeddedMavenHome();
     }
 
@@ -86,11 +86,14 @@ public final class MavenDistributionsCache {
 
   }
 
-  @Nullable
-  private static MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
+  private static @Nullable MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
     Path file = Path.of(path);
-    if (!isValidMavenHome(file)) return null;
-    return new LocalMavenDistribution(file, label);
+    if (isValidMavenHome(file)) return new LocalMavenDistribution(file, label);
+    if (isValidMavenDaemon(file)) {
+      var mvnFile = extractMvnFromDaemon(file);
+      if (mvnFile != null) return new DaemonedLocalDistribution(new LocalMavenDistribution(mvnFile, label), file);
+    }
+    return null;
   }
 
   public @NotNull String getVmOptions(@Nullable String workingDirectory) {
@@ -136,8 +139,7 @@ public final class MavenDistributionsCache {
     return distribution;
   }
 
-  @NotNull
-  public static LocalMavenDistribution resolveEmbeddedMavenHome() {
+  public static @NotNull LocalMavenDistribution resolveEmbeddedMavenHome() {
     PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
 
     if (PluginManagerCore.isRunningFromSources()) { // running from sources

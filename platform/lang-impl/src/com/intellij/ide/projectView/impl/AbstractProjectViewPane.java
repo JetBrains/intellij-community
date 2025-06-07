@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -11,6 +11,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -69,8 +70,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -119,7 +120,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
         rebuildCompletely(true);
       }
     }, this);
-    ProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
+    CompoundProjectViewNodeDecorator.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ProjectViewNodeDecorator extension, @NotNull PluginDescriptor pluginDescriptor) {
         rebuildCompletely(false);
@@ -234,6 +235,17 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
+  @NotNull
+  public final ActionCallback selectWithCallback(@Nullable Object element, @Nullable VirtualFile file, boolean requestFocus) {
+    if (this instanceof ProjectViewPaneWithAsyncSelect async) {
+      return async.selectCB(element, file, requestFocus);
+    }
+    else {
+      select(element, file, requestFocus);
+      return ActionCallback.DONE;
+    }
+  }
+
   public void selectModule(@NotNull Module module, final boolean requestFocus) {
     doSelectModuleOrGroup(module, requestFocus);
   }
@@ -337,7 +349,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
 
     if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
-      List<TreeStructureProvider> providers = treeStructure.getProviders();
+      List<TreeStructureProvider> providers = ReadAction.compute(treeStructure::getProviders);
       if (providers != null && !providers.isEmpty()) {
         //noinspection unchecked
         List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
@@ -471,7 +483,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return unloadedModules(myProject, getSelectedValues(selectedUserObjects));
   }
 
-  private <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
+  private @Unmodifiable <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
   }
 
@@ -497,7 +509,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
 
-  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @Unmodifiable @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
     JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
@@ -1220,5 +1232,9 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
     @Override
     public void treeCollapsed(TreeExpansionEvent event) { }
+  }
+
+  public interface ProjectViewPaneWithAsyncSelect {
+    @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
   }
 }

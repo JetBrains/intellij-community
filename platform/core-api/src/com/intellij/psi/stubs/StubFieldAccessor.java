@@ -1,11 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
+
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
-final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
-  final String externalId;
+@ApiStatus.Internal
+public final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
+  public final String externalId;
   private final Field myField;
   private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 
@@ -23,8 +27,19 @@ final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? exte
     ObjectStubSerializer<?, Stub> delegate = myFieldValue;
     if (delegate == null) {
       try {
-        @SuppressWarnings("unchecked") ObjectStubSerializer<?, Stub> value = (ObjectStubSerializer<?, Stub>)myField.get(null);
-        myFieldValue = delegate = value;
+        Object object = myField.get(null);
+        ObjectStubSerializer<?, Stub> serializer;
+        if (object instanceof ObjectStubSerializer) {
+          serializer = (ObjectStubSerializer<?, Stub>)object;
+        }
+        else if (object instanceof IElementType) {
+          IElementType elementType = ((IElementType)object);
+          serializer = StubElementRegistryService.getInstance().getStubSerializer(elementType);
+        }
+        else {
+          throw new IllegalStateException(object + " is not an instance of ObjectStubSerializer nor IElementType with registered stub serializer");
+        }
+        myFieldValue = delegate = serializer;
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);

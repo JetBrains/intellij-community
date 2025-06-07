@@ -8,17 +8,17 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
-val EP_NAME = ExtensionPointName.create<SmartUpdateStep>("com.intellij.smartUpdateStep")
+internal val EP_NAME = ExtensionPointName.create<SmartUpdateStep>("com.intellij.smartUpdateStep")
 
 interface SmartUpdateStep {
   val id: @NonNls String
   val stepName: @Nls String
 
   /**
-   * Perform update step and proceed by invoking onSuccess()
+   * Perform an update step and proceed by invoking onSuccess()
    *
-   * @param e null if task is invoked after restart or by scheduler, otherwise user-initiated
-   * @param onSuccess must be called to proceed to next step
+   * @param e null if a task is invoked after restart or by scheduler, otherwise user-initiated
+   * @param onSuccess must be called to proceed to the next step
    */
   fun performUpdateStep(project: Project, e: AnActionEvent? = null, onSuccess: () -> Unit)
   fun isAvailable(project: Project): Boolean = true

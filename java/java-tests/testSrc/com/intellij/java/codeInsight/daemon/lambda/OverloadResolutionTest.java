@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NonNls;
 
 public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
@@ -83,14 +82,6 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
 
   public void testLambdaValueCompatibleWithNestedTryWithResources() {
     doTest(false);
-  }
-
-  public void testManyOverloadsWithVarargsPerformance() {
-    Benchmark.newBenchmark("Overload resolution with 14 overloads", () -> doTest(false)).start();
-  }
-
-  public void testConstructorOverloadsWithDiamondsPerformance() {
-    Benchmark.newBenchmark("Overload resolution with chain constructor calls with diamonds", () -> doTest(false)).start();
   }
 
   public void testMultipleOverloadsWithNestedGeneric() {

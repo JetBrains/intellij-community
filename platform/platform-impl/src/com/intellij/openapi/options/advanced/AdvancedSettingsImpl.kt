@@ -11,17 +11,21 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import java.lang.reflect.Method
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
     @JvmField
@@ -137,8 +141,26 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   fun group(): @Nls String? = if (groupKey.isEmpty()) null else findBundle()?.let { BundleBase.message(it, groupKey) }
 
   fun description(): @Nls String? {
+    if (descriptionGetter != null && serviceInstance != null) {
+      descriptionGetter!!.invoke(serviceInstance!!)
+        ?.let { if ((it as? String)?.isNotEmpty() == true) return it }
+    }
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.${id}.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
+  }
+
+  fun isVisible(): Boolean {
+    if (visibilityCheckMethod != null && serviceInstance != null) {
+      visibilityCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
+  }
+
+  fun isEnabled(): Boolean {
+    if (enabledCheckMethod != null && serviceInstance != null) {
+      enabledCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
   }
 
   fun trailingLabel(): @Nls String? {
@@ -167,7 +189,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   private fun findBundle(): ResourceBundle? {
     val bundleName = bundle.nullize()
-                     ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
+                     ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" }?.let { ApplicationBundle.BUNDLE }
                      ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
@@ -193,6 +215,33 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
       }
   }
 
+  private val descriptionGetter: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "get" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Description" }
+      }
+  }
+
+  private val visibilityCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Visible" }?.takeIf { it.canAccess(instance) }
+      }
+  }
+
+  private val enabledCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Enabled" }?.takeIf { it.canAccess(instance) }
+      }
+  }
+
   override fun getKey(): String = id
 
   override fun getInstance(): AdvancedSettingBean = this
@@ -204,6 +253,7 @@ private val logger = logger<AdvancedSettingsImpl>()
   Storage("advancedSettings.xml", roamingType = RoamingType.DISABLED),
   Storage(value = "ide.general.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 ])
+@ApiStatus.Internal
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
     var settings: Map<String, String> = mapOf()
@@ -211,6 +261,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
   private val internalState = ConcurrentHashMap<String, Any>()
+  private val unknownValues = ConcurrentHashMap<String, String>()
   private val defaultValueCache = ConcurrentHashMap<String, Any>()
   private var modificationCount = 0L
 
@@ -218,30 +269,46 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionAdded(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         logger.info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
+        val rawValue = unknownValues.remove(extension.id) ?: return
+        internalState[extension.id] = extension.valueFromString(rawValue)
       }
 
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         logger.info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
         defaultValueCache.remove(extension.id)
+        val currentValue = internalState.remove(extension.id) ?: return
+        unknownValues[extension.id] = extension.valueToString(currentValue)
       }
     }, this)
   }
 
-  override fun dispose() { }
+  override fun dispose() {}
 
   override fun getState(): AdvancedSettingsState {
     if (logger.isDebugEnabled) {
       logger.debug("Getting advanced settings state: $internalState")
     }
-    return  AdvancedSettingsState().also { it.settings = internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap() }
+    val retval = AdvancedSettingsState()
+    retval.settings = HashMap(unknownValues).apply { putAll(internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap()) }
+    return retval
   }
 
   override fun loadState(state: AdvancedSettingsState) {
     if (logger.isDebugEnabled) {
       logger.debug("Will load advanced settings state: ${state.settings}. Current state: ${this.internalState}")
     }
+
     this.internalState.clear()
-    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.internalState)
+
+    for ((k, v) in state.settings) {
+      val optionOrNull = getOptionOrNull(k)
+      if (optionOrNull != null) {
+        this.internalState.put(k, optionOrNull.valueFromString(v))
+      }
+      else {
+        unknownValues.put(k, v)
+      }
+    }
   }
 
   override fun getStateModificationCount(): Long = modificationCount
@@ -301,14 +368,10 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getOptionOrNull(id: String): AdvancedSettingBean? {
     val bean = epCollector.findSingle(id)
     if (bean == null) {
-      if (ApplicationManager.getApplication().isEAP)
-        logger.error("Cannot find advanced setting $id", Throwable())
-      else
-        logger.warn("Cannot find advanced setting $id", Throwable())
+      logger.info("Cannot find advanced setting $id")
     }
     return bean
   }
-
 
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
@@ -319,6 +382,6 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
     val (oldValue, type) = getSettingAndType(id)
     setSetting(id, value, type)
-    Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
+    Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type) })
   }
 }

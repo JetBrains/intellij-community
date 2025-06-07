@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,8 +27,7 @@ public abstract class TypeConversionRule {
    * @return null when it's impossible to convert {@code from} type to {@code to} type by this rule,
    *         conversion description otherwise
    */
-  @Nullable
-  public abstract TypeConversionDescriptorBase findConversion(final PsiType from,
+  public abstract @Nullable TypeConversionDescriptorBase findConversion(final PsiType from,
                                                               final PsiType to,
                                                               final PsiMember member,
                                                               final PsiExpression context,
@@ -38,8 +37,7 @@ public abstract class TypeConversionRule {
   /**
    * @return type parameters mapping between {@code from} and {@code to}
    */
-  @Nullable
-  public Pair<PsiType, PsiType> bindTypeParameters(PsiType from, PsiType to, final PsiMethod method, final PsiExpression context,
+  public @Nullable Pair<PsiType, PsiType> bindTypeParameters(PsiType from, PsiType to, final PsiMethod method, final PsiExpression context,
                                                    final TypeMigrationLabeler labeler) {
     return null;
   }

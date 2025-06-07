@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiElement;
@@ -62,8 +62,8 @@ public class StreamingJsonBuilderTest extends LightGroovyTestCase {
         (GroovyFile)getFixture().configureByText("a.groovy", "def builder = new groovy.json.StreamingJsonBuilder(null);" + text);
       GrTopStatement[] statements = file.getTopStatements();
       GrCallExpression call = (GrCallExpression)statements[statements.length - 1];
-      assert call.resolveMethod() != null;
-      assert call.getType().getCanonicalText().equals("groovy.json.StreamingJsonBuilder");
+      assertNotNull(call.resolveMethod());
+      assertEquals("groovy.json.StreamingJsonBuilder", call.getType().getCanonicalText());
     }
   }
 
@@ -110,17 +110,17 @@ public class StreamingJsonBuilderTest extends LightGroovyTestCase {
       }
       """);
     PsiElement resolved = myFixture.getFile().findReferenceAt(myFixture.getCaretOffset()).resolve();
-    assert resolved instanceof GrMethod;
-    assert !(resolved instanceof LightElement);
-    assert resolved.isPhysical();
+    assertInstanceOf(resolved, GrMethod.class);
+    assertFalse(resolved instanceof LightElement);
+    assertTrue(resolved.isPhysical());
   }
 
   private void doTest(String text) {
     getFixture().configureByText("a.groovy", "def builder = new groovy.json.StreamingJsonBuilder(); " +
                                              DefaultGroovyMethods.invokeMethod(String.class, "valueOf", new Object[]{text}));
     GrReferenceExpression reference = (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
-    assert reference.resolve() instanceof PsiMethod &&
-           reference.getType().getCanonicalText().equals("java.lang.Object") : text;
+    assertInstanceOf(reference.resolve(), PsiMethod.class);
+    assertEquals("java.lang.Object", reference.getType().getCanonicalText());
   }
 
   public void testDoNotOverrideExistingMethods() {
@@ -130,8 +130,8 @@ public class StreamingJsonBuilderTest extends LightGroovyTestCase {
     GrTopStatement[] statements = file.getTopStatements();
     GrCallExpression call = (GrCallExpression) statements[statements.length - 1];
     Object method = call.resolveMethod();
-    assert method != null;
-    assert method instanceof ClsMethodImpl;
+    assertNotNull(method);
+    assertInstanceOf(method, ClsMethodImpl.class);
   }
 
   @Override

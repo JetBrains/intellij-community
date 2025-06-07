@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class InfiniteLoopStatementInspection extends BaseInspection {
   public boolean myIgnoreInThreadTopLevel = true;
@@ -48,24 +46,16 @@ public final class InfiniteLoopStatementInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "infinite.loop.statement.problem.descriptor");
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("infinite.loop.statement.problem.descriptor");
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new InfiniteLoopStatementsVisitor(myIgnoreInThreadTopLevel);
+    return new InfiniteLoopStatementsVisitor();
   }
 
-  private static class InfiniteLoopStatementsVisitor extends BaseInspectionVisitor {
-    final boolean myIgnoreInThreadTopLevel;
-
-    InfiniteLoopStatementsVisitor(boolean ignoreInThreadTopLevel) {
-      this.myIgnoreInThreadTopLevel = ignoreInThreadTopLevel;
-    }
-
+  private class InfiniteLoopStatementsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -103,7 +93,7 @@ public final class InfiniteLoopStatementInspection extends BaseInspection {
                                                                               element instanceof PsiLambdaExpression ||
                                                                               element instanceof PsiAnonymousClass);
         if (parent instanceof PsiMethod method) {
-          if (method.hasModifier(JvmModifier.PRIVATE)) {
+          if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
             PsiClass aClass = method.getContainingClass();
             boolean allUsagesAreInThreadStart = StreamEx.ofTree((PsiElement)aClass, element -> StreamEx.of(element.getChildren()))
               .filter(element -> {
@@ -127,52 +117,32 @@ public final class InfiniteLoopStatementInspection extends BaseInspection {
               });
             if (allUsagesAreInThreadStart) return;
           }
-          else {
-            PsiClass maybeAnonymous = tryCast(method.getContainingClass(), PsiAnonymousClass.class);
-            if (maybeAnonymous != null && "run".equals(method.getName()) && method.getParameterList().isEmpty()) {
-              PsiExpression argument = tryCast(PsiUtil.skipParenthesizedExprUp(maybeAnonymous.getParent()), PsiExpression.class);
-              if (isInThreadConstructor(argument)) return;
-            }
+          else if (method.getContainingClass() instanceof PsiAnonymousClass anonymous &&
+                   "run".equals(method.getName()) &&
+                   method.getParameterList().isEmpty() &&
+                   isInThreadConstructor((PsiExpression)anonymous.getParent())) {
+            return;
           }
         }
-        else if (parent instanceof PsiLambdaExpression) {
-          if (isInThreadConstructor((PsiExpression)parent)) return;
+        else if (parent instanceof PsiLambdaExpression lambda && isInThreadConstructor(lambda)) {
+          return;
         }
       }
       registerStatementError(statement);
     }
 
-
     private static boolean isArgumentInThreadConstructor(@Nullable PsiExpression inArgument) {
       PsiElement skipped = PsiUtil.skipParenthesizedExprUp(inArgument);
-      if (skipped == null) return false;
-      PsiElement argParent = skipped.getParent();
-      PsiExpression argument = null;
-      if (argParent instanceof PsiLambdaExpression) {
-        argument = (PsiExpression)argParent;
-      }
-      else if (argParent instanceof PsiAnonymousClass) {
-        argument = tryCast(argParent, PsiNewExpression.class);
-      }
-      return isInThreadConstructor(argument);
+      return skipped != null && skipped.getParent() instanceof PsiLambdaExpression lambda && isInThreadConstructor(lambda);
     }
 
-    private static boolean isInThreadConstructor(PsiExpression argument) {
-      if (argument != null) {
-        PsiElement argumentParent = PsiUtil.skipParenthesizedExprUp(PsiUtil.skipParenthesizedExprUp(argument).getParent());
-        PsiConstructorCall constructorCall =
-          tryCast(argumentParent.getParent(), PsiConstructorCall.class);
-        if (constructorCall != null) {
-          PsiMethod constructor = constructorCall.resolveConstructor();
-          if (constructor != null) {
-            PsiClass aClass = constructor.getContainingClass();
-            if (aClass != null) {
-              if ("java.lang.Thread".equals(aClass.getQualifiedName())) return true;
-            }
-          }
-        }
-      }
-      return false;
+    private static boolean isInThreadConstructor(@NotNull PsiExpression argument) {
+      PsiElement argumentParent = PsiUtil.skipParenthesizedExprUp(argument.getParent());
+      if (!(argumentParent.getParent() instanceof PsiConstructorCall constructorCall)) return false;
+      PsiMethod constructor = constructorCall.resolveConstructor();
+      if (constructor == null) return false;
+      PsiClass aClass = constructor.getContainingClass();
+      return aClass != null && "java.lang.Thread".equals(aClass.getQualifiedName());
     }
   }
 }

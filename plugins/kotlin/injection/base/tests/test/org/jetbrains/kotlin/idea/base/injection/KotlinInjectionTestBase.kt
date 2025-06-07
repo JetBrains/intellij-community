@@ -16,6 +16,52 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
+
+    fun testInjectionLanguageOnString() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            fun bar(){ val code = "fun foo() { <caret> }" }
+        """.trimIndent(),
+            after = """
+            import org.intellij.lang.annotations.Language
+
+            fun bar(){ @Language("kotlin") val code = "fun foo() {  }" }
+        """.trimIndent()
+        )
+    }
+
+    fun testInjectionLanguageOnStringSplitDeclaration() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            var code: String? = null
+            fun bar(){ code = "fun foo() { <caret> }" }
+        """.trimIndent(),
+            after = """
+            import org.intellij.lang.annotations.Language
+
+            @Language("kotlin")
+            var code: String? = null
+            fun bar(){ code = "fun foo() {  }" }
+        """.trimIndent()
+        )
+    }
+
+    fun testInjectionLanguageOnLibraryDeclaration() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            val s = buildString { 
+                append("<caret>val x = 1")
+            }
+        """.trimIndent(),
+            after = """
+            val s = buildString { 
+                // language="kotlin"
+                append("val x = 1")
+            }
+        """.trimIndent()
+        )
+    }
+
     fun testInjectionOnJavaPredefinedMethodWithAnnotation() = doInjectionPresentTest(
         """
         val test1 = java.util.regex.Pattern.compile("<caret>pattern")
@@ -147,7 +193,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         """,
         """
         fun test() {
-            //language=file-reference
+            // language="file-reference"
             "<caret>"
         }
         """
@@ -186,7 +232,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         """,
         """
         fun test() {
-            //language=file-reference
+            // language="file-reference"
             "<caret>"
         }
         """
@@ -390,6 +436,20 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
             ShredInfo(range(27, 28), hostRange = range(25, 25), prefix = "s")
         ),
         injectedText = "s text smissingValues text s"
+    )
+
+    fun testEditorShortShreadsInInterpolatedInjectionWithEscapes() = doInjectionPresentTest(
+        """
+        const val s = "text1"
+        // language=TEXT
+        val test = "${'$'}s <caret>text"
+        """,
+        languageId = PlainTextLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+        shreds = listOf(
+            ShredInfo(range(0, 0), hostRange = range(1, 1)),
+            ShredInfo(range(0, 10), hostRange = range(3, 8), prefix = "text1")
+        ),
+        injectedText = "text1 text"
     )
 
     fun testEditorLongShreadsInInterpolatedInjection() = doInjectionPresentTest(

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.icons.AllIcons
@@ -10,27 +10,74 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Version
-import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
+import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
+import com.jetbrains.python.packaging.PyPIPackageUtil.INSTANCE
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPackageBackground
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
+import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * PyCharm doesn't provide any API for package management for external plugins.
+ * The closest thing is [PythonPackageManager], although it is also subject to change
+ */
+@ApiStatus.Internal
 object PyPackageInstallUtils {
-  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String) {
+  internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Project): Set<PyRequirement> {
+    val confirmationEnabled = PropertiesComponent.getInstance()
+      .getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
+
+    if (!confirmationEnabled || packageNames.isEmpty()) return packageNames.toSet()
+
+    val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableTextWithoutVersion }
+
+    if (!dialog.showAndGet()) {
+      PyPackagesUsageCollector.installAllCanceledEvent.log()
+      return emptySet()
+    }
+
+    return dialog.markedElements.toSet()
+  }
+
+
+  fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
+    val shouldToInstall = checkShouldToInstallSnapshot(project, sdk, moduleName)
+    if (!shouldToInstall)
+      return null
+    return PyPsiPackageUtil.moduleToPackageName(moduleName)
+  }
+
+  fun checkShouldToInstallSnapshot(project: Project, sdk: Sdk, moduleName: String): Boolean {
+    val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
+    return !checkIsInstalledSnapshot(project, sdk, packageName) && INSTANCE.isInPyPI(packageName)
+  }
+
+  fun checkIsInstalledSnapshot(project: Project, sdk: Sdk, packageName: String): Boolean {
+    val isStdLib = PyStdlibUtil.getPackages()?.contains(packageName) ?: false
+    if (isStdLib) {
+      return true
+    }
+    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    return packageManager.hasInstalledPackageSnapshot(packageName)
+  }
+
+
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: PyRequirementVersionSpec? = null) {
     val isConfirmed = withContext(Dispatchers.EDT) {
       confirmInstall(project, packageName)
     }
     if (!isConfirmed)
       return
-    installPackage(project, sdk, packageName)
+    PythonPackageManagerUI.forSdk(project, sdk).installPackageBackground(packageName, versionSpec = versionSpec)
   }
 
   fun confirmInstall(project: Project, packageName: String): Boolean {
@@ -51,44 +98,6 @@ object PyPackageInstallUtils {
     return true
   }
 
-  suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
-                               ?: return Result.failure(Exception("Could not find any repositories"))
-
-    return pythonPackageManager.updatePackage(packageSpecification)
-  }
-
-
-  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
-                               ?: return Result.failure(Exception("Could not find any repositories"))
-
-    return pythonPackageManager.installPackage(packageSpecification, emptyList<String>())
-  }
-
-  fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {
-    val pythonPackage = getPackage(project, sdk, packageName)
-    val version = pythonPackage?.version ?: return null
-    return Version.parseVersion(version)
-  }
-
-  private fun getPackage(
-    project: Project,
-    sdk: Sdk,
-    packageName: String,
-  ): PythonPackage? {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val pythonPackage = pythonPackageManager.installedPackages.firstOrNull { it.name == packageName }
-    return pythonPackage
-  }
-
-  suspend fun uninstall(project: Project, sdk: Sdk, libName: String) {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val pythonPackage = getPackage(project, sdk, libName) ?: return
-    pythonPackageManager.uninstallPackage(pythonPackage)
-  }
 
   private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
@@ -99,45 +108,4 @@ object PyPackageInstallUtils {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
-fun getConfirmedPackages(packageNames: List<String>): List<String> {
-  val confirmationEnabled = PropertiesComponent.getInstance().getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
-  if (!confirmationEnabled) {
-    return packageNames
-  }
 
-  val packageRank = ApplicationManager.getApplication()
-    .getService(PyPIPackageRanking::class.java)
-    .packageRank
-
-  val (knownPackages, nonWellKnownPackages) = packageNames.partition {
-    packageRank.containsKey(it)
-  }
-
-  if (nonWellKnownPackages.isEmpty()) {
-    return packageNames
-  }
-
-  val packagesToInstall = ArrayList(packageNames)
-  val panel = panel {
-    packageNames.forEach {
-      row {
-        checkBox(it).bindSelected({ true }, { isSelected ->
-          if (isSelected)
-            packagesToInstall.add(it)
-          else
-            packagesToInstall.remove(it)
-        })
-      }
-    }
-  }
-
-  val dialog = dialog(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"), panel, resizable = true)
-  dialog.contentPanel.preferredSize = JBUI.size(maxOf(dialog.contentPanel.preferredSize.width, 600), dialog.preferredSize.height)
-
-  val isOk = dialog.showAndGet()
-  if (!isOk) {
-    return emptyList()
-  }
-  return knownPackages + packagesToInstall
-}

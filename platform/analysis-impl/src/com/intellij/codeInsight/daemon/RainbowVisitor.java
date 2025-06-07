@@ -31,7 +31,7 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile file,
+  public boolean analyze(@NotNull PsiFile psiFile,
                          boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {

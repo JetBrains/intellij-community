@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.RunManager;
@@ -31,10 +31,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -45,15 +42,14 @@ public class ExternalSystemTaskActivator {
   private static final Logger LOG = Logger.getInstance(ExternalSystemTaskActivator.class);
 
   public static final String RUN_CONFIGURATION_TASK_PREFIX = "run: ";
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList();
 
   public ExternalSystemTaskActivator(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
-  public static String getRunConfigurationActivationTaskName(@NotNull RunnerAndConfigurationSettings settings) {
+  public static @NotNull String getRunConfigurationActivationTaskName(@NotNull RunnerAndConfigurationSettings settings) {
     return RUN_CONFIGURATION_TASK_PREFIX + settings.getName();
   }
 
@@ -129,7 +125,7 @@ public class ExternalSystemTaskActivator {
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
       new LinkedList<>();
 
-    Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
+    Map<ProjectSystemId, @Unmodifiable Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
       FactoryMap.create(key -> {
         final AbstractExternalSystemTaskConfigurationType configurationType =
           ExternalSystemUtil.findConfigurationType(key);
@@ -205,8 +201,7 @@ public class ExternalSystemTaskActivator {
     return rootPath.contains(rootProjectPath);
   }
 
-  @Nullable
-  private static String getRootProjectPath(@NotNull AbstractExternalSystemSettings systemSettings, @NotNull String projectPath) {
+  private static @Nullable String getRootProjectPath(@NotNull AbstractExternalSystemSettings systemSettings, @NotNull String projectPath) {
     final ExternalProjectSettings projectSettings = systemSettings.getLinkedProjectSettings(projectPath);
     return projectSettings != null ? projectSettings.getExternalProjectPath() : null;
   }
@@ -259,7 +254,7 @@ public class ExternalSystemTaskActivator {
     return taskActivationState.getTasks(phase).contains(taskData.getName());
   }
 
-  public void addTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
+  public void addTasks(@NotNull Collection<? extends TaskData> tasks, final @NotNull Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
@@ -282,7 +277,7 @@ public class ExternalSystemTaskActivator {
     fireTasksChanged();
   }
 
-  public void removeTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
+  public void removeTasks(@NotNull Collection<? extends TaskData> tasks, final @NotNull Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
@@ -372,8 +367,7 @@ public class ExternalSystemTaskActivator {
     BEFORE_REBUILD("external.system.task.before.rebuild"),
     AFTER_REBUILD("external.system.task.after.rebuild");
 
-    @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE)
-    public final String myMessageKey;
+    public final @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String myMessageKey;
 
     Phase(@PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String messageKey) {
       myMessageKey = messageKey;
@@ -394,10 +388,10 @@ public class ExternalSystemTaskActivator {
   }
 
   public static class TaskActivationEntry {
-    @NotNull private final ProjectSystemId systemId;
-    @NotNull private final Phase phase;
-    @NotNull private final String projectPath;
-    @NotNull private final String taskName;
+    private final @NotNull ProjectSystemId systemId;
+    private final @NotNull Phase phase;
+    private final @NotNull String projectPath;
+    private final @NotNull String taskName;
 
     public TaskActivationEntry(@NotNull ProjectSystemId systemId,
                                @NotNull Phase phase, @NotNull String projectPath, @NotNull String taskName) {
@@ -407,23 +401,19 @@ public class ExternalSystemTaskActivator {
       this.taskName = taskName;
     }
 
-    @NotNull
-    public ProjectSystemId getSystemId() {
+    public @NotNull ProjectSystemId getSystemId() {
       return systemId;
     }
 
-    @NotNull
-    public Phase getPhase() {
+    public @NotNull Phase getPhase() {
       return phase;
     }
 
-    @NotNull
-    public String getProjectPath() {
+    public @NotNull String getProjectPath() {
       return projectPath;
     }
 
-    @NotNull
-    public String getTaskName() {
+    public @NotNull String getTaskName() {
       return taskName;
     }
   }

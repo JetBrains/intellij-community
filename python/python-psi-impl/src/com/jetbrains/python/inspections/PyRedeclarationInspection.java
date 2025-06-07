@@ -51,11 +51,10 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
  */
 public final class PyRedeclarationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -99,7 +98,7 @@ public final class PyRedeclarationInspection extends PyInspection {
       return isDecorated;
     }
 
-    private void processElement(@NotNull final PsiNameIdentifierOwner element) {
+    private void processElement(final @NotNull PsiNameIdentifierOwner element) {
       final String name = element.getName();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
       if (owner != null && name != null) {
@@ -167,6 +166,15 @@ public final class PyRedeclarationInspection extends PyInspection {
     }
 
     private static boolean possiblyFalseCondition(@NotNull Instruction instruction) {
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
+        if (conditionalInstruction.getCondition() instanceof PyExpression condition) {
+          return conditionalInstruction.getResult()
+                 ? !PyEvaluator.evaluateAsBoolean(condition, false)
+                 : PyEvaluator.evaluateAsBoolean(condition, true);
+        }
+        return false;
+      }
+
       final PsiElement element = instruction.getElement();
       if (element == null) return false;
 
@@ -175,15 +183,6 @@ public final class PyRedeclarationInspection extends PyInspection {
       if (element instanceof PyForStatement) {
         final PyForPart forPart = ((PyForStatement)element).getForPart();
         return !PyEvaluator.evaluateAsBoolean(forPart.getSource(), false);
-      }
-
-      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
-        final PsiElement condition = conditionalInstruction.getCondition();
-        if (condition instanceof PyExpression) {
-          return conditionalInstruction.getResult()
-                 ? !PyEvaluator.evaluateAsBoolean((PyExpression)condition, false)
-                 : PyEvaluator.evaluateAsBoolean((PyExpression)condition, true);
-        }
       }
 
       return false;

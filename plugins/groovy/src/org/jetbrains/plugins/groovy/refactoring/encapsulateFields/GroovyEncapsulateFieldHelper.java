@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.encapsulateFields;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,20 +43,17 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   }
 
   @Override
-  @NotNull
-  public String suggestSetterName(@NotNull PsiField field) {
+  public @NotNull String suggestSetterName(@NotNull PsiField field) {
     return PropertyUtilBase.suggestSetterName(field);
   }
 
   @Override
-  @NotNull
-  public String suggestGetterName(@NotNull PsiField field) {
+  public @NotNull String suggestGetterName(@NotNull PsiField field) {
     return PropertyUtilBase.suggestGetterName(field);
   }
 
   @Override
-  @Nullable
-  public PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter) {
+  public @Nullable PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter) {
     PsiMethod prototype = isGetter
                           ? GroovyPropertyUtils.generateGetterPrototype(field)
                           : GroovyPropertyUtils.generateSetterPrototype(field);
@@ -73,10 +68,9 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   }
 
   @Override
-  @Nullable
-  public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
-                                               @NotNull FieldDescriptor fieldDescriptor,
-                                               @NotNull PsiReference reference) {
+  public @Nullable EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
+                                                         @NotNull FieldDescriptor fieldDescriptor,
+                                                         @NotNull PsiReference reference) {
     if (!(reference instanceof GrReferenceExpression ref)) return null;
 
     boolean findSet = descriptor.isToEncapsulateSet();
@@ -106,8 +100,7 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return new EncapsulateFieldUsageInfo(ref, fieldDescriptor);
   }
 
-  @Nullable
-  private static PsiClass getAccessObject(@NotNull GrReferenceExpression ref) {
+  private static @Nullable PsiClass getAccessObject(@NotNull GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) {
       return (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
@@ -341,11 +334,10 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return methodCall;
   }
 
-  @Nullable
-  private static GrMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor,
-                                                         GrReferenceExpression expr,
-                                                         PsiClass aClass,
-                                                         PsiMethod getter) throws IncorrectOperationException {
+  private static @Nullable GrMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor,
+                                                                   GrReferenceExpression expr,
+                                                                   PsiClass aClass,
+                                                                   PsiMethod getter) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(fieldDescriptor.getField().getProject());
     final String getterName = fieldDescriptor.getGetterName();
     @NonNls String text = getterName + "()";
@@ -366,11 +358,10 @@ public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return methodCall;
   }
 
-  @Nullable
-  private static GrMethodCallExpression checkMethodResolvable(GrMethodCallExpression methodCall,
-                                                              PsiMethod targetMethod,
-                                                              GrReferenceExpression context,
-                                                              PsiClass aClass) throws IncorrectOperationException {
+  private static @Nullable GrMethodCallExpression checkMethodResolvable(GrMethodCallExpression methodCall,
+                                                                        PsiMethod targetMethod,
+                                                                        GrReferenceExpression context,
+                                                                        PsiClass aClass) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(targetMethod.getProject()).getElementFactory();
     final PsiElement resolved = ((GrReferenceExpression)methodCall.getInvokedExpression()).resolve();
     if (resolved != targetMethod) {

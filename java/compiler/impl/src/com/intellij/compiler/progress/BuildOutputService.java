@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -108,9 +108,8 @@ public class BuildOutputService implements BuildViewService {
         .withContextActions(contextActions.toArray(AnAction.EMPTY_ARRAY));
 
     myBuildProgress.start(new BuildProgressDescriptor() {
-      @NotNull
       @Override
-      public String getTitle() {
+      public @NotNull String getTitle() {
         return buildDescriptor.getTitle();
       }
 
@@ -180,20 +179,18 @@ public class BuildOutputService implements BuildViewService {
     }
   }
 
-  @Nullable
-  private BuildIssue buildIssue(@NotNull Collection<String> moduleNames,
-                                @NotNull String title,
-                                @NotNull String message,
-                                @NotNull MessageEvent.Kind kind,
-                                @Nullable VirtualFile virtualFile,
-                                @Nullable Navigatable navigatable) {
+  private @Nullable BuildIssue buildIssue(@NotNull Collection<String> moduleNames,
+                                          @NotNull String title,
+                                          @NotNull String message,
+                                          @NotNull MessageEvent.Kind kind,
+                                          @Nullable VirtualFile virtualFile,
+                                          @Nullable Navigatable navigatable) {
     return BUILD_ISSUE_EP.computeSafeIfAny(contributor -> {
       return contributor.createBuildIssue(myProject, moduleNames, title, message, kind, virtualFile, navigatable);
     });
   }
 
-  @NotNull
-  private List<AnAction> getRestartActions(Runnable restartWork, ProgressIndicator indicator) {
+  private @NotNull List<AnAction> getRestartActions(Runnable restartWork, ProgressIndicator indicator) {
     List<AnAction> restartActions = new SmartList<>();
     if (restartWork != null) {
       AnAction restartAction = new DumbAwareAction(
@@ -242,8 +239,7 @@ public class BuildOutputService implements BuildViewService {
     }
     ((ProgressIndicatorEx)indicator).addStateDelegate(new CompilerMessagesService.DummyProgressIndicator() {
       private final Map<String, Set<String>> mySeenMessages = new HashMap<>();
-      @NlsSafe
-      private String lastMessage = null;
+      private @NlsSafe String lastMessage = null;
       private Stack<@NlsContexts.ProgressText String> myTextStack;
 
       @Override
@@ -261,8 +257,7 @@ public class BuildOutputService implements BuildViewService {
         myBuildProgress.progress(lastMessage, 100, (long)(fraction * 100), "%");
       }
 
-      @NotNull
-      private Stack<@NlsContexts.ProgressText String> getTextStack() {
+      private @NotNull Stack<@NlsContexts.ProgressText String> getTextStack() {
         Stack<@NlsContexts.ProgressText String> stack = myTextStack;
         if (stack == null) myTextStack = stack = new Stack<>(2);
         return stack;
@@ -292,8 +287,7 @@ public class BuildOutputService implements BuildViewService {
     });
   }
 
-  @NotNull
-  private static List<AnAction> getContextActions() {
+  private static @NotNull List<AnAction> getContextActions() {
     List<AnAction> contextActions = new SmartList<>();
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup compilerErrorsViewPopupGroup = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
@@ -303,8 +297,7 @@ public class BuildOutputService implements BuildViewService {
     return contextActions;
   }
 
-  @Nls
-  private static String getMessageTitle(@NotNull CompilerMessage compilerMessage) {
+  private static @Nls String getMessageTitle(@NotNull CompilerMessage compilerMessage) {
     String message = null;
     String[] messages = splitByLines(compilerMessage.getMessage());
     if (messages.length > 1) {
@@ -329,8 +322,7 @@ public class BuildOutputService implements BuildViewService {
     return trimEnd(trimStart(message, "java: "), '.'); //NON-NLS
   }
 
-  @NotNull
-  private static MessageEvent.Kind convertCategory(@NotNull CompilerMessageCategory category) {
+  private static @NotNull MessageEvent.Kind convertCategory(@NotNull CompilerMessageCategory category) {
     return switch (category) {
       case ERROR -> MessageEvent.Kind.ERROR;
       case WARNING -> MessageEvent.Kind.WARNING;
@@ -354,8 +346,7 @@ public class BuildOutputService implements BuildViewService {
       progress.output(text, kind != MessageEvent.Kind.ERROR);
     }
 
-    @Nls
-    private static String wrapWithAnsiColor(MessageEvent.Kind kind, @Nls String message) {
+    private static @Nls String wrapWithAnsiColor(MessageEvent.Kind kind, @Nls String message) {
       if (kind == MessageEvent.Kind.SIMPLE) return message;
       @NlsSafe
       String color;
@@ -368,7 +359,7 @@ public class BuildOutputService implements BuildViewService {
       else {
         color = ANSI_BOLD;
       }
-      @NlsSafe final String ansiReset = ANSI_RESET;
+      final @NlsSafe String ansiReset = ANSI_RESET;
       return color + message + ansiReset;
     }
   }

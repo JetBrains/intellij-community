@@ -191,7 +191,8 @@ private val METHOD_ANNOTATION_FQN = setOf(
     "org.junit.jupiter.params.ParameterizedTest",
     "org.junit.jupiter.api.RepeatedTest",
     "org.junit.jupiter.api.TestFactory",
-    "org.junit.jupiter.api.TestTemplate"
+    "org.junit.jupiter.api.TestTemplate",
+    "org.junitpioneer.jupiter.RetryingTest"
 )
 
 private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)

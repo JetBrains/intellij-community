@@ -19,6 +19,7 @@ final class SelectInCoverageView implements SelectInTarget {
     myProject = project;
   }
 
+  @Override
   public String toString() {
     return CoverageBundle.message("coverage.view.title");
   }

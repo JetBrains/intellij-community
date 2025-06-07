@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduc
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ParseContext.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
@@ -73,7 +74,7 @@ class NewJavaToKotlinConverter(
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
         }
@@ -160,11 +161,10 @@ class NewJavaToKotlinConverter(
             inputElements.any { it == element || it.isAncestor(element, strict = true) }
 
         val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
-        val context = NewJ2kConverterContext(
+        val context = ConverterContext(
             symbolProvider,
             typeFactory,
             converter = this,
-            ::isInConversionContext,
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
@@ -187,16 +187,15 @@ class NewJavaToKotlinConverter(
             processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
-            val code = JKCodeBuilder(context).run { printCodeOut(ast) }
+
+            val code = JKCodeBuilder(context).printCodeOut(ast)
+            val importsToAdd = importStorage.getImports()
             val parseContext = when (element) {
-                is PsiStatement, is PsiExpression -> ParseContext.CODE_BLOCK
-                else -> ParseContext.TOP_LEVEL
+                is PsiStatement, is PsiExpression -> CODE_BLOCK
+                else -> TOP_LEVEL
             }
-            ElementResult(
-                code,
-                importsToAdd = importStorage.getImports(),
-                parseContext = parseContext
-            )
+
+            ElementResult(code, importsToAdd, parseContext)
         }
 
         return Result(

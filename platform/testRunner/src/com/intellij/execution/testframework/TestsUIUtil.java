@@ -91,15 +91,15 @@ public final class TestsUIUtil {
     return null;
   }
 
-  public static void notifyByBalloon(@NotNull final Project project,
+  public static void notifyByBalloon(final @NotNull Project project,
                                      boolean started,
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
-                                     @Nullable final @NlsContexts.SystemNotificationText String comment) {
+                                     final @Nullable @NlsContexts.SystemNotificationText String comment) {
     notifyByBalloon(project, root, properties, new TestResultPresentation(root, started, comment).getPresentation());
   }
 
-  public static void notifyByBalloon(@NotNull final Project project,
+  public static void notifyByBalloon(final @NotNull Project project,
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
                                      TestResultPresentation testResultPresentation) {
@@ -126,8 +126,7 @@ public final class TestsUIUtil {
     SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 
-  @NlsContexts.NotificationContent
-  public static String getTestSummary(AbstractTestProxy proxy) {
+  public static @NlsContexts.NotificationContent String getTestSummary(AbstractTestProxy proxy) {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
   }
 

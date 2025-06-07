@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Computable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
-/**
- * Use [writeAction].
- */
+/** Use [edtWriteAction]. */
 @Obsolete
 fun <T> runWriteAction(runnable: () -> T): T {
   return ApplicationManager.getApplication().runWriteAction(Computable(runnable))
@@ -23,7 +21,6 @@ fun <T> runUndoTransparentWriteAction(runnable: () -> T): T {
 /**
  * Use [readAction].
  */
-@Obsolete
 fun <T> runReadAction(runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable(runnable))
 }

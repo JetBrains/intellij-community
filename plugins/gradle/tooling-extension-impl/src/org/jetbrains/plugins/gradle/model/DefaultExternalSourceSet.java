@@ -12,30 +12,30 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 2L;
 
-  private String name;
-  private boolean isPreview;
-  private String sourceCompatibility;
-  private String targetCompatibility;
-  // The jdkInstallationPath exists only for migration.
-  // Source sets are serialized with the project data nodes.
-  private String jdkInstallationPath;
-  private File javaToolchainHome;
-  private Collection<File> artifacts;
+  private static final long serialVersionUID = 3L;
+
+  private @Nullable String name;
+
+  private @Nullable File javaToolchainHome;
+  private @Nullable String sourceCompatibility;
+  private @Nullable String targetCompatibility;
+  private @Nullable List<String> compilerArguments;
+
+  private @NotNull Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
   private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
     // Collection can be modified outside by mutation methods
-    sources = new HashMap<>(0);
-    dependencies = new LinkedHashSet<>(0);
     artifacts = new ArrayList<>(0);
+    dependencies = new LinkedHashSet<>(0);
+    sources = new HashMap<>(0);
   }
 
   @Override
   public @NotNull String getName() {
-    return name;
+    return Objects.requireNonNull(name, "The source set's name property has not been initialized");
   }
 
   public void setName(@NotNull String name) {
@@ -43,12 +43,12 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public boolean isPreview() {
-    return isPreview;
+  public @Nullable File getJavaToolchainHome() {
+    return javaToolchainHome;
   }
 
-  public void setPreview(boolean preview) {
-    isPreview = preview;
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.javaToolchainHome = javaToolchainHome;
   }
 
   @Override
@@ -70,25 +70,22 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public @Nullable File getJavaToolchainHome() {
-    if (jdkInstallationPath != null) {
-      javaToolchainHome = new File(jdkInstallationPath);
-      jdkInstallationPath = null;
-    }
-    return javaToolchainHome;
+  public @NotNull List<String> getCompilerArguments() {
+    return Collections.unmodifiableList(
+      Objects.requireNonNull(compilerArguments, "The source set's compilerArguments property has not been initialized")
+    );
   }
 
-  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
-    this.jdkInstallationPath = null;
-    this.javaToolchainHome = javaToolchainHome;
+  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
+    this.compilerArguments = compilerArguments;
   }
 
   @Override
-  public Collection<File> getArtifacts() {
+  public @NotNull Collection<File> getArtifacts() {
     return artifacts;
   }
 
-  public void setArtifacts(Collection<File> artifacts) {
+  public void setArtifacts(@NotNull Collection<File> artifacts) {
     this.artifacts = artifacts;
   }
 

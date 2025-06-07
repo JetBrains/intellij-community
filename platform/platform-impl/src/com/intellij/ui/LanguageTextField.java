@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
@@ -64,7 +64,7 @@ public class LanguageTextField extends EditorTextField {
                            @NotNull DocumentCreator documentCreator,
                            boolean oneLineMode) {
     super(documentCreator.createDocument(value, language, project), project,
-          language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT, language == null, oneLineMode);
+          language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT, language == null, oneLineMode);
 
     myLanguage = language;
     myProject = project;
@@ -116,7 +116,9 @@ public class LanguageTextField extends EditorTextField {
     EditorEx editor = super.createEditor();
     if (myLanguage != null && (myProject == null || !myProject.isDisposed())) {
       FileType fileType = myLanguage.getAssociatedFileType();
-      editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
+      if (fileType != null) {
+        editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
+      }
     }
     editor.setEmbeddedIntoDialogWrapper(true);
     return editor;

@@ -7,22 +7,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.ForceStepIntoAction;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class PyForceStepIntoAction extends ForceStepIntoAction {
-  private final XDebuggerSuspendedActionHandler myPyForceStepIntoHandler;
+  private final XDebuggerProxySuspendedActionHandler myPyForceStepIntoHandler;
 
   public PyForceStepIntoAction() {
-    myPyForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
+    DebuggerSupport debuggerSupport = new DebuggerSupport() {
+    };
+    DebuggerActionHandler superHandler = super.getHandler(debuggerSupport);
+    myPyForceStepIntoHandler = new XDebuggerProxySuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-        session.forceStepInto();
+      public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
+        superHandler.perform(project, event);
       }
 
       private static boolean isPythonConfig(DataContext dataContext) {
@@ -36,7 +39,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
       }
 
       @Override
-      public boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      public boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
         if (isPythonConfig(dataContext)) {
           return false;
         }

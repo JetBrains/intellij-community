@@ -332,7 +332,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
         }
       }
 
-      writeAction {
+      edtWriteAction {
         // All Actions on Save have completed successfully for the document, so need to save it.
         // Otherwise, users would see unsaved documents after pressing Ctrl+S/Cmd+S, which would be unexpected.
         FileDocumentManager.getInstance().saveDocument(document)

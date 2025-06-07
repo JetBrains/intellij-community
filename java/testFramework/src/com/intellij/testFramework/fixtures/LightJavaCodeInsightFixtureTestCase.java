@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -20,6 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
+ * A JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link JavaCodeInsightTestFixture}.
+ * <p>
+ * This class is similar to {@link JavaCodeInsightFixtureTestCase}, but with some differences:
+ * <ul>
+ *   <li>Uses a lightweight project setup with {@link LightProjectDescriptor}
+ *   (and provides many predefined descriptors for different Java versions)</li>
+ *   <li>Creates a simpler in-memory project structure</li>
+ *   <li>Faster to initialize and run but with some limitations</li>
+ * </ul>
  * @see LightJavaCodeInsightFixtureTestCase4
  * @see LightJavaCodeInsightFixtureTestCase5
  */
@@ -128,8 +137,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
-  @NotNull
-  protected TempDirTestFixture getTempDirFixture() {
+  protected @NotNull TempDirTestFixture getTempDirFixture() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     return policy != null
            ? policy.createTempDirTestFixture()
@@ -159,8 +167,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     return "";
   }
 
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_LATEST;
   }
 

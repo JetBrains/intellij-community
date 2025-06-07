@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -24,7 +25,10 @@ import javax.swing.border.CompoundBorder
  * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
  * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
  *
- * [component] is the [JComponent] opening the list.
+ * Use this render in very specific cases like multiline renderers, otherwise use [com.intellij.ui.dsl.listCellRenderer.listCellRenderer].
+ * It allows building complex renderers with shorter and simpler code
+ *
+ * @param component the [JComponent] opening the list
  */
 abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : GroupedElementsRenderer(), ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
@@ -172,7 +176,7 @@ abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : G
   protected open fun getCaption(list: JList<out T>?,
                                 value: T): @NlsContexts.Separator String? = (list?.model as ListPopupModel).getCaptionAboveOf(value)
 
-  protected open fun isSeparatorVisible(list: JList<out T>?, value: T) = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
+  protected open fun isSeparatorVisible(list: JList<out T>?, value: T): Boolean = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
 
   override fun getDelegateAccessibleName(): String? {
     return coloredComponent.accessibleContext.accessibleName

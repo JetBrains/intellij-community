@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.artifacts.Artifact;
@@ -30,18 +30,15 @@ public final class PackagingElementPath {
     return new PackagingElementPath(this, element);
   }
 
-  @NotNull
-  public String getPathString() {
+  public @NotNull String getPathString() {
     return getPathString("/");
   }
 
-  @NotNull
-  public String getPathString(String separator) {
+  public @NotNull String getPathString(String separator) {
     return getPathStringFrom(separator, null);
   }
 
-  @NotNull
-  public String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
+  public @NotNull String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
     final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
     // StringUtil.join ignores empty strings whereas this monstrosity doesn't
     return ContainerUtil.reverse(parents).stream().map(RenameablePackagingElement::getName).collect(Collectors.joining("/"));
@@ -73,8 +70,7 @@ public final class PackagingElementPath {
     return result;
   }
 
-  @Nullable
-  public CompositePackagingElement<?> getLastParent() {
+  public @Nullable CompositePackagingElement<?> getLastParent() {
     PackagingElementPath path = this;
     while (path != EMPTY) {
       if (path.myLastElement instanceof CompositePackagingElement<?>) {
@@ -85,8 +81,7 @@ public final class PackagingElementPath {
     return null;
   }
 
-  @Nullable
-  public Artifact findLastArtifact(PackagingElementResolvingContext context) {
+  public @Nullable Artifact findLastArtifact(PackagingElementResolvingContext context) {
     PackagingElementPath path = this;
     while (path != EMPTY) {
       final PackagingElement<?> element = path.myLastElement;

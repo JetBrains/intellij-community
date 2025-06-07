@@ -1,0 +1,9 @@
+LineBreakpoint created at capturedTypeParam.kt:5
+Run Java
+Connected to the target VM
+capturedTypeParam.kt:5
+Compile bytecode for it as T
+capturedTypeParam.kt:5
+Disconnected from the target VM
+
+Process finished with exit code 0

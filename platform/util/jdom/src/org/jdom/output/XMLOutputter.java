@@ -74,7 +74,7 @@ public class XMLOutputter implements Cloneable {
   private static final Format preserveFormat = Format.getRawFormat();
 
   @SuppressWarnings("WeakerAccess")
-  protected Format currentFormat = userFormat;
+  protected Format currentFormat;
 
   public XMLOutputter() {
     this((Format)null);
@@ -231,8 +231,9 @@ public class XMLOutputter implements Cloneable {
   }
 
   private void writeLineSeparator(Writer out) throws IOException {
-    if (currentFormat.lineSeparator != null) {
-      out.write(currentFormat.lineSeparator);
+    String lineSeparator = currentFormat.getLineSeparator();
+    if (lineSeparator != null) {
+      out.write(lineSeparator);
     }
   }
 
@@ -1181,7 +1182,7 @@ public class XMLOutputter implements Cloneable {
           entity = "&#xD;";
           break;
         case '\n':
-          entity = currentFormat.lineSeparator;
+          entity = currentFormat.getLineSeparator();
           break;
         default:
 
@@ -1267,11 +1268,13 @@ public class XMLOutputter implements Cloneable {
    *
    * @return a string listing the settings for this XMLOutputter instance
    */
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    if (userFormat.lineSeparator != null) {
-      for (int i = 0; i < userFormat.lineSeparator.length(); i++) {
-        char ch = userFormat.lineSeparator.charAt(i);
+    String lineSeparator = userFormat.getLineSeparator();
+    if (lineSeparator != null) {
+      for (int i = 0; i < lineSeparator.length(); i++) {
+        char ch = lineSeparator.charAt(i);
         switch (ch) {
           case '\r':
             buffer.append("\\r");
@@ -1301,17 +1304,6 @@ public class XMLOutputter implements Cloneable {
       "lineSeparator = '" + buffer + "', " +
       "textMode = " + userFormat.mode + "]"
     );
-  }
-
-  /**
-   * Our own null subclass of NamespaceStack.  This plays a little
-   * trick with Java access protection.  We want subclasses of
-   * XMLOutputter to be able to override protected methods that
-   * declare a NamespaceStack parameter, but we don't want to
-   * declare the parent NamespaceStack class as public.
-   */
-  @SuppressWarnings("WeakerAccess")
-  protected static final class NamespaceStack extends org.jdom.output.NamespaceStack {
   }
 
   // Support method to print a name without using elt.getQualifiedName()

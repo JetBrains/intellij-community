@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="joni" type="repository">
-    <properties maven-id="org.jruby.joni:joni:2.2.1">
+    <properties maven-id="org.jruby.joni:joni:2.2.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar">
-          <sha256sum>b3e4b657a3ed1d8f684114f6baa462d553a5932a865c1574695498dda8577748</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar">
+          <sha256sum>7ea54221f5f91deff2e860fe986eefe208b59fa04300e54c505c5c0c08d55e9a</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar">
-          <sha256sum>e2f85def67d6848a7a41c648248645689e3990d17ab8f253ab2fd7e69407df67</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar">
+          <sha256sum>3238c68a2f86cec53cc184ad26df8352db87bb22a419bd17fb4acdfbb0bc40f0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

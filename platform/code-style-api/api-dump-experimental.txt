@@ -1,5 +1,3 @@
-com.intellij.formatting.Formatter
-- *a:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
 a:com.intellij.formatting.Indent
 - *s:getIndentEnforcedToChildrenToBeRelativeToMe():com.intellij.formatting.Indent
 - *s:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
@@ -26,10 +24,14 @@ c:com.intellij.openapi.editor.EditorModificationUtilEx
 - a:indent(com.intellij.psi.PsiFile,I):java.lang.String
 - s:indentLine(com.intellij.psi.PsiFile,I):java.lang.String
 - s:useExternalFormatter(com.intellij.psi.PsiFile):Z
+c:com.intellij.psi.codeStyle.PackageEntry
+- *sf:ALL_MODULE_IMPORTS:com.intellij.psi.codeStyle.PackageEntry
 *:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getActivatingAction(com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor,com.intellij.psi.PsiFile):com.intellij.openapi.actionSystem.AnAction
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
 - a:getName():java.lang.String
 - a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 - mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
 - a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+- modifySettingsAndUiCustomization(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z

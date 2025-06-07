@@ -36,8 +36,7 @@ internal class SpecifyAllRemainingArgumentsByNameIntention: KotlinApplicableModC
         SpecifyRemainingArgumentsByNameUtil.applyFix(actionContext.project, element, elementContext.allRemainingArguments, updater)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtValueArgumentList): RemainingArgumentsData? {
+    override fun KaSession.prepareContext(element: KtValueArgumentList): RemainingArgumentsData? {
         val remainingArguments = findRemainingNamedArguments(element) ?: return null
 
         return remainingArguments

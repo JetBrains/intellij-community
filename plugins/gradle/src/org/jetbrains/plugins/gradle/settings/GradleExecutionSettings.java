@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -111,13 +111,11 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myIdeProjectPath = ideProjectPath;
   }
 
-  @Nullable
-  public String getIdeProjectPath() {
+  public @Nullable String getIdeProjectPath() {
     return myIdeProjectPath;
   }
 
-  @Nullable
-  public String getGradleHome() {
+  public @Nullable String getGradleHome() {
     return myGradleHome;
   }
 
@@ -125,8 +123,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myGradleHome = gradleHome;
   }
 
-  @Nullable
-  public String getServiceDirectory() {
+  public @Nullable String getServiceDirectory() {
     return myServiceDirectory;
   }
 
@@ -134,8 +131,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myServiceDirectory = serviceDirectory;
   }
 
-  @Nullable
-  public String getJavaHome() {
+  public @Nullable String getJavaHome() {
     return myJavaHome;
   }
 
@@ -175,8 +171,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.delegatedBuild = delegatedBuild;
   }
 
-  @Nullable
-  public String getWrapperPropertyFile() {
+  public @Nullable String getWrapperPropertyFile() {
     return wrapperPropertyFile;
   }
 
@@ -184,8 +179,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.wrapperPropertyFile = wrapperPropertyFile;
   }
 
-  @NotNull
-  public DistributionType getDistributionType() {
+  public @NotNull DistributionType getDistributionType() {
     return myDistributionType;
   }
 
@@ -193,8 +187,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myDistributionType = distributionType;
   }
 
-  @NotNull
-  public GradleExecutionWorkspace getExecutionWorkspace() {
+  public @NotNull GradleExecutionWorkspace getExecutionWorkspace() {
     return myExecutionWorkspace;
   }
 

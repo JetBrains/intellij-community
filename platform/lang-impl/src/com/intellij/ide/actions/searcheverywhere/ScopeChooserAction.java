@@ -7,7 +7,7 @@ import com.intellij.ide.util.scopeChooser.ScopeSeparator;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -25,6 +25,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,13 +48,49 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
     getTemplatePresentation().setPerformGroup(true);
   }
 
-  protected abstract void onScopeSelected(@NotNull ScopeDescriptor o);
+  public abstract void onScopeSelected(@NotNull ScopeDescriptor o);
 
-  protected abstract @NotNull ScopeDescriptor getSelectedScope();
+  public abstract @NotNull ScopeDescriptor getSelectedScope();
 
   protected abstract void onProjectScopeToggled();
 
   protected abstract boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor);
+
+  public @Nullable @Nls String getEverywhereScopeName() {
+    return null;
+  }
+
+  public @Nullable @Nls String getProjectScopeName() {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull List<ScopeDescriptor> getScopesWithSeparators() {
+    ArrayList<ScopeDescriptor> scopes = new ArrayList<>();
+    collectScopesAndSeparators(scopes, null);
+    return scopes;
+  }
+
+  private void collectScopesAndSeparators(ArrayList<ScopeDescriptor> items, @Nullable HashMap<ScopeDescriptor, ScopeSeparator> separators) {
+    final ScopeSeparator[] nextSeparator = {null};
+    processScopes(o -> {
+      if (o instanceof ScopeSeparator separator && !items.isEmpty()) {
+        nextSeparator[0] = separator;
+      } else if (!o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
+        if (nextSeparator[0] != null) {
+          if (separators == null) {
+            items.add(nextSeparator[0]);
+          }
+          else {
+            separators.put(items.get(items.size() - 1), nextSeparator[0]);
+          }
+          nextSeparator[0] = null;
+        }
+        items.add(o);
+      }
+      return true;
+    });
+  }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
@@ -79,7 +116,8 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
           KeyEvent.getExtendedKeyCodeForChar(TOGGLE), TOGGLE);
         AnActionEvent event = AnActionEvent.createFromAnAction(
           ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
-        ActionUtil.performDumbAwareWithCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
+        ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+        actionManager.performWithActionCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
       }
     });
     if (ExperimentalUI.isNewUI()) {
@@ -115,21 +153,10 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
   public void actionPerformed(@NotNull AnActionEvent e) {
     JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (button == null || !button.isValid()) return;
-    List<ScopeDescriptor> items = new ArrayList<>();
+    ArrayList<ScopeDescriptor> items = new ArrayList<>();
     HashMap<ScopeDescriptor, ScopeSeparator> separators = new HashMap<>();
-    final ScopeSeparator[] nextSeparator = {null};
-    processScopes(o -> {
-      if (o instanceof ScopeSeparator separator && !items.isEmpty()) {
-        nextSeparator[0] = separator;
-      } else if (!o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
-        if (nextSeparator[0] != null) {
-          separators.put(items.get(items.size() - 1), nextSeparator[0]);
-          nextSeparator[0] = null;
-        }
-        items.add(o);
-      }
-      return true;
-    });
+    collectScopesAndSeparators(items, separators);
+
     BaseListPopupStep<ScopeDescriptor> step = new BaseListPopupStep<>("", items) {
       @Override
       public @Nullable PopupStep<?> onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {

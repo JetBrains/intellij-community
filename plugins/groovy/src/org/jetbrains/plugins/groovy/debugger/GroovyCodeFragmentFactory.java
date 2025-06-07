@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
@@ -169,7 +169,7 @@ public class GroovyCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
     return result;
   }
 
-  public static Pair<Map<String, String>, GroovyFile> externalParameters(String text, @NotNull final PsiElement context) {
+  public static Pair<Map<String, String>, GroovyFile> externalParameters(String text, final @NotNull PsiElement context) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
@@ -320,9 +320,8 @@ public class GroovyCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
     return JavaPsiFacade.getInstance(project).findClass("org.codehaus.groovy.control.CompilationUnit", context.getResolveScope()) != null;
   }
 
-  @NotNull
   @Override
-  public LanguageFileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 

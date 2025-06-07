@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -37,10 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -55,8 +52,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
@@ -68,11 +65,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
   private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
   private final Project myProject;
-  @NotNull private final ChangesBrowserTree myChangesTree;
+  private final @NotNull ChangesBrowserTree myChangesTree;
   private final MyRepositoryChangesViewer myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
-  @NotNull private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
+  private @NotNull ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
   private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final JPanel myLeftPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
@@ -87,7 +84,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
 
   private final List<CommittedChangeListDecorator> myDecorators;
 
-  @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
+  public static final @NonNls String ourHelpId = "reference.changesToolWindow.incoming";
 
   private WiseSplitter myInnerSplitter;
   private final MessageBusConnection myConnection;
@@ -250,13 +247,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
     updateModel();
   }
 
-  @NotNull
-  public ChangeListGroupingStrategy getGroupingStrategy() {
+  public @NotNull ChangeListGroupingStrategy getGroupingStrategy() {
     return myGroupingStrategy;
   }
 
-  @NotNull
-  public Tree getChangesTree() {
+  public @NotNull Tree getChangesTree() {
     return myChangesTree;
   }
 
@@ -278,9 +273,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
     }
   }
 
-  @NotNull
-  public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
-    selectedChangeLists.sort(CommittedChangeListByDateComparator.ASCENDING);
+  public static @NotNull List<Change> collectChanges(@Unmodifiable List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
+    selectedChangeLists = ContainerUtil.sorted(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
     List<Change> changes = new ArrayList<>();
     for (CommittedChangeList cl : selectedChangeLists) {
@@ -293,8 +287,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
    * Zips changes by removing duplicates (changes in the same file) and compounding the diff.
    * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
    */
-  @NotNull
-  public static List<Change> zipChanges(@NotNull List<? extends Change> changes) {
+  public static @NotNull List<Change> zipChanges(@NotNull List<? extends Change> changes) {
     // TODO: further improvements needed
     // We may want to process collisions more consistent
 
@@ -397,7 +390,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
     return false;
   }
 
-  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup,
+  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, final @Nullable ActionGroup tailGroup,
                                                 final List<? extends AnAction> extra) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(leadGroup);
@@ -566,9 +559,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
       setViewerBorder(RIGHT_BORDER);
     }
 
-    @Nullable
     @Override
-    protected JComponent createHeaderPanel() {
+    protected @Nullable JComponent createHeaderPanel() {
       return myHeaderPanel;
     }
 

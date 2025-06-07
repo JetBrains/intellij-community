@@ -39,19 +39,17 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyTargetExpressionImpl(node);
   }
 
   @Override
-  public PyTargetExpression createPsi(@NotNull final PyTargetExpressionStub stub) {
+  public PyTargetExpression createPsi(final @NotNull PyTargetExpressionStub stub) {
     return new PyTargetExpressionImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyTargetExpressionStub createStub(@NotNull final PyTargetExpression psi, final StubElement parentStub) {
+  public @NotNull PyTargetExpressionStub createStub(final @NotNull PyTargetExpression psi, final StubElement parentStub) {
     final String name = psi.getName();
     final PyExpression assignedValue = psi.findAssignedValue();
     final String docString = DocStringUtil.getDocStringValue(psi);
@@ -67,6 +65,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
     QualifiedName initializer = null;
+    PyLiteralKind assignedLiteralKind = null;
     final Ref<QualifiedName> assignedReference = PyTargetExpressionImpl.getAssignedReferenceQualifiedName(psi);
     if (assignedReference != null) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
@@ -78,13 +77,16 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         initializerType = PyTargetExpressionStub.InitializerType.CallExpression;
         initializer = assignedCallCalleeReference.get();
       }
+      else {
+        assignedLiteralKind = PyLiteralKind.fromExpression(assignedValue);
+      }
     }
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), typeComment, annotation,
-                                          psi.hasAssignedValue(), parentStub, versions);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, assignedLiteralKind, psi.isQualified(),
+                                          typeComment, annotation, psi.hasAssignedValue(), parentStub, versions);
   }
 
   @Override
-  public void serialize(@NotNull final PyTargetExpressionStub stub, @NotNull final StubOutputStream stream) throws IOException {
+  public void serialize(final @NotNull PyTargetExpressionStub stub, final @NotNull StubOutputStream stream) throws IOException {
     stream.writeName(stub.getName());
     final String docString = stub.getDocString();
     stream.writeUTFFast(docString != null ? docString : "");
@@ -100,12 +102,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     else {
       QualifiedName.serialize(stub.getInitializer(), stream);
       stream.writeBoolean(stub.isQualified());
+      PyLiteralKind.serialize(stream, stub.getAssignedLiteralKind());
     }
   }
 
   @Override
-  @NotNull
-  public PyTargetExpressionStub deserialize(@NotNull final StubInputStream stream, final StubElement parentStub) throws IOException {
+  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub) throws IOException {
     String name = stream.readNameString();
     String docString = stream.readUTFFast();
     if (docString.isEmpty()) {
@@ -122,7 +124,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, isQualified, typeComment, annotation,
+    PyLiteralKind literalKind = PyLiteralKind.deserialize(stream);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, literalKind, isQualified, typeComment, annotation,
                                           hasAssignedValue, parentStub, versions);
   }
 
@@ -162,9 +165,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
   }
 
-  @NotNull
   @Override
-  public List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
+  public @NotNull List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
     return CustomTargetExpressionStubType.EP_NAME.getExtensionList();
   }
 }

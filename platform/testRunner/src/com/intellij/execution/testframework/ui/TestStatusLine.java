@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter;
@@ -46,7 +47,7 @@ public class TestStatusLine extends NonOpaquePanel {
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
-    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), JBUI.CurrentTheme.ProgressBar.passedStatusValue());
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, ProgressBarUtil.PASSED_VALUE);
 
     JPanel stateWrapper = new NonOpaquePanel(new GridBagLayout());
     stateWrapper.setBorder(JBUI.Borders.emptyLeft(2));
@@ -75,6 +76,9 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
+  /// Updates the test status count.
+  /// The number of passed tests is inferred from `finishedTestsCount`, `failuresCount` and `ignoredTestsCount`.
+  /// @param testsTotal total amount of tests. -1 if the amount of tests is unknown.
   public void formatTestMessage(final int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
@@ -109,6 +113,7 @@ public class TestStatusLine extends NonOpaquePanel {
 
     final boolean ongoing = finishedTestsCount != testsTotal;
     final boolean finished = endTime != 0;
+    final boolean indefinite = testsTotal < 0;
 
     if (ongoing && finished) {
       myState.append(TestRunnerBundle.message("test.result.stopped"));
@@ -125,12 +130,14 @@ public class TestStatusLine extends NonOpaquePanel {
 
     final int count = failuresCount + passedCount + ignoredTestsCount;
 
-    if (ongoing && finished && duration != null) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    } else if (ongoing) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    } else if (duration != null) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (ongoing && finished && !indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (finished && indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", count, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (ongoing && !indefinite) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (!indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
@@ -155,13 +162,13 @@ public class TestStatusLine extends NonOpaquePanel {
 
   @ApiStatus.Internal
   public String getStatus() {
-    final var property = myProgressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
+    final var property = myProgressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
     if (property == null) return null;
     return (String)property;
   }
 
   public void setStatus(@NotNull String status) {
-    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), status);
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, status);
   }
 
   /**
@@ -185,17 +192,24 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
+  @ApiStatus.Internal
+  public void showProgressBar() {
+    myProgressBar.setVisible(true);
+  }
+
+  @ApiStatus.Internal
+  public void hideProgressBar() {
+    myProgressBar.setVisible(false);
+  }
+
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
-      myWarning.setVisible(!progressStatus_text.isEmpty());
     });
   }
 
-  @NlsSafe
-  @NotNull
-  public String getStateText() {
+  public @NlsSafe @NotNull String getStateText() {
     return myState.toString();
   }
 

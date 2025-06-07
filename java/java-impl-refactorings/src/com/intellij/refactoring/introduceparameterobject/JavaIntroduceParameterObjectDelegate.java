@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -7,7 +7,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -15,6 +14,7 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -67,7 +67,7 @@ public final class JavaIntroduceParameterObjectDelegate
     String baseParameterName = StringUtil.decapitalize(descriptor.getClassName());
     final Project project = method.getProject();
 
-    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, LanguageLevel.HIGHEST)) {
+    if (!PsiNameHelper.getInstance(project).isIdentifier(baseParameterName, PsiUtil.getLanguageLevel(method))) {
       baseParameterName = StringUtil.fixVariableNameDerivedFromPropertyName(baseParameterName);
     }
     final String paramName = body != null
@@ -79,9 +79,8 @@ public final class JavaIntroduceParameterObjectDelegate
     final String classTypeText = descriptor.createFakeClassTypeText();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     return new ParameterInfoImpl(NEW_PARAMETER, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
-      @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement exp, Object substitutor) {
+      public @Nullable PsiElement getActualValue(PsiElement exp, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
         return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters, substitutor) : null;
       }
@@ -151,8 +150,7 @@ public final class JavaIntroduceParameterObjectDelegate
     return newExpression.toString();
   }
 
-  @Nullable
-  private static String getArgument(PsiElement[] args, int i, List<? extends ParameterInfo> oldParameters) {
+  private static @Nullable String getArgument(PsiElement[] args, int i, List<? extends ParameterInfo> oldParameters) {
     if (i < args.length) {
       return args[i].getText();
     }
@@ -273,7 +271,7 @@ public final class JavaIntroduceParameterObjectDelegate
         @Override
         public void fixUsage() throws IncorrectOperationException {
           final PsiClass psiClass = descriptor.getExistingClass();
-          for (PsiReference reference : ReferencesSearch.search(method)) {
+          for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
             final PsiElement place = reference.getElement();
             VisibilityUtil.escalateVisibility(psiClass, place);
             for (PsiMethod constructor : psiClass.getConstructors()) {

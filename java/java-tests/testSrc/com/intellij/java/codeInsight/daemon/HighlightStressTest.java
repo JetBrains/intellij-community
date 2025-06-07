@@ -18,6 +18,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -98,7 +99,7 @@ new java . util . HashMap ( 1 ) ; l77 . toString ( ) ;
     long time = System.currentTimeMillis();
     for (int i = 0; i < 20/*00000*/; i++) {
       //System.out.println("i = " + i);
-      ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+      ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
 
       configureFromFileText("Stress.java", text);
       List<HighlightInfo> infos = doHighlighting();

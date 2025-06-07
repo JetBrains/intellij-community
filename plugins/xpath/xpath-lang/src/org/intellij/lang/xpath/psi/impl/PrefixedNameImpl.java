@@ -39,8 +39,7 @@ public class PrefixedNameImpl implements PrefixedName {
     }
 
     @Override
-    @NotNull
-    public String getLocalName() {
+    public @NotNull String getLocalName() {
         return localNode.getText();
     }
 
@@ -52,6 +51,7 @@ public class PrefixedNameImpl implements PrefixedName {
         return localNode;
     }
 
+    @Override
     public String toString() {
         return prefixText() + localNode.getText();
     }
@@ -60,10 +60,12 @@ public class PrefixedNameImpl implements PrefixedName {
         return prefixNode != null ? prefixNode.getText() + ":" : "";
     }
 
+    @Override
     public boolean equals(Object object) {
         return object.getClass() == getClass() && ((PrefixedName)object).getLocalName().equals(getLocalName());
     }
 
+    @Override
     public int hashCode() {
         return getLocalName().hashCode();
     }

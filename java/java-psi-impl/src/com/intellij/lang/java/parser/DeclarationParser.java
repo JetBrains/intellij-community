@@ -5,9 +5,14 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class DeclarationParser extends BasicDeclarationParser {
   public enum Context {
-    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
+    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
 
   public DeclarationParser(final @NotNull JavaParser javaParser) {
@@ -30,6 +35,8 @@ public class DeclarationParser extends BasicDeclarationParser {
         return Context.CODE_BLOCK;
       case ANNOTATION_INTERFACE:
         return Context.ANNOTATION_INTERFACE;
+      case JSHELL:
+        return Context.JSHELL;
       default:
         throw new UnsupportedOperationException();
     }
@@ -49,6 +56,8 @@ public class DeclarationParser extends BasicDeclarationParser {
         return BaseContext.CODE_BLOCK;
       case ANNOTATION_INTERFACE:
         return BaseContext.ANNOTATION_INTERFACE;
+      case JSHELL:
+        return BaseContext.JSHELL;
       default:
         throw new UnsupportedOperationException();
     }

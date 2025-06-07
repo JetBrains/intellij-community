@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,19 +30,19 @@ import java.util.regex.PatternSyntaxException
 
 class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
-    private var nameRegex: Regex? = defaultNamePattern.toRegex()
-    private var namePattern: String = defaultNamePattern
+    private var nameRegex: Regex? = DEFAULT_NAME_PATTERN.toRegex()
+    private var namePattern: String = DEFAULT_NAME_PATTERN
         set(value) {
             field = value
             nameRegex = try {
                 value.toRegex()
-            } catch (e: PatternSyntaxException) {
+            } catch (_: PatternSyntaxException) {
                 null
             }
         }
 
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
         object : KtVisitorVoid() {
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 super.visitDotQualifiedExpression(expression)
@@ -77,7 +77,7 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
                         receiverExpression,
                         KotlinBundle.message("call.of.inline.function.with.nullable.extension.receiver.can.cause.npe.in.kotlin.1.2"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        IntentionWrapper(it)
+                        it.asQuickFix(),
                     )
                 }
             }
@@ -89,6 +89,6 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
         .onValue("namePattern", this::namePattern)
 
     companion object {
-        const val defaultNamePattern = "(toBoolean)|(content.*)"
+        const val DEFAULT_NAME_PATTERN: String = "(toBoolean)|(content.*)"
     }
 }

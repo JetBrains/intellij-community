@@ -27,7 +27,7 @@ public enum FutureFeature {
   ABSOLUTE_IMPORT("absolute_import", LanguageLevel.PYTHON25, LanguageLevel.PYTHON30),
   PRINT_FUNCTION("print_function", LanguageLevel.PYTHON26, LanguageLevel.PYTHON30),
   UNICODE_LITERALS("unicode_literals", LanguageLevel.PYTHON26, LanguageLevel.PYTHON30),
-  ANNOTATIONS("annotations", LanguageLevel.PYTHON37, LanguageLevel.PYTHON313)
+  ANNOTATIONS("annotations", LanguageLevel.PYTHON37, LanguageLevel.PYTHON314)
   // NOTE: only add new features to the end unless you want to break existing stubs that rely on ordinal
   ;
 

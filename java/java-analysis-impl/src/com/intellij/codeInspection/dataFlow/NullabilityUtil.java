@@ -3,12 +3,14 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -16,6 +18,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -137,7 +141,7 @@ public final class NullabilityUtil {
         PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
         // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
         // only initial nullability
-        if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
+        if (block == null || !ControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block)) return Nullability.UNKNOWN;
       }
       return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
@@ -147,5 +151,24 @@ public final class NullabilityUtil {
       return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;
+  }
+
+  /**
+   * @param type type to process
+   * @return the same type but without top-level nullability annotations. Could be used to declare new local variables,
+   * as top-level nullability annotations could be inferred from the initializer.
+   */
+  public static @NotNull PsiType removeTopLevelNullabilityAnnotations(@NotNull Project project, @NotNull PsiType type) {
+    PsiAnnotation[] annotations = type.getAnnotations();
+    if (annotations.length == 0) return type;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    for (PsiAnnotation annotation : annotations) {
+      if (manager.getAnnotationNullability(annotation.getQualifiedName()).isPresent()) {
+        return type.annotate(TypeAnnotationProvider.Static.create(
+          StreamEx.of(annotations).remove(a -> manager.getAnnotationNullability(a.getQualifiedName()).isPresent())
+            .toArray(PsiAnnotation.EMPTY_ARRAY)));
+      }
+    }
+    return type;
   }
 }

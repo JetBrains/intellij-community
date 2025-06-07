@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -45,16 +46,14 @@ public abstract class FileBasedIndex {
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
    */
-  @Nullable
-  public abstract VirtualFile getFileBeingCurrentlyIndexed();
+  public abstract @Nullable VirtualFile getFileBeingCurrentlyIndexed();
 
   /**
    * @return the file which the current thread is writing evaluated values of indexes right now,
    * or {@code null} if current thread isn't writing index values.
    */
   @Internal
-  @Nullable
-  public abstract IndexWritingFile getFileWritingCurrentlyIndexes();
+  public abstract @Nullable IndexWritingFile getFileWritingCurrentlyIndexes();
 
   @Internal
   public static class IndexWritingFile {
@@ -70,6 +69,9 @@ public abstract class FileBasedIndex {
     throw new UnsupportedOperationException();
   }
 
+  @ApiStatus.Internal
+  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
+
   @Internal
   public void onProjectClosing(@NotNull Project project) {
     throw new UnsupportedOperationException();
@@ -77,10 +79,19 @@ public abstract class FileBasedIndex {
 
   /**
    * Should be called only in dumb mode and only in a read action
+   * @deprecated Please use getCurrentDumbModeAccessType(Project)
    */
   @Internal
-  @Nullable
-  public DumbModeAccessType getCurrentDumbModeAccessType() {
+  @Deprecated
+  public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
+    return getCurrentDumbModeAccessType(null);
+  }
+
+  /**
+   * Should be called only in dumb mode and only in a read action
+   */
+  @Internal
+  public @Nullable DumbModeAccessType getCurrentDumbModeAccessType(@Nullable Project project) {
     throw new UnsupportedOperationException();
   }
 
@@ -93,7 +104,7 @@ public abstract class FileBasedIndex {
     return ApplicationManager.getApplication().getService(FileBasedIndex.class);
   }
 
-  public static int getFileId(@NotNull final VirtualFile file) {
+  public static int getFileId(final @NotNull VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();
     }
@@ -111,22 +122,19 @@ public abstract class FileBasedIndex {
     requestRebuild(indexId, new RebuildRequestedByUserAction(PluginUtil.getInstance().findPluginId(new Throwable())));
   }
 
-  @NotNull
-  public abstract <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
+  public abstract @NotNull <K, V> @Unmodifiable List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
 
-  @NotNull
-  public abstract <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
-                                                                    @NotNull K dataKey,
-                                                                    @NotNull GlobalSearchScope filter);
+  public abstract @NotNull <K, V> @Unmodifiable Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
+                                                                                           @NotNull K dataKey,
+                                                                                           @NotNull GlobalSearchScope filter);
 
   /**
    * @return lazily reified iterator of VirtualFile's.
    */
   @ApiStatus.Experimental
-  @NotNull
-  public abstract <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
-                                                                          @NotNull K dataKey,
-                                                                          @NotNull GlobalSearchScope filter);
+  public abstract @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                                   @NotNull K dataKey,
+                                                                                   @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
@@ -182,8 +190,7 @@ public abstract class FileBasedIndex {
    *
    * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
    */
-  @NotNull
-  public abstract <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
+  public abstract @NotNull @Unmodifiable <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
 
   /**
    * DO NOT CALL DIRECTLY IN CLIENT CODE
@@ -243,22 +250,24 @@ public abstract class FileBasedIndex {
    */
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
+  /**
+   * If {@link FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} is false {@link IdFilter} will be ignored.
+   */
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }
 
-  @NotNull
-  public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
+  public abstract @NotNull @Unmodifiable <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
   public abstract <V> @Nullable V getSingleEntryIndexData(@NotNull ID<Integer, V> id,
                                                           @NotNull VirtualFile virtualFile,
                                                           @NotNull Project project);
 
-  public static void iterateRecursively(@NotNull final VirtualFile root,
-                                        @NotNull final ContentIterator processor,
-                                        @Nullable final ProgressIndicator indicator,
-                                        @Nullable final Set<? super VirtualFile> visitedRoots,
-                                        @Nullable final ProjectFileIndex projectFileIndex) {
+  public static void iterateRecursively(final @NotNull VirtualFile root,
+                                        final @NotNull ContentIterator processor,
+                                        final @Nullable ProgressIndicator indicator,
+                                        final @Nullable Set<? super VirtualFile> visitedRoots,
+                                        final @Nullable ProjectFileIndex projectFileIndex) {
     VirtualFileFilter acceptFilter = file -> {
       if (indicator != null) {
         indicator.checkCanceled();
@@ -294,33 +303,27 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Experimental
   public static final class AllKeysQuery<K, V> {
-    @NotNull
-    private final ID<K, V> indexId;
-    @NotNull
-    private final Collection<? extends K> dataKeys;
-    @Nullable
-    private final Condition<? super V> valueChecker;
+    private final @NotNull ID<K, V> indexId;
+    private final @NotNull Collection<? extends K> dataKeys;
+    private final @Nullable Condition<? super V> valueChecker;
 
     public AllKeysQuery(@NotNull ID<K, V> id,
-                        @NotNull Collection<? extends K> keys,
+                        @NotNull @Unmodifiable Collection<? extends K> keys,
                         @Nullable Condition<? super V> checker) {
       indexId = id;
       dataKeys = keys;
       valueChecker = checker;
     }
 
-    @NotNull
-    public ID<K, V> getIndexId() {
+    public @NotNull ID<K, V> getIndexId() {
       return indexId;
     }
 
-    @NotNull
-    public Collection<? extends K> getDataKeys() {
+    public @NotNull @Unmodifiable Collection<? extends K> getDataKeys() {
       return dataKeys;
     }
 
-    @Nullable
-    public Condition<? super V> getValueChecker() {
+    public @Nullable Condition<? super V> getValueChecker() {
       return valueChecker;
     }
   }

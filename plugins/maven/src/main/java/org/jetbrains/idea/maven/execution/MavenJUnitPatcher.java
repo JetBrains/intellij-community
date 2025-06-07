@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
@@ -356,8 +356,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     return sb.toString();
   }
 
-  @NotNull
-  private static List<String> getExcludedCoordinates(@NotNull Element config) {
+  private static @NotNull List<String> getExcludedCoordinates(@NotNull Element config) {
     Element excludesElement = config.getChild("classpathDependencyExcludes");
     if (excludesElement == null) {
       return Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -6,10 +6,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -101,7 +98,9 @@ public abstract class SdkListItem {
   public static final class InvalidSdkItem extends SdkListItem {
     public final @NotNull String sdkName;
 
-    InvalidSdkItem(@NotNull String name) {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public InvalidSdkItem(@NotNull String name) {
       sdkName = name;
     }
 
@@ -119,12 +118,21 @@ public abstract class SdkListItem {
   public static final class SuggestedItem extends SdkListItem {
     public final @NotNull SdkType sdkType;
     public final @NlsSafe String version;
-    public final @NotNull String homePath;
+    @NlsSafe public final @NotNull String homePath;
+    public final @NotNull Boolean isSymlink;
 
     SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
       this.sdkType = sdkType;
       this.version = version;
       this.homePath = homePath;
+      this.isSymlink = false;
+    }
+
+    SuggestedItem(@NotNull SdkType sdkType, @NotNull SdkType.SdkEntry entry) {
+      this.sdkType = sdkType;
+      this.version = entry.versionString();
+      this.homePath = entry.homePath();
+      this.isSymlink = Boolean.TRUE.equals(entry.isSymlink());
     }
   }
 

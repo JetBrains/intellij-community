@@ -1,5 +1,5 @@
 open class A {
-    val <caret>foo: String
+    open val <caret>foo: String
         get() {
             return "A"
         }

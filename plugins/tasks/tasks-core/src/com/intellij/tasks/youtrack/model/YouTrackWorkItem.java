@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,13 +17,11 @@ public class YouTrackWorkItem {
     duration = new Duration(durationInMinutes);
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return text;
   }
 
-  @NotNull
-  public Duration getDuration() {
+  public @NotNull Duration getDuration() {
     return duration;
   }
 

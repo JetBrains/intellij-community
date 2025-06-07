@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.capitalize
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -39,7 +40,7 @@ class KotlinBuildScriptManipulator(
 
     private val gradleVersion = GradleVersionProvider.fetchGradleVersion(scriptFile)
 
-    override fun isConfiguredWithOldSyntax(kotlinPluginName: String) = runReadAction {
+    override fun isConfiguredWithOldSyntax(kotlinPluginName: String): Boolean = runReadAction {
         scriptFile.containsApplyKotlinPlugin(kotlinPluginName) && scriptFile.containsCompileStdLib()
     }
 
@@ -294,7 +295,7 @@ class KotlinBuildScriptManipulator(
                 getCompileDependencySnippet(
                     KOTLIN_GROUP_ID,
                     stdlibArtifactName,
-                    version = "\$$GSK_KOTLIN_VERSION_PROPERTY_NAME"
+                    version = "$$GSK_KOTLIN_VERSION_PROPERTY_NAME"
                 )
             ) as? KtCallExpression
 
@@ -444,7 +445,7 @@ class KotlinBuildScriptManipulator(
         val arguments: List<KtExpression>,
         /**
          * Important!: You may only delete one such part per method call, a second deletion will have no effect.
-         * To delete more than one part you will have to parse the method call chain again and call delete on the new chain!
+         * To delete more than one part, you will have to parse the method call chain again and call delete on the new chain!
          */
         val delete: () -> Unit
     )
@@ -545,7 +546,7 @@ class KotlinBuildScriptManipulator(
         return PsiTreeUtil.getChildrenOfType(this, KtCallExpression::class.java)?.find {
             val calleeText = it.calleeExpression?.text
             calleeText in SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
-                    && (it.valueArguments.firstOrNull()?.getArgumentExpression()?.isKotlinStdLib() ?: false)
+                    && (it.valueArguments.firstOrNull()?.getArgumentExpression()?.isKotlinStdLib() == true)
         }
     }
 
@@ -553,7 +554,7 @@ class KotlinBuildScriptManipulator(
         is KtCallExpression -> {
             val calleeText = calleeExpression?.text
             (calleeText == "kotlinModule" || calleeText == "kotlin") &&
-                    valueArguments.firstOrNull()?.getArgumentExpression()?.text?.startsWith("\"stdlib") ?: false
+                    valueArguments.firstOrNull()?.getArgumentExpression()?.text?.startsWith("\"stdlib") == true
         }
 
         is KtStringTemplateExpression -> text.startsWith("\"$STDLIB_ARTIFACT_PREFIX")
@@ -598,7 +599,7 @@ class KotlinBuildScriptManipulator(
         getPluginsBlock()?.let {
             val existingPluginDefinition = it.findPluginInPluginsGroup(pluginName)
             if (existingPluginDefinition?.applyExpression != null) {
-                // Cannot properly handle apply, delete and redo
+                // Cannot properly handle `apply`, `delete` and `redo`
                 existingPluginDefinition.entireExpression.delete()
             }
             if (existingPluginDefinition?.applyExpression != null || existingPluginDefinition?.versionExpression == null) {
@@ -624,18 +625,6 @@ class KotlinBuildScriptManipulator(
     private fun KtBlockExpression.createPluginIfMissing(pluginName: String): KtCallExpression? =
         findPlugin(pluginName) ?: addExpressionIfMissing("plugin(\"$pluginName\")") as? KtCallExpression
 
-    private fun KtFile.changeCoroutineConfiguration(coroutineOption: String): PsiElement? {
-        val snippet = "experimental.coroutines = Coroutines.${coroutineOption.toUpperCase()}"
-        val kotlinBlock = getKotlinBlock() ?: return null
-        addImportIfMissing("org.jetbrains.kotlin.gradle.dsl.Coroutines")
-        val statement = kotlinBlock.statements.find { it.text.startsWith("experimental.coroutines") }
-        return if (statement != null) {
-            statement.replace(psiFactory.createExpression(snippet))
-        } else {
-            kotlinBlock.add(psiFactory.createExpression(snippet)).apply { addNewLinesIfNeeded() }
-        }
-    }
-
     private fun KtFile.changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
         state: LanguageFeature.State,
@@ -657,14 +646,19 @@ class KotlinBuildScriptManipulator(
             "listOf(\"$featureArgumentString\")",
             forTests
         ) { _, preserveAssignmentWhenReplacing ->
-            val prefix: String
+            val prefix: String // prefix is used only when adding a new value
             val postfix: String
             if (preserveAssignmentWhenReplacing) {
                 prefix = "$parameterName = listOf("
                 postfix = ")"
             } else {
-                prefix = "$parameterName.addAll(listOf(" // prefix is used only when adding a new value
-                postfix = "))"
+                prefix = "$parameterName.addAll("
+                // We check `text` instead of PSI (or with regex) here because `replaceLanguageFeature()` operates with `text` too
+                postfix = if (text.endsWith("))")) { // It may be in the case `addAll(listOf(<...>))`
+                    "))"
+                } else {
+                    ")"
+                }
             }
             val newText = text.replaceLanguageFeature(
                 feature,
@@ -673,7 +667,18 @@ class KotlinBuildScriptManipulator(
                 prefix,
                 postfix
             )
-            replace(psiFactory.createExpression(newText))
+            val replacedExpression = replace(psiFactory.createExpression(newText))
+
+            // If we had a `.add(...)` call with a single argument, replace it with `.addAll(...)` for multiple arguments
+            (replacedExpression as? KtExpression)?.replaceCallee(from = "add", to = "addAll")
+            replacedExpression
+        }
+    }
+
+    private fun KtExpression.replaceCallee(from: String, to: String) {
+        val calleeExpression = this.getPossiblyQualifiedCallExpression()?.calleeExpression
+        if (calleeExpression?.text == from) {
+            calleeExpression.replace(psiFactory.createExpression(to))
         }
     }
 
@@ -698,7 +703,7 @@ class KotlinBuildScriptManipulator(
 
     private fun projectSupportsCompilerOptions(file: PsiFile, kotlinVersion: IdeKotlinVersion?): Boolean {
         /*
-        // Current test infrastructure uses either a fallback version of Kotlin –
+        // The current test infrastructure uses either a fallback version of Kotlin –
         org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.getFallbackVersionForOutdatedCompiler
         or a currently bundled version. Not that one that is stated in build scripts
          */
@@ -950,22 +955,22 @@ class KotlinBuildScriptManipulator(
             return "$compileScope(${getKotlinModuleDependencySnippet(artifactId)})"
         }
 
-        val libraryVersion = if (version == GSK_KOTLIN_VERSION_PROPERTY_NAME) "\$$version" else version
+        val libraryVersion = if (version == GSK_KOTLIN_VERSION_PROPERTY_NAME) "$$version" else version
         return "$compileScope(${getKotlinModuleDependencySnippet(artifactId, libraryVersion)})"
     }
 
     companion object {
-        private const val STDLIB_ARTIFACT_PREFIX = "org.jetbrains.kotlin:kotlin-stdlib"
-        const val GSK_KOTLIN_VERSION_PROPERTY_NAME = "kotlin_version"
+        private const val STDLIB_ARTIFACT_PREFIX: String = "org.jetbrains.kotlin:kotlin-stdlib"
+        const val GSK_KOTLIN_VERSION_PROPERTY_NAME: String = "kotlin_version"
 
         fun getKotlinGradlePluginClassPathSnippet(): String =
-            "classpath(${getKotlinModuleDependencySnippet("gradle-plugin", "\$$GSK_KOTLIN_VERSION_PROPERTY_NAME")})"
+            "classpath(${getKotlinModuleDependencySnippet("gradle-plugin", "$$GSK_KOTLIN_VERSION_PROPERTY_NAME")})"
 
         fun getKotlinModuleDependencySnippet(artifactId: String, version: String? = null): String {
             val moduleName = artifactId.removePrefix("kotlin-")
             return when (version) {
                 null -> "kotlin(\"$moduleName\")"
-                "\$$GSK_KOTLIN_VERSION_PROPERTY_NAME" -> "kotlinModule(\"$moduleName\", $GSK_KOTLIN_VERSION_PROPERTY_NAME)"
+                "$$GSK_KOTLIN_VERSION_PROPERTY_NAME" -> "kotlinModule(\"$moduleName\", $GSK_KOTLIN_VERSION_PROPERTY_NAME)"
                 else -> "kotlinModule(\"$moduleName\", ${"\"$version\""})"
             }
         }

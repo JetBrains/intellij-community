@@ -21,11 +21,12 @@ public final class PropertiesSplitter extends BaseSplitter {
   private static final @NonNls Pattern WORD = Pattern.compile("\\p{L}*");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }
-    final IdentifierSplitter splitter = IdentifierSplitter.getInstance();
+    var splitter = IdentifierSplitter.getInstance();
+    //noinspection IncorrectCancellationExceptionHandling custom exception handling
     try {
       Matcher matcher = WORD.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {

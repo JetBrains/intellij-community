@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -57,9 +57,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     return new GroovyScriptClass(myFile);
   }
 
-  @NotNull
   @Override
-  public GroovyFile getContainingFile() {
+  public @NotNull GroovyFile getContainingFile() {
     return myFile;
   }
 
@@ -78,9 +77,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     return myFile.isValid() && myFile.isScript();
   }
 
-  @NotNull
   @Override
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return StringUtil.getQualifiedName(myFile.getPackageName(), getName());
   }
 
@@ -156,9 +154,7 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
   }
 
   @Override
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return FileUtilRt.getNameWithoutExtension(myFile.getName());
   }
 
@@ -169,8 +165,8 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (shouldProcessMethods(processor) || shouldProcessProperties(processor)) {

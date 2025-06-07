@@ -7,41 +7,38 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.RunningPackagingTasksListener
-import com.jetbrains.python.packaging.getConfirmedPackages
+import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
+import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
+import org.jetbrains.annotations.Nls
 
-class InstallAllPackagesQuickFix : LocalQuickFix {
-  var packageNames: List<String> = emptyList()
+class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
 
-    val confirmedPackages = getConfirmedPackages(packageNames)
-    if (confirmedPackages.isEmpty()) {
-      return
-    }
+    val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
+    val pyRequirements = normalizedPackageNames.map { pyRequirement(it) }
+    val confirmedPackages = PyPackageInstallUtils.getConfirmedPackages(pyRequirements, project)
 
-    val requirements = confirmedPackages.map { pyRequirement(it) }
+    if (confirmedPackages.isEmpty()) return
 
     val fix = PyInstallRequirementsFix(familyName, module, sdk,
-                                       requirements,
-                                       emptyList(),
-                                       RunningPackagingTasksListener(module))
+                                       confirmedPackages.toList(),
+                                       emptyList())
     fix.applyFix(module.project, descriptor)
-    PyPackagesUsageCollector.installAllEvent.log(requirements.size)
+    PyPackagesUsageCollector.installAllEvent.log(confirmedPackages.size)
   }
 
-  override fun getFamilyName() = PyBundle.message("python.unresolved.reference.inspection.install.all")
+  override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.all")
 
   override fun startInWriteAction(): Boolean = false
 
-  override fun availableInBatchMode() = false
+  override fun availableInBatchMode(): Boolean = false
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
 }

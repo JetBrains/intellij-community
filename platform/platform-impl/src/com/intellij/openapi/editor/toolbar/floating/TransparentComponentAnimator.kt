@@ -14,29 +14,22 @@ class TransparentComponentAnimator(
   parentDisposable: Disposable,
 ) {
 
+  private val disposable = Disposer.newCheckedDisposable(parentDisposable)
+
+  private val clk = TimerUtil.createNamedTimer("CLK", RETENTION_TIME_MS)
+
   private val animator = ShowHideAnimator { progress ->
     component.setOpacity(progress.toFloat())
     component.repaintComponent()
-  }.apply {
-    Disposer.register(parentDisposable, disposable)
-    hidingDelay = 0
-    showingDelay = 0
-    hidingDuration = HIDING_TIME_MS
-    showingDuration = SHOWING_TIME_MS
-  }
-  private val disposable = Disposer.newCheckedDisposable(parentDisposable)
-  private val clk = TimerUtil.createNamedTimer("CLK", RETENTION_TIME_MS).apply {
-    isRepeats = true
-    disposable.whenDisposed { stopTimerIfNeeded() }
-    addActionListener {
-      if (!component.isComponentOnHold()) {
-        scheduleHide()
-      }
-    }
   }
 
-  internal var showingTime: Int by animator::showingDuration
-  internal var hidingTime: Int by animator::hidingDuration
+  var showingTime: Int by animator::showingDuration
+
+  var hidingTime: Int by animator::hidingDuration
+
+  var retentionTime: Int by clk::initialDelay
+
+  var autoHideable: Boolean = false
 
   private fun startTimerIfNeeded() {
     if (!disposable.isDisposed) {
@@ -54,7 +47,7 @@ class TransparentComponentAnimator(
 
   fun scheduleShow() {
     stopTimerIfNeeded()
-    val onCompletion = if (component.autoHideable) ::startTimerIfNeeded else null
+    val onCompletion = if (autoHideable) ::startTimerIfNeeded else null
     animator.setVisible(true, onCompletion) {
       component.showComponent()
     }
@@ -73,9 +66,33 @@ class TransparentComponentAnimator(
     animator.setVisibleImmediately(false)
   }
 
+  init {
+    Disposer.register(parentDisposable, animator.disposable)
+    animator.hidingDelay = 0
+    animator.showingDelay = 0
+    animator.hidingDuration = HIDING_TIME_MS
+    animator.showingDuration = SHOWING_TIME_MS
+  }
+
+  init {
+    clk.isRepeats = false
+    disposable.whenDisposed {
+      stopTimerIfNeeded()
+    }
+    clk.addActionListener {
+      if (!component.isComponentOnHold()) {
+        scheduleHide()
+      }
+    }
+  }
+
+  init {
+    component.hideComponent()
+  }
+
   companion object {
-    private const val SHOWING_TIME_MS = 500
-    private const val HIDING_TIME_MS = 1000
-    private const val RETENTION_TIME_MS = 1500
+    const val SHOWING_TIME_MS = 500
+    const val HIDING_TIME_MS = 1000
+    const val RETENTION_TIME_MS = 1500
   }
 }

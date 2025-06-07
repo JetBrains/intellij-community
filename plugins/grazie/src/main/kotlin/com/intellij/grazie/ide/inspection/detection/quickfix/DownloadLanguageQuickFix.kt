@@ -32,10 +32,7 @@ class DownloadLanguageQuickFix(private val languages: Set<Language>) : LocalQuic
   override fun startInWriteAction() = false
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    for (lang in langs) {
-      GrazieRemote.download(lang)
-    }
-
+    GrazieRemote.downloadAsync(langs, project)
     GrazieConfig.update { state -> state.copy(enabledLanguages = state.enabledLanguages + langs) }
     GrazieFUSCounter.languagesSuggested(languages, isEnabled = true)
   }

@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -85,7 +85,7 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : references.asIterable()) {
       final PsiElement element = reference.getElement();
       if (!(element instanceof PsiReferenceExpression)) {
         continue;
@@ -111,7 +111,7 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : references.asIterable()) {
       final PsiElement element = reference.getElement();
       if (!(element instanceof PsiReferenceExpression)) {
         continue;
@@ -145,11 +145,11 @@ public class NullityInferrer {
   public void apply(final @NotNull Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-      annotateNullable(project, manager, pointer.getElement());
+      annotateNullable(manager, pointer.getElement());
     }
 
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-      annotateNotNull(project, manager, pointer.getElement());
+      annotateNotNull(manager, pointer.getElement());
     }
 
     if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
@@ -163,29 +163,26 @@ public class NullityInferrer {
                                      JavaBundle.message("dialog.title.infer.nullity.results")));
   }
 
-  private static boolean annotateNotNull(@NotNull Project project,
-                                         @NotNull NullableNotNullManager manager,
+  private static boolean annotateNotNull(@NotNull NullableNotNullManager manager,
                                          final @Nullable PsiModifierListOwner element) {
     if (element == null ||
         element instanceof PsiField field && field.hasInitializer() && field.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
-    invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+    invoke(element, manager.getDefaultNotNull(), manager.getDefaultNullable());
     return true;
   }
 
-  private static boolean annotateNullable(@NotNull Project project,
-                                          @NotNull NullableNotNullManager manager,
+  private static boolean annotateNullable(@NotNull NullableNotNullManager manager,
                                           final @Nullable PsiModifierListOwner element) {
     if (element == null) return false;
-    invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
+    invoke(element, manager.getDefaultNullable(), manager.getDefaultNotNull());
     return true;
   }
 
-  private static void invoke(final @NotNull Project project,
-                             final @NotNull PsiModifierListOwner element,
+  private static void invoke(final @NotNull PsiModifierListOwner element,
                              final @NotNull String fqn, final @NotNull String toRemove) {
-    new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
+    new AddAnnotationPsiFix(fqn, element, toRemove).applyFix();
   }
 
   public int getCount() {
@@ -194,10 +191,10 @@ public class NullityInferrer {
 
   public static boolean apply(@NotNull Project project, @NotNull NullableNotNullManager manager, UsageInfo info) {
     if (info instanceof NullableUsageInfo) {
-      return annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
+      return annotateNullable(manager, (PsiModifierListOwner)info.getElement());
     }
     if (info instanceof NotNullUsageInfo) {
-      return annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
+      return annotateNotNull(manager, (PsiModifierListOwner)info.getElement());
     }
     return false;
   }
@@ -376,7 +373,7 @@ public class NullityInferrer {
         }
       }
       else if (grandParent instanceof PsiForeachStatement) {
-        for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent))) {
+        for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent)).asIterable()) {
           final PsiElement place = reference.getElement();
           if (place instanceof PsiReferenceExpression expr) {
             final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);

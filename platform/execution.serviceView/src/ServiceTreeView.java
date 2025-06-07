@@ -38,6 +38,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -100,9 +101,8 @@ final class ServiceTreeView extends ServiceView {
           }));
       }
 
-      @Nullable
       @Override
-      public ServiceViewItem getSelectedItem() {
+      public @Nullable ServiceViewItem getSelectedItem() {
         return myLastSelection;
       }
     };
@@ -144,7 +144,7 @@ final class ServiceTreeView extends ServiceView {
 
   @NotNull
   @Override
-  List<ServiceViewItem> getSelectedItems() {
+  @Unmodifiable List<ServiceViewItem> getSelectedItems() {
     int[] rows = myTree.getSelectionRows();
     if (rows == null || rows.length == 0) return Collections.emptyList();
 
@@ -429,7 +429,7 @@ final class ServiceTreeView extends ServiceView {
   }
 
   @Override
-  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
+  @Unmodifiable List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
     Queue<Object> values = new LinkedList<>(valueSubPath);
     Object visibleRoot = values.poll();
     if (visibleRoot == null) return Collections.emptyList();
@@ -560,9 +560,8 @@ final class ServiceTreeView extends ServiceView {
       myPath = ContainerUtil.newLinkedList(path.getPath());
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       Object node = path.getLastPathComponent();
       if (node.equals(myPath.peek())) {
         myPath.poll();
@@ -579,9 +578,8 @@ final class ServiceTreeView extends ServiceView {
       myPaths = paths;
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       if (path.getParentPath() == null) return Action.CONTINUE;
 
       for (TreePath treePath : myPaths) {

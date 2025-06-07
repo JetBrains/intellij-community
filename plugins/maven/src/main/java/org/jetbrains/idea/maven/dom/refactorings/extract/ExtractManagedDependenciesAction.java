@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.refactorings.extract;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -73,8 +73,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     return Pair.create(dependency, parents);
   }
 
-  @NotNull
-  private static Set<MavenDomProjectModel> getParentProjects(@NotNull PsiFile file) {
+  private static @NotNull Set<MavenDomProjectModel> getParentProjects(@NotNull PsiFile file) {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 
     if (model == null) return Collections.emptySet();
@@ -87,7 +86,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
-    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+    public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
       MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.EXTRACT_MANAGED_DEPENDENCIES);
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
@@ -167,17 +166,16 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
     }
 
 
-    @Nullable
-    private static ProcessData getProcessData(@NotNull Project project,
+    private static @Nullable ProcessData getProcessData(@NotNull Project project,
 
-                                              @NotNull Set<MavenDomProjectModel> models,
-                                              @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
-                                              boolean hasExclusions) {
-      if (models.size() == 0) return null;
+                                                        @NotNull Set<MavenDomProjectModel> models,
+                                                        @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
+                                                        boolean hasExclusions) {
+      if (models.isEmpty()) return null;
 
       if (models.size() == 1 && !hasExclusions) {
         MavenDomProjectModel model = models.iterator().next();
-        if (funOccurrences.fun(model).size() == 0) {
+        if (funOccurrences.fun(model).isEmpty()) {
           return new ProcessData(model, Collections.emptySet(), false);
         }
       }

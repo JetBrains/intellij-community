@@ -21,8 +21,7 @@ public interface PsiNamedElementWithCustomPresentation extends PsiNamedElement {
    * @return the name of the named element, like it's displayed in the source code;
    * null if a given element has no user-visible name.
    */
-  @NlsSafe
-  default @Nullable String getPresentationName() {
+  default @NlsSafe @Nullable String getPresentationName() {
     return getName();
   }
 }

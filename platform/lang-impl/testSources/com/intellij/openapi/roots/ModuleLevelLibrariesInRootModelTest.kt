@@ -18,7 +18,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -97,14 +96,14 @@ class ModuleLevelLibrariesInRootModelTest {
 
     run {
       val model = createModifiableModel(module)
-      val library = model.moduleLibraryTable.libraries.single()
+      val library = model.moduleLibraryTable.libraries.single() as LibraryEx
       model.moduleLibraryTable.removeLibrary(library)
       assertThat(model.moduleLibraryTable.libraries).isEmpty()
       assertThat(model.orderEntries).hasSize(1)
       assertThat(model.findLibraryOrderEntry(library)).isNull()
+      assertThat(library.isDisposed).isTrue()
       val committed = commitModifiableRootModel(model)
       assertThat(committed.orderEntries).hasSize(1)
-      assertThat((library as LibraryEx).isDisposed).isTrue()
     }
   }
 
@@ -112,7 +111,8 @@ class ModuleLevelLibrariesInRootModelTest {
   fun `add rename remove module library`() {
     run {
       val model = createModifiableModel(module)
-      val library = model.moduleLibraryTable.createLibrary("foo")
+      val library = model.moduleLibraryTable.createLibrary("foo") as LibraryEx
+      assertThat(library.isDisposed).isFalse()
       assertThat(model.moduleLibraryTable.libraries.single()).isEqualTo(library)
       val libraryEntry = getSingleLibraryOrderEntry(model)
       assertThat(libraryEntry.libraryName).isEqualTo("foo")
@@ -122,6 +122,7 @@ class ModuleLevelLibrariesInRootModelTest {
       val committed = commitModifiableRootModel(model)
       val committedEntry = getSingleLibraryOrderEntry(committed)
       assertThat(committedEntry.libraryName).isEqualTo("foo")
+      assertThat((committedEntry.library as LibraryEx).isDisposed).isFalse()
     }
 
     run {
@@ -140,7 +141,9 @@ class ModuleLevelLibrariesInRootModelTest {
     run {
       val model = createModifiableModel(module)
       val libraryEntry = getSingleLibraryOrderEntry(model)
+      val library = libraryEntry.library as LibraryEx
       model.removeOrderEntry(libraryEntry)
+      assertThat(library.isDisposed).isTrue()
       assertThat(model.moduleLibraryTable.libraries).isEmpty()
       assertThat(model.orderEntries).hasSize(1)
       val committed = commitModifiableRootModel(model)
@@ -151,29 +154,31 @@ class ModuleLevelLibrariesInRootModelTest {
   @Test
   fun `add module library and dispose`() {
     val model = createModifiableModel(module)
-    val library = model.moduleLibraryTable.createLibrary("foo")
+    val library = model.moduleLibraryTable.createLibrary("foo") as LibraryEx
     val libraryEntry = getSingleLibraryOrderEntry(model)
     assertThat(libraryEntry.library).isEqualTo(library)
+    assertThat(library.isDisposed).isFalse()
     model.dispose()
 
     dropModuleSourceEntry(ModuleRootManager.getInstance(module), 0)
-    assertThat((library as LibraryEx).isDisposed).isTrue()
+    assertThat(library.isDisposed).isTrue()
   }
 
   @Test
   fun `remove previously created module library`() {
-    val library: Library = runWriteActionAndWait {
+    val library = runWriteActionAndWait {
       val model = ModuleRootManager.getInstance(module).modifiableModel
       val table = model.moduleLibraryTable
       val lib = table.createLibrary("lib")
       model.commit()
-      lib
+      lib as LibraryEx
     }
 
     runWriteActionAndWait {
       val model = ModuleRootManager.getInstance(module).modifiableModel
       val table = model.moduleLibraryTable
       table.removeLibrary(library)
+      assertThat(library.isDisposed).isTrue()
       model.commit()
     }
   }
@@ -181,12 +186,14 @@ class ModuleLevelLibrariesInRootModelTest {
   @Test
   fun `rename library before committing root model`() {
     val model = createModifiableModel(module)
-    val library = model.moduleLibraryTable.createLibrary("foo")
+    val library = model.moduleLibraryTable.createLibrary("foo") as LibraryEx
     val libraryModel = library.modifiableModel
     assertThat(getSingleLibraryOrderEntry(model).libraryName).isEqualTo("foo")
     libraryModel.name = "bar"
     assertThat(getSingleLibraryOrderEntry(model).libraryName).isEqualTo("foo")
+    assertThat(library.isDisposed).isFalse()
     libraryModel.commit()
+    assertThat(library.isDisposed).isFalse()
     assertThat(getSingleLibraryOrderEntry(model).libraryName).isEqualTo("bar")
     val committed = commitModifiableRootModel(model)
     assertThat(getSingleLibraryOrderEntry(committed).libraryName).isEqualTo("bar")

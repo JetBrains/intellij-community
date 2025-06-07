@@ -8,10 +8,10 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.internal.statistic.utils.StartMoment;
-import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -30,20 +30,19 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
@@ -59,7 +58,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private SearchEverywhereUI mySearchEverywhereUI;
   private Dimension myBalloonFullSize;
 
-  private final SearchHistoryList myHistoryList = new SearchHistoryList();
+  private final SearchHistoryList myHistoryList = new SearchHistoryList(false);
   private final Map<String, Object> myPrevSelections = new HashMap<>();
   private HistoryIterator myHistoryIterator;
   private boolean myEverywhere;
@@ -71,7 +70,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
-    myTabsShortcutsMap = createShortcutsMap();
+    myTabsShortcutsMap = SearchEverywhereTabsShortcutsUtils.INSTANCE.createShortcutsMap();
   }
 
   @Override
@@ -84,10 +83,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
-    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
-    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector, SearchFieldStatisticsCollector.getStartMoment(initEvent));
+    mySearchEverywhereUI = createView(myProject, contributors, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
-    mySearchEverywhereUI.switchToTab(tabID);
+
+    // Handle SE on the Welcome Screen
+    if (project == null && ALL_CONTRIBUTORS_GROUP_ID.equals(tabID)) mySearchEverywhereUI.switchToTabOrFirst(tabID);
+    else mySearchEverywhereUI.switchToTab(tabID);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
@@ -111,7 +112,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelCallback(() -> {
         saveSearchText();
         savePrevSelection(mySearchEverywhereUI.getSelectedTabID(), mySearchEverywhereUI.getSelectionIdentity());
-        DIALOG_CLOSED.log(myProject);
+        DIALOG_CLOSED.log(myProject, false);
         return true;
       })
       .setResizable(true)
@@ -171,7 +172,8 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
+  @ApiStatus.Internal
+  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
     SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
@@ -271,13 +273,23 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public boolean isSplit() {
+    return false;
+  }
+
+  @Override
+  public SearchEverywherePopupInstance getCurrentlyShownPopupInstance() {
+    return getCurrentlyShownUI();
+  }
+
   private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
                                         @Nullable StartMoment startMoment) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector, startMoment);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, startMoment);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {
@@ -366,11 +378,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     searchField.selectAll();
   }
   @NotNull
+  @Unmodifiable
   List<String> getHistoryItems() {
     if (!isShown()) return ContainerUtil.emptyList();
 
     updateHistoryIterator();
-    return myHistoryIterator.list;
+    return myHistoryIterator.getList();
   }
 
   private void updateHistoryIterator() {
@@ -381,130 +394,6 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     String selectedContributorID = mySearchEverywhereUI.getSelectedTabID();
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
-    }
-  }
-
-  private static Map<String, String> createShortcutsMap() {
-    Map<String, @Nls String> res = new HashMap<>();
-
-    res.put(ALL_CONTRIBUTORS_GROUP_ID, LangBundle.message("double.shift"));
-    addShortcut(res, "ClassSearchEverywhereContributor", "GotoClass");
-    addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
-    addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
-    addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
-    addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
-    addShortcut(res, "TextSearchContributor", "TextSearchAction");
-    addShortcut(res, "UrlSearchEverywhereContributor", "GotoUrlAction");
-
-    return res;
-  }
-
-  private static void addShortcut(Map<String, @Nls String> map, String tabId, String actionID) {
-    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
-    if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
-  }
-
-  private static final class SearchHistoryList {
-
-    private static final int HISTORY_LIMIT = 50;
-
-    private record HistoryItem(String searchText, String contributorID) {
-    }
-
-    private final List<HistoryItem> historyList = new ArrayList<>();
-
-    public HistoryIterator getIterator(String contributorID) {
-      List<String> list = getHistoryForContributor(contributorID);
-      return new HistoryIterator(contributorID, list);
-    }
-
-    public void saveText(@NotNull String text, @NotNull String contributorID) {
-      historyList.stream()
-        .filter(item -> text.equals(item.searchText()) && contributorID.equals(item.contributorID()))
-        .findFirst()
-        .ifPresent(historyList::remove);
-
-      historyList.add(new HistoryItem(text, contributorID));
-
-      List<String> list = filteredHistory(item -> item.contributorID().equals(contributorID));
-      if (list.size() > HISTORY_LIMIT) {
-        historyList.stream()
-          .filter(item -> item.contributorID().equals(contributorID))
-          .findFirst()
-          .ifPresent(historyList::remove);
-      }
-    }
-
-    private List<String> getHistoryForContributor(String contributorID) {
-      if (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
-        List<String> res = filteredHistory(item -> true);
-        int size = res.size();
-        return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
-      }
-      else {
-        return filteredHistory(item -> item.contributorID().equals(contributorID));
-      }
-    }
-
-    private @NotNull List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
-      return historyList.stream()
-        .filter(predicate)
-        .map(item -> item.searchText())
-        .collect(distinctCollector);
-    }
-
-    private static final Collector<String, List<String>, List<String>> distinctCollector = Collector.of(
-      () -> new ArrayList<>(),
-      (lst, str) -> {
-        lst.remove(str);
-        lst.add(str);
-      },
-      (lst1, lst2) -> {
-        lst1.removeAll(lst2);
-        lst1.addAll(lst2);
-        return lst1;
-      }
-    );
-  }
-
-  private static final class HistoryIterator {
-
-    private final String contributorID;
-    private final List<String> list;
-    private int index;
-
-    HistoryIterator(String id, List<String> list) {
-      contributorID = id;
-      this.list = list;
-      index = -1;
-    }
-
-    public String getContributorID() {
-      return contributorID;
-    }
-
-    public String next() {
-      if (list.isEmpty()) {
-        return "";
-      }
-
-      index += 1;
-      if (index >= list.size()) {
-        index = 0;
-      }
-      return list.get(index);
-    }
-
-    public String prev() {
-      if (list.isEmpty()) {
-        return "";
-      }
-
-      index -= 1;
-      if (index < 0) {
-        index = list.size() - 1;
-      }
-      return list.get(index);
     }
   }
 }

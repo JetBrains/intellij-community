@@ -26,6 +26,14 @@ public class InfiniteLoopStatement {
         }
     }
 
+    void doWhile() {
+        int x = 0;
+        do {
+            x++;
+            continue;
+        } while (x < 10);
+    }
+
     void lambdaThreadRun() {
         new Thread((() -> {
             while (true) {}

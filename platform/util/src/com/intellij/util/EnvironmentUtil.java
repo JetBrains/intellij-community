@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.process.UnixProcessManager;
@@ -128,7 +128,7 @@ public final class EnvironmentUtil {
     }
 
     // execution time of 'envFuture' handlers should not be included in the "load environment" activity
-    if (result == Boolean.FALSE) {
+    if (!result) {
       envFuture.complete(getSystemEnv());
     }
     return result;
@@ -506,7 +506,7 @@ public final class EnvironmentUtil {
 
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
     return ContainerUtil.exists(Locale.getAvailableLocales(), l -> Objects.equals(l.toString(), candidateLanguageTerritory)) &&
-           new File(MAC_OS_LOCALE_PATH, candidateLanguageTerritory).exists();
+           (!SystemInfoRt.isMac || Files.exists(Paths.get(MAC_OS_LOCALE_PATH, candidateLanguageTerritory)));
   }
 
   public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
@@ -563,12 +563,14 @@ public final class EnvironmentUtil {
   }
 
   @TestOnly
-  static Map<String, String> testLoader() throws IOException {
+  @ApiStatus.Internal
+  public static Map<String, String> testLoader() throws IOException {
     return getShellEnv(DEFAULT_SHELL_ENV_READING_TIMEOUT_MILLIS);
   }
 
   @TestOnly
-  static Map<String, String> testParser(@NotNull String lines) {
+  @ApiStatus.Internal
+  public static Map<String, String> testParser(@NotNull String lines) {
     try {
       return parseEnv(lines);
     }

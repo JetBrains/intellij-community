@@ -5,8 +5,12 @@ import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.report.ijmetric.AiPerformanceMetricsDto
 import com.intellij.cce.util.isUnderTeamCity
+import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.tools.ide.metrics.collector.OpenTelemetrySpanCollector
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -17,6 +21,7 @@ class IntellijPerfJsonReportGenerator(
   outputDir: String,
   filterName: String,
   comparisonFilterName: String,
+  val spanFilter: SpanFilter?,
 ) : JsonReportGeneratorBase(
   outputDir,
   filterName,
@@ -27,7 +32,8 @@ class IntellijPerfJsonReportGenerator(
     val reportFile = dir.resolve(metricsInfoName)
     LOG.info("generateGlobalReport. save to ${reportFile.absolutePathString()}")
     try {
-      val perfMetrics = globalMetrics.map { it.toPerfMetric() }
+      val globalPerfMetrics = globalMetrics.map { it.toPerfMetric() }
+      val openTelemetryMetrics = spanFilter?.let { getOpenTelemetryMetrics(spanFilter) } ?: emptyList()
 
       val metricsDto = AiPerformanceMetricsDto
         .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
@@ -35,7 +41,7 @@ class IntellijPerfJsonReportGenerator(
                 projectDescription = "",
                 methodName = "",
                 buildNumber = BuildNumber.currentVersion(),
-                metrics = perfMetrics
+                metrics = globalPerfMetrics + openTelemetryMetrics,
         )
 
       reportFile.writeText(gson.toJson(metricsDto))
@@ -85,4 +91,20 @@ private class TeamCityReportHelper : ReportHelper {
     LOG.info("publishTeamCityArtifacts. source=${source.absolutePathString()}")
     LOG.info("report content: ${source.readText()}")
   }
+}
+
+@Suppress("TestOnlyProblems")
+private fun getOpenTelemetryMetrics(spanFilter: SpanFilter): List<ApplicationMetricDto<Double>> {
+  TelemetryManager.getInstance().forceFlushMetricsBlocking()
+  val openTelemetryMetrics =
+    OpenTelemetrySpanCollector(spanFilter.toCollectorSpanFilter())
+      .collect(Path.of(System.getProperty("idea.diagnostic.opentelemetry.file")))
+      .map {
+        ApplicationMetricDto(
+          n = it.id.name,
+          d = if (it.id is PerformanceMetrics.MetricId.Duration) it.value.toDouble() else null,
+          c = if (it.id is PerformanceMetrics.MetricId.Counter) it.value.toDouble() else null
+        )
+      }
+  return openTelemetryMetrics
 }

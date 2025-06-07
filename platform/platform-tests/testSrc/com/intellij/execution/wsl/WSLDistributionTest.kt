@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ClassName")
 
 package com.intellij.execution.wsl
@@ -13,13 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
-import com.intellij.platform.eel.provider.EelProcessResultImpl
-import com.intellij.platform.ijent.IjentExecApi
+import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
@@ -42,13 +40,13 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.cancel
+import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
 import java.io.File
-import java.lang.reflect.Field
 import java.nio.file.FileSystems
 import java.util.stream.Stream
 import kotlin.reflect.full.memberProperties
@@ -221,6 +219,7 @@ class WSLDistributionTest {
             cmd = listOf("printenv")
           ))
           environment should be(strategy.environment(
+            cmd,
             "FOO" to "BAR",
             "HURR" to "DURR",
           ))
@@ -340,6 +339,10 @@ class WSLDistributionTest {
         val commandLine = GeneralCommandLine("date")
           .withEnvironment("FOO", "BAR")
           .withEnvironment("HURR", "DURR")
+          .withEnvironment("TRANSLATABLE_PATH", "DUMMY_PATH", WSLEnvTranslationType.Path.translationFlag)
+          .withEnvironment("TRANSLATABLE_PATH_LIST", "DUMMY_PATH_LIST", WSLEnvTranslationType.PathList.translationFlag)
+          .withEnvironment("TO_WSL", "DUMMY_TOWSL", WSLEnvTranslationType.ToWSL.translationFlag)
+          .withEnvironment("TO_WIN", "DUMMY_TOWIN", WSLEnvTranslationType.ToWin.translationFlag)
 
         val options = WSLCommandLineOptions()
           .apply {
@@ -356,8 +359,13 @@ class WSLDistributionTest {
             cmd = listOf(TEST_SHELL, "-l", "-c", "date"),
           ))
           environment should be(strategy.environment(
+            cmd,
             "FOO" to "BAR",
             "HURR" to "DURR",
+            "TRANSLATABLE_PATH" to "DUMMY_PATH",
+            "TRANSLATABLE_PATH_LIST" to "DUMMY_PATH_LIST",
+            "TO_WSL" to "DUMMY_TOWSL",
+            "TO_WIN" to "DUMMY_TOWIN",
           ))
         }
       }
@@ -443,12 +451,16 @@ class WSLDistributionTest {
     WslTestStrategy.Ijent -> cmd
   }
 
-  private fun WslTestStrategy.environment(vararg entries: Pair<String, String>) = when (this) {
-    WslTestStrategy.Legacy ->
-      mapOf(
-        *entries,
-        "WSLENV" to entries.sortedBy { (name, _) -> name }.joinToString(":") { (name, _) -> "$name/u" },
-      )
+  private fun WslTestStrategy.environment(cmd: GeneralCommandLine, vararg entries: Pair<String, String>) = when (this) {
+    WslTestStrategy.Legacy -> mapOf(
+      *entries,
+      "WSLENV" to entries
+        .sortedBy { (name, _) -> name }
+        .joinToString(":") { (name, _) ->
+          val translationFlag = WSLEnvTranslationType.fromFlag(cmd.wslEnvTranslations.getOrDefault(name, "/u")).translationFlag
+          name + translationFlag
+        },
+    )
 
     WslTestStrategy.Ijent -> mapOf(*entries)
   }
@@ -504,11 +516,15 @@ class WSLDistributionTest {
         sourceCommandLine.isProcessCreatorSet should be(true)
       }
 
+      withClue("Eel should not be set for a patched command line") {
+        sourceCommandLine.tryGetEel() should beNull()
+      }
+
       withClue("Checking that the mock works") {
         val err = shouldThrow<ProcessNotCreatedException> {
           sourceCommandLine.createProcess()
         }
-        err.message should be(executeResultMock.error.message)
+        err.message should be(executeResultMock.message)
       }
       adapter
     }
@@ -517,7 +533,15 @@ class WSLDistributionTest {
 enum class WslTestStrategy { Legacy, Ijent }
 
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
-  override val platform: EelPlatform.Posix get() = throw UnsupportedOperationException()
+  override val descriptor: EelDescriptor
+    get() = object : EelDescriptor {
+      override val userReadableDescription: @NonNls String = "mock"
+      override val platform: EelPlatform = EelPlatform.Linux(EelPlatform.Arch.Unknown)
+
+      override suspend fun toEelApi(): EelApi {
+        throw UnsupportedOperationException()
+      }
+    }
 
   override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
 
@@ -531,34 +555,40 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override suspend fun waitUntilExit(): Unit = Unit
 
-  override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
+  override val exec: EelExecPosixApi get() = MockIjentExecApi(adapter, rootUser)
 
   override val fs: IjentFileSystemPosixApi get() = throw UnsupportedOperationException()
 
   override val tunnels: IjentTunnelsPosixApi get() = throw UnsupportedOperationException()
 }
 
-private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
+private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : EelExecPosixApi {
 
+  override val descriptor: EelDescriptor get() = throw UnsupportedOperationException()
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
+  override suspend fun spawnProcess(builder: EelExecApi.ExecuteProcessOptions): EelPosixProcess {
     adapter.exePath = builder.exe
     if (rootUser) {
       adapter.putUserData(TEST_ROOT_USER_SET, true)
     }
     adapter.addParameters(builder.args)
-    adapter.setWorkDirectory(builder.workingDirectory)
+    adapter.setWorkDirectory(builder.workingDirectory?.toString())
     adapter.environment.putAll(builder.env)
+    throw executeResultMock
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
+  override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): ExternalCliEntrypoint {
+    throw UnsupportedOperationException()
+  }
 }
 
 private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }
 
 
 private val executeResultMock by lazy {
-  EelProcessResultImpl.createErrorResult(errno = 12345, message = "mock result ${Ksuid.generate()}")
+  ExecuteProcessException(errno = 12345, message = "mock result ${Ksuid.generate()}")
 }
 
 private class WslTestStrategyExtension

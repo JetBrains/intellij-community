@@ -1,21 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class StubSerializationUtil {
+@ApiStatus.Internal
+public final class StubSerializationUtil {
   private StubSerializationUtil() {}
 
-  static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
+  public static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
     if (rootStub instanceof PsiFileStub) {
-      //noinspection unchecked
-      return ((PsiFileStub)rootStub).getType();
+      ObjectStubSerializer serializer = StubElementRegistryService.getInstance().getStubSerializer(((PsiFileStub<?>)rootStub).getFileElementType());
+      return (ObjectStubSerializer<Stub, Stub>)serializer;
     }
     //noinspection unchecked
-    return (ObjectStubSerializer<Stub, Stub>)rootStub.getStubType();
+    return (ObjectStubSerializer<Stub, Stub>)rootStub.getStubSerializer();
   }
 
   /**
@@ -24,7 +26,7 @@ final class StubSerializationUtil {
    * @param root - serializer which couldn't deserialize stub
    * @return message for broken stub format
    */
-  static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root, @Nullable PsiFile file) {
+  public static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root, @Nullable PsiFile file) {
     String fileInfo = file == null ? "" : " in file " + file.getName();
     return "Broken stub format" + fileInfo + ", most likely version of " + root + " (" + root.getExternalId() + ") was not updated after serialization changes\n";
   }

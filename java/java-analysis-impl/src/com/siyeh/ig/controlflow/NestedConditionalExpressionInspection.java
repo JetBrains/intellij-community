@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public final class NestedConditionalExpressionInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "nested.conditional.expression.problem.descriptor");
   }

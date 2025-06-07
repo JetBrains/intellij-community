@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.learn.exceptons.NoSdkException
 import training.project.FileUtils
 import training.project.ProjectUtils
@@ -66,6 +67,7 @@ abstract class AbstractLangSupport : LangSupport {
 
   open val readMeCreator: ReadMeCreator? = null
 
+  @RequiresEdt
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     try {
       // Use no SDK if it's a valid for this language
@@ -89,6 +91,7 @@ abstract class AbstractLangSupport : LangSupport {
     })
   }
 
+  @RequiresEdt
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {

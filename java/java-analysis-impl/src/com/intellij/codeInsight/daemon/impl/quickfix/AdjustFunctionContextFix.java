@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -74,29 +74,34 @@ public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMetho
       PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.family.name");
   }
 
-  @Nullable
-  public static IntentionAction createFix(@NotNull PsiElement context) {
-    if (!(context instanceof PsiExpression expression)) return null;
-    PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
+  public static @Nullable IntentionAction createFix(@NotNull PsiExpression expression) {
+    PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(expression, PsiFunctionalExpression.class, false);
     if (fn == null) return null;
-    PsiExpressionList expressionList = ObjectUtils.tryCast(fn.getParent(), PsiExpressionList.class);
-    if (expressionList == null || expressionList.getExpressionCount() != 1) return null;
-    PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
-    Function<PsiType, String> remapper = METHOD_NAME_ADJUSTER.mapFirst(call);
-    if (remapper == null) return null;
     PsiType actualReturnType;
     if(expression instanceof PsiMethodReferenceExpression methodRef) {
       actualReturnType = PsiMethodReferenceUtil.getMethodReferenceReturnType(methodRef);
     } else {
       actualReturnType = expression.getType();
     }
+    return createFix(actualReturnType, fn);
+  }
+
+  /**
+   * @param actualReturnType actual (unexpected) return type of functional expression
+   * @param fn functional expression
+   * @return a fix that aims to adjust the surroundings
+   */
+  public static @Nullable IntentionAction createFix(@Nullable PsiType actualReturnType, @NotNull PsiFunctionalExpression fn) {
+    PsiExpressionList expressionList = ObjectUtils.tryCast(fn.getParent(), PsiExpressionList.class);
+    if (expressionList == null || expressionList.getExpressionCount() != 1) return null;
+    PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
+    Function<PsiType, String> remapper = METHOD_NAME_ADJUSTER.mapFirst(call);
+    if (remapper == null) return null;
     String targetMethodName = remapper.apply(actualReturnType);
     if (targetMethodName == null) return null;
     return new AdjustFunctionContextFix(call, targetMethodName).asIntention();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,7 +21,7 @@ public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage
   private static final Logger LOG = Logger.getInstance(AnnotatedPackagesSearcher.class);
 
   @Override
-  public boolean execute(@NotNull final AnnotatedPackagesSearch.Parameters p, @NotNull final Processor<? super PsiPackage> consumer) {
+  public boolean execute(final @NotNull AnnotatedPackagesSearch.Parameters p, final @NotNull Processor<? super PsiPackage> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 
@@ -89,7 +89,7 @@ public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage
   private static class PackageInfoFilesOnly extends GlobalSearchScope {
 
     @Override
-    public boolean contains(@NotNull final VirtualFile file) {
+    public boolean contains(final @NotNull VirtualFile file) {
       return "package-info.java".equals(file.getName());
     }
 
@@ -99,7 +99,7 @@ public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+    public boolean isSearchInModuleContent(final @NotNull Module aModule) {
       return true;
     }
   }

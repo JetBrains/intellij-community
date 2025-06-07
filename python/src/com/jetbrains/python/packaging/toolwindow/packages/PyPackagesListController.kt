@@ -29,14 +29,14 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
 
   private val tablesView = PyPackagingTablesView(project, packageListPanel, controller)
 
-  val scrollingPackageListComponent = ScrollPaneFactory.createScrollPane(packageListPanel, true)
+  private val scrollingPackageListComponent = ScrollPaneFactory.createScrollPane(packageListPanel, true)
 
   private val loadingPanel = JBPanelWithEmptyText().apply {
     emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
   }
 
 
-  val component = JPanel().apply {
+  val component: JPanel = JPanel().apply {
     layout = BorderLayout()
   }
 

@@ -5,7 +5,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.psi.*
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.findChildByType
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
-class RobolectricGradleTestFilterTest : GradleExecutionTestCase() {
+class RobolectricGradleTestFilterTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource

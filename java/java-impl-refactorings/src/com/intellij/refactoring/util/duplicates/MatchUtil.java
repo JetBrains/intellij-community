@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -15,13 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 public final class MatchUtil {
-  @Nullable
-  public static String getChangedSignature(Match match, final PsiMethod method, final boolean shouldBeStatic, String visibility) {
+  public static @Nullable String getChangedSignature(Match match, final PsiMethod method, final boolean shouldBeStatic, String visibility) {
     final PsiType returnType = match.getChangedReturnType(method);
-    if (!match.myChangedParams.isEmpty() || returnType != null) {
+    if (!match.changedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibility);
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(" ");
       }
       if (shouldBeStatic) {
@@ -39,7 +38,7 @@ public final class MatchUtil {
       buffer.append("(");
       int count = 0;
       final String INDENT = "    ";
-      final List<ParameterInfoImpl> params = patchParams(match.myChangedParams, method);
+      final List<ParameterInfoImpl> params = patchParams(match.changedParams, method);
       for (ParameterInfoImpl param : params) {
         String typeText = param.getTypeText();
         if (count > 0) {
@@ -74,8 +73,8 @@ public final class MatchUtil {
 
   public static void changeSignature(@NotNull Match match, @NotNull PsiMethod psiMethod) {
     final PsiType expressionType = match.getChangedReturnType(psiMethod);
-    if (expressionType == null && match.myChangedParams.isEmpty()) return;
-    final List<ParameterInfoImpl> newParameters = patchParams(match.myChangedParams, psiMethod);
+    if (expressionType == null && match.changedParams.isEmpty()) return;
+    final List<ParameterInfoImpl> newParameters = patchParams(match.changedParams, psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                       expressionType != null ? expressionType : psiMethod.getReturnType(),
                                                                       newParameters.toArray(new ParameterInfoImpl[0]));

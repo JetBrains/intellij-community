@@ -35,11 +35,11 @@ final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListe
     if (oldSet == null) return scope;
 
     PackageSet newSet = oldSet.map(packageSet -> {
-      if (packageSet instanceof PatternBasedPackageSet) {
-        String modulePattern = ((PatternBasedPackageSet)packageSet).getModulePattern();
+      if (packageSet instanceof PatternBasedPackageSet pattern) {
+        String modulePattern = pattern.getModulePattern();
         String newName = nameMapping.get(modulePattern);
         if (newName != null) {
-          return ((PatternBasedPackageSet)packageSet).updateModulePattern(modulePattern, newName);
+          return pattern.updateModulePattern(modulePattern, newName);
         }
       }
       return packageSet;

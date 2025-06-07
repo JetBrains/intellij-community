@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -35,8 +35,7 @@ public final class JavaPsiMathUtil {
    * @param ct comment tracker to track used comments
    * @return an expression text representing an expression with added value.
    */
-  @NotNull
-  public static String add(@NotNull PsiExpression expression, int addend, @NotNull CommentTracker ct) {
+  public static @NotNull String add(@NotNull PsiExpression expression, int addend, @NotNull CommentTracker ct) {
     if (addend == 0) return ct.text(expression);
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(expression);
     Number value = getNumberFromLiteral(stripped);
@@ -82,8 +81,7 @@ public final class JavaPsiMathUtil {
    * then comment tracker is unchanged).
    */
   @Contract("null, _ -> null")
-  @Nullable
-  public static String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
+  public static @Nullable String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
     if (!(comparison instanceof PsiBinaryExpression binOp)) return null;
     RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
     if (relationType == null) return null;
@@ -161,9 +159,8 @@ public final class JavaPsiMathUtil {
    * @param expression expression to extract the numeric value from
    * @return an extracted number or null if supplied expression does not represent a number.
    */
-  @Nullable
   @Contract("null->null")
-  public static Number getNumberFromLiteral(@Nullable PsiExpression expression) {
+  public static @Nullable Number getNumberFromLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression) {
       return tryCast(((PsiLiteralExpression)expression).getValue(), Number.class);
@@ -183,8 +180,7 @@ public final class JavaPsiMathUtil {
    * @param value number to negate
    * @return negated number; null if supplied value is not supported.
    */
-  @Nullable
-  public static Number negate(Object value) {
+  public static @Nullable Number negate(Object value) {
     if (value instanceof Integer) {
       return -((Integer)value).intValue();
     }
@@ -215,8 +211,7 @@ public final class JavaPsiMathUtil {
     return multiplier;
   }
 
-  @Nullable
-  private static Number getLastAddend(PsiPolyadicExpression polyadic) {
+  private static @Nullable Number getLastAddend(PsiPolyadicExpression polyadic) {
     if (polyadic != null) {
       int multiplier = getMultiplier(polyadic);
       if (multiplier != 0) {
@@ -242,8 +237,7 @@ public final class JavaPsiMathUtil {
    * @param nonConstantOperand expression which is compared to int or long constant.
    * @return long range set
    */
-  @Nullable
-  public static LongRangeSet getRangeFromComparison(@NotNull PsiExpression nonConstantOperand) {
+  public static @Nullable LongRangeSet getRangeFromComparison(@NotNull PsiExpression nonConstantOperand) {
     final PsiBinaryExpression binOp =
       tryCast(PsiUtil.skipParenthesizedExprUp(nonConstantOperand.getParent()), PsiBinaryExpression.class);
     if (binOp == null) return null;

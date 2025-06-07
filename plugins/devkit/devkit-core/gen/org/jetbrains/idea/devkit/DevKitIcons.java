@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit;
 
 import com.intellij.ui.IconManager;
@@ -18,7 +18,6 @@ public final class DevKitIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
-  /** 16x16 */ public static final @NotNull Icon Freeze = load("icons/expui/freeze.svg", "icons/freeze.svg", 754396711, 2);
 
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);
@@ -28,6 +27,10 @@ public final class DevKitIcons {
   }
 
   /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", 1719825147, 2);
+  /** 16x16 */ public static final @NotNull Icon ProjectService = load("icons/expui/projectService.svg", -1874664689, 2);
+  /** 16x16 */ public static final @NotNull Icon ProjectState = load("icons/expui/projectState.svg", 329241222, 2);
   /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/expui/remoteMapping.svg", "icons/remoteMapping.svg", 1371307852, 2);
   /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/expui/sdkClosed.svg", "icons/sdk_closed.svg", -1355048140, 2);
+  /** 16x16 */ public static final @NotNull Icon Service = load("icons/expui/service.svg", 865613742, 2);
+  /** 16x16 */ public static final @NotNull Icon State = load("icons/expui/state.svg", 889951373, 2);
 }

@@ -4,13 +4,14 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 
-internal class RevealGroup : DefaultActionGroup(), DumbAware {
+internal class RevealGroup : SmartPopupActionGroup(), DumbAware {
   override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
-    visibleChildren.forEach {
-      it.applyTextOverride(ActionPlaces.REVEAL_IN_POPUP, e.updateSession.presentation(it))
+    if (visibleChildren.size > childrenCountThreshold) {
+      visibleChildren.forEach {
+        it.applyTextOverride(ActionPlaces.REVEAL_IN_POPUP, e.updateSession.presentation(it))
+      }
     }
     return super.postProcessVisibleChildren(e, visibleChildren);
   }

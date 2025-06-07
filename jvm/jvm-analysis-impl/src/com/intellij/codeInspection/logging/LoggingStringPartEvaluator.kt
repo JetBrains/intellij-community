@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -43,6 +44,14 @@ internal class LoggingStringPartEvaluator {
       if (context.maxParts <= 0 || context.depth <= 0) {
         return listOf(PartHolder(null, false))
       }
+      if (expression is UUnknownExpression) {
+        val sourcePsi = expression.sourcePsi
+        //can be compiled element, so let's try to use as java literal, otherwise fail
+        if (sourcePsi is PsiLiteralExpression && sourcePsi.value is String) {
+          return listOf(PartHolder(sourcePsi.value as? String, true))
+        }
+        return listOf(PartHolder(null, false))
+      }
       if (!isString(expression)) {
         return listOf(PartHolder(null, true))
       }
@@ -50,9 +59,8 @@ internal class LoggingStringPartEvaluator {
         is ULiteralExpression -> getFromLiteralExpression(expression)
         is UPolyadicExpression -> getFromPolyadicExpression(expression, context)
         is UParenthesizedExpression -> recursiveCalculateValue(expression.skipParenthesizedExprDown(), context)
-        is USimpleNameReferenceExpression -> getFromReferenceExpression(expression, context)
+        is UReferenceExpression -> getFromReferenceExpression(expression, context)
         is UCallExpression -> getFromCallExpression(expression, context)
-        is UQualifiedReferenceExpression -> getFromCallExpression(expression.selector as? UCallExpression, context)
         else -> listOf(PartHolder(null, false))
       }
     }
@@ -113,11 +121,15 @@ internal class LoggingStringPartEvaluator {
       return result
     }
 
-    private fun getFromReferenceExpression(expression: USimpleNameReferenceExpression,
+    private fun getFromReferenceExpression(expression: UReferenceExpression,
                                            context: Context): List<PartHolder> {
       val resolvedUElement = expression.resolveToUElement()
       if (resolvedUElement is UField && resolvedUElement.isFinal) {
-        return recursiveCalculateValue(resolvedUElement.uastInitializer, context)
+        var currentContext = context
+        if (resolvedUElement.getContainingUFile() != expression.getContainingUFile()) {
+          currentContext = currentContext.copy(depth = context.depth - 3)
+        }
+        return recursiveCalculateValue(resolvedUElement.uastInitializer, currentContext)
       }
       if (resolvedUElement is ULocalVariable && isNotAssignment(resolvedUElement)) {
         return recursiveCalculateValue(resolvedUElement.uastInitializer, context)

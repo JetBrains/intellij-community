@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,14 +84,12 @@ public class BranchMerger implements IMerger {
     }
   }
 
-  @NotNull
-  private DiffOptions createDiffOptions() {
+  private @NotNull DiffOptions createDiffOptions() {
     return myVcs.getSvnConfiguration().getMergeOptions();
   }
 
   @Override
-  @Nullable
-  public String getInfo() {
+  public @Nullable String getInfo() {
     return null;
   }
 
@@ -105,13 +103,11 @@ public class BranchMerger implements IMerger {
   }
 
   @Override
-  @Nullable
-  public String getSkipped() {
+  public @Nullable String getSkipped() {
     return null;
   }
 
-  @NotNull
-  public Revision resolveSourceLatestRevision() {
+  public @NotNull Revision resolveSourceLatestRevision() {
     Revision result = Revision.HEAD;
 
     try {

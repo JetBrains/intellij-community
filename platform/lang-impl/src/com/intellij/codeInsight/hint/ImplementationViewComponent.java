@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,7 +9,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiDocumentManager;
@@ -51,8 +50,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class ImplementationViewComponent extends JPanel {
@@ -85,7 +84,8 @@ public final class ImplementationViewComponent extends JPanel {
     return mySwitcher.getElements().length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
+  @ApiStatus.Internal
+  public record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -180,7 +180,7 @@ public final class ImplementationViewComponent extends JPanel {
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setIcon(AllIcons.Actions.More);
-        e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+        e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
       }
 
       @Override
@@ -578,7 +578,7 @@ public final class ImplementationViewComponent extends JPanel {
   private class ShowInFindWindowAction extends AnAction {
     ShowInFindWindowAction() {
       super(() -> IdeBundle.message("show.in.find.window.button.name"),
-            ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+            ToolWindowManager.getInstance(project).getShowInFindToolWindowIcon());
     }
 
     @Override

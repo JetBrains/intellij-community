@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
@@ -45,13 +47,11 @@ internal class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 
     private fun IElementType.isUnaryMinusOrPlus() = this == KtTokens.MINUS || this == KtTokens.PLUS
 
-    private class WrapUnaryOperatorQuickfix : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("wrap.unary.operator.quickfix.text")
+    private class WrapUnaryOperatorQuickfix : PsiUpdateModCommandQuickFix() {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("wrap.unary.operator.quickfix.text")
 
-        override fun getFamilyName() = name
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val expression = descriptor.psiElement as? KtPrefixExpression ?: return
+        override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+            val expression = element as? KtPrefixExpression ?: return
             val dotQualifiedExpression = expression.baseExpression as? KtDotQualifiedExpression ?: return
             val factory = KtPsiFactory(project)
             val newReceiver = factory.createExpressionByPattern(

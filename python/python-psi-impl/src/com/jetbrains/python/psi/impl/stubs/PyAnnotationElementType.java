@@ -7,7 +7,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAnnotation;
@@ -29,30 +28,27 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
   }
 
   @Override
-  public PyAnnotation createPsi(@NotNull final PyAnnotationStub stub) {
+  public PyAnnotation createPsi(final @NotNull PyAnnotationStub stub) {
     return new PyAnnotationImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyAnnotationStub createStub(@NotNull final PyAnnotation psi, final StubElement parentStub) {
+  public @NotNull PyAnnotationStub createStub(final @NotNull PyAnnotation psi, final StubElement parentStub) {
     return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyAnnotationImpl(node);
   }
 
   @Override
-  public void serialize(@NotNull final PyAnnotationStub stub, @NotNull final StubOutputStream dataStream)
+  public void serialize(final @NotNull PyAnnotationStub stub, final @NotNull StubOutputStream dataStream)
       throws IOException {
   }
 
   @Override
-  @NotNull
-  public PyAnnotationStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub)
+  public @NotNull PyAnnotationStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
   }

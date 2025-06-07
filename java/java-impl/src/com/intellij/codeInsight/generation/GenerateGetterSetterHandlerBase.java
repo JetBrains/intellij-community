@@ -39,8 +39,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
   protected boolean myGenerateAnnotations;
-  @Nullable
-  private JBCheckBox myGenerateAnnotationsCheckBox;
+  private @Nullable JBCheckBox myGenerateAnnotationsCheckBox;
   private boolean supportsAnnotations;
   public GenerateGetterSetterHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     super(chooserTitle);

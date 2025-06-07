@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.4
-// ERROR: Too many arguments for public fun main(): Unit defined in root package in file simple.kt
+// DISABLE_ERRORS
 
 fun main(args<caret>: Array<String>) {
 }

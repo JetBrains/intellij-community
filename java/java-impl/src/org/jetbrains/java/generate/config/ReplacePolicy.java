@@ -48,6 +48,7 @@ public final class ReplacePolicy implements ConflictResolutionPolicy {
       return generatedMethod;
     }
 
+    @Override
     public String toString() {
         return "Replace existing";
     }

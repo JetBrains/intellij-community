@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -26,7 +26,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
@@ -51,21 +50,18 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreWhenQuickFixNotAvailable = false;
 
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "rawtypes";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "RawUseOfParameterized";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return JavaBundle.message("inspection.raw.use.of.parameterized.type.problem.descriptor");
   }
 
@@ -90,8 +86,7 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     return (LocalQuickFix)infos[0];
   }
 
-  @Nullable
-  private static LocalQuickFix createFix(PsiElement target) {
+  private static @Nullable LocalQuickFix createFix(PsiElement target) {
     if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable variable) {
       final PsiType type = getSuggestedType(variable);
       if (type != null) {
@@ -307,8 +302,7 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  private static PsiType getSuggestedType(@NotNull PsiVariable variable) {
+  private static @Nullable PsiType getSuggestedType(@NotNull PsiVariable variable) {
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return null;
     final PsiType variableType = variable.getType();
@@ -331,9 +325,8 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   private static class UseDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.insert.x", "<>");
     }
 
@@ -373,22 +366,20 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
   }
 
-  private static class RawTypeCanBeGenericFix extends InspectionGadgetsFix {
+  private static class RawTypeCanBeGenericFix implements LocalQuickFix {
     private final @IntentionName String myName;
 
     RawTypeCanBeGenericFix(@NotNull @IntentionName String name) {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("raw.variable.type.can.be.generic.family.quickfix");
     }
 
@@ -398,7 +389,9 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement problemElement = descriptor.getPsiElement();
+      if (problemElement == null || !problemElement.isValid()) return;
       final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable variable) {
         final PsiType type = getSuggestedType(variable);

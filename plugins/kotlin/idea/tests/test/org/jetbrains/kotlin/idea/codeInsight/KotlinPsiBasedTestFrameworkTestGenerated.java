@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -52,6 +52,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
         }
 
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
@@ -96,6 +101,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
         }
 
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
@@ -138,6 +148,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
         @TestMetadata("jUnit5TestFile.kt")
         public void testJUnit5TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")

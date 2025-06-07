@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,6 +22,8 @@ public interface QueryExecutor<Result, Param> {
    */
   boolean execute(@NotNull Param queryParameters, @NotNull Processor<? super Result> consumer);
 
+  @ScheduledForRemoval
+  @Deprecated
   @Experimental
   default @NotNull QueryExecutor<Result, Param> wrap(@NotNull QueryWrapper<Result> wrapper) {
     return (queryParameters, consumer) -> wrapper.wrapExecution(c -> execute(queryParameters, c), consumer);

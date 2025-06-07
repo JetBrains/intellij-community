@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.run
 
@@ -61,6 +63,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.takeWhileInclusive
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRunConfigurationModule, factory: ConfigurationFactory?) :
@@ -109,7 +112,9 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(it))
         } ?: PathUtil.toSystemDependentName(defaultWorkingDirectory())
 
-    protected open fun defaultWorkingDirectory() = project.basePath
+    protected open fun defaultWorkingDirectory(): String? {
+        return ProgramParametersUtil.getWorkingDirectoryByModule(this)
+    }
 
     override fun setVMParameters(value: String?) {
         options.vmParameters = value
@@ -207,18 +212,23 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
-        val fqNameBeingRenamed: String? = when (element) {
+        val fqNameBeingChanged: String? = when (element) {
             is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
             is PsiPackage -> element.qualifiedName
+            is KtNamedFunction -> {
+                if (PsiOnlyKotlinMainFunctionDetector.isMain(element)) {
+                    element.containingKtFile.javaFileFacadeFqName.asString()
+                } else null
+            }
             else -> null
         }
         val mainClassName = options.mainClassName
         if (mainClassName == null ||
-            mainClassName != fqNameBeingRenamed && !mainClassName.startsWith("$fqNameBeingRenamed.")
+            mainClassName != fqNameBeingChanged && !mainClassName.startsWith("$fqNameBeingChanged.")
         ) {
             return null
         }
-        if (element is KtDeclarationContainer) {
+        if (element is KtDeclarationContainer || element is KtNamedFunction) {
             return object : RefactoringElementAdapter() {
                 override fun undoElementMovedOrRenamed(newElement: PsiElement, oldQualifiedName: String) {
                     updateMainClassName(newElement)
@@ -229,7 +239,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 }
             }
         }
-        val nameSuffix = mainClassName.substring(fqNameBeingRenamed!!.length)
+        val nameSuffix = mainClassName.substring(fqNameBeingChanged!!.length)
         return object : RefactoringElementAdapter() {
             override fun elementRenamedOrMoved(newElement: PsiElement) {
                 updateMainClassNameWithSuffix(newElement, nameSuffix)
@@ -284,7 +294,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun needPrepareTarget(): Boolean {
-        return super.needPrepareTarget() || runsUnderWslJdk()
+        return super.needPrepareTarget() || runsUnderWslJdk() || runsUnderRemoteJdk()
     }
 
     override fun getShortenCommandLine(): ShortenCommandLine? {

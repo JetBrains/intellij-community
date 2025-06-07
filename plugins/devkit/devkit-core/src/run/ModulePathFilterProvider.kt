@@ -10,7 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 
-private val ModulePattern = """(intellij|kotlin|fleet|android)(.[-\w]+)+""".toRegex()
+private val ModulePattern = """(intellij|kotlin|fleet|android)(\.[-\w]+)+""".toRegex()
 
 internal class ModulePathFilterProvider : ConsoleFilterProvider {
 

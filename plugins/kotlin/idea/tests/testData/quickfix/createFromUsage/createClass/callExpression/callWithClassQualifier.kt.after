@@ -1,5 +1,11 @@
 // "Create class 'Foo'" "true"
-
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Create annotation 'Foo'
+// K2_ACTIONS_LIST: Create class 'Foo'
+// K2_ACTIONS_LIST: Create enum 'Foo'
+// K2_ACTIONS_LIST: Create interface 'Foo'
+// K2_ACTIONS_LIST: Create extension function 'A.Companion.Foo'
+// K2_ACTIONS_LIST: Create member function 'A.Companion.Foo'
 class A<T>(val n: T) {
     class Foo(i: Int) {
 

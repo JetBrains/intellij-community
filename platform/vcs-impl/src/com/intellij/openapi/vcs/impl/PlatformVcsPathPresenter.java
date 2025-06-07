@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -15,14 +15,12 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public class PlatformVcsPathPresenter extends VcsPathPresenter {
   @Override
-  @NotNull
-  public String getPresentableRelativePathFor(final VirtualFile file) {
+  public @NotNull String getPresentableRelativePathFor(final VirtualFile file) {
     return FileUtil.toSystemDependentName(file.getPath());
   }
 
   @Override
-  @NotNull
-  public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
+  public @NotNull String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
     FilePath path = toRevision.getFile();
     FilePath originalPath = fromRevision.getFile();
     return getPresentableRelativePath(path, originalPath);

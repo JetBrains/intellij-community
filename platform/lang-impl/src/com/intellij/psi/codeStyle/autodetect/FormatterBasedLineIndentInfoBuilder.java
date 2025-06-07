@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.formatting.ASTBlock;
@@ -15,6 +15,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public final class FormatterBasedLineIndentInfoBuilder {
     myProgressIndicator = indicator;
   }
 
-  public List<LineIndentInfo> build() {
+  public @Unmodifiable List<LineIndentInfo> build() {
     List<Block> newLineBlocks = getBlocksStartingNewLine();
     
     return ContainerUtil.map(newLineBlocks, newLineBlock -> {

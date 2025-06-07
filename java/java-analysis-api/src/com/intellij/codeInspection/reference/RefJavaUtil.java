@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -31,27 +31,22 @@ public abstract class RefJavaUtil {
    * @param refEntity  the entity to get the package name for.
    * @return the package name, or null if the specified entity is not contained in a package.
    */
-  @Nullable
-  public abstract String getPackageName(RefEntity refEntity);
+  public abstract @Nullable String getPackageName(RefEntity refEntity);
 
-  @Nullable
-  public RefClass getOwnerClass(RefManager refManager, UElement uElement) {
+  public @Nullable RefClass getOwnerClass(RefManager refManager, UElement uElement) {
     throw new UnsupportedOperationException();
   }
 
   @Deprecated(forRemoval = true)
-  @Nullable
-  public RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
+  public @Nullable RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  public abstract RefClass getOwnerClass(RefElement refElement);
+  public abstract @Nullable RefClass getOwnerClass(RefElement refElement);
 
   public abstract int compareAccess(String a1, String a2);
 
-  @NotNull
-  public abstract String getAccessModifier(@NotNull PsiModifierListOwner modifiersOwner);
+  public abstract @NotNull String getAccessModifier(@NotNull PsiModifierListOwner modifiersOwner);
 
   public abstract void setAccessModifier(@NotNull RefJavaElement refElement, @NotNull String newAccess);
 
@@ -68,8 +63,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  public static RefPackage getPackage(RefEntity refEntity) {
+  public static @Nullable RefPackage getPackage(RefEntity refEntity) {
     while (refEntity != null && !(refEntity instanceof RefPackage)) {
       if (refEntity instanceof RefElement) {
         ((RefElement)refEntity).initializeIfNeeded();

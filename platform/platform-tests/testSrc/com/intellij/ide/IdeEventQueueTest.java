@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
-  public void testManyEventsStress() {
+  public void testManyEventsStressPerformance() {
     int N = 100000;
     Benchmark.newBenchmark("Event queue dispatch", () -> {
       UIUtil.dispatchAllInvocationEvents();
@@ -110,7 +110,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   private static void postCarefully(AWTEvent event) {
     LOG.debug("posting " + event);
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    boolean posted = ideEventQueue.doPostEvent(event);
+    boolean posted = ideEventQueue.doPostEvent(event, false);
     assertTrue("Was not posted: "+event, posted);
     boolean mustBeConsumed = event.getID() == ActionEvent.ACTION_PERFORMED;
     assertEquals(mustBeConsumed, ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "consumed").booleanValue());

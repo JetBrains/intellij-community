@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.common.PythonPackage
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+@ApiStatus.Internal
 
-class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PyPackage>,
-                                private val settings: PyPackageRequirementsSettings) {
+class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String, PythonPackage>,
+                                private val settings: PyPackageRequirementsSettings
+) {
 
   private val collectedOutput: MutableMap<VirtualFile, MutableList<String>> = mutableMapOf()
   private val unmatchedLines: MutableList<String> = mutableListOf()
@@ -61,8 +66,8 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
 
         // base files cannot be modified, so we report requirements with different version
         parsed.asSequence()
-          .filter { it.name.toLowerCase() in importedPackages }
-          .map { it to importedPackages.remove(it.name.toLowerCase()) }
+          .filter { it.name.lowercase(Locale.getDefault()) in importedPackages }
+          .map { it to importedPackages.remove(it.name.lowercase(Locale.getDefault())) }
           .filterNot { compatibleVersion(it.first, it.second!!.version, settings.specifyVersion) }
           .forEach { unchangedInBaseFiles.add(it.first.name) }
 
@@ -74,7 +79,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       }
       else {
         val requirement = parsed.first()
-        val name = requirement.name.toLowerCase()
+        val name = requirement.name
         if (name in importedPackages) {
           val pkg = importedPackages.remove(name)!!
           val formatted = formatRequirement(requirement, pkg, lines)
@@ -88,7 +93,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
     collectedOutput[requirementsFile.virtualFile] = outputLines
   }
 
-  private fun formatRequirement(requirement: PyRequirement, pkg: PyPackage, lines: List<String>): List<String> = when {
+  private fun formatRequirement(requirement: PyRequirement, pkg: PythonPackage, lines: List<String>): List<String> = when {
     // keeping editable and vcs requirements
     requirement.isEditable || vcsPrefixes.any { lines.first().startsWith(it) } -> lines
     // existing version separators match the current package version
@@ -130,10 +135,10 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
   private fun convertToRequirementsEntry(requirement: PyRequirement, settings: PyPackageRequirementsSettings, version: String? = null): String {
     val packageName = when {
       settings.specifyVersion -> when {
-        version != null -> requirement.name + requirement.extras + settings.versionSpecifier.separator + version
-        else -> requirement.presentableText
+        version != null -> requirement.presentableTextWithoutVersion + requirement.extras + settings.versionSpecifier.separator + version
+        else -> requirement.presentableTextWithoutVersion
       }
-      else -> requirement.name + requirement.extras
+      else -> requirement.presentableTextWithoutVersion + requirement.extras
     }
 
     if (requirement.installOptions.size == 1) return packageName

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PositionManagerEx implements PositionManagerWithConditionEvaluation {
-  @Nullable
-  public XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
+  public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
     Location location = descriptor.getLocation();
     if (location != null) {
       return createStackFrame(descriptor.getFrameProxy(), (DebugProcessImpl)descriptor.getDebugProcess(), location);
@@ -18,8 +17,7 @@ public abstract class PositionManagerEx implements PositionManagerWithConditionE
     return null;
   }
 
-  @Nullable
-  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl frame, @NotNull DebugProcessImpl debugProcess, @NotNull Location location) {
+  public @Nullable XStackFrame createStackFrame(@NotNull StackFrameProxyImpl frame, @NotNull DebugProcessImpl debugProcess, @NotNull Location location) {
     return null;
   }
 }

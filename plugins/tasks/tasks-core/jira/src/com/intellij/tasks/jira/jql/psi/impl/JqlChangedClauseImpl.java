@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -18,9 +19,8 @@ public class JqlChangedClauseImpl extends JqlClauseWithHistoryPredicatesImpl imp
     visitor.visitJqlChangedClause(this);
   }
 
-  @NotNull
   @Override
-  public Type getType() {
+  public @NotNull Type getType() {
     return Type.CHANGED;
   }
 }

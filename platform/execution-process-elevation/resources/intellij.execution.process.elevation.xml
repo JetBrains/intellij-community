@@ -14,7 +14,6 @@
                              instance="com.intellij.execution.process.elevation.settings.ElevationSettingsConfigurable"
                              bundle="messages.ElevationBundle"
                              key="elevation.settings.configurable"
-                             id="application.elevation"
-                             order="before application.passwordSafe"/>
+                             id="application.elevation"/>
   </extensions>
 </idea-plugin>

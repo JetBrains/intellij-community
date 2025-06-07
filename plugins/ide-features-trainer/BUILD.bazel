@@ -1,0 +1,107 @@
+### auto-generated section `build intellij.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "featuresTrainer_resources",
+  files = glob(["res/**/*"]),
+  strip_prefix = "res"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/ide-core-impl",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lvcs-impl",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+  ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+jvm_library(
+  name = "featuresTrainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/diff-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lvcs-impl",
+    "//platform/lvcs-impl:lvcs-impl_test_lib",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:mockito-kotlin",
+    "@lib//:mockito",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+jvm_test(
+  name = "featuresTrainer_test",
+  runtime_deps = [":featuresTrainer_test_lib"]
+)
+### auto-generated section `build intellij.featuresTrainer` end

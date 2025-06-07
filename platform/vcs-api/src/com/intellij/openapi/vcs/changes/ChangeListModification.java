@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -33,5 +33,5 @@ public interface ChangeListModification {
   boolean editName(@NotNull @NlsSafe String fromName, @NotNull @NlsSafe String toName);
 
   @Nullable
-  String editComment(@NotNull @NlsSafe String name, @NlsSafe final String newComment);
+  String editComment(@NotNull @NlsSafe String name, final @NlsSafe String newComment);
 }

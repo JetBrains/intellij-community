@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.project.Project;
@@ -75,6 +75,7 @@ public class ReductionSystem {
     return memberString(method) + "#" + var.getName();
   }
 
+  @Override
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public String toString() {
     @NonNls StringBuilder buffer = new StringBuilder();
@@ -272,7 +273,7 @@ public class ReductionSystem {
 
             frontier.addFirst(n);
 
-            while (frontier.size() > 0) {
+            while (!frontier.isEmpty()) {
               final Node curr = frontier.removeFirst();
 
               curr.myComponent = component;
@@ -337,7 +338,7 @@ public class ReductionSystem {
     return StreamEx.of(data).sorted().map(aData -> aData + "\n").joining();
   }
 
-  @NonNls private static
+  private static @NonNls
   String elementString(final PsiElement element) {
     if (element instanceof PsiNewExpression) {
       return "new";

@@ -23,6 +23,7 @@ import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NlsContexts.DialogTitle @NotNull String presentationText,
-                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
+                                                   @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class<?> quickfixClass,
                                                    boolean startInWriteAction,
                                                    boolean markGlobal) {
@@ -63,7 +64,7 @@ public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   @Override
   public AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
                                                    @NotNull String presentationText,
-                                                   @NotNull List<? extends ProblemDescriptor> descriptions,
+                                                   @NotNull @Unmodifiable List<? extends ProblemDescriptor> descriptions,
                                                    @Nullable Class<?> quickfixClass,
                                                    boolean startInWriteAction) {
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);

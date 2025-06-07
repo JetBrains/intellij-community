@@ -4,9 +4,13 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInspection.GlobalInspectionContext
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.globalInspectionContext
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.ide.plugins.PluginManagerCore
@@ -16,6 +20,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,7 +33,7 @@ class IncorrectFormattingInspection(
 
   private val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
-  override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+  private fun getResultsForFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean, globalContext: GlobalInspectionContext?): Array<ProblemDescriptor>? {
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null
@@ -56,12 +61,7 @@ class IncorrectFormattingInspection(
     if (formattingChanges.mismatches.isEmpty()) return null
 
     val helper = IncorrectFormattingInspectionHelper(formattingChanges, file, document, manager, isOnTheFly)
-    return if (reportPerFile) {
-      arrayOf(helper.createGlobalReport())
-    }
-    else {
-      helper.createAllReports()
-    }
+    return IncorrectFormattingResultHandlerProvider.getResultHandler(globalContext).getResults(reportPerFile, helper)
   }
 
   override fun getOptionsPane(): OptPane = OptPane(
@@ -70,6 +70,20 @@ class IncorrectFormattingInspection(
       listOf(checkbox("kotlinOnly", LangBundle.message("inspection.incorrect.formatting.setting.kotlin.only"))) 
     else listOf()
   )
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    return object : PsiElementVisitor() {
+      override fun visitFile(psiFile: PsiFile) {
+        val context = session.globalInspectionContext()
+        val problemDescriptors = getResultsForFile(psiFile, holder.manager, isOnTheFly, context)
+        if (problemDescriptors != null) {
+          for (descriptor in problemDescriptors) {
+            holder.registerProblem(descriptor)
+          }
+        }
+      }
+    }
+  }
 
   override fun runForWholeFile(): Boolean = true
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING

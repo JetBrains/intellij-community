@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.PositionManager
+import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
+import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePositionAsync
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
@@ -60,7 +60,7 @@ internal class KotlinSmartStepTargetFiltererAdapter(
 
     suspend fun visitTrace(
         targetFilterer: KotlinSmartStepTargetFilterer,
-        positionManager: PositionManager
+        positionManager: PositionManagerAsync
     ): Pair<List<KotlinMethodSmartStepTarget>, List<KotlinMethodSmartStepTarget>> {
         for (element in visitedTrace) {
             visitTraceElement(element, targetFilterer, positionManager)
@@ -76,7 +76,7 @@ internal class KotlinSmartStepTargetFiltererAdapter(
     private suspend fun visitTraceElement(
         element: BytecodeTraceElement,
         targetFilterer: KotlinSmartStepTargetFilterer,
-        positionManager: PositionManager
+        positionManager: PositionManagerAsync
     ) {
         when (element) {
             is BytecodeTraceElement.InlineCall -> {
@@ -122,7 +122,7 @@ private fun extractInlineCalls(location: Location): List<InlineCallInfo> = locat
     // Filter already visible variable to support smart-step-into while inside an inline function
     .filterNot { location.codeIndex() in it.bciRange }
 
-private suspend fun getCalledInlineFunction(positionManager: PositionManager, location: Location): KtNamedFunction? {
-    val sourcePosition = positionManager.safeGetSourcePosition(location) ?: return null
+private suspend fun getCalledInlineFunction(positionManager: PositionManagerAsync, location: Location): KtNamedFunction? {
+    val sourcePosition = positionManager.safeGetSourcePositionAsync(location) ?: return null
     return readAction { sourcePosition.elementAt?.parentOfType<KtNamedFunction>() }
 }

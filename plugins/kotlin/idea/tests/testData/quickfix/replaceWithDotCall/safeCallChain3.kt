@@ -9,5 +9,5 @@ class Baz(val qux: Int)
 fun test(foo: Foo) {
     foo?.bar?<caret>.baz?.qux
 }
-/* IGNORE_K2 */
+// IGNORE_K2
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.tools.projectWizard.core.entity
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
-import kotlin.reflect.KProperty1
 
 sealed class Task : EntityBase()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -27,7 +27,7 @@ import java.util.List;
  * @see ChangeDiffRequestChain.Async
  */
 public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
-  @NotNull private final ListSelection<? extends Producer> myProducers;
+  private final @NotNull ListSelection<? extends Producer> myProducers;
 
   public ChangeDiffRequestChain(@NotNull ListSelection<? extends Producer> producers) {
     myProducers = producers;
@@ -43,21 +43,18 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   @Override
-  @NotNull
-  public List<? extends Producer> getRequests() {
+  public @NotNull List<? extends Producer> getRequests() {
     return myProducers.getList();
   }
 
-  @NotNull
   @Override
-  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+  public @NotNull AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
     return createGoToChangeAction(getRequests(), onSelected, defaultSelection);
   }
 
-  @NotNull
-  private static AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
-                                                 @NotNull Consumer<? super Integer> onSelected,
-                                                 int defaultSelection) {
+  private static @NotNull AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
+                                                          @NotNull Consumer<? super Integer> onSelected,
+                                                          int defaultSelection) {
     return new PresentableGoToChangePopupAction<ProducerWrapper>() {
       @Override
       protected @NotNull ListSelection<? extends ProducerWrapper> getChanges() {
@@ -97,14 +94,12 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
     }
   }
 
-  public static abstract class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
-    @NotNull
+  public abstract static class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
     @Override
-    protected abstract ListSelection<? extends Producer> loadRequestProducers() throws DiffRequestProducerException;
+    protected abstract @NotNull ListSelection<? extends Producer> loadRequestProducers() throws DiffRequestProducerException;
 
-    @Nullable
     @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+    public @Nullable AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
       List<? extends DiffRequestProducer> requests = getRequests();
 
       // may contain other producers with intermediate MessageDiffRequest

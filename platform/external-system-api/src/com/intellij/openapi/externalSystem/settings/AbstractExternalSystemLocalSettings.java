@@ -1,33 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectBuildClasspathEntity;
-import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.sequences.Sequence;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt.modifyExternalProjectsBuildClasspathEntity;
-import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectBuildClasspathPojo;
-import static com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt.getExternalProjectsBuildClasspathEntity;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
@@ -42,8 +32,8 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings.State> {
   protected S state;
 
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId, @NotNull Project project, @NotNull S state) {
     myExternalSystemId = externalSystemId;
@@ -81,8 +71,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
       }
     }
 
-    WriteAction.runAndWait(() -> forgetExternalProjectsClasspath(linkedProjectPathsToForget));
-
     for (Iterator<Map.Entry<String, SyncType>> it = state.projectSyncType.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<String, SyncType> entry = it.next();
       if (linkedProjectPathsToForget.contains(entry.getKey())
@@ -97,8 +85,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-  @NotNull
-  public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
+  public @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
     return state.availableProjects;
   }
 
@@ -106,23 +93,19 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     state.availableProjects = projects;
   }
 
-  @NotNull
-  public List<ExternalTaskExecutionInfo> getRecentTasks() {
+  public @NotNull @Unmodifiable List<ExternalTaskExecutionInfo> getRecentTasks() {
     return ContainerUtil.notNullize(state.recentTasks);
   }
 
-  @NotNull
-  public Map<String, Long> getExternalConfigModificationStamps() {
+  public @NotNull Map<String, Long> getExternalConfigModificationStamps() {
     return state.modificationStamps;
   }
 
-  @NotNull
-  public Map<String, SyncType> getProjectSyncType() {
+  public @NotNull Map<String, SyncType> getProjectSyncType() {
     return state.projectSyncType;
   }
 
-  @Nullable
-  public S getState() {
+  public @Nullable S getState() {
     return state;
   }
 
@@ -164,15 +147,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-
-  @Deprecated(forRemoval = true)
-  public void fillState(@NotNull State otherState) {
-    otherState.recentTasks.clear();
-    otherState.availableProjects = state.availableProjects;
-    otherState.modificationStamps = state.modificationStamps;
-    otherState.projectSyncType = state.projectSyncType;
-  }
-
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
     public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
@@ -182,63 +156,5 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public enum SyncType {
     PREVIEW, IMPORT, RE_IMPORT
-  }
-
-  @RequiresWriteLock
-  private void forgetExternalProjectsClasspath(@NotNull Set<String> linkedProjectPathsToForget) {
-    WorkspaceModel.getInstance(myProject)
-      .updateProjectModel("ForgetExternalProjects update", storage -> {
-        Sequence<ExternalProjectsBuildClasspathEntity> currentEntities = storage.entities(ExternalProjectsBuildClasspathEntity.class);
-        Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = currentEntities.iterator();
-        if (!entityIterator.hasNext()) {
-          return null;
-        }
-        modifyExternalProjectsBuildClasspathEntity(storage, entityIterator.next(), modifiableEntity -> {
-          Map<String, ExternalProjectBuildClasspathEntity> classpath = modifiableEntity.getProjectsBuildClasspath();
-          Iterator<Map.Entry<String, ExternalProjectBuildClasspathEntity>> classpathIterator = classpath.entrySet().iterator();
-          while (classpathIterator.hasNext()) {
-            Map.Entry<String, ExternalProjectBuildClasspathEntity> entry = classpathIterator.next();
-            if (linkedProjectPathsToForget.contains(entry.getKey()) ||
-                linkedProjectPathsToForget.contains(getRootProjectPath(entry.getKey(), myExternalSystemId, myProject))) {
-              classpathIterator.remove();
-            }
-          }
-          return null;
-        });
-        return null;
-      });
-  }
-
-  @ApiStatus.Internal
-  @RequiresWriteLock
-  public void setProjectBuildClasspath(@NotNull Map<String, ExternalProjectBuildClasspathPojo> value) {
-    WorkspaceModel.getInstance(myProject)
-      .updateProjectModel("AbstractExternalSystemLocalSettings update", storage -> {
-        Sequence<ExternalProjectsBuildClasspathEntity> entities = storage.entities(ExternalProjectsBuildClasspathEntity.class);
-        Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = entities.iterator();
-        ExternalProjectsBuildClasspathEntity.Builder newClasspathEntity = getExternalProjectsBuildClasspathEntity(value);
-        if (!entityIterator.hasNext()) {
-          storage.addEntity(newClasspathEntity);
-        }
-        else {
-          modifyExternalProjectsBuildClasspathEntity(storage, entityIterator.next(), modifiableEntity -> {
-            modifiableEntity.setProjectsBuildClasspath(newClasspathEntity.getProjectsBuildClasspath());
-            return null;
-          });
-        }
-        return null;
-      });
-  }
-
-  @ApiStatus.Internal
-  public @NotNull Map<String, ExternalProjectBuildClasspathPojo> getProjectBuildClasspath() {
-    Sequence<ExternalProjectsBuildClasspathEntity> entities = WorkspaceModel.getInstance(myProject)
-      .getCurrentSnapshot()
-      .entities(ExternalProjectsBuildClasspathEntity.class);
-    Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = entities.iterator();
-    if (entityIterator.hasNext()) {
-      return getExternalProjectBuildClasspathPojo(entityIterator.next());
-    }
-    return Collections.emptyMap();
   }
 }

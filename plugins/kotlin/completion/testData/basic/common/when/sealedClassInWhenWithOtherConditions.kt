@@ -15,4 +15,5 @@ fun foo(e: SEALED) {
 // WITH_ORDER
 // EXIST: BBBB
 // EXIST: { lookupString: "else -> "}
+// EXIST: SEALED
 // FIR_COMPARISON

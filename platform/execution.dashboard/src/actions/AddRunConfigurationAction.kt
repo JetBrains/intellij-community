@@ -6,17 +6,20 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.execution.configurations.LocatableConfigurationBase
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.callNewConfigurationCreated
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.containers.ContainerUtil
 import java.util.function.Consumer
@@ -28,7 +31,7 @@ private val IGNORE_CASE_DISPLAY_NAME_COMPARATOR = Comparator<ConfigurationType> 
   t1.displayName.compareTo(t2.displayName, ignoreCase = true)
 }
 
-class AddRunConfigurationAction : DumbAwareAction() {
+class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -55,19 +58,21 @@ class AddRunConfigurationAction : DumbAwareAction() {
       }
     }
 
+    var configuration: RunConfiguration? = null
     if (!addedTypes.isEmpty()) {
       if (RunManager.getInstance(project).allSettings.none { addedTypes.contains(it.type) }) {
         val type = addedTypes.minWithOrNull(IGNORE_CASE_DISPLAY_NAME_COMPARATOR) ?: return
-        if (!addRunConfiguration(type, project)) {
-          return
-        }
+        configuration = addRunConfiguration(type, project) ?: return
       }
 
       runDashboardManager.types = updatedTypes
     }
     else {
       val type = selectedTypes.minWithOrNull(IGNORE_CASE_DISPLAY_NAME_COMPARATOR) ?: return
-      addRunConfiguration(type, project)
+      configuration = addRunConfiguration(type, project)
+    }
+    if (configuration != null && !runDashboardManager.isShowInDashboard(configuration)) {
+      (runDashboardManager as RunDashboardManagerImpl).restoreConfigurations(listOf(configuration))
     }
   }
 
@@ -99,7 +104,7 @@ class AddRunConfigurationAction : DumbAwareAction() {
   }
 }
 
-private fun addRunConfiguration(type: ConfigurationType, project: Project): Boolean {
+private fun addRunConfiguration(type: ConfigurationType, project: Project): RunConfiguration? {
   val runManager = RunManager.getInstance(project)
   val settings = runManager.createConfiguration("", type.configurationFactories[0])
 
@@ -110,12 +115,14 @@ private fun addRunConfiguration(type: ConfigurationType, project: Project): Bool
   runManager.setUniqueNameIfNeeded(settings)
   callNewConfigurationCreated(settings.getFactory(), settings.getConfiguration())
 
+  // fixme ask Lera?
   val added = RunDialog.editConfiguration(project, settings,
                                           ExecutionBundle.message("add.new.run.configuration.action2.name"))
   if (added) {
     runManager.addConfiguration(settings)
+    return settings.configuration
   }
-  return added
+  return null
 }
 
 private fun getTypesPopupList(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): ArrayList<Any> {

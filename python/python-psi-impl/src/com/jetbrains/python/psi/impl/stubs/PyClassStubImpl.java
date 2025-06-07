@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
@@ -17,29 +18,23 @@ import java.util.Map;
 
 public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implements PyClassStub {
 
-  @Nullable
-  private final String myName;
+  private final @Nullable String myName;
 
-  @NotNull
-  private final Map<QualifiedName, QualifiedName> mySuperClasses;
+  private final @NotNull Map<QualifiedName, QualifiedName> mySuperClasses;
 
-  @Nullable
-  private final QualifiedName myMetaClass;
+  private final @Nullable QualifiedName myMetaClass;
 
-  @Nullable
-  private final List<String> mySlots;
+  private final @Nullable List<String> mySlots;
 
-  @Nullable
-  private final String myDocString;
+  private final @Nullable List<String> myMatchArgs;
 
-  @NotNull
-  private final List<String> mySuperClassesText;
+  private final @Nullable String myDocString;
 
-  @Nullable
-  private final String myDeprecationMessage;
+  private final @NotNull List<String> mySuperClassesText;
 
-  @Nullable
-  private final PyCustomClassStub myCustomStub;
+  private final @Nullable String myDeprecationMessage;
+
+  private final @Nullable PyCustomClassStub myCustomStub;
 
   public PyClassStubImpl(@Nullable String name,
                          @Nullable StubElement parentStub,
@@ -47,6 +42,7 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
                          @NotNull List<String> superClassesText,
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
+                         @Nullable List<String> matchArgs,
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
@@ -58,61 +54,71 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
     mySuperClassesText = superClassesText;
     myMetaClass = metaClass;
     mySlots = slots;
+    myMatchArgs = matchArgs;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myCustomStub = customStub;
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public Map<QualifiedName, QualifiedName> getSuperClasses() {
+  public @NotNull Map<QualifiedName, QualifiedName> getSuperClasses() {
     return mySuperClasses;
   }
 
-  @Nullable
   @Override
-  public QualifiedName getMetaClass() {
+  public @Nullable QualifiedName getMetaClass() {
     return myMetaClass;
   }
 
-  @Nullable
   @Override
-  public List<String> getSlots() {
+  public @Nullable List<String> getSlots() {
     return mySlots;
   }
 
-  @Nullable
   @Override
-  public String getDocString() {
+  public @Nullable List<String> getMatchArgs() {
+    return myMatchArgs;
+  }
+
+  @Override
+  public @Nullable String getDocString() {
     return myDocString;
   }
 
-  @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public @Nullable String getDeprecationMessage() {
     return myDeprecationMessage;
   }
 
-  @NotNull
   @Override
-  public List<String> getSuperClassesText() {
+  public @NotNull List<String> getSuperClassesText() {
     return mySuperClassesText;
   }
 
-  @Nullable
   @Override
-  public <T> T getCustomStub(@NotNull Class<T> stubClass) {
+  public @Nullable <T> T getCustomStub(@NotNull Class<T> stubClass) {
     return ObjectUtils.tryCast(myCustomStub, stubClass);
   }
 
   @Override
   public String toString() {
-    return "PyClassStub(" + myName + ")";
+    // @formatter:off
+    return "PyClassStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", mySuperClasses=" + mySuperClasses +
+           ", myMetaClass=" + myMetaClass +
+           ", mySlots=" + mySlots +
+           ", myMatchArgs=" + myMatchArgs +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", mySuperClassesText=" + mySuperClassesText +
+           ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters((myDeprecationMessage)) : null) + '\'' +
+           ", myCustomStub=" + myCustomStub +
+           '}';
+    // @formatter:on
   }
 }

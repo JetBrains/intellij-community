@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.completion.BaseCompletionLookupArranger;
@@ -36,7 +36,7 @@ public final class MavenDependencyCompletionUtil {
   }
 
   public static MavenDomPlugin findManagedPlugin(MavenDomProjectModel domModel, Project project,
-                                                 @NotNull final String groupId, @NotNull final String artifactId) {
+                                                 final @NotNull String groupId, final @NotNull String artifactId) {
 
     final Ref<MavenDomPlugin> ref = new Ref<>();
 
@@ -54,7 +54,7 @@ public final class MavenDependencyCompletionUtil {
   }
 
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
-                                                         @NotNull final String groupId, @NotNull final String artifactId) {
+                                                         final @NotNull String groupId, final @NotNull String artifactId) {
 
     final Ref<MavenDomDependency> ref = new Ref<>();
 
@@ -80,7 +80,7 @@ public final class MavenDependencyCompletionUtil {
     return parent.getParent() instanceof MavenDomDependencyManagement;
   }
 
-  public static void invokeCompletion(@NotNull final InsertionContext context, final CompletionType completionType) {
+  public static void invokeCompletion(final @NotNull InsertionContext context, final CompletionType completionType) {
     context.setLaterRunnable(
       () -> new CodeCompletionHandlerBase(completionType).invokeCompletion(context.getProject(), context.getEditor()));
   }
@@ -122,8 +122,7 @@ public final class MavenDependencyCompletionUtil {
     return IndicesBundle.message("maven.dependency.completion.presentable", info.getGroupId(), info.getArtifactId());
   }
 
-  @Nullable
-  public static Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {
+  public static @Nullable Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {
     if (type == PROJECT) {
       return AllIcons.Nodes.Module;
     }

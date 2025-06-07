@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -69,9 +69,8 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
     return false;
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @NotNull RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new Handler();
   }
 
@@ -102,8 +101,7 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
     return getEditableElement(region) != null;
   }
 
-  @Nullable
-  public static PsiElement getEditableElement(@NotNull FoldRegion region) {
+  public static @Nullable PsiElement getEditableElement(@NotNull FoldRegion region) {
     PsiElement psiElement = EditorFoldingInfo.get(region.getEditor()).getPsiElement(region);
     return psiElement == null || psiElement.getUserData(EDITABLE_PROPERTY_VALUE) == null ? null : psiElement;
   }
@@ -411,7 +409,7 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
       return ActionUpdateThread.EDT;
     }
 
-    private static class Handler extends EditorWriteActionHandler {
+    private static final class Handler extends EditorWriteActionHandler {
       @Override
       public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, caret, dataContext);

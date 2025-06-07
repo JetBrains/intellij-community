@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -11,8 +11,11 @@ import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
  */
 interface LocalEelApi : EelApi
 
-interface EelApiBase {
-  val platform: EelPlatform
+interface EelApi {
+  val descriptor: EelDescriptor
+
+  // TODO: should it be extension property?
+  val platform: EelPlatform get() = descriptor.platform
 
   /** Docs: [EelFileSystemApi] */
   val fs: EelFileSystemApi
@@ -39,25 +42,17 @@ interface EelApiBase {
   }
 }
 
-/**
- * Provides access to a local machine or an IJent process running on some machine. An instance of this interface gives ability to run commands
- * on a local or a remote machine.
- * in a Docker container, every call to execute a process (see [EelExecApi]) runs a command in the same Docker container.
- *
- */
-interface EelApi : EelApiBase {
-  val mapper: EelPathMapper
-}
-
-interface EelPosixApi : EelApiBase {
-  override val platform: EelPlatform.Posix
+interface EelPosixApi : EelApi {
+  override val exec: EelExecPosixApi
+  override val platform: EelPlatform.Posix get() = descriptor.platform as EelPlatform.Posix
   override val tunnels: EelTunnelsPosixApi
   override val userInfo: EelUserPosixInfo
   override val fs: EelFileSystemPosixApi
 }
 
-interface EelWindowsApi : EelApiBase {
-  override val platform: EelPlatform.Windows
+interface EelWindowsApi : EelApi {
+  override val exec: EelExecWindowsApi
+  override val platform: EelPlatform.Windows get() = descriptor.platform as EelPlatform.Windows
   override val tunnels: EelTunnelsWindowsApi
   override val userInfo: EelUserWindowsInfo
   override val fs: EelFileSystemWindowsApi

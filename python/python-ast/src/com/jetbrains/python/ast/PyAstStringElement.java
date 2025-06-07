@@ -27,8 +27,7 @@ public interface PyAstStringElement extends PsiElement {
    *
    * @see #getPrefixLength()
    */
-  @NotNull
-  default String getPrefix() {
+  default @NotNull String getPrefix() {
     return PyStringLiteralCoreUtil.getPrefix(getText());
   }
 
@@ -55,8 +54,7 @@ public interface PyAstStringElement extends PsiElement {
    * 
    * @see #getContentRange() 
    */
-  @NotNull
-  default String getContent() {
+  default @NotNull String getContent() {
     return getContentRange().substring(getText());
   }
 
@@ -119,4 +117,12 @@ public interface PyAstStringElement extends PsiElement {
    * is allowed to have such prefix.
    */
   boolean isFormatted();
+
+  /**
+   * Returns whether this string literal contains "t" or "T" prefix.
+   * <p>
+   * Template strings (t-strings) are a new feature in Python 3.14 for handling
+   * text templates with embedded expressions.
+   */
+  boolean isTemplate();
 }

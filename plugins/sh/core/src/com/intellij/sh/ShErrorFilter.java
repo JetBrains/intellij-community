@@ -21,10 +21,10 @@ final class ShErrorFilter extends HighlightErrorFilter implements HighlightInfoF
   }
 
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
     if (ApplicationManager.getApplication().isInternal()) return true;
     if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(highlightInfo)) return true;
-    if (!(file instanceof ShFile)) return true;
+    if (!(psiFile instanceof ShFile)) return true;
     return highlightInfo.getSeverity().compareTo(HighlightSeverity.WARNING) < 0;
   }
 }

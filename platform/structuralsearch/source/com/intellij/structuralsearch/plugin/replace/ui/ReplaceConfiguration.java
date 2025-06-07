@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.structuralsearch.MatchOptions;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko
  */
 public class ReplaceConfiguration extends Configuration {
-  @NotNull
-  private final ReplaceOptions myReplaceOptions;
+  private final @NotNull ReplaceOptions myReplaceOptions;
   public static final String REPLACEMENT_VARIABLE_SUFFIX = "$replacement";
 
   public ReplaceConfiguration() {
@@ -72,6 +71,7 @@ public class ReplaceConfiguration extends Configuration {
     myReplaceOptions.writeExternal(element);
   }
 
+  @Override
   public boolean equals(Object configuration) {
     if (this == configuration) return true;
     if (!(configuration instanceof ReplaceConfiguration)) return false;
@@ -79,6 +79,7 @@ public class ReplaceConfiguration extends Configuration {
     return myReplaceOptions.equals(((ReplaceConfiguration)configuration).myReplaceOptions);
   }
 
+  @Override
   public int hashCode() {
     return 31 * super.hashCode() + myReplaceOptions.hashCode();
   }

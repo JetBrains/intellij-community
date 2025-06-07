@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.intellilang.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -17,7 +18,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-class PatternInstrumenter extends ClassVisitor implements Opcodes {
+@ApiStatus.Internal
+public final class PatternInstrumenter extends ClassVisitor implements Opcodes {
   static final String PATTERN_CACHE_NAME = "$_PATTERN_CACHE_$";
   static final String ASSERTIONS_DISABLED_NAME = "$assertionsDisabled";
   static final String JAVA_LANG_STRING = "Ljava/lang/String;";

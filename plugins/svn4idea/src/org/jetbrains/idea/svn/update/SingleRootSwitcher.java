@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,7 @@ import org.jetbrains.idea.svn.api.Url;
 
 public class SingleRootSwitcher extends AutoSvnUpdater {
 
-  @NotNull private final Url myUrl;
+  private final @NotNull Url myUrl;
 
   public SingleRootSwitcher(Project project, @NotNull FilePath root, @NotNull Url url) {
     super(project, new FilePath[]{root});

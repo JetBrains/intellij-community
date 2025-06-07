@@ -1,7 +1,4 @@
-/*
- * Copyright (c) 2000-2019 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.types;
 
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
@@ -15,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,7 +122,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
   }
 
   @Override
-  public List<Method> methods() {
+  public @Unmodifiable List<Method> methods() {
     return ContainerUtil.map(myClass.getMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
@@ -137,12 +135,12 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
   }
 
   @Override
-  public List<Method> allMethods() {
+  public @Unmodifiable List<Method> allMethods() {
     return ContainerUtil.map(myClass.getAllMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
   @Override
-  public List<Method> methodsByName(String name) {
+  public @Unmodifiable List<Method> methodsByName(String name) {
     return ContainerUtil.map(myClass.findMethodsByName(name, true), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.openapi.util.Pair;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -62,8 +63,7 @@ public final class MessageFormatUtil {
    * @param pattern MessageFormat-like formatting string
    * @return MessageFormatResult object that contains information about placeholders and possible syntax errors inside the pattern
    */
-  @NotNull
-  public static MessageFormatResult checkFormat(@NotNull String pattern) {
+  public static @NotNull MessageFormatResult checkFormat(@NotNull String pattern) {
     if (pattern.isEmpty()) {
       return new MessageFormatResult(true, List.of(), List.of());
     }
@@ -94,11 +94,10 @@ public final class MessageFormatUtil {
     return new MessageFormatResult(errors.isEmpty(), errors, placeholderIndexes);
   }
 
-  @NotNull
-  private static List<MessageFormatError> rearrangeErrors(@NotNull List<MessageFormatError> errors,
-                                                          @NotNull String fullPattern,
-                                                          @NotNull String string,
-                                                          int start) {
+  private static @NotNull List<MessageFormatError> rearrangeErrors(@NotNull List<MessageFormatError> errors,
+                                                                   @NotNull String fullPattern,
+                                                                   @NotNull String string,
+                                                                   int start) {
     if (errors.isEmpty()) {
       return errors;
     }
@@ -172,8 +171,8 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  @NotNull
-  static List<MessageFormatError> checkQuote(@NotNull String string) {
+  @ApiStatus.Internal
+  public static @NotNull List<MessageFormatError> checkQuote(@NotNull String string) {
     List<MessageFormatError> errors = new ArrayList<>();
     int fromIndex = 0;
     while (true) {
@@ -206,8 +205,7 @@ public final class MessageFormatUtil {
     return errors;
   }
 
-  @NotNull
-  private static String getStringWord(@NotNull String string, int from, @NotNull Int2IntFunction nextIntFun) {
+  private static @NotNull String getStringWord(@NotNull String string, int from, @NotNull Int2IntFunction nextIntFun) {
     StringBuilder builder = new StringBuilder();
     int nextInt = from;
     while (nextInt >= 0 && nextInt < string.length() && Character.isLetter(string.charAt(nextInt))) {
@@ -218,8 +216,8 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  @NotNull
-  static MessageHolder parseMessageHolder(@NotNull String pattern) {
+  @ApiStatus.Internal
+  public static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern) {
     MessageHolder holder = new MessageHolder(pattern);
     while (!holder.hasRuntimeError && holder.hasNext()) {
       char ch = holder.nextPool();
@@ -349,8 +347,7 @@ public final class MessageFormatUtil {
     return -1;
   }
 
-  @NotNull
-  private static MessageHolder parseChoice(@NotNull String patten) {
+  private static @NotNull MessageHolder parseChoice(@NotNull String patten) {
     MessageHolder holder = new MessageHolder(patten);
     holder.parts.clear();
     holder.startNumberElement();
@@ -426,7 +423,8 @@ public final class MessageFormatUtil {
     NUMBER, DATE, TIME, CHOICE
   }
 
-  enum MessageFormatParsedType {
+  @ApiStatus.Internal
+  public enum MessageFormatParsedType {
     STRING, FORMAT_ELEMENT, NUMBER /*for choice format*/
   }
 
@@ -476,13 +474,11 @@ public final class MessageFormatUtil {
   public record MessageFormatPlaceholder(int index, @NotNull TextRange range, boolean isString) implements FormatPlaceholder {
   }
 
-  static class MessageFormatPart {
-    @NotNull
-    private final StringBuilder text = new StringBuilder();
-    @NotNull
-    private final MessageFormatParsedType parsedType;
-    @Nullable
-    private final MessageFormatUtil.MessageFormatElement messageFormatElement;
+  @ApiStatus.Internal
+  public static final class MessageFormatPart {
+    private final @NotNull StringBuilder text = new StringBuilder();
+    private final @NotNull MessageFormatParsedType parsedType;
+    private final @Nullable MessageFormatUtil.MessageFormatElement messageFormatElement;
     private int start;
 
     private MessageFormatPart(int start, @NotNull MessageFormatParsedType type, @Nullable MessageFormatElement element) {
@@ -491,18 +487,16 @@ public final class MessageFormatUtil {
       messageFormatElement = element;
     }
 
-    @Nullable
-    MessageFormatElement getMessageFormatElement() {
+    public @Nullable MessageFormatElement getMessageFormatElement() {
       return messageFormatElement;
     }
 
     @VisibleForTesting
-    String getText() {
+    public String getText() {
       return text.toString();
     }
 
-    @NotNull
-    MessageFormatParsedType getParsedType() {
+    public @NotNull MessageFormatParsedType getParsedType() {
       return parsedType;
     }
 
@@ -514,7 +508,8 @@ public final class MessageFormatUtil {
     }
   }
 
-  static class MessageFormatElement {
+  @ApiStatus.Internal
+  public static final class MessageFormatElement {
     private final StringBuilder indexSegment = new StringBuilder();
     private final StringBuilder formatTypeSegment = new StringBuilder();
     private final StringBuilder formatStyleSegment = new StringBuilder();
@@ -524,12 +519,10 @@ public final class MessageFormatUtil {
     private int formatTypeSegmentStart = 0;
     private int formatStyleSegmentStart = 0;
 
-    @Nullable
-    private Integer index;
-    @Nullable
-    private MessageFormatType formatType;
+    private @Nullable Integer index;
+    private @Nullable MessageFormatType formatType;
 
-    @Nullable Integer getIndex() {
+    public @Nullable Integer getIndex() {
       return index;
     }
 
@@ -605,7 +598,8 @@ public final class MessageFormatUtil {
   public record MessageFormatError(@NotNull MessageFormatErrorType errorType, int fromIndex, int toIndex) {
   }
 
-  static class MessageHolder {
+  @ApiStatus.Internal
+  public static final class MessageHolder {
     private final String pattern;
     private final List<MessageFormatPart> parts = new ArrayList<>();
     private final List<MessageFormatError> errors = new ArrayList<>();
@@ -620,11 +614,11 @@ public final class MessageFormatUtil {
       parts.add(new MessageFormatPart(0, MessageFormatParsedType.STRING, null));
     }
 
-    List<MessageFormatPart> getParts() {
+    public List<MessageFormatPart> getParts() {
       return parts;
     }
 
-    List<MessageFormatError> getErrors() {
+    public List<MessageFormatError> getErrors() {
       return errors;
     }
 
@@ -648,8 +642,7 @@ public final class MessageFormatUtil {
       parts.add(new MessageFormatPart(current, MessageFormatParsedType.NUMBER, null));
     }
 
-    @NotNull
-    private MessageFormatPart getLastPart() {
+    private @NotNull MessageFormatPart getLastPart() {
       return parts.get(parts.size() - 1);
     }
 

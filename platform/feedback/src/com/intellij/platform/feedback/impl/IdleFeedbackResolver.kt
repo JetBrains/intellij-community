@@ -1,14 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl
 
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.FeedbackSurvey
+import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,23 +44,28 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
       return
     }
 
+    if (AppMode.isRemoteDevHost()) {
+      thisLogger().debug("Not showing idle feedback notification on remote-dev host")
+      return
+    }
+
+    val feedbackNotifications = NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(RequestFeedbackNotification::class.java, project)
+    if (feedbackNotifications.isNotEmpty()) {
+      thisLogger().debug("There is already another request feedback notification shown, not showing more feedback notifications")
+      return
+    }
+
     cs.launch {
-      val suitableFeedbackTypes = IdleFeedbackTypes.entries.filter { it.isSuitable() }
       val suitableIdleFeedbackSurveys = getJbIdleFeedbackSurveyExtensionList().filter { it.isSuitableToShow(project) }
 
-      if (suitableFeedbackTypes.isEmpty() && suitableIdleFeedbackSurveys.isEmpty()) {
+      if (suitableIdleFeedbackSurveys.isEmpty()) {
         return@launch
       }
 
-      val feedbackIndex = Random.Default.nextInt(suitableFeedbackTypes.size + suitableIdleFeedbackSurveys.size)
-
+      val feedbackIndex = Random.nextInt(suitableIdleFeedbackSurveys.size)
       withContext(Dispatchers.EDT) {
-        if (feedbackIndex < suitableFeedbackTypes.size) {
-          suitableFeedbackTypes[feedbackIndex].showNotification(project)
-        }
-        else {
-          suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
-        }
+        suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
       }
     }
   }

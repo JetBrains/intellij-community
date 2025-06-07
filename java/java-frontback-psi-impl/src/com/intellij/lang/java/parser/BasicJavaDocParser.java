@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
@@ -15,8 +15,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public final class BasicJavaDocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
     JavaDocTokenType.DOC_TAG_VALUE_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_COMMA, JavaDocTokenType.DOC_TAG_VALUE_DOT,
@@ -36,7 +42,9 @@ public final class BasicJavaDocParser {
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
-  private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
+  private static final String INHERIT_DOC_TAG = "@inheritDoc";
+  private static final Set<String> REFERENCE_TAGS =
+    Collections.unmodifiableSet(ContainerUtil.newHashSet("@throws", "@exception", "@provides", "@uses"));
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 
@@ -143,7 +151,7 @@ public final class BasicJavaDocParser {
           BasicJavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_4) && LINK_PLAIN_TAG.equals(tagName) && isInline) {
         parseSeeTagValue(builder, false, javaDocElementTypeContainer);
       }
-      else if (!isInline && tagName != null && REFERENCE_TAGS.contains(tagName)) {
+      else if (!isInline && tagName != null && REFERENCE_TAGS.contains(tagName) || isInline && INHERIT_DOC_TAG.equals(tagName)) {
         PsiBuilder.Marker tagValue = builder.mark();
         builder.remapCurrentToken(javaDocElementTypeContainer.DOC_REFERENCE_HOLDER);
         builder.advanceLexer();
@@ -603,13 +611,11 @@ public final class BasicJavaDocParser {
     tagData.done(javaDocElementTypeContainer.DOC_TAG_VALUE_ELEMENT);
   }
 
-  @Nullable
-  private static IElementType getTokenType(PsiBuilder builder) {
+  private static @Nullable IElementType getTokenType(PsiBuilder builder) {
     return getTokenType(builder, true);
   }
 
-  @Nullable
-  private static IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
+  private static @Nullable IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
     IElementType tokenType;
     while ((tokenType = builder.getTokenType()) == JavaDocTokenType.DOC_SPACE) {
       builder.remapCurrentToken(TokenType.WHITE_SPACE);

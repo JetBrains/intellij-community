@@ -1,5 +1,6 @@
 // FILE: test.before.kt
-// "Change function signature to 'fun foo(x: String): String'" "true"
+// "Change return type to 'String'" "true"
+// ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'public open fun foo(x: String): String defined in p.Foo'
 package p;
 
 class Bar : Foo() {
@@ -49,7 +50,8 @@ public class Foo {
 }
 
 // FILE: test.after.kt
-// "Change function signature to 'fun foo(x: String): String'" "true"
+// "Change return type to 'String'" "true"
+// ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'public open fun foo(x: String): String defined in p.Foo'
 package p;
 
 class Bar : Foo() {

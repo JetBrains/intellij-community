@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.ClassType
 import com.sun.jdi.Location
@@ -90,10 +91,15 @@ class KotlinStepOutRequestHint(
                 return super.getNextStepDepth(context)
             }
             val filterThread = context.debugProcess.requestsManager.filterThread
-            thisLogger().debug("KotlinStepOutRequestHint: stepping to the suspend RETURN in method ${currentLocation.method()?.name()}, filterThread = $filterThread, resumeLocationIndex = $returnAfterSuspendLocation, currentIndex = ${currentLocation.codeIndex()}")
+            thisLogger().debug {
+                "KotlinStepOutRequestHint: stepping to the suspend RETURN in method ${currentLocation.method()?.name()}, " +
+                        "filterThread = $filterThread, " +
+                        "resumeLocationIndex = $returnAfterSuspendLocation, " +
+                        "currentIndex = ${currentLocation.codeIndex()}"
+            }
             if (currentLocation.codeIndex() < returnAfterSuspendLocation.codeIndex()) return StepRequest.STEP_OVER
             if (currentLocation.codeIndex() == returnAfterSuspendLocation.codeIndex()) {
-                thisLogger().debug("KotlinStepOutRequestHint: reached suspend RETURN, currentIndex = ${currentLocation.codeIndex()} -> RESUME")
+                thisLogger().debug { "KotlinStepOutRequestHint: reached suspend RETURN, currentIndex = ${currentLocation.codeIndex()} -> RESUME" }
                 return RESUME
             }
         }
@@ -301,7 +307,7 @@ private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
         return true
     }
 
-    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
+    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !hasUserCodeOnFirstLine(location.safeMethod())) {
         return true
     }
 

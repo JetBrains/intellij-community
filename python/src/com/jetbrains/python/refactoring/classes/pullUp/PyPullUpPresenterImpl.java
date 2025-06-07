@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.base.Preconditions;
@@ -11,17 +11,18 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterWithPreviewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
  * Pull-up presenter implementation
- *
- * @author Ilya.Kazakevich
  */
-class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullUpView, PyPullUpInfoModel> implements PyPullUpPresenter {
+@ApiStatus.Internal
+public final class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullUpView, PyPullUpInfoModel> implements PyPullUpPresenter {
   private final @NotNull Collection<PyClass> myParents;
 
   /**
@@ -29,12 +30,12 @@ class PyPullUpPresenterImpl extends MembersBasedPresenterWithPreviewImpl<PyPullU
    * @param infoStorage member storage
    * @param clazz       class to refactor
    */
-  PyPullUpPresenterImpl(final @NotNull PyPullUpView view, final @NotNull PyMemberInfoStorage infoStorage, final @NotNull PyClass clazz) {
+  @VisibleForTesting
+  public PyPullUpPresenterImpl(final @NotNull PyPullUpView view, final @NotNull PyMemberInfoStorage infoStorage, final @NotNull PyClass clazz) {
     super(view, clazz, infoStorage, new PyPullUpInfoModel(clazz, view));
     myParents = PyAncestorsUtils.getAncestorsUnderUserControl(clazz);
     Preconditions.checkArgument(!myParents.isEmpty(), "No parents found");
   }
-
 
   @Override
   public void launch() {

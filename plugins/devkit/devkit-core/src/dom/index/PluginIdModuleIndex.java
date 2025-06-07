@@ -32,15 +32,13 @@ import java.util.*;
 public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -54,9 +52,8 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -73,6 +70,10 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
 
   public static List<IdeaPlugin> findPlugins(@NotNull DomElement place, @NotNull String idOrModule) {
     Project project = place.getManager().getProject();
+    return findPlugins(idOrModule, project);
+  }
+
+  public static @NotNull List<IdeaPlugin> findPlugins(@NotNull String idOrModule, Project project) {
     Collection<VirtualFile> vFiles = getFiles(project, idOrModule);
     return JBIterable.from(vFiles)
       .map(PsiManager.getInstance(project)::findFile)

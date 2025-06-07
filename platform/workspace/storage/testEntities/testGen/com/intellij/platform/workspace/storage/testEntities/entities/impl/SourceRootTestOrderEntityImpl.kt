@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -27,13 +19,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootT
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootTestOrderEntityData) : SourceRootTestOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootTestOrderEntityData) : SourceRootTestOrderEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
-                                                                               SourceRootTestOrderEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ContentRootTestEntity::class.java, SourceRootTestOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -61,8 +53,8 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
   }
 
 
-  internal class Builder(result: SourceRootTestOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity, SourceRootTestOrderEntityData>(
-    result), SourceRootTestOrderEntity.Builder {
+  internal class Builder(result: SourceRootTestOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity, SourceRootTestOrderEntityData>(result), SourceRootTestOrderEntity.Builder {
     internal constructor() : this(SourceRootTestOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -143,8 +135,9 @@ internal class SourceRootTestOrderEntityImpl(private val dataSource: SourceRootT
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID,
-                                                                           this) as? ContentRootTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            CONTENTROOT_CONNECTION_ID, this
+          ) as? ContentRootTestEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootTestEntity.Builder)
         }
         else {
@@ -205,7 +198,8 @@ internal class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTes
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestOrderEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestOrderEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -65,8 +65,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
@@ -195,8 +195,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return label;
   }
 
-  @NotNull
-  protected FileLookup.Finder createFinder() {
+  protected @NotNull FileLookup.Finder createFinder() {
     return new LocalFsFinder();
   }
 
@@ -528,9 +527,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     updateTextFieldShowing();
   }
 
-  @NotNull
-  @NlsSafe
-  protected String getPresentableUrl(@NotNull VirtualFile virtualFile) {
+  protected @NotNull @NlsSafe String getPresentableUrl(@NotNull VirtualFile virtualFile) {
     return VfsUtil.getReadableUrl(virtualFile);
   }
 

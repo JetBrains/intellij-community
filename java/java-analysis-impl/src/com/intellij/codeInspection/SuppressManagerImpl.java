@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -32,14 +32,12 @@ final class SuppressManagerImpl extends SuppressManager {
   }
 
   @Override
-  @Nullable
-  public String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
+  public @Nullable String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
     return JavaSuppressionUtil.getSuppressedInspectionIdsIn(element);
   }
 
   @Override
-  @Nullable
-  public PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, @NotNull String toolId) {
+  public @Nullable PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, @NotNull String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(place, toolId);
   }
 

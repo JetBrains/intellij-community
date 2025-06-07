@@ -1,4 +1,4 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 import a.n<caret>.c.d

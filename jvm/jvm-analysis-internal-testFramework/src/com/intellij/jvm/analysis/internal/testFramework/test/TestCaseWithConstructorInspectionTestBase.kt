@@ -9,7 +9,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class TestCaseWithConstructorInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = TestCaseWithConstructorInspection()
+  override val inspection: TestCaseWithConstructorInspection = TestCaseWithConstructorInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 

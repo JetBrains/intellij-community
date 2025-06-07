@@ -3,6 +3,9 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
+  <depends>com.intellij.modules.os.windows</depends>
+  <depends>com.intellij.modules.os.mac</depends>
+
   <depends>com.intellij.modules.vcs</depends>
   <depends>com.intellij.custom</depends>
   <depends><error descr="Cannot resolve plugin 'com.intellij.xxx' in dependencies (Reference: Plugin Dependencies)">com.intellij.xxx</error></depends>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.application.options.CodeStyleConfigurableWrapper;
@@ -68,8 +68,7 @@ public final class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
         }
       })
       .setItemChosenCallback(tabInfo -> {
-        String configurableId = CodeStyleConfigurableWrapper.getConfigurableId(tabInfo.configurableId);
-        Configurable configurable = getSettings().find(configurableId);
+        Configurable configurable = getSettings().find(tabInfo.configurableId);
         getSettings().select(configurable).doWhenDone(() -> {
           if (configurable instanceof CodeStyleConfigurableWrapper) {
             ((CodeStyleConfigurableWrapper)configurable).selectTab(ApplicationBundle.message("arrangement.title.settings.tab"));

@@ -12,6 +12,7 @@ import git4idea.http.GitAskPassAppHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class GitScriptGenerator extends ScriptGeneratorImpl {
@@ -24,7 +25,7 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
   @Override
   protected @NotNull String getJavaExecutablePath() {
     if (myExecutable instanceof GitExecutable.Wsl) {
-      File javaExecutable = new File(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
+      Path javaExecutable = Path.of(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
       return myExecutable.convertFilePath(javaExecutable);
     }
     return super.getJavaExecutablePath();

@@ -16,15 +16,13 @@
 package com.intellij.ui.colorpicker
 
 import com.intellij.icons.AllIcons
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-class MaterialGraphicalColorPipette(base: GraphicalColorPipette) : ColorPipette by base {
+internal class MaterialGraphicalColorPipette(base: GraphicalColorPipette) : ColorPipette by base {
   override val icon: Icon = AllIcons.Ide.Pipette
 
-  override val rolloverIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val rolloverIcon: Icon = AllIcons.Ide.PipetteRollover
 
   override val pressedIcon: Icon = AllIcons.Ide.Pipette
 }

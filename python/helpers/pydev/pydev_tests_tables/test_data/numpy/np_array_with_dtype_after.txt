@@ -1,7 +1,0 @@
-<class 'numpy.ndarray'>
-__pydev_val__
-2
-__pydev_val__
-'<table class="dataframe">\n<thead>\n<tr style="text-align: right;">\n<th></th>\n<th>ci</th>\n<th>cf</th>\n<th>cs</th>\n<th>cb</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<th>0</th>\n<td>10</td>\n<td>3.140000104904175</td>\n<td>Hello</td>\n<td>True</td>\n</tr>\n<tr>\n<th>1</th>\n<td>20</td>\n<td>2.7100000381469727</td>\n<td>World</td>\n<td>False</td>\n</tr>\n</tbody>\n</table>\n'
-__pydev_val__
-int64__pydev_table_column_type_val__int32__pydev_table_column_type_val__float32__pydev_table_column_type_val__<U16__pydev_table_column_type_val__bool

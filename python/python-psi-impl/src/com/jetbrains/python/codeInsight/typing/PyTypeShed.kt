@@ -15,18 +15,14 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.psi.LanguageLevel
 import java.io.File
 
@@ -114,6 +110,41 @@ object PyTypeShed {
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   ) // Modified by script 2024-07-31 07:30:25
 
+  // mapping of definitions that are in the incorrect place in typeshed
+  val typingRedirections: Map<String, String> = mapOf(
+    "typing.Hashable" to "_collections_abc.Hashable",
+    "typing.Awaitable" to "_collections_abc.Awaitable",
+    "typing.Coroutine" to "_collections_abc.Coroutine",
+    "typing.AsyncIterable" to "_collections_abc.AsyncIterable",
+    "typing.AsyncIterator" to "_collections_abc.AsyncIterator",
+    "typing.Iterable" to "_collections_abc.Iterable",
+    "typing.Iterator" to "_collections_abc.Iterator",
+    "typing.Reversible" to "_collections_abc.Reversible",
+    "typing.Sized" to "_collections_abc.Sized",
+    "typing.Container" to "_collections_abc.Container",
+    "typing.Collection" to "_collections_abc.Collection",
+    "typing.Callable" to "_collections_abc.Callable",
+    "typing.AbstractSet" to "_collections_abc.Set",
+    "typing.MutableSet" to "_collections_abc.MutableSet",
+    "typing.Mapping" to "_collections_abc.Mapping",
+    "typing.MutableMapping" to "_collections_abc.MutableMapping",
+    "typing.Sequence" to "_collections_abc.Sequence",
+    "typing.MutableSequence" to "_collections_abc.MutableSequence",
+    "typing.ByteString" to "_collections_abc.ByteString",
+    "typing.Deque" to "_collections.deque",
+    "typing.MappingView" to "_collections_abc.MappingView",
+    "typing.KeysView" to "_collections_abc.KeysView",
+    "typing.ItemsView" to "_collections_abc.ItemsView",
+    "typing.ValuesView" to "_collections_abc.ValuesView",
+    "typing.DefaultDict" to "_collections.defaultdict",
+    "typing.Generator" to "_collections_abc.Generator",
+    "typing.AsyncGenerator" to "_collections_abc.AsyncGenerator"
+  )
+
+  val typeshedModuleRedirections: Map<String, String> = mapOf(
+    "collections.abc" to "_collections_abc",
+  )
+
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
@@ -126,47 +157,37 @@ object PyTypeShed {
         it == null || it.isAtLeast(currentLanguageLevel)
       }
     }
-    if (isInThirdPartyLibraries(root)) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        return true
-      }
-      val possiblePackage = name.firstComponent ?: return false
-      val alternativePossiblePackages = PyPsiPackageUtil.moduleToPackageName(possiblePackage, default = "")
-
-      val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment && !PlatformUtils.isFleetBackend()) {
-        packageManager.refreshAndGetPackages(false)
-      }
-      else {
-        packageManager.packages ?: return true
-      }
-
-      return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
-             PyPsiPackageUtil.findPackage(installedPackages, alternativePossiblePackages) != null
-    }
-    return false
+    return isInThirdPartyLibraries(root)
   }
 
   /**
-   * Returns the list of roots in typeshed for the Python language level of [sdk].
+   * Returns the stdlib roots in Typeshed for the Python language level of [sdk].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
+  fun findStdlibRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
-    return findRootsForLanguageLevel(level)
+    return findStdlibRootsForLanguageLevel(level)
   }
 
   /**
-   * Returns the list of roots in typeshed for the specified Python language [level].
+   * Returns the stdlib roots in Typeshed for the specified Python language [level].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+  fun findStdlibRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
     val dir = directory ?: return emptyList()
 
-    val common = sequenceOf(dir.findChild("stdlib"))
-      .plus(dir.findFileByRelativePath("stubs")?.children ?: VirtualFile.EMPTY_ARRAY)
-      .filterNotNull()
-      .toList()
+    val stdlib = dir.findChild("stdlib") ?: return emptyList()
+    return if (level.isPython2) listOfNotNull(stdlib.findChild("@python2"), stdlib) else listOf(stdlib)
+  }
 
-    return if (level.isPython2) common.flatMap { listOfNotNull(it.findChild("@python2"), it) } else common
+  /**
+   * Returns both stdlib and third-party stub roots in Typeshed for the specified Python language [level].
+   */
+  fun findAllRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    // We no longer include Python 2 stubs for third-party packages, only for stdlib
+    return findStdlibRootsForLanguageLevel(level) + thirdPartyStubRoot?.children?.toList().orEmpty()
   }
 
   /**
@@ -185,6 +206,10 @@ object PyTypeShed {
     StandardFileSystems.local().findFileByPath(path)
   }
 
+  val thirdPartyStubRoot: VirtualFile? by lazy {
+    directory?.findChild("stubs")
+  }
+
   private val directoryPath: String?
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
@@ -201,4 +226,13 @@ object PyTypeShed {
   fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "stubs" in file.path
 
   fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
+
+  /**
+   * Find the directory containing .pyi stubs for the package [packageName] under `typeshed/stubs`.
+   *
+   * [packageName] should match the name of the package on PyPI.
+   */
+  fun getStubRootForPackage(packageName: String): VirtualFile? {
+    return thirdPartyStubRoot?.findChild(packageName)
+  }
 }

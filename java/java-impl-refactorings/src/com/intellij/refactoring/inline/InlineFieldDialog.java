@@ -22,7 +22,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     myField = field;
     myReferenceExpression = ref;
     myOccurrencesNumber = getNumberOfOccurrences(myField);
-    myInvokedOnReference = myReferenceExpression != null && myOccurrencesNumber != 1;
+    myInvokedOnReference = myReferenceExpression != null;
 
     setTitle(getRefactoringName());
     init();

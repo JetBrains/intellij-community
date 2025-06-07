@@ -10,7 +10,9 @@ import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
@@ -19,10 +21,7 @@ import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -482,6 +481,27 @@ class KotlinNameSuggester(
             }
         }
 
+        fun suggestTypeAliasNameByPsi(typeElement: KtTypeElement, validator: (String) -> Boolean): String {
+            fun KtTypeElement.render(): String {
+                return when (this) {
+                    is KtNullableType -> "Nullable${innerType?.render() ?: ""}"
+                    is KtFunctionType -> {
+                        val arguments = listOfNotNull(receiverTypeReference) + parameters.mapNotNull { it.typeReference }
+                        val argText = arguments.joinToString(separator = "") { it.typeElement?.render() ?: "" }
+                        val returnText = returnTypeReference?.typeElement?.render() ?: "Unit"
+                        "${argText}To$returnText"
+                    }
+                    is KtUserType -> {
+                        val argText = typeArguments.joinToString(separator = "") { it.typeReference?.typeElement?.render() ?: "" }
+                        "$argText${referenceExpression?.text ?: ""}"
+                    }
+                    else -> text.capitalizeAsciiOnly()
+                }
+            }
+
+            return suggestNameByName(typeElement.render(), validator)
+        }
+
         /**
          * Decapitalizes the passed [name] if [mustStartWithLowerCase] is `true`, checks whether the result is a valid identifier,
          * validates it using [validator], and improves it by adding a numeric suffix in case of conflicts.
@@ -585,9 +605,7 @@ private fun getPrimitiveType(type: KaType): PrimitiveType? {
     }
 }
 
-private val ITERABLE_LIKE_CLASS_IDS =
-    listOf(FqNames.iterable, FqNames.array.toSafe())
-        .map { ClassId.topLevel(it) }
+private val ITERABLE_LIKE_CLASS_IDS: Collection<ClassId> = hashSetOf(StandardClassIds.Iterable, StandardClassIds.Array)
 
 context(KaSession)
 private fun getIterableElementType(type: KaType): KaType? {

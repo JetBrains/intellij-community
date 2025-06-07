@@ -1,0 +1,12 @@
+// WITH_STDLIB
+// IGNORE_K1
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+private fun test(s: Any) {
+    if (s is String) println("1")
+    else if (s is Int && s > 5) println("2")
+    else if (s.toString() == "foo") println("3")
+    else if (s is Int && s < 0) println("4")
+    else if (s.toString() == "bar") println("5")
+    else println("6")
+}

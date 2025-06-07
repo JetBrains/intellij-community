@@ -17,9 +17,8 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
     super(element, TextRange.create(0, element.getTextLength()));
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return CachedValuesManager.getCachedValue(myElement, new ShFunctionCachedValueProvider(myElement));
   }
 
@@ -33,8 +32,7 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
       return CachedValueProvider.Result.create(resolveInner(), myElement.getContainingFile());
     }
 
-    @Nullable
-    private PsiElement resolveInner() {
+    private @Nullable PsiElement resolveInner() {
       ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
       PsiTreeUtil.treeWalkUp(functionProcessor, myElement, myElement.getContainingFile(), ResolveState.initial());
       return functionProcessor.getFunction();

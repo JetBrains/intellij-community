@@ -59,6 +59,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -232,14 +233,13 @@ class InstancesView extends InstancesViewBase {
     return myProgress;
   }
 
-  private final static class MyNodeManager extends NodeManagerImpl {
+  private static final class MyNodeManager extends NodeManagerImpl {
     MyNodeManager(Project project) {
       super(project, null);
     }
 
-    @NotNull
     @Override
-    public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+    public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
@@ -248,9 +248,8 @@ class InstancesView extends InstancesViewBase {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
-    @NotNull
     @Override
-    public DebuggerTreeNodeImpl createMessageNode(String message) {
+    public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
     }
   }
@@ -273,8 +272,7 @@ class InstancesView extends InstancesViewBase {
     private long myLastTreeUpdatingTime;
     private long myLastProgressUpdatingTime;
 
-    @Nullable
-    private FilteringResult myCompletionReason = null;
+    private @Nullable FilteringResult myCompletionReason = null;
 
     MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
       myEvaluationContext = evaluationContext;
@@ -297,9 +295,8 @@ class InstancesView extends InstancesViewBase {
       ApplicationManager.getApplication().invokeLater(() -> myProgressIndicator.start());
     }
 
-    @NotNull
     @Override
-    public Action matched(@NotNull JavaReferenceInfo ref) {
+    public @NotNull Action matched(@NotNull JavaReferenceInfo ref) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
                                                   myEvaluationContext, myNodeManager);
       myMatchedCount++;
@@ -311,18 +308,16 @@ class InstancesView extends InstancesViewBase {
       return myMatchedCount < MAX_TREE_NODE_COUNT ? Action.CONTINUE : Action.STOP;
     }
 
-    @NotNull
     @Override
-    public Action notMatched(@NotNull JavaReferenceInfo ref) {
+    public @NotNull Action notMatched(@NotNull JavaReferenceInfo ref) {
       myProceedCount++;
       updateProgress();
 
       return Action.CONTINUE;
     }
 
-    @NotNull
     @Override
-    public Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
+    public @NotNull Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
                                                   myEvaluationContext, myNodeManager);
       myErrorsGroup.addErrorValue(description, val);
@@ -497,7 +492,7 @@ class InstancesView extends InstancesViewBase {
     }
   }
 
-  private @NotNull List<JavaReferenceInfo> getInstances(int limit) {
+  private @Unmodifiable @NotNull List<JavaReferenceInfo> getInstances(int limit) {
     return ContainerUtil.map(
       getInstancesProvider().getInstances(limit),
       referenceInfo -> ((JavaReferenceInfo)referenceInfo)

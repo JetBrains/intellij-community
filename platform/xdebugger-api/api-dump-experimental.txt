@@ -14,12 +14,16 @@ a:com.intellij.xdebugger.XDebugProcess
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - *:isEvaluateExpressionFieldEnabled():Z
 *:com.intellij.xdebugger.frame.XDropFrameHandler
-- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- canDropFrame(com.intellij.xdebugger.frame.XStackFrame):com.intellij.util.ThreeState
+- canDropFrameAsync(com.intellij.xdebugger.frame.XStackFrame):java.util.concurrent.CompletableFuture
 - a:drop(com.intellij.xdebugger.frame.XStackFrame):V
 a:com.intellij.xdebugger.frame.XExecutionStack
 - *sf:SELECTED_STACKS:com.intellij.openapi.actionSystem.DataKey
 *:com.intellij.xdebugger.frame.XStringValueModifier
 - a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+*:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
+- a:createProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.hotswap.HotSwapProvider
 *:com.intellij.xdebugger.ui.TextValueVisualizer
 - detectFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - a:visualize(java.lang.String):java.util.List

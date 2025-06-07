@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
-import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefreshService;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -38,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ShellTerminalWidget extends JBTerminalWidget {
+public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPanelMarker {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
@@ -65,7 +63,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
-    ClassicTerminalVfsRefresher refresher = project.getService(ClassicTerminalVfsRefreshService.class).create(this);
+    ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       handleAnyKeyPressed();
@@ -134,8 +132,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return myStartupOptions;
   }
 
-  @NotNull
-  public String getTypedShellCommand() {
+  public @NotNull String getTypedShellCommand() {
     return myPrompt.getTypedShellCommand();
   }
 
@@ -176,6 +173,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
   }
 
+  @Override
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
     if (connector == null) return false;
@@ -258,22 +256,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       TtyConnector connector = starter.getTtyConnector();
       TerminalUtilKt.waitFor(connector, TerminalUtilKt.STOP_EMULATOR_TIMEOUT, () -> {
         if (connector.isConnected()) {
-          LOG.warn("Cannot destroy " + getDebugName(connector));
+          LOG.warn("Cannot destroy " + TerminalUtilKt.getDebugName(connector));
         }
         super.close();
         return Unit.INSTANCE;
       });
     }
-  }
-
-  private static @NotNull String getDebugName(@NotNull TtyConnector connector) {
-    ProcessTtyConnector processTtyConnector = getProcessTtyConnector(connector);
-    String commandLineText = null;
-    if (processTtyConnector != null) {
-      List<String> commandLine = processTtyConnector.getCommandLine();
-      commandLineText = commandLine != null ? Strings.join(commandLine, " ") : null;
-    }
-    return connector.getName() + ": " + Objects.requireNonNull(commandLineText, "<no command line>");
   }
 
   @Override

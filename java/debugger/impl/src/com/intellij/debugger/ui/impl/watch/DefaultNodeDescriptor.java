@@ -27,10 +27,12 @@ import com.intellij.openapi.diagnostic.Logger;
 public final class DefaultNodeDescriptor extends NodeDescriptorImpl {
   private static final Logger LOG = Logger.getInstance(DefaultNodeDescriptor.class);
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof DefaultNodeDescriptor;
   }
 
+  @Override
   public int hashCode() {
     return 0;
   }

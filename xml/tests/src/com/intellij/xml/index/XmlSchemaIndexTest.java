@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
@@ -12,6 +12,13 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.DisableOnDebug;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,8 +28,12 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"ConstantConditions"})
+@RunWith(JUnit4.class)
 public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
+
+  @Rule
+  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
 
   private static @NotNull Collection<String> computeTagNames(@NotNull VirtualFile file) throws IOException {
     List<String> tags = new ArrayList<>();
@@ -30,6 +41,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     return tags;
   }
 
+  @Test
   public void testBuilder() throws IOException {
     VirtualFile file = myFixture.copyFileToProject("spring-beans-2.0.xsd");
     final Collection<String> tags = computeTagNames(file);
@@ -47,6 +59,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(xstags.contains("schema"));
   }
 
+  @Test
   public void testXsdNamespaceBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("web-app_2_5.xsd");
     final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
@@ -56,6 +69,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(Collections.singletonList("web-app"), builder.getTags());
   }
 
+  @Test
   public void testRootTags() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("XMLSchema.xsd");
     final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
@@ -66,6 +80,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(41, builder.getTags().size());
   }
 
+  @Test
   public void testTagNameIndex() {
     myFixture.copyDirectoryToProject("", "");
 
@@ -85,6 +100,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(Arrays.asList("web-app_2_5.xsd", "web-app_3_0.xsd"), names);
   }
 
+  @Test
   public void testNamespaceIndex() {
 
     myFixture.copyDirectoryToProject("", "");
@@ -114,6 +130,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertNull(resource);
   }
 
+  @Test
   public void testGuessDTD() {
     myFixture.copyDirectoryToProject("", "");
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
@@ -127,6 +144,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(XmlNamespaceIndex.guessDtd("foo://bar/2/foo.dtd", file).getVirtualFile().getPath().endsWith("/2/foo.dtd"));
   }
 
+  @Test
   public void testGuessByLocation() {
     myFixture.copyDirectoryToProject("", "");
     String namespace = "http://www.liquibase.org/xml/ns/dbchangelog";
@@ -141,6 +159,7 @@ public class XmlSchemaIndexTest extends LightJavaCodeInsightFixtureTestCase {
       .getFile().getName());
   }
 
+  @Test
   public void testNullSerialization() throws Exception {
     DataExternalizer<XsdNamespaceBuilder> externalizer = new XmlNamespaceIndex().getValueExternalizer();
     XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new StringReader(""));

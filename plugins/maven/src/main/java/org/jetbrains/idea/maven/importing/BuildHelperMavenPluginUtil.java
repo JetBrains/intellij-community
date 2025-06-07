@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import org.jdom.Element;
@@ -10,8 +10,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.function.Consumer;
 
 public final class BuildHelperMavenPluginUtil {
-  @Nullable
-  public static MavenPlugin findPlugin(@NotNull MavenProject mavenProject) {
+  public static @Nullable MavenPlugin findPlugin(@NotNull MavenProject mavenProject) {
     return mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
   }
 

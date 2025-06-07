@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,10 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
 import java.awt.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -58,6 +62,13 @@ public final class TestFrameworkUtil {
     if (aClass.getAnnotation(ExtendWith.class) != null) return true;
     for (Method method : aClass.getMethods()) {
       if (method.getAnnotation(org.junit.jupiter.api.Test.class) != null) return true;
+      if (method.getAnnotation(TestFactory.class) != null) return true;
+      if (method.getAnnotation(TestTemplate.class) != null) return true;
+      if (method.getAnnotation(RepeatedTest.class) != null) return true;
+      for (Annotation annotation : method.getAnnotations()) {
+        String name = annotation.annotationType().getCanonicalName();
+        if ("org.junit.jupiter.params.ParameterizedTest".equals(name)) return true;
+      }
     }
     return false;
   }

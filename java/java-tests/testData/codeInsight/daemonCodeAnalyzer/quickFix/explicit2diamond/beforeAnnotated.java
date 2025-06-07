@@ -18,7 +18,7 @@ class XYZ {
   public static <T> void genericConsumer(T item) {}
 
   public static void main(String[] args) {
-    genericConsumer(new Wrapper<@Nullable<caret>s String>(getString()));
+    genericConsumer(new Wrapper<@Nullable<caret> String>(getString()));
     // below one works great
     Wrapper<@Nullable String> wrapper = new Wrapper<>(getString());
   }

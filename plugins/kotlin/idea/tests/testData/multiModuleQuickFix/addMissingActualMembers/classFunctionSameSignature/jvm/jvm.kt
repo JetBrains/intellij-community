@@ -1,6 +1,6 @@
 // "Add missing actual members" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
+
 
 actual object <caret>O {
     fun <T> hello(): MutableMap<String, T> {

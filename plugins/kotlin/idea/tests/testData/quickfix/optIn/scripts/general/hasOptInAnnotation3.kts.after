@@ -1,4 +1,5 @@
 // "Opt in for 'A' on 'root'" "true"
+// PRIORITY: HIGH
 // ACTION: Opt in for 'A' in containing file 'hasOptInAnnotation3.kts'
 // ACTION: Opt in for 'A' in module 'light_idea_test_case'
 // ACTION: Opt in for 'A' on 'root'
@@ -15,4 +16,4 @@ fun f1() {}
 fun root() {
     <caret>f1()
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix

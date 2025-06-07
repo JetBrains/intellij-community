@@ -1,19 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.NonPersistentModuleStore
+import com.intellij.openapi.module.impl.ModuleComponentManager
+import com.intellij.openapi.project.ModuleListener.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -27,8 +28,10 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
@@ -38,35 +41,36 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListenerBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
-internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
-  : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
-  private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
-  internal class ModuleManagerInitProjectActivity : InitProjectActivity {
-    override suspend fun run(project: Project) {
-      val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
-      coroutineContext.ensureActive()
-      span("firing modules_added event") {
-        fireModulesAdded(project, modules)
-      }
-      span("deprecated module component moduleAdded calling") {
-        for (module in modules) {
-          module.markAsLoaded()
-        }
-      }
+private class ModuleManagerInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
+    val modules = moduleManager.modules().toList()
+    span("firing modules_added event") {
+      project.messageBus.syncPublisher(TOPIC).modulesAdded(project, modules)
     }
-  }
+    for (module in modules) {
+      module.markAsLoaded()
+    }
 
-  init {
-    // default project doesn't have facets
+    // listen only after we executed `fireModulesAdded`
+    project.serviceAsync<FacetEventsPublisher>().listen()
+  }
+}
+
+@ApiStatus.Internal
+open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+  : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
+    init {
+    // a default project doesn't have facets
     if (!project.isDefault) {
       // Instantiate facet change listener as early as possible
       project.service<FacetEntityChangeListener>()
@@ -94,9 +98,11 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
 
-    // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
-    //   This approach is used in ModuleManagerBridgeImpl.loadModules
-    // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
+    if (moduleChanges.isEmpty()) {
+      return
+    }
+
+    val precomputedModel = precomputeModuleLevelExtensionModel()
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -106,18 +112,13 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
       }
 
       LOG.debug { "Creating module instance for ${change.newEntity.name}" }
-      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
       val bridge = createModuleInstanceWithoutCreatingComponents(
         moduleEntity = change.newEntity,
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
-        precomputedExtensionModel = null,
-        plugins = plugins,
-        corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
+        precomputedExtensionModel = precomputedModel,
       )
-      LOG.debug { "Creating components ${change.newEntity.name}" }
-      bridge.callCreateComponents()
 
       LOG.debug { "${change.newEntity.name} module initialized" }
       builder.mutableModuleMap.addMapping(change.newEntity, bridge)
@@ -139,19 +140,11 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     }
   }
 
-  override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).registerService(
-      serviceInterface = IComponentStore::class.java,
-      implementation = NonPersistentModuleStore::class.java,
-      pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-      override = true,
-    )
-  }
-
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
     val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
-    val configLocation = getJpsProjectConfigLocation(project)!!
+    val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val configLocation = getJpsProjectConfigLocation(project, virtualFileManager)!!
     val context = SingleImlSerializationContext(virtualFileManager, CachingJpsFileContentReader(configLocation))
     JpsProjectEntitiesLoader.loadModule(Path.of(filePath), configLocation, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
@@ -167,9 +160,19 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
       throw IOException("Failed to load module from $filePath")
     }
 
+    if (moduleEntity.entitySource is OrphanageWorkerEntitySource) {
+      throw IOException("The file only declares additional module components, but not the module itself: $filePath")
+    }
+
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)!!
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleFileUrl.toPath())
     return moduleEntity
+  }
+
+  final override fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
+    coroutineScope.launch(CoroutineName("init facets")) {
+      ModuleBridgeImpl.initFacets(modules = modules, project = project)
+    }
   }
 
   override fun createModule(
@@ -178,15 +181,21 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
+    init: (ModuleBridge) -> Unit,
   ): ModuleBridge {
-    return ModuleBridgeImpl(
+    val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
+    val moduleBridge = ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,
       project = project,
-      virtualFileUrl = virtualFileUrl,
+      virtualFileUrl = virtualFileUrl as? VirtualFileUrlBridge,
       entityStorage = entityStorage,
       diff = diff,
+      componentManager = componentManager,
     )
+    componentManager.initForModule(moduleBridge)
+    init(moduleBridge)
+    return moduleBridge
   }
 }
 

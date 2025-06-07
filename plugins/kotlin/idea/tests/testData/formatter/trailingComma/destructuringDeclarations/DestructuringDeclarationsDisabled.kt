@@ -1,0 +1,8 @@
+// SET_TRUE: ALLOW_TRAILING_COMMA
+// SET_FALSE: ALLOW_TRAILING_COMMA_DESTRUCTURING_DECLARATION
+
+fun test() {
+    val (
+        a, b
+    ) = 1 to 2
+}

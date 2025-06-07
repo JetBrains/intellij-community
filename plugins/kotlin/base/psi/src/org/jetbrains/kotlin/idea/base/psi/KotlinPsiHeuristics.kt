@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object KotlinPsiHeuristics {
@@ -45,7 +48,7 @@ object KotlinPsiHeuristics {
         return result
     }
 
-    private val KtFile.aliasImportMap by userDataCached("ALIAS_IMPORT_MAP_KEY") { file ->
+    private val KtFile.aliasImportMap: HashMultimap<String, String> by userDataCached("ALIAS_IMPORT_MAP_KEY") { file ->
         HashMultimap.create<String, String>().apply {
             for (import in file.importList?.imports.orEmpty()) {
                 val aliasName = import.aliasName ?: continue
@@ -63,18 +66,18 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun isProbablyNothing(type: KtUserType): Boolean {
-        val referencedName = type.referencedName
-
+        val referencedName = type.referencedName ?: return false
         if (referencedName == "Nothing") {
             return true
         }
 
         // TODO: why don't use PSI-less stub for calculating aliases?
         val file = type.containingKotlinFileStub?.psi as? KtFile ?: return false
-
         // TODO: support type aliases
-        if (!file.hasImportAlias()) return false
-        return file.aliasImportMap[referencedName].contains("Nothing")
+        if (file.hasImportAlias()) {
+            return file.aliasImportMap.get(referencedName).contains("Nothing")
+        }
+        return false
     }
 
     @JvmStatic

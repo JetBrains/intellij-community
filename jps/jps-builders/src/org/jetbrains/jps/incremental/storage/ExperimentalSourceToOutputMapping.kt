@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.jps.incremental.storage
 
 import org.h2.mvstore.MVMap
@@ -8,18 +10,26 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
+import java.nio.file.Path
 
 @Internal
 class ExperimentalSourceToOutputMapping private constructor(
-  mapHandle: MapHandle<LongArray, Array<String>>,
-  relativizer: PathRelativizerService,
+  map: MVMap<LongArray, Array<String>>,
+  @JvmField internal val relativizer: PathTypeAwareRelativizer,
   private val outputToTargetMapping: ExperimentalOutputToTargetMapping?,
   @JvmField internal val targetHashId: Long,
-) : SourceToOutputMapping, ExperimentalOneToManyPathMapping(mapHandle = mapHandle, relativizer = relativizer, valueOffset = 1) {
+) : SourceToOutputMapping {
+  private val impl = ExperimentalOneToManyPathMapping(
+    map = map,
+    relativizer = relativizer,
+    valueOffset = 1,
+    keyKind = RelativePathType.SOURCE,
+    valueKind = RelativePathType.OUTPUT,
+  )
+
   companion object {
     // we have a lot of targets - reduce GC and reuse map builder
     private val mapBuilder = MVMap.Builder<LongArray, Array<String>>().also {
@@ -31,7 +41,7 @@ class ExperimentalSourceToOutputMapping private constructor(
     @Internal
     fun createSourceToOutputMap(
       storageManager: StorageManager,
-      relativizer: PathRelativizerService,
+      relativizer: PathTypeAwareRelativizer,
       targetId: String,
       targetTypeId: String,
       outputToTargetMapping: ExperimentalOutputToTargetMapping?,
@@ -41,7 +51,7 @@ class ExperimentalSourceToOutputMapping private constructor(
       // * avoid a huge B-tree and reduce rebalancing time due to contention.
       val mapName = storageManager.getMapName(targetId = targetId, targetTypeId = targetTypeId, suffix = "src-to-out-v1")
       return ExperimentalSourceToOutputMapping(
-        mapHandle = storageManager.openMap(mapName, mapBuilder),
+        map = storageManager.openMap(mapName, mapBuilder),
         relativizer = relativizer,
         outputToTargetMapping = outputToTargetMapping,
         targetHashId = targetToHash(targetId, targetTypeId),
@@ -49,62 +59,103 @@ class ExperimentalSourceToOutputMapping private constructor(
     }
   }
 
-  override fun setOutputs(path: String, outPaths: List<String>) {
-    val relativeSourcePath = super.relativizer.toRelative(path)
+  override fun remove(sourceFile: Path) {
+    impl.remove(sourceFile)
+  }
+
+  override fun getOutputs(sourcePath: String): List<String>? = impl.getOutputs(sourcePath)
+
+  override fun getOutputs(sourceFile: Path): List<Path>? = impl.getOutputs(sourceFile)
+
+  override fun setOutputs(sourceFile: Path, outputPaths: List<Path>) {
+    val relativeSourcePath = relativizer.toRelative(sourceFile, RelativePathType.SOURCE)
     val key = stringTo128BitHash(relativeSourcePath)
-    val normalizeOutputPaths = super.normalizeOutputPaths(outPaths, relativeSourcePath)
-    if (normalizeOutputPaths == null) {
-      mapHandle.map.remove(key)
+    val normalizeOutputPaths = if (outputPaths.isEmpty()) {
+      null
     }
     else {
-      mapHandle.map.put(key, normalizeOutputPaths)
+      Array(outputPaths.size + 1) {
+        if (it == 0) relativeSourcePath else impl.relativizer.toRelative(outputPaths.get(it - 1), RelativePathType.OUTPUT)
+      }
+    }
+    if (normalizeOutputPaths == null) {
+      impl.map.remove(key)
+    }
+    else {
+      impl.map.put(key, normalizeOutputPaths)
       outputToTargetMapping?.addMappings(normalizeOutputPaths, targetHashId)
     }
   }
 
-  override fun setOutput(sourcePath: String, outputPath: String) {
-    val relativeSourcePath = relativizer.toRelative(sourcePath)
-    val relativeOutputPath = relativizer.toRelative(outputPath)
-    mapHandle.map.put(stringTo128BitHash(relativeSourcePath), arrayOf(relativeSourcePath, relativeOutputPath))
-    outputToTargetMapping?.addMapping(relativeOutputPath, targetHashId)
-  }
-
   override fun appendOutput(sourcePath: String, outputPath: String) {
-    val relativeSourcePath = relativizer.toRelative(sourcePath)
-    val relativeOutputPath = relativizer.toRelative(outputPath)
-    mapHandle.map.operate(stringTo128BitHash(relativeSourcePath),
-                          null,
-                          AddItemDecisionMaker(sourcePath = relativeSourcePath, toAdd = relativeOutputPath))
+    val relativeSourcePath = relativizer.toRelative(sourcePath, RelativePathType.SOURCE)
+    val relativeOutputPath = relativizer.toRelative(outputPath, RelativePathType.OUTPUT)
+    impl.map.operate(
+      stringTo128BitHash(relativeSourcePath),
+      null,
+      AddItemDecisionMaker(sourcePath = relativeSourcePath, toAdd = relativeOutputPath),
+    )
     outputToTargetMapping?.addMapping(relativeOutputPath, targetHashId)
   }
 
   override fun removeOutput(sourcePath: String, outputPath: String) {
-    mapHandle.map.operate(getKey(sourcePath), null, RemoveItemDecisionMaker(relativizer.toRelative(outputPath)))
+    impl.map.operate(
+      impl.getKey(sourcePath),
+      null,
+      RemoveItemDecisionMaker(relativizer.toRelative(outputPath, RelativePathType.OUTPUT)),
+    )
+  }
+
+  fun outputs(): Sequence<String> {
+    return sequence {
+      val cursor = impl.map.cursor(null)
+      while (cursor.hasNext()) {
+        cursor.next()
+        val list = cursor.value
+        for (index in 1 until list.size) {
+          yield(list[index])
+        }
+      }
+    }
   }
 
   override fun cursor(): SourceToOutputMappingCursor {
-    val cursor = mapHandle.map.cursor(null)
     return object : SourceToOutputMappingCursor {
+      private val cursor = impl.map.cursor(null)
+
       override fun hasNext(): Boolean = cursor.hasNext()
 
       override fun next(): String {
         cursor.next()
-        return relativizer.toFull(cursor.value.first<String>())
+        return relativizer.toAbsolute(cursor.value[0], RelativePathType.SOURCE)
       }
 
       override val outputPaths: Array<String>
         get() {
           val list = cursor.value
-          return Array<String>(list.size - 1) { relativizer.toFull(list[it + 1]) }
+          return Array<String>(list.size - 1) { relativizer.toAbsolute(list[it + 1], RelativePathType.OUTPUT) }
         }
     }
   }
 
   override fun getSourcesIterator(): Iterator<String> = cursor()
 
+  override fun getSourceFileIterator(): Iterator<Path> {
+    return object : Iterator<Path> {
+      private val cursor = impl.map.cursor(null)
+
+      override fun hasNext(): Boolean = cursor.hasNext()
+
+      override fun next(): Path {
+        cursor.next()
+        return relativizer.toAbsoluteFile(cursor.value[0], RelativePathType.SOURCE)
+      }
+    }
+  }
+
   @TestOnly
   fun clear() {
-    mapHandle.map.clear()
+    impl.map.clear()
   }
 }
 

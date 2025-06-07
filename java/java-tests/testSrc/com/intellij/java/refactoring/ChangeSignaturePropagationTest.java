@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testParamSimple() {
     parameterPropagationTest();
@@ -40,7 +38,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testParamTypeSubst() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
       if (psiMethod != null) {
         methods.add(psiMethod);
@@ -52,7 +50,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testConflictingParameterName() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
       if (psiMethod != null) {
         methods.add(psiMethod);
@@ -111,7 +109,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   private static HashSet<PsiMethod> collectDefaultConstructorsToPropagate(PsiMethod method) {
     final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
-    for (PsiClass inheritor : ClassInheritorsSearch.search(method.getContainingClass())) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(method.getContainingClass()).asIterable()) {
       methodsToPropagate.add(inheritor.getConstructors()[0]);
     }
     return methodsToPropagate;

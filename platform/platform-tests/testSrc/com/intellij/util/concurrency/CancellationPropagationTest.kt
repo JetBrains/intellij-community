@@ -9,11 +9,12 @@ import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -40,9 +41,11 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Result
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.seconds
 
@@ -564,9 +567,11 @@ class CancellationPropagationTest {
           assertSame(job, blockingJob.blockingJob)
           prepareThreadContext { prepared ->
             assertNull(prepared[BlockingJob])
+            assertNull(prepared[ThreadScopeCheckpoint])
           }
           runBlockingCancellable {
             assertNull(coroutineContext[BlockingJob])
+            assertNull(coroutineContext[ThreadScopeCheckpoint])
           }
         }
       }
@@ -710,7 +715,7 @@ class CancellationPropagationTest {
     readActionScheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     assertEquals(0, timesCancelled)
-    writeAction {
+    edtWriteAction {
       // immediately return, just to cancel and reschedule read action
     }
     assertEquals(1, timesCancelled)
@@ -866,5 +871,69 @@ class CancellationPropagationTest {
     }
     semaphore.timeoutWaitUp()
     job.cancel()
+  }
+
+  @Test
+  fun `coroutine non-cancellable section coherence`() = timeoutRunBlocking {
+    withContext(Dispatchers.Default) {
+      val canProceed = Job()
+      val coroutineStarted = Job()
+      val result = CompletableDeferred<Int>()
+      val orphanCoroutine = launch {
+        withContext(NonCancellable) {
+          coroutineStarted.complete()
+          // withContext creates a child job, so this computation is formally not `isNonCancellable`
+          assertFalse(Cancellation.isInNonCancelableSection())
+          canProceed.join()
+          Cancellation.checkCancelled()
+          result.complete(42)
+        }
+      }
+      coroutineStarted.join()
+      orphanCoroutine.cancel()
+      canProceed.complete()
+      assertEquals(42, result.await())
+    }
+  }
+
+  @Test
+  fun `ij non-cancellable section coherence`() = timeoutRunBlocking {
+    Cancellation.executeInNonCancelableSection {
+      assertTrue(Cancellation.isInNonCancelableSection())
+    }
+    Cancellation.executeInNonCancelableSection {
+      installThreadContext(Job(currentThreadContext().job), true).use {
+        assertFalse(Cancellation.isInNonCancelableSection())
+      }
+    }
+  }
+
+  @Test
+  fun `inner computations are still cancellable in non-cancellable section`() = timeoutRunBlocking {
+    val canProceedWithWa = Job()
+    val entryCounter = AtomicInteger(0)
+    launch {
+      canProceedWithWa.join()
+      edtWriteAction {
+      }
+    }
+    launch {
+      Cancellation.executeInNonCancelableSection {
+        assertTrue(Cancellation.isInNonCancelableSection())
+        runBlockingCancellable {
+          readAction {
+            entryCounter.incrementAndGet()
+            canProceedWithWa.complete()
+            assertFalse(Cancellation.isInNonCancelableSection())
+            Thread.sleep(100) // ensure that pending WA is initiated
+            Cancellation.checkCancelled()
+            if (entryCounter.get() == 1) {
+              fail("Should not be executed")
+            }
+          }
+        }
+      }
+    }.join()
+    assertEquals(entryCounter.get(), 2)
   }
 }

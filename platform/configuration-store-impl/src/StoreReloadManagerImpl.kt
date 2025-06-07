@@ -4,12 +4,8 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -24,12 +20,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManagerListener
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-internal class StoreReloadManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
+internal open class StoreReloadManagerImpl(protected val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedStorages = LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>()
@@ -75,10 +69,9 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       return
     }
 
-    val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
       LOG.debug("Dispatch to EDT")
-      applyProjectChanges(projectsToReload)
+      val projectsToReload = doReloadChangedStorages()
 
       if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
@@ -88,11 +81,16 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     }
   }
 
+  /**
+   * Reloads the changed schemes in [changedSchemes] and changed storages in [changedSchemes]
+   *
+   * @return set of projects that need to be fully re-loaded to apply the changes
+   */
   @RequiresEdt
-  private suspend fun applyProjectChanges(projectsToReload: LinkedHashSet<Project>) {
-    if (changedSchemes.isEmpty() && changedStorages.isEmpty()
-        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
-      return
+  protected open suspend fun doReloadChangedStorages(): Set<Project> {
+    val projectsToReload = LinkedHashSet<Project>()
+    if (changedSchemes.isEmpty() && changedStorages.isEmpty()) {
+      return projectsToReload
     }
 
     val changedSchemesCopy: LinkedHashMap<SchemeChangeApplicator<*, *>, MutableSet<SchemeChangeEvent<*, *>>>
@@ -107,9 +105,8 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       changedStorages.clear()
     }
 
-    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()
-        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
-      return
+    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()) {
+      return projectsToReload
     }
 
     val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
@@ -140,21 +137,16 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     finally {
       publisher.onBatchUpdateFinished()
     }
-
-    withContext(Dispatchers.IO) {
-      withBackgroundProgress(project, ConfigurationStoreBundle.message("progress.title.reloading.project.configuration")) {
-        JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
-      }
-    }
+    return projectsToReload
   }
 
-  override fun isReloadBlocked(): Boolean {
+  final override fun isReloadBlocked(): Boolean {
     val count = reloadBlockCount.get()
     LOG.debug { "[RELOAD] reloadBlockCount = $count" }
     return count > 0
   }
 
-  override fun saveChangedProjectFile(file: VirtualFile) {
+  final override fun saveChangedProjectFile(file: VirtualFile) {
     val store = project.stateStore as ComponentStoreImpl
     val storageManager = store.storageManager as? StateStorageManagerImpl ?: return
     storageManager.getCachedFileStorages(listOf(storageManager.collapseMacro(file.path))).firstOrNull()?.let {
@@ -163,13 +155,13 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     }
   }
 
-  override fun blockReloadingProjectOnExternalChanges() {
+  final override fun blockReloadingProjectOnExternalChanges() {
     if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationManagerEx.isInStressTest()) {
       blockStackTrace.set(Throwable())
     }
   }
 
-  override fun unblockReloadingProjectOnExternalChanges() {
+  final override fun unblockReloadingProjectOnExternalChanges() {
     val counter = reloadBlockCount.get()
     if (counter <= 0) {
       LOG.error("Block counter $counter must be > 0, first block stack trace: ${blockStackTrace.get()?.let { ExceptionUtil.getThrowableText(it) }}")
@@ -187,19 +179,19 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
    * Internal use only. Force reload changed project files.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun reloadChangedStorageFiles() {
+  final override suspend fun reloadChangedStorageFiles() {
     changedFilesRequests.resetReplayCache()
     doReload()
   }
 
-  override fun reloadProject() {
+  final override fun reloadProject() {
     synchronized(changedStorages) {
       changedStorages.clear()
     }
     doReloadProject(project)
   }
 
-  override fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>) {
+  final override fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${storages.joinToString("\n")}", Exception())
     }
@@ -217,7 +209,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
+  final override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${batchStorageEvents.entries.joinToString("\n")}", Exception())
     }
@@ -249,7 +241,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  override fun scheduleProcessingChangedFiles() {
+  final override fun scheduleProcessingChangedFiles() {
     if (!isReloadBlocked()) {
       check(changedFilesRequests.tryEmit(Unit))
     }
@@ -268,7 +260,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {

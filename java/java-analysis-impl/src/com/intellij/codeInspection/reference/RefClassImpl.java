@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -13,12 +13,12 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
@@ -121,16 +121,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
       setLocal(parent != null && !(parent instanceof UClass));
     }
-
     initializeSuperReferences(uClass);
 
-    UMethod[] uMethods = uClass.getMethods();
-    UField[] uFields = uClass.getFields();
-
     boolean memberSeen = false;
-    for (UField uField : uFields) {
-      final RefField field = ObjectUtils.tryCast(manager.getReference(uField.getSourcePsi()), RefField.class);
-      if (field != null) {
+    for (UField uField : uClass.getFields()) {
+      if (manager.getReference(uField.getSourcePsi()) instanceof RefField field) {
         memberSeen = true;
         addChild(field);
         if (!uField.isStatic() || uField instanceof UEnumConstant) utilityClass = false;
@@ -138,10 +133,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     RefMethodImpl varargConstructor = null;
     boolean constructorSeen = false;
-    for (UMethod uMethod : uMethods) {
-      RefMethodImpl refMethod = ObjectUtils.tryCast(manager.getReference(uMethod.getSourcePsi()), RefMethodImpl.class);
-
-      if (refMethod != null) {
+    for (UMethod uMethod : uClass.getMethods()) {
+      if (manager.getReference(uMethod.getSourcePsi()) instanceof RefMethodImpl refMethod) {
         addChild(refMethod);
         if (uMethod.isConstructor()) {
           constructorSeen = true;
@@ -354,7 +347,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
-    return ObjectUtils.notNull(myDerivedReferences, EMPTY_CLASS_SET);
+    return (myDerivedReferences == null) ? EMPTY_CLASS_SET : myDerivedReferences;
   }
 
   @Override
@@ -387,7 +380,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public List<RefField> getFields() {
+  public @Unmodifiable List<RefField> getFields() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
   }
@@ -567,7 +560,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+    return (myOutTypeReferences == null) ? Collections.emptySet() : myOutTypeReferences;
   }
 
   private void setAnonymous(boolean anonymous) {

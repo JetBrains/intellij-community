@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
 
-final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+@ApiStatus.Internal
+public final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();
@@ -38,8 +40,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
     new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
       @Override
@@ -141,8 +142,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
       }
     }
 
-    @Nullable
-    private static UReferenceExpression getReferenceExpression(PsiElement element) {
+    private static @Nullable UReferenceExpression getReferenceExpression(PsiElement element) {
       UReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
       if (expression == null) {
         expression = UastContextKt.toUElement(element, USimpleNameReferenceExpression.class);
@@ -150,8 +150,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
       return expression;
     }
 
-    @NotNull
-    private static @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
+    private static @NotNull @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
       @NonNls String text = expression.getText();
       if (text.contains(".")) {
         text = text.substring(text.lastIndexOf('.'));

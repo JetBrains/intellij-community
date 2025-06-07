@@ -16,7 +16,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
@@ -49,7 +48,6 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
       FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
-        if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
         PsiFile psiFile = psiManager.findFile(file);
         return !(psiFile instanceof PyFile) || processor.process(psiFile);
       }, scope);

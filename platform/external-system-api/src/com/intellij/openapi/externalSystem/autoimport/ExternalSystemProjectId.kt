@@ -14,5 +14,10 @@ data class ExternalSystemProjectId(
 
   val projectName: @Nls String = PathUtil.getFileName(externalProjectPath)
 
+  @Deprecated("Use ExternalSystemProjectId#toString instead", replaceWith = ReplaceWith("this.toString()"))
   val debugName: String = "$systemName ($projectName)"
+
+  override fun toString(): String {
+    return "$systemName ($projectName)"
+  }
 }

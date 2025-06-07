@@ -6,7 +6,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ContributedReferenceHost;
+import com.intellij.psi.PsiLiteralValue;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -14,9 +16,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -28,9 +32,9 @@ import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
-  @Nullable private volatile String myStringValue;
-  @Nullable private volatile List<TextRange> myValueTextRanges;
-  @Nullable private volatile List<Pair<TextRange, String>> myDecodedFragments;
+  private volatile @Nullable String myStringValue;
+  private volatile @Nullable List<TextRange> myValueTextRanges;
+  private volatile @Nullable List<Pair<TextRange, String>> myDecodedFragments;
 
   public PyStringLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -50,8 +54,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<TextRange> getStringValueTextRanges() {
+  public @NotNull List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
       myValueTextRanges = result = PyStringLiteralExpression.super.getStringValueTextRanges();
@@ -60,8 +63,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<Pair<TextRange, String>> getDecodedFragments() {
+  public @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
       myDecodedFragments = result = PyStringLiteralExpression.super.getDecodedFragments();
@@ -82,9 +84,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       .anyMatch(element -> !element.getFragments().isEmpty());
   }
 
-  @NotNull
   @Override
-  public String getStringValue() {
+  public @NotNull String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
     String result = myStringValue;
@@ -94,9 +95,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return getStringValue();
   }
 
@@ -114,6 +114,16 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
+        String prefix = PyStringLiteralCoreUtil.getPrefix(firstNode.getText());
+        if (PyStringLiteralUtil.isTemplatePrefix(prefix)) {
+          if (languageLevel.isOlderThan(LanguageLevel.PYTHON314)) {
+            return PyBuiltinCache.getInstance(this).getStrType();
+          }
+          PyClassType templateClassType = getTemplateClassType();
+          if (templateClassType != null) {
+            return templateClassType;
+          }
+        }
         // f-strings can't have "b" prefix, so they are always unicode
         return builtinCache.getUnicodeType(languageLevel);
       }
@@ -136,6 +146,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return builtinCache.getStrType();
   }
 
+  private @Nullable PyClassType getTemplateClassType() {
+    PyPsiFacade facade = PyPsiFacade.getInstance(getProject());
+    PyClass templateClass = facade.createClassByQName(PyNames.TEMPLATELIB_TEMPLATE, getContainingFile());
+    if (templateClass != null) {
+      return facade.createClassType(templateClass, false);
+    }
+    return null;
+  }
+
   @Override
   public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
@@ -154,9 +173,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return getStringValue();
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
+      public @Nullable String getLocationString() {
         String packageForFile = PyElementPresentation.getPackageForFile(getContainingFile());
         return packageForFile != null ? String.format("(%s)", packageForFile) : null;
       }

@@ -32,14 +32,12 @@ public final class FinalizeInspection extends BaseInspection {
   public boolean ignoreTrivialFinalizers = true;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "FinalizeDeclaration";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finalize.declaration.problem.descriptor");
   }

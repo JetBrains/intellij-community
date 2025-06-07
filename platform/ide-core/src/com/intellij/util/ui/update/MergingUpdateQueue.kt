@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.ui.update
@@ -18,10 +18,12 @@ import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -33,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
-import kotlin.Throws
 import kotlin.coroutines.coroutineContext
 
 private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
@@ -156,6 +157,13 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         threadToUse = thread,
         coroutineScope = coroutineScope,
       )
+    }
+
+    if (coroutineScope != null) {
+      coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
+        val stuckUpdates = flushScheduledUpdates() ?: return@invokeOnCompletion
+        stuckUpdates.forEachGuaranteed(Update::setRejected)
+      }
     }
 
     if (isActive) {
@@ -336,7 +344,12 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       try {
         val all = flushScheduledUpdates() ?: return@scheduleTask
 
-        coroutineContext.ensureActive()
+        try {
+          coroutineContext.ensureActive()
+        } catch (e : CancellationException) {
+          all.forEachGuaranteed(Update::setRejected)
+          throw e
+        }
 
         for (update in all) {
           update.setProcessed()
@@ -355,8 +368,16 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
   @Internal
   protected open suspend fun executeUpdates(updates: List<Update>) {
-    for (update in updates) {
-      coroutineContext.ensureActive()
+    var i = 0
+    while (i < updates.size) {
+      try {
+        coroutineContext.ensureActive()
+      } catch (e : CancellationException) {
+        updates.subList(i, updates.size).forEachGuaranteed(Update::setRejected)
+        throw e
+      }
+
+      val update = updates[i++]
 
       if (isExpired(update)) {
         update.setRejected()
@@ -434,7 +455,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     val current = ModalityState.current()
     val modalityState = getModalityState()
-    return !current.dominates(modalityState)
+    return current.accepts(modalityState)
   }
 
   @Internal

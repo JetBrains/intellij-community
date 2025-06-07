@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -144,6 +145,12 @@ public final class KotlinTestUtils {
             return androidSdkRootEnvDir;
         }
 
+        // Try to guess Android SDK location for local development
+        File defaultAndroidSdkLocation = new File(System.getProperty("user.home") + "/Library/Android/sdk");
+        if (defaultAndroidSdkLocation.isDirectory()) {
+            return defaultAndroidSdkLocation;
+        }
+
         throw new RuntimeException(
                 "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
                 "please point it to the android SDK location");
@@ -186,7 +193,7 @@ public final class KotlinTestUtils {
         shortName = shortName.substring(shortName.lastIndexOf('\\') + 1);
         LightVirtualFile virtualFile = new LightVirtualFile(shortName, KotlinLanguage.INSTANCE, StringUtilRt.convertLineSeparators(text));
 
-        virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        virtualFile.setCharset(StandardCharsets.UTF_8);
         PsiFileFactoryImpl factory = (PsiFileFactoryImpl) PsiFileFactory.getInstance(project);
         return (KtFile) factory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false);
     }
@@ -390,7 +397,7 @@ public final class KotlinTestUtils {
         return directives;
     }
 
-    public static List<String> loadBeforeAfterText(String filePath) {
+    public static List<TestFile> loadBeforeAfterAndDependenciesText(String filePath) {
         String content;
 
         try {
@@ -399,19 +406,21 @@ public final class KotlinTestUtils {
             throw new RuntimeException(e);
         }
 
-        List<String> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<>() {
+        List<TestFile> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<>() {
             @NotNull
             @Override
-            public String create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {
+            public TestFile create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {
                 int firstLineEnd = text.indexOf('\n');
-                return StringUtil.trimTrailing(text.substring(firstLineEnd + 1));
+                return new TestFile(fileName, StringUtil.trimTrailing(text.substring(firstLineEnd + 1)));
             }
         });
 
-        Assert.assertEquals("Exactly two files expected: ", 2, files.size());
+        Assert.assertTrue("At least two files expected, actually " + files.size(), files.size() >= 2);
 
         return files;
     }
+
+    public record TestFile(String name, String content) {}
 
     public static String getLastCommentedLines(@NotNull Document document) {
         List<CharSequence> resultLines = new ArrayList<>();

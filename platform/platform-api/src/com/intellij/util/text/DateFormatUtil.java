@@ -25,7 +25,6 @@ import java.time.format.FormatStyle;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import static java.util.Objects.requireNonNullElse;
 
@@ -53,8 +52,6 @@ public final class DateFormatUtil {
   @Deprecated(forRemoval = true) public static final long MONTH = 30 * DAY;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
   @Deprecated(forRemoval = true) public static final long YEAR = 365 * DAY;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long DAY_FACTOR = DAY;
 
   public static final String TIME_SHORT_12H = "h:mm\u202Fa";
   public static final String TIME_SHORT_24H = "HH:mm";
@@ -86,15 +83,6 @@ public final class DateFormatUtil {
   @SuppressWarnings("removal")
   public static @NotNull SyncDateFormat getDateTimeFormat() {
     return new SyncDateFormat(formats().dateTimeFmt());
-  }
-
-  /** @deprecated use {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("removal")
-  public static @NotNull SyncDateFormat getIso8601Format() {
-    var iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
-    return new SyncDateFormat(iso8601);
   }
 
   public static @NlsSafe @NotNull String formatTime(@NotNull Date time) {

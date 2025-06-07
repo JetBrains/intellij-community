@@ -129,13 +129,13 @@ public final class RestUtil {
     DIRECTIVES.put("restructuredtext-test-directive::", new String[] {});
   }
 
-  static public String[] getDirectiveOptions(String directive) {
+  public static String[] getDirectiveOptions(String directive) {
     if (DIRECTIVES.containsKey(directive))
       return DIRECTIVES.get(directive);
     return new String[]{};
   }
 
-  static public Set<String> getDirectives() {
+  public static Set<String> getDirectives() {
     return DIRECTIVES.keySet();
   }
 }

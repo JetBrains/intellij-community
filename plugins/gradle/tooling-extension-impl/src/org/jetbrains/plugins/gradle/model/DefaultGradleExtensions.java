@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -56,9 +56,8 @@ public class DefaultGradleExtensions implements GradleExtensions {
     }
   }
 
-  @Nullable
   @Override
-  public String getParentProjectPath() {
+  public @Nullable String getParentProjectPath() {
     return parentProjectPath;
   }
 
@@ -66,27 +65,23 @@ public class DefaultGradleExtensions implements GradleExtensions {
     this.parentProjectPath = parentProjectPath;
   }
 
-  @NotNull
   @Override
-  public List<DefaultGradleExtension> getExtensions() {
+  public @NotNull List<DefaultGradleExtension> getExtensions() {
     return extensions == null ? Collections.emptyList() : extensions;
   }
 
   @Override
-  @NotNull
-  public List<DefaultGradleConvention> getConventions() {
+  public @NotNull List<DefaultGradleConvention> getConventions() {
     return conventions == null ? Collections.emptyList() : conventions;
   }
 
-  @NotNull
   @Override
-  public List<DefaultGradleProperty> getGradleProperties() {
+  public @NotNull List<DefaultGradleProperty> getGradleProperties() {
     return gradleProperties == null ? Collections.emptyList() : gradleProperties;
   }
 
-  @NotNull
   @Override
-  public List<DefaultExternalTask> getTasks() {
+  public @NotNull List<DefaultExternalTask> getTasks() {
     return tasks;
   }
 
@@ -102,9 +97,8 @@ public class DefaultGradleExtensions implements GradleExtensions {
     }
   }
 
-  @NotNull
   @Override
-  public List<DefaultGradleConfiguration> getConfigurations() {
+  public @NotNull List<DefaultGradleConfiguration> getConfigurations() {
     return configurations == null ? Collections.emptyList() : configurations;
   }
 

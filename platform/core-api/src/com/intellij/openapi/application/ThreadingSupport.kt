@@ -1,25 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.lang.Deprecated
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.function.BooleanSupplier
-import java.util.function.Consumer
-import javax.swing.JComponent
+import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 interface ThreadingSupport {
-  @ApiStatus.Internal
-  fun postInit(writeThread: Thread) {}
 
   /**
    * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
@@ -30,33 +20,21 @@ interface ThreadingSupport {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
    */
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
-
+  fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
-   * Acquires Write Intent lock if it's not acquired by the current thread.
-   *
-   * This is low-level API, please use [WriteIntentReadAction].
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return `true` if this call acquired lock, `false` if lock was taken already.
+   * Executes a runnable with a write-intent lock only if locking is permitted on this thread
+   * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
+   * may be not needed.
    */
-  @ApiStatus.Internal
-  fun acquireWriteIntentLock(invokedClassFqn: String?): Boolean
+  fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T
 
   /**
-   * Release Write Intent lock acquired with [acquireWriteIntentLock].
+   * Checks, if Write Intent lock acquired by the current thread.
    *
-   * This is low-level API, please use [WriteIntentReadAction].
-   */
-  @ApiStatus.Internal
-  fun releaseWriteIntentLock()
-
-  /**
-   * Checks, is Write Intent lock  acquired by the current thread.
+   * As Write Intent Lock has very special status, this method doesn't check for "inherited" lock, it returns `true` if and only if
+   * current thread is the owner of Write Intent Lock.
    *
    * This is low-level API, please use [WriteIntentReadAction].
    *
@@ -66,55 +44,12 @@ interface ThreadingSupport {
   fun isWriteIntentLocked(): Boolean
 
   /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*>
-
-  /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T>
-
-
-  /**
-   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
-   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
-   *
-   * This method is used to implement higher-level API. Please do not use it directly.
-   *
-   * @param action the action to run
-   */
-  @ApiStatus.Internal
-  fun runIntendedWriteActionOnCurrentThread(action: Runnable)
-
-  /**
    * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
    *
    * This method is used to implement higher-level API. Please do not use it directly.
    */
   @ApiStatus.Internal
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T
+  fun <T> runUnlockingIntendedWrite(action: () -> T): T
 
   /**
    * Set a [ReadActionListener].
@@ -136,51 +71,8 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun removeReadActionListener(listener: ReadActionListener)
 
-  /**
-   * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.
-   *
-   * See also [ReadAction.run] for a more lambda-friendly version.
-   *
-   * @param action the action to run.
-   * @see CoroutinesKt.readAction
-   *
-   * @see CoroutinesKt.readActionBlocking
-   */
   @RequiresBlockingContext
-  fun runReadAction(action: Runnable)
-
-  /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
-   *
-   * See also [ReadAction.compute] for a more lambda-friendly version.
-   *
-   * @param computation the computation to perform.
-   * @return the result returned by the computation.
-   * @see CoroutinesKt.readAction
-   * @see CoroutinesKt.readActionBlocking
-   */
-  @RequiresBlockingContext
-  fun <T> runReadAction(computation: Computable<T>): T
-
-  /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
-   *
-   * See also [ReadAction.compute] for a more lambda-friendly version.
-   *
-   * @param computation the computation to perform.
-   * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
-   * @see CoroutinesKt.readAction
-   * @see CoroutinesKt.readActionBlocking
-   */
-  @RequiresBlockingContext
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T
+  fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
 
   /**
    * Tries to acquire the read lock and run the `action`.
@@ -213,6 +105,24 @@ interface ThreadingSupport {
   fun setWriteActionListener(listener: WriteActionListener)
 
   /**
+   * Adds a [WriteIntentReadActionListener].
+   *
+   * Only one listener can be set. It is an error to set the second listener.
+   *
+   * @param listener the listener to set
+   */
+  fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
+   * Removes a [WriteIntentReadActionListener].
+   *
+   * It is an error to remove the listener which was not set early.
+   *
+   * @param listener the listener to remove
+   */
+  fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
    * Removes a [WriteActionListener].
    *
    * It is error to remove listener which was not set early.
@@ -222,53 +132,17 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun removeWriteActionListener(listener: WriteActionListener)
 
-  /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param action the action to run
-   * @see WriteAction
-   */
   @RequiresBlockingContext
-  fun runWriteAction(action: Runnable)
+  fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T
 
   /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param computation the action to run
-   * @return the result returned by the computation.
-   * @see WriteAction
-   */
-  @RequiresBlockingContext
-  fun <T> runWriteAction(computation: Computable<T>): T
-
-  /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param computation the action to run
-   * @return the result returned by the computation.
-   * @see WriteAction
-   */
-  @RequiresBlockingContext
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T
-
-  /**
-   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action
-   * parallelization).
+   * If called inside a write-action, executes the given [action] with write-lock released
+   * (e.g., to allow for read-action parallelization).
    * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
    * callers should be ready for those.
    */
-  fun executeSuspendingWriteAction(project: Project?, title: @NlsContexts.DialogTitle String, runnable: Runnable)
+  fun executeSuspendingWriteAction(action: () -> Unit)
 
   /**
    * Returns `true` if there is currently executing write action of the specified class.
@@ -300,30 +174,10 @@ interface ThreadingSupport {
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
 
-
-  @ApiStatus.Experimental
-  fun runWriteActionWithCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                            project: Project?,
-                                                            parentComponent: JComponent?,
-                                                            action: Consumer<in ProgressIndicator?>): Boolean
-
-  @ApiStatus.Experimental
-  fun runWriteActionWithNonCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                               project: Project?,
-                                                               parentComponent: JComponent?,
-                                                               action: Consumer<in ProgressIndicator?>): Boolean
-
-  /**
-   * Use [runReadAction] instead
-   */
-  @Deprecated
+  @Deprecated("Use `runReadAction` instead")
   fun acquireReadActionLock(): AccessToken
 
-
-  /**
-   * Use [runWriteAction], [WriteAction.run], or [WriteAction.compute] instead
-   */
-  @Deprecated
+  @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   fun acquireWriteActionLock(marker: Class<*>): AccessToken
 
   /**
@@ -332,27 +186,118 @@ interface ThreadingSupport {
   fun prohibitWriteActionsInside(): AccessToken
 
   /**
-   * DO NOT USE
+   * Adds a [LockAcquisitionListener].
+   *
+   * Only one listener can be set. It is an error to set the second listener.
+   *
+   * @param listener the listener to set
    */
   @ApiStatus.Internal
-  // @Throws(CannotRunReadActionException::class)
-  fun executeByImpatientReader(runnable: Runnable)
+  fun setLockAcquisitionListener(listener: LockAcquisitionListener)
+
+  @ApiStatus.Internal
+  fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit)
+
+  @ApiStatus.Internal
+  fun removeLockAcquisitionInterceptor()
+
+  @ApiStatus.Internal
+  fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
+
+  @ApiStatus.Internal
+  fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
+
+  @ApiStatus.Internal
+  fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
+
+  @ApiStatus.Internal
+  fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
+
 
   /**
-   * DO NOT USE
+   * Removes a [LockAcquisitionListener].
+   *
+   * It is error to remove listener which was not set early.
+   *
+   * @param listener the listener to remove
    */
   @ApiStatus.Internal
-  fun isInImpatientReader(): Boolean
+  fun removeLockAcquisitionListener(listener: LockAcquisitionListener)
 
   /**
-   * DO NOT USE
+   * Prevents any attempt to use R/W locks inside [action].
    */
+  @ApiStatus.Internal
+  @Throws(LockAccessDisallowed::class)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
+
+  /**
+   * Allows using R/W locks inside [action].
+   * This is mostly needed for incremental transition from previous approach with unconditional lock acquisiton:
+   * we cannot afford prohibiting taking locks for large regions of the platform
+   */
+  @ApiStatus.Internal
+  @Throws(LockAccessDisallowed::class)
+  fun allowTakingLocksInsideAndRun(action: Runnable)
+
+  /**
+   * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
+   * this function will return not-null string with advice on how to fix the problem
+   */
+  @ApiStatus.Internal
+  fun getLockingProhibitedAdvice(): String?
+
+  /** DO NOT USE */
   @ApiStatus.Internal
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
   @ApiStatus.Internal
-  fun getPermitAsContextElement(): CoroutineContext
+  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken>
 
   @ApiStatus.Internal
-  fun hasPermitAsContextElement(context: CoroutineContext): Boolean
+  fun isParallelizedReadAction(context: CoroutineContext): Boolean
+
+  @ApiStatus.Internal
+  fun isInTopmostReadAction(): Boolean
+
+  /**
+   * This is a very hacky function ABSOLUTELY NOT FOR PRODUCTION.
+   * Consider the following old code:
+   * ```kotlin
+   * launch(Dispatchers.EDT) {
+   *   writeIntentReadAction {
+   *     // do something
+   *     IndexingTestUtil.waitUntilIndexesAreReady()
+   *     // do something else
+   *   }
+   * }
+   *
+   * launch(Dispatchers.Default) {
+   *   backgroundWriteAction {}
+   * }
+   * ```
+   *
+   * This is a deadlock, because `waitUntilIndexesAreReady` spins the event queue inside, and it waits for some write action to happen.
+   * When WA is executed on background, the code above would result in a deadlock, because the code in WI waits for (lower-level) Write to finish.
+   *
+   * This function is a TEMPORARY fix for tests. When we are ready (i.e., when we eliminate write action by default), this hack will be removed.
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T = action()
+
+  /**
+   * Makes [runPreventiveWriteIntentReadAction] no-op inside [action].
+   * This is needed for platform code that is sure that the called action would not abuse locks
+   */
+  @ApiStatus.Internal
+  fun <T> relaxPreventiveLockingActions(action: () -> T) : T
+
+  class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
+
+  /**
+   * Defers [action] while write action is pending or in progress.
+   * [action] is guaranteed to run. It may run immediately on the current thread or after some time on an unspecified thread.
+   */
+  fun runWhenWriteActionIsCompleted(action: () -> Unit)
 }

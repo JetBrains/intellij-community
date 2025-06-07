@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.configSlurper;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,11 +15,9 @@ public abstract class ConfigSlurperSupport {
   public static final ExtensionPointName<ConfigSlurperSupport> EP_NAME =
     ExtensionPointName.create("org.intellij.groovy.configSlurperSupport");
 
-  @Nullable
-  public abstract PropertiesProvider getProvider(@NotNull GroovyFile file);
+  public abstract @Nullable PropertiesProvider getProvider(@NotNull GroovyFile file);
 
-  @Nullable
-  public PropertiesProvider getConfigSlurperInfo(@NotNull PsiElement qualifierResolve) {
+  public @Nullable PropertiesProvider getConfigSlurperInfo(@NotNull PsiElement qualifierResolve) {
     return null;
   }
 

@@ -14,6 +14,7 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
@@ -25,7 +26,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (ignoreGrammarChecking(file)) {
+    if (ignoreGrammarChecking(file) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
@@ -90,8 +91,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
 
       val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
-        findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
-      }
+        val contents = findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
+        TextContentRelatedData(file, contents)
+      }.contents
       val checkedDomains = checkedDomains()
       return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
@@ -141,6 +143,17 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
           textRangeInFile.intersects(priorityRange) -> 1
           else -> 2
         }
+      }
+    }
+
+    data class TextContentRelatedData(private val psiFile: PsiFile, val contents: Set<TextContent>) {
+      override fun toString(): String {
+        return "[fileType = ${psiFile.viewProvider.virtualFile.fileType}, " +
+               "fileLanguage = ${psiFile.language}, " +
+               "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
+               "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()},"
+               "isPhysical = ${psiFile.isPhysical}, " +
+               "contentLengths = ${contents.map { it.length }}]"
       }
     }
   }

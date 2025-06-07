@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 import javax.swing.Icon
 
-class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
+private class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
   private val testStorage = TestStateStorage.getInstance(project)
 
   private val cache = FactoryMap.create<VirtualFile, MutableMap<String, TestInfoCache>> { hashMapOf() }

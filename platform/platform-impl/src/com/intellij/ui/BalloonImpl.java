@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.application.Topics;
@@ -44,6 +44,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +60,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
@@ -633,7 +634,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-          if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
+          if (myHideOnAction && !HintManagerImpl.isActionToIgnore(action)) {
             hide();
           }
         }
@@ -1209,9 +1210,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return myDefaultPrefSize;
   }
 
-  private abstract static class AbstractPosition {
+  @ApiStatus.Internal
+  public abstract static class AbstractPosition {
     abstract EmptyBorder createBorder(final BalloonImpl balloon);
-
 
     abstract void setRecToRelativePosition(Rectangle rec, Point targetPoint);
 
@@ -1431,11 +1432,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                                        balloon.getArc(), balloon.getArc());
   }
 
-  public static final AbstractPosition BELOW = new Below();
-  public static final AbstractPosition ABOVE = new Above();
-  public static final AbstractPosition AT_RIGHT = new AtRight();
-  public static final AbstractPosition AT_LEFT = new AtLeft();
-
+  static final AbstractPosition BELOW = new Below();
+  static final AbstractPosition ABOVE = new Above();
+  static final AbstractPosition AT_RIGHT = new AtRight();
+  static final AbstractPosition AT_LEFT = new AtLeft();
 
   private static final class Below extends AbstractPosition {
     @Override
@@ -2267,6 +2267,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return myId;
   }
 
+  @Override
   public void setId(String id) {
     myId = id;
   }

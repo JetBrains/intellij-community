@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -228,7 +229,7 @@ public class GenericType extends VarType implements Type {
   }
 
   @Override
-  public GenericType decreaseArrayDim() {
+  public @NotNull GenericType decreaseArrayDim() {
     assert getArrayDim() > 0 : this;
     return new GenericType(getType(), getArrayDim() - 1, getValue(), parent, arguments, wildcard);
   }

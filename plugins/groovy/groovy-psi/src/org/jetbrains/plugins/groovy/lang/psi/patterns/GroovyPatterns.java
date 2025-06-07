@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.*;
@@ -41,16 +41,16 @@ public final class GroovyPatterns extends PsiJavaPatterns {
     return groovyLiteralExpression(null);
   }
 
-  public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(@Nullable final ElementPattern value) {
+  public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(final @Nullable ElementPattern value) {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<>(GrLiteral.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         return o instanceof GrLiteral && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
       }
     });
   }
 
-  public static PsiMethodPattern grLightMethod(@NotNull final Object key) {
+  public static PsiMethodPattern grLightMethod(final @NotNull Object key) {
     return PsiJavaPatterns.psiMethod().with(new PatternCondition<>("GrLightMethodBuilder") {
       @Override
       public boolean accepts(@NotNull PsiMethod method, ProcessingContext context) {
@@ -76,7 +76,7 @@ public final class GroovyPatterns extends PsiJavaPatterns {
   public static GroovyElementPattern.Capture<GrLiteralImpl> stringLiteral() {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<>(GrLiteralImpl.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         if (!(o instanceof GrLiteral)) return false;
         return ((GrLiteral)o).isString();
       }
@@ -91,10 +91,10 @@ public final class GroovyPatterns extends PsiJavaPatterns {
     return new GroovyNamedArgumentPattern();
   }
 
-  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<String> namePattern) {
+  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(final @Nullable ElementPattern<String> namePattern) {
     return new GroovyElementPattern.Capture<>(new InitialPatternCondition<>(GrArgumentLabel.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         if (o instanceof GrArgumentLabel) {
           PsiElement nameElement = ((GrArgumentLabel)o).getNameElement();
           if (nameElement instanceof LeafPsiElement) {

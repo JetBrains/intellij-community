@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -148,9 +149,9 @@ public final class RollbackAction extends DumbAwareAction {
     return emptyList();
   }
 
-  @Nullable
-  private static Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
-    final List<VirtualFile> selectedModifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+  private static @Nullable Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
+    List<VirtualFile> selectedModifiedWithoutEditing =
+      JBIterable.from(e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY)).toList();
     if (!ContainerUtil.isEmpty(selectedModifiedWithoutEditing)) {
       return new HashSet<>(selectedModifiedWithoutEditing);
     }
@@ -167,12 +168,13 @@ public final class RollbackAction extends DumbAwareAction {
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final Set<? extends VirtualFile> modifiedWithoutEditing) {
-    final String operationName = StringUtil.decapitalize(removeMnemonic(getRollbackOperationName(project)));
+    String operationName = removeMnemonic(getRollbackOperationName(project));
+    String decapitalizedOperationName = StringUtil.decapitalize(operationName);
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
-                                         operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
+                                         decapitalizedOperationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
                      : VcsBundle.message("rollback.modified.without.editing.confirm.multiple",
-                                         operationName, modifiedWithoutEditing.size());
+                                         decapitalizedOperationName, modifiedWithoutEditing.size());
     int rc = showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title", operationName), getQuestionIcon());
     if (rc != Messages.YES) {
       return;

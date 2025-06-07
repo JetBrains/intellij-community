@@ -5,13 +5,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.UserDataHolder
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -34,9 +30,6 @@ interface PySdkProvider {
    */
   fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData?
 
-  // Packaging
-  fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService?
-
   // Inspections
   /**
    * Quickfix that makes the existing environment available to the module, or null.
@@ -47,14 +40,6 @@ interface PySdkProvider {
                                       associatedModulePath: @NlsSafe String?): PyInterpreterInspectionQuickFixData?
 
   fun createInstallPackagesQuickFix(module: Module): LocalQuickFix?
-
-
-  // New env
-  fun createNewEnvironmentPanel(project: Project?,
-                                module: Module?,
-                                existingSdks: List<Sdk>,
-                                newProjectPath: String?,
-                                context: UserDataHolder): PyAddNewEnvPanel
 
 
   companion object {

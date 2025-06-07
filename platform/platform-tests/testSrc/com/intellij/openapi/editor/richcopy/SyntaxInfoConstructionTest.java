@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -18,6 +18,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.JBColor;
+
+import java.awt.*;
 
 public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
   public void testBlockSelection() {
@@ -340,7 +342,7 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor() {
       @Override
-      void createResult(SyntaxInfo syntaxInfo, Editor editor) {
+      protected void createResult(SyntaxInfo syntaxInfo, Editor editor) {
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
@@ -353,12 +355,18 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
           @Override
           public void handleForeground(int foregroundId) {
-            builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
+            Color color = colorRegistry.dataById(foregroundId);
+            builder.append("foreground=").append(toCanonicalString(color)).append(',');
           }
 
           @Override
           public void handleBackground(int backgroundId) {
-            builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
+            Color color = colorRegistry.dataById(backgroundId);
+            builder.append("background=").append(toCanonicalString(color)).append(',');
+          }
+
+          private static String toCanonicalString(Color color) {
+            return new Color(color.getRGB(), true).toString();
           }
 
           @Override

@@ -5,11 +5,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 
-import java.net.URL;
+import java.io.IOException;
 
 public class DsldTest extends LightGroovyTestCase {
   public void testUnknownPointcut() {
@@ -165,13 +166,13 @@ public class DsldTest extends LightGroovyTestCase {
       PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), GrNewExpression.class,
                                              false);
     PsiMethod method = newExpr.resolveMethod();
-    assert method.isConstructor();
-    assert method.getParameterList().getParameters().length == 3;
+    assertTrue(method.isConstructor());
+    assertSize(3, method.getParameterList().getParameters());
   }
 
-  public void testMeta() {
-    URL dslUrl = GdslScriptProvider.class.getClassLoader().getResource("standardDsls/metaDsl.gdsl");
-    VirtualFile dslVirtualFile = myFixture.copyFileToProject(dslUrl.getPath(), "metaDsl.gdsl");
+  public void testMeta() throws IOException {
+    String content = ResourceUtil.loadText(GdslScriptProvider.class.getClassLoader().getResourceAsStream("standardDsls/metaDsl.gdsl"));
+    VirtualFile dslVirtualFile = myFixture.createFile("metaDsl.gdsl", content);
     myFixture.configureFromExistingVirtualFile(dslVirtualFile);
     GroovyDslFileIndex.activate(dslVirtualFile);
     myFixture.enableInspections(new GrUnresolvedAccessInspection());

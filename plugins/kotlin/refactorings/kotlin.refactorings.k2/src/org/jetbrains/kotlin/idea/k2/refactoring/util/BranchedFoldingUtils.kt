@@ -276,7 +276,7 @@ object BranchedFoldingUtils {
      *       return       // cannot be lifted because of the null returned expression -> this function will return `null`
      *     }
      */
-    private fun getFoldableBranchedReturn(branch: KtExpression?): KtReturnExpression? =
+    fun getFoldableBranchedReturn(branch: KtExpression?): KtReturnExpression? =
         (branch?.lastBlockStatementOrThis() as? KtReturnExpression)?.takeIf {
             it.returnedExpression != null &&
                     it.returnedExpression !is KtLambdaExpression &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -308,6 +308,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             @TestMetadata("KeywordClassName.kt")
             public void testKeywordClassName() throws Exception {
                 runTest("testData/copyPaste/imports/KeywordClassName.kt");
+            }
+
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("testData/copyPaste/imports/LabelReference.kt");
             }
 
             @TestMetadata("Local.kt")
@@ -880,6 +885,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             @TestMetadata("KeywordClassName.kt")
             public void testKeywordClassName() throws Exception {
                 runTest("testData/copyPaste/imports/KeywordClassName.kt");
+            }
+
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("testData/copyPaste/imports/LabelReference.kt");
             }
 
             @TestMetadata("Local.kt")

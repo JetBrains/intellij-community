@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,8 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -57,7 +59,9 @@ public final class NameSuggester {
     return -1;
   }
 
-  List<Pair<String, String>> getChanges() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public List<Pair<String, String>> getChanges() {
     final ArrayList<Pair<String, String>> result = new ArrayList<>();
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       final OriginalToNewChange change = myChanges.get(i);
@@ -188,8 +192,7 @@ public final class NameSuggester {
     return decapitalizeProbably(newClassNameWords, propertyWord);
   }
 
-  @NotNull
-  private static String decapitalizeProbably(@NotNull String word, String originalWord) {
+  private static @NotNull String decapitalizeProbably(@NotNull String word, String originalWord) {
     if (originalWord.isEmpty()) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
       return StringUtil.decapitalize(word);
@@ -259,8 +262,7 @@ public final class NameSuggester {
   private record Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
   }
 
-  @Nullable
-  private Match checkMatch(final int oldClassNameIndex, final int propertyNameIndex, final String propertyWord) {
+  private @Nullable Match checkMatch(final int oldClassNameIndex, final int propertyNameIndex, final String propertyWord) {
     if (propertyWord.equalsIgnoreCase(myOldClassName[oldClassNameIndex])) {
       return new Match(oldClassNameIndex, propertyNameIndex, propertyWord);
     }

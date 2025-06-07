@@ -34,7 +34,7 @@ public final class RawIncludedRuntimeModule {
 
   public @Nullable IncludedRuntimeModule resolve(@NotNull RuntimeModuleRepository repository) {
     RuntimeModuleDescriptor descriptor;
-    if (getLoadingRule() == RuntimeModuleLoadingRule.REQUIRED) {
+    if (getLoadingRule() == RuntimeModuleLoadingRule.REQUIRED || getLoadingRule() == RuntimeModuleLoadingRule.EMBEDDED) {
       descriptor = repository.getModule(getModuleId());
     }
     else {

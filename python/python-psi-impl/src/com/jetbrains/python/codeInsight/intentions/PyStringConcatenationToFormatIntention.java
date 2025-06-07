@@ -29,8 +29,7 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.string.concatenation.to.format");
   }
 

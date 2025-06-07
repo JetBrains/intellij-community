@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -27,7 +27,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
-  @NotNull private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
+  private final @NotNull Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
   private boolean myQueueProcessorActive;
 
   RepositoryLoader(@NotNull SvnRepositoryCache cache) {
@@ -76,20 +76,19 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void startLoadTask(@NotNull final Pair<RepositoryTreeNode, Expander> data) {
+  private void startLoadTask(final @NotNull Pair<RepositoryTreeNode, Expander> data) {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new LoadTask(data), new EmptyProgressIndicator());
   }
 
   @Override
-  @NotNull
-  protected NodeLoadState getNodeLoadState() {
+  protected @NotNull NodeLoadState getNodeLoadState() {
     return NodeLoadState.REFRESHED;
   }
 
   private final class LoadTask extends Task.Backgroundable {
-    @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
-    @NotNull private final List<DirectoryEntry> entries = new ArrayList<>();
-    @Nullable private VcsException error;
+    private final @NotNull Pair<RepositoryTreeNode, Expander> myData;
+    private final @NotNull List<DirectoryEntry> entries = new ArrayList<>();
+    private @Nullable VcsException error;
 
     private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {
       super(data.first.getVcs().getProject(), message("progress.title.loading.child.entries"));

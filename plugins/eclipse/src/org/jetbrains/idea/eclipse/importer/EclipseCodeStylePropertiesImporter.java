@@ -40,6 +40,7 @@ public class EclipseCodeStylePropertiesImporter implements EclipseFormatterOptio
     String oderOfImportsValue = uiPreferences.getProperty(OPTION_IMPORT_ORDER);
     if (oderOfImportsValue != null) {
       PackageEntryTable importLayoutTable = new PackageEntryTable();
+      importLayoutTable.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
       importLayoutTable.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       String[] chunks = oderOfImportsValue.split(";");
       for (String importString : chunks) {

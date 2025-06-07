@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -67,6 +67,18 @@ public final class NioFiles {
   public static @NotNull @NlsSafe String getFileName(@NotNull Path path) {
     Path name = path.getFileName();
     return (name != null ? name : path).toString();
+  }
+
+  /**
+   * Same as {@link Files#size(Path)}, but returns {@code -1} instead of throwing {@link IOException}.
+   */
+  public static long sizeIfExists(@NotNull Path path) {
+    try {
+      return Files.size(path);
+    }
+    catch (IOException e) {
+      return -1;
+    }
   }
 
   /**
@@ -228,9 +240,9 @@ public final class NioFiles {
   }
 
   /**
-   * <p>Recursively deletes the given directory or file, if it exists.
-   * Does not follow symlinks or junctions (i.e. deletes just links, not targets).
-   * Invokes the callback before deleting a file or a directory (the latter - after deleting it's content).
+   * <p>Recursively deletes the given directory or file if it exists.
+   * Does not follow symlinks or junctions (i.e., deletes just links, not targets).
+   * Invokes the callback before deleting a file or a directory (the latter - after deleting its content).
    * Fails fast (throws an exception right after meeting a problematic file and does not try to delete the rest first).</p>
    *
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
@@ -238,6 +250,30 @@ public final class NioFiles {
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
+  }
+
+  /**
+   * See {@link #deleteQuietly(Path, Consumer)}.
+   */
+  @ApiStatus.Experimental
+  public static void deleteQuietly(@Nullable Path file) {
+    deleteQuietly(file, null);
+  }
+
+  /**
+   * Deletes a single file or an empty directory without throwing exceptions.
+   * Handy for using in {@code finally} blocks for cleaning up temporary artifacts.
+   */
+  @ApiStatus.Experimental
+  public static void deleteQuietly(@Nullable Path file, @Nullable Consumer<IOException> handler) {
+    try {
+      if (file != null) {
+        Files.deleteIfExists(file);
+      }
+    }
+    catch (IOException e) {
+      if (handler != null) handler.accept(e);
+    }
   }
 
   /**
@@ -250,7 +286,7 @@ public final class NioFiles {
 
   /**
    * <p>Recursively copies the given directory or file; for files, copies attributes.
-   * Does not follow symlinks (i.e. copies just links, not targets).
+   * Does not follow symlinks (i.e., copies just links, not targets).
    * Merges with an existing directory structure under {@code to} (if any), but does not overwrite existing files.
    * Invokes the callback before copying a file or a directory.
    * Fails fast (throws an exception right after meeting a problematic file or directory); does not try to delete an incomplete copy.</p>
@@ -280,7 +316,7 @@ public final class NioFiles {
    * A handy stub for building tree stats collecting visitors (e.g., for estimating the number of files before deletion).
    * It ignores exceptions and skips symlinks and NTFS reparse points.
    */
-  public static abstract class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
+  public abstract static class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
     protected abstract void countDirectory(Path dir, BasicFileAttributes attrs);
     protected abstract void countFile(Path file, BasicFileAttributes attrs);
 

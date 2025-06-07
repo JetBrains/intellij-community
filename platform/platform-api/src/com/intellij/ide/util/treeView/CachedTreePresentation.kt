@@ -55,7 +55,7 @@ class CachedTreePresentationData(
         }
         val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
-          TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
+          TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
           CachedPresentationDataImpl(presentation.presentableText ?: "", iconData, isLeaf),
           extraAttrs,
           children
@@ -163,6 +163,8 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
   fun getRoot(): Any = cachedRoot
 
   fun isLeaf(node: Any): Boolean = getCachedNode(node)?.isLeaf == true
+
+  fun isExpanded(node: Any): Boolean = getCachedNode(node)?.isExpanded == true
 
   fun getChildren(parent: Any): List<Any>? = getCachedChildren(parent)?.nullize()
 

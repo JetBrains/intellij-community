@@ -146,7 +146,7 @@ class InstanceContainerImpl(
     val preparedHolders = prepareHolders(parentScope, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
-    updateState { state: InstanceContainerState ->
+    updateState { state ->
       // key -> holder to add/replace; key -> null to remove
       val restorationMap = LinkedHashMap<String, InstanceHolder?>()
       val builder = state.holders.builder()
@@ -200,7 +200,7 @@ class InstanceContainerImpl(
       val existingHolder = state.getByName(keyClassName)
       if (existingHolder != null) {
         throw InstanceAlreadyRegisteredException(
-          keyClassName,
+          keyClassName = keyClassName,
           existingInstanceClassName = existingHolder.instanceClassName(),
           newInstanceClassName = holder.instanceClassName(),
         )
@@ -216,7 +216,7 @@ class InstanceContainerImpl(
     updateState { state: InstanceContainerState ->
       val existingHolder = state.getByName(keyClassName)
       handle = UnregisterHandle {
-        undoReplaceInstance(keyClassName, instance, previousHolder = existingHolder)
+        undoReplaceInstance(keyClassName = keyClassName, instance = instance, previousHolder = existingHolder)
         return@UnregisterHandle mapOf(keyClassName to holder)
       }
       state.replaceByClass(keyClass, holder)
@@ -237,7 +237,7 @@ class InstanceContainerImpl(
     val keyClassName = keyClass.name
     val holder = InitializedInstanceHolder(instance)
     var existingHolder: InstanceHolder? = null
-    updateState { state: InstanceContainerState ->
+    updateState { state ->
       existingHolder = state.getByName(keyClassName)
       state.replaceByClass(keyClass, holder)
     }
@@ -246,7 +246,7 @@ class InstanceContainerImpl(
 
   override fun unregister(keyClassName: String, unregisterDynamic: Boolean): InstanceHolder? {
     lateinit var existingHolder: InstanceHolder
-    updateState { state: InstanceContainerState ->
+    updateState { state ->
       existingHolder = state.getByName(keyClassName)?.takeUnless {
         it is DynamicInstanceHolder && !unregisterDynamic
       } ?: return null
@@ -266,7 +266,7 @@ class InstanceContainerImpl(
   }
 
   private companion object {
-
+    @JvmField
     val stateHandle: VarHandle = MethodHandles
       .privateLookupIn(InstanceContainerImpl::class.java, MethodHandles.lookup())
       .findVarHandle(InstanceContainerImpl::class.java, "_state", Any::class.java)

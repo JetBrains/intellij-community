@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(i: Int, b: Boolean) {
+    when (i) {
+        in 0..1 if b -> {
+        }
+        else -> {}
+    }
+}

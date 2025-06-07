@@ -46,15 +46,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     return true;
   }
 
-  @NotNull
   @Override
-  public final XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
+  public final @NotNull XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointFiltersPanel<>(project);
   }
 
-  @NotNull
   @Override
-  public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
+  public final @NotNull XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
   }
 
@@ -80,7 +78,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
   }
 
-  protected static boolean canPutAtElement(@NotNull final VirtualFile file,
+  protected static boolean canPutAtElement(final @NotNull VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
                                            @NotNull BiFunction<? super PsiElement, ? super Document, Boolean> processor) {

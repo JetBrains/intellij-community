@@ -33,7 +33,6 @@ import com.intellij.xml.util.XmlEnumeratedValueReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.digested.DAttributePattern;
 import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
@@ -78,39 +77,15 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   private final QName myName;
 
   RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
-                            DAttributePattern pattern,
+                            QName name,
                             Map<String, String> values,
-                            boolean optional) {
-    this(elementDescriptor, getName(pattern), values, optional, pattern.getLocation());
-  }
-
-  private static QName getName(DAttributePattern pattern) {
-    final Iterator<QName> iterator = pattern.getName().listNames().iterator();
-    return iterator.hasNext() ? iterator.next() : UNKNOWN;
-  }
-
-  private RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
-                                    QName name,
-                                    Map<String, String> values,
-                                    boolean optional,
-                                    Locator... locations) {
+                            boolean optional,
+                            List<Locator> locations) {
     myElementDescriptor = elementDescriptor;
     myValues = values;
     myOptional = optional;
     myName = name;
-    myDeclarations.addAll(Arrays.asList(locations));
-  }
-
-  public RngXmlAttributeDescriptor mergeWith(RngXmlAttributeDescriptor d) {
-    final QName name = d.myName.equals(UNKNOWN) ? myName : d.myName;
-
-    Map<String, String> values = new LinkedHashMap<>(myValues);
-    values.putAll(d.myValues);
-
-    Set<Locator> locations = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
-    locations.addAll(myDeclarations);
-    locations.addAll(d.myDeclarations);
-    return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[0]));
+    myDeclarations.addAll(locations);
   }
 
   @Override
@@ -140,12 +115,12 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
 
   @Override
   public boolean isEnumerated() {
-    return myValues.size() > 0 && myValues.get(null) == null;
+    return !myValues.isEmpty() && myValues.get(null) == null;
   }
 
   @Override
   public String[] getEnumeratedValues() {
-    if (myValues.size() > 0) {
+    if (!myValues.isEmpty()) {
       final Map<String, String> copy;
       if (myValues.get(null) != null) {
         copy = new HashMap<>(myValues);
@@ -181,7 +156,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
       final String uri = myName.getNamespaceURI();
       final String prefix = tag.getPrefixByNamespace(uri);
       if (prefix != null) {
-        if (prefix.length() == 0) {
+        if (prefix.isEmpty()) {
           return myName.getLocalPart();
         }
         else {
@@ -189,9 +164,9 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
         }
       }
     }
-    if (myName.getNamespaceURI().length() > 0) {
+    if (!myName.getNamespaceURI().isEmpty()) {
       final String prefix2 = myName.getPrefix();
-      if (prefix2 != null && prefix2.length() > 0) {
+      if (prefix2 != null && !prefix2.isEmpty()) {
         return prefix2 + ":" + myName.getLocalPart();
       }
     }

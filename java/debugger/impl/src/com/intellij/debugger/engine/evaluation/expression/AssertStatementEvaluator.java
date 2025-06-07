@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class AssertStatementEvaluator implements Evaluator {
-  @NotNull private final Evaluator myEvaluator;
+  private final @NotNull Evaluator myEvaluator;
 
   public AssertStatementEvaluator(@NotNull Evaluator evaluator) {
     myEvaluator = evaluator;

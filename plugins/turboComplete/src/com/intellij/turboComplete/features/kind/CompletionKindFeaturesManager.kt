@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Key
 import com.intellij.platform.ml.impl.turboComplete.CompletionKind
 
-class CompletionKindFeaturesManager {
+internal class CompletionKindFeaturesManager {
   private val computedFeatures: MutableMap<CompletionKind, Map<String, MLFeatureValue>> = mutableMapOf()
 
   private fun computeKindFeatures(kind: CompletionKind,

@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Profile;
@@ -62,6 +64,7 @@ public final class ArtifactRepositoryManager {
   
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
+  private final Retry myRetry;
   private final RepositorySystemSessionFactory mySessionFactory;
 
   private static final RepositorySystem ourSystem;
@@ -116,18 +119,17 @@ public final class ArtifactRepositoryManager {
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories,
                                    @NotNull ProgressConsumer progressConsumer, boolean offline, @NotNull Retry retry) {
     myRemoteRepositories.addAll(remoteRepositories);
-    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline, retry);
+    myRetry = retry;
+    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
   }
 
 
   private static final class RepositorySystemSessionFactory {
     private final RepositorySystemSession sessionTemplate;
-    private final Retry myRetry;
 
     private RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
                                            @NotNull ProgressConsumer progressConsumer,
-                                           boolean offline,
-                                           Retry retry) {
+                                           boolean offline) {
       DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
       if (progressConsumer != ProgressConsumer.DEAF) {
         session.setTransferListener(new TransferListener() {
@@ -179,10 +181,9 @@ public final class ArtifactRepositoryManager {
 
       session.setReadOnly();
       sessionTemplate = session;
-      myRetry = retry;
     }
 
-    private RepositorySystemSession createDefaultSession() {
+    RepositorySystemSession createDefaultSession() {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
       session.setReadOnly();
       return session;
@@ -192,14 +193,14 @@ public final class ArtifactRepositoryManager {
      * Return session which will include dependencies rejected by conflict resolver to the results.
      * @see ArtifactDependencyNode#isRejected()
      */
-    private RepositorySystemSession createVerboseSession() {
+    RepositorySystemSession createVerboseSession() {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
       session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, Boolean.TRUE);
       session.setReadOnly();
       return session;
     }
 
-    private RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
+    RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
       if (!excludedDependencies.isEmpty()) {
         session.setDependencySelector(new AndDependencySelector(
@@ -209,6 +210,12 @@ public final class ArtifactRepositoryManager {
       }
       session.setReadOnly();
       return session;
+    }
+
+    RepositorySystemSession createSessionCloneWithCleanData(RepositorySystemSession fromSession) {
+      DefaultRepositorySystemSession newSession = new DefaultRepositorySystemSession(fromSession).setData(new DefaultSessionData());
+      newSession.setReadOnly();
+      return newSession;
     }
 
     @SuppressWarnings("SSBasedInspection")
@@ -223,44 +230,7 @@ public final class ArtifactRepositoryManager {
         return new Exclusion(groupId, artifactName, "*", "*");
       }).collect(Collectors.toList());
     }
-
-    private <R> RetryWithClearSessionDataResult<R> retryWithClearSessionData(@NotNull RepositorySystemSession sessionTemplate,
-                                                                             @NotNull ThrowingFunction<RepositorySystemSession, ? extends R> func)
-      throws Exception {
-      // Some errors are cached in session data, and for proper retries work, we must
-      // reset this data with RepositorySystemSession#setData after failure.
-      return myRetry.retry(() -> {
-        RepositorySystemSession newSession = cloneSessionAndClearData(sessionTemplate);
-        R result = func.get(newSession);
-        return new RetryWithClearSessionDataResult<>(newSession, result);
-      }, LOG);
-    }
-
-    private static RepositorySystemSession cloneSessionAndClearData(RepositorySystemSession session) {
-      DefaultRepositorySystemSession newSession = new DefaultRepositorySystemSession(session);
-      newSession.setData(new DefaultSessionData());
-      newSession.setReadOnly();
-      return newSession;
-    }
-
-    private static final class RetryWithClearSessionDataResult<R> {
-      private final RepositorySystemSession session;
-      private final R result;
-
-      RetryWithClearSessionDataResult(RepositorySystemSession session, R result) {
-        this.session = session;
-        this.result = result;
-      }
-
-      private RepositorySystemSession getSession() {
-        return session;
-      }
-
-      private R getResult() {
-        return result;
-      }
-    }
-  }
+ }
 
   /**
    * Returns list of classes corresponding to classpath entries for this module.
@@ -318,16 +288,13 @@ public final class ArtifactRepositoryManager {
     return files;
   }
 
-  @Nullable
-  public ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
+  /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
+  public @Nullable ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
 
-    DependencyNode root = mySessionFactory.retryWithClearSessionData(
-      mySessionFactory.createVerboseSession(),
-      s -> ourSystem.collectDependencies(s, collectRequest)
-    ).getResult().getRoot();
+    DependencyNode root = runWithRetry(mySessionFactory.createVerboseSession(), s -> ourSystem.collectDependencies(s, collectRequest).getRoot());
 
     if (root.getArtifact() == null && root.getChildren().size() == 1) {
       root = root.getChildren().get(0);
@@ -336,10 +303,9 @@ public final class ArtifactRepositoryManager {
     return builder.getRoot();
   }
 
-  @NotNull
-  public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
-                                                          Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
-                                                          List<String> excludedDependencies) throws Exception {
+  public @NotNull Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
+                                                                   Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
+                                                                   List<String> excludedDependencies) throws Exception {
     List<Artifact> artifacts = new ArrayList<>();
     VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
@@ -365,10 +331,7 @@ public final class ArtifactRepositoryManager {
 
         if (!requests.isEmpty()) {
           try {
-            List<ArtifactResult> resultList = mySessionFactory.retryWithClearSessionData(
-              session,
-              s -> ourSystem.resolveArtifacts(s, requests)
-            ).getResult();
+            List<ArtifactResult> resultList = runWithRetry(session, s -> ourSystem.resolveArtifacts(s, requests));
 
             for (ArtifactResult result : resultList) {
               artifacts.add(result.getArtifact());
@@ -406,8 +369,8 @@ public final class ArtifactRepositoryManager {
     return artifacts;
   }
 
-  @NotNull
-  private RepositorySystemSession prepareRequests(String groupId,
+  /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
+  private @NotNull RepositorySystemSession prepareRequests(String groupId,
                                                   String artifactId,
                                                   Set<VersionConstraint> constraints,
                                                   ArtifactKind kind,
@@ -417,12 +380,9 @@ public final class ArtifactRepositoryManager {
     RepositorySystemSession session;
     if (includeTransitiveDependencies) {
       CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind));
-      var resultAndSession = mySessionFactory.retryWithClearSessionData(
-        mySessionFactory.createSession(excludedDependencies),
-        (s) -> ourSystem.collectDependencies(s, collectRequest)
-      );
-      session = resultAndSession.getSession();
-      CollectResult collectResult = resultAndSession.getResult();
+      var resultAndSession = runWithRetry(mySessionFactory.createSession(excludedDependencies), s -> Pair.create(s, ourSystem.collectDependencies(s, collectRequest)));
+      session = resultAndSession.getFirst();
+      CollectResult collectResult = resultAndSession.getSecond();
 
       ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
       DependencyFilter filter = createScopeFilter();
@@ -451,20 +411,16 @@ public final class ArtifactRepositoryManager {
     return session;
   }
 
-  @NotNull
-  public Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
-                                                                ArtifactKind kind, boolean includeTransitiveDependencies,
-                                                                List<String> excludedDependencies) throws Exception {
+  public @NotNull Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
+                                                                         ArtifactKind kind, boolean includeTransitiveDependencies,
+                                                                         List<String> excludedDependencies) throws Exception {
     List<Artifact> artifacts = new ArrayList<>();
     List<ArtifactRequest> requests = new ArrayList<>();
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
     if (!requests.isEmpty()) {
-      List<ArtifactResult> resultList = mySessionFactory.retryWithClearSessionData(
-        session,
-        (s) -> ourSystem.resolveArtifacts(s, requests)
-      ).getResult();
+      List<ArtifactResult> resultList = runWithRetry(session, s -> ourSystem.resolveArtifacts(s, requests));
 
       for (ArtifactResult result : resultList) {
         artifacts.add(result.getArtifact());
@@ -510,7 +466,8 @@ public final class ArtifactRepositoryManager {
 
     try {
       return Collections.singleton(ourVersioning.parseVersionConstraint(annotationsConstraint));
-    } catch (InvalidVersionSpecificationException e) {
+    }
+    catch (InvalidVersionSpecificationException e) {
       LOG.info("Failed to parse version constraint " + annotationsConstraint, e);
     }
 
@@ -531,16 +488,14 @@ public final class ArtifactRepositoryManager {
     return candidate;
   }
 
-  @NotNull
-  private static DependencyFilter createScopeFilter() {
+  private static @NotNull DependencyFilter createScopeFilter() {
     return DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
   }
 
   /**
    * Gets the versions (in ascending order) that matched the requested range.
    */
-  @NotNull
-  public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
+  public @NotNull List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
     VersionRangeResult result = ourSystem.resolveVersionRange(
       mySessionFactory.createDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
@@ -585,8 +540,7 @@ public final class ArtifactRepositoryManager {
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
   }
 
-  @NotNull
-  public static List<RemoteRepository> createDefaultRemoteRepositories() {
+  public static @NotNull List<RemoteRepository> createDefaultRemoteRepositories() {
     return List.of(
       // Maven Central Repository
       createRemoteRepository(
@@ -640,6 +594,12 @@ public final class ArtifactRepositoryManager {
       }
     }
     return result;
+  }
+
+  private <R> R runWithRetry(@NotNull RepositorySystemSession sessionTemplate, @NotNull ThrowableNotNullFunction<RepositorySystemSession, ? extends R, Exception> action) throws Exception {
+    // Some errors are cached in session data, and for proper retries work, we must
+    // reset this data with RepositorySystemSession#setData after failure.
+    return myRetry.retry(() -> action.fun(mySessionFactory.createSessionCloneWithCleanData(sessionTemplate)), LOG);
   }
 
   public static class ArtifactAuthenticationData {
@@ -714,8 +674,7 @@ public final class ArtifactRepositoryManager {
       return true;
     }
 
-    @NotNull
-    public List<ArtifactRequest> getRequests() {
+    public @NotNull List<ArtifactRequest> getRequests() {
       return myRequests;
     }
   }
@@ -778,7 +737,7 @@ public final class ArtifactRepositoryManager {
   }
 
   // Force certain activation kinds to be always active in order to include such dependencies in dependency resolution process
-  // Currently OS and JDK activations are always enabled for the purpose of transitive artifact discovery
+  // Currently JDK activations are always enabled for the purpose of transitive artifact discovery
   private static class ProfileActivatorProxy implements ProfileActivator {
 
     private final ProfileActivator[] myDelegates;
@@ -789,7 +748,7 @@ public final class ArtifactRepositoryManager {
 
     private static boolean isForceActivation(Profile profile) {
       Activation activation = profile.getActivation();
-      return activation != null && (activation.getJdk() != null || activation.getOs() != null);
+      return activation != null && activation.getJdk() != null;
     }
 
     @Override

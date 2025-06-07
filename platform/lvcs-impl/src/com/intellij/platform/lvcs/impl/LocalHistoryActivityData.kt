@@ -35,7 +35,7 @@ internal fun ActivityData.getSelectionCalculator(facade: LocalHistoryFacade, gat
     val rootEntry = getRootEntry(gateway)
     val changeSets = items.filterIsInstance<ChangeSetActivityItem>().map { RevisionId.ChangeSet(it.id) }
     val entryPath = getEntryPath(gateway, scope)
-    return SelectionCalculator.create(facade, gateway, rootEntry, entryPath, listOf(RevisionId.Current) + changeSets,
+    SelectionCalculator.create(facade, gateway, rootEntry, entryPath, listOf(RevisionId.Current) + changeSets,
                                       scope.from, scope.to, isOldContentUsed)
   }
 }

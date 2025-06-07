@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -10,6 +9,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -18,6 +18,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -35,6 +36,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -84,7 +86,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   public static @IntentionFamilyName @NotNull String getReplaceWithSwitchFixName(){
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH);
   }
 
   private static class IfCanBeSwitchFix extends PsiUpdateModCommandQuickFix {
@@ -242,7 +244,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  private static @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
+  private static @Unmodifiable @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
     return SyntaxTraverser.psiTraverser(expression)
       .filter(PsiTypeCastExpression.class)
       .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
@@ -256,7 +258,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     if (initializer != castExpression) return null;
     PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return null;
-    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
+    if (!ControlFlowUtil.isEffectivelyFinal(variable, scope)) return null;
     return variable;
   }
 
@@ -331,7 +333,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
         if (defaultBranch != null){
-          defaultBranch.addCaseExpression(condition);
+          if (switchExpressionCanBeNullInsideDefault(switchExpression, defaultBranch)) {
+            defaultBranch.addCaseExpression(condition);
+          }
         }
         else {
           IfStatementBranch nullBranch = new IfStatementBranch(new PsiEmptyStatementImpl(), !hasUnconditionalPatternCheck(ifStatement, switchExpression));
@@ -375,6 +379,39 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       statement.replace(breakTarget);
       breakTarget.replace(labeledStatement);
     }
+  }
+
+  private static boolean switchExpressionCanBeNullInsideDefault(@NotNull PsiExpression switchExpression,
+                                                                @NotNull IfStatementBranch branch) {
+    EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
+    var visitor = new JavaRecursiveElementVisitor() {
+
+      private boolean isNull = true;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (!isNull) {
+          return;
+        }
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitExpression(@NotNull PsiExpression expression) {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+        if (statement != null &&
+            //check only high-level statements
+            statement.getParent() instanceof PsiCodeBlock codeBlock &&
+            codeBlock.getParent() == branch.getStatement() &&
+            equivalenceChecker.expressionsAreEquivalent(switchExpression, expression) &&
+            getNullability(expression) == Nullability.NOT_NULL) {
+          isNull = false;
+        }
+        super.visitExpression(expression);
+      }
+    };
+    visitor.visitElement(branch.getStatement());
+    return visitor.isNull;
   }
 
 
@@ -426,6 +463,12 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
 
   private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch branch) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+      if (SwitchUtils.STRING_IS_EMPTY.test(methodCallExpression)) {
+        final PsiElementFactory factory = PsiElementFactory.getInstance(methodCallExpression.getProject());
+        final PsiExpression caseWithEmptyText = factory.createExpressionFromText("\"\"", switchExpression.getContext());
+        branch.addCaseExpression(caseWithEmptyText);
+        return;
+      }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
@@ -753,9 +796,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   private static boolean hasUnconditionalPatternCheck(PsiType type, PsiExpression check) {
-    final PsiCaseLabelElement pattern = SwitchUtils.createPatternFromExpression(check);
-    if (pattern == null) return false;
-    return JavaPsiPatternUtil.isUnconditionalForType(pattern, type);
+    if (!(check instanceof PsiInstanceOfExpression instanceOfExpression)) return false;
+    if (!(instanceOfExpression.getPattern() instanceof PsiTypeTestPattern pattern)) return false;
+    PsiTypeElement checkType = pattern.getCheckType();
+    if (checkType == null) return false;
+    return JavaPsiPatternUtil.isUnconditionallyExactForType(check, type, checkType.getType());
   }
 
   private static Nullability getNullability(PsiExpression expression) {

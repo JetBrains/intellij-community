@@ -22,6 +22,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ final class JumpFromRemoteFileToLocalAction extends AnAction {
     }
   }
 
-  private static Collection<VirtualFile> findLocalFiles(Project project, Url url, String fileName) {
+  private static @Unmodifiable Collection<VirtualFile> findLocalFiles(Project project, Url url, String fileName) {
     for (LocalFileFinder finder : LocalFileFinder.EP_NAME.getExtensions()) {
       final VirtualFile file = finder.findLocalFile(url, project);
       if (file != null) {

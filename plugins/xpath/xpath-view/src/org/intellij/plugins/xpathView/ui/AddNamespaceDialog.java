@@ -87,7 +87,7 @@ public class AddNamespaceDialog extends DialogWrapper {
     }
 
     private void updateOkAction() {
-        getOKAction().setEnabled(getURI().length() > 0 && getPrefix().length() > 0);
+        getOKAction().setEnabled(!getURI().isEmpty() && !getPrefix().isEmpty());
     }
 
     @Override

@@ -1,52 +1,49 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
+import java.io.IOException
 
 /**
- * Represents some process which was launched via [EelExecApi.executeProcess].
+ * Represents some process that was launched via [EelExecApi.spawnProcess].
  *
  */
-interface EelProcess: KillableProcess {
-  val pid: EelApiBase.Pid
+sealed interface EelProcess {
+  val pid: EelApi.Pid
 
   /**
    * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],
-   * this method does not allow to ensure that a data chunk was actually delivered to the remote process.
-   * For synchronous delivery that reports about delivery result, please use [sendStdinWithConfirmation].
+   * this method does not allow ensuring that a data chunk was actually delivered to the remote process.
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
-  val stdin: SendChannel<ByteArray>
-
-  val stdout: ReceiveChannel<ByteArray>
-  val stderr: ReceiveChannel<ByteArray>
+  val stdin: EelSendChannel
+  val stdout: EelReceiveChannel
+  val stderr: EelReceiveChannel
   val exitCode: Deferred<Int>
 
   /**
-   * Sends [data] into the process stdin and waits until the data is received by the process.
+   * Sends `SIGKILL` on Unix.
    *
-   * Notice that every data chunk is flushed into the process separately. There's no buffering.
+   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+   * on Windows.
    */
-  @Throws(SendStdinError::class)
-  suspend fun sendStdinWithConfirmation(data: ByteArray)
+  suspend fun kill()
 
-  sealed class SendStdinError(msg: String) : Exception(msg) {
-    class ProcessExited : SendStdinError("Process exited")
-
-    /**
-     * This error doesn't imply that the process has already exited. It is possible to close the stdin of the process, and the process
-     * may live quite a long time after that. However, usually processes exit immediately right after their stdin are closed.
-     * Therefore, it may turn out that the process exits at the moment when this error is being observed by the API user.
-     */
-    class StdinClosed : SendStdinError("Stdin closed")
-  }
+  /**
+   * Sends `SIGINT` on Unix.
+   * Sends `CTRL+C` on Windows by attaching a console.
+   *
+   * Warning: This signal can be ignored.
+   */
+  suspend fun interrupt()
 
   /**
    * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
    * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
+   * If the process was launched with PTY, `com.pty4j.PtyProcess` instance is returned.
    */
   fun convertToJavaProcess(): Process
 
@@ -58,4 +55,15 @@ interface EelProcess: KillableProcess {
     class NoPty : ResizePtyError("Process has no PTY")
     data class Errno(val errno: Int, override val message: String) : ResizePtyError("[$errno] $message")
   }
+}
+
+interface EelPosixProcess : EelProcess {
+  /**
+   * Sends `SIGTERM` on Unix.
+   */
+  suspend fun terminate()
+}
+
+interface EelWindowsProcess : EelProcess {
+  // Nothing yet.
 }

@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.icons.ImageDescriptor
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -25,12 +24,12 @@ import kotlin.io.path.listDirectoryEntries
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
-private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, deprecation = null)
+private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, flat = false, deprecation = null)
 
 internal class ImageInfo(
   @JvmField val id: String,
   @JvmField val sourceRoot: JpsModuleSourceRoot,
-  @JvmField val phantom: Boolean
+  @JvmField val phantom: Boolean,
 ) {
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
@@ -83,6 +82,8 @@ internal class ImageInfo(
 
   val used: Boolean
     get() = flags.used
+  val flat: Boolean
+    get() = flags.flat
   val deprecated: Boolean
     get() = flags.deprecation != null
   val deprecation: DeprecationData?
@@ -121,7 +122,7 @@ internal class ImageInfo(
   }
 }
 
-internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val deprecation: DeprecationData?)
+internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val flat: Boolean, @JvmField val deprecation: DeprecationData?)
 
 internal data class ImageSyncFlags(@JvmField val skipSync: Boolean, @JvmField val forceSync: Boolean)
 
@@ -129,21 +130,21 @@ internal data class DeprecationData(
   @JvmField val comment: String?,
   @JvmField val replacement: String?,
   @JvmField val replacementContextClazz: String?,
-  @JvmField val replacementReference: String?
+  @JvmField val replacementReference: String?,
 )
 
 internal class ImageCollector(
   private val projectHome: Path,
   private val iconsOnly: Boolean = true,
   private val ignoreSkipTag: Boolean = false,
-  private val moduleConfig: IntellijIconClassGeneratorModuleConfig?
+  private val moduleConfig: IntellijIconClassGeneratorModuleConfig?,
 ) {
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
-  private val mergeRoots: MutableSet<String> = ContainerUtil.newConcurrentSet()
+  private val mergeRoots: MutableSet<String> = ConcurrentHashMap.newKeySet()
   private val mergeAdd = ConcurrentHashMap<String, List<String>>()
-  private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
+  private val usedIconRobots: MutableSet<Path> = ConcurrentHashMap.newKeySet()
   private var mappingFile: Path? = null
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
@@ -164,8 +165,11 @@ internal class ImageCollector(
         break
       }
 
+      val excludeDirectories = moduleConfig?.excludePackages
+        ?.map { rootDir.resolve(it.replace('.', '/')) }?.toSet() ?: emptySet()
+
       if (rootDir.fileName.toString() != "compatibilityResources") {
-        processRoot(sourceRoot, rootDir)
+        processRoot(sourceRoot, rootDir, excludeDirectories)
       }
       else if (java.lang.Boolean.getBoolean("remove.extra.icon.robots.files")) {
         // under flag because not required for regular usage (to avoid FS call)
@@ -181,7 +185,7 @@ internal class ImageCollector(
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
     collectMappingFile(sourceRoot.path)
-    processRoot(sourceRoot, sourceRoot.path.resolve(name))
+    processRoot(sourceRoot, sourceRoot.path.resolve(name), emptySet())
     val result = icons.values.toMutableList()
     if (includePhantom) {
       result.addAll(phantomIcons.values)
@@ -195,7 +199,7 @@ internal class ImageCollector(
     }
   }
 
-  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path) {
+  private fun processRoot(sourceRoot: JpsModuleSourceRoot, rootDir: Path, excludeDirectories: Set<Path>) {
     val rootRobotData = upToProjectHome(rootDir)
     if (rootRobotData.isSkipped(rootDir)) {
       return
@@ -214,7 +218,8 @@ internal class ImageCollector(
       isDirectory = attributes.isDirectory,
       common = null,
       robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
-      level = 0
+      level = 0,
+      excludeDirectories = excludeDirectories,
     ) ?: return
     val robotData = rootRobotData.fork(iconRoot, rootDir)
 
@@ -228,7 +233,7 @@ internal class ImageCollector(
     sourceRoot: JpsModuleSourceRoot,
     robotData: IconRobotsData,
     prefix: String,
-    level: Int
+    level: Int,
   ) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
     processChildren(dir, isParallel = level < 3) { file ->
@@ -288,7 +293,7 @@ internal class ImageCollector(
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
-  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int): Path? {
+  private fun downToRoot(root: Path, file: Path, isDirectory: Boolean, common: Path?, robotData: IconRobotsData, level: Int, excludeDirectories: Set<Path>): Path? {
     if (robotData.isSkipped(file) || robotData.mergeToRoot) {
       return common
     }
@@ -300,11 +305,15 @@ internal class ImageCollector(
         }
       }
 
+      if (excludeDirectories.contains(file)) {
+        return common
+      }
+
       val childRobotData = robotData.fork(file, root)
       var childCommon = common
       Files.newDirectoryStream(file).use { stream ->
         for (it in stream) {
-          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1)
+          childCommon = downToRoot(root, it, Files.isDirectory(it), childCommon, childRobotData, level + 1, excludeDirectories)
         }
       }
       return childCommon
@@ -446,10 +455,11 @@ private data class OwnDeprecatedIcon(val relativeFile: String, val data: Depreca
 internal class IconRobotsData(
   private val parent: IconRobotsData? = null,
   private val ignoreSkipTag: Boolean,
-  private val usedIconRobots: MutableSet<Path>?
+  private val usedIconRobots: MutableSet<Path>?,
 ) {
   private val skip = ArrayList<Pattern>()
   private val used = ArrayList<Pattern>()
+  private var flat = ArrayList<Pattern>()
   private val deprecated = ArrayList<DeprecatedEntry>()
   private val skipSync = ArrayList<Pattern>()
   private val forceSync = ArrayList<Pattern>()
@@ -460,9 +470,10 @@ internal class IconRobotsData(
   private val ownDeprecatedIcons = ArrayList<OwnDeprecatedIcon>()
 
   fun getImageFlags(file: Path): ImageFlags {
+    val isFlat = matches(file, flat)
     val isUsed = matches(file, used)
     val deprecationData = findDeprecatedData(file)
-    val flags = ImageFlags(isUsed, deprecationData)
+    val flags = ImageFlags(isUsed, isFlat, deprecationData)
     val parentFlags = parent?.getImageFlags(file) ?: return flags
     return mergeImageFlags(flags, parentFlags, file)
   }
@@ -471,7 +482,7 @@ internal class IconRobotsData(
     ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
   fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> =
-    ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, deprecation = it.data)) }
+    ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, flat = false, deprecation = it.data)) }
 
   fun isSkipped(file: Path): Boolean {
     if (!ignoreSkipTag && matches(file, skip)) {
@@ -491,31 +502,35 @@ internal class IconRobotsData(
     usedIconRobots?.add(robots)
 
     val answer = IconRobotsData(this, ignoreSkipTag, usedIconRobots)
-    parse(robots,
-          RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("mergeAdd:") { value -> answer.mergeAdd.add(value.trim()) },
-          RobotFileHandler("merge") { answer.mergeToRoot = true },
-          RobotFileHandler("deprecated:") { value ->
-            val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }
-            val valueWithoutComment = value.substringBefore(";")
-            val pattern = valueWithoutComment.substringBefore("->").trim()
-            val replacementString = valueWithoutComment.substringAfter("->", "").trim().takeIf { it.isNotEmpty() }
-            val replacement = replacementString?.substringAfter('@')?.trim()
-            val replacementContextClass = replacementString?.substringBefore('@', "")?.trim()?.takeIf { it.isNotEmpty() }
+    parse(
+      robots,
+      RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("mergeAdd:") { value -> answer.mergeAdd.add(value.trim()) },
+      RobotFileHandler("merge") { answer.mergeToRoot = true },
+      RobotFileHandler("deprecated:") { value ->
+        val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }
+        val valueWithoutComment = value.substringBefore(";")
+        val pattern = valueWithoutComment.substringBefore("->").trim()
+        val replacementString = valueWithoutComment.substringAfter("->", "").trim().takeIf { it.isNotEmpty() }
+        val replacement = replacementString?.substringAfter('@')?.trim()
+        val replacementContextClass = replacementString?.substringBefore('@', "")?.trim()?.takeIf { it.isNotEmpty() }
 
-            val deprecatedData = DeprecationData(comment, replacement, replacementContextClass,
-                                                 replacementReference = computeReplacementReference(comment))
-            answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
+        val deprecatedData = DeprecationData(
+          comment, replacement, replacementContextClass,
+          replacementReference = computeReplacementReference(comment)
+        )
+        answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
-            if (!pattern.contains('*') && !pattern.startsWith('/')) {
-              answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
-            }
-          },
-          RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
-          RobotFileHandler("#") { }, // comment
-          RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) }
+        if (!pattern.contains('*') && !pattern.startsWith('/')) {
+          answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
+        }
+      },
+      RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
+      RobotFileHandler("#") { }, // comment
+      RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("flatIconName:") { value -> answer.flat.add(compilePattern(dir, root, value)) }, // generates the icon field without static class wrappers
     )
     return answer
   }
@@ -593,7 +608,7 @@ internal class IconRobotsData(
 private data class RobotFileHandler(val start: String, val handler: (String) -> Unit)
 
 private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Path): ImageFlags =
-  ImageFlags(used = flags1.used || flags2.used, deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
+  ImageFlags(used = flags1.used || flags2.used, flat = flags1.flat || flags2.flat, deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
 
 private fun mergeDeprecations(data1: DeprecationData?, data2: DeprecationData?, comment: Path): DeprecationData? {
   if (data1 == null) {

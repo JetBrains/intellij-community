@@ -10,11 +10,13 @@ import com.intellij.psi.xml.XmlMarkupDecl;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
 public final class DtdResolveUtil {
-  static @Nullable XmlNSDescriptor getNsDescriptor(XmlElement element) {
+  @ApiStatus.Internal
+  public static @Nullable XmlNSDescriptor getNsDescriptor(XmlElement element) {
     final XmlElement parentThatProvidesMetaData = PsiTreeUtil
       .getParentOfType(CompletionUtilCoreImpl.getOriginalElement(element), XmlDocument.class, XmlMarkupDecl.class);
 

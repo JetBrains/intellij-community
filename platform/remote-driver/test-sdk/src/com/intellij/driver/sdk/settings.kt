@@ -11,17 +11,21 @@ interface GeneralSettingsRef {
 
 @Remote("com.intellij.openapi.options.advanced.AdvancedSettings")
 interface AdvancedSettingsRef {
+  fun getBoolean(id: String): Boolean
   fun setBoolean(id: String, value: Boolean)
+  fun getDefaultBoolean(id: String): Boolean
 }
 
 fun Driver.setOpenNewProjectsInSameWindow() {
-  service(GeneralSettingsRef::class).setConfirmOpenNewProject(1)
+  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(1)
 }
 
 fun Driver.setOpenNewProjectsInNewWindow() {
-  service(GeneralSettingsRef::class).setConfirmOpenNewProject(0)
+  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(0)
 }
 
+fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT) = service(AdvancedSettingsRef::class, rdTarget)
+
 fun Driver.setAdvancedSetting(id: String, value: Boolean, rdTarget: RdTarget = RdTarget.DEFAULT) {
-  service(AdvancedSettingsRef::class, rdTarget).setBoolean(id, value)
+  advancedSettings(rdTarget).setBoolean(id, value)
 }

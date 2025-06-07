@@ -53,14 +53,17 @@ public final class JavaColorProvider implements ElementColorProvider {
       }
     }
 
-    if (isIntLiteralInsideNewJBColorExpression(parent)) {
+    if (color != null && isIntLiteralInsideNewJBColorExpression(parent)) {
       return color;
     }
+
     return null;
   }
 
+  private static final @NotNull List<@NotNull String> colorNames = List.of("Color", "ColorUIResource");
+
   public static boolean isColorType(@Nullable PsiType type) {
-    if (type != null) {
+    if (type != null && type.isValid()) {
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
       if (aClass != null) {
         final String fqn = aClass.getQualifiedName();
@@ -78,10 +81,10 @@ public final class JavaColorProvider implements ElementColorProvider {
   }
 
   private static @Nullable Color getJavaColorFromExpression(@Nullable PsiElement element, @Nullable UCallExpression newExpression) {
-    if (newExpression != null && newExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
-        isColorType(newExpression.getReturnType())) {
+    if (newExpression != null && canBeColorConstructorCall(newExpression)) {
       return getColor(newExpression.getValueArguments());
     }
+
     if (isIntLiteralInsideNewJBColorExpression(element)) {
       final String text = element.getText();
       boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
@@ -94,22 +97,32 @@ public final class JavaColorProvider implements ElementColorProvider {
 
   private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
     ULiteralExpression literalExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
-    if (literalExpression != null && PsiTypes.intType().equals(literalExpression.getExpressionType())) {
-      UElement parent = literalExpression.getUastParent();
-      if (parent != null) {
-        return isNewJBColorExpression(parent);
-      }
+    if (literalExpression == null) {
+      return false;
     }
-    return false;
+
+    UElement parent = literalExpression.getUastParent();
+    if (parent == null) {
+      return false;
+    }
+
+    return isNewJBColorExpression(parent) && PsiTypes.intType().equals(literalExpression.getExpressionType());
   }
 
   private static boolean isNewJBColorExpression(UElement element) {
-    if (element instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+    if (element instanceof UCallExpression callExpression &&
+        callExpression.getValueArgumentCount() == 2 &&
+        callExpression.isClassConstructorNameOneOf(jbColorNames) &&
+        callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL)
+    ) {
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
       return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
     }
+
     return false;
   }
+
+  private static final @NotNull List<@NotNull String> jbColorNames = List.of("JBColor");
 
   private static @Nullable Color getColor(List<? extends UExpression> args) {
     try {
@@ -128,6 +141,15 @@ public final class JavaColorProvider implements ElementColorProvider {
     catch (Exception ignore) {
     }
     return null;
+  }
+
+  private static boolean canBeColorConstructorCall(@NotNull UCallExpression callExpression) {
+    int argumentCount = callExpression.getValueArgumentCount();
+    return argumentCount > 0 &&
+           argumentCount < 5 &&
+           callExpression.isClassConstructorNameOneOf(colorNames) &&
+           callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL) &&
+           isColorType(callExpression.getReturnType());
   }
 
   private static @Nullable ColorConstructors getConstructorType(int paramCount, PsiType paramType) {

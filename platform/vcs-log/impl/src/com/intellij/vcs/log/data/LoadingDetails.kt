@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 interface LoadingDetails
 
 @ApiStatus.Internal
-open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
+open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: VcsLogCommitStorageIndex, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
   private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { storage.getCommitId(commitIndex)!! }
 
   override fun getId(): Hash = commitId.hash
@@ -32,14 +32,14 @@ open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val load
   override fun getParents(): List<Hash> = emptyList()
   override fun getTimestamp(): Long = -1
   override fun getChanges(): Collection<Change> = emptyList()
-  override fun getChanges(parent: Int): Collection<Change> = emptyList()
+  override fun getChanges(parent: VcsLogCommitStorageIndex): Collection<Change> = emptyList()
 
   companion object {
     private val STUB_USER = VcsUserImpl("", "")
   }
 }
 
-internal class LoadingDetailsWithRoot(storage: VcsLogStorage, commitIndex: Int, private val cachedRoot: VirtualFile, loadingTaskIndex: Long) :
+internal class LoadingDetailsWithRoot(storage: VcsLogStorage, commitIndex: VcsLogCommitStorageIndex, private val cachedRoot: VirtualFile, loadingTaskIndex: Long) :
   LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
   override fun getRoot(): VirtualFile = cachedRoot
 }

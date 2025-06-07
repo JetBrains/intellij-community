@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("KotlinPsiUtils")
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.base.psi
 
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration as isExpectDeclaration_alias
@@ -46,18 +48,20 @@ val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
 
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset)
-    if (element is PsiWhiteSpace) {
-        return file.findElementAt(element.getTextRange().endOffset)
+    return if (element is PsiWhiteSpace) {
+        file.findElementAt(element.getTextRange().endOffset)
+    } else {
+        element
     }
-    return element
 }
 
 fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset - 1)
-    if (element is PsiWhiteSpace) {
-        return file.findElementAt(element.getTextRange().startOffset - 1)
+    return if (element is PsiWhiteSpace) {
+        file.findElementAt(element.getTextRange().startOffset - 1)
+    } else {
+        element
     }
-    return element
 }
 
 fun getStartLineOffset(file: PsiFile, line: Int): Int? {
@@ -231,6 +235,9 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
+
+fun KtNamedDeclaration.isAlwaysActual(): Boolean = safeAs<KtParameter>()?.parent?.parent?.safeAs<KtPrimaryConstructor>()
+    ?.mustHaveValOrVar() ?: false
 
 fun KtPrimaryConstructor.isRedundant(): Boolean {
     val containingClass = containingClass() ?: return false

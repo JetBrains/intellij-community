@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.usageView;
 
@@ -27,8 +27,10 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,25 +42,21 @@ public final class UsageViewUtil {
 
   private UsageViewUtil() { }
 
-  @NotNull
-  public static @NlsSafe String createNodeText(@NotNull PsiElement element) {
+  public static @NotNull @NlsSafe String createNodeText(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
-  @NotNull
-  public static @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
-  @NotNull
-  public static @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
+  public static @NotNull @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
-  @NotNull
-  public static @NlsSafe String getType(@NotNull PsiElement psiElement) {
+  public static @NotNull @NlsSafe String getType(@NotNull PsiElement psiElement) {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
@@ -133,7 +131,7 @@ public final class UsageViewUtil {
     return set.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  public static UsageInfo @NotNull [] toUsageInfoArray(@NotNull final Collection<? extends UsageInfo> collection) {
+  public static UsageInfo @NotNull [] toUsageInfoArray(final @NotNull Collection<? extends UsageInfo> collection) {
     final int size = collection.size();
     return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
   }
@@ -142,6 +140,7 @@ public final class UsageViewUtil {
     return ContainerUtil.map2Array(usageInfos, PsiElement.class, UsageInfo::getElement);
   }
 
+  @ApiStatus.Obsolete
   public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {
     int offset = info.getNavigationOffset();
     VirtualFile file = info.getVirtualFile();
@@ -152,8 +151,7 @@ public final class UsageViewUtil {
     }
   }
 
-  @NotNull
-  public static Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
+  public static @NotNull @Unmodifiable Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
     Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
     Set<UsageInfo> usageInfos = new LinkedHashSet<>();
@@ -180,8 +178,7 @@ public final class UsageViewUtil {
     return false;
   }
 
-  @Nullable
-  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+  public static @Nullable KeyboardShortcut getShowUsagesWithSettingsShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 }

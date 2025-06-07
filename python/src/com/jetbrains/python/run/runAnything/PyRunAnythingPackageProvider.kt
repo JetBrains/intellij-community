@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.sdk.isTargetBased
@@ -39,11 +40,11 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       initCaches(packageManager)
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
-        return packageManager.repositoryManager.packagesFromRepository(packageRepository).filter {
+        return packageRepository.getPackages().filter {
           it.startsWith(commandLine.toComplete)
         }.asSequence()
       }
-      return packageManager.installedPackages.map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
+      return packageManager.listInstalledPackagesSnapshot().map { it.name }.filter { it.startsWith(commandLine.toComplete) }.asSequence()
     }
     val last = commandLine.parameters.last()
     if (isInstall) {
@@ -52,10 +53,10 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       val packageName = last.substring(0, ind)
       val packageManager = getPackageManager(dataContext) ?: return emptySequence()
       initCaches(packageManager)
-      val packageSpec = getPackageRepository(dataContext)?.createPackageSpecification(packageName) ?: return emptySequence()
+      val packageSpec = getPackageRepository(dataContext)?.findPackageSpecification(packageName) ?: return emptySequence()
       return runBlockingCancellable {
         withContext(Dispatchers.Default) {
-          val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec)
+          val packageInfo = packageManager.repositoryManager.getPackageDetails(packageSpec).getOrThrow()
           val versionPrefix = last.substring(ind + operator.length)
           packageInfo.availableVersions.distinct().asSequence().filter { it.startsWith(versionPrefix) }.map { packageName + operator + it }
         }

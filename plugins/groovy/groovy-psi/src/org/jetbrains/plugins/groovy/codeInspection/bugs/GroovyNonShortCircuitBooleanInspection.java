@@ -35,8 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public final class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.non.short.circuit.boolean.expression");
 
   }
@@ -48,8 +47,7 @@ public final class GroovyNonShortCircuitBooleanInspection extends BaseInspection
 
   private static class NonShortCircuitBooleanFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.replace.with.short.circuit.expression");
     }
 
@@ -73,9 +71,8 @@ public final class GroovyNonShortCircuitBooleanInspection extends BaseInspection
     }
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

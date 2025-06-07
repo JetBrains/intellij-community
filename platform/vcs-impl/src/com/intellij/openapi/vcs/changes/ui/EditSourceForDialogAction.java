@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import java.awt.*;
 
 @ApiStatus.Internal
 public class EditSourceForDialogAction extends EditSourceAction {
-  @NotNull private final Component mySourceComponent;
+  private final @NotNull Component mySourceComponent;
 
   public EditSourceForDialogAction(@NotNull Component component) {
     super();

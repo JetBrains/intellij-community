@@ -88,10 +88,10 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiTypeParameterList parameterList = psiClass.getTypeParameterList();
     assertNotNull(parameterList);
     PsiTypeParameter[] params = parameterList.getTypeParameters();
-    assertEquals(params.length, 2);
+    assertEquals(2, params.length);
 
-    assertEquals(params[0].getName(), "A");
-    assertEquals(params[1].getName(), "B");
+    assertEquals("A", params[0].getName());
+    assertEquals("B", params[1].getName());
 
     assertEquals("java.lang.String", params[0].getSupers()[0].getQualifiedName());
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, params[1].getSupers()[0].getQualifiedName());

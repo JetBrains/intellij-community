@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -13,7 +14,7 @@ import javax.swing.*;
 @ApiStatus.Internal
 public class LabeledComponentNoThrow<Comp extends JComponent> extends LabeledComponent<Comp> {
   @Override
-  public void setComponentClass(String className) {
+  public void setComponentClass(@NonNls String className) {
     try {
       super.setComponentClass(className);
     }

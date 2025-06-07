@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import com.intellij.codeInsight.completion.InsertionContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -19,10 +21,15 @@ sealed class ImportStrategy {
     data class InsertFqNameAndShorten(val fqName: FqName) : ImportStrategy()
 }
 
-internal fun addImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
-    if (!alreadyHasImport(targetFile, nameToImport)) {
-        targetFile.addImport(nameToImport)
-    }
+internal fun addImportIfRequired(
+    context: InsertionContext,
+    nameToImport: FqName
+) {
+    val targetFile = context.file as KtFile
+    if (alreadyHasImport(targetFile, nameToImport)) return
+
+    targetFile.addImport(nameToImport)
+    context.doPostponedOperationsAndUnblockDocument()
 }
 
 @OptIn(KaExperimentalApi::class)

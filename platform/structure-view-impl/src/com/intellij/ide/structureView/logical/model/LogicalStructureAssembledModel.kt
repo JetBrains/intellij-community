@@ -3,10 +3,13 @@ package com.intellij.ide.structureView.logical.model
 
 import com.intellij.ide.structureView.logical.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Utility class which helps to build full logical model for some element
  */
+@ApiStatus.Experimental
 class LogicalStructureAssembledModel<T> private constructor(
   val project: Project,
   val model: T,
@@ -20,35 +23,37 @@ class LogicalStructureAssembledModel<T> private constructor(
   }
 
   fun getChildren(): List<LogicalStructureAssembledModel<*>> {
-    return LogicalStructureElementsProvider.getProviders(model!!)
-      .filter { it !is ConvertElementsProvider }
-      .flatMap { it.getElements(model) }
-      //.flatMap { ConvertElementsProvider.convert(it) }
+    val result = LogicalStructureElementsProvider.getProviders(model!!)
+      .flatMap { provider ->
+        if (provider is ContainerElementsProvider || provider is PropertyElementProvider) {
+          listOf(ProvidedLogicalContainer(provider) { provider.getElements(model) })
+        }
+        else {
+          provider.getElements(model)
+        }
+      }
       .map { LogicalStructureAssembledModel(project, it, this) }
       .toList()
+    if (model is LogicalContainer<*>) {
+      return ContainerUtil.concat(
+        model.getElements().map { LogicalStructureAssembledModel(project, it, parent) },
+        result
+      )
+    }
+    return result
   }
 
-  /**
-   * The grouping element in each pair - Any - can be any object, for which a PresentationProvider is registered
-   */
-  fun getChildrenGrouped(): List<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>> {
-    val result = mutableListOf<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>>()
-    for (provider in LogicalStructureElementsProvider.getProviders(model!!)) {
-      if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) continue
-      if (provider is ContainerGroupedElementsProvider<*, *, *>) {
-        for (groupedElement in (provider as ContainerGroupedElementsProvider<T, *, *>).getGroupedElements(model)) {
-          result.add(Pair(groupedElement.key!!) { groupedElement.value.map { LogicalStructureAssembledModel(project, it, this) } })
-        }
-        continue
-      }
-      val children = {
-        provider.getElements(model)
-          .map { LogicalStructureAssembledModel(project, it, this) }
-      }
-      result.add(Pair(provider, children))
+  internal fun hasSameModelParent(): Boolean {
+    var parentTmp = parent
+    while (parentTmp != null) {
+      val first = parentTmp.model
+      val second = model
+      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
+          || second is ExtendedLogicalObject && second.isTheSameParent(first)
+          || first == second) return true
+      parentTmp = parentTmp.parent
     }
-    result.sortBy { if (it.first is PropertyElementProvider<*, *>) 0 else 1 }
-    return result
+    return false
   }
 
   override fun equals(other: Any?): Boolean {

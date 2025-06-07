@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -60,12 +60,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
@@ -88,8 +89,6 @@ class LineStatusTrackerManager(
   private val trackers = HashMap<Document, TrackerData>()
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
-
   private var partialChangeListsEnabled: Boolean = false
   private val documentsInDefaultChangeList = HashSet<Document>()
   private var clmFreezeCounter: Int = 0
@@ -101,6 +100,9 @@ class LineStatusTrackerManager(
 
   companion object {
     private val LOG = logger<LineStatusTrackerManager>()
+
+    @ProjectLevel
+    val TOPIC: Topic<Listener> = Topic(Listener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun getInstance(project: Project): LineStatusTrackerManagerI = project.service()
@@ -234,8 +236,11 @@ class LineStatusTrackerManager(
     }
   }
 
+  /**
+   * See [LineStatusTrackerManager.TOPIC]
+   */
   fun addTrackerListener(listener: Listener, disposable: Disposable) {
-    eventDispatcher.addListener(listener, disposable)
+    project.messageBus.connect(disposable).subscribe(TOPIC, listener)
   }
 
   open class ListenerAdapter : Listener
@@ -244,6 +249,12 @@ class LineStatusTrackerManager(
     }
 
     fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
+    }
+
+    /**
+     * See [LineStatusTrackerI.isValid]
+     */
+    fun onTrackerBecomeValid(tracker: LineStatusTracker<*>) {
     }
   }
 
@@ -434,13 +445,15 @@ class LineStatusTrackerManager(
     }
     tracker.mode = getTrackingMode()
 
+    tracker.addListener(MyTrackerStateListener(tracker))
+
     val data = TrackerData(tracker)
     val replacedData = trackers.put(document, data)
     LOG.assertTrue(replacedData == null)
 
     registerTrackerInCLM(data)
     refreshTracker(tracker, provider)
-    eventDispatcher.multicaster.onTrackerAdded(tracker)
+    project.messageBus.syncPublisher(TOPIC).onTrackerAdded(tracker)
 
     if (clmFreezeCounter > 0) {
       tracker.freeze()
@@ -468,8 +481,9 @@ class LineStatusTrackerManager(
   @RequiresEdt
   private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
     val data = trackers.remove(document) ?: return
-
-    eventDispatcher.multicaster.onTrackerRemoved(data.tracker)
+    if (!project.isDisposed) {
+      project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
+    }
     unregisterTrackerInCLM(data, wasUnbound)
     data.tracker.release()
 
@@ -808,14 +822,15 @@ class LineStatusTrackerManager(
       if (documentsInDefaultChangeList.contains(document)) return
 
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (!virtualFile.isInLocalFileSystem) return
       if (getLineStatusTracker(document) != null) return
-
-      val provider = getTrackerProvider(virtualFile, document)
-      if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
       val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
       if (inAnotherChangelist) {
+        val provider = getTrackerProvider(virtualFile, document)
+        if (provider != ChangelistsLocalStatusTrackerProvider) return
+
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
@@ -828,6 +843,12 @@ class LineStatusTrackerManager(
       else {
         documentsInDefaultChangeList.add(document)
       }
+    }
+  }
+
+  private inner class MyTrackerStateListener(val tracker: LocalLineStatusTracker<*>) : LineStatusTrackerListener {
+    override fun onBecomingValid() {
+      project.messageBus.syncPublisher(TOPIC).onTrackerBecomeValid(tracker)
     }
   }
 
@@ -1082,7 +1103,7 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
+    if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManager.getInstance(project).currentFile) {
       return
     }
     filesWithDamagedInactiveRanges.add(virtualFile)

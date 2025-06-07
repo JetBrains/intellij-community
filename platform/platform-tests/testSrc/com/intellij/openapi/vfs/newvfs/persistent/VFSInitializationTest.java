@@ -3,13 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverLockFreeFileCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.testFramework.TemporaryDirectory;
-import com.intellij.util.io.PageCacheUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Rule;
@@ -22,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.DEFRAGMENTATION_REQUESTED;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
@@ -198,10 +197,7 @@ public class VFSInitializationTest {
 
 
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (fails otherwise)
-    List<PersistentFSRecordsStorageFactory> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                              List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
-                                                              List.of(new OverMMappedFile());
+    List<PersistentFSRecordsStorageFactory> allStorageKinds = List.of(new OverMMappedFile());
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
     for (PersistentFSRecordsStorageFactory storageKind : allStorageKinds) {
@@ -272,10 +268,7 @@ public class VFSInitializationTest {
   @Test
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (will fail)
-    final List<PersistentFSRecordsStorageFactory> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                             List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
-                                                             List.of(new OverMMappedFile());
+    final List<PersistentFSRecordsStorageFactory> allKinds = List.of(new OverMMappedFile());
 
     //check all combinations (from->to) of implementations:
     for (PersistentFSRecordsStorageFactory kindBefore : allKinds) {
@@ -333,7 +326,7 @@ public class VFSInitializationTest {
     final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
       assertTrue("records must report 'closedProperly' since connection was properly disconnect()-ed",
-                   reopenedConnection.records().wasClosedProperly());
+                 reopenedConnection.records().wasClosedProperly());
     }
     finally {
       reopenedConnection.close();
@@ -377,6 +370,43 @@ public class VFSInitializationTest {
         //  NOT_CLOSED_PROPERLY,
         //  requestToRebuild.category()
         //);
+      }
+    }
+    finally {
+      connection.close();
+    }
+  }
+
+  @Test
+  public void VFS_Must_FailOnReopen_RequestingRebuild_if_DefragmentationRequested() throws IOException {
+    Path cachesDir = temporaryDirectory.createDir();
+    int version = 1;
+
+    PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    try {
+      connection.scheduleDefragmentation();
+    }
+    finally {
+      connection.close();
+    }
+
+    try {
+      try {
+        PersistentFSConnection conn = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+        try {
+          fail("VFS init must fail (with error ~ DEFRAGMENTATION_REQUESTED)");
+        }
+        finally {
+          conn.close();
+        }
+      }
+      catch (VFSInitException requestToDefragmentation) {
+        //OK, this is what we expect:
+        assertEquals(
+          "rebuildCategory must be DEFRAGMENTATION_REQUESTED",
+          DEFRAGMENTATION_REQUESTED,
+          requestToDefragmentation.category()
+        );
       }
     }
     finally {

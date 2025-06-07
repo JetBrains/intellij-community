@@ -60,7 +60,7 @@ import org.jdom.Namespace;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 
-class NamespaceStack {
+final class NamespaceStack {
   /**
    * The prefixes available
    */
@@ -136,6 +136,7 @@ class NamespaceStack {
    * most recently added <code>{@link Namespace}</code> to
    * the "oldest," all to <code>System.out</code>.
    */
+  @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
     buf.append("Stack: ").append(prefixes.size()).append('\n');

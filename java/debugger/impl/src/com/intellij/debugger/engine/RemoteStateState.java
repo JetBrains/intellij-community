@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -28,7 +28,7 @@ public class RemoteStateState implements RemoteState {
   }
 
   @Override
-  public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
+  public ExecutionResult execute(final Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
     ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject, myAutoRestart);
     consoleView.attachToProcess(process);

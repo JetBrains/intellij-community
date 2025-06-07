@@ -4,4 +4,4 @@ class UnusedPropertyAsConstructorParameter(val <caret>myOwnProperty97: String)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
-/* IGNORE_K2 */
+// IGNORE_K2

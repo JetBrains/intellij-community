@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmArrayType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   private final PsiType myComponentType;
+  private final TypeNullability myNullability;
 
   public PsiArrayType(@NotNull PsiType componentType) {
     this(componentType, TypeAnnotationProvider.EMPTY);
@@ -21,28 +24,31 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   public PsiArrayType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(annotations);
     myComponentType = componentType;
+    myNullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(annotations);
   }
 
   public PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider) {
-    super(provider);
-    myComponentType = componentType;
+    this(componentType, provider, JavaTypeNullabilityUtil.getNullabilityFromAnnotations(provider.getAnnotations()));
   }
 
-  @NotNull
+  PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+    super(provider);
+    myComponentType = componentType;
+    myNullability = nullability;
+  }
+
   @Override
-  public String getPresentableText(boolean annotated) {
+  public @NotNull String getPresentableText(boolean annotated) {
     return getText(getDeepComponentType().getPresentableText(annotated), "[]", false, annotated);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(getDeepComponentType().getCanonicalText(annotated), "[]", true, annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(getDeepComponentType().getInternalCanonicalText(), "[]", true, true);
   }
 
@@ -107,11 +113,25 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
    *
    * @return the component type instance.
    */
-  @NotNull
   @Override
   @Contract(pure = true)
-  public PsiType getComponentType() {
+  public @NotNull PsiType getComponentType() {
     return myComponentType;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    return myNullability;
+  }
+
+  /**
+   * Creates a new array type with the given nullability.
+   * @param nullability wanted nullability.
+   * @return new array type instance.
+   */
+  @Override
+  public @NotNull PsiArrayType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiArrayType(getComponentType(), getAnnotationProvider(), nullability);
   }
 
   @Override

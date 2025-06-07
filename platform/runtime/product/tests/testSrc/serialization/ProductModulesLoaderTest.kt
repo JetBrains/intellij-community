@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -51,13 +51,15 @@ class ProductModulesLoaderTest {
     val repository = createRepository(tempDirectory.rootPath,
                                       RawRuntimeModuleDescriptor.create("util", emptyList(), emptyList()),
                                       RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("required", emptyList(), emptyList()),
                                       RawRuntimeModuleDescriptor.create("optional", emptyList(), listOf("root")),
     )
     val xml = directoryContent { 
       xml(FILE_NAME, """
         <product-modules>
           <main-root-modules>
-            <module loading="required">root</module>
+            <module loading="embedded">root</module>
+            <module loading="required">required</module>
             <module loading="optional">optional</module>
             <module loading="optional">unknown-optional</module>
           </main-root-modules>
@@ -66,10 +68,12 @@ class ProductModulesLoaderTest {
     }.generateInTempDir().resolve(FILE_NAME)
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
-    assertEquals(2, mainGroupModules.size)
-    val (optional, root) = mainGroupModules
+    assertEquals(3, mainGroupModules.size)
+    val (optional, required, root) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, root.loadingRule)
+    assertEquals("required", required.moduleDescriptor.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
@@ -92,7 +96,7 @@ class ProductModulesLoaderTest {
     assertEquals(2, pluginModules.size)
     val (plugin, optional) = pluginModules
     assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
-    assertEquals(RuntimeModuleLoadingRule.REQUIRED, plugin.loadingRule)
+    assertEquals(RuntimeModuleLoadingRule.EMBEDDED, plugin.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
@@ -104,7 +108,8 @@ class ProductModulesLoaderTest {
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor.create("intellij.platform.frontend.split", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("intellij.platform.monolith", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.backend", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.monolith", emptyList(), listOf("intellij.platform.backend")),
       RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin.common", emptyList(), listOf("plugin")),
       RawRuntimeModuleDescriptor.create("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend.split")),
@@ -139,7 +144,7 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("common.plugin"), "common")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
     val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
-    productModulesWithPlugins(plugins = listOf("common.plugin")).generate(rootProductModulesPath.toFile())
+    productModulesWithPlugins(plugins = listOf("common.plugin")).generate(rootProductModulesPath)
 
     val xmlPath = directoryContent {
       xml(FILE_NAME, """
@@ -178,7 +183,7 @@ class ProductModulesLoaderTest {
     productModulesWithPlugins(
       mainModules = listOf("root", "additional"),
       plugins = listOf("plugin", "plugin2")
-    ).generate(rootProductModulesPath.toFile())
+    ).generate(rootProductModulesPath)
 
     val xmlPath = directoryContent {
       xml(FILE_NAME, """

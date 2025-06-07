@@ -1,0 +1,4 @@
+object PropertyContainerE {
+    const val <caret>propModifierP = "const"
+}
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">const</span> <span style="color:#000080;font-weight:bold;">val</span> <span style="color:#660e7a;font-weight:bold;">propModifierP</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.String">String</a></span><span style=""> = </span><span style="color:#008000;font-weight:bold;">"const"</span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PropertyContainerE"><code><span style="color:#000000;">PropertyContainerE</span></code></a><br/></div>

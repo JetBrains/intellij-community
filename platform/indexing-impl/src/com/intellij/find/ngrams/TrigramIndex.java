@@ -1,12 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -20,15 +19,24 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
  * <p>
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
-public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
+public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>,
+                                                                                 ShardableIndexExtension {
   public static final ID<Integer, Void> INDEX_ID = ID.create("Trigram.Index");
+
+  @Internal
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.trigram-index-shards", 0));
 
   @Internal
   public TrigramIndex() {
@@ -42,13 +50,6 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @Override
   public int getCacheSize() {
     return 64 * super.getCacheSize();
-  }
-
-  @Internal
-  public static boolean isIndexable(@NotNull VirtualFile file, @NotNull Project project) {
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
-    TrigramIndexFilter trigramIndexFilter = ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
-    return trigramIndexFilter.acceptInput(indexedFile);
   }
 
   @Override
@@ -82,8 +83,20 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   }
 
   @Override
-  public int getVersion() {
+  @Internal
+  public int shardlessVersion() {
     return 4;
+  }
+
+  @Override
+  public int getVersion() {
+    return shardlessVersion() + (SHARDS - 1);
+  }
+
+  @Override
+  @Internal
+  public int shardsCount() {
+    return SHARDS;
   }
 
   @Override
@@ -111,15 +124,10 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
             buffer[ptr++] = i;
           }
         }
+
         Arrays.sort(buffer, 0, numberOfValues);
 
-        DataInputOutputUtil.writeINT(out, numberOfValues);
-        int prev = 0;
-        for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          int cur = buffer[ptr];
-          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
-          prev = cur;
-        }
+        DataInputOutputUtil.writeDiffCompressed(out, buffer, numberOfValues);
       }
 
       @Override

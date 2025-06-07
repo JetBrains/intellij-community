@@ -1,21 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
 
 package com.intellij.tools.apiDump
 
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentHashMap
-import kotlinx.metadata.jvm.JvmFieldSignature
 import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
+import java.net.URI
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.walk
+import kotlin.io.path.*
+import kotlin.metadata.jvm.JvmFieldSignature
+import kotlin.metadata.jvm.JvmMethodSignature
 
 val emptyApiIndex: ApiIndex = ApiIndex(
   persistentHashMapOf(),
@@ -53,10 +54,13 @@ class ApiIndex private constructor(
     return classes[className]
   }
 
-  internal fun discoverPackages(packages: Map<String, ApiAnnotations>): ApiIndex {
+  internal fun discoverPackages(packages: Map<String, ApiAnnotations>, root: Path): ApiIndex {
     val builder = this.packages.builder()
     for ((packageName, packageAnnotations) in packages) {
-      check(this.packages[packageName] == null)
+      val existingAnnotations = this.packages[packageName]
+      if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
+        error("$packageName has different annotations in different modules. The current root = $root")
+      }
       builder[packageName] = packageAnnotations
     }
     return ApiIndex(
@@ -65,11 +69,17 @@ class ApiIndex private constructor(
     )
   }
 
-  internal fun discoverClass(signature: ClassBinarySignature): ApiIndex {
+  internal fun discoverClass(signature: ClassBinarySignature, root: Path): ApiIndex {
     val className = signature.name
-    check(classes[className] == null) {
-      "Class already discovered $className"
+    if (className.endsWith("/package-info")) {
+      // ignore package-info.java
+      return this
     }
+
+    check(classes[className] == null) {
+      "$className already declared. The current root = $root"
+    }
+
     return ApiIndex(
       packages,
       classes = classes.put(className, signature),
@@ -104,7 +114,7 @@ fun api(index: ApiIndex, root: Path): API {
   val classFilePaths: Sequence<Path> = classFilePaths(root)
 
   val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages)
+  index = index.discoverPackages(packages, root)
 
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
@@ -118,7 +128,7 @@ fun api(index: ApiIndex, root: Path): API {
          * because the next [handleAnnotationsAndVisibility] call relies on it
          * to resolve the outer class name.
          */
-        index = index.discoverClass(it)
+        index = index.discoverClass(it, root)
       }
     }
   return API(index, signatures)
@@ -300,11 +310,22 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 
 @OptIn(ExperimentalPathApi::class)
 private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  return classRoot
+  var root = classRoot
+  if (root.isRegularFile() && root.extension == "jar") {
+    val uri = URI("jar:${classRoot.toUri()}!/")
+    val fs = try {
+      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+    }
+    catch (ignored: FileSystemAlreadyExistsException) {
+      FileSystems.getFileSystem(uri)
+    }
+    root = fs.rootDirectories.single()
+  }
+  return root
     .walk()
     .filter { path ->
-      path.name.endsWith(".class") &&
-      !classRoot.relativize(path).startsWith("META-INF/")
+      path.extension == "class" &&
+      !root.relativize(path).startsWith("META-INF/")
     }
 }
 
@@ -329,7 +350,7 @@ private val unannotated = ApiAnnotations(false, false)
 private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
   val packages = HashMap<String, ApiAnnotations>()
   for (path in this) {
-    if (!path.endsWith("package-info.class")) {
+    if (path.name != "package-info.class") {
       continue
     }
     val node = readClass(path)
@@ -406,8 +427,8 @@ private fun ClassBinarySignature.removeToString(): ClassBinarySignature {
   val withoutToString = memberSignatures.filterNot { signature ->
     signature is MethodBinarySignature
     && !signature.access.access.isSet(Opcodes.ACC_ABSTRACT)
-    && signature.jvmMember.let { member ->
-      member.name == "toString" && member.desc == "()Ljava/lang/String;"
+    && signature.jvmMember.let { member: JvmMethodSignature ->
+      member.name == "toString" && member.descriptor == "()Ljava/lang/String;"
     }
   }
   if (withoutToString.size == memberSignatures.size) {

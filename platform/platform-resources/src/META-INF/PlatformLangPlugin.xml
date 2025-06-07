@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
@@ -6,6 +7,7 @@
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
+  <module value="com.intellij.platform.ide.impl.wsl"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
@@ -21,8 +23,11 @@
   <xi:include href="/META-INF/CoreImpl.xml"/>
   <xi:include href="/META-INF/Analysis.xml"/>
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
+  <xi:include href="/META-INF/WorkspaceModel.xml"/>
+  <xi:include href="/META-INF/WorkspaceModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
+  <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
@@ -30,17 +35,10 @@
   <xi:include href="/META-INF/Inspect.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/WebSymbols.xml">
+  <xi:include href="/META-INF/PolySymbols.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/WebSymbolsExtensionPoints.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/xml.xml">
-    <xi:fallback/>
-  </xi:include>
-
-  <xi:include href="/META-INF/PlatformWarmup.xml">
+  <xi:include href="/META-INF/PolySymbolsExtensionPoints.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -50,12 +48,15 @@
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionExtensions.xml"/>
 
   <xi:include href="/META-INF/credential-store.xml">
     <xi:fallback/>
   </xi:include>
 
   <xi:include href="/META-INF/LangExtensions.xml"/>
+  <xi:include href="/META-INF/ProjectModelLangExtensions.xml"/>
+  <xi:include href="/META-INF/SearchEverywhereCodeInsightContributors.xml"/>
   <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
@@ -64,36 +65,25 @@
 
   <xi:include href="/META-INF/IJent.xml"/>
 
+  <xi:include href="intellij.platform.bookmarks.xml"/>
+
+  <xi:include href="intellij.platform.todo.xml"/>
+
+  <xi:include href="intellij.platform.syntax.psi.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
-                        serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
-
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
-    <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
-
-    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
-    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkHeadlessActivity"/>
-    <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
-    <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
-    <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
-    <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
-    <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
-
-    <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
-
-    <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
-    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
     <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
@@ -115,6 +105,8 @@
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil$ImplService"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil$ImplServiceImpl"/>
     <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
@@ -148,6 +140,9 @@
 
     <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
 
+    <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
+                        serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
+
     <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
                  description="Switches submenu in File - New to popup step" />
   </extensions>
@@ -157,10 +152,6 @@
   </xi:include>
 
   <xi:include href="/META-INF/compose.xml">
-    <xi:fallback/>
-  </xi:include>
-
-  <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -178,9 +169,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/duplicates-analysis.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/tasks.xml">
     <xi:fallback/>
   </xi:include>
 

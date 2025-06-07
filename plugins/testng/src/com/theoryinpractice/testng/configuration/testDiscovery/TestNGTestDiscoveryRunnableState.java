@@ -18,8 +18,6 @@ package com.theoryinpractice.testng.configuration.testDiscovery;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -59,11 +57,6 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
   @Override
   protected boolean forkPerModule() {
     return getConfiguration().getConfigurationModule().getModule() == null;
-  }
-
-  @Override
-  public @Nullable SearchForTestsTask createSearchingForTestsTask() {
-    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
   }
 
   @Override

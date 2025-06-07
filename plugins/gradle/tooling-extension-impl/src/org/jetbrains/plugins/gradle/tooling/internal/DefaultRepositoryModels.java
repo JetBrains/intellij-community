@@ -4,10 +4,15 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
+import com.intellij.gradle.toolingExtension.impl.model.repositoryModel.DefaultProjectRepositoriesModel;
 
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated use {@link DefaultProjectRepositoriesModel} instead.
+ */
+@Deprecated
 public class DefaultRepositoryModels implements RepositoryModels {
 
   private final @NotNull List<MavenRepositoryModel> myRepositories;

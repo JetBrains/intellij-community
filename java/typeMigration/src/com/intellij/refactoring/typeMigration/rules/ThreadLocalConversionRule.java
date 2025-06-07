@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -64,11 +64,10 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
     return false;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findDirectConversion(PsiElement context,
-                                                               PsiClassType to,
-                                                               PsiType from,
-                                                               TypeMigrationLabeler labeler) {
+  private static @Nullable TypeConversionDescriptor findDirectConversion(PsiElement context,
+                                                                         PsiClassType to,
+                                                                         PsiType from,
+                                                                         TypeMigrationLabeler labeler) {
     final PsiClass toTypeClass = to.resolve();
     LOG.assertTrue(toTypeClass != null);
 
@@ -273,7 +272,7 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
       PsiExpression replaced = super.replace(expression, evaluator);
       boolean effectivelyFinalSupported = PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, replaced);
       for (PsiVariable var : myVariablesToMakeFinal) {
-        if (!effectivelyFinalSupported || !HighlightControlFlowUtil.isEffectivelyFinal(var, replaced, null)) {
+        if (!effectivelyFinalSupported || !ControlFlowUtil.isEffectivelyFinal(var, replaced)) {
           VariableAccessFromInnerClassFix.fixAccess(var, replaced);
         }
       }

@@ -27,9 +27,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -68,7 +70,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   @Override
-  public @NotNull List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  public @Unmodifiable @NotNull List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, o -> o != this);
   }
 
@@ -250,6 +252,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
           clickInfo.add(new PropertyBean("Tree Node", value));
           clickInfo.add(new PropertyBean("Tree Node Class", UiInspectorUtil.getClassPresentation(value)));
+          clickInfo.add(new PropertyBean("User Object Class", UiInspectorUtil.getClassPresentation(TreeUtil.getUserObject(value))));
 
           Component rendererComponent = renderer.getTreeCellRendererComponent(
             tree, value, tree.getSelectionModel().isPathSelected(path),

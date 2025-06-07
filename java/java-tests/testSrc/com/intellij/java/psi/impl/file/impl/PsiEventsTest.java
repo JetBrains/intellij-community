@@ -15,11 +15,11 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.WaitFor;
@@ -169,11 +169,11 @@ public class PsiEventsTest extends JavaPsiTestCase {
   }
 
   public void testRenameFileWithoutDir() {
-    FileManager fileManager = myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
 
-    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1)).ensureCollected();
+    GCWatcher.tracking(fileManager.getCachedDirectory(myPrjDir1)).ensureCollected();
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -267,12 +267,12 @@ public class PsiEventsTest extends JavaPsiTestCase {
   }
 
   public void testRenameDirectory_WithoutPsiDir() {
-    FileManager fileManager = myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
 
-    GCWatcher.tracking(((FileManagerImpl)fileManager).getCachedDirectory(file)).ensureCollected();
+    GCWatcher.tracking(fileManager.getCachedDirectory(file)).ensureCollected();
 
-    assertNull(((FileManagerImpl)fileManager).getCachedDirectory(file));
+    assertNull(fileManager.getCachedDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -752,7 +752,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
           throw new NullPointerException();
         }
       };
-      ((PsiManagerImpl)getPsiManager()).addTreeChangePreprocessor(preprocessor);
+      ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor);
       try {
         WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -762,7 +762,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
         assertInstanceOf(e.getCause(), NullPointerException.class);
       }
       finally {
-        ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
+        ((PsiManagerEx)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
       }
 
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -75,8 +75,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return hash;
   }
 
-  @Nullable
-  public static List<LibraryDescriptor> calculate(@NotNull ModuleInsight insight, @NotNull ProjectFromSourcesBuilder builder) {
+  public static @Nullable List<LibraryDescriptor> calculate(@NotNull ModuleInsight insight, @NotNull ProjectFromSourcesBuilder builder) {
     final List<DetectedSourceRoot> sourceRoots = getSourceRoots(insight, builder);
 
     final HashSet<String> ignored = new HashSet<>();
@@ -96,8 +95,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return calculate(myInsight, myBuilder);
   }
 
-  @NotNull
-  private static List<DetectedSourceRoot> getSourceRoots(@NotNull ModuleInsight insight, @NotNull ProjectFromSourcesBuilder builder) {
+  private static @NotNull List<DetectedSourceRoot> getSourceRoots(@NotNull ModuleInsight insight, @NotNull ProjectFromSourcesBuilder builder) {
     final List<DetectedSourceRoot> sourceRoots = new ArrayList<>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       for (DetectedProjectRoot root : builder.getProjectRoots(detector)) {

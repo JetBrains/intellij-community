@@ -25,7 +25,6 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 
@@ -60,7 +59,6 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupSampleCodeUI(builder)
-            setupSampleCodeWithOnBoardingTipsUI(builder)
             setupCompactDirectoryLayoutUI(builder)
             if (context.isCreatingNewProject) {
                 addMultiPlatformLink(builder)
@@ -137,15 +135,14 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
         override fun setupAssets(project: Project) {
+            setOutputDirectory(parent.contentRoot)
+
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }
             if (parent.addSampleCode) {
-                if (parent.generateOnboardingTips) {
-                    prepareKotlinSampleOnboardingTips(project)
-                }
                 val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"
-                withKotlinSampleCode(sourceRootPath, null, parent.generateOnboardingTips)
+                withKotlinSampleCode(project, sourceRootPath)
             }
         }
     }

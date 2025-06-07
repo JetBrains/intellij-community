@@ -216,10 +216,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     return filteredElements;
   }
 
-  @NotNull
-  private Couple<Integer> computeHash(SingleChildDescriptor childDescriptor,
-                                      PsiFragment parentFragment,
-                                      NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> computeHash(SingleChildDescriptor childDescriptor,
+                                               PsiFragment parentFragment,
+                                               NodeSpecificHasher nodeSpecificHasher) {
 
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
@@ -241,10 +240,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     return role != null && !duplicatesProfile.getDuplocatorState(duplicatesProfile.getLanguage(element)).distinguishRole(role);
   }
 
-  @NotNull
-  private Couple<Integer> doComputeHash(SingleChildDescriptor childDescriptor,
-                                        PsiFragment parentFragment,
-                                        NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> doComputeHash(SingleChildDescriptor childDescriptor,
+                                                 PsiFragment parentFragment,
+                                                 NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
       return Couple.of(0, 0);
@@ -262,10 +260,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     };
   }
 
-  @NotNull
-  private Couple<Integer> computeHash(MultiChildDescriptor childDescriptor,
-                                      PsiFragment parentFragment,
-                                      NodeSpecificHasher nodeSpecificHasher) {
+  private @NotNull Couple<Integer> computeHash(MultiChildDescriptor childDescriptor,
+                                               PsiFragment parentFragment,
+                                               NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
     return switch (childDescriptor.getType()) {
@@ -275,8 +272,7 @@ class TreeHasherBase extends AbstractTreeHasher {
     };
   }
 
-  @NotNull
-  private static Couple<Integer> hashChildResults(TreeHashResult[] childResults, int multiplier) {
+  private static @NotNull Couple<Integer> hashChildResults(TreeHashResult[] childResults, int multiplier) {
     int[] hashes = getHashes(childResults);
     int[] costs = getCosts(childResults);
 

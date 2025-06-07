@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -46,12 +46,16 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -68,9 +72,10 @@ import java.awt.*;
 import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
 
 public final class DebuggerUIUtil {
-  @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
+  public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
   private DebuggerUIUtil() {
   }
@@ -96,8 +101,7 @@ public final class DebuggerUIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  @Nullable
-  public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
+  public static @Nullable RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
     if (line > -1) {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
       boolean isRemoteEditor = !ClientId.isLocal(ClientEditorManager.getClientId(editor));
@@ -179,6 +183,7 @@ public final class DebuggerUIUtil {
       EditorFactory.getInstance().releaseEditor(editor);
     });
     editor.getSettings().setLineNumbersShown(false);
+    editor.getSettings().setUseSoftWraps(true);
     return editor;
   }
 
@@ -221,15 +226,49 @@ public final class DebuggerUIUtil {
     return builder;
   }
 
+  @ApiStatus.Obsolete
   public static void showXBreakpointEditorBalloon(final Project project,
-                                                  @Nullable final Point point,
+                                                  final @Nullable Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
-                                                  @NotNull final XBreakpoint breakpoint) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+                                                  final @NotNull XBreakpoint breakpoint) {
+    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
+      showXBreakpointEditorBalloon(project, point, component, showAllOptions, asProxy(breakpointBase));
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpointProxy breakpoint) {
+    showXBreakpointEditorBalloon(project, point, component, showAllOptions, showAllOptions, breakpoint);
+  }
+
+  @ApiStatus.Obsolete
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showActionOptions,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpoint breakpoint) {
+    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
+      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, asProxy(breakpointBase));
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showActionOptions,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpointProxy breakpoint) {
+    XBreakpointManagerProxy managerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
     final XLightBreakpointPropertiesPanel propertiesPanel =
-      new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                          showAllOptions, true);
+      new XLightBreakpointPropertiesPanel(project, managerProxy, breakpoint,
+                                          showActionOptions, showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -243,7 +282,7 @@ public final class DebuggerUIUtil {
         balloonRef.get().hide();
       }
       propertiesPanel.dispose();
-      showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+      showXBreakpointEditorBalloon(project, point, component, true, false, breakpoint);
       moreOptionsRequested.set(true);
     });
 
@@ -258,7 +297,7 @@ public final class DebuggerUIUtil {
     Runnable showMoreOptions = () -> {
       propertiesPanel.saveProperties();
       propertiesPanel.dispose();
-      BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
+      BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint.getId());
     };
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
@@ -276,10 +315,12 @@ public final class DebuggerUIUtil {
       }
     });
 
+    // TODO IJPL-185322 Migrate this listener to proxy
     project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
-        if (removedBreakpoint.equals(breakpoint)) {
+        if (removedBreakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase &&
+            asProxy(breakpointBase).equals(breakpoint)) {
           balloon.hide();
         }
       }
@@ -290,7 +331,7 @@ public final class DebuggerUIUtil {
   public static Balloon showBreakpointEditor(Project project, final JComponent mainPanel,
                                              final Point whereToShow,
                                              final JComponent component,
-                                             @Nullable final Runnable showMoreOptions, Object breakpoint) {
+                                             final @Nullable Runnable showMoreOptions, Object breakpoint) {
     final BreakpointEditor editor = new BreakpointEditor();
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(true);
@@ -364,18 +405,15 @@ public final class DebuggerUIUtil {
     return balloon;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme() {
+  public static @NotNull EditorColorsScheme getColorScheme() {
     return EditorColorsUtil.getGlobalOrDefaultColorScheme();
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
+  public static @NotNull EditorColorsScheme getColorScheme(@Nullable JComponent component) {
     return EditorColorsUtil.getColorSchemeForComponent(component);
   }
 
-  @Nullable
-  public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
+  public static @Nullable String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
     if (valueNode.getValueContainer() instanceof XValueTextProvider) {
       res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
@@ -387,21 +425,25 @@ public final class DebuggerUIUtil {
   }
 
   public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
-    node.calculateEvaluationExpression().onSuccess(expression -> {
+    addToWatches(watchesView, node.getValueContainer());
+  }
+
+  @ApiStatus.Internal
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValue value) {
+    value.calculateEvaluationExpression().onSuccess(expression -> {
       if (expression != null) {
         invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
       }
     });
   }
 
-  @Nullable
-  public static XWatchesView getWatchesView(@NotNull AnActionEvent e) {
+  public static @Nullable XWatchesView getWatchesView(@NotNull AnActionEvent e) {
     XWatchesView view = e.getData(XWatchesView.DATA_KEY);
     Project project = e.getProject();
     if (view == null && project != null) {
-      XDebugSession session = getSession(e);
-      if (session != null) {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+      XDebugSessionProxy proxy = getSessionProxy(e);
+      if (proxy != null) {
+        XDebugSessionTab tab = proxy.getSessionTab();
         if (tab != null) {
           return tab.getWatchesView();
         }
@@ -433,14 +475,12 @@ public final class DebuggerUIUtil {
     }
   }
 
-  @NotNull
-  public static @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
+  public static @NotNull @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().collect(NlsMessages.joiningOr());
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message("ad.extra.selection.shortcut", text);
   }
 
-  @Nullable
-  public static String getActionShortcutText(String actionName) {
+  public static @Nullable String getActionShortcutText(String actionName) {
     KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(actionName).getShortcutSet());
     if (stroke != null) {
       return KeymapUtil.getKeystrokeText(stroke);
@@ -471,7 +511,7 @@ public final class DebuggerUIUtil {
       }
 
       @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
+      public void errorOccurred(final @NotNull String errorMessage) {
         AppUIUtil.invokeOnEdt(() -> {
           tree.rebuildAndRestore(treeState);
           errorConsumer.consume(errorMessage);
@@ -485,20 +525,20 @@ public final class DebuggerUIUtil {
     return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 
-  @Nullable
-  public static XDebugSessionData getSessionData(AnActionEvent e) {
+  public static @Nullable XDebugSessionData getSessionData(AnActionEvent e) {
     XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
-    if (data == null) {
-      XDebugSession session = getSession(e);
-      if (session != null) {
-        data = ((XDebugSessionImpl)session).getSessionData();
-      }
-    }
-    return data;
+    if (data != null) return data;
+
+    XDebugSessionProxy proxy = getSessionProxy(e);
+    if (proxy == null) return null;
+    return proxy.getSessionData();
   }
 
-  @Nullable
-  public static XDebugSession getSession(@NotNull AnActionEvent e) {
+  /**
+   * Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
+   */
+  @ApiStatus.Obsolete
+  public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     if (session == null) {
       Project project = e.getProject();
@@ -507,6 +547,15 @@ public final class DebuggerUIUtil {
       }
     }
     return session;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy getSessionProxy(@NotNull AnActionEvent e) {
+    XDebugSessionProxy session = e.getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY);
+    if (session != null) return session;
+    Project project = e.getProject();
+    if (project == null) return null;
+    return XDebugManagerProxy.getInstance().getCurrentSessionProxy(project);
   }
 
 

@@ -29,7 +29,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {
 
-    override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
+    override fun getSettings(module: Module): IKotlinFacetSettings? = KotlinFacet.get(module)?.configuration?.settings
 
     override fun getInitializedSettings(module: Module): IKotlinFacetSettings = runReadAction { get(module) }
 

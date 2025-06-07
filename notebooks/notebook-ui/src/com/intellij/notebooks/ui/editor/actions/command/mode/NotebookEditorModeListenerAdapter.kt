@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 class NotebookEditorModeListenerAdapter private constructor(private val editor: Editor) : NotebookEditorModeListener, CaretListener, Disposable.Default {
   private var currentEditorMode: NotebookEditorMode? = null
 
-
   override fun onModeChange(editor: Editor, mode: NotebookEditorMode) {
     val modeWasChanged = currentEditorMode != mode
 
@@ -26,33 +25,32 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
       return
     }
 
-    editor.apply {
-      (markupModel as MarkupModelEx).apply {
-        allHighlighters.filterIsInstance<RangeHighlighterEx>().forEach {
-          val lineMarkerRenderer = it.getLineMarkerRenderer()
-          it.setLineMarkerRenderer(null)
-          it.setLineMarkerRenderer(lineMarkerRenderer) // to fireChange
-        }
+    (editor.markupModel as MarkupModelEx).apply {
+      allHighlighters.filterIsInstance<RangeHighlighterEx>().forEach {
+        val lineMarkerRenderer = it.getLineMarkerRenderer()
+        it.setLineMarkerRenderer(null)
+        it.setLineMarkerRenderer(lineMarkerRenderer) // to fireChange
       }
-
-      if (modeWasChanged) {
-        handleCarets(mode)
-        editor.settings.isCaretRowShown = isCaretRowShown(mode)
-      }
-
-      caretModel.allCarets.forEach { caret ->
-        caret.visualAttributes = getCaretAttributes(mode)
-      }
-
-      editor.contentComponent.putClientProperty(ActionUtil.ALLOW_PlAIN_LETTER_SHORTCUTS, when (mode) {
-        NotebookEditorMode.EDIT -> false
-        NotebookEditorMode.COMMAND -> true
-      })
-      editor.contentComponent.enableInputMethods(when (mode) {
-                                                   NotebookEditorMode.EDIT -> true
-                                                   NotebookEditorMode.COMMAND -> false
-                                                 })
     }
+
+    if (modeWasChanged) {
+      handleCarets(mode)
+      editor.settings.isCaretRowShown = isCaretRowShown(mode)
+    }
+
+    editor.caretModel.allCarets.forEach { caret ->
+      caret.visualAttributes = getCaretAttributes(mode)
+    }
+
+    editor.contentComponent.putClientProperty(ActionUtil.ALLOW_PlAIN_LETTER_SHORTCUTS, when (mode) {
+      NotebookEditorMode.EDIT -> false
+      NotebookEditorMode.COMMAND -> true
+    })
+
+    editor.contentComponent.enableInputMethods(when (mode) {
+                                                 NotebookEditorMode.EDIT -> true
+                                                 NotebookEditorMode.COMMAND -> false
+                                               })
   }
 
   override fun caretAdded(event: CaretEvent) {
@@ -71,9 +69,9 @@ class NotebookEditorModeListenerAdapter private constructor(private val editor: 
   }
 
   private fun isCaretRowShown(mode: NotebookEditorMode): Boolean = when (mode) {
-      NotebookEditorMode.EDIT -> true
-      NotebookEditorMode.COMMAND -> false
-    }
+    NotebookEditorMode.EDIT -> true
+    NotebookEditorMode.COMMAND -> false
+  }
 
   private fun handleCarets(mode: NotebookEditorMode) = when (mode) {
     NotebookEditorMode.EDIT -> {

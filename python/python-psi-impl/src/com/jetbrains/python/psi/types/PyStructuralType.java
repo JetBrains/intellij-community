@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 public class PyStructuralType implements PyType {
-  @NotNull private final Set<String> myAttributes;
+  private final @NotNull Set<String> myAttributes;
   private final boolean myInferredFromUsages;
 
   public PyStructuralType(@NotNull Set<String> attributes, boolean inferredFromUsages) {
@@ -41,12 +41,11 @@ public class PyStructuralType implements PyType {
     myInferredFromUsages = inferredFromUsages;
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 
@@ -62,9 +61,8 @@ public class PyStructuralType implements PyType {
     return variants.toArray();
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return "{" + StringUtil.join(myAttributes, ", ") + "}";
   }
 

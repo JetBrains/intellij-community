@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.google.common.collect.Iterables;
@@ -20,9 +20,9 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class RepositoryLibrarySupport {
-  @NotNull private final Project project;
-  @NotNull private final RepositoryLibraryPropertiesModel model;
-  @NotNull private final RepositoryLibraryDescription libraryDescription;
+  private final @NotNull Project project;
+  private final @NotNull RepositoryLibraryPropertiesModel model;
+  private final @NotNull RepositoryLibraryDescription libraryDescription;
 
   public RepositoryLibrarySupport(@NotNull Project project,
                                   @NotNull RepositoryLibraryDescription libraryDescription,
@@ -37,13 +37,13 @@ public class RepositoryLibrarySupport {
    */
   @Deprecated(forRemoval = true)
   public void addSupport(@NotNull Module module,
-                         @NotNull final ModifiableRootModel rootModel,
+                         final @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
     addSupport(module, rootModel, modifiableModelsProvider, null);
   }
 
   public void addSupport(@NotNull Module module,
-                         @NotNull final ModifiableRootModel rootModel,
+                         final @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @Nullable DependencyScope scope) {
     LibraryTable.ModifiableModel modifiableModel = modifiableModelsProvider.getLibraryTableModifiableModel(module.getProject());
@@ -67,7 +67,7 @@ public class RepositoryLibrarySupport {
     }
   }
 
-  private LibraryEx createNewLibrary(@NotNull final Module module, final LibraryTable.ModifiableModel modifiableModel) {
+  private LibraryEx createNewLibrary(final @NotNull Module module, final LibraryTable.ModifiableModel modifiableModel) {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(
       libraryDescription.getGroupId(),
       libraryDescription.getArtifactId(),

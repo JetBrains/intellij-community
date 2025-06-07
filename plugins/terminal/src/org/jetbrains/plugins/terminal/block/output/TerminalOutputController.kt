@@ -9,22 +9,23 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.session.StyleRange
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.cancel
-import org.jetbrains.plugins.terminal.block.BlockTerminalScopeProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkHighlighter
+import org.jetbrains.plugins.terminal.block.hyperlinks.Gen1TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
-import org.jetbrains.plugins.terminal.block.ui.executeInBulk
-import org.jetbrains.plugins.terminal.block.ui.getDisposed
-import org.jetbrains.plugins.terminal.block.ui.invokeLater
+import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.util.*
 import kotlin.math.max
 
@@ -34,7 +35,8 @@ import kotlin.math.max
  * @see TerminalOutputView
  * @see TerminalOutputController
  */
-internal class TerminalOutputController(
+@ApiStatus.Internal
+class TerminalOutputController(
   private val project: Project,
   private val editor: EditorEx,
   private val session: BlockTerminalSession,
@@ -56,7 +58,7 @@ internal class TerminalOutputController(
   @Volatile
   private var runningCommandInteractivity: RunningCommandInteractivity? = null
 
-  private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
+  private val hyperlinkHighlighter: Gen1TerminalHyperlinkHighlighter = Gen1TerminalHyperlinkHighlighter(project, outputModel, session)
 
   private val nextBlockCanBeStartedQueue: Queue<() -> Unit> = LinkedList()
 
@@ -97,7 +99,7 @@ internal class TerminalOutputController(
 
     // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
     val createBlockRequest: () -> Unit = {
-      doWithScrollingAware {
+      editor.doWithScrollingAware {
         val terminalWidth = session.model.withContentLock { session.model.width }
         createNewBlock(newRunningCommandContext, terminalWidth)
       }
@@ -126,7 +128,7 @@ internal class TerminalOutputController(
 
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = outputModel.getActiveBlock() ?: error("No active block")
-      doWithScrollingAware {
+      editor.doWithScrollingAware {
         trimLastEmptyLine(block)
       }
       disposeRunningCommandInteractivity()
@@ -146,7 +148,7 @@ internal class TerminalOutputController(
 
   private fun scheduleLastOutputUpdate() {
     val contentUpdatesScheduler = runningCommandInteractivity?.contentUpdatesScheduler
-    val lastOutput: PartialCommandOutput? = if (contentUpdatesScheduler?.finished == false) {
+    val lastOutput: List<PartialCommandOutput> = if (contentUpdatesScheduler?.finished == false) {
       contentUpdatesScheduler.finishUpdating()
     }
     else {
@@ -156,18 +158,19 @@ internal class TerminalOutputController(
       val (output, terminalWidth) = session.model.withContentLock {
         ShellCommandOutputScraperImpl.scrapeOutput(session) to session.model.width
       }
-      PartialCommandOutput(
+      listOf(PartialCommandOutput(
         output.text,
         output.styleRanges,
         logicalLineIndex = 0,
         terminalWidth,
         isChangesDiscarded = false,
-      )
+      ))
     }
-
-    if (lastOutput != null) {
+    if (lastOutput.isNotEmpty()) {
       invokeLater(editor.getDisposed(), ModalityState.any()) {
-        updateCommandOutput(lastOutput)
+        for (output in lastOutput) {
+          updateCommandOutput(output)
+        }
       }
     }
   }
@@ -230,16 +233,7 @@ internal class TerminalOutputController(
 
   @RequiresEdt
   fun scrollToBottom() {
-    val scrollingModel = editor.scrollingModel
-    // disable animation to perform scrolling atomically
-    scrollingModel.disableAnimation()
-    try {
-      val visibleArea = editor.scrollingModel.visibleArea
-      scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
-    }
-    finally {
-      scrollingModel.enableAnimation()
-    }
+    editor.scrollToBottom()
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -266,7 +260,7 @@ internal class TerminalOutputController(
     if (editor.isDisposed) {
       return
     }
-    return doWithScrollingAware {
+    return editor.doWithScrollingAware {
       doUpdateCommandOutput(output)
     }
   }
@@ -347,29 +341,17 @@ internal class TerminalOutputController(
 
   private fun updateHighlightings(block: CommandBlock, replaceOffset: Int, styles: List<StyleRange>) {
     val replaceHighlightings = styles.map {
-      HighlightingInfo(replaceOffset + it.startOffset, replaceOffset + it.endOffset, it.style.toTextAttributesProvider())
+      HighlightingInfo(
+        startOffset = (replaceOffset + it.startOffset).toInt(),
+        endOffset = (replaceOffset + it.endOffset).toInt(),
+        textAttributesProvider = it.style.toTextAttributesProvider()
+      )
     }
     val newHighlightings = outputModel.getHighlightings(block).asSequence()
       .filter { it.endOffset <= replaceOffset }
       .plus(replaceHighlightings)
       .toList()
     outputModel.putHighlightings(block, newHighlightings)
-  }
-
-  /**
-   * Scroll to bottom if we were at the bottom before executing the [action]
-   */
-  @RequiresEdt(generateAssertion = false)
-  private fun <T> doWithScrollingAware(action: () -> T): T {
-    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
-    try {
-      return action()
-    }
-    finally {
-      if (wasAtBottom) {
-        scrollToBottom()
-      }
-    }
   }
 
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
@@ -411,12 +393,13 @@ internal class TerminalOutputController(
       val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
       setupKeyEventDispatcher(editor, eventsHandler, disposable)
       setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
-      TerminalOutputEditorInputMethodSupport(editor, session, caretModel).install(disposable)
+      setupInputMethodSupport(editor, session, caretModel, disposable)
+
       contentUpdatesScheduler = setupContentUpdating()
     }
 
     private fun setupContentUpdating(): TerminalOutputContentUpdatesScheduler {
-      val scope = BlockTerminalScopeProvider.getInstance(project).childScope("Command block content update")
+      val scope = terminalProjectScope(project).childScope("Command block content update")
       Disposer.register(disposable) {
         scope.cancel()
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.icons.AllIcons;
@@ -50,22 +50,19 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     ProjectKeys.TASK
   };
 
-  @NotNull
   @Override
-  public ProjectSystemId getSystemId() {
+  public @NotNull ProjectSystemId getSystemId() {
     return ProjectSystemId.IDE;
   }
 
-  @NotNull
   @Override
-  public List<Key<?>> getKeys() {
+  public @NotNull List<Key<?>> getKeys() {
     return Arrays.asList(KEYS);
   }
 
   @Override
-  @NotNull
-  public List<ExternalSystemNode<?>> createNodes(final ExternalProjectsView externalProjectsView,
-                                                 final MultiMap<Key<?>, DataNode<?>> dataNodes) {
+  public @NotNull List<ExternalSystemNode<?>> createNodes(final ExternalProjectsView externalProjectsView,
+                                                          final MultiMap<Key<?>, DataNode<?>> dataNodes) {
     final List<ExternalSystemNode<?>> result = new SmartList<>();
 
     addModuleNodes(externalProjectsView, dataNodes, result);
@@ -253,9 +250,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       }
     }
 
-    @NotNull
     @Override
-    protected List<ExternalSystemNode<?>> doBuildChildren() {
+    protected @NotNull List<ExternalSystemNode<?>> doBuildChildren() {
       buildNodesMap(myDependencyNodeMap, myDependenciesGraph);
       List<ExternalSystemNode<?>> myChildNodes = new ArrayList<>();
       for (DependencyNode dependency : myDependenciesGraph.getDependencies()) {
@@ -269,8 +265,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return getErrorLevelRecursively(myDependenciesGraph);
     }
 
-    @NotNull
-    private static ExternalProjectsStructure.ErrorLevel getErrorLevelRecursively(@NotNull DependencyNode node) {
+    private static @NotNull ExternalProjectsStructure.ErrorLevel getErrorLevelRecursively(@NotNull DependencyNode node) {
       if (node instanceof UnknownDependencyNode) {
         return ExternalProjectsStructure.ErrorLevel.ERROR;
       }
@@ -294,12 +289,9 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
   }
 
   private static final class DependencyExternalSystemNode extends ExternalSystemNode<Object> {
-    @NotNull
-    private final DependencyNode myDependencyNode;
-    @NotNull
-    private final Long2ObjectMap<DependencyNode> myDependencyNodeMap;
-    @Nullable
-    private DependencyNode myReferencedNode;
+    private final @NotNull DependencyNode myDependencyNode;
+    private final @NotNull Long2ObjectMap<DependencyNode> myDependencyNodeMap;
+    private @Nullable DependencyNode myReferencedNode;
     private final String myName;
 
     DependencyExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
@@ -326,9 +318,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return myName;
     }
 
-    @Nullable
     @Override
-    protected String getMenuId() {
+    protected @Nullable String getMenuId() {
       return "ExternalSystemView.DependencyMenu";
     }
 
@@ -358,9 +349,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       setNameAndTooltip(presentation, getName(), tooltip, (String)null);
     }
 
-    @NotNull
     @Override
-    protected List<ExternalSystemNode<?>> doBuildChildren() {
+    protected @NotNull List<ExternalSystemNode<?>> doBuildChildren() {
       if (myReferencedNode != null) {
         return Collections.emptyList();
       }
@@ -394,8 +384,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       }
     }
 
-    @Nullable
-    private DependencyExternalSystemNode findReferencedNode(ExternalSystemNode<?> node) {
+    private @Nullable DependencyExternalSystemNode findReferencedNode(ExternalSystemNode<?> node) {
       for (ExternalSystemNode<?> child : node.getChildren()) {
         if (child instanceof DependencyExternalSystemNode &&
             ((DependencyExternalSystemNode)child).myDependencyNode == myReferencedNode) {
@@ -408,7 +397,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     }
   }
 
-  private static abstract class DependencyDataExternalSystemNode<T extends DependencyData<?>> extends ExternalSystemNode<T> {
+  private abstract static class DependencyDataExternalSystemNode<T extends DependencyData<?>> extends ExternalSystemNode<T> {
 
     private final Navigatable myNavigatable;
 
@@ -419,14 +408,12 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       myNavigatable = new OrderEntryModuleDependenciesNavigatable(getProject(), () -> getOrderEntry());
     }
 
-    @Nullable
     @Override
-    public Navigatable getNavigatable() {
+    public @Nullable Navigatable getNavigatable() {
       return myNavigatable;
     }
 
-    @Nullable
-    private OrderEntry getOrderEntry() {
+    private @Nullable OrderEntry getOrderEntry() {
       final T data = getData();
       if (data == null) return null;
       final Project project = getProject();
@@ -451,8 +438,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return StringUtil.compare(dependencyName, thatDependencyName, true);
     }
 
-    @NotNull
-    private static String getDependencySimpleName(@NotNull ExternalSystemNode<?> node) {
+    private static @NotNull String getDependencySimpleName(@NotNull ExternalSystemNode<?> node) {
       Object thatData = node.getData();
       if (thatData instanceof LibraryDependencyData dependencyData) {
         String externalName = dependencyData.getExternalName();
@@ -468,8 +454,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
 
     private static class OrderEntryModuleDependenciesNavigatable implements Navigatable {
       private final @NotNull Supplier<? extends OrderEntry> myProvider;
-      @Nullable private final Project myProject;
-      @Nullable private OrderEntry myOrderEntry;
+      private final @Nullable Project myProject;
+      private @Nullable OrderEntry myOrderEntry;
 
       OrderEntryModuleDependenciesNavigatable(@Nullable Project project,
                                               @NotNull Supplier<? extends OrderEntry> provider) {
@@ -514,9 +500,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       }
     }
 
-    @NotNull
     @Override
-    protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+    protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
       return Collections.emptyList();
     }
 
@@ -544,8 +529,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     }
   }
 
-  @NotNull
-  private static String getNodeDisplayName(@NotNull DataNode<?> node) {
+  private static @NotNull String getNodeDisplayName(@NotNull DataNode<?> node) {
     Object data = node.getData();
     if (data instanceof LibraryDependencyData libraryDependencyData) {
       String externalName = libraryDependencyData.getExternalName();

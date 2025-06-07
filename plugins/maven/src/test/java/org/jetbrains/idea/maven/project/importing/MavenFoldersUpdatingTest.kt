@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.registry.Registry
@@ -150,7 +150,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     val sourceDir = File(projectRoot.getPath(), "target/src")
     sourceDir.mkdirs()
 
-    writeAction {
+    edtWriteAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
         projectsTree.findProject(projectPom)!!,
         getModule("project"),
@@ -186,7 +186,7 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    writeAction {
+    edtWriteAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
         projectsTree.findProject(projectPom)!!,
         getModule("project"),

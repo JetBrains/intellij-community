@@ -5,6 +5,6 @@ package test
 
 public interface Inherited : dependency.Base {
     public companion object {
-        public final val INT_CONST: kotlin.Int /* compiled code */
+        public final val INT_CONST: kotlin.Int /* compiled code */ /* hasBackingField: true */
     }
 }

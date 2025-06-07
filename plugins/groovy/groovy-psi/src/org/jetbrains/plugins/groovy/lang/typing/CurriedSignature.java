@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing;
 
 import com.intellij.psi.PsiElement;
@@ -31,9 +31,8 @@ class CurriedSignature implements CallSignature<CallParameter> {
     return myOriginal.isVararg();
   }
 
-  @Nullable
   @Override
-  public PsiType getReturnType() {
+  public @Nullable PsiType getReturnType() {
     return myOriginal.getReturnType();
   }
 
@@ -42,9 +41,8 @@ class CurriedSignature implements CallSignature<CallParameter> {
     return myOriginal.getParameterCount() - myArguments.size();
   }
 
-  @NotNull
   @Override
-  public List<CallParameter> getParameters() {
+  public @NotNull List<CallParameter> getParameters() {
     final int argumentCount = myArguments.size();
     final List<? extends CallParameter> originalParameters = myOriginal.getParameters();
     final int originalParameterCount = originalParameters.size();
@@ -65,9 +63,8 @@ class CurriedSignature implements CallSignature<CallParameter> {
     }
   }
 
-  @Nullable
   @Override
-  public ArgumentMapping<? extends CallParameter> applyTo(@NotNull List<? extends Argument> arguments, @NotNull PsiElement context) {
+  public @Nullable ArgumentMapping<? extends CallParameter> applyTo(@NotNull List<? extends Argument> arguments, @NotNull PsiElement context) {
     final int argumentCount = arguments.size();
     final int position = myPosition < 0
                          ? isVararg()

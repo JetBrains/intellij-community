@@ -6,55 +6,94 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 
+@Suppress("DialogTitleCapitalization")
 internal object LangDownloader {
   fun download(lang: Lang, project: Project?): Boolean {
     // check if language lib already loaded
-    if (GrazieRemote.isAvailableLocally(lang)) return true
+    if (isAvailableLocally(lang)) return true
 
-    val result = runDownload(lang, project) ?: return false
-    check(GrazieRemote.isValidBundleForLanguage(lang, result)) { "Language bundle checksum became invalid right before loading it" }
-    val classLoader = UrlClassLoader.build().parent(GraziePlugin.classLoader).files(listOf(result)).get()
-    GrazieDynamic.addDynClassLoader(classLoader)
-    // force reloading available language classes
-    GrazieConfig.update { it.copy() }
-    // drop caches, restart highlighting
-    GrazieConfig.stateChanged(GrazieConfig.get(), GrazieConfig.get())
+    val path = runDownload(lang, project) ?: return false
+    performGrazieUpdate(listOf(lang to path))
     return true
+  }
+
+  fun downloadAsync(languages: Collection<Lang>, project: Project) {
+    // check if language lib already loaded
+    val notAvailableLocallyLanguages = languages
+      .filter { !isAvailableLocally(it) }
+    if (notAvailableLocallyLanguages.isEmpty()) return
+
+    val task = object : Task.Backgroundable(
+      project,
+      msg("grazie.settings.proofreading.languages.download"),
+      true,
+      ALWAYS_BACKGROUND
+    ) {
+      override fun run(indicator: ProgressIndicator) {
+        performGrazieUpdate(
+          performDownload(languages)
+        )
+      }
+    }
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(
+      task, BackgroundableProcessIndicator(task)
+    )
   }
 
   private fun runDownload(language: Lang, project: Project?): Path? {
     try {
-      val presentableName = msg("grazie.settings.proofreading.languages.download.name", language.nativeName)
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously<Path, Exception>(
-        { performDownload(language, presentableName) },
-        presentableName,
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously<List<Pair<Lang, Path>>, Exception>(
+        { performDownload(listOf(language)) },
+        msg("grazie.settings.proofreading.languages.download"),
         false,
         project
-      )
-    } catch (exception: Throwable) {
+      ).single().second
+    }
+    catch (exception: Throwable) {
       thisLogger().warn(exception)
       return promptToSelectLanguageBundleManually(project, language)
     }
   }
 
-  @Throws(IllegalStateException::class)
-  private fun performDownload(language: Lang, presentableName: @Nls String): Path? {
-    val bundle = doDownload(language, presentableName)
-    if (!GrazieRemote.isValidBundleForLanguage(language, bundle)) {
-      FileUtil.delete(bundle)
-      throw IllegalStateException("Failed to verify integrity of downloaded language bundle for language ${language.nativeName}.")
+  private fun performGrazieUpdate(bundles: List<Pair<Lang, Path>>) {
+    bundles.forEach { (lang, path) ->
+      check(GrazieRemote.isValidBundleForLanguage(lang, path)) { "Language bundle checksum became invalid right before loading it: $lang" }
     }
-    return bundle
+    val classLoader = UrlClassLoader.build()
+      .parent(GraziePlugin.classLoader)
+      .files(bundles.map { it.second })
+      .get()
+    GrazieDynamic.addDynClassLoader(classLoader)
+    // force reloading available language classes
+    GrazieConfig.update { it.copy() }
+    // drop caches, restart highlighting
+    GrazieConfig.stateChanged(GrazieConfig.get(), GrazieConfig.get())
+  }
+
+  @Throws(IllegalStateException::class)
+  private fun performDownload(languages: Collection<Lang>): List<Pair<Lang, Path>> {
+    val bundles = doDownload(languages)
+    val invalidBundles = bundles
+      .filter { !GrazieRemote.isValidBundleForLanguage(it.first, it.second) }
+      .map { it.second }
+    if (invalidBundles.isNotEmpty()) {
+      bundles.forEach { NioFiles.deleteRecursively(it.second) }
+      throw IllegalStateException("Failed to verify integrity of downloaded language bundle for languages ${invalidBundles}.")
+    }
+    return bundles
   }
 
   private fun promptToSelectLanguageBundleManually(project: Project?, language: Lang): Path? {
@@ -64,13 +103,14 @@ internal object LangDownloader {
     return targetPath
   }
 
-  private fun doDownload(lang: Lang, presentableName: @Nls String): Path {
+  private fun doDownload(languages: Collection<Lang>): List<Pair<Lang, Path>> {
     val downloaderService = DownloadableFileService.getInstance()
-    val downloader = downloaderService.createDownloader(
-      listOf(downloaderService.createFileDescription(lang.remote.url, lang.remote.fileName)),
-      presentableName
-    )
-    val result = downloader.download(GrazieDynamic.dynamicFolder.toFile()).map { it.first.toPath() }
-    return result.single()
+    val descriptors = languages
+      .map { downloaderService.createFileDescription(it.remote.url, it.remote.fileName) }
+    val paths = downloaderService
+      .createDownloader(descriptors, msg("grazie.settings.proofreading.languages.download"))
+      .download(GrazieDynamic.dynamicFolder.toFile())
+      .map { it.first.toPath() }
+    return languages.zip(paths)
   }
 }

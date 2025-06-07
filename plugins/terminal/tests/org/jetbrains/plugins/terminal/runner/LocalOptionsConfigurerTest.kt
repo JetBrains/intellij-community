@@ -13,14 +13,11 @@ import kotlin.io.path.pathString
 
 @TestFor(classes = [LocalOptionsConfigurer::class])
 internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
-  private lateinit var myTarget: LocalOptionsConfigurer
-
   private lateinit var tempDirectory: Path
 
   override fun setUp() {
     super.setUp()
     tempDirectory = createTempDirectory("dummy")
-    myTarget = LocalOptionsConfigurer(myFixture.project)
   }
 
   override fun tearDown() {
@@ -38,13 +35,14 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
   fun testZsh() {
     TerminalProjectOptionsProvider.getInstance(project).startingDirectory = tempDirectory.pathString
 
-    val actual = myTarget.configureStartupOptions(
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
       ShellStartupOptions.Builder()
         .shellCommand(mutableListOf<String>("/bin/zsh"))
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
-        .build()
+        .build(),
+      project
     )
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
@@ -57,13 +55,14 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
   fun testBash() {
     TerminalProjectOptionsProvider.getInstance(project).startingDirectory = tempDirectory.pathString
 
-    val actual = myTarget.configureStartupOptions(
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
       ShellStartupOptions.Builder()
         .shellCommand(mutableListOf<String>("/bin/bash"))
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
-        .build()
+        .build(),
+      project
     )
 
     assertEquals(listOf("/bin/bash"), actual.shellCommand)
@@ -77,12 +76,13 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     TerminalProjectOptionsProvider.getInstance(project).startingDirectory = tempDirectory.pathString
     TerminalProjectOptionsProvider.getInstance(project).shellPath = "/bin/bash"
 
-    val actual = myTarget.configureStartupOptions(
+    val actual = LocalOptionsConfigurer.configureStartupOptions(
       ShellStartupOptions.Builder()
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
-        .build()
+        .build(),
+      project
     )
 
     assertEquals(convertShellPathToCommand("/bin/bash"), actual.shellCommand)

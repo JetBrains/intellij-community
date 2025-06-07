@@ -36,8 +36,7 @@ public final class CheckForOutOfMemoryOnLargeArrayAllocationInspection
   public int m_limit = 64;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "large.array.allocation.no.outofmemoryerror.problem.descriptor");
   }

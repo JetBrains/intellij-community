@@ -3,12 +3,14 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.TimeoutCachedValue
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
@@ -36,20 +38,24 @@ internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
       return true
     }
     else -> {
-      return PluginManagerCore.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
+      return PluginUtils.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
     }
   }
 }
 
+@ApiStatus.Internal
+fun hasStandardExceptionPrefix(className: String): Boolean =
+  className.startsWith("java.") || className.startsWith("javax.") ||
+  className.startsWith("sun.") || className.startsWith("com.sun.") || className.startsWith("jdk.") ||
+  className.startsWith("kotlin.") || className.startsWith("kotlinx.") ||
+  className.startsWith("groovy.")
+
 fun getPluginInfo(className: String): PluginInfo {
-  if (className.startsWith("java.") || className.startsWith("javax.") ||
-      className.startsWith("sun.") || className.startsWith("com.sun.") || className.startsWith("jdk.") ||
-      className.startsWith("kotlin.") || className.startsWith("kotlinx.") ||
-      className.startsWith("groovy.")) {
+  if (hasStandardExceptionPrefix(className)) {
     return jvmCore
   }
 
-  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
+  val plugin = PluginUtils.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
   return getPluginInfoByDescriptor(plugin)
 }
 
@@ -252,7 +258,7 @@ private fun isClassFromCoreOrJetBrainsPlugin(clazz: Class<*>): Boolean {
   if (loader is PluginAwareClassLoader) {
     return isCoreOrJetBrainsPlugin((loader as PluginAwareClassLoader).pluginDescriptor)
   }
-  val descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name)
+  val descriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(clazz.name)
   return descriptor != null && isCoreOrJetBrainsPlugin(descriptor)
 }
 

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -15,6 +16,14 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
+
+    override fun doTest(testDataPath: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFilePath(), 
+            IgnoreTests.DIRECTIVES.of(pluginMode),
+            test = { super.doTest(testDataPath) }
+        )
+    }
 
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
@@ -35,5 +44,6 @@ abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTest
 
     protected companion object {
         const val BIND_TO = "BIND_TO"
+        const val BIND_RESULT = "BIND_RESULT"
     }
 }

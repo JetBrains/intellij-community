@@ -4,8 +4,11 @@ package com.intellij.psi.impl.java.stubs.index;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import org.jetbrains.annotations.NotNull;
 
 class JavaAutoModuleFilterScope extends DelegatingGlobalSearchScope {
@@ -34,7 +37,7 @@ class JavaAutoModuleFilterScope extends DelegatingGlobalSearchScope {
         return false;
       }
     }
-    if (JavaModuleNameIndex.descriptorFile(root) != null) {
+    if (JavaMultiReleaseUtil.findVersionSpecificFile(root, PsiJavaModule.MODULE_INFO_CLS_FILE, LanguageLevel.HIGHEST) != null) {
       return false;
     }
 

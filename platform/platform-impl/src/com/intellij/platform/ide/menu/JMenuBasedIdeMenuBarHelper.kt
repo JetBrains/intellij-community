@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
+import com.intellij.openapi.wm.impl.headertoolbar.MergedMainMenu
 import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.MenuSelectionManager
 
@@ -15,7 +17,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
   override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
     val menuBarComponent = menuBar.component
-    if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
+    if (!forceRebuild && (newVisibleActions == visibleActions) && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       for (child in menuBarComponent.components) {
         if (child is ActionMenu) {
@@ -28,6 +30,8 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     // should rebuild UI
     val changeBarVisibility = newVisibleActions.isEmpty() || visibleActions.isEmpty()
     visibleActions = newVisibleActions
+    val mergedMainMenu = (menuBarComponent as? MergedMainMenu)
+    val visibleMenuCount = mergedMainMenu?.rootMenuItems?.count() ?: 0
     menuBarComponent.removeAll()
 
     if (!newVisibleActions.isEmpty()) {
@@ -41,12 +45,19 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
                                     isMnemonicEnabled = enableMnemonics,
                                     useDarkIcons = (menuBar as IdeJMenuBar.JMenuBarImpl).isDarkMenu,
                                     isHeaderMenuItem = true)
-        if (isCustomDecorationActive) {
+        if (isCustomDecorationActive || menuBarComponent is MergedMainMenu) {
           actionMenu.isOpaque = false
-          actionMenu.isFocusable = false
+          if (isCustomDecorationActive) {
+            actionMenu.isFocusable = false
+          }
+        }
+        if (mergedMainMenu != null && visibleMenuCount > 0 && visibleMenuCount < visibleActions.size && newVisibleActions.indexOf(action) >= visibleMenuCount) {
+          mergedMainMenu.addInvisibleItem(actionMenu)
+          continue
         }
         menuBarComponent.add(actionMenu)
       }
+      (mergedMainMenu?.parent as? MainMenuWithButton)?.recalculateWidth()
     }
     presentationFactory.resetNeedRebuild()
     flavor.updateAppMenu()

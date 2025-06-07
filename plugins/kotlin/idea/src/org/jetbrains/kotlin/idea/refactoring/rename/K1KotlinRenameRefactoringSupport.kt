@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
+import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -45,11 +45,12 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun mangleInternalName(name: String, moduleName: String): String {
-        return KotlinTypeMapper.InternalNameMapper.mangleInternalName(name, moduleName)
+        return name + "$" + NameUtils.sanitizeAsJavaIdentifier(moduleName)
     }
 
     override fun demangleInternalName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.demangleInternalName(mangledName)
+        val indexOfDollar = mangledName.indexOf('$')
+        return if (indexOfDollar >= 0) mangledName.substring(0, indexOfDollar) else null
     }
 
     override fun getJvmName(element: PsiElement): String? {

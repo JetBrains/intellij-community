@@ -47,7 +47,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
       public void actionPerformed(final ActionEvent e) {
         final boolean dedicated = rbModulesDedicated.isSelected();
         myDirComponent.setEnabled(dedicated);
-        if (dedicated && myDirComponent.getText().length() == 0) {
+        if (dedicated && myDirComponent.getText().isEmpty()) {
           final String remoteStorage = Options.getProjectStorageDir(context.getProject());
           myDirComponent.setText(remoteStorage != null ? remoteStorage : FileUtil.toSystemDependentName(myWorkspaceRootComponent.getText()));
         }

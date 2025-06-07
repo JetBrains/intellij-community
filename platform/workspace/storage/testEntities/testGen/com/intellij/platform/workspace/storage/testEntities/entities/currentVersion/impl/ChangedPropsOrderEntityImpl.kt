@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -24,8 +23,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrderEntityData) : ChangedPropsOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsOrderEntityData) : ChangedPropsOrderEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -69,8 +68,8 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
   }
 
 
-  internal class Builder(result: ChangedPropsOrderEntityData?) : ModifiableWorkspaceEntityBase<ChangedPropsOrderEntity, ChangedPropsOrderEntityData>(
-    result), ChangedPropsOrderEntity.Builder {
+  internal class Builder(result: ChangedPropsOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedPropsOrderEntity, ChangedPropsOrderEntityData>(result), ChangedPropsOrderEntity.Builder {
     internal constructor() : this(ChangedPropsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -227,7 +226,8 @@ internal class ChangedPropsOrderEntityData : WorkspaceEntityData<ChangedPropsOrd
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropsOrderEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedPropsOrderEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): ChangedPropsOrderEntityData {

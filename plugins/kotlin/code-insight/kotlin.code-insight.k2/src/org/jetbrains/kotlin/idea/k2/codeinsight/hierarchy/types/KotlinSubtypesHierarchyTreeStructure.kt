@@ -1,24 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.LambdaUtil
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.ArrayUtilRt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
@@ -29,7 +22,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -79,6 +71,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
             if (klass is KtClass && klass.isAnnotation()) {
                 val javaAnnotations = if (psiClass != null) {
                     AnnotatedElementsSearch.searchPsiClasses(psiClass, searchScope.excludeKotlinSources(klass.project))
+                        .asIterable()
                         .filter { it.isAnnotationType }.asSequence()
                 } else emptySequence()
 
@@ -99,7 +92,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
             }
 
             if (klass is PsiClass && klass.isAnnotationType) {
-                return AnnotatedElementsSearch.searchPsiClasses(klass, searchScope).filter { it.isAnnotationType }.asSequence()
+                return AnnotatedElementsSearch.searchPsiClasses(klass, searchScope).asIterable().filter { it.isAnnotationType }.asSequence()
             }
 
             val inheritors = KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
@@ -108,7 +101,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
                 return inheritors
             }
 
-            return inheritors + FunctionalExpressionSearch.search(psiClass, searchScope)
+            return inheritors + FunctionalExpressionSearch.search(psiClass, searchScope).asIterable()
         }
     }
 }

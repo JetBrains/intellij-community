@@ -102,7 +102,7 @@ public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<Inden
         String initialText = document.getText(TextRange.create(0, bounds.getStartOffset())) +
                    document.getText(TextRange.create(bounds.getEndOffset(), document.getTextLength()));
         int toIndent = 0;
-        if (initialText.length() > 0) {
+        if (!initialText.isEmpty()) {
           final DocumentImpl initialDocument = new DocumentImpl(initialText);
           int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
                                                                         : initialDocument.getLineCount() - 1;

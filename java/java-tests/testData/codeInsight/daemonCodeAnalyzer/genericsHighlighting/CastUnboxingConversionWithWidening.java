@@ -14,7 +14,7 @@ public class CastUnboxingConversionWithWidening {
   }
 
   static <T extends Double> int boundDoubleToIntegerPrimitive(T i) {
-    <error descr="Incompatible types. Found: 'T', required: 'int'">int i1 = i;</error> //report
+    int i1 = <error descr="Incompatible types. Found: 'T', required: 'int'">i</error>; //report
     return i1;
   }
 }

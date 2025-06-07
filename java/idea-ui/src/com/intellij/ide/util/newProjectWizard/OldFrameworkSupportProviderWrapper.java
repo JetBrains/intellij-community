@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -37,15 +37,13 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     return myProvider;
   }
 
-  @NotNull
   @Override
-  public FrameworkTypeEx getFrameworkType() {
+  public @NotNull FrameworkTypeEx getFrameworkType() {
     return myType;
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     final FrameworkSupportConfigurable configurable = myProvider.createConfigurable(model);
     return new FrameworkSupportConfigurableWrapper(configurable);
   }
@@ -81,16 +79,13 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       myNewProvider = newProvider;
     }
 
-    @NotNull
     @Override
-    public FrameworkSupportInModuleProvider createProvider() {
+    public @NotNull FrameworkSupportInModuleProvider createProvider() {
       return myNewProvider;
     }
 
-    @NotNull
     @Override
-    @Nls(capitalization = Nls.Capitalization.Title)
-    public String getPresentableName() {
+    public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
       return GuiUtils.getTextWithoutMnemonicEscaping(myOldProvider.getTitle());
     }
 
@@ -99,9 +94,8 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       return myOldProvider.getUnderlyingFrameworkId();
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       final Icon icon = myOldProvider.getIcon();
       return icon != null ? icon : EmptyIcon.ICON_16;
     }
@@ -177,9 +171,8 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       return OldCustomLibraryDescription.createByVersions(versions);
     }
 
-    @NotNull
     @Override
-    public FrameworkLibraryVersionFilter getLibraryVersionFilter() {
+    public @NotNull FrameworkLibraryVersionFilter getLibraryVersionFilter() {
       return myVersionFilter;
     }
 

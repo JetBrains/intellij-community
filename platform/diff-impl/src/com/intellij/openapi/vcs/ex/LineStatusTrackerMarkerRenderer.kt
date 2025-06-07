@@ -6,9 +6,14 @@ import com.intellij.diff.comparison.ByWord
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -32,7 +37,7 @@ abstract class LineStatusTrackerMarkerRenderer(
                                       popupDisposable: Disposable): LineStatusMarkerPopupPanel {
     var editorComponent: JComponent? = null
     if (range.hasVcsLines()) {
-      editorComponent = createVcsContentComponent(range, editor, popupDisposable)
+      editorComponent = createVcsContentComponent(range, editor, mousePosition, popupDisposable)
     }
     val actions = createToolbarActions(editor, range, mousePosition) +
                   createAdditionalToolbarActions(editor, range, mousePosition, popupDisposable)
@@ -41,18 +46,28 @@ abstract class LineStatusTrackerMarkerRenderer(
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, additionalInfoPanel)
   }
 
-  private fun createVcsContentComponent(range: Range, editor: Editor, disposable: Disposable): JComponent {
+  private fun createVcsContentComponent(range: Range, editor: Editor, mousePosition: Point?, disposable: Disposable): JComponent {
     val vcsRange = DiffUtil.getLinesRange(vcsDocument, range.vcsLine1, range.vcsLine2)
     val vcsContent = DiffUtil.getLinesContent(vcsDocument, range.vcsLine1, range.vcsLine2).toString()
     val textField = LineStatusMarkerPopupPanel.createTextField(editor, vcsContent)
     LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(project, textField, vcsDocument, vcsRange,
                                                                    fileType ?: PlainTextFileType.INSTANCE)
     installWordDiff(editor, textField, range, disposable)
+    textField.addSettingsProvider { uEditor ->
+      uEditor as? EditorImpl ?: return@addSettingsProvider
+      val contextMenuActions = createEditorContextMenuActions(editor, range, mousePosition)
+      if (contextMenuActions.isNotEmpty()) {
+        uEditor.installPopupHandler(object : ContextMenuPopupHandler() {
+          override fun getActionGroup(event: EditorMouseEvent): ActionGroup = DefaultActionGroup(contextMenuActions)
+        })
+      }
+    }
     return LineStatusMarkerPopupPanel.createEditorComponent(editor, textField)
   }
 
   protected open fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = emptyList()
   protected open fun createAdditionalToolbarActions(editor: Editor, range: Range, mousePosition: Point?, popupDisposable: Disposable): List<AnAction> = emptyList()
+  protected open fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = emptyList()
 
   protected open fun createAdditionalInfoPanel(editor: Editor,
                                                range: Range,

@@ -14,7 +14,7 @@ import java.util.function.Function;
  */
 @Deprecated(forRemoval = true)
 @ApiStatus.Internal
-public class AnnotationSessionImpl {
+public final class AnnotationSessionImpl {
   @ApiStatus.Internal
   public static <T> T computeWithSession(@NotNull PsiFile psiFile, boolean batchMode, @NotNull Function<? super AnnotationHolderImpl, T> runnable) {
     AnnotationSession session = com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl.create(psiFile);

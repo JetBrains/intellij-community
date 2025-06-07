@@ -60,9 +60,10 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     myObject = o;
   }
 
+  @Override
   public boolean equals(Object o){
     if (o == this) return true;
-    if (o instanceof LookupItem item){
+    if (o instanceof LookupItem<?> item){
       return Comparing.equal(myObject, item.myObject)
              && Objects.equals(myLookupString, item.myLookupString)
              && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)
@@ -71,12 +72,14 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return false;
   }
 
+  @Override
   public int hashCode() {
     final Object object = getObject();
     assert object != this: getClass().getName();
     return myAllLookupStrings.hashCode() * 239 + object.hashCode();
   }
 
+  @Override
   public String toString() {
     return getLookupString();
   }
@@ -182,8 +185,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
       return type;
     }
 
-    if (lookupElement instanceof LookupItem) {
-      final LookupItem<?> item = (LookupItem)lookupElement;
+    if (lookupElement instanceof LookupItem<?> item) {
       final TailType attr = item.getAttribute(TAIL_TYPE_ATTR);
       if (attr != null) {
         return attr;

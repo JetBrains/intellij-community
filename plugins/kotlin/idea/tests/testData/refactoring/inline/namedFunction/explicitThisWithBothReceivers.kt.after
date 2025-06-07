@@ -1,0 +1,16 @@
+fun foo() {
+    bar {
+        foobs(1)
+    }
+}
+
+interface Foo {
+    fun foobs(a: Int)
+    fun m() {
+        foobs(1)
+    }
+}
+
+fun bar(a: Foo.() -> Unit) {}
+
+// IGNORE_K1

@@ -30,15 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public final class GroovyDivideByZeroInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.divide.by.zero");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -85,8 +83,7 @@ public final class GroovyDivideByZeroInspection extends BaseInspection {
   }
 
   private static boolean isZero(GrExpression expression) {
-    @NonNls
-    final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "0".equals(text) ||
         "0x0".equals(text) ||
         "0X0".equals(text) ||

@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
@@ -23,6 +24,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
@@ -32,6 +34,8 @@ import org.jetbrains.plugins.terminal.block.prompt.renderer.ShellPromptRenderer
 import org.jetbrains.plugins.terminal.block.prompt.renderer.TerminalPromptRenderer
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.ui.getDisposed
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 
 internal class TerminalPromptModelImpl(
   override val editor: EditorEx,
@@ -80,17 +84,21 @@ internal class TerminalPromptModelImpl(
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       doUpdatePrompt(renderingInfo)
     })
-    BlockTerminalOptions.getInstance().addListener(this) {
-      renderer = createPromptRenderer()
-      placeholderPromptRenderer = createPlaceholderPromptRenderer()
-      updatePrompt(promptState)
-    }
+    BlockTerminalOptions.getInstance().addListener(this, object : BlockTerminalOptionsListener {
+      override fun promptStyleChanged(promptStyle: TerminalPromptStyle) {
+        renderer = createPromptRenderer()
+        placeholderPromptRenderer = createPlaceholderPromptRenderer()
+        updatePrompt(promptState)
+      }
+    })
   }
 
   @RequiresEdt
   override fun resetChangesHistory() {
-    val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
-    undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+    WriteIntentReadAction.run {
+      val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
+      undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+    }
   }
 
   private fun updatePrompt(state: TerminalPromptState?) {
@@ -100,7 +108,7 @@ internal class TerminalPromptModelImpl(
     else {
       renderer.calculateRenderingInfo(state)
     }
-    runInEdt {
+    invokeLater(editor.getDisposed(), ModalityState.any()) {
       doUpdatePrompt(updatedInfo)
       promptState = state
       renderingInfo = updatedInfo

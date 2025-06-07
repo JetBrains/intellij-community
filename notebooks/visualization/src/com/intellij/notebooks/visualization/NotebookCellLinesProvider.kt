@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.annotations.TestOnly
 
 private const val ID: String = "org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
 
@@ -31,10 +30,18 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
       return provider
     }
 
+    fun getOrInstall(project: Project, document: Document): NotebookCellLinesProvider {
+      val cellLinesProvider = get(document)
+      if (cellLinesProvider != null) {
+        return cellLinesProvider
+      }
+      return install(project, document) ?: error("Can't install NotebookCellLinesProvider for document")
+    }
+
     fun get(document: Document): NotebookCellLinesProvider? {
       return document.getUserData(key)
     }
-    @TestOnly
+
     fun install(document: Document, provider: NotebookCellLinesProvider): NotebookCellLines {
       key.set(document, provider)
       return provider.create(document)

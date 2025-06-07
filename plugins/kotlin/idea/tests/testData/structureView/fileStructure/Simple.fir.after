@@ -1,0 +1,8 @@
+-Simple.kt visibility=none,icon=org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+ -Test visibility=PUBLIC,icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public
+  constructor Test(String, Integer) visibility=PUBLIC,icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public
+  foo(): Int visibility=PROTECTED,icon=Method, Protected
+  number: Integer visibility=PRIVATE,icon=Parameter, Private
+  other(): Unit visibility=PUBLIC,icon=Method, Public
+  some: Int visibility=PRIVATE,icon=org/jetbrains/kotlin/idea/icons/field_value.svg, Private
+  str: String visibility=PUBLIC,icon=Parameter, Public

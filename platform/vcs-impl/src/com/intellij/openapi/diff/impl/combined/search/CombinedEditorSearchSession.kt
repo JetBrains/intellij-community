@@ -334,7 +334,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
     override fun searchFieldDocumentChanged() {
       holders.forEach { it.setMatchesLimit(LivePreviewController.MATCHES_LIMIT) }
       val text = component.searchTextComponent.getText()
-      findModel.setStringToFind(text)
+      findModel.stringToFind = text
       updateResults()
       findModel.isMultiline = component.searchTextComponent.getText().contains("\n") ||
                               component.replaceTextComponent.getText().contains("\n")
@@ -342,7 +342,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
     override fun replaceFieldDocumentChanged() {
       holders.forEach { it.setMatchesLimit(LivePreviewController.MATCHES_LIMIT) }
-      findModel.setStringToReplace(component.replaceTextComponent.getText())
+      findModel.stringToReplace = component.replaceTextComponent.getText()
       findModel.isMultiline = component.searchTextComponent.getText().contains("\n") ||
                               component.replaceTextComponent.getText().contains("\n")
     }
@@ -352,7 +352,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
     }
 
     override fun toggleSearchReplaceMode() {
-      findModel.setReplaceState(!findModel.isReplaceState)
+      findModel.isReplaceState = !findModel.isReplaceState
     }
   }
 

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="kotlin-language" name="Kotlin" />
-  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -12,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.compose-compiler-plugin" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.noarg-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.lombok-compiler-plugin" level="project" />
@@ -23,5 +20,8 @@
     <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.js-plain-objects-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-dataframe-compiler-plugin" level="project" />
   </component>
 </module>

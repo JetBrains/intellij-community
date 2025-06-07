@@ -8,14 +8,15 @@ Driver uses [JMX](https://en.wikipedia.org/wiki/Java_Management_Extensions) as t
 ```shell
 -Dcom.sun.management.jmxremote=true
 -Dcom.sun.management.jmxremote.port=7777
+-Dcom.sun.management.jmxremote.rmi.port=5000
 -Dcom.sun.management.jmxremote.authenticate=false
 -Dcom.sun.management.jmxremote.ssl=false
--Djava.rmi.server.hostname=localhost
+-Djava.rmi.server.hostname=<host-ip>
 ```
 
 Then, you will be able to create a driver and call IDE:
 ```kotlin
-val driver = Driver.create(JmxHost(null, null, "localhost:7777"))
+val driver = Driver.create(JmxHost(null, null, "<host-ip>:7777"))
 assertTrue(driver.isConnected)
 println(driver.getProductVersion())
 driver.exitApplication()

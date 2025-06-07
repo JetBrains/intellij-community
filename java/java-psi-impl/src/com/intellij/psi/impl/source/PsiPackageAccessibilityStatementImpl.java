@@ -17,7 +17,7 @@ import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<PsiPackageAccessibilityStatementStub> implements PsiPackageAccessibilityStatement {
   public PsiPackageAccessibilityStatementImpl(@NotNull PsiPackageAccessibilityStatementStub stub) {
-    super(stub, stub.getStubType());
+    super(stub, stub.getElementType());
   }
 
   public PsiPackageAccessibilityStatementImpl(@NotNull ASTNode node) {
@@ -26,7 +26,7 @@ public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<Psi
 
   @Override
   public @NotNull Role getRole() {
-    return JavaPackageAccessibilityStatementElementType.typeToRole(getElementType());
+    return JavaPackageAccessibilityStatementElementType.typeToRole(getIElementType());
   }
 
   @Override

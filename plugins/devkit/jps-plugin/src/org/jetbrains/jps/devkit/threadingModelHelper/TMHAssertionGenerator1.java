@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.util.Set;
 
-class TMHAssertionGenerator1 implements TMHAssertionGenerator {
+@ApiStatus.Internal
+public class TMHAssertionGenerator1 implements TMHAssertionGenerator {
   private static final String DEFAULT_APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/ApplicationManager";
   private static final String DEFAULT_APPLICATION_CLASS_NAME = "com/intellij/openapi/application/Application";
 
@@ -52,7 +55,7 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
         myAssetionMethod.getDescriptor(), true);
   }
 
-  static class AnnotationChecker extends AnnotationVisitor {
+  static final class AnnotationChecker extends AnnotationVisitor {
     private boolean myShouldGenerateAssertion = true;
     private final Runnable myOnShouldGenerateAssertion;
 
@@ -77,14 +80,16 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
   }
 
   // TODO avoid hardcoding annotation names
-  static class AssertEdt extends TMHAssertionGenerator1 {
+  @ApiStatus.Internal
+  public static final class AssertEdt extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresEdt";
 
     AssertEdt() {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    @VisibleForTesting
+    public AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
           Type.getType("L" + applicationManagerClassName + ";"),
           Type.getType("L" + applicationClassName + ";"));
@@ -95,14 +100,15 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static class AssertBackgroundThread extends TMHAssertionGenerator1 {
+  @ApiStatus.Internal
+  public static final class AssertBackgroundThread extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresBackgroundThread";
 
     AssertBackgroundThread() {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -113,7 +119,8 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static class AssertReadAccess extends TMHAssertionGenerator1 {
+  @ApiStatus.Internal
+  public static final class AssertReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLock";
 
     AssertReadAccess() {
@@ -122,7 +129,7 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
     }
 
-    AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -133,7 +140,8 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static class AssertWriteAccess extends TMHAssertionGenerator1 {
+  @ApiStatus.Internal
+  public static final class AssertWriteAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresWriteLock";
 
     AssertWriteAccess() {
@@ -142,7 +150,8 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
           Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
     }
 
-    AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    @VisibleForTesting
+    public AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -153,14 +162,15 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static class AssertNoReadAccess extends TMHAssertionGenerator1 {
+  @ApiStatus.Internal
+  public static final class AssertNoReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLockAbsence";
 
     AssertNoReadAccess() {
       this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
     }
 
-    AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+    public AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
       this(Type.getType("L" + annotationClassName + ";"),
            Type.getType("L" + applicationManagerClassName + ";"),
            Type.getType("L" + applicationClassName + ";"));
@@ -171,7 +181,8 @@ class TMHAssertionGenerator1 implements TMHAssertionGenerator {
     }
   }
 
-  static Set<? extends TMHAssertionGenerator> generators() {
+  @VisibleForTesting
+  public static Set<? extends TMHAssertionGenerator> generators() {
     return Set.of(
       new TMHAssertionGenerator1.AssertEdt(),
       new TMHAssertionGenerator1.AssertBackgroundThread(),

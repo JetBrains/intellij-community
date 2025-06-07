@@ -2,8 +2,9 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.driver.sdk.ui.components.UiComponent
 import java.awt.Point
+import java.awt.datatransfer.DataFlavor
 import java.awt.event.KeyEvent
 
 fun UiRobot.pasteText(text: String) {
@@ -11,11 +12,17 @@ fun UiRobot.pasteText(text: String) {
     .getDefaultToolkit()
     .getSystemClipboard()
     .setContents(driver.new(StringSelectionRef::class, text), null)
+
   keyboard {
-    val keyEvent = if (SystemInfo.isMac) KeyEvent.VK_META else KeyEvent.VK_CONTROL
+    val keyEvent = if (driver.utility(SystemInfoRef::class).getOsName() == "macOS") KeyEvent.VK_META else KeyEvent.VK_CONTROL
     hotKey(keyEvent, KeyEvent.VK_V)
   }
 }
+
+fun UiRobot.getClipboardText() = driver.utility(ToolkitRef::class)
+    .getDefaultToolkit()
+    .getSystemClipboard()
+    .getData(DataFlavor.stringFlavor)
 
 fun UiRobot.dragAndDrop(start: Point, end: Point) {
   try {
@@ -30,6 +37,10 @@ fun UiRobot.dragAndDrop(start: Point, end: Point) {
   }
 }
 
+fun UiComponent.dragAndDrop(to: Point) {
+  driver.ui.dragAndDrop(this.center, to)
+}
+
 @Remote("java.awt.Toolkit")
 interface ToolkitRef {
   fun getDefaultToolkit(): ToolkitRef
@@ -39,6 +50,12 @@ interface ToolkitRef {
 @Remote("java.awt.datatransfer.Clipboard")
 interface ClipboardRef {
   fun setContents(content: StringSelectionRef, ownerRef: ClipboardOwnerRef?)
+  fun getData(flavor: DataFlavor): Object
+}
+
+@Remote("com.intellij.openapi.util.SystemInfo")
+interface SystemInfoRef {
+  fun getOsName(): String
 }
 
 @Remote("java.awt.datatransfer.ClipboardOwner")

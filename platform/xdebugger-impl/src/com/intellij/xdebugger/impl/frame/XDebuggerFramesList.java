@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -29,6 +30,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +41,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +51,14 @@ import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
 public class XDebuggerFramesList extends DebuggerFramesList implements UiCompatibleDataProvider {
   private final Project myProject;
-  private final FileColorsCache myFileColorsCache;
+  private final XStackFramesListColorsCache myFileColorsCache;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
 
   private void copyStack() {
@@ -92,9 +95,24 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     }
   }
 
+  /**
+   * Please use constructor with {@link XDebugSession} instead.
+   */
+  @ApiStatus.Obsolete
   public XDebuggerFramesList(@NotNull Project project) {
+    this(project, (XDebugSessionProxy)null);
+  }
+
+  public XDebuggerFramesList(@NotNull Project project, @NotNull XDebugSession session) {
+    this(project, XDebugSessionProxyKeeperKt.asProxy(session));
+  }
+
+  @ApiStatus.Internal
+  public XDebuggerFramesList(@NotNull Project project, @Nullable XDebugSessionProxy sessionProxy) {
     myProject = project;
-    myFileColorsCache = new FileColorsCache(project);
+    myFileColorsCache = sessionProxy == null
+                        ? new OldFileColorsCache(project)
+                        : sessionProxy.createFileColorsCache(this);
 
     doInit();
 
@@ -221,8 +239,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     return position != null ? position.createNavigatable(myProject) : null;
   }
 
-  @Nullable
-  private static VirtualFile getFile(XStackFrame frame) {
+  private static @Nullable VirtualFile getFile(XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.getFile() : null;
   }
@@ -236,7 +253,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     if (stackFrame instanceof ItemWithCustomBackgroundColor) {
       return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
     }
-    return myFileColorsCache.get(getFile(stackFrame));
+    return myFileColorsCache.get(stackFrame);
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
@@ -244,15 +261,13 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
-        @Nullable
         @Override
-        public String getTextFor(Object value) {
+        public @Nullable String getTextFor(Object value) {
           return null;
         }
 
-        @Nullable
         @Override
-        public String getCaptionAboveOf(Object value) {
+        public @Nullable String getCaptionAboveOf(Object value) {
           return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
         }
 
@@ -323,7 +338,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     );
 
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list,
+    protected void customizeCellRenderer(final @NotNull JList list,
                                          final Object value,
                                          final int index,
                                          final boolean selected,
@@ -386,7 +401,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         return false;
       }
       var selectedValue = list.getSelectedValue();
-      if (!(selectedValue instanceof XStackFrame)) {
+      if (!(selectedValue instanceof XStackFrame frame)) {
         return false;
       }
       try {
@@ -394,7 +409,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         if (dropFrameHandler == null) {
           return false;
         }
-        return dropFrameHandler.canDrop((XStackFrame)selectedValue);
+        return dropFrameHandler.canDropFrame(frame) == ThreeState.YES;
       } catch (Throwable ignore) {
       }
       return false;
@@ -419,14 +434,26 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     }
   }
 
-  private class FileColorsCache {
+  /**
+   * @deprecated Only used in old code that doesn't provide a session
+   */
+  @Deprecated
+  private class OldFileColorsCache extends XStackFramesListColorsCache {
     private static final Color NULL_COLOR = JBColor.marker("NULL_COLOR");
     private static final Color COMPUTING_COLOR = JBColor.marker("COMPUTING_COLOR");
-    private final FileColorManager myColorsManager;
     private volatile Map<VirtualFile, Color> myFileColors = new HashMap<>();
 
-    private FileColorsCache(Project project) {
-      myColorsManager = FileColorManager.getInstance(project);
+    OldFileColorsCache(Project project) {
+      super(project);
+    }
+
+    @Override
+    public @Nullable Color get(@NotNull XStackFrame stackFrame) {
+      VirtualFile file = getFile(stackFrame);
+      if (file == null) {
+        return null;
+      }
+      return get(file);
     }
 
     @RequiresEdt
@@ -442,7 +469,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
           fileColors.put(virtualFile, COMPUTING_COLOR);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (fileColors == myFileColors) { // check if it is obsolete already
-              Color color = ReadAction.compute(() -> myColorsManager.getFileColor(virtualFile));
+              Color color = ReadAction.compute(() -> getColorsManager().getFileColor(virtualFile));
               EdtExecutorService.getInstance().execute(() -> {
                 if (fileColors == myFileColors) { // check if it is obsolete already
                   fileColors.put(virtualFile, color == null ? NULL_COLOR : color);
@@ -456,7 +483,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         }
       }
       else {
-        return myColorsManager.getScopeColor(NonProjectFilesScope.NAME);
+        return getColorsManager().getScopeColor(NonProjectFilesScope.NAME);
       }
       return null;
     }
@@ -482,7 +509,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     Color getBackgroundColor();
   }
 
-  public static class CopyStackAction extends DumbAwareAction {
+  public static class CopyStackAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     @Override
     public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
@@ -512,7 +539,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
    *   <li>Flag if hovered frame can be dropped</li>
    * </ol>
    *
-   * @see XDropFrameHandler#canDrop(XStackFrame)
+   * @see XDropFrameHandler#canDropFrame(XStackFrame)
    * @see #findDropFrameHandler(XDebuggerFramesList)
    */
   private static final class XDebuggerFrameListMouseListener extends HoverListener {
@@ -590,9 +617,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         ClientProperty.put(list, HOVER_INDEX, index);
         if (index >= 0 && index < list.getModel().getSize()) {
           var value = list.getModel().getElementAt(index);
-          if (value instanceof XStackFrame) {
+          if (value instanceof XStackFrame frame) {
             var dropFrameHandler = findDropFrameHandler(list);
-            ClientProperty.put(list, CAN_DROP_FRAME, dropFrameHandler != null && dropFrameHandler.canDrop((XStackFrame)value));
+            ClientProperty.put(list, CAN_DROP_FRAME, dropFrameHandler != null && dropFrameHandler.canDropFrame(frame) == ThreeState.YES);
           }
         }
         if (renderer != null && getCanDropFrame(list)) {
@@ -718,14 +745,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   private static @Nullable XDropFrameHandler findDropFrameHandler(XDebuggerFramesList list) {
-    var session = DataManager.getInstance().getDataContext(list).getData(XDebugSession.DATA_KEY);
+    var session = DataManager.getInstance().getDataContext(list).getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY);
     if (session == null) {
       return null;
     }
-    return session.getDebugProcess().getDropFrameHandler();
+    return session.getDropFrameHandler();
   }
 
-  private static class ResetFrameAction extends DumbAwareAction {
+  private static class ResetFrameAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       var inputEvent = e.getInputEvent();
@@ -747,7 +774,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
       if (index >= 0 && index < model.getSize()) {
         var handler = findDropFrameHandler(list);
         var frame = ObjectUtils.tryCast(model.getElementAt(index), XStackFrame.class);
-        if (frame != null && handler != null && handler.canDrop(frame)) {
+        if (frame != null && handler != null && handler.canDropFrame(frame) == ThreeState.YES) {
           handler.drop(frame);
           inputEvent.consume();
         }

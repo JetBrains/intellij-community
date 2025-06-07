@@ -20,19 +20,19 @@ final class HighlightSuppressedWarningsFactory extends HighlightUsagesHandlerFac
 
   @Override
   public @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor,
-                                                                           @NotNull PsiFile file,
+                                                                           @NotNull PsiFile psiFile,
                                                                            @NotNull PsiElement target) {
     throw new UnsupportedOperationException("Use createHighlightUsagesHandler(editor, file, target, visibleRange)");
   }
 
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target,
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target,
                                                                  @NotNull ProperTextRange visibleRange) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(target, PsiAnnotation.class);
     if (annotation != null && Comparing.strEqual(SuppressWarnings.class.getName(), annotation.getQualifiedName())) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
-        return new HighlightSuppressedWarningsHandler(editor, file, annotation,
+        return new HighlightSuppressedWarningsHandler(editor, psiFile, annotation,
                                                       PsiTreeUtil.getParentOfType(target, PsiLiteralExpression.class), visibleRange);
       }
     }

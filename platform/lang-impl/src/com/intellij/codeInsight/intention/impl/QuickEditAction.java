@@ -55,8 +55,8 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   private String myLastLanguageName;
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getRangePair(file, editor) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getRangePair(psiFile, editor) != null;
   }
 
   protected @Nullable Pair<PsiElement, TextRange> getRangePair(PsiFile file, Editor editor) {
@@ -84,8 +84,8 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    invokeImpl(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    invokeImpl(project, editor, psiFile);
   }
 
   public QuickEditHandler invokeImpl(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

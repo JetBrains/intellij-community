@@ -7,6 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import training.dsl.LessonContext
 import training.learn.course.KLesson
 import training.learn.exceptons.InvalidSdkException
@@ -15,6 +17,7 @@ import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Path
+import java.util.Locale
 
 interface LangSupport {
   /** It should be a language ID */
@@ -39,7 +42,7 @@ interface LangSupport {
 
   /** Relative path inside plugin resources */
   val projectResourcePath: String
-    get() = "learnProjects/${primaryLanguage.toLowerCase()}/$contentRootDirectoryName"
+    get() = "learnProjects/${primaryLanguage.lowercase(Locale.getDefault())}/$contentRootDirectoryName"
 
   /** Language can specify default sandbox-like file to be used for lessons with modifications but also with project support */
   val sampleFilePath: String?
@@ -70,13 +73,18 @@ interface LangSupport {
    * Implement that method to define SDK lookup depending on a given project.
    *
    * @return an SDK instance which (existing or newly created) should be applied to the project given. Return `null`
-   * if no SDK is okay for this project.
+   * if no SDK is okay for this project. If sdk is not null, we call [applyProjectSdk]
    *
    * @throws NoSdkException in the case no valid SDK is available, yet it's required for the given project
    */
   @Throws(NoSdkException::class)
+  @RequiresEdt
   fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk?
 
+  /**
+   * [sdk] is from [getSdkForProject]
+   */
+  @RequiresEdt
   fun applyProjectSdk(sdk: Sdk, project: Project)
 
   fun applyToProjectAfterConfigure(): (Project) -> Unit
@@ -113,4 +121,13 @@ interface LangSupport {
   fun getContentRootPath(projectPath: Path): Path {
     return projectPath
   }
+
+  /**
+   * When a project dir is cleared using [training.project.ProjectUtils.restoreProject],
+   * these paths along with their descenders are protected.
+   *
+   * For example: `.venv` in Python shouldn't be deleted as it has SDK.
+   */
+  @RequiresReadLock
+  fun getProtectedDirs(project: Project): Set<Path> = emptySet()
 }

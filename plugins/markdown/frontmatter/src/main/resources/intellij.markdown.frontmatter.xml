@@ -1,7 +1,7 @@
 <idea-plugin package="org.intellij.plugins.markdown.frontmatter">
   <dependencies>
     <plugin id="org.intellij.intelliLang"/>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

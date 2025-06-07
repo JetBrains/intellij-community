@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessImagesExtension$Provider"/>
+  </extensions>
+</idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch
 
 import com.intellij.openapi.application.runReadAction
@@ -23,11 +23,11 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.nio.file.Paths
 
 abstract class AbstractDirectKotlinInheritorsSearcherTest : AbstractKotlinSearchersTest() {
-    override fun searchClass(ktClass: KtClass): Query<PsiElement> {
+    override fun searchClass(ktClass: KtClass): Query<out PsiElement> {
         return DirectKotlinClassInheritorsSearch.search(ktClass)
     }
 
-    override fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement> {
+    override fun searchCallable(ktFunction: KtCallableDeclaration): Query<out PsiElement> {
         return DirectKotlinOverridingCallableSearch.search(ktFunction)
     }
 

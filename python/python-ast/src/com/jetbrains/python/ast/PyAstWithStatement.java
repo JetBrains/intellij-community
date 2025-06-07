@@ -19,8 +19,7 @@ public interface PyAstWithStatement extends PyAstCompoundStatement, PyAstNamedEl
   TokenSet WITH_ITEM = TokenSet.create(PyElementTypes.WITH_ITEM);
 
   @Override
-  @NotNull
-  default List<PsiNamedElement> getNamedElements() {
+  default @NotNull List<PsiNamedElement> getNamedElements() {
     PyAstWithItem[] items = PsiTreeUtil.getChildrenOfType(this, PyAstWithItem.class);
     List<PsiNamedElement> result = new ArrayList<>();
     if (items != null) {
@@ -42,8 +41,7 @@ public interface PyAstWithStatement extends PyAstCompoundStatement, PyAstNamedEl
   }
 
   @Override
-  @NotNull
-  default PyAstStatementList getStatementList() {
+  default @NotNull PyAstStatementList getStatementList() {
     final PyAstStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
     assert statementList != null : "Statement list missing for with statement " + getText();
     return statementList;

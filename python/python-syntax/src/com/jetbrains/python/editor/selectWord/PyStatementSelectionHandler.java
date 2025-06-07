@@ -18,13 +18,13 @@ import java.util.List;
 
 public final class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(@NotNull final PsiElement e) {
+  public boolean canSelect(final @NotNull PsiElement e) {
     return e instanceof PyAstStringLiteralExpression || e instanceof PyAstCallExpression || e instanceof PyAstStatement ||
            e instanceof PyAstStatementList;
   }
 
   @Override
-  public List<TextRange> select(@NotNull final PsiElement e, @NotNull final CharSequence editorText, final int cursorOffset, @NotNull final Editor editor) {
+  public List<TextRange> select(final @NotNull PsiElement e, final @NotNull CharSequence editorText, final int cursorOffset, final @NotNull Editor editor) {
     PsiElement endElement = e;
     while(endElement.getLastChild() != null) {
       endElement = endElement.getLastChild();

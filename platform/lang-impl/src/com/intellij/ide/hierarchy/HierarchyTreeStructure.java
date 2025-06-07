@@ -2,6 +2,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.module.Module;
@@ -145,6 +146,12 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
       if (namedScope != null) {
         searchScope = GlobalSearchScopesCore.filterScope(myProject, namedScope);
+      }
+    }
+    if (thisClass != null) {
+      PsiFile file = thisClass.getContainingFile();
+      if (file != null && ScratchUtil.isScratch(file.getVirtualFile())) {
+        searchScope = searchScope.union(new LocalSearchScope(file));
       }
     }
     return searchScope;

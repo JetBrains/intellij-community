@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.ColoredTextContainer;
@@ -22,6 +8,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -81,8 +68,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return Collections.enumeration(getChildren());
   }
 
-  @NotNull
-  public abstract List<? extends TreeNode> getChildren();
+  public abstract @NotNull @Unmodifiable List<? extends TreeNode> getChildren();
 
   protected void setIcon(final Icon icon) {
     myIcon = icon;
@@ -92,23 +78,19 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     myLeaf = leaf;
   }
 
-  @Nullable
-  public XDebuggerTreeNodeHyperlink getLink() {
+  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
     return null;
   }
 
-  @NotNull
-  public SimpleColoredText getText() {
+  public @NotNull SimpleColoredText getText() {
     return myText;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
-  @Nullable
-  public Object getIconTag() {
+  public @Nullable Object getIconTag() {
     return null;
   }
 
@@ -174,8 +156,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return myPath;
   }
 
-  @NotNull
-  public abstract List<? extends XDebuggerTreeNode> getLoadedChildren();
+  public abstract @NotNull @Unmodifiable List<? extends XDebuggerTreeNode> getLoadedChildren();
 
   public abstract void clearChildren();
 

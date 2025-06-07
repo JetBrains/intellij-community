@@ -20,7 +20,7 @@ public final class CleanupAllIntention extends CleanupIntention {
   }
 
   @Override
-  protected @NotNull AnalysisScope getScope(Project project, PsiFile file) {
-    return new AnalysisScope(file);
+  protected @NotNull AnalysisScope getScope(Project project, PsiFile psiFile) {
+    return new AnalysisScope(psiFile);
   }
 }

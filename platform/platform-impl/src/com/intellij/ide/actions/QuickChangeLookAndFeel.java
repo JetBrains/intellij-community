@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -11,12 +11,14 @@ import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -24,7 +26,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.icons.IconUtilKt;
+import com.intellij.ui.popup.ActionPopupOptions;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 
 public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
 
@@ -59,6 +71,93 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   }
 
   @Override
+  protected @NotNull ListPopup createPopup(AnActionEvent e, DefaultActionGroup group, JBPopupFactory.ActionSelectionAid aid) {
+    if (WelcomeFrame.getInstance() == null &&
+        ContainerUtil.exists(group.getChildren(e),
+                             action -> action instanceof LafChangeAction lafAction && lafAction.myLookAndFeelInfo.isRestartRequired())) {
+      return new PopupFactoryImpl.ActionGroupPopup(null, getPopupTitle(e), group, e.getDataContext(),
+                                                   myActionPlace == null ? ActionPlaces.POPUP : myActionPlace, new PresentationFactory(),
+                                                   ActionPopupOptions.forAid(aid, true, -1, preselectAction()), null) {
+        @Override
+        protected ListCellRenderer<?> getListElementRenderer() {
+          JLabel icon1 = new JLabel();
+          JLabel icon2 = new JLabel();
+
+          List<Groups.@NotNull GroupInfo<@NotNull UIThemeLookAndFeelInfo>> infos =
+            ThemeListProvider.Companion.getInstance().getShownThemes().getInfos();
+
+          return new PopupListElementRenderer(this) {
+            @Override
+            protected JComponent layoutComponent(JComponent middleItemComponent) {
+              NonOpaquePanel subPanel = new NonOpaquePanel(new BorderLayout());
+              subPanel.add(icon1, BorderLayout.WEST);
+              subPanel.add(icon2, BorderLayout.EAST);
+              icon1.setBorder(JBUI.Borders.emptyLeft(10));
+              icon2.setBorder(JBUI.Borders.emptyLeft(5));
+
+              NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+              panel.add(middleItemComponent);
+              panel.add(subPanel, BorderLayout.EAST);
+
+              return super.layoutComponent(panel);
+            }
+
+            @Override
+            protected void customizeComponent(JList list, Object value, boolean isSelected) {
+              super.customizeComponent(list, value, isSelected);
+
+              icon1.setIcon(null);
+              icon2.setIcon(null);
+              myRendererComponent.setToolTipText(null);
+
+              if (value instanceof PopupFactoryImpl.ActionItem item) {
+                AnAction action = item.getAction();
+                if (action instanceof LafChangeAction lafAction) {
+                  checkRestartRequired(lafAction, infos, isSelected, icon1, icon2);
+                }
+              }
+            }
+          };
+        }
+      };
+    }
+    return super.createPopup(e, group, aid);
+  }
+
+  private static boolean checkRestartRequired(@NotNull LafChangeAction lafAction,
+                                              @NotNull List<Groups.GroupInfo<UIThemeLookAndFeelInfo>> infos,
+                                              boolean isSelected,
+                                              @Nullable JLabel icon1,
+                                              @Nullable JLabel icon2) {
+    UIThemeLookAndFeelInfo currentLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+
+    if (lafAction.myLookAndFeelInfo.isRestartRequired()) {
+      if (icon1 != null) {
+        icon1.setIcon(AllIcons.General.Beta);
+      }
+
+      if (!isSelected) {
+        Groups.GroupInfo<@NotNull UIThemeLookAndFeelInfo> group = ContainerUtil.find(infos, info -> ContainerUtil.find(
+          info.getItems(), element -> element.getId().equals(lafAction.myLookAndFeelInfo.getId())) != null);
+        if (group != null &&
+            ContainerUtil.find(group.getItems(), element -> element.getId().equals(currentLaf.getId())) == null) {
+          if (icon2 != null) {
+            icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
+          }
+          return true;
+        }
+      }
+    }
+    else if (!isSelected && currentLaf.isRestartRequired()) {
+      if (icon2 != null) {
+        icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
+      }
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
     ApplicationManager.getApplication().getService(QuickChangeLookAndFeelService.class)
       .preparePopup(popup);
@@ -82,11 +181,11 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @ApiStatus.Internal
   public static void switchLafAndUpdateUI(@NotNull LafManager lafManager,
-                                          @NotNull UIThemeLookAndFeelInfo lf,
+                                          @NotNull UIThemeLookAndFeelInfo laf,
                                           boolean async,
                                           boolean force,
                                           boolean lockEditorScheme) {
-    QuickChangeLookAndFeelService.switchLafAndUpdateUI(lafManager, lf, async, force, lockEditorScheme);
+    QuickChangeLookAndFeelService.switchLafAndUpdateUI(lafManager, laf, async, force, lockEditorScheme);
   }
 
   @Override
@@ -105,6 +204,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
+      LafManager.getInstance().checkRestart();
     }
 
     private static @Nullable Icon getIcon(boolean currentLaf) {
@@ -123,16 +223,18 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     void preparePopup(ListPopup popup) {
       UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
+      List<Groups.@NotNull GroupInfo<@NotNull UIThemeLookAndFeelInfo>> infos =
+        ThemeListProvider.Companion.getInstance().getShownThemes().getInfos();
+
       switchAlarm.cancelAllRequests();
       if (Registry.is("ide.instant.theme.switch")) {
         popup.addListSelectionListener(event -> {
           Object item = ((JList<?>)event.getSource()).getSelectedValue();
           if (item instanceof AnActionHolder) {
             AnAction anAction = ((AnActionHolder)item).getAction();
-            if (anAction instanceof LafChangeAction) {
+            if (anAction instanceof LafChangeAction action && !checkRestartRequired(action, infos, false, null, null)) {
               switchAlarm.cancelAllRequests();
               switchAlarm.addRequest(() -> {
-                LafChangeAction action = (LafChangeAction)anAction;
                 switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);
               }, Registry.get("ide.instant.theme.switch.delay").asInteger());
             }

@@ -66,6 +66,10 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testDeleteImportedClass() {
+    doTest().assertFailed();
+  }
+
   public void testInner() {
     doTest();
   }

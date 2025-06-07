@@ -26,7 +26,10 @@ import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
+import com.intellij.util.IconUtil.computeFileIcon
+import com.intellij.util.IconUtil.scale
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
@@ -40,12 +43,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
 import javax.swing.*
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
 
 private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
-  IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
+  computeFileIcon(file = key.file, flags = key.flags, project = key.project)
 }
 
 private val toolbarDecoratorIconsFolder: @NonNls String
@@ -308,6 +312,17 @@ object IconUtil {
     }
   }
 
+  @JvmStatic
+  @ApiStatus.Experimental
+  fun downscaleIconToSize(icon: Icon, maxIconWidth: Int, maxIconHeight: Int): Icon {
+    val scale = min(maxIconWidth.toFloat() / icon.iconWidth.toFloat(),
+                    maxIconHeight.toFloat() / icon.iconHeight.toFloat())
+    if (scale >= 1.0) return icon
+    if (abs(scale - 1) < 0.01f) return icon
+    val currentScale = if (icon is ScalableIcon) icon.getScale() else 1.0f
+    return scale(icon, null, scale * currentScale)
+  }
+
   /**
    * Returns a copy of the provided icon.
    * @see CopyableIcon
@@ -425,18 +440,23 @@ object IconUtil {
     return scaleByIcon(icon = icon, ancestor = ancestor, defaultIcon = defaultIcon) { it.iconWidth }
   }
 
+  /**
+   * @param keepGray if false - the saturation is fully taken from [color]
+   * @param keepBrightness if false - the brightness is fully taken from [color].
+   *                       If left true - 'gray color + gray icon' will produce a nearly black resulting icon.
+   */
   @JvmOverloads
   @JvmStatic
-  fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
+  fun colorize(source: Icon, color: Color, keepGray: Boolean = false, keepBrightness: Boolean = true): Icon {
     return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
-      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray)
+      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray, keepBrightness = keepBrightness)
     })
   }
 
   @JvmOverloads
   @JvmStatic
-  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray))
+  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false, keepBrightness: Boolean = true): Icon {
+    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray, keepBrightness = keepBrightness))
   }
 
   @JvmStatic
@@ -635,7 +655,8 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
-private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+@Internal
+class ColorFilter(val color: Color, val keepGray: Boolean, val keepBrightness: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
   override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
@@ -644,7 +665,9 @@ private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImag
     val b = rgba and 0xff
     val hsb = FloatArray(3)
     Color.RGBtoHSB(r, g, b, hsb)
-    val rgb = Color.HSBtoRGB(base[0], base[1] * if (keepGray) hsb[1] else 1.0f, base[2] * hsb[2])
+    val rgb = Color.HSBtoRGB(base[0],
+                             base[1] * if (keepGray) hsb[1] else 1.0f,
+                             base[2] * if (keepBrightness) hsb[2] else 1.0f)
     return rgba and -0x1000000 or (rgb and 0xffffff)
   }
 }

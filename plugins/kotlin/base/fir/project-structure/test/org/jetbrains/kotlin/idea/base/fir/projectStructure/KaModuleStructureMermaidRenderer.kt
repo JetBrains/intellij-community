@@ -22,8 +22,13 @@ object KaModuleStructureMermaidRenderer {
             .sortedWith(kaModulesComparatorForStableRendering)
             .withIndex().associate { (index, module) -> module to index }
 
-        fun KaModule.nodeId(): String =
-            getKaModuleClass() + "_" + moduleToId.getValue(this)
+        fun KaModule.nodeId(): String {
+            val moduleForId = when (this) {
+                is KaLibraryFallbackDependenciesModule -> dependentLibrary
+                else -> this
+            }
+            return getKaModuleClass() + "_" + moduleToId.getValue(moduleForId)
+        }
 
         return prettyPrint {
             appendLine("graph TD")
@@ -53,7 +58,10 @@ object KaModuleStructureMermaidRenderer {
                 }
 
                 val dependencies = buildList {
-                    regularDependencies.map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
+                    regularDependencies
+                        /* mitigation of KT-74010 */
+                        .filter { (_, to) -> to !is KaBuiltinsModule }
+                        .map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
                         .mapTo(this) { it to DependencyKind.Regular }
                     friendDependencies.map { (from, to) -> "${from.nodeId()} --friend--> ${to.nodeId()}" }.sorted()
                         .mapTo(this) { it to DependencyKind.Friend }

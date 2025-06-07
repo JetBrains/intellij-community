@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -8,10 +8,10 @@ import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.groovy.compiler.rt.GroovyRtJarPaths;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.incremental.groovy.GreclipseBuilder;
 import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
+import org.jetbrains.jps.incremental.groovy.GroovyRtJarPaths;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -26,9 +26,8 @@ final class GrBuildProcessParametersProvider extends BuildProcessParametersProvi
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<String> getClassPath() {
+  public @NotNull List<String> getClassPath() {
     CompilerConfiguration config = myProject.isDefault() ? null : CompilerConfiguration.getInstance(myProject);
     if (config instanceof CompilerConfigurationImpl) {
       BackendCompiler backend = ((CompilerConfigurationImpl)config).getDefaultCompiler();

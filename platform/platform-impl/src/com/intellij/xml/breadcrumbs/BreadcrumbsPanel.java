@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.ui.UISettings;
@@ -29,10 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.Gray;
+import com.intellij.ui.*;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -55,12 +51,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
-import static com.intellij.ui.RelativeFont.SMALL;
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-
 public abstract class BreadcrumbsPanel extends JComponent implements Disposable {
-  private static final Logger LOG = getInstance(BreadcrumbsPanel.class);
+  private static final Logger LOG = Logger.getInstance(BreadcrumbsPanel.class);
 
   final PsiBreadcrumbs breadcrumbs = new PsiBreadcrumbs();
 
@@ -110,7 +102,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
       breadcrumbs.onSelect(this::itemSelected);
       breadcrumbs.setFont(getNewFont(myEditor));
 
-      JScrollPane pane = createScrollPane(breadcrumbs, true);
+      JScrollPane pane = ScrollPaneFactory.createScrollPane(breadcrumbs, true);
       pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
       pane.getHorizontalScrollBar().setEnabled(false);
       setLayout(new BorderLayout());
@@ -199,14 +191,16 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
   private void updateCrumbsAsync() {
     if (myEditor == null || myEditor.isDisposed()) return;
-
-    ReadAction
-      .nonBlocking(() -> computeCrumbs(myEditor.getCaretModel().getOffset()))
-      .withDocumentsCommitted(myProject)
-      .expireWith(this)
-      .coalesceBy(this)
-      .finishOnUiThread(ModalityState.any(), crumbs -> applyCrumbs(crumbs))
-      .submit(NonUrgentExecutor.getInstance());
+    // this is EDT, so we need an explicit read action to correct dependencies correctly
+    ReadAction.run(() -> {
+      ReadAction
+        .nonBlocking(() -> computeCrumbs(myEditor.getCaretModel().getOffset()))
+        .withDocumentsCommitted(myProject)
+        .expireWith(this)
+        .coalesceBy(this)
+        .finishOnUiThread(ModalityState.any(), crumbs -> applyCrumbs(crumbs))
+        .submit(NonUrgentExecutor.getInstance());
+    });
   }
 
   private void applyCrumbs(Iterable<? extends Crumb> _crumbs) {
@@ -334,20 +328,11 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
   private static Font getNewFont(Editor editor) {
     Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? StartupUiUtil.getLabelFont() : getEditorFont(editor);
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI() ? SMALL.derive(font) : font;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI() ? RelativeFont.SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {
     return ComplementaryFontsRegistry.getFontAbleToDisplay('a', Font.PLAIN, editor.getColorsScheme().getFontPreferences(),
                                                            null).getFont();
-  }
-
-  protected static @Nullable FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
-                                                                       @Nullable VirtualFile file,
-                                                                       @NotNull BreadcrumbsPanel panel) {
-    if (file == null) return null;
-    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, file);
-    collector.watchForChanges(file, panel.myEditor, panel, () -> panel.queueUpdate());
-    return collector;
   }
 }

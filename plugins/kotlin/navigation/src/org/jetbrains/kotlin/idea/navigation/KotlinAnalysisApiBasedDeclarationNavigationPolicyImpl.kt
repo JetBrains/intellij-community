@@ -8,12 +8,12 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.Variance
@@ -74,6 +75,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     private fun KtDeclaration?.matchesWithPlatform(targetPlatform: TargetPlatform): Boolean {
         val common = targetPlatform.isCommon()
         val bool = this?.isExpectDeclaration() == common
+        if (common && !bool) {
+            if (this?.hasActualModifier() != true) return true
+        }
         return bool
     }
 
@@ -113,10 +117,12 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val classId = declaration.getClassId() ?: return null
         val project = module.project
         val targetPlatform = module.targetPlatform
-        val declarations =
-            KotlinFullClassNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
-            KotlinTopLevelTypeAliasFqNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) }
-        return declarations
+
+        val classIdName = classId.asFqNameString()
+        val targetDeclaration =
+            KotlinFullClassNameIndex[classIdName, project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
+            KotlinTopLevelTypeAliasFqNameIndex[classIdName, project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) }
+        return targetDeclaration
     }
 
     private fun getCorrespondingCallableDeclaration(
@@ -143,20 +149,29 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                         val packageFqName = declaration.containingKtFile.packageFqName.takeUnless { it.isRoot }?.asString()
                         val callableName = "${packageFqName?.let { "$it." }.orEmpty()}${declarationName}"
                         val project = module.project
-                        when (declaration) {
+                        val declarations = when (declaration) {
                             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex[callableName, project, scope]
                             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex[callableName, project, scope]
                             else -> return null
                         }
+                        val targetPlatform = module.targetPlatform
+                        declarations.filter { it.matchesWithPlatform(targetPlatform) }
                     }
 
                     else -> {
                         val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, module) as? KtClassOrObject
                             ?: return null
-                        if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
-                            correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
+                        val declarations = correspondingOwner.declarations
+                        if (declaration is KtProperty) {
+                            declarations.firstOrNull { it is KtProperty && it.name == declaration.name }
+                                ?.let { return it }
+
+                            if (!declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
+                                correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }
+                                    ?.let { return it }
+                            }
                         }
-                        correspondingOwner.declarations
+                        declarations
                     }
                 }
                 return chooseCallableCandidate(declaration, candidates)
@@ -293,11 +308,13 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
             add(contentScope)
             allDirectDependencies().filter { it.targetPlatform.isCommon() }.mapTo(this) { it.contentScope }
         }
-        return KotlinGlobalSearchScopeMerger.getInstance(project).union(scopes)
+        return KaGlobalSearchScopeMerger.getInstance(project).union(scopes)
     }
 
     companion object {
         @KaExperimentalApi
-        private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES
+        private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+            expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+        }
     }
 }

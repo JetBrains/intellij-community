@@ -8,6 +8,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -32,6 +33,7 @@ public interface TreeStructureProvider extends PossiblyDumbAware {
    * are required.
    */
   @NotNull
+  @Unmodifiable
   Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                          ViewSettings settings);

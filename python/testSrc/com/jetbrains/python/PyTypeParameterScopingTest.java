@@ -35,6 +35,19 @@ public class PyTypeParameterScopingTest extends PyTestCase {
     );
   }
 
+  public void testFunctionDeclaresOwnTypeVarInReturnTypeAnnotation() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                               from typing import TypeVar
+
+                               T = TypeVar('T')
+
+                               def func() -> T:
+                                   pass
+                               """
+    );
+  }
+
   public void testFunctionDeclaresOwnTypeVarInTypeComment() {
     assertTypeParameterOwner("func", "func",
                              """
@@ -49,12 +62,38 @@ public class PyTypeParameterScopingTest extends PyTestCase {
     );
   }
 
+  public void testFunctionDeclaresOwnTypeVarInReturnTypeComment() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                               from typing import TypeVar
+
+                               T = TypeVar('T')
+
+                               def func():
+                                   # type: () -> T
+                                   pass
+                               """
+    );
+  }
+
   public void testFunctionDeclaresOwnTypeVarInDocstring() {
     assertTypeParameterOwner("func", "func",
                              """
                                def func(x):
                                    ""\"
                                    :type x: T\s
+                                   :rtype: T
+                                   ""\"
+                                   pass
+                               """
+    );
+  }
+
+  public void testFunctionDeclaresOwnTypeVarInReturnTypeDocstring() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                               def func():
+                                   ""\"
                                    :rtype: T
                                    ""\"
                                    pass

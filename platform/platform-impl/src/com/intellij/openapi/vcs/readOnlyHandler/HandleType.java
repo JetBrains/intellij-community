@@ -9,6 +9,7 @@ import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public abstract class HandleType {
   public abstract void processFiles(@NotNull Collection<? extends VirtualFile> virtualFiles,
                                     @Nullable String changelist, boolean setChangeListActive);
 
-  public List<String> getChangelists() {
+  public @Unmodifiable List<String> getChangelists() {
     return Collections.emptyList();
   }
 

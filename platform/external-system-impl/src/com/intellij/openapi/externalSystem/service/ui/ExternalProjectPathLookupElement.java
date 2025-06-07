@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -15,17 +15,16 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public class ExternalProjectPathLookupElement extends LookupElement {
   
-  @NotNull private final String myProjectName;
-  @NotNull private final String myProjectPath;
+  private final @NotNull String myProjectName;
+  private final @NotNull String myProjectPath;
 
   public ExternalProjectPathLookupElement(@NotNull String projectName, @NotNull String projectPath) {
     myProjectName = projectName;
     myProjectPath = projectPath;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myProjectName;
   }
 

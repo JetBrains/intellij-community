@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -98,8 +98,9 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
 
         runInEdtAndWait {
             myTestFixture.project.executeWriteCommand("") {
+                val moduleBridge = myTestFixture.module as ModuleBridge
                 KotlinWithGradleConfigurator.addKotlinLibraryToModule(
-                    object : Module by myTestFixture.module {
+                    object : ModuleBridge  by moduleBridge {
                         override fun getName(): String = "jvmMain"
                     },
                     DependencyScope.COMPILE,

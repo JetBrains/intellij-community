@@ -2,7 +2,6 @@
 package com.intellij.openapi.util
 
 import com.intellij.openapi.application.impl.assertReferenced
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -271,24 +270,18 @@ class SuspendingLazyTest {
   fun `recursive lazy via blockingContext and runBlockingCancellable`(): Unit = timeoutRunBlocking {
     lateinit var lazy2: SuspendingLazy<Int>
     val lazy1: SuspendingLazy<Int> = suspendingLazy(CoroutineName("lazy1name")) {
-      blockingContext {
-        runBlockingCancellable {
-          lazy2.getValue()
-        }
+      runBlockingCancellable {
+        lazy2.getValue()
       }
     }
     lazy2 = suspendingLazy(CoroutineName("lazy2name")) {
-      blockingContext {
-        runBlockingCancellable {
-          lazy1.getValue()
-        }
+      runBlockingCancellable {
+        lazy1.getValue()
       }
     }
     assertThrows<LazyRecursionPreventedException> {
-      blockingContext {
-        runBlockingCancellable {
-          lazy1.getValue()
-        }
+      runBlockingCancellable {
+        lazy1.getValue()
       }
     }
   }

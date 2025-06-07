@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -213,6 +213,11 @@ public class K1ExpressionTypeTestGenerated extends AbstractK1ExpressionTypeTest 
     @TestMetadata("typeOfLambda.kt")
     public void testTypeOfLambda() throws Exception {
         runTest("testData/codeInsight/expressionType/typeOfLambda.kt");
+    }
+
+    @TestMetadata("TypealiasedConstructorCall_implicitTypeArguments.kt")
+    public void testTypealiasedConstructorCall_implicitTypeArguments() throws Exception {
+        runTest("testData/codeInsight/expressionType/TypealiasedConstructorCall_implicitTypeArguments.kt");
     }
 
     @TestMetadata("VariableDeclaration.kt")

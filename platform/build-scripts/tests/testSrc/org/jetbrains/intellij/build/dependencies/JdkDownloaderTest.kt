@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build.dependencies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory
+import org.jetbrains.intellij.build.dependencies.JdkDownloader.Arch
+import org.jetbrains.intellij.build.dependencies.JdkDownloader.OS
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJavaExecutable
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJdkHome
 import org.junit.Assert
@@ -21,10 +23,24 @@ class JdkDownloaderTest {
           continue
         }
 
-        val jdkHome = runBlocking(Dispatchers.IO) { getJdkHome(communityRoot = communityRoot, os = os, arch = arch) { } }
-        val javaExecutable = getJavaExecutable(jdkHome)
-        Assert.assertTrue(Files.exists(javaExecutable))
+        if (os === JdkDownloader.OS.LINUX) {
+          // check if linux musl available
+          checkJdkVariantCouldBeDownloaded(communityRoot = communityRoot, os = os, arch = arch, isMusl = true)
+        }
+
+        checkJdkVariantCouldBeDownloaded(communityRoot = communityRoot, os = os, arch = arch, isMusl = false)
       }
     }
+  }
+
+  private fun checkJdkVariantCouldBeDownloaded(
+    communityRoot: BuildDependenciesCommunityRoot,
+    os: OS,
+    arch: Arch,
+    isMusl: Boolean,
+  ) {
+    val jdkHome = runBlocking(Dispatchers.IO) { getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl) { } }
+    val javaExecutable = getJavaExecutable(jdkHome)
+    Assert.assertTrue(Files.exists(javaExecutable))
   }
 }

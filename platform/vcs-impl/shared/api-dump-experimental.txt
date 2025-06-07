@@ -1,0 +1,2 @@
+*:com.intellij.openapi.vcs.LinkDescriptor
+- a:getRange():com.intellij.openapi.util.TextRange

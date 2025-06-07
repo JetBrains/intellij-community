@@ -2,12 +2,12 @@ class YieldStatements {
   static final int ref = -1;
 
   void m(int i) {
-    <error descr="Case statement outside switch">default:</error> <error descr="Yield outside of switch expression">yield 0;</error>
+    <error descr="Case statement outside switch">default:</error> <error descr="'yield' outside of a switch expression">yield 0;</error>
 
     l1: yield <error descr="Cannot resolve symbol 'l1'">l1</error>;
 
     switch (i) {
-      default: <error descr="Yield outside of switch expression">yield 0;</error>
+      default: <error descr="'yield' outside of a switch expression">yield 0;</error>
     }
 
     out: System.out.println(switch (i) {
@@ -21,7 +21,7 @@ class YieldStatements {
         a: switch (0) { default: yield a; }
       }
       case 7 -> {
-        Runnable r = () -> { <error descr="Yield outside of switch expression">yield 0;</error> };
+        Runnable r = () -> { <error descr="'yield' outside of a switch expression">yield 0;</error> };
         r.run();
         yield 0;
       }

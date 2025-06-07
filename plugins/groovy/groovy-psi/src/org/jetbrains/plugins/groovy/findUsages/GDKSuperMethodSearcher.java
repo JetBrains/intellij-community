@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.findUsages;
 
@@ -120,8 +120,7 @@ public final class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatu
     }
   }
 
-  @Nullable
-  private static PsiType getRealType(PsiMethod method) {
+  private static @Nullable PsiType getRealType(PsiMethod method) {
     final PsiElement navigationElement = method.getNavigationElement();
     if (navigationElement instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)navigationElement).getParameterList().getParameters();

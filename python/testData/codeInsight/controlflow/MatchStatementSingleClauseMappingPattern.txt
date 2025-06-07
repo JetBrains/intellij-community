@@ -10,13 +10,14 @@
 9(10,19) refutable pattern: 'bar': foo.bar
 10(11,19) refutable pattern: 'bar'
 11(12) matched pattern: 'bar'
-12(13,19) refutable pattern: foo.bar
-13(14) READ ACCESS: foo
+12(13) refutable pattern: foo.bar
+13(14,19) READ ACCESS: foo
 14(15) matched pattern: foo.bar
 15(16) matched pattern: 'bar': foo.bar
 16(17) matched pattern: {'foo': 1, 'bar': foo.bar}
 17(18) element: PyExpressionStatement
-18(19) READ ACCESS: x
-19(20) element: PyExpressionStatement
-20(21) READ ACCESS: y
-21() element: null
+18(20) READ ACCESS: x
+19(20) ASSERTTYPE ACCESS: null
+20(21) element: PyExpressionStatement
+21(22) READ ACCESS: y
+22() element: null

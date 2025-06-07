@@ -32,11 +32,11 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     Comparator.comparingInt(PsiErrorElement::getTextOffset).thenComparing(PsiErrorElement::getErrorDescription);
 
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
-    if (file == null) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
+    if (psiFile == null) {
       return true;
     }
-    final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) {
       return true;
     }
@@ -50,11 +50,11 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     if (!Registry.is("ssr.in.editor.problem.highlighting")) {
       return false;
     }
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(psiFile);
     if (profile == null) {
       return true;
     }
-    final PsiErrorElement error = findErrorElementAt(file, highlightInfo.startOffset, highlightInfo.getDescription());
+    final PsiErrorElement error = findErrorElementAt(psiFile, highlightInfo.startOffset, highlightInfo.getDescription());
     if (error == null) {
       return false;
     }

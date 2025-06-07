@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.Notification;
@@ -6,21 +6,14 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
-import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerBundle;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.io.CustomPortServerManagerBase;
-
-import java.util.Collection;
-import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
@@ -41,18 +34,6 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
 
   public static BuiltInServerOptions getInstance() {
     return ApplicationManager.getApplication().getService(BuiltInServerOptions.class);
-  }
-
-  static final class BuiltInServerDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
-    @NotNull
-    @Override
-    public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
-      if (category == DebuggerSettingsCategory.GENERAL) {
-        return Collections.singletonList(SimpleConfigurable.create("builtInServer", BuiltInServerBundle
-          .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, () -> getInstance()));
-      }
-      return Collections.emptyList();
-    }
   }
 
   @Override

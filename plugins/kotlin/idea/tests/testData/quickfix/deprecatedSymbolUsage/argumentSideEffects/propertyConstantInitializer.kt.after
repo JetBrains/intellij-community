@@ -1,0 +1,18 @@
+// "Replace with 'this.otherProperty'" "true"
+// WITH_STDLIB
+class A {
+    @Deprecated("", ReplaceWith("this.otherProperty"))
+    val property: Int = 0
+    val otherProperty: Int = 0
+
+    private fun callMethod(): Int {
+        TODO("Not yet implemented updated")
+    }
+}
+
+fun client() {
+    <caret>A()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

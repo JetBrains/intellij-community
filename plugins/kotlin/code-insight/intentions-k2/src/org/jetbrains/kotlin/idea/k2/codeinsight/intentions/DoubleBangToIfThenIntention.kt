@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -45,7 +45,7 @@ internal class DoubleBangToIfThenIntention : SelfTargetingIntention<KtPostfixExp
 
         val ifStatement =
             runWithModalProgressBlocking(project, KotlinBundle.message("progress.title.converting.to.if.then.else.expression")) {
-                writeAction {
+                edtWriteAction {
                     if (isStatement)
                         element.convertToIfNullExpression(base, defaultException)
                     else {
@@ -74,7 +74,7 @@ internal class DoubleBangToIfThenIntention : SelfTargetingIntention<KtPostfixExp
         editor.caretModel.moveToOffset(thrownExpression.node!!.startOffset)
 
         runWithModalProgressBlocking(project, KotlinBundle.message("progress.title.introducing.value.for.condition")) {
-            writeAction {
+            edtWriteAction {
                 TemplateManager.getInstance(project)
                     .startTemplate(editor, builder.buildInlineTemplate(), object : TemplateEditingAdapter() {
                         override fun templateFinished(template: Template, brokenOff: Boolean) {

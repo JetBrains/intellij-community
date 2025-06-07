@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,7 +21,7 @@ private val EP: ExtensionPointName<FloatingToolbarLanguageBean> = ExtensionPoint
 private const val FLOATING_CODE_TOOLBAR_GROUP_ID = "Floating.CodeToolbar"
 
 private fun forLanguage(language: Language): FloatingToolbarLanguageBean? {
-  return EP.extensionList.firstOrNull { bean -> bean.language == language.id }
+  return EP.extensionList.firstOrNull { bean -> bean.language == language.id || bean.language == language.baseLanguage?.id }
 }
 
 internal fun findActionGroupFor(language: Language): String? {
@@ -29,10 +30,8 @@ internal fun findActionGroupFor(language: Language): String? {
     if (bean != null) {
       if (bean.isMinimal) {
         // check if any of the primary languages have full toolbar available
-        val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages.any {
-          val bean = forLanguage(it)
-          bean != null && !bean.isMinimal
-        }
+        val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages
+          .any { forLanguage(it) != null }
 
         if (!hasPrimaryToolbar) return null
       }
@@ -42,7 +41,7 @@ internal fun findActionGroupFor(language: Language): String? {
         return null
       }
 
-      return FLOATING_CODE_TOOLBAR_GROUP_ID
+      return bean.actionGroup ?: FLOATING_CODE_TOOLBAR_GROUP_ID
     }
 
     DEPRECATED_EP.allForLanguage(lang)
@@ -60,6 +59,15 @@ internal fun hasMinimalFloatingToolbar(language: Language): Boolean {
   }
 
   return false
+}
+
+internal fun isSelectionRequiredForFloatingToolbar(language: Language): Boolean {
+  if (!Registry.`is`("floating.codeToolbar.show.without.selection")) return true
+
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    forLanguage(lang)?.let { return it.selectionRequired }
+  }
+  return true
 }
 
 @ApiStatus.Experimental
@@ -81,6 +89,12 @@ internal class FloatingToolbarLanguageBean : PluginAware {
 
   @Attribute("minimal")
   var isMinimal: Boolean = false
+
+  @Attribute("selectionRequired")
+  var selectionRequired: Boolean = true
+
+  @Attribute("actionGroup")
+  var actionGroup: String? = null
 
   @Attribute("customizationClass")
   var customizationClass: String? = null

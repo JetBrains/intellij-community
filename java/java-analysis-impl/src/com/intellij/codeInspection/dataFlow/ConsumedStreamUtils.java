@@ -14,7 +14,8 @@ public final class ConsumedStreamUtils {
 
   private static final CallMatcher CLOSE_STREAM_MATCHERS = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "close");
 
-  private static final CallMatcher SKIP_STREAM = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "parallel", "sequential");
+  private static final CallMatcher SKIP_STREAM = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "parallel", "sequential")
+    .parameterCount(0);
   private static final CallMatcher MARK_AND_CONSUMED_STREAM =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "iterator", "spliterator",
                  "forEach", "forEachOrdered", "toArray", "reduce", "collect", "sum", "min", "max", "count", "average", "summaryStatistics",

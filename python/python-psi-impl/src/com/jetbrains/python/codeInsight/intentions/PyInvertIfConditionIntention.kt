@@ -279,7 +279,8 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
         when {
           instruction == currentInstruction -> ControlFlowUtil.Operation.NEXT
           instruction is ReadWriteInstruction -> ControlFlowUtil.Operation.NEXT
-          instruction.element == null || !instruction.element!!.parents(false).contains(currentElement) -> {
+          instruction.element == null -> ControlFlowUtil.Operation.NEXT
+          !instruction.element!!.parents(false).contains(currentElement) -> {
             result = false
             ControlFlowUtil.Operation.BREAK
           }

@@ -42,10 +42,11 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -118,6 +119,10 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
+    if (testSdk == null) {
+      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
+      return;
+    }
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -242,25 +247,53 @@ public abstract class PyTestCase extends UsefulTestCase {
                                             @NotNull VirtualFile root,
                                             @NotNull OrderRootType rootType,
                                             @NotNull Consumer<VirtualFile> rootConsumer) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(root, rootType);
-      modificator.commitChanges();
-    });
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    addSdkRoots(sdk, List.of(root), rootType);
     try {
       rootConsumer.accept(root);
     }
     finally {
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(root, rootType);
-        modificator.commitChanges();
-      });
-      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+      removeSdkRoots(sdk, List.of(root), rootType);
     }
+  }
+
+  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.removeRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.addRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    List<VirtualFile> stubPackageRoots = new ArrayList<>();
+    for (String packageName : packageNames) {
+      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
+      if (stubPackageRoot == null) {
+        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
+      }
+      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
+      stubPackageRoots.add(stubPackageRoot);
+    }
+    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
+    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   protected String getTestDataPath() {

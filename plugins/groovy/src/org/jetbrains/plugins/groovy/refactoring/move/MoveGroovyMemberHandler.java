@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
@@ -75,8 +75,7 @@ public final class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @NotNull
-  public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
+  public @NotNull PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     GroovyChangeContextUtil.encodeContextInfo(member);
 
     final PsiDocComment docComment;
@@ -212,15 +211,14 @@ public final class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, Set<PsiMember> membersToMove) {
+  public @Nullable PsiElement getAnchor(final @NotNull PsiMember member, final @NotNull PsiClass targetClass, Set<PsiMember> membersToMove) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();
       if (psiExpression != null) {
         psiExpression.accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitReferenceExpression(@NotNull final GrReferenceExpression expression) {
+          public void visitReferenceExpression(final @NotNull GrReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof GrField grField) {

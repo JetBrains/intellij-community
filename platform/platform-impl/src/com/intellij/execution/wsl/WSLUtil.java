@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -13,9 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -204,7 +202,23 @@ public final class WSLUtil {
     }
   }
 
-  static @NotNull String getUncPrefix() {
-    return SystemInfo.isWin11OrNewer ? "\\\\wsl.localhost\\" : WslConstants.UNC_PREFIX;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull String getUncPrefix() {
+    return SystemInfo.isWin11OrNewer ? DEFAULT_UNC_PREFIX : WslConstants.UNC_PREFIX;
   }
+
+  /**
+   * The default path prefix to access Linux files from Windows.
+   * This is a successor to the ` \\wsl$\` path prefix.
+   * 
+   * <li>Windows 11</li>
+   * It's available since the initial release.
+
+   * <li>Windows 10</li>
+   * It's available since Windows 10 Insider Preview Build 21354.
+   * <a href="https://blogs.windows.com/windows-insider/2021/04/07/announcing-windows-10-insider-preview-build-21354/"></a>
+   * This preview was included in Windows 10 Version 21H2 (November 2021 Update).
+   */
+  static final String DEFAULT_UNC_PREFIX = "\\\\wsl.localhost\\";
 }

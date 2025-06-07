@@ -131,10 +131,13 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testArrayElementWrappedInPureMethod() { doTest(); }
   public void testArrayAddedIntoCollection() { doTest(); }
+  public void testInstanceOfUnresolvedType() { doTest(); }
 
   public void testInstanceOfPatternAffectNullity() { doTest(); }
 
   public void testNullabilityInEnumSwitch() { doTest(); }
+  
+  public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
     addJetBrainsNotNullByDefault(myFixture);
@@ -144,6 +147,45 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testClassFileGetter() {
     doTest();
   }
+  public void testPrivateMethodDoNotFlushFinalFields() { doTest(); }
   public void testGetterVsDirectAccess() { doTest(); }
+  public void testGetterVsDirectAccessRecordOverriddenGetter() { doTest(); }
+  public void testGetterVsDirectAccessNonFinal() { doTest(); }
+  public void testGetterVsDirectAccessObjectEquals() { doTest(); }
   public void testSetterAndGetter() { doTest(); }
+  public void testStaticEqualsContract() { doTest(); }
+  public void testNewExpressionAnnotations() { doTest(); }
+  
+  public void testJSpecifyLocalWithGenerics() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyCallExplicitTypeParameters() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyGetOrDefault() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyReturnFromParameterized() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testJsr305NicknameAsTypeAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  
+  public void testSwitchNoUnreachableBranchesDueToUnresolvedType() {
+    doTest();
+  }
 }

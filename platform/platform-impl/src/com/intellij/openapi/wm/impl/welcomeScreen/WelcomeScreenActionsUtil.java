@@ -26,9 +26,9 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
-final class WelcomeScreenActionsUtil {
+public final class WelcomeScreenActionsUtil {
 
-  static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
+  public static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
     return new CustomComponentAction() {
       @Override
       public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -74,7 +74,7 @@ final class WelcomeScreenActionsUtil {
     DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createEvent(
       action, context, null, ActionPlaces.WELCOME_SCREEN, uiKind, null);
-    ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
+    ActionUtil.performAction(action, actionEvent);
   }
 
   private static class LargeIconWithTextPanel extends NonOpaquePanel {

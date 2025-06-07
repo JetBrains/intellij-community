@@ -1,6 +1,6 @@
 package com.intellij.configurationScript
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -34,7 +34,7 @@ internal class ConfigurationFileManager(project: Project): Disposable {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       return@SynchronizedClearableLazy null
     }
     val projectIdeaDir = Paths.get(project.basePath ?: return@SynchronizedClearableLazy null)
@@ -42,7 +42,7 @@ internal class ConfigurationFileManager(project: Project): Disposable {
   }
 
   init {
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       TrustedProjectsListener.onceWhenProjectTrusted(this) {
         clearClearableValues()
       }

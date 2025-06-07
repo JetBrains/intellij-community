@@ -10,7 +10,11 @@ import git4idea.stash.GitStashTracker
 class GitRefreshStashesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null || !isStashTabAvailable()) {
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    if (!project.service<GitStashUIHandler>().isStashTabAvailable()) {
       e.presentation.isEnabledAndVisible = false
     }
   }

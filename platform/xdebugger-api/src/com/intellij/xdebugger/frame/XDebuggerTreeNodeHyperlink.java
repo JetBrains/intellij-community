@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,18 +18,13 @@ public abstract class XDebuggerTreeNodeHyperlink {
   public static final SimpleTextAttributes TEXT_ATTRIBUTES = new SimpleTextAttributes(
     SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.SECONDARY);
 
-  @Nls
-  private final String linkText;
+  private final @Nls String linkText;
 
-  @Nullable
-  @Nls
-  private final String linkTooltip;
+  private final @Nullable @Nls String linkTooltip;
 
-  @Nullable
-  private final Icon linkIcon;
+  private final @Nullable Icon linkIcon;
 
-  @Nullable
-  private final Supplier<String> shortcutSupplier;
+  private final @Nullable Supplier<String> shortcutSupplier;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText) {
     this(linkText, null, null, null);
@@ -56,25 +51,19 @@ public abstract class XDebuggerTreeNodeHyperlink {
     this.shortcutSupplier = shortcutSupplier;
   }
 
-  @NotNull
-  @Nls
-  public String getLinkText() {
+  public @NotNull @Nls String getLinkText() {
     return linkText;
   }
 
-  @Nullable
-  @Nls
-  public String getLinkTooltip() {
+  public @Nullable @Nls String getLinkTooltip() {
     return linkTooltip;
   }
 
-  @Nullable
-  public Icon getLinkIcon() {
+  public @Nullable Icon getLinkIcon() {
     return linkIcon;
   }
 
-  @NotNull
-  public SimpleTextAttributes getTextAttributes() {
+  public @NotNull SimpleTextAttributes getTextAttributes() {
     return TEXT_ATTRIBUTES;
   }
 
@@ -84,8 +73,7 @@ public abstract class XDebuggerTreeNodeHyperlink {
     return false;
   }
 
-  @Nullable
-  public Supplier<String> getShortcutSupplier() {
+  public @Nullable Supplier<String> getShortcutSupplier() {
     return shortcutSupplier;
   }
 }

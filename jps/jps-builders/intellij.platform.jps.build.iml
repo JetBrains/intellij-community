@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="11" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.2" />
+            <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -25,7 +25,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
@@ -40,40 +40,41 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
-        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1">
+        <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar">
-              <sha256sum>c28db4602da9f3817a59de9be137c1f6083a9cb95fa1781f54eda75763a95c67</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar">
+              <sha256sum>c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="library" name="jetbrains.kotlinx.metadata.jvm" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
-    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
+    <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
+    <orderEntry type="library" exported="" name="http-client" level="project" />
+    <orderEntry type="library" name="kotlin-metadata" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>
 </module>

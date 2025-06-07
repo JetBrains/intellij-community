@@ -79,7 +79,7 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
   }
 
   public void setDescriptionText(final @Nls String text) {
-    myDescriptionLabel.setVisible(text != null && text.trim().length() > 0);
+    myDescriptionLabel.setVisible(text != null && !text.trim().isEmpty());
 
     myDescriptionLabel.setText(text);
   }

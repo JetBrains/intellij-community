@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.module.Module;
@@ -18,23 +18,17 @@ public abstract class BuildableRootsChangeRescanningInfo implements RootsChangeR
   public BuildableRootsChangeRescanningInfo() {
   }
 
-  @NotNull
-  public static BuildableRootsChangeRescanningInfo newInstance() {
+  public static @NotNull BuildableRootsChangeRescanningInfo newInstance() {
     return EntityIndexingService.getInstance().createBuildableInfoBuilder();
   }
 
-  @NotNull
-  public abstract BuildableRootsChangeRescanningInfo addModule(@NotNull Module module);
+  public abstract @NotNull BuildableRootsChangeRescanningInfo addModule(@NotNull Module module);
 
-  @NotNull
-  public abstract BuildableRootsChangeRescanningInfo addInheritedSdk();
+  public abstract @NotNull BuildableRootsChangeRescanningInfo addInheritedSdk();
 
-  @NotNull
-  public abstract BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk);
+  public abstract @NotNull BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk);
 
-  @NotNull
-  public abstract BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library);
+  public abstract @NotNull BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library);
 
-  @NotNull
-  public abstract RootsChangeRescanningInfo buildInfo();
+  public abstract @NotNull RootsChangeRescanningInfo buildInfo();
 }

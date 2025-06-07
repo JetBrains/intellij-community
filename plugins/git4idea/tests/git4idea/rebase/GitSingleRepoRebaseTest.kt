@@ -24,6 +24,7 @@ import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
@@ -453,7 +454,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   // git rebase --continue should be either called from a commit dialog, either from the GitRebaseProcess.
   // both should prepare the working tree themselves by adding all necessary changes to the index.
-  fun `test local changes in the conflicting file should lead to error on continue rebase`() {
+  fun `test local changes in the conflicting file should not prevent rebase`() {
     repo.`prepare simple conflict`()
     `do nothing on merge`()
 
@@ -462,14 +463,22 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     //manually resolve conflicts
     repo.resolveConflicts()
-    file("c.txt").append("more changes after resolving")
+    val appended = "more changes after resolving"
+    file("c.txt").append(appended)
     // forget to git add afterwards
 
+    refresh()
+    updateChangeListManager()
+
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor(null) { "message!" })
     GitRebaseUtils.continueRebase(project)
 
-    `assert error about unstaged file before continue rebase`("c.txt")
-    repo.`assert feature not rebased on master`()
-    repo.assertRebaseInProgress()
+    assertSuccessfulRebaseNotification("Rebased feature on master")
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
+
+    repo.assertNoLocalChanges()
+    assertTrue(file("c.txt").read().endsWith(appended))
   }
 
   fun `test local changes in some other file should lead to error on continue rebase`() {
@@ -497,10 +506,47 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(project)
 
-    `assert error about unstaged file before continue rebase`("d.txt")
-
-    repo.`assert feature not rebased on master`()
+    `assert error about unstaged file before continue rebase`()
     repo.assertRebaseInProgress()
+  }
+
+  fun `test unstaged changes while stopped for editing stage and retry`() {
+    val fileA = file("a.txt")
+    val fileB = file("b.txt")
+    build {
+      master {
+        0()
+        1()
+      }
+      feature(1) {
+        fileA.write("hello").add()
+        fileB.write("hello").add()
+        repo.commit("feature")
+      }
+    }
+
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor({ it.lines().joinToString(LineSeparator.getSystemLineSeparator().separatorString) { s -> s.replace("pick", "edit") } }, { "message" }))
+
+    refresh()
+    updateChangeListManager()
+    rebaseInteractively()
+
+    assertSuccessfulNotification("Rebase stopped for editing", "")
+    val editedContent = "more changes after resolving"
+    fileA.append(editedContent)
+    fileB.delete()
+    refresh()
+    updateChangeListManager()
+
+    runBlocking {
+      GitRebaseStagingAreaHelper.tryStageChangesInTrackedFilesAndRetryInBackground(repo) { fail("Error shouln't be shown") }.join()
+    }
+
+    assertNoRebaseInProgress(repo)
+
+    repo.assertNoLocalChanges()
+    assertTrue(fileA.read().endsWith(editedContent))
+    assertFalse(fileB.exists())
   }
 
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {

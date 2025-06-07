@@ -280,6 +280,10 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON311);
   }
 
+  // PY-79967
+  public void testTemplateStrings() {
+    doTest(LanguageLevel.PYTHON313);
+  }
 
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);

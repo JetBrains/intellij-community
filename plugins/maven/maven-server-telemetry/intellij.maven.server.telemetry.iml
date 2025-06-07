@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.rt" exported="" />
   </component>
 </module>

@@ -36,9 +36,8 @@ import java.util.stream.Collectors;
 
 public final class PyArgumentListInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -49,9 +48,8 @@ public final class PyArgumentListInspection extends PyInspection {
       super(holder, context);
     }
 
-    @NotNull
     @Override
-    protected ProblemsHolder getHolder() {
+    protected @NotNull ProblemsHolder getHolder() {
       //noinspection ConstantConditions, see Visitor#Visitor(ProblemsHolder, LocalInspectionToolSession)
       return super.getHolder();
     }
@@ -203,6 +201,7 @@ public final class PyArgumentListInspection extends PyInspection {
           if (inside_type != null && !PyTypeChecker.isUnknown(inside_type, context)) {
             if (((PyStarArgument)arg).isKeyword()) {
               if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
+                // TODO: check that the key type is compatible with `str`
                 holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.type", inside_type.getName()));
               }
             }
@@ -314,12 +313,10 @@ public final class PyArgumentListInspection extends PyInspection {
     );
   }
 
-  @NlsSafe
-  @NotNull
-  private static String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
-                                                         @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                         @NotNull TypeEvalContext context,
-                                                         boolean isOnTheFly) {
+  private static @NlsSafe @NotNull String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
+                                                                           @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                           @NotNull TypeEvalContext context,
+                                                                           boolean isOnTheFly) {
     final @NlsSafe String separator = isOnTheFly ? "<br>" : " ";
     final @NlsSafe String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
 
@@ -338,10 +335,9 @@ public final class PyArgumentListInspection extends PyInspection {
   }
 
 
-  @NotNull
-  private static @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                        @NotNull TypeEvalContext context,
-                                                                        boolean isOnTheFly) {
+  private static @NotNull @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                                 @NotNull TypeEvalContext context,
+                                                                                 boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
@@ -351,9 +347,8 @@ public final class PyArgumentListInspection extends PyInspection {
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
-  @Nullable
-  private static @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
-                                                                       @NotNull TypeEvalContext context) {
+  private static @Nullable @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
+                                                                                 @NotNull TypeEvalContext context) {
     final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
     final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
     if (callableParameters == null) return null;

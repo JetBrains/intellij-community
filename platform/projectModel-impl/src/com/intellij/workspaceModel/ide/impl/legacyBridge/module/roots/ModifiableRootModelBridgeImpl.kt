@@ -88,8 +88,7 @@ internal class ModifiableRootModelBridgeImpl(
   private val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   private val extensionsDelegate = lazy {
-    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
-                                       parentDisposable = extensionsDisposable)
+    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true)
   }
   private val extensions by extensionsDelegate
 
@@ -597,10 +596,6 @@ internal class ModifiableRootModelBridgeImpl(
   }
 
   private fun disposeWithoutLibraries() {
-    if (!modelIsCommittedOrDisposed) {
-      Disposer.dispose(extensionsDisposable)
-    }
-
     // No assertions here since it is ok to call dispose twice or more
     modelIsCommittedOrDisposed = true
   }

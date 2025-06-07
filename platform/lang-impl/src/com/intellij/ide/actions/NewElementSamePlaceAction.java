@@ -8,28 +8,42 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NewElementSamePlaceAction extends NewElementAction {
-  @Override
-  protected String getPopupTitle() {
-    return IdeBundle.message("title.popup.new.element.same.place");
-  }
 
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW) != null;
   }
 
+  @ApiStatus.Internal
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    ListPopup popup = createPopup(e.getDataContext());
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project != null) {
-      popup.showCenteredInCurrentWindow(project);
+  protected @NotNull PopupHandler createPopupHandler(@NotNull AnActionEvent e) {
+    return new SamePlacePopupHandler(e);
+  }
+
+  private class SamePlacePopupHandler extends PopupHandler {
+    private SamePlacePopupHandler(@NotNull AnActionEvent e) {
+      super(e);
     }
-    else {
-      popup.showInBestPositionFor(e.getDataContext());
+
+    @Override
+    protected @Nullable String getTitle() {
+      return IdeBundle.message("title.popup.new.element.same.place");
+    }
+
+    @Override
+    protected void show(@NotNull ListPopup popup) {
+      Project project = event.getData(CommonDataKeys.PROJECT);
+      if (project != null) {
+        popup.showCenteredInCurrentWindow(project);
+      }
+      else {
+        popup.showInBestPositionFor(event.getDataContext());
+      }
     }
   }
 }

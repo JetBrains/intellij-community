@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.psi.PsiArrayType;
@@ -15,16 +15,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 class GrFunctionalExpressionSignature implements GrSignature {
 
-  @NotNull
-  private final GrFunctionalExpression myExpression;
+  private final @NotNull GrFunctionalExpression myExpression;
 
   GrFunctionalExpressionSignature(@NotNull GrFunctionalExpression expression) {
     myExpression = expression;
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return PsiSubstitutor.EMPTY;
   }
 
@@ -48,9 +46,8 @@ class GrFunctionalExpressionSignature implements GrSignature {
     return last != null && last.getType() instanceof PsiArrayType;
   }
 
-  @Nullable
   @Override
-  public PsiType getReturnType() {
+  public @Nullable PsiType getReturnType() {
     return myExpression.getReturnType();
   }
 

@@ -12,6 +12,7 @@ public class MaybeReturnInstruction extends InstructionImpl implements MaybeInte
     super(element);
   }
 
+  @Override
   public String toString() {
     return super.toString() + " MAYBE_RETURN";
   }

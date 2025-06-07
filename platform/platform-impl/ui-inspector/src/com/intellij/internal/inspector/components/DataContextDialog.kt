@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Comparing
@@ -31,9 +31,9 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 
-class DataContextDialog(
+internal class DataContextDialog(
   project: Project?,
-  val contextComponent: JComponent
+  @JvmField val componentList: List<Component>
 ) : DialogWrapper(project) {
   init {
     init()
@@ -54,8 +54,11 @@ class DataContextDialog(
 
     val panel = panel {
       row {
-        checkBox("Show BGT Data")
-          .actionListener { event, component -> table.model = buildTreeModel(component.isSelected) }
+        checkBox("Show BGT Data").actionListener { event, component ->
+          table.model = SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+            buildTreeModel(component.isSelected)
+          }
+        }
       }
       row {
         scrollCell(table)
@@ -78,14 +81,10 @@ class DataContextDialog(
     model.addColumn("Value")
     model.addColumn("Value type")
 
-    var component: Component? = contextComponent
-    while (component != null) {
-      val c = component
-      val token = if (showDataRules) SlowOperations.knownIssue("move collection to BGT")
-      else AccessToken.EMPTY_ACCESS_TOKEN
-      val result = token.use {
-        collectDataFrom(c, showDataRules)
-      }
+    var prev: Component? = null
+    for (c in componentList) {
+      assert(prev?.parent == null || prev.parent === c)
+      val result = collectDataFrom(c, showDataRules)
       if (result.isNotEmpty()) {
         if (model.rowCount > 0) {
           model.appendEmptyRow()
@@ -95,7 +94,7 @@ class DataContextDialog(
           model.appendRow(data)
         }
       }
-      component = component.parent
+      prev = c
     }
     return model
   }
@@ -123,7 +122,7 @@ class DataContextDialog(
     val result = mutableListOf<ContextData>()
     for (key in DataKey.allKeys()) {
       val specialKey = isSpecialContextComponentOnlyKey(key)
-      if (specialKey && component !== contextComponent) continue
+      if (specialKey && component !== componentList.first()) continue
       val data = context.getData(key)
       val parentData = if (specialKey) null else parentContext.getData(key)
       if (equalData(data, parentData, 0, null)) continue
@@ -136,91 +135,94 @@ class DataContextDialog(
     result.sortWith(Comparator.comparing { StringUtil.toUpperCase(it.key) })
     return result
   }
+}
 
-  private fun equalData(o1: Any?, o2: Any?, level: Int, visited: MutableSet<Any>?): Boolean {
-    class P(val o1: Any, val o2: Any) {
-      override fun equals(other: Any?): Boolean = other is P && o1 === other.o1 && o2 === other.o2
-      override fun hashCode(): Int = o1.hashCode() + o2.hashCode() * 31
-    }
-    fun set() = (visited ?: HashSet<Any>()).apply { add(P(o1!!, o2!!)) }
-    if (o1 === o2) return true
-    if (o1 == null || o2 == null) return false
-    val c1 = o1.javaClass
-    val c2 = o2.javaClass
-    return when {
-      level > 10 -> visited?.contains(P(o1, o2)) == true
-      Comparing.equal(o1, o2) -> true
-      o1 is Array<*> && o2 is Array<*> -> equalData(o1.toList(), o2.toList(), level + 1, set())
-      o1 is Reference<*> && o2 is Reference<*> -> Comparing.equal(o1.get(), o2.get())
-      o1 is Collection<*> && o2 is Collection<*> -> {
-        if (o1.size != o2.size) return false
-        val it1 = o1.iterator()
-        val it2 = o2.iterator()
-        while (it1.hasNext()) {
-          if (!equalData(it1.next(), it2.next(), level + 1, set())) return false
-        }
-        true
+private fun equalData(o1: Any?, o2: Any?, level: Int, visited: MutableSet<Any>?): Boolean {
+  class P(val o1: Any, val o2: Any) {
+    override fun equals(other: Any?): Boolean = other is P && o1 === other.o1 && o2 === other.o2
+    override fun hashCode(): Int = o1.hashCode() + o2.hashCode() * 31
+  }
+  fun set() = (visited ?: HashSet()).apply { add(P(o1!!, o2!!)) }
+  if (o1 === o2) return true
+  if (o1 == null || o2 == null) return false
+  val c1 = o1.javaClass
+  val c2 = o2.javaClass
+  return when {
+    level > 10 -> visited?.contains(P(o1, o2)) == true
+    Comparing.equal(o1, o2) -> true
+    o1 is Array<*> && o2 is Array<*> -> equalData(o1.toList(), o2.toList(), level + 1, set())
+    o1 is Reference<*> && o2 is Reference<*> -> Comparing.equal(o1.get(), o2.get())
+    o1 is Collection<*> && o2 is Collection<*> -> {
+      if (o1.size != o2.size) return false
+      val it1 = o1.iterator()
+      val it2 = o2.iterator()
+      while (it1.hasNext()) {
+        if (!equalData(it1.next(), it2.next(), level + 1, set())) return false
       }
-      c1 != c2 -> false
-      o1 is JBIterable<*> && o2 is JBIterable<*> -> equalData(o1.toList(), o2.toList(), level + 1, set())
-      else -> {
-        for (field in ReflectionUtil.collectFields(c1)) {
-          if (Modifier.isStatic(field.modifiers)) continue
-          field.isAccessible = true
-          val o11 = field.get(o1)
-          val o22 = field.get(o2)
-          if (!equalData(o11, o22, level + 1, set())) return false
-        }
-        true
-      }
+      true
     }
-  }
-
-  private fun isSpecialContextComponentOnlyKey(key: DataKey<*>): Boolean {
-    return key === PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-           key === PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
-           key === PlatformDataKeys.MODALITY_STATE ||
-           key === PlatformDataKeys.SPEED_SEARCH_TEXT ||
-           key === PlatformDataKeys.SPEED_SEARCH_COMPONENT
-  }
-
-  private fun getKeyPresentation(key: String, overridden: Boolean) = when {
-    overridden -> "*OVERRIDDEN* ${key}"
-    else -> key
-  }
-
-  private fun getValuePresentation(value: Any) = when (value) {
-    is Array<*> -> value.contentToString()
-    else -> value.toString()
-  }
-
-  private fun getClassName(value: Any): String {
-    val clazz: Class<*> = value.javaClass
-    return when {
-      clazz.isAnonymousClass -> "${clazz.superclass.simpleName}$..."
-      else -> clazz.simpleName
+    c1 != c2 -> false
+    o1 is JBIterable<*> && o2 is JBIterable<*> -> equalData(o1.toList(), o2.toList(), level + 1, set())
+    else -> {
+      for (field in ReflectionUtil.collectFields(c1)) {
+        if (Modifier.isStatic(field.modifiers)) continue
+        field.isAccessible = true
+        val o11 = field.get(o1)
+        val o22 = field.get(o2)
+        if (!equalData(o11, o22, level + 1, set())) return false
+      }
+      true
     }
   }
+}
 
-  private class MyTableCellRenderer : ColoredTableCellRenderer() {
-    override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (value != null) {
-        append(value.toString())
-      }
+private fun isSpecialContextComponentOnlyKey(key: DataKey<*>): Boolean {
+  return key === PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+         key === PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+         key === PlatformDataKeys.MODALITY_STATE ||
+         key === PlatformDataKeys.SPEED_SEARCH_TEXT ||
+         key === PlatformDataKeys.SPEED_SEARCH_COMPONENT
+}
 
-      val isHeader = table.model.getValueAt(row, 0) is Header
-      if (isHeader) {
-        background = JBUI.CurrentTheme.Table.Selection.background(false)
-      }
+private fun getKeyPresentation(key: String, overridden: Boolean) = when {
+  overridden -> "*OVERRIDDEN* ${key}"
+  else -> key
+}
+
+private fun getValuePresentation(value: Any) = when (value) {
+  is Array<*> -> value.contentToString()
+  is DataManagerImpl.KeyedDataProvider ->
+    "${value.map.size} lazy" +
+    "${value.generic?.let { " + generic" } ?: ""}: ${value.map.keys.joinToString(", ")}"
+  else -> value.toString()
+}
+
+private fun getClassName(value: Any): String {
+  val clazz: Class<*> = value.javaClass
+  return when {
+    clazz.isAnonymousClass -> "${clazz.superclass.simpleName}$..."
+    else -> clazz.simpleName
+  }
+}
+
+private class MyTableCellRenderer : ColoredTableCellRenderer() {
+  override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+    if (value != null) {
+      append(value.toString())
+    }
+
+    val isHeader = table.model.getValueAt(row, 0) is Header
+    if (isHeader) {
+      background = JBUI.CurrentTheme.Table.Selection.background(false)
     }
   }
+}
 
-  private class ContextData(val key: String,
-                            val valueStr: String,
-                            val valueClass: String,
-                            val overridden: Boolean)
+private class ContextData(val key: String,
+                          val valueStr: String,
+                          val valueClass: String,
+                          val overridden: Boolean)
 
-  private class Header(val key: String) {
-    override fun toString(): String = key
-  }
+private class Header(val key: String) {
+  override fun toString(): String = key
 }

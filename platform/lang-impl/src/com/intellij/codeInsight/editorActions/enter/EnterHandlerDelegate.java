@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -78,9 +78,16 @@ public interface EnterHandlerDelegate {
    *                         performed
    * </table>
    */
-  Result preprocessEnter(final @NotNull PsiFile file, final @NotNull Editor editor, final @NotNull Ref<Integer> caretOffset,
-                         final @NotNull Ref<Integer> caretAdvance, final @NotNull DataContext dataContext,
-                         final @Nullable EditorActionHandler originalHandler);
+  default Result preprocessEnter(
+    final @NotNull PsiFile file,
+    final @NotNull Editor editor,
+    final @NotNull Ref<Integer> caretOffset,
+    final @NotNull Ref<Integer> caretAdvance,
+    final @NotNull DataContext dataContext,
+    final @Nullable EditorActionHandler originalHandler
+  ) {
+    return Result.Continue;
+  }
 
   /**
    * Called at the end of Enter handling after line feed insertion and indentation adjustment.
@@ -103,5 +110,11 @@ public interface EnterHandlerDelegate {
    * @see DataContext
    * @see com.intellij.psi.PsiDocumentManager
    */
-  Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext);
+  default Result postProcessEnter(
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    @NotNull DataContext dataContext
+  ) {
+    return Result.Continue;
+  }
 }

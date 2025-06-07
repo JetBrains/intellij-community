@@ -36,7 +36,7 @@ public class GroovyGenerateActionsTest extends LightPlatformCodeInsightTestCase 
     for (GrBaseGenerateAction action : actions) {
       AnActionEvent event = TestActionEvent.createTestEvent(action, getCurrentEditorDataContext());
       action.update(event);
-      assert event.getPresentation().isEnabledAndVisible();
+      assertTrue(event.getPresentation().isEnabledAndVisible());
     }
   }
 
@@ -58,7 +58,7 @@ public class GroovyGenerateActionsTest extends LightPlatformCodeInsightTestCase 
     for (GrBaseGenerateAction action : actions) {
       AnActionEvent event = TestActionEvent.createTestEvent(action, getCurrentEditorDataContext());
       action.update(event);
-      assert !event.getPresentation().isEnabledAndVisible();
+      assertFalse (event.getPresentation().isEnabledAndVisible());
     }
   }
 }

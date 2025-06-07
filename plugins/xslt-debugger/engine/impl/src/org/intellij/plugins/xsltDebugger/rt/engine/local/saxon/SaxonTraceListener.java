@@ -56,6 +56,7 @@ public class SaxonTraceListener implements TraceListener {
    * Called at start
    */
 
+  @Override
   public void open() {
     myDebugger.getEventQueue().startDocument();
     if (TRACE) {
@@ -73,6 +74,7 @@ public class SaxonTraceListener implements TraceListener {
    * Called at end
    */
 
+  @Override
   public void close() {
     myDebugger.getEventQueue().endDocument();
 //        myDebugger.stopped();
@@ -85,6 +87,7 @@ public class SaxonTraceListener implements TraceListener {
   /**
    * Called for all top level elements
    */
+  @Override
   public void toplevel(NodeInfo element) {
     if (!myIsInitialized) {
       myIsInitialized = true;
@@ -116,6 +119,7 @@ public class SaxonTraceListener implements TraceListener {
   /**
    * Called when a node of the source tree gets processed
    */
+  @Override
   public void enterSource(NodeHandler handler, Context context) {
     NodeInfo curr = context.getContextNodeInfo();
     final String path = Navigator.getPath(curr);
@@ -132,6 +136,7 @@ public class SaxonTraceListener implements TraceListener {
   /**
    * Called after a node of the source tree got processed
    */
+  @Override
   public void leaveSource(NodeHandler handler, Context context) {
     if (TRACE) {
       indent = indent.substring(0, indent.length() - 1);
@@ -145,6 +150,7 @@ public class SaxonTraceListener implements TraceListener {
   /**
    * Called when an element of the stylesheet gets processed
    */
+  @Override
   public void enter(NodeInfo element, Context context) {
     if (element.getNodeType() == NodeInfo.ELEMENT) {
       if (TRACE) {
@@ -159,6 +165,7 @@ public class SaxonTraceListener implements TraceListener {
   /**
    * Called after an element of the stylesheet got processed
    */
+  @Override
   public void leave(NodeInfo element, Context context) {
     if (element.getNodeType() == NodeInfo.ELEMENT) {
 //            final int lineNumber = element.getLineNumber();

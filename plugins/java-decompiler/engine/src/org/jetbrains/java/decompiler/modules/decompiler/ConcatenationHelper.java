@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +192,7 @@ public final class ConcatenationHelper {
           if (c == TAG_CONST || c == TAG_ARG) {
             // Detected a special tag, flush all accumulated characters
             // as a constant first:
-            if (acc.length() > 0) {
+            if (!acc.isEmpty()) {
               res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
               acc.setLength(0);
             }
@@ -228,7 +228,7 @@ public final class ConcatenationHelper {
         }
 
         // Flush the remaining characters as constant:
-        if (acc.length() > 0) {
+        if (!acc.isEmpty()) {
           res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
         }
 

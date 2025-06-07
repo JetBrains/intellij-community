@@ -24,8 +24,7 @@ public final class PyGlobalStatementNavigator {
   private PyGlobalStatementNavigator() {
   }
 
-  @Nullable
-  public static PyGlobalStatement getByArgument(final PsiElement element){
+  public static @Nullable PyGlobalStatement getByArgument(final PsiElement element){
     final PsiElement parent = element.getParent();
     if (parent instanceof PyGlobalStatement statement){
       return ArrayUtil.find(statement.getGlobals(), element) != -1 ? statement : null;

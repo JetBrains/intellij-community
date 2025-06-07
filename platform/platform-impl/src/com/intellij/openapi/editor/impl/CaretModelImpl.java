@@ -32,8 +32,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private static final RegistryValue MAX_CARET_COUNT = Registry.get("editor.max.caret.count");
@@ -305,13 +305,16 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
         }
       }
       finally {
-        myCurrentCaret.set(null);
+        myCurrentCaret.remove();
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
-      doWithCaretMerging(iteration);
-      myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+      try {
+        doWithCaretMerging(iteration);
+      } finally {
+        myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+      }
     }
     else {
       iteration.run();

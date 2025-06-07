@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +30,17 @@ public class PatternEvaluator implements Evaluator {
   }
 
   boolean match(Value value, EvaluationContextImpl context) throws EvaluateException {
-    String typeName = myTypeEvaluator != null ? myTypeEvaluator.evaluate(context).name() : myPrimitiveType;
-    if (typeName == null) return false;
-    boolean res = DebuggerUtils.instanceOf(value.type(), typeName);
+    boolean res = false;
+    if (myTypeEvaluator != null) {
+      if (value.type() instanceof ReferenceType referenceType) {
+        res = DebuggerUtilsImpl.instanceOf(referenceType, myTypeEvaluator.evaluate(context));
+      }
+    }
+    else if (value.type() instanceof PrimitiveType primitiveType) {
+      res = primitiveType.name().equals(myPrimitiveType);
+    }
     if (res && myVariableEvaluator != null) {
-      AssignmentEvaluator.assign(myVariableEvaluator.getModifier(), value, context);
+      AssignmentEvaluator.assign(myVariableEvaluator.evaluateModifiable(context).getModifier(), value, context);
     }
     return res;
   }

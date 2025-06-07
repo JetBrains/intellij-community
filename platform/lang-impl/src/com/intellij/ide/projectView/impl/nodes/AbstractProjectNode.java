@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -24,9 +25,9 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     super(project, value, viewSettings);
   }
 
-  protected @NotNull Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
+  protected @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modulesWithTopLevelContentRoots) {
     if (getSettings().isFlattenModules()) {
-      return ContainerUtil.mapNotNull(modules, moduleDescription -> {
+      return ContainerUtil.mapNotNull(modulesWithTopLevelContentRoots, moduleDescription -> {
         try {
           return createModuleNode(moduleDescription);
         }
@@ -37,34 +38,34 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
       });
     }
 
-    Set<String> topLevelGroups = new LinkedHashSet<>();
-    Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
-    List<String> commonGroupsPath = null;
-    for (final ModuleDescription moduleDescription : modules) {
-      final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
-      if (!path.isEmpty()) {
-        final String topLevelGroupName = path.get(0);
-        topLevelGroups.add(topLevelGroupName);
-        nonGroupedModules.remove(moduleDescription);
-        if (commonGroupsPath == null) {
-          commonGroupsPath = path;
-        }
-        else {
-          int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
-          OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
-          if (firstDifference.isPresent()) {
-            commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
-          }
-          else if (commonPartLen < commonGroupsPath.size()) {
-            commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);
-          }
-        }
-      }
-    }
-
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     try {
-      if (modules.size() > 1) {
+      if (modulesWithTopLevelContentRoots.size() > 1) {
+        Set<String> topLevelGroups = new LinkedHashSet<>();
+        Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modulesWithTopLevelContentRoots);
+        List<String> commonGroupsPath = null;
+        for (final ModuleDescription moduleDescription : modulesWithTopLevelContentRoots) {
+          final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
+          if (!path.isEmpty()) {
+            final String topLevelGroupName = path.get(0);
+            topLevelGroups.add(topLevelGroupName);
+            nonGroupedModules.remove(moduleDescription);
+            if (commonGroupsPath == null) {
+              commonGroupsPath = path;
+            }
+            else {
+              int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
+              OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
+              if (firstDifference.isPresent()) {
+                commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
+              }
+              else if (commonPartLen < commonGroupsPath.size()) {
+                commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);
+              }
+            }
+          }
+        }
+
         if (commonGroupsPath != null && !commonGroupsPath.isEmpty()) {
           result.add(createModuleGroupNode(new ModuleGroup(commonGroupsPath)));
         }
@@ -78,7 +79,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
         }
       }
       else {
-        ContainerUtil.addIfNotNull(result, createModuleNode(ContainerUtil.getFirstItem(modules)));
+        ContainerUtil.addIfNotNull(result, createModuleNode(ContainerUtil.getFirstItem(modulesWithTopLevelContentRoots)));
       }
     }
     catch (ProcessCanceledException e) {

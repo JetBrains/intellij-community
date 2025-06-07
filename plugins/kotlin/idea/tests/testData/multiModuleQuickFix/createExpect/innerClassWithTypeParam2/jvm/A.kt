@@ -1,6 +1,6 @@
 // "Create expected class in common module testModule_Common" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
+
 
 actual open class <caret>A<T: A<T>> {
     actual class C<T>

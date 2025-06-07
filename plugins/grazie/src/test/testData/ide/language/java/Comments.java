@@ -37,6 +37,8 @@ class ForMultiLanguageSupport {
 
   // An iterable of bundle instances
 
+  // b'0' fill as usize is a mistake
+
   // Resolve '../' in paths (like real_path)
 
   // Thrown when an UPLOAD_ERR_CANT_WRITE error occurred with UploadedFile.
@@ -84,4 +86,17 @@ class ForMultiLanguageSupport {
   //        for (Person person : people) {
   //            System.out.println(person);
   //        }
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=)A?mUi5|' ; this is however highly unlikely...
+
+  // if the subject includes the
+  //    string '|6xX$\WG-C?|' or the author includes the string
+  //    '|^#=(A?mUi5|' ; this is however highly unlikely...
+
+  // print(f'Hello world')
+  // print(f'
+  // print(f')
+  // print(f'      world')
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.dvcs.repo.Repository;
@@ -32,14 +18,11 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public static final ExtensionPointName<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>> PUSH_SUPPORT_EP =
     ExtensionPointName.create("com.intellij.pushSupport");
 
-  @NotNull
-  public abstract AbstractVcs getVcs();
+  public abstract @NotNull AbstractVcs getVcs();
 
-  @NotNull
-  public abstract Pusher<Repo, Source, Target> getPusher();
+  public abstract @NotNull Pusher<Repo, Source, Target> getPusher();
 
-  @NotNull
-  public abstract OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
+  public abstract @NotNull OutgoingCommitsProvider<Repo, Source, Target> getOutgoingCommitsProvider();
 
   public boolean canBePushed(@NotNull Repo repository, @NotNull Source source, @NotNull Target target) {
     return true;
@@ -48,37 +31,31 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   /**
    * @return Default push destination
    */
-  @Nullable
-  public abstract Target getDefaultTarget(@NotNull Repo repository);
+  public abstract @Nullable Target getDefaultTarget(@NotNull Repo repository);
 
 
   /**
    * @return Push destination for source
    */
-  @Nullable
-  public Target getDefaultTarget(@NotNull Repo repository, @NotNull Source source) { return null; }
+  public @Nullable Target getDefaultTarget(@NotNull Repo repository, @NotNull Source source) { return null; }
 
   /**
    * @return current source(branch) for repository
    */
-  @Nullable
-  public abstract Source getSource(@NotNull Repo repository);
+  public abstract @Nullable Source getSource(@NotNull Repo repository);
 
   /**
    * @return RepositoryManager for vcs
    */
-  @NotNull
-  public abstract RepositoryManager<Repo> getRepositoryManager();
+  public abstract @NotNull RepositoryManager<Repo> getRepositoryManager();
 
-  @Nullable
-  public VcsPushOptionsPanel createOptionsPanel() {
+  public @Nullable VcsPushOptionsPanel createOptionsPanel() {
     return null;
   }
 
-  @NotNull
-  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository,
-                                                            @NotNull Source source,
-                                                            @Nullable Target defaultTarget);
+  public abstract @NotNull PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository,
+                                                                     @NotNull Source source,
+                                                                     @Nullable Target defaultTarget);
 
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     return true;

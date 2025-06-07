@@ -19,8 +19,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
-import javax.swing.Box.Filler.LEFT_ALIGNMENT
-import javax.swing.JPanel.LEFT_ALIGNMENT
 import javax.swing.plaf.ComponentUI
 
 @ApiStatus.Internal
@@ -96,7 +94,7 @@ class HelpAndResourcesPanel : JPanel() {
 
   private fun performActionOnWelcomeScreen(action: AnAction) {
     val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-    ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
+    ActionUtil.performAction(action, anActionEvent)
   }
 
   private fun LinkLabel<Any>.wrapWithUrlPanel(): JPanel {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -28,7 +29,7 @@ class MergeElseIfPredicate implements PsiElementPredicate {
       return false;
     }
     final @NonNls String text = element.getText();
-    if (!PsiKeyword.ELSE.equals(text)) {
+    if (!JavaKeywords.ELSE.equals(text)) {
       return false;
     }
     final PsiElement parent = token.getParent();

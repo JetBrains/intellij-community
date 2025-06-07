@@ -1,12 +1,10 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.nio.file.Files
+import com.jetbrains.performancePlugin.utils.dumpIdeThreads
 
 /**
  * Command takes thread dump.
@@ -21,18 +19,7 @@ class TakeThreadDumpCommand(text: String, line: Int) : PlaybackCommandCoroutineA
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val threadDump = ThreadDumper.dumpThreadsToString()
     val threadDumpBeforeExit = PathManager.getLogDir().resolve("threadDump_before_exit.txt")
-    if (!Files.exists(threadDumpBeforeExit)) {
-      withContext(Dispatchers.IO) {
-        Files.createFile(threadDumpBeforeExit)
-      }
-    }
-
-    withContext(Dispatchers.IO) {
-      Files.writeString(threadDumpBeforeExit, threadDump)
-    }
+    dumpIdeThreads(threadDumpBeforeExit)
   }
 }
-
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,9 +31,8 @@ public final class WeakestTypeFinder {
 
   private WeakestTypeFinder() {}
 
-  @NotNull
-  public static Collection<PsiClass> calculateWeakestClassesNecessary(@NotNull PsiElement variableOrMethod,
-                                                                      boolean useRighthandTypeAsWeakestTypeInAssignments) {
+  public static @NotNull Collection<PsiClass> calculateWeakestClassesNecessary(@NotNull PsiElement variableOrMethod,
+                                                                               boolean useRighthandTypeAsWeakestTypeInAssignments) {
     final PsiType variableOrMethodType;
     if (variableOrMethod instanceof PsiVariable variable) {
       variableOrMethodType = variable.getType();
@@ -61,7 +60,7 @@ public final class WeakestTypeFinder {
         return Collections.emptyList();
       }
       weakestTypeClasses.add(lowerBoundClass);
-      @NonNls final String methodCallText = resourceVariable.getName() + ".close()";
+      final @NonNls String methodCallText = resourceVariable.getName() + ".close()";
       final PsiMethodCallExpression methodCallExpression =
         (PsiMethodCallExpression)facade.getElementFactory().createExpressionFromText(methodCallText, resourceVariable.getParent());
       if (!findWeakestType(methodCallExpression, weakestTypeClasses)) {
@@ -81,7 +80,7 @@ public final class WeakestTypeFinder {
 
     final Query<PsiReference> query = ReferencesSearch.search(variableOrMethod, variableOrMethod.getUseScope());
     boolean hasUsages = false;
-    for (PsiReference reference : query) {
+    for (PsiReference reference : query.asIterable()) {
       ProgressManager.checkCanceled();
       hasUsages = true;
       PsiElement referenceElement = reference.getElement();
@@ -288,7 +287,7 @@ public final class WeakestTypeFinder {
         return false;
       }
     }
-    @NonNls final String methodName = method.getName();
+    final @NonNls String methodName = method.getName();
     if (HardcodedMethodConstants.REMOVE.equals(methodName) ||
         HardcodedMethodConstants.GET.equals(methodName) ||
         "containsKey".equals(methodName) ||
@@ -530,11 +529,10 @@ public final class WeakestTypeFinder {
     return result;
   }
 
-  @Nullable
-  private static PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiClass upperBound, PsiElement context) {
+  private static @Nullable PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiClass upperBound, PsiElement context) {
     final Query<PsiClass> search = DirectClassInheritorsSearch.search(superClass, context.getResolveScope());
     final Project project = superClass.getProject();
-    for (PsiClass aClass : search) {
+    for (PsiClass aClass : search.asIterable()) {
       ProgressManager.checkCanceled();
       if (aClass.isInheritor(superClass, true) && upperBound.isInheritor(aClass, true)) {
         if (PsiUtil.isAccessible(project, aClass, context, null)) {

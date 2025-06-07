@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -22,6 +22,7 @@ import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
   private final Set<VirtualFile> myDirs;
+  private final Set<VirtualFile> myFiles;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
@@ -54,6 +55,16 @@ public class PackageScope extends GlobalSearchScope {
       myDirs.add(e);
       return true;
     });
+    
+    Query<VirtualFile> files = packageIndex.getFilesByPackageName(myPackageQualifiedName);
+    if (packageScope != null) {
+      files = files.filtering(packageScope::contains);
+    }
+    myFiles = VfsUtilCore.createCompactVirtualFileSet();
+    files.forEach(e -> {
+      myFiles.add(e);
+      return true;
+    });
 
     myIncludeLibraries = includeLibraries;
 
@@ -84,7 +95,7 @@ public class PackageScope extends GlobalSearchScope {
         }
       }
     }
-    return false;
+    return myFiles.contains(file);
   }
 
   @Override
@@ -103,20 +114,17 @@ public class PackageScope extends GlobalSearchScope {
            ", includeSubpackages = " + myIncludeSubpackages;
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, true);
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage,
-                                               boolean includeSubpackages,
-                                               @NotNull GlobalSearchScope packageScope) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage,
+                                                        boolean includeSubpackages,
+                                                        @NotNull GlobalSearchScope packageScope) {
     return new PackageScope(aPackage, includeSubpackages, true, packageScope);
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, false);
   }
 }

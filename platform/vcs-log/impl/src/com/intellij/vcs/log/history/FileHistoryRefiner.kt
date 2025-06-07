@@ -4,6 +4,7 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.util.containers.Stack
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
@@ -22,12 +23,12 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val commitToFileStateMap = HashMap<Int, CommitFileState>()
+  private val commitToFileStateMap = HashMap<VcsLogCommitStorageIndex, CommitFileState>()
 
-  fun refine(row: Int, startFileState: CommitFileState): Pair<Map<Int, CommitFileState>, Set<Int>> {
+  fun refine(row: Int, startFileState: CommitFileState): Pair<Map<VcsLogCommitStorageIndex, CommitFileState>, Set<VcsLogCommitStorageIndex>> {
     walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, startFileState)
 
-    val excluded = HashSet<Int>()
+    val excluded = HashSet<VcsLogCommitStorageIndex>()
     for ((commit, path) in commitToFileStateMap) {
       if (!historyData.affects(commit, path, true)) {
         excluded.add(commit)

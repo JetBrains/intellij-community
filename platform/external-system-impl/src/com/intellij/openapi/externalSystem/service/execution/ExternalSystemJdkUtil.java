@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -43,15 +44,13 @@ public final class ExternalSystemJdkUtil {
   public static final String USE_PROJECT_JDK = "#USE_PROJECT_JDK";
   public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
-  @Nullable
   @Contract("_, null -> null")
-  public static Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
+  public static @Nullable Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
     return resolveJdkName(getProjectJdk(project), jdkName);
   }
 
-  @Nullable
   @Contract("_, null -> null")
-  public static Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
+  public static @Nullable Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
     if (jdkName == null) return null;
     return switch (jdkName) {
       case USE_INTERNAL_JAVA -> getInternalJdk();
@@ -66,8 +65,7 @@ public final class ExternalSystemJdkUtil {
     };
   }
 
-  @NotNull
-  private static Sdk getProjectJdk(@Nullable Project project) {
+  private static @NotNull Sdk getProjectJdk(@Nullable Project project) {
     if (project != null) {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
       if (res != null) return res;
@@ -88,8 +86,7 @@ public final class ExternalSystemJdkUtil {
       .orElseGet(ExternalSystemJdkUtil::getInternalJdk);
   }
 
-  @NotNull
-  private static Sdk getJavaHomeJdk() {
+  private static @NotNull Sdk getJavaHomeJdk() {
     String javaHome = getJavaHome();
     if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
     if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
@@ -100,8 +97,7 @@ public final class ExternalSystemJdkUtil {
     return Environment.getVariable(JAVA_HOME);
   }
 
-  @Nullable
-  private static Sdk getJdk(@NotNull String jdkName) {
+  private static @Nullable Sdk getJdk(@NotNull String jdkName) {
     Sdk jdk = ProjectJdkTable.getInstance().findJdk(jdkName);
     if (jdk == null) return null;
     String homePath = jdk.getHomePath();
@@ -109,8 +105,7 @@ public final class ExternalSystemJdkUtil {
     return jdk;
   }
 
-  @NotNull
-  public static Pair<String, Sdk> getAvailableJdk(@Nullable Project project) throws ExternalSystemJdkException {
+  public static @NotNull Pair<String, Sdk> getAvailableJdk(@Nullable Project project) throws ExternalSystemJdkException {
     SdkType javaSdkType = getJavaSdkType();
 
     if (project != null) {
@@ -149,13 +144,12 @@ public final class ExternalSystemJdkUtil {
                                             Stream.of(ModuleManager.getInstance(project).getModules()).map(module -> ModuleRootManager
                                               .getInstance(module).getSdk()));
     return projectSdks
-      .filter(sdk -> sdk != null && sdk.getSdkType() == javaSdkType && isValidJdk(sdk))
+      .filter(sdk -> sdk != null && sdk.getSdkType() == javaSdkType && isValidJdk(sdk) && JdkUtil.isCompatible(sdk, project))
       .findFirst().orElse(null);
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static Sdk findReferencedJdk(Sdk projectSdk) {
+  private static @Nullable Sdk findReferencedJdk(Sdk projectSdk) {
     if (projectSdk != null
         && projectSdk.getSdkType() instanceof DependentSdkType
         && projectSdk.getSdkType() instanceof JavaSdkType sdkType) {
@@ -173,26 +167,22 @@ public final class ExternalSystemJdkUtil {
     }
   }
 
-  @Nullable
-  private static Sdk findReferencedJdk(Project project) {
+  private static @Nullable Sdk findReferencedJdk(Project project) {
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     return findReferencedJdk(projectSdk);
   }
 
-  @NotNull
-  public static Sdk resolveDependentJdk(@NotNull Sdk sdk) {
+  public static @NotNull Sdk resolveDependentJdk(@NotNull Sdk sdk) {
     Sdk parentSdk = findReferencedJdk(sdk);
     if (parentSdk == null) return sdk;
     return parentSdk;
   }
 
-  @NotNull
-  public static Collection<String> suggestJdkHomePaths() {
+  public static @NotNull Collection<String> suggestJdkHomePaths() {
     return getJavaSdkType().suggestHomePaths();
   }
 
-  @NotNull
-  public static SdkType getJavaSdkType() {
+  public static @NotNull SdkType getJavaSdkType() {
     return ExternalSystemJdkProvider.getInstance().getJavaSdkType();
   }
 
@@ -221,15 +211,15 @@ public final class ExternalSystemJdkUtil {
       return false;
     }
     try {
-      return JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
+      Path path = Path.of(homePath);
+      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(homePath);
     }
     catch (InvalidPathException exception) {
       return false;
     }
   }
 
-  @NotNull
-  public static Sdk addJdk(@NotNull String homePath) {
+  public static @NotNull Sdk addJdk(@NotNull String homePath) {
     ExternalSystemJdkProvider jdkProvider = ExternalSystemJdkProvider.getInstance();
     List<Sdk> sdks = Arrays.asList(ProjectJdkTable.getInstance().getAllJdks());
     String name = SdkConfigurationUtil.createUniqueSdkName(jdkProvider.getJavaSdkType(), homePath, sdks);
@@ -238,8 +228,7 @@ public final class ExternalSystemJdkUtil {
     return jdk;
   }
 
-  @NotNull
-  private static Sdk getInternalJdk() {
+  private static @NotNull Sdk getInternalJdk() {
     return ExternalSystemJdkProvider.getInstance().getInternalJdk();
   }
 

@@ -1,4 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <module value="com.intellij.modules.kotlin.k1"/>
+
   <xi:include href="/META-INF/analysis-api/analysis-api-fe10.xml"/> <!-- comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml"/>
@@ -22,18 +25,17 @@
   <xi:include href="caches-fe10.xml"/>
   <xi:include href="jps.xml"/>
   <xi:include href="statistics.xml"/>
-  <xi:include href="scripting-support.xml"/>
+  <xi:include href="scripting-base.xml"/>
+  <xi:include href="scripting-k1.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="kotlinx-serialization.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-fe10.xml"/>
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-fe10.xml"/>
-  <xi:include href="scripting-base.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>
-  <xi:include href="jvm-k1.xml"/>
   <xi:include href="actions-fe10.xml"/>
 
   <!--suppress XmlPathReference -->
@@ -55,6 +57,9 @@
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.scripting.k1"/>
+    <module name="kotlin.gradle.gradle-java.k1"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.onboarding"/>
     <module name="kotlin.onboarding.gradle"/>
@@ -74,7 +79,6 @@
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.ml-completion"/>
-
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
@@ -93,6 +97,9 @@
     <module name="kotlin.compiler-plugins.assignment.common.k1"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
+
+    <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.jvm.k1"/>
 
     <module name="kotlin.features-trainer"/>
     <module name="kotlin.j2k.k1.new.post-processing"/>
@@ -114,5 +121,7 @@
     <module name="kotlin.compiler-reference-index"/>
 
     <module name="kotlin.performanceExtendedPlugin"/>
+
+    <module name="kotlin.base.scripting.k1"/>
   </content>
 </idea-plugin>

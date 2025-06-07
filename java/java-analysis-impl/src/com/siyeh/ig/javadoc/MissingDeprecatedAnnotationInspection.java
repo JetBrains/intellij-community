@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +45,12 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+@ApiStatus.Internal
+public final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning
            ? InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor")
@@ -76,8 +77,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
   private static class MissingDeprecatedAnnotationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
     }
 
@@ -98,13 +98,11 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
   }
 
   private static class MissingDeprecatedTagFix extends PsiUpdateModCommandQuickFix {
-    @NonNls private static final String DEPRECATED_TAG_NAME = "deprecated";
+    private static final @NonNls String DEPRECATED_TAG_NAME = "deprecated";
     private static final String TEXT = " TODO: explain";
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("missing.add.deprecated.javadoc.tag.quickfix");
     }
 
@@ -238,8 +236,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
         return true;
       }
       for (PsiElement element : deprecatedTag.getDataElements()) {
-        if (element instanceof PsiDocTagValue ||
-            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        if (element instanceof PsiDocTagValue || PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_DATA)) {
           return true;
         }
       }

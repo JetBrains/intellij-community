@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
-class CoroutineViewDebugSessionListener(
+internal class CoroutineViewDebugSessionListener(
     private val session: XDebugSession,
     private val coroutineView: CoroutineView
 ) : XDebugSessionListener {
@@ -18,13 +18,22 @@ class CoroutineViewDebugSessionListener(
 
     override fun sessionPaused() {
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         coroutineView.alarm.cancel()
         renew(suspendContext)
     }
 
     override fun sessionResumed() {
-        coroutineView.saveState()
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         renew(suspendContext)
     }
 

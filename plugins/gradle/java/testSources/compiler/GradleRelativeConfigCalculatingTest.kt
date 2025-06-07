@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.compiler
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.withProjectAsync
@@ -27,7 +27,7 @@ class GradleRelativeConfigCalculatingTest : GradleRelativeConfigCalculatingTestC
       initProject(projectInfo1)
       initProject(projectInfo2)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project1/project/src/main/resources/dir/file-main.properties")
         testRoot.createFile("project1/project/src/test/resources/dir/file-test.properties")
         testRoot.createFile("project2/project/src/main/resources/dir/file-main.properties")

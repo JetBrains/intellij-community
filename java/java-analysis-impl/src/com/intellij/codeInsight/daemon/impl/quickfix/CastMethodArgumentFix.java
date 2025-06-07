@@ -50,7 +50,7 @@ public final class CastMethodArgumentFix extends MethodArgumentFix {
     }
 
     @Override
-    public boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, final @NotNull PsiElement context) {
       if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType primitiveType) {
         parameterType = primitiveType.getBoxedType(context); //unboxing from type of cast expression will take place at runtime
         if (parameterType == null) return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -14,7 +14,8 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -54,7 +55,8 @@ public final class LaterInvocator {
 
   private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = CollectionFactory.createConcurrentWeakMap();
 
-  static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
+  @ApiStatus.Internal
+  public static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
@@ -74,7 +76,8 @@ public final class LaterInvocator {
     return window instanceof Dialog && ((Dialog)window).isModal();
   }
 
-  static void invokeLater(@NotNull ModalityState modalityState,
+  @ApiStatus.Internal
+  public static void invokeLater(@NotNull ModalityState modalityState,
                           @NotNull Condition<?> expired,
                           @NotNull Runnable runnable) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.INVOKE_LATER);
@@ -84,9 +87,9 @@ public final class LaterInvocator {
     ourEdtQueue.push(modalityState, expired, runnable);
   }
 
-  static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-
+  @RequiresBackgroundThread
+  @ApiStatus.Internal
+  public static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -138,6 +141,7 @@ public final class LaterInvocator {
     }
   }
 
+  @RequiresEdt
   public static void enterModal(@NotNull Object modalEntity) {
     ModalityStateEx state = getCurrentModalityState().appendEntity(modalEntity);
     if (isModalDialog(modalEntity)) {
@@ -148,9 +152,8 @@ public final class LaterInvocator {
     enterModal(modalEntity, state);
   }
 
+  @RequiresEdt
   public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + modalEntity);
     }
@@ -170,9 +173,8 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
+  @RequiresEdt
   public static void enterModal(@NotNull Project project, @NotNull Dialog dialog) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + dialog.getName() + " ; for project: " + project.getName());
     }
@@ -197,15 +199,14 @@ public final class LaterInvocator {
   @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
+  @RequiresEdt
   public static void markTransparent(@NotNull ModalityState state) {
-    ThreadingAssertions.assertEventDispatchThread();
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItemsAndRequestFlush();
   }
 
+  @RequiresEdt
   public static void leaveModal(Project project, @NotNull Dialog dialog) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
     }
@@ -244,9 +245,8 @@ public final class LaterInvocator {
   }
 
 
+  @RequiresEdt
   public static void leaveModal(@NotNull Object modalEntity) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
     }
@@ -263,8 +263,8 @@ public final class LaterInvocator {
   }
 
   @TestOnly
+  @RequiresEdt
   public static void leaveAllModals() {
-    ThreadingAssertions.assertEventDispatchThread();
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
@@ -277,32 +277,31 @@ public final class LaterInvocator {
    * This may cause memory leaks from improperly closed/undisposed modal dialogs.
    * Intended for use mostly in Remote Dev where forcefully leaving all modalities is better than alternatives.
    */
+  @RequiresEdt
   @ApiStatus.Internal
-  public static void forceLeaveAllModals() {
-    ThreadingAssertions.assertEventDispatchThread();
+  public static void forceLeaveAllModals(@NonNls String reason) {
     ModalityStateEx currentState = getCurrentModalityState();
     if (currentState != ModalityState.nonModal()) {
-      currentState.cancelAllEntities();
+      currentState.cancelAllEntities(reason);
       // let event queue pump once before trying to cancel next modal
-      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals());
+      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals(reason));
     }
   }
 
+  @RequiresEdt
   public static Object @NotNull [] getCurrentModalEntities() {
-    ThreadingAssertions.assertEventDispatchThread();
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
+  @RequiresEdt
   public static @NotNull ModalityStateEx getCurrentModalityState() {
-    ThreadingAssertions.assertEventDispatchThread();
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
     }
   }
 
+  @RequiresEdt
   public static boolean isInModalContextForProject(@Nullable Project project) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     if (ourModalEntities.isEmpty()) return false;
     if (project == null) return true;
 
@@ -310,10 +309,12 @@ public final class LaterInvocator {
     return modalEntitiesForProject == null || modalEntitiesForProject.isEmpty();
   }
 
+  @RequiresEdt
   public static boolean isInModalContext() {
     return isInModalContextForProject(null);
   }
 
+  @RequiresEdt
   public static boolean isInModalContext(@NotNull JFrame frame, @Nullable Project project) {
     Object[] entities = getCurrentModalEntities();
     int forOtherProjects = 0;
@@ -355,13 +356,13 @@ public final class LaterInvocator {
     return ourEdtQueue.getQueue();
   }
 
+  @RequiresEdt
   private static void reincludeSkippedItemsAndRequestFlush() {
-    ThreadingAssertions.assertEventDispatchThread();
     ourEdtQueue.reincludeSkippedItems();
   }
 
+  @RequiresEdt
   public static void purgeExpiredItems() {
-    ThreadingAssertions.assertEventDispatchThread();
     ourEdtQueue.purgeExpiredItems();
   }
 
@@ -371,9 +372,8 @@ public final class LaterInvocator {
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @TestOnly
+  @RequiresEdt
   public static void dispatchPendingFlushes() {
-    if (!SwingUtilities.isEventDispatchThread()) throw new IllegalStateException("Must call from EDT");
-
     Semaphore semaphore = new Semaphore();
     semaphore.down();
     invokeLater(ModalityState.any(), Conditions.alwaysFalse(), semaphore::up);

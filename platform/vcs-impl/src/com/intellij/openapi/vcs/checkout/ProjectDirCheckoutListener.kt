@@ -5,10 +5,11 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -18,9 +19,8 @@ private class ProjectDirCheckoutListener : CheckoutListener {
   override fun processCheckedOutDirectory(project: Project, directory: Path): Boolean {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val dotIdea = directory.resolve(Project.DIRECTORY_STORE_FOLDER)
     // todo Rider project layout - several.idea.solution-name names
-    if (!Files.exists(dotIdea)) {
+    if (!service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(directory)) {
       return false
     }
     runBlockingCancellable {

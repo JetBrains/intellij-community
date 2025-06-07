@@ -2,7 +2,6 @@
 // "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
-/* IGNORE_K2 */
 
 package pack_one
 
@@ -20,7 +19,6 @@ fun foo() {}
 // "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
 // ACTION: Create type parameter in function 'shade'
-/* IGNORE_K2 */
 
 package pack_one
 

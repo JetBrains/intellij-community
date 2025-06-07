@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -9,7 +9,9 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.*;
@@ -23,7 +25,8 @@ import static com.intellij.util.PathUtil.getParentPath;
 /**
  * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
  */
-final class CanonicalPathMap {
+@ApiStatus.Internal
+public final class CanonicalPathMap {
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "CanonicalPathMap", ProcessIOExecutorService.INSTANCE, Runtime.getRuntime().availableProcessors());
 
@@ -36,7 +39,7 @@ final class CanonicalPathMap {
   private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
-  CanonicalPathMap(
+  public CanonicalPathMap(
     @NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
     @NotNull NavigableSet<String> optimizedFlatWatchRoots,
     @NotNull Collection<Pair<String, String>> initialPathMappings
@@ -47,7 +50,8 @@ final class CanonicalPathMap {
     myPathMappings = MultiMap.createConcurrentSet();
   }
 
-  @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
+  @VisibleForTesting
+  public @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
     initializeMappings();
 
     var canonicalPathMappings = new ConcurrentHashMap<String, String>();
@@ -107,7 +111,8 @@ final class CanonicalPathMap {
     myInitialPathMappings = null;
   }
 
-  void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
+  @VisibleForTesting
+  public void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (var pair : mapping) {
       var from = pair.first;
       var to = pair.second;
@@ -145,7 +150,8 @@ final class CanonicalPathMap {
    * For recursive roots, if the path given to us is already the parent of the actual dirty path, we need to compare the path to the parent
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
-  @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
+  @VisibleForTesting
+  public @NotNull Collection<String> mapToOriginalWatchRoots(@NotNull String reportedPath, boolean isExact) {
     if (myOptimizedFlatWatchRoots.isEmpty() && myOptimizedRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     var affectedPaths = applyMapping(reportedPath);

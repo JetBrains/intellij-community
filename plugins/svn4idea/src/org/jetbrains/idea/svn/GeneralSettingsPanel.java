@@ -21,7 +21,7 @@ import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
 public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private JPanel myMainPanel;
 
@@ -58,9 +58,8 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, D
     });
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 

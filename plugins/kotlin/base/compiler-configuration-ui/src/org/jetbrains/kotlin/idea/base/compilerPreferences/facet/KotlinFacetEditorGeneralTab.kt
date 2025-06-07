@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
@@ -126,6 +127,10 @@ class KotlinFacetEditorGeneralTab(
         fun initialize() {
             class CommonCompilerArgumentsHolder: CommonCompilerArguments() {
                 override fun copyOf(): Freezable = copyCommonCompilerArguments(this, CommonCompilerArgumentsHolder())
+
+                @get:Transient
+                @field:kotlin.jvm.Transient
+                override val configurator: CommonCompilerArgumentsConfigurator = CommonCompilerArgumentsConfigurator()
             }
             if (isMultiEditor) {
                 editableCommonArguments = CommonCompilerArgumentsHolder()
@@ -462,6 +467,7 @@ class KotlinFacetEditorGeneralTab(
     override fun apply() {
         validateOnce {
             editor.compilerConfigurable.apply()
+            configuration.settings.compilerArguments = editor.compilerConfigurable.commonCompilerArguments
             with(configuration.settings) {
                 useProjectSettings = editor.useProjectSettingsCheckBox.isSelected
                 editor.getChosenPlatform()?.let {

@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.diagnostic.PlatformMemoryUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -12,11 +14,13 @@ import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.io.DirectByteBufferAllocator;
 import com.intellij.util.io.IOUtil;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jetbrains.JBR;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +33,11 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatable {
   public static final String WIDGET_ID = "Memory";
 
   public static final String SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY = "idea.memory.usage.show.total.memory.estimation";
-  public static final String SHOW_MORE_INFO_IN_TOOLTIP_REGISTRY_KEY = "idea.memory.usage.tooltip.show.more";
 
   private final LazyValue<MemoryUsagePanelImpl> myComponent = LazyInitializer.create(MemoryUsagePanelImpl::new);
   private ScheduledFuture<?> myFuture;
@@ -100,8 +104,21 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-          //noinspection CallToSystemGC
-          System.gc();
+          if (clickCount == 1) {
+            //noinspection CallToSystemGC
+            System.gc();
+          } else if (clickCount == 2) {
+            if (JBR.isSystemUtilsSupported()) {
+              JBR.getSystemUtils().fullGC();
+            } else {
+              //noinspection CallToSystemGC
+              System.gc();
+            }
+            StorageLockContext.forceDirectMemoryCache();
+            DirectByteBufferAllocator.ALLOCATOR.releaseCachedBuffers();
+            PlatformMemoryUtil.getInstance().trimLinuxNativeHeap();
+          }
+
           updateState();
           return true;
         }
@@ -171,7 +188,9 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
     @Override
     protected String getTextForPreferredSize() {
-      long maxMemoryMb = toMb(Runtime.getRuntime().maxMemory());
+      long maxMemoryMb = Registry.is(SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY)
+                         ? toMb(Runtime.getRuntime().maxMemory()) * 2
+                         : toMb(Runtime.getRuntime().maxMemory());
       long sample = maxMemoryMb < 1000 ? 999 :
                     maxMemoryMb < 10_000 ? 9_999 : 99_999;
       //if -Xmx > 100Gb -- well, I'm sorry
@@ -199,6 +218,14 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
       long estimatedTotalMemoryUsedMb = toMb(memoryUsage.estimatedTotalMemoryUsedBytes());
 
+      PlatformMemoryUtil.MemoryStats stats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats();
+      if (stats != null && stats.getRamMinusFileMappings() == 0) {
+        stats = null; // In old Windows versions `ramMinusFileMappings` always reports 0
+      }
+      long fileMappingsRamMb = toMb(stats != null ? stats.getFileMappingsRam() : 0);
+      long ramMinusFileMappingsMb = toMb(stats != null ? stats.getRamMinusFileMappings() : 0);
+      long ramPlusSwapMinusFileMappings = toMb(stats != null ? stats.getRamPlusSwapMinusFileMappings() : 0);
+
       var text = Registry.is(SHOW_TOTAL_MEMORY_ESTIMATION_REGISTRY_KEY) ?
                  UIBundle.message("memory.usage.panel.message.text", heapUsedMb, estimatedTotalMemoryUsedMb) :
                  UIBundle.message("memory.usage.panel.message.text", heapUsedMb, heapMaxMb);
@@ -208,10 +235,10 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         lastUsedMb = heapUsedMb;
         setText(text);
 
-        boolean showExtendedInfoInTooTip = Registry.is(SHOW_MORE_INFO_IN_TOOLTIP_REGISTRY_KEY);
-        String i18nBundleKey = showExtendedInfoInTooTip ?
+        String i18nBundleKey = stats != null ?
                                "memory.usage.panel.message.tooltip-extended" :
                                "memory.usage.panel.message.tooltip";
+
         setToolTipText(
           UIBundle.message(i18nBundleKey,
 
@@ -223,7 +250,10 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
 
                            estimatedTotalMemoryUsedMb,
 
-                           memoryMappedFilesMb //shown only in .tooltip-extended version
+                           memoryMappedFilesMb,
+
+                           //shown only in .tooltip-extended version:
+                           fileMappingsRamMb, ramMinusFileMappingsMb, ramPlusSwapMinusFileMappings
           ));
       }
     }

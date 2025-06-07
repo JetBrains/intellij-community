@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,18 +27,15 @@ public final class PsiIntersectionType extends PsiType.Stub {
     myConjuncts = conjuncts;
   }
 
-  @NotNull
-  public static PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
+  public static @NotNull PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
     return createIntersection(conjuncts.toArray(createArray(conjuncts.size())));
   }
 
-  @NotNull
-  public static PsiType createIntersection(PsiType... conjuncts) {
+  public static @NotNull PsiType createIntersection(PsiType... conjuncts) {
     return createIntersection(true, conjuncts);
   }
 
-  @NotNull
-  public static PsiType createIntersection(boolean flatten, PsiType @NotNull ... conjuncts) {
+  public static @NotNull PsiType createIntersection(boolean flatten, PsiType @NotNull ... conjuncts) {
     assert conjuncts.length > 0;
     if (flatten) {
       conjuncts = flattenAndRemoveDuplicates(conjuncts);
@@ -91,22 +90,25 @@ public final class PsiIntersectionType extends PsiType.Stub {
     return myConjuncts;
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(final boolean annotated) {
+  public @NotNull String getPresentableText(final boolean annotated) {
     return StringUtil.join(myConjuncts, psiType -> psiType.getPresentableText(annotated), " & ");
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return myConjuncts[0].getCanonicalText(annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return StringUtil.join(myConjuncts, psiType -> psiType.getInternalCanonicalText(), " & ");
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    List<TypeNullability> nullabilities = ContainerUtil.map(myConjuncts, PsiType::getNullability);
+    return TypeNullability.intersect(nullabilities);
   }
 
   @Override
@@ -137,8 +139,7 @@ public final class PsiIntersectionType extends PsiType.Stub {
     return myConjuncts;
   }
 
-  @NotNull
-  public PsiType getRepresentative() {
+  public @NotNull PsiType getRepresentative() {
     return myConjuncts[0];
   }
 

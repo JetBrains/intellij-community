@@ -1,50 +1,190 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "util_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_provided_library(
+  name = "troveCompileOnly_provided",
+  lib = "//platform/util/troveCompileOnly"
+)
+
+jvm_library(
   name = "util",
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:log4j-over-slf4j",
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@libraries//:jna-platform",
-    "@libraries//:oro",
-    "@libraries//:lz4-java",
-    "@libraries//:commons-compress",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:util-base",
-    "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:caffeine",
-    "@community//platform/util/troveCompileOnly:util-troveCompileOnly",
+    "//platform/util/jdom",
+    "@lib//:log4_j",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:jna",
+    "@lib//:oro_matcher",
+    "@lib//:lz4-java",
+    "@lib//:commons-compress",
+    "@lib//:fastutil-min",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/coroutines",
+    "//platform/util/multiplatform",
+    ":troveCompileOnly_provided",
   ],
   exports = [
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util/base:util-base",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util/base",
+    "//platform/util/multiplatform",
   ],
   runtime_deps = [
-    ":resources",
-    "@libraries//:commons-io",
-    "@libraries//:commons-codec",
+    ":util_resources",
+    "@lib//:commons-io",
+    "@lib//:commons-codec",
+    "@lib//:commons-lang3",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util` end
+
+### auto-generated section `build intellij.platform.util.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "util-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_resources(
+  name = "util-tests_test_resources_1",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+java_library(
+  name = "util-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "util-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+    "@lib//:jna",
+    "//platform/core-api:core",
+    "//platform/indexing-impl",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-impl",
+    "@lib//:jet_check",
+    "@lib//:commons-compress",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:memoryfilesystem",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "@lib//:junit5",
+    "//platform/util/jdom",
+    "//platform/boot",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5.jimfs",
+    "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
+    "@lib//:kotlinx-coroutines-debug",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains-kotlinx-lincheck-jvm",
+    "@lib//:mockito",
+    "@lib//:mockito-kotlin",
+    "@lib//:jimfs",
+  ],
+  runtime_deps = [
+    ":util-tests_test_resources",
+    ":util-tests_test_resources_1",
+  ]
+)
+
+jvm_test(
+  name = "util-tests_test",
+  runtime_deps = [":util-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.util.tests` end
+
+### auto-generated section `build intellij.platform.util.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.font=ALL-UNNAMED",
+    "java.desktop/sun.awt.image=ALL-UNNAMED",
+    "java.desktop/sun.swing=ALL-UNNAMED",
+  ]
+)
+
+jvm_resources(
+  name = "util-ui_resources",
+  files = glob(["ui/resources/**/*"]),
+  strip_prefix = "ui/resources"
+)
+
+jvm_library(
+  name = "util-ui",
+  module_name = "intellij.platform.util.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["ui/src/**/*.kt", "ui/src/**/*.java"], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "@lib//:eawtstub-provided",
+    "//platform/util",
+    "@lib//:imgscalr",
+    "@lib//:jna",
+    "@lib//:java_compatibility",
+    "@lib//:kotlin-stdlib",
+    "@lib//:fastutil-min",
+    "//platform/util-ex",
+    "@lib//:netty-buffer",
+    "@lib//:caffeine",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "//platform/util/zip",
+    "@lib//:jbr-api",
+    "@lib//:jsvg",
+    "//platform/util/rt-java8",
+    "@lib//:hash4j",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-protobuf",
+    "@lib//:mvstore",
+  ],
+  runtime_deps = [":util-ui_resources"]
+)
+### auto-generated section `build intellij.platform.util.ui` end

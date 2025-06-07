@@ -20,7 +20,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyGeneratorExpression;
-import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +36,11 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
     pyVisitor.visitPyGeneratorExpression(this);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     if (resultExpr != null) {
-      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), PyNoneType.INSTANCE, this);
+      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), null, PyBuiltinCache.getInstance(this).getNoneType(), this);
     }
     return null;
   }

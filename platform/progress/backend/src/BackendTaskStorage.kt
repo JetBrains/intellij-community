@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class BackendTaskStorage : TaskStorage() {
-  override suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity): TaskInfoEntity {
+  override suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity?): TaskInfoEntity? {
     return change {
       shared {
         provider()

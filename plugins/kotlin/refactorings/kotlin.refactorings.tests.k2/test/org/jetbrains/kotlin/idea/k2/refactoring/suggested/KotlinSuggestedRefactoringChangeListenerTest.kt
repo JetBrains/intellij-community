@@ -55,7 +55,7 @@ class KotlinSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringCha
         perform("editingStarted: 'foo()'") { myFixture.type("p: DoubleArra") }
         perform("nextSignature: 'foo(p: DoubleArra)'",
                 "nextSignature: 'foo(p: DoubleArray)'",
-                "nextSignature: 'foo(p: kotlin.DoubleArray)'",
+                "nextSignature: 'foo(p: _root_ide_package_.kotlin.DoubleArray)'",
                 "nextSignature: 'foo(p: .DoubleArray)'",
                 "nextSignature: 'foo(p: DoubleArray)'") { myFixture.completeBasic() }
     }

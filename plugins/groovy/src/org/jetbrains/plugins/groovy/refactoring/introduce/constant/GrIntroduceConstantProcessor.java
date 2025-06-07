@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.openapi.ui.Messages;
@@ -46,8 +46,7 @@ public class GrIntroduceConstantProcessor {
     this.settings = settings;
   }
 
-  @Nullable
-  public GrField run() {
+  public @Nullable GrField run() {
     final PsiClass targetClass = settings.getTargetClass();
     if (targetClass == null) return null;
 
@@ -137,8 +136,7 @@ public class GrIntroduceConstantProcessor {
     return false;
   }
 
-  @Nullable
-  private @DialogMessage String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
+  private @Nullable @DialogMessage String check(@NotNull PsiClass targetClass, final @Nullable String fieldName) {
     if (!GroovyLanguage.INSTANCE.equals(targetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
@@ -177,8 +175,7 @@ public class GrIntroduceConstantProcessor {
     return replaced;
   }
 
-  @NotNull
-  private static GrReferenceExpression createRefExpression(@NotNull GrField field, @NotNull PsiElement place) {
+  private static @NotNull GrReferenceExpression createRefExpression(@NotNull GrField field, @NotNull PsiElement place) {
     final PsiClass containingClass = field.getContainingClass();
     assert containingClass != null;
     final String qname = containingClass.getQualifiedName();
@@ -187,8 +184,7 @@ public class GrIntroduceConstantProcessor {
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }
 
-  @NotNull
-  private  GrVariableDeclaration createField(PsiClass targetClass) {
+  private @NotNull GrVariableDeclaration createField(PsiClass targetClass) {
     final String name = settings.getName();
     final PsiType type = settings.getSelectedType();
 
@@ -198,8 +194,7 @@ public class GrIntroduceConstantProcessor {
     return factory.createFieldDeclaration(modifiers, name, getInitializer(), type);
   }
 
-  @NotNull
-  protected GrExpression getInitializer() {
+  protected @NotNull GrExpression getInitializer() {
     GrVariable var = GrIntroduceHandlerBase.resolveLocalVar(context);
     GrExpression expression = context.getExpression();
 

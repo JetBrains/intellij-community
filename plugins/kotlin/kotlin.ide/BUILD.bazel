@@ -1,0 +1,41 @@
+### auto-generated section `build kotlin.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide",
+  module_name = "kotlin.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/statistics",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/project-configuration",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/code-insight/minimal",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//platform/analysis-impl",
+    "//platform/util/jdom",
+    "//plugins/kotlin/code-insight/impl-base",
+    "//platform/diff-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/scripting",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build kotlin.ide` end

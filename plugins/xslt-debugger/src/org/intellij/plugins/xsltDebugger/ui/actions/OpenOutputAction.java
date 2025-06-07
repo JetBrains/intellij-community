@@ -47,9 +47,8 @@ public class OpenOutputAction extends AnAction {
     if (editor != null) {
       final String extension = "xml"; // TODO: get from output type
       final VirtualFile file = new LightVirtualFile("XSLT Output." + extension, editor.getDocument().getText()) {
-        @NotNull
         @Override
-        public Charset getCharset() {
+        public @NotNull Charset getCharset() {
           return StandardCharsets.UTF_8;
         }
       };

@@ -1,8 +1,10 @@
-<idea-plugin package="com.intellij.platform.execution.dashboard">
+<idea-plugin>
   <dependencies>
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
+
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
                     serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.RunDashboardCheckerActivity"/>
@@ -16,7 +18,6 @@
     <runDashboardGroupingRule id="folder" order="after status"
                               implementation="com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule"/>
     <actionPromoter implementation="com.intellij.platform.execution.dashboard.actions.RunDashboardActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.statistics">
     <projectUsagesCollector implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector"/>
@@ -28,16 +29,12 @@
   </extensionPoints>
   <actions>
     <group id="RunDashboardContentToolbar">
-      <!-- IDEA-356383 RunClass -> com.intellij.execution.executors.DefaultRunExecutor.getContextActionId() -->
-      <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Run" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"
               class="com.intellij.platform.execution.dashboard.actions.RunAction">
         <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
         <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
         <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
       </action>
-      <!-- IDEA-356383 DebugClass -> com.intellij.execution.executors.DefaultDebugExecutor.getContextActionId() -->
-      <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
               class="com.intellij.platform.execution.dashboard.actions.DebugAction">
         <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
@@ -47,8 +44,8 @@
       <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
               class="com.intellij.platform.execution.dashboard.actions.StopAction"/>
       <separator/>
-      <reference id="ExpandAll"/>
-      <reference id="CollapseAll"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
@@ -92,7 +89,7 @@
     <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
-    <reference id="RunDashboard.RestoreHiddenConfigurations">
+    <reference ref="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>
     </reference>
     <action id="RunDashboard.DoubleClickRun"

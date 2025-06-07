@@ -483,9 +483,12 @@ f:com.intellij.openapi.projectRoots.JdkUtil
 - sf:PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL:java.lang.String
 - s:checkForJdk(java.lang.String):Z
 - s:checkForJdk(java.nio.file.Path):Z
+- s:checkForJdk(java.nio.file.Path,Z):Z
 - s:checkForJre(java.lang.String):Z
 - s:checkForJre(java.nio.file.Path):Z
 - s:getJdkMainAttribute(com.intellij.openapi.projectRoots.Sdk,java.util.jar.Attributes$Name):java.lang.String
+- s:isCompatible(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.project.Project):Z
+- s:isCompatible(java.nio.file.Path,com.intellij.openapi.project.Project):Z
 - s:isExplodedModularRuntime(java.nio.file.Path):Z
 - s:isModularRuntime(java.lang.String):Z
 - s:isModularRuntime(java.nio.file.Path):Z
@@ -516,6 +519,7 @@ a:com.intellij.openapi.projectRoots.SdkType
 - <init>(java.lang.String):V
 - adjustSelectedSdkHome(java.lang.String):java.lang.String
 - allowCreationByUser():Z
+- collectSdkEntries(com.intellij.openapi.project.Project):java.util.Collection
 - a:createAdditionalDataConfigurable(com.intellij.openapi.projectRoots.SdkModel,com.intellij.openapi.projectRoots.SdkModificator):com.intellij.openapi.projectRoots.AdditionalDataConfigurable
 - equals(java.lang.Object):Z
 - s:findByName(java.lang.String):com.intellij.openapi.projectRoots.SdkType
@@ -553,6 +557,15 @@ a:com.intellij.openapi.projectRoots.SdkType
 - suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - a:suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - supportsCustomCreateUI():Z
+f:com.intellij.openapi.projectRoots.SdkType$SdkEntry
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,Z):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- homePath():java.lang.String
+- isSymlink():Z
+- versionString():java.lang.String
 c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - com.intellij.openapi.projectRoots.SdkType
 - com.intellij.openapi.projectRoots.JavaSdkType
@@ -591,7 +604,6 @@ com.intellij.openapi.roots.ui.configuration.FacetsProvider
 - a:getAllFacets(com.intellij.openapi.module.Module):com.intellij.facet.Facet[]
 - a:getFacetsByType(com.intellij.openapi.module.Module,com.intellij.facet.FacetTypeId):java.util.Collection
 com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createEditors(com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState):com.intellij.openapi.module.ModuleConfigurationEditor[]
 com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 - com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider

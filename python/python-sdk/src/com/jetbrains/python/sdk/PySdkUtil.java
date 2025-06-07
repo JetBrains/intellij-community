@@ -46,7 +46,7 @@ import java.util.Map;
  *
  * @deprecated please use Kotlin coroutines to run processes in background
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PySdkUtil {
   private static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 
@@ -68,28 +68,33 @@ public final class PySdkUtil {
    * @param timeout  how many milliseconds to wait until the process terminates; non-positive means inifinity.
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
-  @NotNull
-  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, final int timeout) {
+  @ApiStatus.Internal
+
+  public static @NotNull ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, final int timeout) {
     return getProcessOutput(homePath, command, null, timeout);
   }
 
-  @NotNull
-  public static ProcessOutput getProcessOutput(String homePath,
-                                               @NonNls String[] command,
-                                               @Nullable @NonNls Map<String, String> extraEnv,
-                                               final int timeout) {
+  @ApiStatus.Internal
+
+  public static @NotNull ProcessOutput getProcessOutput(String homePath,
+                                                        @NonNls String[] command,
+                                                        @Nullable @NonNls Map<String, String> extraEnv,
+                                                        final int timeout) {
     return getProcessOutput(homePath, command, extraEnv, timeout, null, true);
   }
 
-  @NotNull
-  public static ProcessOutput getProcessOutput(String homePath,
-                                               @NonNls String[] command,
-                                               @Nullable @NonNls Map<String, String> extraEnv,
-                                               final int timeout,
-                                               byte @Nullable [] stdin,
-                                               boolean needEOFMarker) {
+  @ApiStatus.Internal
+
+  public static @NotNull ProcessOutput getProcessOutput(String homePath,
+                                                        @NonNls String[] command,
+                                                        @Nullable @NonNls Map<String, String> extraEnv,
+                                                        final int timeout,
+                                                        byte @Nullable [] stdin,
+                                                        boolean needEOFMarker) {
     return getProcessOutput(new GeneralCommandLine(command), homePath, extraEnv, timeout, stdin, needEOFMarker);
   }
+
+  @ApiStatus.Internal
 
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
@@ -103,6 +108,8 @@ public final class PySdkUtil {
                                                byte @Nullable [] stdin, boolean needEOFMarker) {
     return getProcessOutput(cmd, homePath, extraEnv, timeout, stdin, needEOFMarker, null);
   }
+
+  @ApiStatus.Internal
 
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
@@ -161,9 +168,8 @@ public final class PySdkUtil {
   private static ProcessOutput getOutputForException(final Exception e) {
     LOG.warn(e);
     return new ProcessOutput() {
-      @NotNull
       @Override
-      public String getStderr() {
+      public @NotNull String getStderr() {
         String err = super.getStderr();
         if (!StringUtil.isEmpty(err)) {
           err += "\n" + e.getMessage();
@@ -176,9 +182,8 @@ public final class PySdkUtil {
     };
   }
 
-  @NotNull
-  public static Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
-                                                      @NotNull Map<String, String> extraEnvironment) {
+  public static @NotNull Map<String, String> mergeEnvVariables(@NotNull Map<String, String> environment,
+                                                               @NotNull Map<String, String> extraEnvironment) {
     final Map<String, String> result = new HashMap<>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
       final String name = entry.getKey();
@@ -192,8 +197,7 @@ public final class PySdkUtil {
     return result;
   }
 
-  @NotNull
-  public static Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
+  public static @NotNull Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
     final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
     if (cached != null) return cached;
 
@@ -218,9 +222,8 @@ public final class PySdkUtil {
    * @deprecated doesn't support targets
    */
   @ApiStatus.Internal
-  @Deprecated
-  @NotNull
-  public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
+  @Deprecated(forRemoval = true)
+  public static @NotNull Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
     if (reader.getActivate() != null) {
       try {
@@ -234,8 +237,7 @@ public final class PySdkUtil {
     return Collections.emptyMap();
   }
 
-  @NotNull
-  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(sdk);
       if (flavor != null) {
@@ -252,9 +254,10 @@ public final class PySdkUtil {
   /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    */
-  @NotNull
-  @NonNls
-  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+
+
+  @ApiStatus.Internal
+  public static @NotNull @NonNls String getBuiltinsFileName(@NotNull Sdk sdk) {
     return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
   }
 
@@ -263,6 +266,7 @@ public final class PySdkUtil {
    *
    * @param allowRemote - indicates whether remote interpreter is acceptable
    */
+  @ApiStatus.Internal
   public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
     VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(workingDirectory);
     if (workingDirectoryVirtualFile != null) {
@@ -282,8 +286,7 @@ public final class PySdkUtil {
     return null;
   }
 
-  @Nullable
-  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile, boolean allowRemote) {
+  private static @Nullable Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile, boolean allowRemote) {
     Module module = ModuleUtilCore.findModuleForFile(workingDirectoryVirtualFile, project);
     if (module != null) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(module);

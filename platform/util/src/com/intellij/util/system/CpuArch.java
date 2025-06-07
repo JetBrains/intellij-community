@@ -1,13 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.WinBuildNumber;
+import com.sun.jna.Native;
 import com.sun.jna.platform.mac.SystemB;
 import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinBase;
+import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +36,7 @@ public enum CpuArch {
    * Here, {@link CpuArch#OTHER} is an architecture not yet supported by JetBrains Runtime,
    * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
    *
-   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
+   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).</p>
    */
   public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
 
@@ -66,7 +70,7 @@ public enum CpuArch {
       }
     }
 
-    return ourEmulated == Boolean.TRUE;
+    return ourEmulated;
   }
 
   private static @Nullable Boolean ourEmulated;
@@ -90,16 +94,22 @@ public enum CpuArch {
     return false;
   }
 
-  // https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getnativesysteminfo
+  // https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2
   private static boolean matchesWindowsNativeArch() {
     try {
       if (JnaLoader.isLoaded()) {
-        WinBase.SYSTEM_INFO systemInfo = new WinBase.SYSTEM_INFO();
-        Kernel32.INSTANCE.GetNativeSystemInfo(systemInfo);
-        int arch = systemInfo.processorArchitecture.dwOemID.getLow().intValue();
-        if (arch == 0) return CURRENT == X86;
-        if (arch == 9) return CURRENT == X86_64;
-        if (arch == 12) return CURRENT == ARM64;
+        Long buildNumber = WinBuildNumber.getWinBuildNumber();
+        if (buildNumber != null && buildNumber >= 16299) {
+          Kernel32Ext kernel32Ext = Native.load("kernel32", Kernel32Ext.class, W32APIOptions.DEFAULT_OPTIONS);
+          WinNT.HANDLE hProcess = Kernel32.INSTANCE.GetCurrentProcess();
+          IntByReference processMachine = new IntByReference(0), nativeMachine = new IntByReference(0);
+          if (kernel32Ext.IsWow64Process2(hProcess, processMachine, nativeMachine)) {
+            int arch = nativeMachine.getValue();
+            if (arch == 0x014C) return CURRENT == X86;
+            if (arch == 0x8664) return CURRENT == X86_64;
+            if (arch == 0xAA64) return CURRENT == ARM64;
+          }
+        }
       }
     }
     catch (Throwable t) {
@@ -107,6 +117,10 @@ public enum CpuArch {
     }
 
     return true;
+  }
+
+  private interface Kernel32Ext extends StdCallLibrary, WinNT {
+    boolean IsWow64Process2(HANDLE hProcess, IntByReference pProcessMachine, IntByReference pNativeMachine);
   }
   //</editor-fold>
 }

@@ -400,7 +400,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>,
-                                         place: String, private val defaultSelection: Condition<AnAction>?,
+                                         place: String, private val defaultSelection: Condition<in AnAction>?,
                                          dataContext: DataContext, presentationFactory: PresentationFactory)
     : ActionPopupStep(actions, null, { dataContext }, place, presentationFactory,
                       ActionPopupOptions.forStep(true, true, false, defaultSelection)) {

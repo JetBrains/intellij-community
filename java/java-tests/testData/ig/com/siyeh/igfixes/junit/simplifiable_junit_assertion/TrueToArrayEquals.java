@@ -8,6 +8,6 @@ class ObjectEqualsToEquals {
       <warning descr="'assertTrue()' can be simplified to 'assertArrayEquals()'"><caret>assertTrue</warning>(Arrays.equals(getFoo(), getBar()));
   }
 
-  int[] getFoo() { <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">return "foo";</error> }
-  int[] getBar() { <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">return "foo";</error> }
+  int[] getFoo() { return <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">"foo";</error> }
+  int[] getBar() { return <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">"foo";</error> }
 }

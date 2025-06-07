@@ -5,7 +5,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.ide.projectWizard.generators.prepareOnboardingTips as prepareOnboardingTipsImpl
 
-@Suppress("unused")
 @Deprecated("Use AssetsOnboardingTips util instead")
 abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
   protected fun rawShortcut(shortcut: String) = AssetsOnboardingTips.rawShortcut(shortcut)
@@ -13,5 +12,5 @@ abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardSte
   protected fun icon(allIconsId: String) = AssetsOnboardingTips.icon(allIconsId)
   protected fun shouldRenderOnboardingTips(): Boolean = AssetsOnboardingTips.shouldRenderOnboardingTips()
   protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, fileName: String, breakpointSelector: (CharSequence) -> Int?) =
-    prepareOnboardingTipsImpl(project, templateWithoutTips, fileName, breakpointSelector)
+    prepareOnboardingTipsImpl(project, fileName, breakpointSelector)
 }

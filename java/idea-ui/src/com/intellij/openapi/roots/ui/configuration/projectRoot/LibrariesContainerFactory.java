@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -41,18 +41,15 @@ public final class LibrariesContainerFactory {
   private LibrariesContainerFactory() {
   }
 
-  @NotNull
-  public static LibrariesContainer createContainer(@Nullable Project project) {
+  public static @NotNull LibrariesContainer createContainer(@Nullable Project project) {
     return new LibrariesContainerImpl(project, null, null);
   }
 
-  @NotNull
-  public static LibrariesContainer createContainer(@NotNull Module module) {
+  public static @NotNull LibrariesContainer createContainer(@NotNull Module module) {
     return new LibrariesContainerImpl(module.getProject(), module, null);
   }
 
-  @NotNull
-  public static LibrariesContainer createContainer(@NotNull ModifiableRootModel rootModel) {
+  public static @NotNull LibrariesContainer createContainer(@NotNull ModifiableRootModel rootModel) {
     Module module = rootModel.getModule();
     return new LibrariesContainerImpl(module.getProject(), module, rootModel);
   }
@@ -62,7 +59,7 @@ public final class LibrariesContainerFactory {
   }
 
   public static Library createLibrary(@Nullable LibrariesContainer container1, @NotNull LibrariesContainer container2,
-                               @NotNull @NonNls final NewLibraryEditor editor, @NotNull final LibrariesContainer.LibraryLevel level) {
+                                      final @NotNull @NonNls NewLibraryEditor editor, final @NotNull LibrariesContainer.LibraryLevel level) {
     if (container1 != null && container1.canCreateLibrary(level)) {
       return container1.createLibrary(editor, level);
     }
@@ -71,8 +68,7 @@ public final class LibrariesContainerFactory {
     }
   }
 
-  @NotNull
-  private static Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
+  private static @NotNull Library createLibraryInTable(final @NotNull NewLibraryEditor editor, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     final String name = StringUtil.isEmpty(editor.getName()) ? null : getUniqueLibraryName(editor.getName(), modifiableModel);
     final LibraryType<?> type = editor.getType();
@@ -88,8 +84,7 @@ public final class LibrariesContainerFactory {
     return UniqueNameGenerator.generateUniqueName(baseName, "", "", " (", ")", s -> model.getLibraryByName(s) == null);
   }
 
-  @NotNull
-  public static LibrariesContainer createContainer(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
+  public static @NotNull LibrariesContainer createContainer(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
     return modulesProvider instanceof ModulesConfigurator configurator
            ? createContainer(configurator.getContext())
            : createContainer(context.getProject());
@@ -139,9 +134,8 @@ public final class LibrariesContainerFactory {
       return libraries;
     }
 
-    @NotNull
     @Override
-    public List<LibraryLevel> getAvailableLevels() {
+    public @NotNull List<LibraryLevel> getAvailableLevels() {
       final List<LibraryLevel> levels = new ArrayList<>();
       for (LibraryLevel level : LibraryLevel.values()) {
         if (canCreateLibrary(level)) {
@@ -151,9 +145,8 @@ public final class LibrariesContainerFactory {
       return levels;
     }
 
-    @NotNull
     @Override
-    public String suggestUniqueLibraryName(@NotNull String baseName) {
+    public @NotNull String suggestUniqueLibraryName(@NotNull String baseName) {
       if (myNameGenerator == null) {
         myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), o -> o.getName());
       }
@@ -163,9 +156,9 @@ public final class LibrariesContainerFactory {
 
 
   private static final class LibrariesContainerImpl extends LibrariesContainerBase {
-    private @Nullable final Project myProject;
-    @Nullable private final Module myModule;
-    @Nullable private final ModifiableRootModel myRootModel;
+    private final @Nullable Project myProject;
+    private final @Nullable Module myModule;
+    private final @Nullable ModifiableRootModel myRootModel;
 
     private LibrariesContainerImpl(final @Nullable Project project, final @Nullable Module module, final @Nullable ModifiableRootModel rootModel) {
       myProject = project;
@@ -174,13 +167,12 @@ public final class LibrariesContainerFactory {
     }
 
     @Override
-    @Nullable
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return myProject;
     }
 
     @Override
-    public Library @NotNull [] getLibraries(@NotNull final LibraryLevel libraryLevel) {
+    public Library @NotNull [] getLibraries(final @NotNull LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
         return getModuleLibraries();
       }
@@ -206,12 +198,12 @@ public final class LibrariesContainerFactory {
     }
 
     @Override
-    public VirtualFile @NotNull [] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getLibraryFiles(final @NotNull Library library, final @NotNull OrderRootType rootType) {
       return library.getFiles(rootType);
     }
 
     @Override
-    public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
+    public boolean canCreateLibrary(final @NotNull LibraryLevel level) {
       if (level == LibraryLevel.MODULE) {
         return myRootModel != null;
       }
@@ -282,19 +274,17 @@ public final class LibrariesContainerFactory {
     }
 
     @Override
-    @Nullable
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return myContext.getProject();
     }
 
     @Override
-    public Library @NotNull [] getLibraries(@NotNull final LibraryLevel libraryLevel) {
+    public Library @NotNull [] getLibraries(final @NotNull LibraryLevel libraryLevel) {
       LibraryTableModifiableModelProvider provider = getProvider(libraryLevel);
       return provider != null ? provider.getModifiableModel().getLibraries() : EMPTY_LIBRARIES_ARRAY;
     }
 
-    @Nullable
-    private LibraryTableModifiableModelProvider getProvider(LibraryLevel libraryLevel) {
+    private @Nullable LibraryTableModifiableModelProvider getProvider(LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.PROJECT) {
         return myContext.getProjectLibrariesProvider();
       }
@@ -307,12 +297,12 @@ public final class LibrariesContainerFactory {
     }
 
     @Override
-    public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
+    public boolean canCreateLibrary(final @NotNull LibraryLevel level) {
       return level == LibraryLevel.GLOBAL || level == LibraryLevel.PROJECT;
     }
 
     @Override
-    public VirtualFile @NotNull [] getLibraryFiles(@NotNull final Library library, @NotNull final OrderRootType rootType) {
+    public VirtualFile @NotNull [] getLibraryFiles(final @NotNull Library library, final @NotNull OrderRootType rootType) {
       LibrariesModifiableModel projectLibrariesModel = myContext.getProjectLibrariesProvider().getModifiableModel();
       if (projectLibrariesModel.hasLibraryEditor(library)) {
         LibraryEditor libraryEditor = projectLibrariesModel.getLibraryEditor(library);

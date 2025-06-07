@@ -28,6 +28,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import java.io.File
 import java.nio.file.Path
+import java.util.Locale
 import java.util.Collections.singletonMap
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
@@ -183,7 +184,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[repository]!!)
     cd(repository)
     val commitMessages = StringUtil.splitByLines(log("--pretty=%s"))
-    val mergeCommitsInTheLog = commitMessages.any { it.toLowerCase().contains("merge") }
+    val mergeCommitsInTheLog = commitMessages.any { it.lowercase(Locale.getDefault()).contains("merge") }
     assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog)
   }
 
@@ -478,7 +479,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     settings.setAutoUpdateIfPushRejected(true)
 
     push("master", "origin/master")
-    assertFalse("Unexpected merge commit: rebase should have happened", log("-1 --pretty=%s").toLowerCase().startsWith("merge"))
+    assertFalse("Unexpected merge commit: rebase should have happened",
+                log("-1 --pretty=%s").lowercase(Locale.getDefault()).startsWith("merge"))
   }
 
   // there is no "branch default" choice in the rejected push dialog

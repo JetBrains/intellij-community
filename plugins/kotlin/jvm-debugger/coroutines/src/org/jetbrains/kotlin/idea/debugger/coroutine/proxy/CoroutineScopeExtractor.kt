@@ -64,6 +64,7 @@ class CoroutineScopeExtractor(
     private fun ObjectReference.getCoroutineScopeByJobKey(evaluationContext: EvaluationContext): ObjectReference? {
         val jobKey = jobKey ?: return null
         val getMethod = getMethod ?: return null
+        if (!DebuggerUtils.instanceOf(type(), "kotlin.coroutines.CoroutineContext")) return null
         val coroutineScope = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,
@@ -75,6 +76,7 @@ class CoroutineScopeExtractor(
 
     private fun ObjectReference.getCoroutineContext(evaluationContext: EvaluationContext): ObjectReference? {
         val getContextMethod = getContextMethod ?: return null
+        if (!DebuggerUtils.instanceOf(type(), "kotlin.coroutines.Continuation")) return null
         val coroutineContext = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,

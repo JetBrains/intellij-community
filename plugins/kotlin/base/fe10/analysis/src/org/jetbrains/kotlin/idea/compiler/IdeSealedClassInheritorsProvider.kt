@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler
 
@@ -76,6 +76,7 @@ object IdeSealedClassInheritorsProvider : SealedClassInheritorsProvider() {
         val resolutionFacade = getResolutionFacade(moduleDescriptor, project) ?: return emptyList()
 
         return ClassInheritorsSearch.search(searchParameters)
+            .asIterable()
             .filter { psiClass -> psiClass is KtClassOrObject || psiClass is KtLightClass }
             .mapNotNull { it.resolveToDescriptor(resolutionFacade) }
             .sortedBy(ClassDescriptor::getName) // order needs to be stable (at least for tests)

@@ -100,7 +100,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             searchInComments = false,
             searchReferences = true,
             dirStructureMatchesPkg = false,
-            moveCallBack
+            moveCallBack = moveCallBack
         ).refactoringProcessor().run()
     }
 

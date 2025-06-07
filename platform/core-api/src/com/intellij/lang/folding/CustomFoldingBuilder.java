@@ -43,7 +43,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
       buildLanguageFoldRegions(descriptors, root, document, quick);
     }
     finally {
-      ourCustomRegionElements.set(null);
+      ourCustomRegionElements.remove();
     }
     return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }

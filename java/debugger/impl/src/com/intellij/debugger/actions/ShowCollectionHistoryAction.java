@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -42,9 +42,8 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase implement
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
   @Override
-  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+  protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     XValueNodeImpl node = getNode(e);
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {

@@ -18,9 +18,9 @@ import java.util.Set;
 public final class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance(DelayedNotificator.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final ChangeListScheduler myScheduler;
+  private final @NotNull Project myProject;
+  private final @NotNull ChangeListManagerImpl myManager;
+  private final @NotNull ChangeListScheduler myScheduler;
 
   public DelayedNotificator(@NotNull Project project,
                             @NotNull ChangeListManagerImpl manager,
@@ -151,8 +151,7 @@ public final class DelayedNotificator implements ChangeListListener {
     });
   }
 
-  @NotNull
-  private ChangeListListener getMulticaster() {
+  private @NotNull ChangeListListener getMulticaster() {
     return myProject.getMessageBus().syncPublisher(ChangeListListener.TOPIC);
   }
 }

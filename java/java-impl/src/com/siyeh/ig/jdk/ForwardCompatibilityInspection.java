@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -41,19 +42,19 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         PsiElement parent = identifier.getParent();
         JavaFeature feature = PsiUtil.softKeywordFeature(name);
         if (feature != null && 
-            feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
+            feature != JavaFeature.MODULES && !name.equals(JavaKeywords.WHEN) &&// Keywords from module-info and 'when' still can be used as class names
             !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {
           return JavaErrorBundle.message("restricted.identifier.warn", name,
                                          feature.getMinimumLevel().feature());
         }
         switch (name) {
-          case PsiKeyword.ASSERT -> {
+          case JavaKeywords.ASSERT -> {
             if (!JavaFeature.ASSERTIONS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("assert.identifier.warn");
             }
           }
-          case PsiKeyword.ENUM -> {
+          case JavaKeywords.ENUM -> {
             if (!JavaFeature.ENUMS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("enum.identifier.warn");
@@ -72,7 +73,7 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
-        if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
+        if (nameElement != null && JavaKeywords.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
             !JavaFeature.SWITCH_EXPRESSION.isSufficient(languageLevel)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
           String message = JavaErrorBundle.message("yield.unqualified.method.warn");
@@ -89,7 +90,7 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         super.visitKeyword(keyword);
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
           @PsiModifier.ModifierConstant String modifier = keyword.getText();
-          if (PsiKeyword.STATIC.equals(modifier) || PsiKeyword.TRANSITIVE.equals(modifier)) {
+          if (JavaKeywords.STATIC.equals(modifier) || JavaKeywords.TRANSITIVE.equals(modifier)) {
             PsiElement parent = keyword.getParent();
             if (parent instanceof PsiModifierList) {
               PsiElement grand = parent.getParent();

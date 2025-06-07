@@ -112,7 +112,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
 
     for (VirtualFile root : rootsToSave) {
-      VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
+      VcsDirtyScopeManager.getInstance(myProject).rootDirty(root);
     }
   }
 

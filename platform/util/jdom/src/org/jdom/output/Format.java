@@ -128,7 +128,7 @@ public final class Format implements Cloneable {
   /**
    * Handles Charsets.
    */
-  private final static class DefaultCharsetEscapeStrategy implements EscapeStrategy {
+  private static final class DefaultCharsetEscapeStrategy implements EscapeStrategy {
     private final CharsetEncoder encoder;
 
     private DefaultCharsetEscapeStrategy(CharsetEncoder cse) {
@@ -350,7 +350,7 @@ public final class Format implements Cloneable {
   /**
    * New line separator
    */
-  String lineSeparator = "\n";
+  private String lineSeparator = "\n";
 
   /**
    * The encoding format
@@ -372,7 +372,7 @@ public final class Format implements Cloneable {
    * Whether or not to expand empty elements to
    * &lt;tagName&gt;&lt;/tagName&gt; - default is <code>false</code>
    */
-  boolean expandEmptyElements = false;
+  public boolean expandEmptyElements = false;
 
   /**
    * Whether TrAX output escaping disabling/enabling PIs are ignored
@@ -383,7 +383,7 @@ public final class Format implements Cloneable {
   /**
    * text handling mode
    */
-  TextMode mode = TextMode.PRESERVE;
+  public TextMode mode = TextMode.PRESERVE;
 
   /**
    * entity escape logic

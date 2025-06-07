@@ -183,6 +183,10 @@ public abstract class ProjectViewPaneSupport {
 
   public abstract @NotNull ActionCallback select(@NotNull JTree tree, @Nullable Object object, @Nullable VirtualFile file);
 
+  protected boolean isMultiSelectionEnabled() {
+    return myMultiSelectionEnabled;
+  }
+
   protected boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {
     if (paths.isEmpty()) {
       LOG.debug("Nothing to select");

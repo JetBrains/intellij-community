@@ -13,16 +13,13 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public abstract class RestInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return RestBundle.message("INSP.GROUP.rest");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return getClass().getSimpleName();
   }
 

@@ -8,10 +8,11 @@ import com.intellij.ide.projectView.actions.MarkRootsManager;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
@@ -22,7 +23,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -52,8 +52,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
@@ -63,8 +63,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   public static final DataKey<String> TEST_DIRECTORY_NAME_KEY = DataKey.create("CreateDirectoryOrPackageAction.testName");
 
   public CreateDirectoryOrPackageAction() {
-    super(IdeBundle.messagePointer("action.create.new.directory.or.package"),
-          IdeBundle.messagePointer("action.create.new.directory.or.package"));
+  }
+
+  @SuppressWarnings({"unused", "ActionPresentationInstantiatedInCtor"})
+  protected CreateDirectoryOrPackageAction(boolean initMessages) {
+    super(ActionsBundle.messagePointer("action.NewDir.GoToAction.text"));
   }
 
   @Override
@@ -74,52 +77,48 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    if (view == null || project == null) return;
+    WriteIntentReadAction.run((Runnable)() -> {
+      final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
+      final Project project = event.getData(CommonDataKeys.PROJECT);
+      if (view == null || project == null) return;
 
-    final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (directory == null) return;
+      final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
+      if (directory == null) return;
 
-    final CreateGroupHandler validator;
-    final String message, title;
+      final CreateGroupHandler validator;
+      final String message, title;
 
-    if (isPackage(project, Collections.singletonList(directory))) {
-      validator = new CreatePackageHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.package.name");
-      title = IdeBundle.message("title.new.package");
-    }
-    else {
-      validator = new CreateDirectoryHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.directory.name");
-      title = IdeBundle.message("title.new.directory");
-    }
-
-    String initialText = validator.getInitialText();
-    Consumer<List<PsiElement>> consumer = elements -> {
-      // we don't have API for multi-selection in the views,
-      // so let's at least make sure the created elements are visible, and the first one is selected
-      for (PsiElement element : ContainerUtil.iterateBackward(elements)) {
-        view.selectElement(element);
+      if (isPackage(project, Collections.singletonList(directory))) {
+        validator = new CreatePackageHandler(project, directory);
+        message = IdeBundle.message("prompt.enter.new.package.name");
+        title = IdeBundle.message("title.new.package");
       }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      @SuppressWarnings("TestOnlyProblems")
-      String testDirectoryName = event.getData(TEST_DIRECTORY_NAME_KEY);
-      if (testDirectoryName != null && validator.checkInput(testDirectoryName) && validator.canClose(testDirectoryName)) {
-        consumer.accept(Collections.singletonList(validator.getCreatedElement()));
-        return;
+      else {
+        validator = new CreateDirectoryHandler(project, directory);
+        message = IdeBundle.message("prompt.enter.new.directory.name");
+        title = IdeBundle.message("title.new.directory");
       }
-    }
 
-    if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
+      String initialText = validator.getInitialText();
+      Consumer<List<PsiElement>> consumer = elements -> {
+        // we don't have API for multi-selection in the views,
+        // so let's at least make sure the created elements are visible, and the first one is selected
+        for (PsiElement element : ContainerUtil.iterateBackward(elements)) {
+          view.selectElement(element);
+        }
+      };
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        @SuppressWarnings("TestOnlyProblems")
+        String testDirectoryName = event.getData(TEST_DIRECTORY_NAME_KEY);
+        if (testDirectoryName != null && validator.checkInput(testDirectoryName) && validator.canClose(testDirectoryName)) {
+          consumer.accept(Collections.singletonList(validator.getCreatedElement()));
+          return;
+        }
+      }
+
       createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
-    }
-    else {
-      Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
-      consumer.accept(Collections.singletonList(validator.getCreatedElement()));
-    }
+    });
   }
 
   @Override
@@ -258,6 +257,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
           variant.rootType != null ? ModuleSourceRootEditHandler.getEditHandler(variant.rootType) : null;
 
         Icon icon = handler == null ? null : handler.getRootIcon();
+        if (icon == null) icon = variant.icon;
         if (icon == null) icon = AllIcons.Nodes.Folder;
 
         CompletionItem completionItem = new CompletionItem(contributor, relativePath, icon, variant.rootType);

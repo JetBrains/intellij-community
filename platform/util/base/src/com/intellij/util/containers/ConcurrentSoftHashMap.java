@@ -16,15 +16,12 @@ import java.util.function.BiConsumer;
  * Use {@link ContainerUtil#createConcurrentSoftMap()} to create
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  ConcurrentSoftHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    super(evictionListener);
-  }
-
   ConcurrentSoftHashMap(int initialCapacity,
                         float loadFactor,
                         int concurrencyLevel,
-                        @NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+                        @Nullable HashingStrategy<? super K> hashingStrategy,
+                        @Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, evictionListener);
   }
 
   private static final class SoftKey<K> extends SoftReference<K> implements KeyReference<K> {

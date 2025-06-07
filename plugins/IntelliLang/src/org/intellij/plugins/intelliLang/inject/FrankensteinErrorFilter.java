@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,17 +21,17 @@ final class FrankensteinErrorFilter extends HighlightErrorFilter implements High
   }
 
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
     if (highlightInfo.getSeverity() != HighlightSeverity.WARNING &&
         highlightInfo.getSeverity() != HighlightSeverity.WEAK_WARNING) return true;
-    if (!isFrankenstein(file)) return true;
+    if (!isFrankenstein(psiFile)) return true;
     int start = highlightInfo.getStartOffset();
     int end = highlightInfo.getEndOffset();
-    String text = file.getText().substring(start, end);
+    String text = psiFile.getText().substring(start, end);
     return !"missingValue".equals(text);
   }
 
   private static boolean isFrankenstein(@Nullable PsiFile file) {
-    return file != null && Boolean.TRUE.equals(file.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
+    return file != null && InjectedLanguageManager.getInstance(file.getProject()).isFrankensteinInjection(file);
   }
 }

@@ -6,7 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
@@ -61,8 +63,7 @@ internal class WhenToIfIntention :
         return entries.size <= 1
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context? {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         if (element.hasNoElseButUsedAsExpression()) return null
 
         val subject = element.subjectExpression
@@ -124,6 +125,7 @@ internal class WhenToIfIntention :
       elementContext: Context,
       updater: ModPsiUpdater,
     ) {
+        val commentSaver = CommentSaver(element)
         val subject = element.subjectExpression
         val temporaryNameForWhenSubject =
             elementContext.nameCandidatesForWhenSubject.ifNotEmpty { elementContext.nameCandidatesForWhenSubject.last() } ?: ""
@@ -137,16 +139,11 @@ internal class WhenToIfIntention :
             element, propertyForWhenSubject?.referenceToProperty ?: subject, elementContext.hasNullableSubject
         ) ?: return
 
-        val commentSaver = CommentSaver(element)
-        //val result = tracker.replaceAndRestoreComments(element, ifExpressionToReplaceWhen)
         val result = element.replace(ifExpressionToReplaceWhen)
         val addedProperty = propertyForWhenSubject?.property?.let { property ->
             val newLineForNewProperty = result.parent.addBefore(KtPsiFactory(element.project).createNewLine(), result)
             result.parent.addBefore(property, newLineForNewProperty) as? KtProperty
         }
-        /**
-         * TODO: CommentSaver behavior is different from FE1.0. Revisit this part of code after fixing it.
-         */
         commentSaver.restore(result)
 
         addedProperty?.let {
@@ -154,7 +151,6 @@ internal class WhenToIfIntention :
             /**
              * TODO: Let renamer provide candidate names. Currently, it allows a user to change the name but it does not provide candidates.
              */
-            //KotlinVariableInplaceRenameHandler().doRename(addedPropertyForWhenSubject, editor, null)
             updater.rename(it, listOf(temporaryNameForWhenSubject))
         }
     }
@@ -169,7 +165,7 @@ internal class WhenToIfIntention :
         return !(entries.any { it != lastEntry && it.isElse }) &&
                 !(entries.size == 1 && lastEntry.isElse) && // 'when' with only 'else' branch is not supported
                 element.subjectExpression !is KtProperty &&
-                entries.none { it.guard != null } // Not implemented: KTIJ-31750
+                (entries.none { it.guard != null } || element.languageVersionSettings.supportsFeature(LanguageFeature.WhenGuards))
     }
 
     /**
@@ -210,7 +206,7 @@ internal class WhenToIfIntention :
                 if (entry.isElse || (isTrueOrFalseCondition && i == 1)) {
                     appendExpression(branch)
                 } else {
-                    val condition = psiFactory.combineWhenConditions(entry.conditions, subject, isNullableSubject)
+                    val condition = psiFactory.combineWhenConditions(entry, subject, isNullableSubject)
                     appendFixedText("if (")
                     appendExpression(condition)
                     appendFixedText(")")

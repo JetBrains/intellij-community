@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -15,8 +17,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.writeWithEnsureWritable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,6 +55,7 @@ import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
 class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
+  private val project: Project?,
   val fileSpec: String,
   processor: SchemeProcessor<T, MUTABLE_SCHEME>,
   private val provider: StreamProvider?,
@@ -57,14 +65,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
-  cs: CoroutineScope? = null,
+  coroutineScope: CoroutineScope? = null,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
+  @JvmField
   internal val isOldSchemeNaming: Boolean = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
 
+  @JvmField
   internal val schemeListManager: SchemeListManager<T> = SchemeListManager(this)
 
   internal val schemes: MutableList<T>
@@ -73,9 +83,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   @Volatile
   internal var cachedVirtualDirectory: VirtualFile? = null
 
+  @JvmField
   internal val schemeExtension: String
   private val updateExtension: Boolean
 
+  @JvmField
   internal val filesToDelete: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
@@ -89,7 +101,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUpdateVfs) {
-      cs!!.launch {  // tests should explicitly provide a scope when needed
+      // tests should explicitly provide a scope when needed
+      coroutineScope!!.launch {
         runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
       }
     }
@@ -331,13 +344,26 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun save() {
     val events = if (isUpdateVfs) mutableListOf<VFileEvent>() else Collections.emptyList()
-    saveImpl(events)
+    wrapWithIndicator(forceIndicator = application.isUnitTestMode) {
+      runBlockingCancellable {
+        saveImpl(events)
+      }
+    }
     if (events.isNotEmpty()) {
       RefreshQueue.getInstance().processEvents(false, events)
     }
   }
 
-  internal fun saveImpl(events: MutableList<VFileEvent>) {
+  private fun wrapWithIndicator(forceIndicator: Boolean, run: () -> Unit) {
+    if (forceIndicator) {
+      ProgressManager.getInstance().runProcess({ run() }, EmptyProgressIndicator())
+    }
+    else {
+      run()
+    }
+  }
+
+  internal suspend fun saveImpl(events: MutableList<VFileEvent>) {
     if (isLoadingSchemes.get()) {
       LOG.warn("Skip save - schemes are loading")
     }
@@ -366,16 +392,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     val filesToDelete = HashSet(filesToDelete)
-    for (scheme in changedSchemes) {
-      try {
-        saveScheme(scheme, nameGenerator, filesToDelete, events)
-      }
-      catch (e: CancellationException) { throw e }
-      catch (e: ProcessCanceledException) { throw e }
-      catch (e: Throwable) {
-        errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
-      }
-    }
+    writeWithEnsureWritable(project, changedSchemes,
+                            { scheme -> saveScheme(scheme, nameGenerator, filesToDelete, events) },
+                            { scheme, e -> errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e)) })
 
     if (filesToDelete.isNotEmpty()) {
       schemeListManager.data.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }
@@ -689,17 +708,17 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     return null
   }
+}
 
-  private class ErrorCollector {
-    private var error: Throwable? = null
+private class ErrorCollector {
+  private var error: Throwable? = null
 
-    fun addError(error: Throwable) {
-      if (error is CancellationException || error is ProcessCanceledException) {
-        throw error
-      }
-      this.error = addSuppressed(this.error, error)
+  fun addError(error: Throwable) {
+    if (error is CancellationException || error is ProcessCanceledException) {
+      throw error
     }
-
-    fun getError(): Throwable? = error
+    this.error = addSuppressed(this.error, error)
   }
+
+  fun getError(): Throwable? = error
 }

@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-core:2024.3.1">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-core:2025.1.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.3.1/rd-core-2024.3.1.jar">
-          <sha256sum>9dd716efcff9a922114d0fa5d6623aa107333e5e8c8a23d3138f394ee4be38c3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2025.1.1/rd-core-2025.1.1.jar">
+          <sha256sum>fd55d05786bb6cdef140ae931bde12c53c76fa75ea9cde7e7553c2eea520e251</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.3.1/rd-core-2024.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2025.1.1/rd-core-2025.1.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.3.1/rd-core-2024.3.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2025.1.1/rd-core-2025.1.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.3.1/rd-core-2024.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2025.1.1/rd-core-2025.1.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

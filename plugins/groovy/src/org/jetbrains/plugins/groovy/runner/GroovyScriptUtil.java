@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.psi.PsiFile;
@@ -13,9 +13,8 @@ import javax.swing.*;
 
 public final class GroovyScriptUtil {
   public static final GroovyRunnableScriptType DEFAULT_TYPE = new GroovyRunnableScriptType("default") {
-    @NotNull
     @Override
-    public Icon getScriptIcon() {
+    public @NotNull Icon getScriptIcon() {
       return JetgroovyIcons.Groovy.GroovyFile;
     }
 
@@ -48,8 +47,7 @@ public final class GroovyScriptUtil {
     return false;
   }
 
-  @NotNull
-  public static GroovyRunnableScriptType getScriptType(@NotNull GroovyFile script) {
+  public static @NotNull GroovyRunnableScriptType getScriptType(@NotNull GroovyFile script) {
     GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType(script);
     return scriptType == null ? DEFAULT_TYPE : (GroovyRunnableScriptType)scriptType;
   }

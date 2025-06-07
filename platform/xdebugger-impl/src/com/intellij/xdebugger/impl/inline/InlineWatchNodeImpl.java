@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -7,13 +7,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.Obsolescent;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -41,9 +41,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     myWatch = watch;
   }
 
-  @NotNull
   @Override
-  public XValue getValueContainer() {
+  public @NotNull XValue getValueContainer() {
     return myValueContainer;
   }
 
@@ -68,9 +67,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     });
   }
 
-  @Nullable
   @Override
-  public XDebuggerTreeNodeHyperlink getLink() {
+  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
     return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + (myWatch.getPosition().getLine() + 1)) {
       @Override
       public boolean alwaysOnScreen() {
@@ -136,7 +134,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private boolean sessionIsInOtherFileThanNode() {
-      XDebugSession session = XDebugView.getSession(myTree);
+      XDebugSessionProxy session = XDebugView.getSessionProxy(myTree);
       if (session != null) {
         XSourcePosition sessionCurrentPosition = session.getCurrentPosition();
         if (sessionCurrentPosition != null && !sessionCurrentPosition.getFile().equals(myPosition.getFile())) {
@@ -162,8 +160,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
-      @NotNull private final XValueNode myNode;
-      @NotNull private final XValuePlace myPlace;
+      private final @NotNull XValueNode myNode;
+      private final @NotNull XValuePlace myPlace;
 
       MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
@@ -196,9 +194,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private static final XValuePresentation EMPTY_PRESENTATION = new XValuePresentation() {
-      @NotNull
       @Override
-      public String getSeparator() {
+      public @NotNull String getSeparator() {
         return "";
       }
 
@@ -213,8 +210,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     @Override
-    @NotNull
-    public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
       callback.computed(myPosition);
       return ThreeState.YES;
     }

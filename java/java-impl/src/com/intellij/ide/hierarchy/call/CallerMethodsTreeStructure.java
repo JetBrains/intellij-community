@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -57,6 +57,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       else {
         expectedQualifierClass = enclosingClass;
       }
+    }
+    else if (enclosingElement instanceof PsiAnonymousClass) {
+      enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(enclosingElement.getParent());
+      expectedQualifierClass = enclosingElement == null ? null : enclosingElement.getContainingClass();
     }
     else {
       expectedQualifierClass = enclosingClass;
@@ -120,13 +124,16 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
     
-    assert enclosingElement instanceof PsiField : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
+    assert enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent
+      : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
 
     return ReferencesSearch
-      .search(enclosingElement, enclosingElement.getUseScope()).findAll().stream()
+      .search(enclosingElement, searchScope).findAll().stream()
       .map(PsiReference::getElement)
       .distinct()
-      .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
+      .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false))
+      .filter(n -> n.getEnclosingElement() != null)
+      .toArray();
   }
 
   private static boolean areClassesRelated(@NotNull PsiClass expectedQualifierClass, @NotNull PsiClass receiverClass) {

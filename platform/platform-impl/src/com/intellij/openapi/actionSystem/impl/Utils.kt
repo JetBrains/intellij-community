@@ -11,6 +11,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
@@ -23,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGr
 import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -65,6 +67,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
@@ -160,13 +164,13 @@ object Utils {
   @JvmStatic
   fun createAsyncDataContext(component: Component?): DataContext {
     if (component == null) return DataContext.EMPTY_CONTEXT
-    return PreCachedDataContext(component)
+    return PreCachedDataContext(component, false)
   }
 
   @JvmStatic
   fun createAsyncDataContext(dataContext: DataContext, provider: Any?): DataContext {
     return when (val asyncContext = createAsyncDataContextImpl(dataContext)) {
-      DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
+      DataContext.EMPTY_CONTEXT -> PreCachedDataContext()
         .prependProvider(provider)
       is PreCachedDataContext -> asyncContext
         .prependProvider(provider)
@@ -184,7 +188,6 @@ object Utils {
   @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     !ApplicationManager.getApplication().isUnitTestMode() -> dataContext.also {
       reportUnexpectedDataContextKind(dataContext)
     }
@@ -197,13 +200,14 @@ object Utils {
       "Use DataManager.getDataContext, CustomizedDataContext, or SimpleDataContext", null, dataContext.javaClass))
   }
 
+  @Deprecated("Use [UiDataProvider] API instead]")
   @JvmStatic
-  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
-  fun wrapDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
-
-  @JvmStatic
-  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
-  fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
+  fun wrapToUiDataProvider(dataProvider: DataProvider): UiDataProvider =
+    dataProvider as? UiDataProvider ?: object : UiCompatibleDataProvider, DataValidators.SourceWrapper {
+      override fun uiDataSnapshot(sink: DataSink) = Unit
+      override fun getData(dataId: @NonNls String): Any? = dataProvider.getData(dataId)
+      override fun unwrapSource(): Any = dataProvider
+    }
 
   @JvmStatic
   fun isAsyncDataContext(dataContext: DataContext): Boolean {
@@ -237,7 +241,6 @@ object Utils {
   @JvmStatic
   private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
-    is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
     is CustomizedDataContext -> getRawDataIfCached(dataContext.customizedDelegate, dataId, uiOnly)
     else -> null
   }
@@ -285,7 +288,7 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, asyncDataContext, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else Dispatchers.EDT[CoroutineDispatcher]!!
+      else Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -374,6 +377,7 @@ object Utils {
     }
   }
 
+  @JvmStatic
   fun <T> computeWithProgressIcon(dataContext: DataContext,
                                   place: String,
                                   task: suspend () -> T): T {
@@ -906,7 +910,7 @@ object Utils {
   @JvmStatic
   fun initUpdateSession(e: AnActionEvent) {
     if (e.updateSession !== UpdateSession.EMPTY) return
-    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place, e.uiKind, edtDispatcher)
     e.updateSession = actionUpdater.asUpdateSession()
   }
@@ -914,7 +918,7 @@ object Utils {
   suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
                                               actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
-    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
     val dataContext = createAsyncDataContext(e.dataContext)
     checkAsyncDataContext(dataContext, "withSuspendingUpdateSession")
     val updater = ActionUpdater(factory, dataContext, e.place, e.uiKind, edtDispatcher, actionFilter)
@@ -924,10 +928,10 @@ object Utils {
     }
   }
 
-  fun <R> runWithInputEventEdtDispatcher(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
+  private fun <R> runWithPotemkinOverlayProgress(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
-    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
-      LOG.error("Actions cannot be updated when write-action is running or pending")
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) && !applicationEx.isBackgroundWriteActionRunningOrPending) {
+      LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
     if (ourInUpdateSessionForInputEventEDTLoop) {
@@ -994,51 +998,78 @@ object Utils {
   }
 
 
-  suspend fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,
-                                                inputEvent: InputEvent,
-                                                dataContext: DataContext,
-                                                place: String,
-                                                actionProcessor: ActionProcessor,
-                                                factory: PresentationFactory,
-                                                function: suspend (List<AnAction>,
-                                                                   suspend (AnAction) -> Presentation,
-                                                                   Map<Presentation, AnActionEvent>) -> T): T = withContext(
-    CoroutineName("runUpdateSessionForInputEvent")) {
-    checkAsyncDataContext(dataContext, place)
-    val start = System.nanoTime()
-    val events = ConcurrentHashMap<Presentation, AnActionEvent>()
-    val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-    val actionUpdater = ActionUpdater(factory, dataContext, place, ActionUiKind.NONE, edtDispatcher) {
-      val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
-      events.putIfAbsent(event.presentation, event) ?: event
-    }
-    cancelAllUpdates("'$place' invoked")
-
-    val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
-      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, dataContext, place, actionUpdater.asUpdateSession()) { promoted ->
-        val rearranged = if (promoted.isNotEmpty()) promoted
-        else rearrangeByPromoters(actions, dataContext)
-        function(rearranged, actionUpdater::presentation, events)
+  fun <T> runUpdateSessionForInputEvent(
+    actions: List<AnAction>,
+    inputEvent: InputEvent,
+    dataContext: DataContext,
+    place: String,
+    actionProcessor: ActionProcessor,
+    factory: PresentationFactory,
+    block: suspend (
+      List<AnAction>,
+      suspend (AnAction) -> Presentation,
+      Map<Presentation, AnActionEvent>,
+    ) -> T,
+  ): T? = runWithPotemkinOverlayProgress(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) {
+    withContext(CoroutineName("runUpdateSessionForInputEvent")) {
+      checkAsyncDataContext(dataContext, place)
+      val start = System.nanoTime()
+      val events = ConcurrentHashMap<Presentation, AnActionEvent>()
+      val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
+      val actionUpdater = ActionUpdater(factory, dataContext, place, ActionUiKind.NONE, edtDispatcher) {
+        val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
+        events.putIfAbsent(event.presentation, event) ?: event
       }
+      cancelAllUpdates("'$place' invoked")
+
+      val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
+        ActionUpdaterInterceptor.runUpdateSessionForInputEvent(
+          actions, dataContext, place, actionUpdater.asUpdateSession()) { promoted ->
+          val rearranged = promoted.ifEmpty {
+            rearrangeByPromoters(actions, dataContext)
+          }
+          block(rearranged, actionUpdater::presentation, events)
+        }
+      }
+      actionUpdater.applyPresentationChanges()
+      val elapsed = TimeoutUtil.getDurationMillis(start)
+      if (elapsed > 1000) {
+        LOG.warn("$elapsed ms to runUpdateSessionForInputEvent@$place")
+      }
+      result
     }
-    actionUpdater.applyPresentationChanges()
-    val elapsed = TimeoutUtil.getDurationMillis(start)
-    if (elapsed > 1000) {
-      LOG.warn("$elapsed ms to runUpdateSessionForInputEvent@$place")
+  }
+
+  @ApiStatus.Internal
+  suspend fun <R> runSuspendingUpdateSessionForActionSearch(updateSession: UpdateSession,
+                                                            block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R) {
+    val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
+    withContext(contextMenuDispatcher + ModalityState.any().asContextElement()) {
+      runUpdateSessionForActionSearch(updater, block)
     }
-    result
   }
 
   fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
     val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
     return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
-        block {
-          updater.presentation(it)
-        }
+      runUpdateSessionForActionSearch(updater, block)
+    }
+  }
+
+  private suspend fun <R> runUpdateSessionForActionSearch(updater: ActionUpdater,
+                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): R {
+    return updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
+      block {
+        updater.presentation(it)
       }
     }
+  }
+
+  @TestOnly
+  fun forceUseCachesAndCreateAsyncDataContextInTestsOnly(component: Component): DataContext {
+    assert(ApplicationManager.getApplication().isUnitTestMode()) { "isUnitTestMode must be true"}
+    return PreCachedDataContext(component, true)
   }
 }
 
@@ -1095,9 +1126,6 @@ private fun getFastTrackMaxTime(useFastTrack: Boolean,
                                 checkLastFailedFastTrackTime: Boolean,
                                 checkMainMenuOrToolbarFirstTime: Boolean): Int {
   if (!useFastTrack) return 0
-  if (!service<ActionUpdaterInterceptor>().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
-    return 0
-  }
   val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime &&
                                    (ActionPlaces.MAIN_MENU == place || (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place))
   if (mainMenuOrToolbarFirstTime) return 1000 // one second to fully update the main menu or toolbar for the first time
@@ -1250,8 +1278,22 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
 internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = EmptyCoroutineContext,
                                                    noinline block: suspend CoroutineScope.() -> R): R = prepareThreadContext { ctx ->
   try {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(ctx + context + Context.current().asContextElement(), block)
+    // read actions inside this `runBlocking` would be stuck if there is a pending background write action.
+    // here we enter a new parallelization layer for the acquired write-intent lock so that inner read actions would ignore the pending background wa.
+    // sometimes, this code runs under read action, so the parallelization here may just grant read access to the whole `block`
+    // without a new parallelization layer
+    val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, true)
+    cleanup.use {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(ctx +
+                  context +
+                  lockContextElement +
+                  // sometimes action update runs inside a read action
+                  // Platform forbids switching to EDT under runBlocking and read action, but action subsystem handles it in its own way
+                  SafeForRunBlockingUnderReadAction +
+                  Context.current().asContextElement(),
+                  block)
+    }
   }
   catch (pce : ProcessCanceledException) {
     throw pce
@@ -1267,7 +1309,7 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
     return readActionUndispatched(block)
   }
   else {
-    return blockingContext { ApplicationManager.getApplication().runReadAction<R, Throwable> { block() } }
+    return ApplicationManager.getApplication().runReadAction<R, Throwable> { block() }
   }
 }
 

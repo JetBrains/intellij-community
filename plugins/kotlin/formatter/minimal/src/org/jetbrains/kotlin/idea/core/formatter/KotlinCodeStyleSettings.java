@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.formatter;
 
 import com.intellij.configurationStore.Property;
@@ -16,15 +16,9 @@ import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide;
 import org.jetbrains.kotlin.idea.util.ReflectionUtil;
 
 public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
-    @NotNull
-    @ReflectionUtil.SkipInEquals
-    @Property(externalName = "packages_to_use_import_on_demand")
-    public KotlinPackageEntryTable PACKAGES_TO_USE_STAR_IMPORTS = new KotlinPackageEntryTable();
+    @ReflectionUtil.SkipInEquals @Property(externalName = "packages_to_use_import_on_demand") public @NotNull KotlinPackageEntryTable PACKAGES_TO_USE_STAR_IMPORTS = new KotlinPackageEntryTable();
 
-    @NotNull
-    @ReflectionUtil.SkipInEquals
-    @Property(externalName = "imports_layout")
-    public KotlinPackageEntryTable PACKAGES_IMPORT_LAYOUT = new KotlinPackageEntryTable();
+    @ReflectionUtil.SkipInEquals @Property(externalName = "imports_layout") public @NotNull KotlinPackageEntryTable PACKAGES_IMPORT_LAYOUT = new KotlinPackageEntryTable();
 
     public static final int DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT = 5;
     public static final int DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS = 3;
@@ -60,6 +54,16 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean IF_RPAREN_ON_NEW_LINE = false;
     public boolean ALLOW_TRAILING_COMMA = false;
     public boolean ALLOW_TRAILING_COMMA_ON_CALL_SITE = false;
+    public boolean ALLOW_TRAILING_COMMA_TYPE_PARAMETER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_DESTRUCTURING_DECLARATION = true;
+    public boolean ALLOW_TRAILING_COMMA_WHEN_ENTRY = true;
+    public boolean ALLOW_TRAILING_COMMA_FUNCTION_LITERAL = true;
+    public boolean ALLOW_TRAILING_COMMA_VALUE_PARAMETER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_CONTEXT_RECEIVER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_COLLECTION_LITERAL_EXPRESSION = false;
+    public boolean ALLOW_TRAILING_COMMA_TYPE_ARGUMENT_LIST = false;
+    public boolean ALLOW_TRAILING_COMMA_INDICES = false;
+    public boolean ALLOW_TRAILING_COMMA_VALUE_ARGUMENT_LIST = false;
     public int BLANK_LINES_BEFORE_DECLARATION_WITH_COMMENT_OR_ANNOTATION_ON_SEPARATE_LINE = 1;
 
     @ReflectionUtil.SkipInEquals

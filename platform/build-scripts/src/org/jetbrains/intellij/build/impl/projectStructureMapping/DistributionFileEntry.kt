@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import org.jetbrains.intellij.build.PluginBuildDescriptor
@@ -10,19 +10,15 @@ internal data class ContentReport(
   @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
 ) {
-  fun all(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-      yieldAll(nonBundledPlugins.flatMap { it.second })
-    }
+  fun all(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
+    yieldAll(nonBundledPlugins.flatMap { it.second })
   }
 
-  fun bundled(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-    }
+  fun bundled(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
   }
 }
 
@@ -47,19 +43,17 @@ sealed interface LibraryFileEntry : DistributionFileEntry {
   val size: Int
 }
 
-internal data class CustomAssetEntry(
+data class CustomAssetEntry(
   override val path: Path,
   override val hash: Long,
+  override val relativeOutputFile: String? = null,
 ) : DistributionFileEntry {
   override val type: String
     get() = "custom-asset"
-
-  override val relativeOutputFile: String?
-    get() = null
 }
 
 /**
- * Represents a file in module-level library
+ * Represents a file in a module-level library
  */
 internal data class ModuleLibraryFileEntry(
   override val path: Path,

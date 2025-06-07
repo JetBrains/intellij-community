@@ -1,18 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
+import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -60,7 +67,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
       val dataPack = logData.dataPack
-      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
       val commitsInfo = permanentGraph.permanentCommitsInfo
       val commitIndices = commitEditingData.selection.ids
 
@@ -108,7 +115,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return description
     }
 
-    private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: Int): CommitId =
+    private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: VcsLogGraphNodeId): CommitId =
       data.getCommitId(permanentGraph.permanentCommitsInfo.getCommitId(nodeId))!!
 
   }
@@ -161,7 +168,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   private fun checkCommitsEditingAvailability(commitEditingData: T): @Nls String? {
     return checkIsHeadBranch(commitEditingData)
-           ?: checkNotInitialCommit(commitEditingData)
            ?: checkNotMergeCommit(commitEditingData)
            ?: checkCommitsCanBeEdited(commitEditingData)
            ?: checkNotRebaseDuringRebase(commitEditingData)
@@ -175,14 +181,14 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     return null
   }
 
-  private fun checkNotInitialCommit(commitEditingData: T): @Nls String? {
+  private fun checkNotInitialCommit(commitEditingData: T): Boolean {
     val commitList = commitEditingData.selection.cachedMetadata
     commitList.forEach { commit ->
-      if (commit !is LoadingDetails && commit.parents.size == 0) {
-        return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
+      if (commit !is LoadingDetails && commit.parents.isEmpty()) {
+        return false
       }
     }
-    return null
+    return true
   }
 
   protected open fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
@@ -246,6 +252,17 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
       return
     }
+
+    if (!checkNotInitialCommit(commitEditingRequirements)) {
+      val ans = MessageDialogBuilder.Companion.yesNo(GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.title"),
+                                                     GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.text"))
+        .yesText(CommonBundle.getContinueButtonText())
+        .noText(CommonBundle.getCancelButtonText())
+        .icon(Messages.getWarningIcon())
+        .ask(commitEditingRequirements.project)
+      if (!ans) return
+    }
+
     actionPerformedAfterChecks(commitEditingRequirements)
   }
 

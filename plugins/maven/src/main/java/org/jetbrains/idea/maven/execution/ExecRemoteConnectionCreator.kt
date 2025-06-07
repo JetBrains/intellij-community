@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
+import org.jetbrains.idea.maven.execution.run.MavenRemoteConnectionWrapper
 import org.jetbrains.idea.maven.model.MavenConstants
 import java.io.File
 import java.util.regex.Pattern
@@ -43,6 +44,21 @@ private fun appendToClassPath(execArgs: ParametersList, classPath: String) {
 }
 
 internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
+
+  override fun createRemoteConnectionForScript(runConfiguration: MavenRunConfiguration): MavenRemoteConnectionWrapper {
+    val parameters = JavaParameters()
+    val connection = createConnection(runConfiguration.project, parameters)
+    val parametersOfConnection = parameters.vmParametersList
+
+    return MavenRemoteConnectionWrapper(connection) { mavenOpts ->
+
+      if (mavenOpts.isEmpty()) return@MavenRemoteConnectionWrapper parametersOfConnection.parametersString
+
+      return@MavenRemoteConnectionWrapper "${parametersOfConnection.parametersString} $mavenOpts"
+    }
+
+  }
+
   override fun createRemoteConnection(javaParameters: JavaParameters, runConfiguration: MavenRunConfiguration): RemoteConnection? {
     val programParametersList = javaParameters.programParametersList
     if (programParametersList.list.find { it == "exec:exec" || EXEC_MAVEN_PLUGIN_PATTERN.matcher(it).matches() } == null) {

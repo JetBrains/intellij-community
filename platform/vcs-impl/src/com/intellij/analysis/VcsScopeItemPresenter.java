@@ -31,17 +31,15 @@ public class VcsScopeItemPresenter implements ModelScopeItemPresenter {
     return AnalysisScope.UNCOMMITTED_FILES;
   }
 
-  @NotNull
   @Override
-  public JRadioButton getButton(ModelScopeItem m) {
+  public @NotNull JRadioButton getButton(ModelScopeItem m) {
     JRadioButton button = new JRadioButton();
     button.setText(CodeInsightBundle.message("scope.option.uncommitted.files"));
     return button;
   }
 
-  @NotNull
   @Override
-  public List<JComponent> getAdditionalComponents(JRadioButton button, ModelScopeItem m, Disposable dialogDisposable) {
+  public @NotNull List<JComponent> getAdditionalComponents(JRadioButton button, ModelScopeItem m, Disposable dialogDisposable) {
     VcsScopeItem model = (VcsScopeItem)m;
     DefaultComboBoxModel<LocalChangeList> comboBoxModel = model.getChangeListsModel();
     if (comboBoxModel == null) {

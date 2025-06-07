@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.service;
 
 import org.jetbrains.annotations.ApiStatus;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ServiceLoader;
 
 public abstract class JpsServiceManager {
@@ -32,11 +19,24 @@ public abstract class JpsServiceManager {
 
   public abstract <T> Iterable<T> getExtensions(Class<T> extensionClass);
 
-  private static class InstanceHolder {
+  private static final class InstanceHolder {
     private static final JpsServiceManager INSTANCE;
 
     static {
-      INSTANCE = ServiceLoader.load(JpsServiceManager.class, JpsServiceManager.class.getClassLoader()).iterator().next();
+      String implClass = System.getProperties().getProperty("jps.service.manager.impl");
+      if (implClass == null || implClass.isEmpty()) {
+        INSTANCE = ServiceLoader.load(JpsServiceManager.class, JpsServiceManager.class.getClassLoader()).iterator().next();
+      }
+      else {
+        try {
+          Class<?> aClass = JpsServiceManager.class.getClassLoader().loadClass(implClass);
+          INSTANCE = (JpsServiceManager)aClass.getDeclaredConstructor().newInstance();
+        }
+        catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException |
+               InvocationTargetException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 }

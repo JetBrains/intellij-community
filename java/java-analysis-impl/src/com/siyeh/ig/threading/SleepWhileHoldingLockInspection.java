@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SleepWhileHoldingLockInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "sleep.while.holding.lock.problem.descriptor");
   }
@@ -45,7 +44,7 @@ public final class SleepWhileHoldingLockInspection extends BaseInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       if (!"sleep".equals(methodName)) {
         return;

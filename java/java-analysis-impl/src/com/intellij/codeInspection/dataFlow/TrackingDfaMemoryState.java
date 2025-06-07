@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -45,9 +46,8 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
     myHistory = toCopy.myHistory;
   }
 
-  @NotNull
   @Override
-  public TrackingDfaMemoryState createCopy() {
+  public @NotNull TrackingDfaMemoryState createCopy() {
     return new TrackingDfaMemoryState(this);
   }
 
@@ -114,8 +114,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
     myHistory = MemoryStateChange.create(myHistory, instruction, result, value);
   }
 
-  @NotNull
-  private Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
+  private @NotNull Map<DfaVariableValue, Change> getChangeMap(TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> changeMap = new HashMap<>();
     Set<DfaVariableValue> varsToCheck = new HashSet<>();
     previous.forRecordedVariableTypes((value, state) -> varsToCheck.add(value));
@@ -237,8 +236,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       myNewType = newType;
     }
 
-    @Nullable
-    static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
+    static @Nullable Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
       if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfType.BOTTOM && newType == DfType.BOTTOM) {
         return null;
       }
@@ -386,8 +384,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       return change;
     }
 
-    @Nullable
-    private static <T> FactDefinition<T> factFromChange(FactExtractor<T> extractor, MemoryStateChange change, Change varChange) {
+    private static @Nullable <T> FactDefinition<T> factFromChange(FactExtractor<T> extractor, MemoryStateChange change, Change varChange) {
       if (varChange != null) {
         T newFact = extractor.extract(varChange.myNewType);
         T oldFact = extractor.extract(varChange.myOldType);
@@ -402,8 +399,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       return null;
     }
 
-    @Nullable
-    private MemoryStateChange findChange(@NotNull Predicate<? super MemoryStateChange> predicate, boolean startFromSelf) {
+    private @Nullable MemoryStateChange findChange(@NotNull Predicate<? super MemoryStateChange> predicate, boolean startFromSelf) {
       for (MemoryStateChange change = startFromSelf ? this : getPrevious(); change != null; change = change.getPrevious()) {
         if (predicate.test(change)) {
           return change;
@@ -432,8 +428,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       return null;
     }
 
-    @NotNull
-    public MemoryStateChange merge(@NotNull MemoryStateChange change) {
+    public @NotNull MemoryStateChange merge(@NotNull MemoryStateChange change) {
       if (change == this) return this;
       Set<MemoryStateChange> previous = new LinkedHashSet<>();
       if (myInstruction instanceof MergeInstruction) {
@@ -467,11 +462,10 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       return new MemoryStateChange(myPrevious, instruction, myChanges, myTopOfStack, bridge);
     }
 
-    @Nullable
-    static MemoryStateChange create(@Nullable MemoryStateChange previous,
-                                    @NotNull Instruction instruction,
-                                    @NotNull Map<DfaVariableValue, Change> result,
-                                    @NotNull DfaValue value) {
+    static @Nullable MemoryStateChange create(@Nullable MemoryStateChange previous,
+                                              @NotNull Instruction instruction,
+                                              @NotNull Map<DfaVariableValue, Change> result,
+                                              @NotNull DfaValue value) {
       if (result.isEmpty() && DfaTypeValue.isUnknown(value)) {
         return previous;
       }
@@ -480,8 +474,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
 
     MemoryStateChange[] flatten() {
       List<MemoryStateChange> changes = StreamEx.iterate(this, Objects::nonNull, change -> change.getPrevious()).toList();
-      Collections.reverse(changes);
-      return changes.toArray(new MemoryStateChange[0]);
+      return ArrayUtil.reverseArray(changes.toArray(new MemoryStateChange[0]));
     }
 
     String dump() {

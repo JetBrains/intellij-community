@@ -40,6 +40,7 @@ public final class PathPattern {
     return this;
   }
 
+  @Override
   public @NonNls String toString() {
     return Arrays.toString(myPath.toArray()).replaceAll("null", "UP");
   }

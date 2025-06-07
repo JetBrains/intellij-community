@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -20,8 +20,7 @@ public final class StringFlowUtil {
   /**
    * Extracts return value without qualifier from getter-like method.
    */
-  @Nullable
-  public static UExpression getReturnValue(@NotNull UCallExpression call) {
+  public static @Nullable UExpression getReturnValue(@NotNull UCallExpression call) {
     PsiMethod psiMethod = call.resolve();
     UExpression returnValue = UastContextKt.toUElement(PropertyUtilBase.getGetterReturnExpression(psiMethod), UExpression.class);
     if (returnValue instanceof UQualifiedReferenceExpression) {

@@ -1,13 +1,14 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvmDecompiler">
   <dependencies>
     <plugin id="org.jetbrains.java.decompiler"/>
+    <module name="kotlin.jvm.shared"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaActionProvider"/>
     <writingAccessProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompiledFileWritingAccessProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade"
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.internal.KotlinJvmDecompilerFacade"
                         serviceImplementation="org.jetbrains.kotlin.idea.jvmDecompiler.KotlinJvmDecompilerFacadeImpl"/>
   </extensions>
 

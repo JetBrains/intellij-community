@@ -29,6 +29,7 @@ public final class InternalIdeaSourceDirectory implements IdeaSourceDirectory {
     this.generated = generated;
   }
 
+  @Override
   public String toString() {
     return "IdeaSourceDirectory{directory=" + this.directory + ", generated=" + this.generated + '}';
   }

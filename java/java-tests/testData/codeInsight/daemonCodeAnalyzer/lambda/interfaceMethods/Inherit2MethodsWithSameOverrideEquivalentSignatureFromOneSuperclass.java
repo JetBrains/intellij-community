@@ -5,7 +5,7 @@ class Test1 {
     default void foo(String x) { }
   }
 
-  class <error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(T)' in 'A'">C</error> implements A<String> { }
+  <error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(T)' in 'A'">class C implements A<String></error> { }
   abstract class <error descr="Test1.D inherits abstract and default for foo(String) from types Test1.A and Test1.A">D</error> implements A<String> {}
   interface <error descr="Test1.E inherits abstract and default for foo(String) from types Test1.A and Test1.A">E</error> extends A<String> {}
 }
@@ -19,7 +19,7 @@ class Test2 {
     void foo(T x);
   }
 
-  <error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(T)' in 'B'">class <error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(T)' in 'B'">C</error> implements B<String></error> { }
+  <error descr="Class 'C' must either be declared abstract or implement abstract method 'foo(T)' in 'B'">class C implements B<String></error> { }
   abstract class D implements B<String> {}
   interface E extends B<String> {}
 }

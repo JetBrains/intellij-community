@@ -39,22 +39,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
-  @NonNls
-  public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
+  public static final @NonNls ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
 
   @Override
-  @NotNull
-  public ID<String, Kind> getName() {
+  public @NotNull ID<String, Kind> getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Kind, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Kind, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, Kind> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Kind> map(@NotNull FileContent inputData) {
         CharSequence inputDataContentAsText = inputData.getContentAsText();
         if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
           return Collections.emptyMap();
@@ -99,21 +95,18 @@ public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltS
     };
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Kind> getValueExternalizer() {
+  public @NotNull DataExternalizer<Kind> getValueExternalizer() {
     return new EnumDataDescriptor<>(Kind.class);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -141,8 +134,7 @@ public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltS
       myClazz = clazz;
     }
 
-    @Nullable
-    public XsltElement wrap(XmlTag tag) {
+    public @Nullable XsltElement wrap(XmlTag tag) {
       final Class<? extends XsltElement> clazz;
       if (myClazz != null) {
         if (!StringUtil.toLowerCase(name()).equals(tag.getLocalName())) {
@@ -173,7 +165,7 @@ public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltS
 
     @Override
     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
-      if (key.equals("name") && (nsURI == null || nsURI.length() == 0) && value != null) {
+      if (key.equals("name") && (nsURI == null || nsURI.isEmpty()) && value != null) {
         if (myMap.put(value, myKind) != null) {
           myMap.put(value, Kind.ANYTHING);
         }

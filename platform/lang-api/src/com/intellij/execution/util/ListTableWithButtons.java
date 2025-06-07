@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -40,7 +41,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             public void keyPressed(KeyEvent e) {
               final int column = myTableView.getEditingColumn();
               final int row = myTableView.getEditingRow();
-              if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+              if (e.getModifiersEx() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
                 e.consume();
                 SwingUtilities.invokeLater(() -> {
                   stopEditing();
@@ -262,7 +263,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
   }
 
-  public void setValues(List<? extends T> envVariables) {
+  public void setValues(@Unmodifiable List<? extends T> envVariables) {
     myElements.clear();
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));

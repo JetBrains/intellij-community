@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
@@ -24,9 +24,8 @@ import java.util.*;
 public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @Override
-  @NotNull
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
-                                                                  PackagingSourceItem parent) {
+  public @NotNull Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
+                                                                           PackagingSourceItem parent) {
     if (parent == null) {
       return createModuleItems(editorContext, Collections.emptyList());
     }
@@ -39,9 +38,8 @@ public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourc
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,
-                                                                                @NotNull Artifact artifact, @NotNull Module module) {
+  private static @NotNull Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,
+                                                                                         @NotNull Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<>();
 
     for (Module toAdd : getAvailableModules(editorContext, artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, module)) {
@@ -66,8 +64,7 @@ public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourc
     return items;
   }
 
-  @NotNull
-  private static Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull List<String> groupPath) {
+  private static @NotNull Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull List<String> groupPath) {
     final List<PackagingSourceItem> items = new ArrayList<>();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(editorContext.getProject(), editorContext.getModifiableModuleModel());
     Set<String> groups = new HashSet<>();
@@ -86,11 +83,10 @@ public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourc
     return items;
   }
 
-  @NotNull
-  private static <E extends ModulePackagingElementBase> List<? extends Module> getAvailableModules(@NotNull final ArtifactEditorContext context,
-                                                                                                   @NotNull Artifact artifact,
-                                                                                                   @NotNull ModuleElementTypeBase<E> elementType,
-                                                                                                   final Module... allModules) {
+  private static @NotNull <E extends ModulePackagingElementBase> List<? extends Module> getAvailableModules(final @NotNull ArtifactEditorContext context,
+                                                                                                            @NotNull Artifact artifact,
+                                                                                                            @NotNull ModuleElementTypeBase<E> elementType,
+                                                                                                            final Module... allModules) {
     final Set<Module> modules = new HashSet<>();
     for (Module module : allModules) {
       if (elementType.isSuitableModule(context.getModulesProvider(), module)) {
@@ -105,7 +101,7 @@ public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourc
     return new ArrayList<>(modules);
   }
 
-  private static List<? extends Library> getNotAddedLibraries(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
+  private static List<? extends Library> getNotAddedLibraries(final @NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                               List<? extends Library> librariesList) {
     final Set<VirtualFile> roots = new HashSet<>();
     ArtifactUtil.processPackagingElements(artifact, PackagingElementFactoryImpl.FILE_COPY_ELEMENT_TYPE, fileCopyPackagingElement -> {

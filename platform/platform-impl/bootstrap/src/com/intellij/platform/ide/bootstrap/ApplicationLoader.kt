@@ -1,23 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING", "ReplaceJavaStaticMethodWithKotlinAnalog")
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.*
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.gdpr.EndUserAgreement
+import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
-import com.intellij.ide.plugins.saveBundledPluginsState
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.IconMapLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -40,7 +41,6 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
@@ -56,7 +56,6 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
-import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -111,7 +110,9 @@ internal suspend fun loadApp(
     }
     else {
       async(CoroutineName("language and region")) {
-        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
+        euaDocumentDeferred.await()?.let {
+          getLanguageAndRegionDialogIfNeeded(it)
+        }
       }
     }
     
@@ -215,9 +216,16 @@ internal suspend fun loadApp(
 
     asyncScope.launch {
       enableCoroutineDumpAndJstack()
+      enableLockMonitoring(app)
     }
 
     launch {
+      if (AppMode.isRemoteDevHost()) {
+        span("telemetry waiting") {
+          initTelemetryJob.join()
+        }
+      }
+
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
@@ -248,7 +256,7 @@ internal suspend fun loadApp(
         delay(1.minutes)
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           span("save bundled plugin state") {
-            saveBundledPluginsState()
+            BundledPluginsState.saveBundledPluginsState()
           }
         }
       }
@@ -272,7 +280,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
   "com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler",
   "org.jetbrains.kotlin.idea.base.plugin.K2UnsupportedPluginsNotificationActivity",
-  "com.intellij.platform.ijent.impl.IjentApplicationActivity",
+  "com.intellij.platform.eel.impl.fs.EelEarlyAccessApplicationActivity",
 )
 
 private fun CoroutineScope.executeAsyncAppInitListeners() {
@@ -320,7 +328,7 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
     if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
-      // ActionManager can use UISettings (KeymapManager doesn't use it, but just to be sure)
+      // ActionManager can use UISettings (KeymapManager doesn't use it but just to be sure)
       initLafJob.join()
     }
 
@@ -357,6 +365,10 @@ private suspend fun enableCoroutineDumpAndJstack() {
   }
 }
 
+private suspend fun enableLockMonitoring(application: ApplicationImpl) {
+  application.serviceAsync<WriteLockMeasurer>()
+}
+
 private suspend fun enableJstack() {
   span("coroutine jstack configuration") {
     JBR.getJstack()?.includeInfoFrom {
@@ -379,7 +391,7 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
     if (loadIconMapping != null) {
       launch {
         loadIconMapping.join()
-        ExperimentalUI.getInstance().installIconPatcher()
+        serviceAsync<ExperimentalUI>().installIconPatcher()
       }
     }
 
@@ -427,7 +439,10 @@ suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
 
     span("init app store") {
       // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-      app._getComponentStore().setPath(configDir)
+      app.serviceAsync<IComponentStore>().setPath(configDir)
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+      }
     }
   }
 }
@@ -440,9 +455,7 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
       }
     }
     else {
-      blockingContext {
-        starter.main(args)
-      }
+      starter.main(args)
     }
   }
   else {
@@ -452,17 +465,21 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
       }
     }
   }
-  // no need to use a pool once started
-  ZipFilePool.POOL = null
 }
 
 @VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.asSequence().toList()
+  val dynamicPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.dynamicApplicationInitializedListener")
+
+  val extensions = mutableListOf<ApplicationInitializedListener>()
+  extensions.addAll(point.extensionList)
+  extensions.addAll(dynamicPoint.extensionList)
+
   point.reset()
-  return result
+  dynamicPoint.reset()
+  return extensions
 }
 
 private fun CoroutineScope.runPostAppInitTasks() {
@@ -510,8 +527,9 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter =
-  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+private fun createDefaultAppStarter(): ApplicationStarter {
+  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+}
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {
@@ -574,7 +592,7 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
 }
 
 private suspend fun checkThirdPartyPluginsAllowed() {
-  val noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted() ?: return
+  val noteAccepted = PluginManagerCore.consumeThirdPartyPluginsNoteAcceptedFlag() ?: return
   if (noteAccepted) {
     serviceAsync<UpdateSettings>().isThirdPartyPluginsAllowed = true
     PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED)

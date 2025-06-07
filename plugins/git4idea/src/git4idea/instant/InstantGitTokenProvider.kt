@@ -2,7 +2,6 @@
 package git4idea.instant
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -27,6 +26,6 @@ interface InstantGitTokenProvider {
   }
 
   suspend fun getAuthHeaders(): Map<String, String>? {
-    return (getAuthToken() ?: blockingContext { getToken() })?.let { mapOf("Authorization" to "Bearer $it") }
+    return (getAuthToken() ?: getToken())?.let { mapOf("Authorization" to "Bearer $it") }
   }
 }

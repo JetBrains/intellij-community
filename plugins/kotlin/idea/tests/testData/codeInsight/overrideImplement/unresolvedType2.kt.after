@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface A {
     fun f(x: Iterable<IADW>.() -> PPPP): XXX<Int, YYY>
 }

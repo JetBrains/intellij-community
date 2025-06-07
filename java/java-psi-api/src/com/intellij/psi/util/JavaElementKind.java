@@ -59,16 +59,14 @@ public enum JavaElementKind {
   /**
    * @return human-readable name of the item having the subject role in the sentence (nominative case)
    */
-  @Nls
-  public @NotNull String subject() {
+  public @Nls @NotNull String subject() {
     return JavaPsiBundle.message(propertyKey, 0);
   }
 
   /**
    * @return human-readable name of the item having the object role in the sentence (accusative case)
    */
-  @Nls
-  public @NotNull String object() {
+  public @Nls @NotNull String object() {
     return JavaPsiBundle.message(propertyKey, 1);
   }
 

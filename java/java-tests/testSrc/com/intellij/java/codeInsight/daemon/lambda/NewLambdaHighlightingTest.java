@@ -49,6 +49,7 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testIDEA123869() { doTest(); }
   @Test void testIDEA123848() { doTest(); }
   @Test void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
+  @Test void testOperatorApplicabilityInUnresolvedLambdas() { doTest(); }
   @Test void testLiftedIntersectionType() { doTest(); }
   @Test void testInferenceFromReturnStatements() { doTest(); }
   @Test void testDownUpThroughLambdaReturnStatements() { doTest(); }
@@ -149,6 +150,9 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testStopAtTypeCastWhenSearchForTopMostNode() { doTest(); }
   @Test void testLambdaWithExplicitTypeAndTargetTypeParameter() { doTest(); }
   @Test void testAmbiguousConstructorCallWithLambdaInside() { doTest(); }
+  @Test void testMultiResolveSameFunction() {doTest();}
+  @Test void testMultiResolveThreeFunctions() {doTest();}
+  @Test void testWrongTargetTypeDoNotReportIncompatibleTypeInside() {doTest();}
 
   @Override
   protected @NotNull String getRelativePath() {

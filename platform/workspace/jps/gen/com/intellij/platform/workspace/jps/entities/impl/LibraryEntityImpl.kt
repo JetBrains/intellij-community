@@ -45,8 +45,8 @@ import org.jetbrains.annotations.NonNls
 internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java,
-                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
@@ -94,8 +94,8 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
   }
 
 
-  internal class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(
-    result), LibraryEntity.Builder {
+  internal class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(result),
+                                                       LibraryEntity.Builder {
     internal constructor() : this(LibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -254,8 +254,8 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ExcludeUrlEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID, this)!!
+            .toList() as List<ExcludeUrlEntity.Builder>) +
           (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList())
         }
         else {

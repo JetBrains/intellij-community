@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -38,9 +38,8 @@ public final class RefImplicitConstructorImpl extends RefMethodImpl implements R
     return getOwnerClass().isValid();
   }
 
-  @NotNull
   @Override
-  public synchronized String getAccessModifier() {
+  public synchronized @NotNull String getAccessModifier() {
     return getOwnerClass().getAccessModifier();
   }
 
@@ -49,20 +48,23 @@ public final class RefImplicitConstructorImpl extends RefMethodImpl implements R
     RefJavaUtil.getInstance().setAccessModifier(getOwnerClass(), am);
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return getOwnerClass().getPsiElement();
   }
 
   @Override
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     return ((RefClassImpl)getOwnerClass()).getContainingFile();
   }
 
   @Override
   protected synchronized void initialize() {
+    throw new AssertionError("Should not be called!");
+  }
+
+  @Override
+  public void addDerivedReference(@NotNull RefOverridable reference) {
     throw new AssertionError("Should not be called!");
   }
 }

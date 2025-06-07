@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,7 +20,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
+@ApiStatus.Internal
+public abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
 
   private static final int MAX_FILTER_VALUE_LENGTH = 20;
@@ -45,7 +46,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     myUiProperties.addRecentlyFilteredGroup(myName, parseLocalizedValues(values));
   }
 
-  protected abstract @NotNull List<String> getAllValues();
+  protected abstract @Unmodifiable @NotNull List<String> getAllValues();
 
   protected abstract @Nullable Filter createFilter(@NotNull List<String> values);
 
@@ -80,9 +81,9 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     return StringUtil.join(getLocalizedValues(values), ", ");
   }
 
-  protected abstract @NotNull List<String> parseLocalizedValues(@NotNull Collection<String> values);
+  protected abstract @NotNull @Unmodifiable List<String> parseLocalizedValues(@NotNull Collection<String> values);
 
-  protected abstract @NotNull List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
+  protected abstract @NotNull @Unmodifiable List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
 
   protected @NotNull AnAction createSelectMultipleValuesAction() {
     return new SelectMultipleValuesAction();

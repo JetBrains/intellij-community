@@ -19,24 +19,25 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.configureAnalysisFlags
+import org.jetbrains.kotlin.cli.common.arguments.configureLanguageFeatures
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compiler.configuration.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.util.merge
 import java.util.*
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
-import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 
 private typealias LanguageFeatureMap = Map<LanguageFeature, LanguageFeature.State>
 private typealias AnalysisFlagMap = Map<AnalysisFlag<*>, Any>
@@ -60,13 +61,29 @@ val Project.languageVersionSettings: LanguageVersionSettings
 
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() {
-        if (project.serviceOrNull<ProjectFileIndex>() == null) {
-            return LanguageVersionSettingsImpl.DEFAULT
-        }
-
         return runReadAction {
-            project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
+            when (KotlinPluginModeProvider.currentPluginMode) {
+                KotlinPluginMode.K1 -> {
+                    if (project.serviceOrNull<ProjectFileIndex>() == null) {
+                        return@runReadAction LanguageVersionSettingsImpl.DEFAULT
+                    }
+                    project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
+                }
+                KotlinPluginMode.K2 -> {
+                    val kaModule = getKaModule(project, useSiteModule = null)
+                    kaModule.languageVersionSettings
+                }
+            }
         }
+    }
+
+val KaModule.languageVersionSettings: LanguageVersionSettings
+    get() = when (this) {
+        is KaDanglingFileModule -> contextModule.languageVersionSettings
+        is KaSourceModule -> languageVersionSettings
+        is KaScriptModule -> languageVersionSettings
+        is KaLibraryModule -> LanguageVersionSettingsProvider.getInstance(project).librarySettings
+        else -> project.languageVersionSettings
     }
 
 @Service(Service.Level.PROJECT)
@@ -122,6 +139,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
 
         val languageVersion = LanguageVersion.fromVersionString(arguments.languageVersion)
+            ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()
             ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion
 
         val languageVersionForApiVersion = LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion
@@ -165,19 +183,6 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = facetSettings.mergedCompilerArguments
 
         val analysisFlags = merge(
-           /*
-            Set default for 'useIR':
-            For common source sets, the common compiler arguments will not configure the 'useIR' flag
-            However, there is at least one FE checker 'SuspendInFunInterfaceChecker' which uses this flag.
-
-            Since IR is default and 'not-IR' is not supported anymore, it is 'safe' to set this flag to 'true' by default
-            in the IDE for common source sets
-
-            Note, 'arguments?.configureAnalysisFlags' will potentially overwrite the flag (see K2JvmCompilerArguments)
-            So for leaf SourceSets or compilations this flag will be configured by taking the actual compiler arguments
-            into account.
-            */
-            mapOf(JvmAnalysisFlags.useIR to true),
             arguments?.configureAnalysisFlags(MessageCollector.NONE, languageVersion),
             getIdeSpecificAnalysisFlags(),
         )
@@ -223,6 +228,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
 
             val kotlinVersion = LanguageVersion.fromVersionString(arguments.languageVersion)?.toKotlinVersion()
                 ?: settings.languageLevel?.toKotlinVersion()
+                ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()?.toKotlinVersion()
                 ?: KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion
 
             // TODO definitely wrong implementation, merge state properly
@@ -269,4 +275,17 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
     }
 
     override fun dispose() {}
+}
+
+internal interface DefaultKotlinLanguageVersionProvider {
+    fun getDefaultLanguageVersion(): LanguageVersion
+
+    companion object {
+        fun getInstance(): DefaultKotlinLanguageVersionProvider? =
+            serviceOrNull<DefaultKotlinLanguageVersionProvider>()
+    }
+}
+
+internal class DefaultKotlinLanguageVersionProviderWithLatestVersion : DefaultKotlinLanguageVersionProvider {
+    override fun getDefaultLanguageVersion(): LanguageVersion = LanguageVersion.LATEST_STABLE
 }

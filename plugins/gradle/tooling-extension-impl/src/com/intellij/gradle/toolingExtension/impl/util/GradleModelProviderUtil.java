@@ -16,15 +16,6 @@ public final class GradleModelProviderUtil {
 
   public static <M> void buildModels(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
-    @NotNull Class<M> modelClass,
-    @NotNull GradleModelConsumer consumer
-  ) {
-    buildModels(controller, Collections.singleton(buildModel), modelClass, consumer);
-  }
-
-  public static <M> void buildModels(
-    @NotNull BuildController controller,
     @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull Class<M> modelClass,
     @NotNull GradleModelConsumer consumer
@@ -63,7 +54,7 @@ public final class GradleModelProviderUtil {
     }
   }
 
-  private static <M> void buildModelsInSequence(
+  public static <M> void buildModelsInSequence(
     @NotNull BuildController controller,
     @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull Class<M> modelClass,
@@ -90,7 +81,7 @@ public final class GradleModelProviderUtil {
     }
   }
 
-  public static <M> void buildModelsRecursively(
+  private static <M> void buildModelsRecursively(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
@@ -104,17 +95,6 @@ public final class GradleModelProviderUtil {
       }
       return gradleProject.getChildren();
     });
-  }
-
-  public static <M, P> void buildModelsWithParameter(
-    @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
-    @NotNull Class<M> modelClass,
-    @NotNull GradleModelConsumer consumer,
-    @NotNull Class<P> parameterClass,
-    @NotNull Action<? super P> action
-  ) {
-    buildModelsWithParameter(controller, Collections.singleton(buildModel), modelClass, consumer, parameterClass, action);
   }
 
   public static <M, P> void buildModelsWithParameter(

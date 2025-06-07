@@ -8,7 +8,7 @@ internal class StringIntPairValueReader : ValueReader() {
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
   }
 
-  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, allowSingleValue: Boolean, out: TextOutput) {
     out.append("read").append("IntStringPairs").append('(')
     addReaderParameter(subtyping, out)
     out.append(')')

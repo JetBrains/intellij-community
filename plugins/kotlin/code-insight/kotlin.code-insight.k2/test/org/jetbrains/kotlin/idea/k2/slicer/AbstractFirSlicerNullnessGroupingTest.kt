@@ -2,11 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.slicer
 
 import com.intellij.slicer.SliceLanguageSupportProvider
-import com.intellij.slicer.SliceRootNode
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
 import org.jetbrains.kotlin.idea.fir.invalidateCaches

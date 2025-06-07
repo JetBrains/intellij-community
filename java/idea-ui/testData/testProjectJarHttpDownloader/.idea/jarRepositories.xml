@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="central-proxy" />
+      <option name="name" value="Maven Central Proxy" />
+      <option name="url" value="$REPOSITORY_LIBRARY_UTILS_TEST_REMOTE_REPOSITORIES_ROOT$" />
+    </remote-repository>
+  </component>
+</project>

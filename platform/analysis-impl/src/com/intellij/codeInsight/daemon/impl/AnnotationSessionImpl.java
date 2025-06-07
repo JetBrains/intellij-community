@@ -21,20 +21,20 @@ public final class AnnotationSessionImpl extends AnnotationSession {
   private volatile TextRange myHighlightRange;
   private volatile HighlightSeverity myMinimumSeverity;
 
-  private AnnotationSessionImpl(@NotNull PsiFile file) {
-    super(file);
+  private AnnotationSessionImpl(@NotNull PsiFile psiFile) {
+    super(psiFile);
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static AnnotationSession create(@NotNull PsiFile file) {
-    return new AnnotationSessionImpl(file);
+  public static @NotNull AnnotationSession create(@NotNull PsiFile psiFile) {
+    return new AnnotationSessionImpl(psiFile);
   }
 
   /**
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
+  @Override
   public @NotNull TextRange getPriorityRange() {
     return Objects.requireNonNullElseGet(myPriorityRange, ()->getFile().getTextRange());
   }

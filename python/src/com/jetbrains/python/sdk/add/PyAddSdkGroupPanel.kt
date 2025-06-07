@@ -7,10 +7,8 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.awt.Container
 import java.util.function.Supplier
 import javax.swing.ButtonGroup
 import javax.swing.Icon

@@ -1,13 +1,11 @@
-// ERROR: Return type mismatch: expected 'java.util.ArrayList<kotlin.String?>', actual 'java.util.ArrayList<@NotNull() kotlin.String>'.
-// ERROR: Return type mismatch: expected 'java.util.ArrayList<kotlin.String?>?', actual 'java.util.ArrayList<@NotNull() kotlin.String>?'.
-// ERROR: Argument type mismatch: actual type is 'java.util.ArrayList<kotlin.String?>?', but 'java.util.ArrayList<@NotNull() kotlin.String>?' was expected.
-// ERROR: Argument type mismatch: actual type is 'java.util.ArrayList<kotlin.String?>', but 'java.util.ArrayList<@NotNull() kotlin.String>' was expected.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>?', actual 'java.util.ArrayList<@NotNull() kotlin.String>?'.
-// ERROR: Type mismatch: inferred type is 'java.util.ArrayList<@NotNull() kotlin.String>?', but 'java.util.ArrayList<kotlin.String?>?' was expected.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>', actual 'java.util.ArrayList<@NotNull() kotlin.String>'.
-// ERROR: Type mismatch: inferred type is 'java.util.ArrayList<@NotNull() kotlin.String>', but 'java.util.ArrayList<kotlin.String?>' was expected.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>?', actual 'java.util.ArrayList<@NotNull() kotlin.String>?'.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>', actual 'java.util.ArrayList<@NotNull() kotlin.String>'.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>', actual '@NotNull() ArrayList<@NotNull() String>'.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>?', actual '@Nullable() ArrayList<@NotNull() String>?'.
+// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but '@Nullable() ArrayList<@NotNull() String>?' was expected.
+// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but '@NotNull() ArrayList<@NotNull() String>' was expected.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual '@Nullable() ArrayList<@NotNull() String>?'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual '@NotNull() ArrayList<@NotNull() String>'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual '@Nullable() ArrayList<@NotNull() String>?'.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual '@NotNull() ArrayList<@NotNull() String>'.
 class Foo {
     fun testAssignment(j: J) {
         val l1 = j.return1()

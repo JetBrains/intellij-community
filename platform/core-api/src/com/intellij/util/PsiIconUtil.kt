@@ -30,7 +30,7 @@ object PsiIconUtil {
 
   @JvmStatic
   @Suppress("IdentifierGrammar")
-  @Deprecated("Use `getIconFromProviders` instead", ReplaceWith("getIconFromProviders"))
+  @Deprecated("Use `getIconFromProviders` instead", ReplaceWith("getIconFromProviders(element, flags)"))
   fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
     return getIconFromProviders(element, flags)
   }

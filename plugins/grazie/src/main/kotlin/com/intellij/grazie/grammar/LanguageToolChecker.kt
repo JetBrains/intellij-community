@@ -1,14 +1,19 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
+import com.intellij.grazie.grammar.LanguageToolChecker.Problem
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.*
+import com.intellij.grazie.utils.html
+import com.intellij.grazie.utils.messageSanitized
+import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -17,7 +22,8 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
-import kotlinx.html.*
+import kotlinx.html.p
+import kotlinx.html.style
 import org.jetbrains.annotations.ApiStatus
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
@@ -31,7 +37,7 @@ import java.util.function.Predicate
 
 open class LanguageToolChecker : TextChecker() {
   @ApiStatus.Internal
-  class TestChecker: LanguageToolChecker()
+  class TestChecker : LanguageToolChecker()
 
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
@@ -40,12 +46,14 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    var result = cacheKey.get(extracted)
-    if (result == null) {
-      result = doCheck(extracted)
-      extracted.putUserDataIfAbsent(cacheKey, result)
+    val cache = extracted.getUserData(cacheKey)
+    val configStamp = service<GrazieConfig>().modificationCount
+    if (cache == null || cache.configStamp != configStamp) {
+      val problems = doCheck(extracted)
+      extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
+      return problems
     }
-    return result
+    return cache.problems
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {
@@ -179,12 +187,15 @@ open class LanguageToolChecker : TextChecker() {
   }
 }
 
+private data class CachedResults(val configStamp: Long, val problems: List<Problem>)
+
 private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
-private val cacheKey = Key.create<List<LanguageToolChecker.Problem>>("grazie.LT.problem.cache")
+private val cacheKey = Key.create<CachedResults>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
+private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
@@ -214,6 +225,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     if (text.startsWith("'", match.fromPos) && text.subSequence(match.fromPos + 1, text.length).contains("'")) {
       return true // https://github.com/languagetool-org/languagetool/issues/7249
     }
+    if (match.fromPos > 1 && text.startsWith("'", match.fromPos) && text.subSequence(0, match.fromPos).count { it == '\'' } == 1) {
+      return true // https://github.com/languagetool-org/languagetool/issues/11379
+    }
     if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
       return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
     }
@@ -221,6 +235,10 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
 
   if (match.rule is GenericUnpairedBracketsRule) {
     if (couldBeOpenClosedRange(text, match.fromPos)) {
+      return true
+    }
+
+    if (isPartOfQuotedLiteralText(match, text)) {
       return true
     }
   }
@@ -235,7 +253,7 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   }
 
   if (match.rule.id == "A_RB_NN" &&
-      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true)  &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true) &&
       (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
     return true // https://github.com/languagetool-org/languagetool/issues/9511
   }
@@ -245,6 +263,12 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   }
 
   return false
+}
+
+private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
+  return quotedLiteralPattern.findAll(text.toString())
+    .map { TextRange(it.range.first, it.range.last) }
+    .any { it.intersectsStrict(match.fromPos, match.toPos) }
 }
 
 // https://github.com/languagetool-org/languagetool/issues/6566
@@ -267,56 +291,8 @@ private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boo
 @NlsSafe
 private fun toTooltipTemplate(match: RuleMatch): String {
   val html = html {
-    val withCorrections = match.rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
-    val incorrectExample = (withCorrections ?: match.rule.incorrectExamples).minByOrNull { it.example.length }
     p {
-      incorrectExample?.let {
-        style = "padding-bottom: 8px;"
-      }
-
       +match.messageSanitized
-      nbsp()
-    }
-
-    table {
-      cellpading = "0"
-      cellspacing = "0"
-
-      incorrectExample?.let {
-        tr {
-          td {
-            valign = "top"
-            style = "padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
-            +" "
-            +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
-            +" "
-            nbsp()
-          }
-          td {
-            style = "width: 100%;"
-            toIncorrectHtml(it)
-            nbsp()
-          }
-        }
-
-        if (it.corrections.isNotEmpty()) {
-          tr {
-            td {
-              valign = "top"
-              style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
-              +" "
-              +GrazieBundle.message("grazie.settings.grammar.rule.correct")
-              +" "
-              nbsp()
-            }
-            td {
-              style = "padding-top: 5px; width: 100%;"
-              toCorrectHtml(it)
-              nbsp()
-            }
-          }
-        }
-      }
     }
 
     p {

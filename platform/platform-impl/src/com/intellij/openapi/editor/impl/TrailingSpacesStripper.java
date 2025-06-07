@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class TrailingSpacesStripper implements FileDocumentManagerListener {
   private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
@@ -75,7 +75,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       final int end = document.getLineEndOffset(lines - 1);
       if (start != end) {
         final CharSequence content = document.getCharsSequence();
-        performUndoableWrite(new DocumentRunnable(document, null) {
+        performUndoableWrite(new Runnable() {
           @Override
           public void run() {
             if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && options.isStripTrailingSpaces() &&
@@ -116,18 +116,13 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
               deleteToExclusive.set(lastLNewLineOffset);
             }
           }
-          performUndoableWrite(new DocumentRunnable(document, null) {
-            @Override
-            public void run() {
-              document.deleteString(firstNewLineOffset, deleteToExclusive.get());
-            }
-          });
+          performUndoableWrite(() -> document.deleteString(firstNewLineOffset, deleteToExclusive.get()));
         }
       }
     }
   }
 
-  private static void performUndoableWrite(@NotNull DocumentRunnable documentRunnable) {
+  private static void performUndoableWrite(@NotNull Runnable documentRunnable) {
     ApplicationManager.getApplication().runWriteAction(
       () -> CommandProcessor.getInstance().runUndoTransparentAction(documentRunnable)
     );
@@ -136,9 +131,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   // clears line modification flags except lines which was not stripped because the caret was in the way
   @ApiStatus.Internal
   public void clearLineModificationFlags(@NotNull Document document) {
-    if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow)document).getDelegate();
-    }
+    document = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (!(document instanceof DocumentImpl)) {
       return;
     }
@@ -206,9 +199,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
 
   @ApiStatus.Internal
   public static boolean strip(@NotNull Document document, boolean inChangedLinesOnly, boolean skipCaretLines) {
-    if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow)document).getDelegate();
-    }
+    document = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (!(document instanceof DocumentImpl)) {
       return true;
     }

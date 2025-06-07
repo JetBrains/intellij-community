@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class ShowRegistryAction extends AnAction implements DumbAware, LightEditCompatible {
+final class ShowRegistryAction extends AnAction implements DumbAware, LightEditCompatible {
 
   private RegistryUi myUi;
 

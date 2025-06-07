@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.DistractionFreeModeController;
@@ -26,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
@@ -37,14 +37,21 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.impl.ad.AdTheManager;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.view.CharacterGrid;
+import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.rd.LocalEditorSupportUtil;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -81,7 +88,6 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,8 +98,8 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
-import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
@@ -120,10 +126,8 @@ import java.lang.invoke.MethodHandle;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.List;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -137,7 +141,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
   private static final Object CUSTOM_LAYER_MARKER = new Object();
-  private static final float MIN_FONT_SIZE = 8;
+  private static final float MIN_FONT_SIZE = 4;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
   private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
@@ -172,6 +176,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
 
+  private final @NotNull EditorCaretRepaintService caretRepaintService = EditorCaretRepaintService.getInstance();
+
   private static final Integer SCROLL_PANE_LAYER = 0;
   private static final Integer STICKY_PANEL_LAYER = 200;
   private static final Integer VERTICAL_SCROLLBAR_LAYER = 250;
@@ -199,7 +205,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final @NotNull CaretCursor myCaretCursor;
+  final @NotNull CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
   private final @NotNull SettingsImpl mySettings;
@@ -226,7 +232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
 
-  private @NotNull EditorColorsScheme myScheme;
+  private @NotNull MyColorSchemeDelegate myScheme;
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myEditorFilteringMarkupModel;
@@ -238,8 +244,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull CaretModelImpl myCaretModel;
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
-
-  private static final @NotNull RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
 
   @MouseSelectionState
   private int myMouseSelectionState;
@@ -333,7 +337,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Deprecated(forRemoval = true)
   public Object myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
 
+  private final EditorModel myEditorModel;
+  private final @Nullable EditorModel myAdEditorModel;
+
   final EditorView myView;
+  final @Nullable EditorView myAdView;
+
+  private @Nullable CharacterGridImpl myCharacterGrid;
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
@@ -346,10 +356,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final ImmediatePainter myImmediatePainter;
 
   private final List<IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>>> myLineExtensionPainters = new SmartList<>();
-
-  static {
-    ourCaretBlinkingCommand.start();
-  }
 
   private volatile int myExpectedCaretOffset = -1;
 
@@ -373,7 +379,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
-    myScheme = createBoundColorSchemeDelegate(null);
+    final EditorColorsScheme boundColorScheme = createBoundColorSchemeDelegate(null);
+    if (boundColorScheme instanceof MyColorSchemeDelegate) {
+      myScheme = (MyColorSchemeDelegate)boundColorScheme;
+    } else {
+      LOG.warn("createBoundColorSchemeDelegate created delegate of type '%s'. Will wrap it with MyColorSchemeDelegate".formatted(boundColorScheme.getClass()),
+                new Throwable());
+      myScheme = new MyColorSchemeDelegate(boundColorScheme);
+    }
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myScrollPane.setBackground(JBColor.lazy(this::getBackgroundColor));
     myState.setViewer(viewer);
@@ -458,8 +471,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollPane.placeStatusOnTopOfStickyPanel();
     }
 
-    myView = new EditorView(this);
+    myFocusModeModel = new FocusModeModel(this);
+    Disposer.register(myDisposable, myFocusModeModel);
+
+    myEditorModel = new EditorModelImpl(this);
+    myAdEditorModel = AdTheManager.getInstance().getEditorModel(this);
+
+    myView = new EditorView(this, myEditorModel);
+    myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
+
     myView.reinitSettings();
+    if (myAdView != null) myAdView.reinitSettings();
+
     if (LOG.isDebugEnabled()) {
       float scaledEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
       int currentFontSize = myScheme.getEditorFontSize();
@@ -478,15 +501,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 
-    myFocusModeModel = new FocusModeModel(this);
-    Disposer.register(myDisposable, myFocusModeModel);
-
     myPopupHandlers.add(new DefaultPopupHandler());
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     addListeners();
+
+    if (myAdEditorModel != null) {
+      AdTheManager.getInstance().bindEditor(this);
+    }
   }
 
   private void addListeners() {
@@ -701,6 +725,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int endLine = myDocument.getLineNumber(end);
         if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
           myView.invalidateRange(start, end, newChange.fontStyleChanged());
+          if (myAdView != null) {
+            myAdView.invalidateRange(start, end, newChange.fontStyleChanged());
+          }
         }
         if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
           repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -797,11 +824,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void repaintCaretRegion(@NotNull CaretEvent e) {
     CaretImpl caretImpl = (CaretImpl)e.getCaret();
-    if (caretImpl != null) {
-      caretImpl.updateVisualPosition();
-      if (caretImpl.hasSelection()) {
-        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd(), false);
-      }
+    caretImpl.updateVisualPosition();
+    if (caretImpl.hasSelection()) {
+      repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd(), false);
     }
   }
 
@@ -820,6 +845,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ReadAction.run(() -> {
       mySoftWrapModel.recalculate();
       myView.setPrefix(prefixText, attributes);
+      if (myAdView != null) myAdView.setPrefix(prefixText, attributes);
     });
   }
 
@@ -1023,6 +1049,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void resetSizes() {
     myView.reset();
+    if (myAdView != null) myAdView.reset();
   }
 
   @Override
@@ -1032,14 +1059,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @RequiresEdt
   void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
-    for (EditorColorsScheme scheme = myScheme;
-         scheme instanceof DelegateColorScheme;
-         scheme = ((DelegateColorScheme)scheme).getDelegate()) {
-      if (scheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
-        break;
-      }
-    }
+    myScheme.updateGlobalScheme();
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
@@ -1049,11 +1069,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
-    ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
-    ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-    ourCaretBlinkingCommand.start();
+    caretRepaintService.setBlinking(mySettings.isBlinkCaret());
+    caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
+    caretRepaintService.restart();
 
     myView.reinitSettings();
+    if (myAdView != null) myAdView.reinitSettings();
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
     myInlayModel.reinitSettings();
@@ -1139,6 +1160,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Disposer.dispose(myCaretModel);
       Disposer.dispose(mySoftWrapModel);
       Disposer.dispose(myView);
+      if (myAdView != null) {
+        Disposer.dispose(myAdView);
+        Disposer.dispose(myAdEditorModel);
+      }
       clearCaretThread();
 
       myFocusListeners.clear();
@@ -1153,14 +1178,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
       Disposer.dispose(myDisposable);
-      myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+
+      // clear error panel's cached image
+      // replace UI with default to release resources (e.g. coroutines) of a custom UI correctly
+      myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
     });
   }
 
   private void clearCaretThread() {
-    synchronized (ourCaretBlinkingCommand) {
-      if (ourCaretBlinkingCommand.myEditor == this) {
-        ourCaretBlinkingCommand.myEditor = null;
+    synchronized (caretRepaintService) {
+      if (caretRepaintService.getEditor() == this) {
+        caretRepaintService.setEditor(null);
       }
     }
   }
@@ -1287,21 +1315,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+  }
+
+  @ApiStatus.Internal
+  public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
+    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
   }
 
   /**
    * Changes editor font size, attempting to keep a given point unmoved. If point is not given, the top left screen corner is assumed.
    *
-   * @param fontSize   new font size
-   * @param zoomCenter zoom point, relative to viewport
+   * @param fontSize            new font size
+   * @param zoomCenter          zoom point, relative to viewport
+   * @param validateImmediately immediately update the editor's size (slower, but more accurate when the point is close to the bottom edge)
    */
-  private void setFontSize(float fontSize, @Nullable Point zoomCenter) {
+  private void setFontSizeImpl(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
     int oldFontSize = myScheme.getEditorFontSize();
     float oldFontSize2D = myScheme.getEditorFontSize2D();
 
@@ -1317,9 +1351,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     float newFontSize2D = myScheme.getEditorFontSize2D(); // the resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, newFontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE_2D, oldFontSize2D, newFontSize2D);
-    // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
-    // to scroll to the bottom of the document).
-    myScrollPane.getViewport().invalidate();
+    if (validateImmediately) {
+      // This is a slow operation and may cause performance issues when zooming large files using the mouse wheel.
+      // On the other hand, the terminal needs this option because it uses the bottom-left corner as the zoom point,
+      // and it doesn't work properly when the font size is increased, because we need to recompute the size immediately
+      // to be able to scroll down that much.
+      validateSize();
+    }
+    else {
+      // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
+      // to scroll to the bottom of the document).
+      myScrollPane.getViewport().invalidate();
+    }
 
     Point shiftedZoomCenterAbsolute = logicalPositionToXY(zoomCenterLogical);
     myScrollingModel.disableAnimation();
@@ -1364,19 +1407,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    VirtualFile file = manager.getFile(myDocument);
-    if (file != null && !file.isValid()) {
-      return false;
+    // - The frontend cannot synchronously check file validity;
+    // - typing on the backend is not performed.
+    if (LocalEditorSupportUtil.isMonolith()) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      VirtualFile file = manager.getFile(myDocument);
+      if (file != null && !file.isValid()) {
+        return false;
+      }
     }
 
     DataContext context = getDataContext();
 
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
-    if (graphics != null) { // editor component is not showing
+    if (graphics != null) {
       PaintUtil.alignTxToInt((Graphics2D)graphics, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
+    }
+    else {
+      // the editor component is not showing
     }
 
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
@@ -1387,17 +1437,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  void processKeyTypedImmediately(char c, @NotNull Graphics graphics, @NotNull DataContext dataContext) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public void processKeyTypedImmediately(char c, @NotNull Graphics graphics, @NotNull DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
     EditorActionManager.getInstance();
     TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
       measureTypingLatency();
-      myLastTypedActionTimestamp = -1;
     }
   }
 
-  void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
     EditorActionManager.getInstance();
     TypedAction.getInstance().actionPerformed(this, c, dataContext);
   }
@@ -1552,29 +1605,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
+    return EditorThreading.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
   }
 
   public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
     assertIsDispatchThread();
-    return ReadAction.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
+    return EditorThreading.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
   }
 
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     assertIsDispatchThread();
-    return ReadAction.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
+    return EditorThreading.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
   }
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    return ReadAction.compute(() -> myView.offsetToLogicalPosition(offset));
+    return EditorThreading.compute(() -> myView.offsetToLogicalPosition(offset));
   }
 
   @TestOnly
   public void setCaretActive() {
-    synchronized (ourCaretBlinkingCommand) {
-      ourCaretBlinkingCommand.myEditor = this;
-      ourCaretBlinkingCommand.start();
+    synchronized (caretRepaintService) {
+      caretRepaintService.setEditor(this);
+      caretRepaintService.restart();
     }
   }
 
@@ -1594,25 +1647,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    return ReadAction.compute(() -> {
-      Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
-      return visualToLogicalPosition(xyToVisualPosition(pp));
-    });
+    return ReadAction.compute(() -> myView.xyToLogicalPosition(p));
   }
 
   private int logicalToVisualLine(int logicalLine) {
-    return logicalLine < myDocument.getLineCount() ? offsetToVisualLine(myDocument.getLineStartOffset(logicalLine)) :
-           logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line;
+    return logicalLine < getEditorModel().getDocument().getLineCount()
+           ? offsetToVisualLine(getEditorModel().getDocument().getLineStartOffset(logicalLine))
+           : myAdView == null
+             ? logicalToVisualPosition(new LogicalPosition(logicalLine, 0)).line
+             : myAdView.logicalToVisualPosition(new LogicalPosition(logicalLine, 0), false).line;
   }
 
   int logicalLineToY(int line) {
     int visualLine = logicalToVisualLine(line);
-    return visualLineToY(visualLine);
+    return myAdView == null
+            ? visualLineToY(visualLine)
+            : myAdView.visualLineToY(visualLine);
   }
 
   @Override
   public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       VisualPosition visible = logicalToVisualPosition(pos);
       return visualPositionToXY(visible);
     });
@@ -1620,7 +1675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Point2D point2D = myView.visualPositionToXY(visible);
       return new Point((int)point2D.getX(), (int)point2D.getY());
     });
@@ -1628,7 +1683,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition visible) {
-    return ReadAction.compute(() -> myView.visualPositionToXY(visible));
+    return EditorThreading.compute(() -> myView.visualPositionToXY(visible));
   }
 
   /**
@@ -1646,12 +1701,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    return ReadAction.compute(() -> myView.findNearestDirectionBoundary(offset, lookForward));
+    return EditorThreading.compute(() -> myView.findNearestDirectionBoundary(offset, lookForward));
   }
 
   @Override
   public int visualLineToY(int line) {
-    return ReadAction.compute(() -> myView.visualLineToY(line));
+    return EditorThreading.compute(() -> myView.visualLineToY(line));
   }
 
   @Override
@@ -1678,11 +1733,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     assertIsDispatchThread();
-    ReadAction.run(() -> {
-      int minEndOffset = Math.min(endOffset, myDocument.getTextLength());
+    EditorThreading.run(() -> {
+      int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
 
       if (invalidateTextLayout) {
         myView.invalidateRange(startOffset, minEndOffset, true);
+        if (myAdView != null) myAdView.invalidateRange(startOffset, minEndOffset, true);
       }
 
       if (!isShowing()) {
@@ -1699,8 +1755,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
       // and it does occupy a particular amount of visual space that may be necessary to repaint.
       if (startOffset <= minEndOffset) {
-        int startLine = myView.offsetToVisualLine(startOffset, false);
-        int endLine = myView.offsetToVisualLine(minEndOffset, true);
+        int startLine; int endLine;
+        if (myAdView != null) {
+          startLine = myAdView.offsetToVisualLine(startOffset, false);
+          endLine = myAdView.offsetToVisualLine(minEndOffset, true);
+        }
+        else {
+          startLine = myView.offsetToVisualLine(startOffset, false);
+          endLine = myView.offsetToVisualLine(minEndOffset, true);
+        }
         doRepaint(startLine, endLine);
       }
     });
@@ -1734,9 +1797,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!isShowing()) return;
 
     int startVisualLine = logicalToVisualLine(startLine);
-    int endVisualLine = myDocument.getTextLength() <= 0
+    DocumentEx document = getEditorModel().getDocument();
+    int endVisualLine = document.getTextLength() <= 0
                         ? 0
-                        : offsetToVisualLine(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine)));
+                        : offsetToVisualLine(document.getLineEndOffset(Math.min(document.getLineCount() - 1, endLine)));
     doRepaint(startVisualLine, endVisualLine);
   }
 
@@ -1745,8 +1809,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   private void doRepaint(int startVisualLine, int endVisualLine) {
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    int yStart = visualLineToY(startVisualLine);
-    int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
+    int yStart; int height;
+    if (myAdView != null) {
+      yStart = myAdView.visualLineToY(startVisualLine);
+      height = myAdView.visualLineToYRange(endVisualLine)[1] + 2 - yStart;
+    }
+    else {
+      yStart = visualLineToY(startVisualLine);
+      height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
+    }
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
     if (myStickyLinesManager != null) {
@@ -1758,6 +1829,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInlayModel.isInBatchMode()) LOG.error("Document bulk mode shouldn't be started from batch inlay operation");
 
     myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
+    if (myAdView != null) myAdView.getPreferredSize();
 
     myScrollingModel.onBulkDocumentUpdateStarted();
 
@@ -1977,6 +2049,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(success || isReleased);
   }
 
+  /**
+   * Sets a callback invoked after every repaint request.
+   * <p>
+   *   The callback is only invoked if the component is showing and the request has a non-empty rectangle.
+   *   In other words, it's invoked when the repaint request is likely to be followed by an actual painting operation.
+   * </p>
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setRepaintCallback(@Nullable Runnable callback) {
+    myEditorComponent.setRepaintCallback(callback);
+  }
+
+  /**
+   * Sets a callback invoked after every paint operation.
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable callback) {
+    myView.setPaintCallback(callback);
+  }
+
   @Override
   public boolean isStickySelection() {
     return myState.isStickySelection();
@@ -2094,7 +2200,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    EditorThreading.run(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
@@ -2104,7 +2210,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      myView.paint(g);
+      if (myAdView != null) {
+        myAdView.paint(g);
+      }
+      else {
+        myView.paint(g);
+      }
     });
 
     boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
@@ -2155,7 +2266,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean hasHeaderComponent() {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       JComponent header = getHeaderComponent();
       return header != null && header != getPermanentHeaderComponent();
     });
@@ -2163,7 +2274,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @Nullable JComponent getPermanentHeaderComponent() {
-    return ReadAction.compute(() -> getUserData(PERMANENT_HEADER));
+    return EditorThreading.compute(() -> getUserData(PERMANENT_HEADER));
   }
 
   @Override
@@ -2196,7 +2307,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Color getBackgroundColor() {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Color forcedBackground = myState.getMyForcedBackground();
       return forcedBackground == null ? getBackgroundIgnoreForced() : forcedBackground;
     });
@@ -2265,7 +2376,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getMaxWidthInRange(int startOffset, int endOffset) {
-    return ReadAction.compute(() -> myView.getMaxWidthInRange(startOffset, endOffset));
+    return EditorThreading.compute(() -> myView.getMaxWidthInRange(startOffset, endOffset));
   }
 
   public boolean isPaintSelection() {
@@ -2303,7 +2414,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getLineHeight() {
-    return ReadAction.compute(() -> myView.getLineHeight());
+    return EditorThreading.compute(() -> myView.getLineHeight());
   }
 
   public int getDescent() {
@@ -2341,7 +2452,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @NotNull Dimension getPreferredSize() {
-    return ReadAction.compute(() -> isReleased ? new Dimension()
+    return EditorThreading.compute(() -> isReleased ? new Dimension()
                                                : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
                                                  ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                                                  : myView.getPreferredSize());
@@ -2397,7 +2508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Dimension getContentSize() {
-    return ReadAction.compute(() -> isReleased ? new Dimension() : myView.getPreferredSize());
+    return EditorThreading.compute(() -> isReleased ? new Dimension() : myView.getPreferredSize());
   }
 
   @Override
@@ -2417,12 +2528,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public Insets getInsets() {
-    return ReadAction.compute(() -> myScrollPane.getInsets());
+    return EditorThreading.compute(() -> myScrollPane.getInsets());
   }
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    return ReadAction.compute(() -> myView.logicalPositionToOffset(pos));
+    return EditorThreading.compute(() -> myView.logicalPositionToOffset(pos));
   }
 
   /**
@@ -2433,24 +2544,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * minus the number of folded lines.
    */
   public int getVisibleLineCount() {
-    return ReadAction.compute(() -> Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber()));
-  }
-
-  /**
-   * @return the number of visible logical lines, which is the number of total logical lines minus the number of folded lines
-   */
-  private int getVisibleLogicalLinesCount() {
-    return getDocument().getLineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
+    return EditorThreading.compute(() -> myView.getVisibleLineCount());
   }
 
   @Override
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    return ReadAction.compute(() -> myView.logicalToVisualPosition(logicalPos, false));
+    return EditorThreading.compute(() -> myView.logicalToVisualPosition(logicalPos, false));
   }
 
   @Override
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    return ReadAction.compute(() -> myView.visualToLogicalPosition(visiblePos));
+    return EditorThreading.compute(() -> myView.visualToLogicalPosition(visiblePos));
   }
 
   private int offsetToLogicalLine(int offset) {
@@ -2574,7 +2678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       if (myGutterComponent != e.getSource()) return EditorMouseEventArea.EDITING_AREA;
 
       int x = myGutterComponent.convertX(e.getX());
@@ -2877,16 +2981,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return result;
   }
 
-  @NotNull
-  private VisualPosition nextSelectionVisualPosition(@NotNull VisualPosition pos) {
+  private @NotNull VisualPosition nextSelectionVisualPosition(@NotNull VisualPosition pos) {
     if (!isColumnMode() && pos.column >= EditorUtil.getLastVisualLineColumnNumber(this, pos.line)) {
       return new VisualPosition(pos.line + 1, 0, false);
     }
     return new VisualPosition(pos.line, pos.column + 1, false);
   }
 
-  @NotNull
-  private VisualPosition prevSelectionVisualPosition(@NotNull VisualPosition pos) {
+  private @NotNull VisualPosition prevSelectionVisualPosition(@NotNull VisualPosition pos) {
     int prevColumn = pos.column - 1;
     if (prevColumn >= 0) {
       return new VisualPosition(pos.line, prevColumn, true);
@@ -3004,57 +3106,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  private static final class RepaintCursorCommand implements ContextAwareRunnable {
-    private long mySleepTime = 500;
-    private boolean myIsBlinkCaret = true;
-    private @Nullable EditorImpl myEditor;
-    private ScheduledFuture<?> mySchedulerHandle;
-
-    void start() {
-      if (mySchedulerHandle != null) {
-        mySchedulerHandle.cancel(false);
-      }
-      if (myEditor != null) {
-        mySchedulerHandle = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this, mySleepTime, mySleepTime,
-                                                                                                     TimeUnit.MILLISECONDS);
-      }
-    }
-
-    private void setBlinkPeriod(int blinkPeriod) {
-      mySleepTime = Math.max(blinkPeriod, 10);
-    }
-
-    private void setBlinkCaret(boolean value) {
-      myIsBlinkCaret = value;
-    }
-
-    @Override
-    public void run() {
-      EditorImpl editor = myEditor;
-      if (editor != null) {
-        CaretCursor activeCursor = editor.myCaretCursor;
-
-        long time = System.currentTimeMillis();
-        time -= activeCursor.myStartTime;
-
-        if (time > mySleepTime) {
-          boolean toRepaint = true;
-          if (myIsBlinkCaret) {
-            activeCursor.myIsShown = !activeCursor.myIsShown;
-          }
-          else {
-            toRepaint = !activeCursor.myIsShown;
-            activeCursor.myIsShown = true;
-          }
-
-          if (toRepaint) {
-            activeCursor.repaint();
-          }
-        }
-      }
-    }
-  }
-
   void updateCaretCursor() {
     myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {
@@ -3085,7 +3136,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean setCaretVisible(boolean b) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       boolean old = myCaretCursor.isActive();
       if (b) {
         myCaretCursor.activate();
@@ -3099,7 +3150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean setCaretEnabled(boolean enabled) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       boolean old = myCaretCursor.isEnabled();
       myCaretCursor.setEnabled(enabled);
       return old;
@@ -3134,7 +3185,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setEmbeddedIntoDialogWrapper(boolean b) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setEmbeddedIntoDialogWrapper(b));
+    EditorThreading.run(() -> myState.setEmbeddedIntoDialogWrapper(b));
   }
 
   private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -3176,11 +3227,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public static final class CaretRectangle {
-    @NotNull
-    public final Point2D myPoint;
+    public final @NotNull Point2D myPoint;
     public final float myWidth;
-    @Nullable
-    public final Caret myCaret;
+    public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
     private CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
@@ -3209,24 +3258,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void activate() {
       boolean blink = mySettings.isBlinkCaret();
       int blinkPeriod = mySettings.getCaretBlinkPeriod();
-      synchronized (ourCaretBlinkingCommand) {
-        ourCaretBlinkingCommand.myEditor = EditorImpl.this;
-        ourCaretBlinkingCommand.setBlinkCaret(blink);
-        ourCaretBlinkingCommand.setBlinkPeriod(blinkPeriod);
+      synchronized (caretRepaintService) {
+        caretRepaintService.setEditor(EditorImpl.this);
+        caretRepaintService.setBlinking(blink);
+        caretRepaintService.setBlinkPeriod(blinkPeriod);
         myIsShown = true;
-        ourCaretBlinkingCommand.start();
+        caretRepaintService.restart();
       }
     }
 
     public boolean isActive() {
-      synchronized (ourCaretBlinkingCommand) {
+      synchronized (caretRepaintService) {
         return myIsShown;
       }
     }
 
+    void setActive(boolean isActive) {
+      synchronized (caretRepaintService) {
+        myIsShown = isActive;
+      }
+    }
+
     private void passivate() {
-      synchronized (ourCaretBlinkingCommand) {
+      synchronized (caretRepaintService) {
         myIsShown = false;
+      }
+    }
+
+    long getStartTime() {
+      synchronized (caretRepaintService) {
+        return myStartTime;
       }
     }
 
@@ -3235,7 +3296,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLocations = locations;
     }
 
-    private void repaint() {
+    void repaint() {
       myView.repaintCarets();
     }
 
@@ -3307,51 +3368,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           stop();
           return;
         }
-        DocumentRunnable command = new DocumentRunnable(myDocument, myProject) {
-          @Override
-          public void run() {
-            int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-            VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
-                                                                      : getCaretModel().getVisualPosition();
-            int column = caretPosition.column;
-            xPassedCycles++;
-            if (xPassedCycles >= myXCycles) {
-              xPassedCycles = 0;
-              column += myDx;
-            }
+        Runnable command = () -> {
+          int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+          VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
+                                                                    : getCaretModel().getVisualPosition();
+          int column = caretPosition.column;
+          xPassedCycles++;
+          if (xPassedCycles >= myXCycles) {
+            xPassedCycles = 0;
+            column += myDx;
+          }
 
-            int line = caretPosition.line;
-            yPassedCycles++;
-            if (yPassedCycles >= myYCycles) {
-              yPassedCycles = 0;
-              line += myDy;
-            }
+          int line = caretPosition.line;
+          yPassedCycles++;
+          if (yPassedCycles >= myYCycles) {
+            yPassedCycles = 0;
+            line += myDy;
+          }
 
-            line = Math.max(0, line);
-            column = Math.max(0, column);
-            VisualPosition pos = new VisualPosition(line, column);
-            if (!myMultiSelectionInProgress) {
-              getCaretModel().moveToVisualPosition(pos);
-              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            }
+          line = Math.max(0, line);
+          column = Math.max(0, column);
+          VisualPosition pos = new VisualPosition(line, column);
+          if (!myMultiSelectionInProgress) {
+            getCaretModel().moveToVisualPosition(pos);
+            getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
 
-            int newCaretOffset = getCaretModel().getOffset();
-            int caretShift = newCaretOffset - mySavedSelectionStart;
+          int newCaretOffset = getCaretModel().getOffset();
+          int caretShift = newCaretOffset - mySavedSelectionStart;
 
-            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
-              return;
-            }
+          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+            setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
+            return;
+          }
 
-            if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
-              myTargetMultiSelectionPosition = pos;
-              LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
-              getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-              createSelectionTill(newLogicalPosition);
-            }
-            else {
-              mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-            }
+          if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
+            myTargetMultiSelectionPosition = pos;
+            LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
+            getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
+            createSelectionTill(newLogicalPosition);
+          }
+          else {
+            mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
           }
         };
         WriteIntentReadAction.run((Runnable)() ->
@@ -3503,7 +3561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private @NotNull MyEditable getViewer() {
     MyEditable editable = myEditable;
     if (editable == null) {
-      myEditable = editable = ReadAction.compute(() -> new MyEditable());
+      myEditable = editable = EditorThreading.compute(() -> new MyEditable());
     }
     return editable;
   }
@@ -3526,6 +3584,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull DeleteProvider getDeleteProvider() {
     return getViewer();
+  }
+
+  /**
+   * Returns the instance of the character grid corresponding to this editor
+   * <p>
+   *   A non-{@code null} value is only returned when the character grid mode is enabled,
+   *   see {@link EditorSettings#setCharacterGridWidthMultiplier(Float)}.
+   * </p>
+   * @return the current character grid instance or {@code null} if the editor is not in the grid mode
+   */
+  @ApiStatus.Internal
+  public @Nullable CharacterGrid getCharacterGrid() {
+    if (getSettings().getCharacterGridWidthMultiplier() == null) {
+      myCharacterGrid = null;
+      return null;
+    }
+    else {
+      if (myCharacterGrid == null) {
+        myCharacterGrid = new CharacterGridImpl(this);
+      }
+      return myCharacterGrid;
+    }
   }
 
   private final class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
@@ -3605,38 +3685,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  /**
+   * This method doesn't set the scheme itself, but the delegate
+   * @param scheme - original scheme
+   * @see EditorImpl.MyColorSchemeDelegate
+   */
   @Override
-  public void setColorsScheme(@NotNull EditorColorsScheme scheme) {
+  public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
-    ReadAction.run(() -> {
-      logSchemeChangeIfNeeded(scheme);
-      myScheme = scheme;
+    final EditorImpl finalEditor = this;
+    EditorThreading.run(() -> {
+      final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+      if (colorsManager == null) {
+        LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
+        return;
+      }
+      if (scheme instanceof MyColorSchemeDelegate) {
+        myScheme = (MyColorSchemeDelegate)scheme;
+      } else {
+        myScheme = new MyColorSchemeDelegate(scheme);
+      }
       reinitSettings();
     });
-  }
-
-  private static void logSchemeChangeIfNeeded(@NotNull EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled()) return;
-    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    if (colorsManager == null) return;
-
-    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
-    boolean isGlobal = (scheme == globalScheme);
-    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
-
-    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
-      scheme = ((DelegateColorScheme)scheme).getDelegate();
-      if (scheme == globalScheme) isGlobal = true;
-      if (scheme instanceof MyColorSchemeDelegate) {
-        isBounded = true;
-      }
-    }
-
-    if (isGlobal && !isBounded) {
-      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
-                  .formatted(UISettings.getInstance().getPresentationMode()));
-      LOG.debug(ExceptionUtil.currentStackTrace());
-    }
   }
 
   @Override
@@ -3651,7 +3721,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setVerticalScrollBarOrientation(type));
+    EditorThreading.run(() -> myState.setVerticalScrollBarOrientation(type));
   }
 
   private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -3769,17 +3839,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
     myLastTypedActionTimestamp = -1;
-    if (e.getID() != KeyEvent.KEY_TYPED) return false;
-    char c = e.getKeyChar();
-    if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
-      myLastTypedActionTimestamp = e.getWhen();
-      myLastTypedAction = Character.toString(c);
-      processKeyTyped(c);
-      return true;
-    }
-    else {
+    if (e.getID() != KeyEvent.KEY_TYPED) {
       return false;
     }
+    if (!UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+      return false;
+    }
+    char c = e.getKeyChar();
+    myLastTypedActionTimestamp = e.getWhen();
+    myLastTypedAction = Character.toString(c);
+    processKeyTyped(c);
+    return true;
   }
 
   public void recordLatencyAwareAction(@NotNull String actionId, long timestampMs) {
@@ -3791,15 +3861,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myLastTypedActionTimestamp == -1) {
       return;
     }
+    long latencyMs = System.currentTimeMillis() - myLastTypedActionTimestamp;
+    myLastTypedActionTimestamp = -1;
 
     LatencyListener latencyPublisher = myLatencyPublisher;
     if (latencyPublisher == null) {
       latencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
       myLatencyPublisher = latencyPublisher;
     }
-
-    latencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
-    myLastTypedActionTimestamp = -1;
+    latencyPublisher.recordTypingLatency(this, myLastTypedAction, latencyMs);
   }
 
   public boolean isProcessingTypedAction() {
@@ -3922,8 +3992,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
 
   static final class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
-    @NotNull
-    private final InputMethodRequests myDelegate;
+    private final @NotNull InputMethodRequests myDelegate;
 
     MyInputMethodHandleSwingThreadWrapper(@NotNull InputMethodRequests delegate) {
       myDelegate = delegate;
@@ -3966,7 +4035,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
-      return UIUtil.invokeAndWaitIfNeeded(() -> ReadAction.compute(computable));
+      return UIUtil.invokeAndWaitIfNeeded(() -> EditorThreading.compute(computable));
     }
   }
 
@@ -4025,7 +4094,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
-        if (composedRangeMarker.getStartOffset() <= pos && pos <= composedRangeMarker.getEndOffset()) {
+        if (composedRangeMarker.getTextRange().containsInclusive(pos)) {
           return TextHitInfo.leading(pos - composedRangeMarker.getStartOffset());
         }
       }
@@ -4133,8 +4202,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return text == null ? null : new AttributedString(text).getIterator();
     }
 
-    @NotNull
-    private static String createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
+    private static @NotNull String createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
       StringBuilder strBuf = new StringBuilder();
 
       // create attributed string with no attributes
@@ -4745,7 +4813,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       AnAction action = actionManager.getAction(mappedActionId);
       DataContext dataContext = DataManager.getInstance().getDataContext(e.getComponent());
       AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU, dataContext);
-      ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
+      ActionUtil.updateAction(action, actionEvent);
       if (actionEvent.getPresentation().isEnabled()) return false;
     }
     return true;
@@ -5318,7 +5386,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int caretOffset = editor.getCaretModel().getOffset();
     if (editor.myDraggedRange != null
-        && editor.myDraggedRange.getStartOffset() <= caretOffset && caretOffset < editor.myDraggedRange.getEndOffset()) {
+        && editor.myDraggedRange.getTextRange().contains(caretOffset)) {
       return false;
     }
 
@@ -5614,7 +5682,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @TestOnly
-  void validateState() {
+  @ApiStatus.Internal
+  public void validateState() {
     myView.validateState();
     mySoftWrapModel.validateState();
     myFoldingModel.validateState();
@@ -5687,6 +5756,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
                                                 && !UISettings.getInstance().getPresentationMode();
           float shift = e.getWheelRotation();
+
+          var strategy = getUserData(ChangeEditorFontSizeStrategy.KEY);
+          if (strategy != null) {
+            strategy.setFontSize(strategy.getFontSize() - shift);
+            return;
+          }
+
           float size = myScheme.getEditorFontSize2D();
           if (isWheelFontChangePersistent) {
             size = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
@@ -5695,12 +5771,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           size -= shift;
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
-              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(UISettingsUtils.getInstance().scaleFontSize(size),
+                              convertPoint(this, e.getPoint(), getViewport()), false);
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(size, convertPoint(this, e.getPoint(), getViewport()), false);
             }
           }
           return;
@@ -5777,9 +5853,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void adjustGlobalFontSize(float size) {
     EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-    if (myScheme instanceof MyColorSchemeDelegate) {
-      ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
-    }
+    myScheme.resetEditorFontSize();
     EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 
@@ -6011,5 +6085,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return null;
     }
   }
-}
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public EditorView getView() {
+    return myView;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull EditorModel getEditorModel() {
+    if (myAdEditorModel != null) {
+      return myAdEditorModel;
+    }
+    return myEditorModel;
+  }
+}

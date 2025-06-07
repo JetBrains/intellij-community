@@ -7,7 +7,7 @@ import org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataPr
 import java.util.Arrays;
 import java.util.List;
 
-public class SpaceDependencyAuthenticationDataProvider extends DependencyAuthenticationDataProvider {
+public final class SpaceDependencyAuthenticationDataProvider extends DependencyAuthenticationDataProvider {
   private static final List<String> PROVIDED_HOSTS = Arrays.asList("jetbrains.team", "jetbrains.space");
 
   @Override

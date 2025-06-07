@@ -279,7 +279,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
     if (myShowNewNameField) {
       String newName = getNewName();
 
-      if (newName.length() == 0) {
+      if (newName.isEmpty()) {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("no.new.name.specified"), RefactoringBundle.message("error.title"));
         return;
       }
@@ -299,7 +299,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
     if (myShowDirectoryField) {
       final String targetDirectoryName = getTargetDirectoryComponent().getText();
 
-      if (targetDirectoryName.length() == 0) {
+      if (targetDirectoryName.isEmpty()) {
         Messages.showErrorDialog(myProject, RefactoringBundle.message("no.target.directory.specified"),
                                  RefactoringBundle.message("error.title"));
         return;
@@ -342,12 +342,12 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
 
   @Override
   protected boolean areButtonsValid() {
-    if (myShowDirectoryField && getTargetDirectoryComponent().getText().length() == 0) {
+    if (myShowDirectoryField && getTargetDirectoryComponent().getText().isEmpty()) {
       return false;
     }
     if (myShowNewNameField) {
       String newName = getNewName();
-      if (newName.length() == 0 || myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
+      if (newName.isEmpty() || myFileCopy && !PathUtilRt.isValidFileName(newName, false)) {
         return false;
       }
     }

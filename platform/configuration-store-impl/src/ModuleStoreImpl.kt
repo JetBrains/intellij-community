@@ -1,41 +1,38 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
 import org.jdom.Element
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
-internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), ModuleStore {
-  private val pathMacroManager = PathMacroManager.getInstance(module)
-
+internal class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), ModuleStore {
   override val project: Project = module.project
 
-  override val storageManager: StateStorageManagerImpl =
-    ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
+  override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
-    SaveSessionProducerManager(storageManager.isUseVfsForWrite, collectVfsEvents = true)
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
+    return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
+  }
 
-  final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
+  override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
-  final override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
+  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
   override fun <T> getStorageSpecs(
     component: PersistentStateComponent<T>,
@@ -68,16 +65,16 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     return result
   }
 
-  final override fun reloadStates(componentNames: Set<String>) {
+  override fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
   }
 
-  final override fun setPath(path: Path) {
-    setPath(path = path, virtualFile = null, isNew = false)
+  override fun setPath(path: Path) {
+    setPath(path = path, isNew = false)
   }
 
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
+  override fun setPath(path: Path, isNew: Boolean) {
+    val isMacroAdded = storageManager.setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
     storageManager.getOrCreateStorage(
       collapsedPath = StoragePathMacros.MODULE_FILE,
@@ -87,12 +84,11 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
           return@getOrCreateStorage
         }
 
-        setFile(virtualFile = virtualFile, ioFileIfChanged = if (isMacroAdded) null else path)
+        setFile(virtualFile = null, ioFileIfChanged = if (isMacroAdded) null else path)
         // ModifiableModuleModel#newModule should always create a new module from scratch
         // https://youtrack.jetbrains.com/issue/IDEA-147530
-
         if (isMacroAdded) {
-          // preload to ensure that we will get FileNotFound error (no module file) during initialization,
+          // preload to ensure that we will get a FileNotFound error (no module file) during initialization
           // and not later in some unexpected place (because otherwise will be loaded by demand)
           preloadStorageData(isNew)
         }
@@ -107,8 +103,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
   : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor, componentManager = module, controller = null),
     RenameableStateStorageManager
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
-    StoragePathMacros.MODULE_FILE
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
   override fun expandMacro(collapsedPath: String): Path {
@@ -127,7 +122,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
           file.rename(storage, newName)
         }
         else if (storage.file.fileName.toString() != newName) {
-          // old file didn't exist or renaming failed
+          // the old file didn't exist or renaming failed
           val newFile = storage.file.parent.resolve(newName)
           storage.setFile(virtualFile = null, ioFileIfChanged = newFile)
           pathRenamed(newPath = newFile, event = null)
@@ -189,30 +184,25 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
 
   override val isUseVfsForWrite: Boolean
-    get() = !useBackgroundSave
+    get() = !useBackgroundSave()
 
   override fun createFileBasedStorage(
     file: Path,
-    fileSpec: String,
+    collapsedPath: String,
     roamingType: RoamingType,
     usePathMacroManager: Boolean,
     rootTagName: String?
   ): StateStorage {
     val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
-    return TrackedFileStorage(storageManager = this, file, fileSpec, rootTagName, roamingType, macroSubstitutor, provider, controller = null)
+    return TrackedFileStorage(
+      storageManager = this,
+      file = file,
+      fileSpec = collapsedPath,
+      rootElementName = rootTagName,
+      roamingType = roamingType,
+      pathMacroManager = macroSubstitutor,
+      provider = provider,
+      controller = null,
+    )
   }
-}
-
-private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
-  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
-
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    super.setPath(path, virtualFile, isNew)
-    if (!isNew && Files.exists(path)) {
-      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
-    }
-  }
-
-  override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: ((project as ProjectStoreOwner).componentStore as ComponentStoreImpl).loadPolicy
 }

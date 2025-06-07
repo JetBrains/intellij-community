@@ -22,6 +22,11 @@ public final class FileStatusFactory {
     return "FILESTATUS_";
   }
 
+  @Internal
+  public static String getFilestatusUiThemePrefix() {
+    return "VersionControl.FileStatus.";
+  }
+
   /**
    * @deprecated this method is not locale-friendly or plugin unloading-friendly
    */

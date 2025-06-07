@@ -2,6 +2,7 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.lexer.TokenList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -22,7 +23,10 @@ public class TokenSequence implements TokenList {
   final IElementType[] lexTypes;
   final int lexemeCount;
 
-  TokenSequence(int[] lexStarts, IElementType[] lexTypes, int lexemeCount, CharSequence text) {
+  TokenSequence(int @NotNull [] lexStarts,
+                @NotNull IElementType @NotNull [] lexTypes,
+                int lexemeCount,
+                @NotNull CharSequence text) {
     this.lexStarts = lexStarts;
     this.lexTypes = lexTypes;
     this.lexemeCount = lexemeCount;
@@ -34,14 +38,14 @@ public class TokenSequence implements TokenList {
   void assertMatches(@NotNull CharSequence text, @NotNull Lexer lexer) {
     TokenSequence sequence = new Builder(text, lexer).performLexing();
     assert lexemeCount == sequence.lexemeCount;
-    for(int j = 0; j <= lexemeCount; ++j) {
+    for (int j = 0; j <= lexemeCount; ++j) {
       if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] != lexTypes[j]) {
         assert false;
       }
     }
   }
 
-  public static @NotNull TokenSequence performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
+  public static @NotNull TokenList performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
     if (lexer instanceof WrappingLexer) {
       TokenList existing = ((WrappingLexer)lexer).getTokens();
       if (existing instanceof TokenSequence && Comparing.equal(text, ((TokenSequence)existing).myText)) {
@@ -120,7 +124,7 @@ public class TokenSequence implements TokenList {
       }
 
       myLexStarts[i] = myText.length();
-      
+
       return new TokenSequence(myLexStarts, myLexTypes, i, myText);
     }
 
@@ -147,6 +151,71 @@ public class TokenSequence implements TokenList {
       myLexStarts = ArrayUtil.realloc(myLexStarts, newSize);
       myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, IElementType.ARRAY_FACTORY);
     }
+  }
 
+  @Override
+  public @NotNull Lexer asLexer() {
+    return new WrappingLexer(this);
+  }
+
+  /**
+   * A simple lexer over {@link TokenList}.
+   */
+  @ApiStatus.Internal
+  static class WrappingLexer extends LexerBase {
+    private final @NotNull TokenList myTokens;
+    private int myIndex;
+
+    WrappingLexer(@NotNull TokenList tokens) {
+      this.myTokens = tokens;
+    }
+
+    public @NotNull TokenList getTokens() {
+      return myTokens;
+    }
+
+    @Override
+    public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+      assert Comparing.equal(buffer, myTokens.getTokenizedText());
+      assert startOffset == 0;
+      assert endOffset == buffer.length();
+      assert initialState == 0;
+      myIndex = 0;
+    }
+
+    @Override
+    public int getState() {
+      return myIndex;
+    }
+
+    @Override
+    public @Nullable IElementType getTokenType() {
+      return myTokens.getTokenType(myIndex);
+    }
+
+    @Override
+    public int getTokenStart() {
+      return myTokens.getTokenStart(myIndex);
+    }
+
+    @Override
+    public int getTokenEnd() {
+      return myTokens.getTokenEnd(myIndex);
+    }
+
+    @Override
+    public void advance() {
+      myIndex++;
+    }
+
+    @Override
+    public @NotNull CharSequence getBufferSequence() {
+      return myTokens.getTokenizedText();
+    }
+
+    @Override
+    public int getBufferEnd() {
+      return myTokens.getTokenizedText().length();
+    }
   }
 }

@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,7 @@ public final class JpsWslPathMapper implements JpsPathMapper {
     return url;
   }
 
-  @NotNull
-  private String mapPath(@NotNull String path) {
+  private @NotNull String mapPath(@NotNull String path) {
     if (myWslRootPrefix == null || path.indexOf(':') != 1) {
       String wslPath;
       try {
@@ -61,7 +60,7 @@ public final class JpsWslPathMapper implements JpsPathMapper {
       return wslPath;
     }
 
-    return myWslRootPrefix + Character.toLowerCase(path.charAt(0)) + FileUtil.toSystemIndependentName(path.substring(2));
+    return myWslRootPrefix + Character.toLowerCase(path.charAt(0)) + FileUtilRt.toSystemIndependentName(path.substring(2));
   }
 
   private static String runWslPath(String path) throws IOException, InterruptedException {

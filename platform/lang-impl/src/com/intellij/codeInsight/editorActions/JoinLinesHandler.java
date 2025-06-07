@@ -90,19 +90,19 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
 
   private static final class JoinLineProcessor {
     private final @NotNull DocumentEx myDoc;
-    private final @NotNull PsiFile myFile;
+    private final @NotNull PsiFile myPsiFile;
     private int myLine;
     private final @NotNull PsiDocumentManager myManager;
     private final @NotNull CodeStyleManager myStyleManager;
     private final @NotNull ProgressIndicator myIndicator;
     int myCaretRestoreOffset = CANNOT_JOIN;
 
-    JoinLineProcessor(@NotNull DocumentEx doc, @NotNull PsiFile file, int line, @NotNull ProgressIndicator indicator) {
+    JoinLineProcessor(@NotNull DocumentEx doc, @NotNull PsiFile psiFile, int line, @NotNull ProgressIndicator indicator) {
       myDoc = doc;
-      myFile = file;
+      myPsiFile = psiFile;
       myLine = line;
       myIndicator = indicator;
-      Project project = file.getProject();
+      Project project = psiFile.getProject();
       myManager = PsiDocumentManager.getInstance(project);
       myStyleManager = CodeStyleManager.getInstance(project);
     }
@@ -142,12 +142,12 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
         int lineEnd = myDoc.getLineEndOffset(line);
         int lastNonSpaceOffset = StringUtil.skipWhitespaceBackward(text, lineEnd);
         if (lastNonSpaceOffset > myDoc.getLineStartOffset(line)) {
-          PsiComment comment = getCommentElement(myFile.findElementAt(lastNonSpaceOffset - 1));
+          PsiComment comment = getCommentElement(myPsiFile.findElementAt(lastNonSpaceOffset - 1));
           if (comment != null) {
             int nextStart = CharArrayUtil.shiftForward(text, myDoc.getLineStartOffset(line + 1), " \t\n");
             if (nextStart < text.length() &&
                 myDoc.getLineNumber(nextStart) <= myLine + lineCount &&
-                !isLineComment(getCommentElement(myFile.findElementAt(nextStart)))) {
+                !isLineComment(getCommentElement(myPsiFile.findElementAt(nextStart)))) {
               endComments.add(comment);
             }
           }
@@ -199,7 +199,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
           for (JoinLinesHandlerDelegate delegate : list) {
             if (delegate instanceof JoinRawLinesHandlerDelegate) {
               rawJoiner = (JoinRawLinesHandlerDelegate)delegate;
-              rc = rawJoiner.tryJoinRawLines(myDoc, myFile, start, end);
+              rc = rawJoiner.tryJoinRawLines(myDoc, myPsiFile, start, end);
               if (rc != CANNOT_JOIN) {
                 myCaretRestoreOffset = checkOffset(rc, delegate, myDoc);
                 break;
@@ -246,7 +246,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
           myDoc.deleteString(myDoc.getLineStartOffset(myLine), offsets.firstNonSpaceOffsetInNextLine);
 
           myManager.commitDocument(myDoc);
-          int indent = myStyleManager.adjustLineIndent(myFile, myLine == 0 ? 0 : myDoc.getLineStartOffset(myLine));
+          int indent = myStyleManager.adjustLineIndent(myPsiFile, myLine == 0 ? 0 : myDoc.getLineStartOffset(myLine));
 
           if (myCaretRestoreOffset == CANNOT_JOIN) {
             myCaretRestoreOffset = indent;
@@ -288,7 +288,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       int end = StringUtil.skipWhitespaceForward(text, lineEndOffset);
       int rc = CANNOT_JOIN;
       for (JoinLinesHandlerDelegate delegate : JoinLinesHandlerDelegate.EP_NAME.getExtensionList()) {
-        rc = checkOffset(delegate.tryJoinLines(myDoc, myFile, start, end), delegate, myDoc);
+        rc = checkOffset(delegate.tryJoinLines(myDoc, myPsiFile, start, end), delegate, myDoc);
         if (rc != CANNOT_JOIN) break;
       }
 
@@ -332,9 +332,9 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       int[] spacesToAdd = new int[size];
       Arrays.fill(spacesToAdd, -1);
       CharSequence text = myDoc.getCharsSequence();
-      FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
-      CodeStyleSettings settings = CodeStyle.getSettings(myFile);
-      FormattingModel model = builder == null ? null : builder.createModel(FormattingContext.create(myFile, settings));
+      FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myPsiFile);
+      CodeStyleSettings settings = CodeStyle.getSettings(myPsiFile);
+      FormattingModel model = builder == null ? null : builder.createModel(FormattingContext.create(myPsiFile, settings));
       FormatterEx formatter = FormatterEx.getInstance();
       for (int i = 0; i < size; i++) {
         myIndicator.checkCanceled();

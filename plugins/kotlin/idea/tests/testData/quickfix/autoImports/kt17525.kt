@@ -1,5 +1,6 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ImportConstructorReferenceFix" "false"
 // ERROR: Unresolved reference: ItsInner
+// K2_AFTER_ERROR: Unresolved reference 'ItsInner'.
 
 
 class WithInner {

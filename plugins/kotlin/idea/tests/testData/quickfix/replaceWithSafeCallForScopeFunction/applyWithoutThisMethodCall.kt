@@ -2,7 +2,7 @@
 // WITH_STDLIB
 fun foo(a: String?) {
     a.apply {
-        <caret>toLowerCase()
+        <caret>lowercase()
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallForScopeFunctionFix

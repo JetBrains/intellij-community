@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val project: Project,
@@ -28,7 +28,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val moveCallBack: MoveCallback? = null
 ) {
     init {
-      require(moveDescriptors.isNotEmpty()) { "No move descriptors were provided" }
+        require(moveDescriptors.isNotEmpty()) { "No move descriptors were provided" }
     }
 
     abstract val sourceElements: List<PsiElement>
@@ -66,7 +66,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        moveCallBack: MoveCallback? = null
+        moveCallBack: MoveCallback? = null,
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
@@ -110,14 +110,26 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                     K2MoveDescriptor.Declarations(project, srcDescriptor, targetDescriptor)
                 }
                 return Declarations(
-                    project, descriptors, searchForText, searchReferences, searchInComments, dirStructureMatchesPkg, moveCallBack
+                    project = project,
+                    moveDescriptors = descriptors,
+                    searchForText = searchForText,
+                    searchInComments = searchReferences,
+                    searchReferences = searchInComments,
+                    dirStructureMatchesPkg = dirStructureMatchesPkg,
+                    moveCallBack = moveCallBack
                 )
             } else {
                 val srcDescr = K2MoveSourceDescriptor.ElementSource(declarations)
                 val targetDescr = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir)
                 val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
                 return Declarations(
-                    project, listOf(moveDescriptor), searchForText, searchInComments, searchReferences, dirStructureMatchesPkg, moveCallBack
+                    project = project,
+                    moveDescriptors = listOf(moveDescriptor),
+                    searchForText = searchForText,
+                    searchInComments = searchInComments,
+                    searchReferences = searchReferences,
+                    dirStructureMatchesPkg = dirStructureMatchesPkg,
+                    moveCallBack = moveCallBack
                 )
             }
         }

@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -114,13 +115,13 @@ public final class WeakList<T> extends UnsafeWeakList<T> {
   }
 
   @Override
-  public @NotNull List<@NotNull T> toStrongList() {
+  public @NotNull @Unmodifiable List<@NotNull T> toStrongList() {
     synchronized (myList) {
       return super.toStrongList();
     }
   }
 
-  public @NotNull List<@NotNull T> copyAndClear() {
+  public @NotNull @Unmodifiable List<@NotNull T> copyAndClear() {
     synchronized (myList) {
       List<T> result = toStrongList();
       clear();

@@ -8,8 +8,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public final class ProjectRootUtil {
   }
 
   private static PsiDirectory @NotNull [] convertRoots(@NotNull Project project, VirtualFile @NotNull [] roots) {
-    return convertRoots(((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager(), roots);
+    return convertRoots(PsiManagerEx.getInstanceEx(project).getFileManager(), roots);
   }
 
   private static PsiDirectory @NotNull [] convertRoots(@NotNull FileManager fileManager, VirtualFile @NotNull [] roots) {

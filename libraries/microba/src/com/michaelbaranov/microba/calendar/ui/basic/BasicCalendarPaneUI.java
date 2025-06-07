@@ -339,15 +339,7 @@ public class BasicCalendarPaneUI extends CalendarPaneUI implements
     } else if (evt.getPropertyName().equals(
         CalendarPane.PROPERTY_NAME_RESOURCES)) {
       widgetResourceChanged();
-    } else if (evt.getPropertyName()
-        .equals("enabled"/* CalendarPane.PROPERTY_NAME_ENABLED */)) {
-      Boolean value = (Boolean) evt.getNewValue();
-      classicPanel.setEnabled(value.booleanValue());
-      modernPanel.setEnabled(value.booleanValue());
-      gridPanel.setEnabled(value.booleanValue());
-      auxPanel.setEnabled(value.booleanValue());
     }
-
   }
 
   protected class ComponentListener implements FocusListener,

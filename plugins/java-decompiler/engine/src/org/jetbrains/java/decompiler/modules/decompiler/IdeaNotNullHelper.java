@@ -45,7 +45,15 @@ public final class IdeaNotNullHelper {
 
     Statement st = stat.getFirst();
     while (st.type == StatementType.SEQUENCE) {
-      st = st.getFirst();
+      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
+          st.getStats().size() > 1 &&
+          (blockStatement.getExprents() == null ||
+           blockStatement.getExprents().isEmpty())) {
+        st = st.getStats().get(1);
+      }
+      else {
+        st = st.getFirst();
+      }
     }
 
     if (st.type == StatementType.IF) {
@@ -134,7 +142,15 @@ public final class IdeaNotNullHelper {
 
     Statement st = stat.getFirst();
     while (st.type == StatementType.SEQUENCE) {
-      st = st.getFirst();
+      if (st.getFirst() instanceof BasicBlockStatement blockStatement &&
+          st.getStats().size() > 1 &&
+          (blockStatement.getExprents() == null ||
+           blockStatement.getExprents().isEmpty())) {
+        st = st.getStats().get(1);
+      }
+      else {
+        st = st.getFirst();
+      }
     }
 
     IfStatement ifstat = (IfStatement)st;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -20,16 +20,19 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.stubs.LanguageStubDescriptor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
-class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+@ApiStatus.Internal
+public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance(SmartPsiElementPointerImpl.class);
 
   private Reference<E> myElement;
@@ -90,7 +93,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return element;
   }
 
-  void cacheElement(@Nullable E element) {
+  @VisibleForTesting
+  public void cacheElement(@Nullable E element) {
     myElement = element == null ? null :
                 PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<>(element) :
                 new SoftReference<>(element);
@@ -245,12 +249,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   private static @Nullable SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
-      IStubFileElementType<?> stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
-      if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
+      LanguageStubDescriptor stubType = ((PsiFileImpl)containingFile).getStubDescriptor();
+      if (stubType != null && stubType.getStubDefinition().shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
         StubBasedPsiElement<?> stubPsi = (StubBasedPsiElement<?>)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
         if (stubId != -1) {
-          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getElementType());
+          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getIElementType());
         }
       }
     }
@@ -283,7 +287,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 
-  synchronized int incrementAndGetReferenceCount(int delta) {
+  @VisibleForTesting
+  public synchronized int incrementAndGetReferenceCount(int delta) {
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
     if (myReferenceCount == 0) return -1; // disposed, not to be reused again
     return myReferenceCount += delta;

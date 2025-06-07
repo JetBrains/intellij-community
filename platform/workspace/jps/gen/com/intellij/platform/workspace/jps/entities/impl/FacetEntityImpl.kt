@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 import com.intellij.platform.workspace.jps.entities.FacetId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -37,10 +36,10 @@ import org.jetbrains.annotations.NonNls
 internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java,
-                                                                                   ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -51,16 +50,16 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
 
   override val symbolicId: FacetId = super.symbolicId
 
-  override val name: String
-    get() {
-      readField("name")
-      return dataSource.name
-    }
-
   override val moduleId: ModuleId
     get() {
       readField("moduleId")
       return dataSource.moduleId
+    }
+
+  override val name: String
+    get() {
+      readField("name")
+      return dataSource.name
     }
 
   override val typeId: FacetEntityTypeId
@@ -92,8 +91,8 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
   }
 
 
-  internal class Builder(result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity, FacetEntityData>(
-    result), FacetEntity.Builder {
+  internal class Builder(result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity, FacetEntityData>(result),
+                                                     FacetEntity.Builder {
     internal constructor() : this(FacetEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,11 +123,11 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isNameInitialized()) {
-        error("Field ModuleSettingsFacetBridgeEntity#name should be initialized")
-      }
       if (!getEntityData().isModuleIdInitialized()) {
         error("Field ModuleSettingsFacetBridgeEntity#moduleId should be initialized")
+      }
+      if (!getEntityData().isNameInitialized()) {
+        error("Field ModuleSettingsFacetBridgeEntity#name should be initialized")
       }
       if (!getEntityData().isTypeIdInitialized()) {
         error("Field FacetEntity#typeId should be initialized")
@@ -153,8 +152,8 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.name != dataSource.name) this.name = dataSource.name
       if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
+      if (this.name != dataSource.name) this.name = dataSource.name
       if (this.typeId != dataSource.typeId) this.typeId = dataSource.typeId
       if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
       updateChildToParentReferences(parents)
@@ -170,14 +169,6 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
 
       }
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).name = value
-        changedProperty.add("name")
-      }
-
     override var moduleId: ModuleId
       get() = getEntityData().moduleId
       set(value) {
@@ -185,6 +176,14 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
         getEntityData(true).moduleId = value
         changedProperty.add("moduleId")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).name = value
+        changedProperty.add("name")
       }
 
     override var typeId: FacetEntityTypeId
@@ -290,13 +289,13 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkable {
-  lateinit var name: String
   lateinit var moduleId: ModuleId
+  lateinit var name: String
   lateinit var typeId: FacetEntityTypeId
   var configurationXmlTag: String? = null
 
-  internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
@@ -363,7 +362,7 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return FacetEntity(name, moduleId, typeId, entitySource) {
+    return FacetEntity(moduleId, name, typeId, entitySource) {
       this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
       parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
       this.underlyingFacet = parents.filterIsInstance<FacetEntity.Builder>().singleOrNull()
@@ -383,8 +382,8 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
     other as FacetEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.name != other.name) return false
     if (this.moduleId != other.moduleId) return false
+    if (this.name != other.name) return false
     if (this.typeId != other.typeId) return false
     if (this.configurationXmlTag != other.configurationXmlTag) return false
     return true
@@ -396,8 +395,8 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
 
     other as FacetEntityData
 
-    if (this.name != other.name) return false
     if (this.moduleId != other.moduleId) return false
+    if (this.name != other.name) return false
     if (this.typeId != other.typeId) return false
     if (this.configurationXmlTag != other.configurationXmlTag) return false
     return true
@@ -405,8 +404,8 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + name.hashCode()
     result = 31 * result + moduleId.hashCode()
+    result = 31 * result + name.hashCode()
     result = 31 * result + typeId.hashCode()
     result = 31 * result + configurationXmlTag.hashCode()
     return result
@@ -414,8 +413,8 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + name.hashCode()
     result = 31 * result + moduleId.hashCode()
+    result = 31 * result + name.hashCode()
     result = 31 * result + typeId.hashCode()
     result = 31 * result + configurationXmlTag.hashCode()
     return result

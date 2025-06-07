@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,31 +25,26 @@ import java.util.Set;
 public interface LanguageCompilerRefAdapter {
   ExtensionPointName<LanguageCompilerRefAdapter> EP_NAME = ExtensionPointName.create("com.intellij.languageCompilerRefAdapter");
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     return findAdapter(fileType);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file, boolean includeExternalLanguageHelper) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file, boolean includeExternalLanguageHelper) {
     final FileType fileType = file.getFileType();
     return findAdapter(fileType, includeExternalLanguageHelper);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiFile file, boolean includeExternalLanguageHelper) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiFile file, boolean includeExternalLanguageHelper) {
     final FileType fileType = file.getFileType();
     return findAdapter(fileType, includeExternalLanguageHelper);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
     return findAdapter(fileType, false);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType, boolean includeExternalLanguageHelper) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType, boolean includeExternalLanguageHelper) {
     for (LanguageCompilerRefAdapter adapter : EP_NAME.getExtensionList()) {
       if (adapter.getFileTypes().contains(fileType) ||
           includeExternalLanguageHelper && adapter instanceof ExternalLanguageHelper && adapter.getAffectedFileTypes().contains(fileType)) {
@@ -59,13 +54,11 @@ public interface LanguageCompilerRefAdapter {
     return null;
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
     return findAdapter(element, false);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element, boolean includeExternalLanguageHelper) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element, boolean includeExternalLanguageHelper) {
     final PsiFile file = element.getContainingFile();
     return file == null ? null : findAdapter(file, includeExternalLanguageHelper);
   }
@@ -76,8 +69,7 @@ public interface LanguageCompilerRefAdapter {
   /**
    * @return file types that are involved in dirty scope computation
    */
-  @NotNull
-  default Set<FileType> getAffectedFileTypes() {
+  default @NotNull Set<FileType> getAffectedFileTypes() {
     return getFileTypes();
   }
 
@@ -167,47 +159,47 @@ public interface LanguageCompilerRefAdapter {
   abstract class ExternalLanguageHelper implements LanguageCompilerRefAdapter {
 
     @Override
-    final public @NotNull Set<FileType> getFileTypes() {
+    public final @NotNull Set<FileType> getFileTypes() {
       return Collections.emptySet();
     }
 
     @Override
-    abstract public @NotNull Set<FileType> getAffectedFileTypes();
+    public abstract @NotNull Set<FileType> getAffectedFileTypes();
 
     @Override
-    final public @NotNull Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
+    public final @NotNull Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public @NotNull Class<? extends CompilerRef> getFunExprClass() {
+    public final @NotNull Class<? extends CompilerRef> getFunExprClass() {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public PsiElement @NotNull [] findDirectInheritorCandidatesInFile(SearchId @NotNull [] internalNames,
+    public final PsiElement @NotNull [] findDirectInheritorCandidatesInFile(SearchId @NotNull [] internalNames,
                                                                             @NotNull PsiFileWithStubSupport file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public PsiElement @NotNull [] findFunExpressionsInFile(SearchId @NotNull [] indices,
+    public final PsiElement @NotNull [] findFunExpressionsInFile(SearchId @NotNull [] indices,
                                                                  @NotNull PsiFileWithStubSupport file) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public boolean isClass(@NotNull PsiElement element) {
+    public final boolean isClass(@NotNull PsiElement element) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass) {
+    public final PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    final public boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass) {
+    public final boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass) {
       throw new UnsupportedOperationException();
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -40,8 +40,7 @@ public final class StringContentIndentUtil {
   /**
    * Extract indent highlighters from editor and group them by (startOffset, endOffset) ranges.
    */
-  @NotNull
-  public static Map<TextRange, RangeHighlighter> getIndentHighlighters(@NotNull Editor editor) {
+  public static @NotNull Map<TextRange, RangeHighlighter> getIndentHighlighters(@NotNull Editor editor) {
     List<RangeHighlighter> highlighters = editor.getUserData(TEXT_BLOCK_HIGHLIGHTERS_IN_EDITOR_KEY);
     if (highlighters == null) return Collections.emptyMap();
     return highlighters.stream().collect(Collectors.toMap(h -> h.getTextRange(), Function.identity()));

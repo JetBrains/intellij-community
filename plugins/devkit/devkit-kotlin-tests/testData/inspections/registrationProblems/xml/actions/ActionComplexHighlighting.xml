@@ -55,11 +55,11 @@
       <<error descr="'<synonym>' must not specify both 'key' or 'text' attributes">synonym</error> text="Syn Text" key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
     </action>
 
-    <reference id="myGroup"/>
-    <reference id="myAction"/>
-    <reference id="myRecursiveGroup"/>
-    <reference id="myRecursiveAction"/>
-    <reference id="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+    <reference <error descr="Use 'ref' instead">id="myGroup"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myAction"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myRecursiveGroup"</error>/>
+    <reference <error descr="Use 'ref' instead">id="myRecursiveAction"</error>/>
+    <reference <error descr="Use 'ref' instead">id="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"</error>/>
 
     <reference ref="myGroup"/>
     <reference ref="myAction"/>

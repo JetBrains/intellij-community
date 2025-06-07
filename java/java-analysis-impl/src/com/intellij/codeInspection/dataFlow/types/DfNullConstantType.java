@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
@@ -14,15 +14,13 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     super(null);
   }
 
-  @NotNull
   @Override
-  public DfaNullability getNullability() {
+  public @NotNull DfaNullability getNullability() {
     return DfaNullability.NULL;
   }
 
-  @NotNull
   @Override
-  public TypeConstraint getConstraint() {
+  public @NotNull TypeConstraint getConstraint() {
     return TypeConstraints.TOP;
   }
 
@@ -31,9 +29,8 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     return DfTypes.NOT_NULL_OBJECT;
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropNullability() {
+  public @NotNull DfReferenceType dropNullability() {
     return DfTypes.OBJECT_OR_NULL;
   }
 
@@ -42,9 +39,8 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     return this;
   }
 
-  @NotNull
   @Override
-  public DfType join(@NotNull DfType other) {
+  public @NotNull DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType type)) return TOP;

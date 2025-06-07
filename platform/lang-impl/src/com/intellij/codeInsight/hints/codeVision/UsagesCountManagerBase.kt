@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
@@ -18,7 +17,7 @@ import java.util.concurrent.ConcurrentMap
 @ApiStatus.Experimental
 @OverrideOnly
 abstract class UsagesCountManagerBase<ELEMENT>(project: Project, private val configuration: UsageCounterConfigurationBase<ELEMENT>): Disposable {
-  private val externalUsagesCache: ConcurrentMap<VirtualFile, FileUsagesCache> = configuration.createCacheMap()
+  private val externalUsagesCache: ConcurrentMap<PsiFile, FileUsagesCache> = configuration.createCacheMap()
 
   init {
     val listener = psiTreeAnyChangeAbstractAdapter()
@@ -27,11 +26,11 @@ abstract class UsagesCountManagerBase<ELEMENT>(project: Project, private val con
 
   private fun psiTreeAnyChangeAbstractAdapter() = object : PsiTreeAnyChangeAbstractAdapter() {
     override fun onChange(psiFile: PsiFile?) {
-      val file = psiFile?.virtualFile ?: return
-      val valueToKeep = externalUsagesCache[file]
+      psiFile?.virtualFile ?: return
+      val valueToKeep = externalUsagesCache[psiFile]
       externalUsagesCache.clear()
       if (valueToKeep != null) {
-        externalUsagesCache[file] = valueToKeep
+        externalUsagesCache[psiFile] = valueToKeep
       }
     }
   }
@@ -46,7 +45,7 @@ abstract class UsagesCountManagerBase<ELEMENT>(project: Project, private val con
     if (virtualFile == null) {
       return configuration.countUsages(file, findSupers(member), GlobalSearchScope.allScope(file.project))
     }
-    return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache(configuration) }.countMemberUsagesCached(file, member)
+    return externalUsagesCache.getOrPut(file) { FileUsagesCache(configuration) }.countMemberUsagesCached(file, member)
   }
 
   protected abstract fun findSupers(member: ELEMENT): List<ELEMENT>

@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.extension
 
 internal class JpsCompilationRunner(private val context: CompilationContext) {
   companion object {
@@ -153,6 +154,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         val module = context.findRequiredModule(it)
         val outputDir = context.getModuleOutputDir(module)
         if (Files.isDirectory(outputDir) && Files.newDirectoryStream(outputDir).use { stream -> stream.any() }) {
+          false
+        } else if (Files.isRegularFile(outputDir) && outputDir.extension == "jar") {
           false
         }
         else {

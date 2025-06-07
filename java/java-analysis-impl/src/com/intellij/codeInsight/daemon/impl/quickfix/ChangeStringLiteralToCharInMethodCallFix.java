@@ -1,15 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -17,10 +16,10 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -30,8 +29,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.single.character.string.to.char.literal.family");
   }
 
@@ -67,8 +65,8 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
     return builder.toString();
   }
 
-  public static void registerFixes(final PsiMethod @NotNull [] candidates, @NotNull final PsiConstructorCall call,
-                                   @NotNull final HighlightInfo.Builder out, TextRange fixRange) {
+  public static void registerFixes(final PsiMethod @NotNull [] candidates, final @NotNull PsiConstructorCall call,
+                                   @NotNull Consumer<? super CommonIntentionAction> info) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
@@ -78,15 +76,13 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
       exactMatch |= findMatchingExpressions(call.getArgumentList().getExpressions(), method, literals);
     }
     if (! exactMatch) {
-      processLiterals(literals, out, fixRange);
+      processLiterals(literals, info);
     }
   }
 
   public static void registerFixes(final CandidateInfo @NotNull [] candidates,
-                                   @NotNull final PsiMethodCallExpression methodCall,
-                                   @Nullable final HighlightInfo.Builder info,
-                                   @Nullable TextRange fixRange) {
-    if (info == null) return;
+                                   final @NotNull PsiMethodCallExpression methodCall,
+                                   @NotNull Consumer<? super CommonIntentionAction> info) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     boolean exactMatch = false;
     for (CandidateInfo candidate : candidates) {
@@ -96,15 +92,15 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
       }
     }
     if (!exactMatch) {
-      processLiterals(literals, info, fixRange);
+      processLiterals(literals, info);
     }
   }
 
-  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
-                                      @NotNull final HighlightInfo.Builder info, TextRange fixRange) {
+  private static void processLiterals(final @NotNull Set<? extends PsiLiteralExpression> literals,
+                                      @NotNull Consumer<? super CommonIntentionAction> info) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal);
-      info.registerFix(fix, null, null, fixRange, null);
+      info.accept(fix);
     }
   }
 

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
-abstract public class AbstractBeforeTestEventProcessor extends AbstractTestEventProcessor {
+public abstract class AbstractBeforeTestEventProcessor extends AbstractTestEventProcessor {
   public AbstractBeforeTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }

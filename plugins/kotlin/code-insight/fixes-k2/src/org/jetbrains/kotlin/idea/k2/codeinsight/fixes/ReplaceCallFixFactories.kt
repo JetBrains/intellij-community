@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object ReplaceCallFixFactories {
-    val unsafeCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
+    val unsafeCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeCall> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCall ->
             val psi = diagnostic.psi
             val target = if (psi is KtBinaryExpression && psi.operationToken in KtTokens.ALL_ASSIGNMENTS) {
                 // UNSAFE_CALL for assignments (e.g., `foo.bar = value`) is reported on the entire statement (KtBinaryExpression).
@@ -46,16 +46,16 @@ object ReplaceCallFixFactories {
             }
         }
 
-    val unsafeInfixCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
+    val unsafeInfixCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeInfixCall> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeInfixCall ->
             val psi = diagnostic.psi
             val target = psi.parent as? KtBinaryExpression
-                ?: return@IntentionBased emptyList()
+                ?: return@ModCommandBased emptyList()
             listOf(ReplaceInfixOrOperatorCallFix(target, shouldHaveNotNullType(target), diagnostic.operator))
         }
 
-    val unsafeOperatorCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
+    val unsafeOperatorCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeOperatorCall> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeOperatorCall ->
             val psi = diagnostic.psi
             val operationToken = when (psi) {
                 is KtOperationReferenceExpression -> psi.getReferencedNameElementType()
@@ -64,29 +64,29 @@ object ReplaceCallFixFactories {
             }
             if (operationToken == KtTokens.EQ || operationToken in OperatorConventions.COMPARISON_OPERATIONS) {
                 // This matches FE1.0 behavior; see ReplaceInfixOrOperatorCallFixFactory.kt
-                return@IntentionBased emptyList()
+                return@ModCommandBased emptyList()
             }
             val target = psi.getNonStrictParentOfType<KtBinaryExpression>()
-                ?: return@IntentionBased emptyList()
+                ?: return@ModCommandBased emptyList()
             val left = target.left
             if (operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && left is KtArrayAccessExpression) {
                 val type = left.arrayExpression?.expressionType
-                    ?: return@IntentionBased emptyList()
+                    ?: return@ModCommandBased emptyList()
                 val argumentType = (type as? KaClassType)?.typeArguments?.firstOrNull()
                 if (type.isMap() && argumentType?.type?.isMarkedNullable != true) {
-                    return@IntentionBased emptyList()
+                    return@ModCommandBased emptyList()
                 }
             }
             listOf(ReplaceInfixOrOperatorCallFix(target, shouldHaveNotNullType(target), diagnostic.operator))
         }
 
-    val unsafeImplicitInvokeCallFactory =
-        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnsafeImplicitInvokeCall ->
+    val unsafeImplicitInvokeCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeImplicitInvokeCall> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeImplicitInvokeCall ->
             val target = diagnostic.psi as? KtNameReferenceExpression
-                ?: return@IntentionBased emptyList()
+                ?: return@ModCommandBased emptyList()
 
             val callExpression = target.parent as? KtCallExpression
-                ?: return@IntentionBased emptyList()
+                ?: return@ModCommandBased emptyList()
             val qualifiedExpression = callExpression.parent as? KtQualifiedExpression
             if (qualifiedExpression == null) {
                 // TODO: This matches FE 1.0 behavior (see ReplaceInfixOrOperatorCallFixFactory.kt) but we should be able to do the fix

@@ -52,8 +52,7 @@ public abstract class IgnoreEntryExtImpl extends IgnoreElementImpl implements Ig
   }
 
   @Override
-  @NotNull
-  public Syntax getSyntax() {
+  public @NotNull Syntax getSyntax() {
     PsiElement previous = getPrevSibling();
     while (previous != null) {
       if (previous.getNode().getElementType().equals(IgnoreTypes.SYNTAX)) {
@@ -74,8 +73,7 @@ public abstract class IgnoreEntryExtImpl extends IgnoreElementImpl implements Ig
    * @return entry value without `!` negation sign
    */
   @Override
-  @NotNull
-  public String getValue() {
+  public @NotNull String getValue() {
     String value = getText();
     if (isNegated()) {
       value = StringUtil.trimStart(value, "!");

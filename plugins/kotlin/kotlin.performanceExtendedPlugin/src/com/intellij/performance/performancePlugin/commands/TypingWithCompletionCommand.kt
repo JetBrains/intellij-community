@@ -3,7 +3,7 @@ package com.intellij.performance.performancePlugin.commands
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.currentCompletionProgressIndicator
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -144,7 +144,7 @@ internal class TypingWithCompletionCommand(text: String, line: Int) : Performanc
 
     private suspend fun moveCaretRight(editor: EditorImpl, mutex: Mutex) {
         mutex.withLock {
-            writeAction {
+            edtWriteAction {
                 val caretModel = editor.caretModel
                 val document = editor.document
                 val currentCaretPosition = caretModel.offset

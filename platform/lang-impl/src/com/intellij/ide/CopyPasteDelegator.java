@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.*;
@@ -17,8 +16,10 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.File;
@@ -39,7 +40,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
   }
 
   protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
+    return ObjectUtils.notNull(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
   private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {
@@ -71,7 +72,9 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  final class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -132,7 +135,9 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       }
     }
 
-    boolean performDefaultPaste(@NotNull DataContext dataContext) {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public boolean performDefaultPaste(@NotNull DataContext dataContext) {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;

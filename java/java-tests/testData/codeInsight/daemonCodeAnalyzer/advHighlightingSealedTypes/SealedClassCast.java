@@ -32,8 +32,8 @@ interface Foo {
   sealed interface W permits X {}
   final class X implements W {}
   
-  sealed class Recursive1 permits <error descr="Invalid permits clause: 'Recursive2' must directly extend 'Recursive1'">Recursive2</error> {}
-  sealed class Recursive2 permits <error descr="Invalid permits clause: 'Recursive1' must directly extend 'Recursive2'">Recursive1</error> {}
+  sealed class Recursive1 permits <error descr="Invalid 'permits' clause: 'Recursive2' must directly extend 'Recursive1'">Recursive2</error> {}
+  sealed class Recursive2 permits <error descr="Invalid 'permits' clause: 'Recursive1' must directly extend 'Recursive2'">Recursive1</error> {}
 
   interface I1 {}
   

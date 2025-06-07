@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.events;
 
 import jetbrains.buildServer.messages.serviceMessages.TestFinished;
@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestFinishedEvent extends TreeNodeEvent {
-  @Nullable
-  private final Long myDuration;
+  private final @Nullable Long myDuration;
   private final String myOutputFile;
 
   public TestFinishedEvent(@NotNull TestFinished testFinished, @Nullable Long duration) {
@@ -35,8 +34,7 @@ public class TestFinishedEvent extends TreeNodeEvent {
   /**
    * @return duration in ms if reported
    */
-  @Nullable
-  public Long getDuration() {
+  public @Nullable Long getDuration() {
     return myDuration;
   }
 

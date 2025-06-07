@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
 import com.intellij.CommonBundle;
@@ -25,8 +25,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
+import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,6 +53,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class RangeSearch implements RangeSearchTask.Callback {
 
   public static final Key<RangeSearch> KEY = new Key<>("lfe.searchResultsToolWindow");
@@ -591,12 +593,12 @@ public final class RangeSearch implements RangeSearchTask.Callback {
   }
 
   @TestOnly
-  void addEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
+  public void addEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
     myEdtRangeSearchEventsListeners.add(listener);
   }
 
   @TestOnly
-  void removeEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
+  public void removeEdtRangeSearchEventsListener(EdtRangeSearchEventsListener listener) {
     myEdtRangeSearchEventsListeners.remove(listener);
   }
 
@@ -765,8 +767,8 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  interface EdtRangeSearchEventsListener {
-
+  @ApiStatus.Internal
+  public interface EdtRangeSearchEventsListener {
     @RequiresEdt
     void onSearchStopped();
 

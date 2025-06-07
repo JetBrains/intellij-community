@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.serialization.PropertyMapping;
@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 public class DefaultGradleProperty implements GradleProperty {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final String name;
-  @NotNull
-  private final String typeFqn;
+  private final @NotNull String name;
+  private final @NotNull String typeFqn;
 
   @PropertyMapping({"name", "typeFqn"})
   public DefaultGradleProperty(@NotNull String name, @Nullable String typeFqn) {
@@ -26,15 +24,13 @@ public class DefaultGradleProperty implements GradleProperty {
     this(property.getName(), property.getTypeFqn());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @NotNull
   @Override
-  public String getTypeFqn() {
+  public @NotNull String getTypeFqn() {
     return typeFqn;
   }
 

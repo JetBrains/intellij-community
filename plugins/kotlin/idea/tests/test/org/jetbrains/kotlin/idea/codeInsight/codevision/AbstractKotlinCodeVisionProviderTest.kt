@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
-import com.intellij.codeInsight.codeVision.CodeVisionHost
-import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils

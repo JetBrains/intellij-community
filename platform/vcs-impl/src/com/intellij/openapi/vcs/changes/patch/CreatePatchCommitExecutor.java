@@ -58,10 +58,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getActionText() {
+  public @NotNull @Nls String getActionText() {
     return VcsBundle.message("action.name.create.patch");
   }
 
@@ -75,9 +73,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  @NotNull
   @Override
-  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+  public @NotNull CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return createCommitSession(myProject, new DefaultPatchBuilder(myProject), commitContext);
   }
 
@@ -88,9 +85,9 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   }
 
   private static final class CreatePatchCommitSession implements CommitSession {
-    @NotNull private final Project myProject;
-    @NotNull private final CommitContext myCommitContext;
-    @NotNull private final PatchBuilder myPatchBuilder;
+    private final @NotNull Project myProject;
+    private final @NotNull CommitContext myCommitContext;
+    private final @NotNull PatchBuilder myPatchBuilder;
 
     private final CreatePatchConfigurationPanel myPanel;
 
@@ -218,9 +215,9 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   }
 
   public static final class ShelfPatchBuilder implements PatchBuilder {
-    @NotNull private final Project myProject;
-    @NotNull private final ShelvedChangeList myShelvedChangeList;
-    @NotNull private final List<String> mySelectedPaths;
+    private final @NotNull Project myProject;
+    private final @NotNull ShelvedChangeList myShelvedChangeList;
+    private final @NotNull List<String> mySelectedPaths;
 
     public ShelfPatchBuilder(@NotNull Project project,
                              @NotNull ShelvedChangeList shelvedChangeList,
@@ -284,8 +281,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  @NotNull
-  private static String getDefaultPatchPath(@NotNull Project project) {
+  private static @NotNull String getDefaultPatchPath(@NotNull Project project) {
     String baseDir = project.getBasePath();
     return baseDir == null ? FileUtil.toSystemIndependentName(PathManager.getHomePath()) : baseDir;
   }
@@ -315,9 +311,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
         return true;
       }
 
-      @NotNull
       @Override
-      public String getDoNotShowMessage() {
+      public @NotNull String getDoNotShowMessage() {
         return IdeCoreBundle.message("dialog.options.do.not.ask");
       }
     };
@@ -380,8 +375,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
   }
 
-  @SystemIndependent
-  private static @Nullable String getRelativePath(@NotNull Path oldBase, @NotNull Path newBase, @Nullable String name) {
+  private static @SystemIndependent @Nullable String getRelativePath(@NotNull Path oldBase, @NotNull Path newBase, @Nullable String name) {
     if (name == null) return null;
     try {
       Path path = oldBase.resolve(name);

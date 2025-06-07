@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -37,8 +38,7 @@ class CanConvertToMultiDollarStringInspection :
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
         if (!element.entries.any { it.isEscapedDollar() }) return null
         return prepareMultiDollarConversionInfo(element, useFallbackPrefix = false)
     }
@@ -48,6 +48,10 @@ class CanConvertToMultiDollarStringInspection :
         context: MultiDollarConversionInfo,
     ): @InspectionMessage String {
         return KotlinBundle.message("inspection.can.convert.to.multi.dollar.string.problem.description")
+    }
+
+    override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
+        return element.findTextRangesInParentForEscapedDollars(includeUnsafe = true)
     }
 
     override fun createQuickFix(
@@ -64,6 +68,7 @@ class CanConvertToMultiDollarStringInspection :
                 element: KtStringTemplateExpression,
                 updater: ModPsiUpdater
             ) {
+                if (element.interpolationPrefix != null) return
                 val multiDollarVersion = convertToMultiDollarString(element, context)
                 simplifyDollarEntries(multiDollarVersion)
             }

@@ -53,7 +53,7 @@ PyFile:AssignmentExpressionsInIndexes.py
     PsiComment(Py:END_OF_LINE_COMMENT)('# valid')
   PsiWhiteSpace('\n\n')
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: s
         PsiElement(Py:IDENTIFIER)('s')
       PsiElement(Py:LBRACKET)('[')

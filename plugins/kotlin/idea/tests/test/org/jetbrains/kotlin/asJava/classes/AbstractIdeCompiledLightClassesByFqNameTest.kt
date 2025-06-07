@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.psi.PsiFile
@@ -15,12 +15,13 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinMultiFileLigh
     override val isLibraryByDefault: Boolean get() = true
 
     override fun setUp() {
-        super.setUp()
         val parsedDirectives = KotlinTestUtils.parseDirectives(dataFile().readText())
         Assume.assumeFalse(
             "The test is not supported",
             LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE in parsedDirectives || LightClassTestCommon.SKIP_LIBRARY_EXCEPTIONS in parsedDirectives,
         )
+
+        super.setUp()
     }
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {

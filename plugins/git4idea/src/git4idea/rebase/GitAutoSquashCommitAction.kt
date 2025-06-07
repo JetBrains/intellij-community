@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
+import git4idea.branch.GitRebaseParams
 import git4idea.i18n.GitBundle
+import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
@@ -40,7 +42,8 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
     val executors = gitVcs.commitExecutors +
                     if (getProhibitedStateMessage(commitEditingData,
                                                   GitBundle.message("rebase.log.action.operation.rebase.name")) == null) {
-                      listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
+                      val upstream = getRebaseUpstreamFor(commit)
+                      listOf(GitRebaseAfterCommitExecutor(project, repository, upstream))
                     }
                     else {
                       listOf()
@@ -53,7 +56,10 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
 
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String
 
-  class GitRebaseAfterCommitExecutor(val project: Project, val repository: GitRepository, val hash: String) : CommitExecutor {
+  class GitRebaseAfterCommitExecutor(
+    val project: Project, val repository: GitRepository,
+    val upstream: GitRebaseParams.RebaseUpstream,
+  ) : CommitExecutor {
     override fun getActionText(): String = GitBundle.message("commit.action.commit.and.rebase.text")
     override fun createCommitSession(commitContext: CommitContext): CommitSession = CommitSession.VCS_COMMIT
     override fun supportsPartialCommit() = true

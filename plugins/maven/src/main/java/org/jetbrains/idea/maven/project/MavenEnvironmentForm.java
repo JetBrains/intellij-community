@@ -84,8 +84,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     userSettingsFileOverrider =
       new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
         @Override
-        @Nullable
-        protected Path getFile() {
+        protected @Nullable Path getFile() {
           return doResolveDefaultUserSettingsFile();
         }
       });
@@ -93,8 +92,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     localRepositoryOverrider =
       new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, listener, new PathProvider() {
         @Override
-        @Nullable
-        protected Path getFile() {
+        protected @Nullable Path getFile() {
           return doResolveDefaultLocalRepository();
         }
       });
@@ -102,8 +100,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenHomeField.addDocumentListener(listener);
   }
 
-  @NotNull
-  private Path doResolveDefaultLocalRepository() {
+  private @NotNull Path doResolveDefaultLocalRepository() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
     return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, "",
@@ -111,8 +108,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
                                      settingsFileComponent.getComponent().getText(), config);
   }
 
-  @NotNull
-  private Path doResolveDefaultUserSettingsFile() {
+  private @NotNull Path doResolveDefaultUserSettingsFile() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
     return MavenEelUtil.getUserSettingsUnderModalProgress(myProject, "", config);
@@ -186,8 +182,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenVersionLabelComponent.getComponent().setText(StringUtil.notNullize(versionText));
   }
 
-  @NlsContexts.Label
-  private static String getUnsupportedMavenMessage(String version) {
+  private static @NlsContexts.Label String getUnsupportedMavenMessage(String version) {
     if (StringUtil.compareVersionNumbers(version, "3.1") < 0 && StringUtil.compareVersionNumbers(version, "2") > 0) {
       return MavenProjectBundle.message("label.invalid.maven30");
     }
@@ -319,15 +314,13 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     return mavenHomes;
   }
 
-  private static abstract class PathProvider {
-    @NlsSafe
-    public String getPath() {
+  private abstract static class PathProvider {
+    public @NlsSafe String getPath() {
       final Path file = getFile();
       return file == null ? "" : file.toString();
     }
 
-    @Nullable
-    abstract protected Path getFile();
+    protected abstract @Nullable Path getFile();
   }
 
   private static class PathOverrider {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -51,16 +51,14 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
     return ResolveUtil.isScriptField(this) ? getContainingFile() : super.getContext();
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     GrScriptField field = ResolveUtil.findScriptField(this);
     return field != null ? field.getUseScope() : super.getUseScope();
   }
 
-  @Nullable
   @Override
-  protected Icon getElementIcon(int flags) {
+  protected @Nullable Icon getElementIcon(int flags) {
     return JetgroovyIcons.Groovy.Variable;
   }
 

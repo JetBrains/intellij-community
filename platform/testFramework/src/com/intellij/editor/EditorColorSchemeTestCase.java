@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -30,7 +30,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     Document doc = JavaXmlDocumentKt.createDocumentBuilder().parse(new InputSource(new StringReader(docText)));
     Element root = new DOMBuilder().build(doc.getDocumentElement());
 
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
     EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
 
     targetScheme.readExternal(root);
@@ -38,9 +38,8 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     return targetScheme;
   }
 
-  @NotNull
-  protected Pair<EditorColorsScheme, TextAttributes> doTestWriteRead(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+  protected @NotNull Pair<EditorColorsScheme, TextAttributes> doTestWriteRead(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
 
     EditorColorsScheme sourceScheme = (EditorColorsScheme)defaultScheme.clone();
     sourceScheme.setName("test");

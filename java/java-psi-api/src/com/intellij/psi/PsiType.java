@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
@@ -11,16 +12,16 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.*;
 
 /**
- * Representation of Java type (primitive type, array or class type).
+ * Representation of a Java type (primitive type, array or class type).
  * <p/>
  * <h3><a id="deprecated-constants">Deprecated constants</a></h3>
  * All static fields in this class representing instances of {@link PsiPrimitiveType} are deprecated. It was done to avoid deadlocks 
  * during initialization of the class. According to <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-5.html#jvms-5.5">section 5.5</a>
- * of JVM specification, when a class is initialized, JVM firsly synchronizes on an initialization lock specific for that class, then
+ * of JVM specification, when a class is initialized, JVM firstly synchronizes on an initialization lock specific for that class, then
  * initializes its super class and then computes initializers for its static fields. So because of these fields initialization of {@link PsiType}
  * performs initialization of {@link PsiPrimitiveType}, and initialization of {@link PsiPrimitiveType} performs initialization of {@link PsiType}
- * because its the super class of its super class. Therefore, if one thread starts initialization of {@link PsiType}, and another thread
- * starts initialization of {@link PsiPrimitiveType} at the same time, it'll result in a deadlock. In order to avoid this, methods from
+ * because it's the super class of its super class. Therefore, if one thread starts initialization of {@link PsiType}, and another thread
+ * starts initialization of {@link PsiPrimitiveType} at the same time, it will result in a deadlock. To avoid this, methods from
  * {@link PsiTypes} must be used to get instances of the primitive types.
  */
 @SuppressWarnings("StaticInitializerReferencesSubClass")
@@ -79,8 +80,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
     myAnnotationProvider = annotations;
   }
 
-  @NotNull
-  public PsiType annotate(@NotNull TypeAnnotationProvider provider) {
+  public @NotNull PsiType annotate(@NotNull TypeAnnotationProvider provider) {
     if (provider == myAnnotationProvider) return this;
 
     try {
@@ -94,55 +94,59 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   /**
+   * Returns a type with the specified nullability. May return the original type if nullability update
+   * cannot be performed (e.g., for primitive type)
+   * 
+   * @param nullability wanted nullability
+   * @return the type with the specified nullability, or the original type if nullability cannot be updated.
+   */
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    return this;
+  }
+
+  /**
    * Creates array type with this type as a component.
    */
-  @NotNull
-  public PsiArrayType createArrayType() {
+  public @NotNull PsiArrayType createArrayType() {
     return new PsiArrayType(this);
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} */
   @Deprecated
-  @NotNull
   @ApiStatus.ScheduledForRemoval
-  public PsiArrayType createArrayType(PsiAnnotation @NotNull ... annotations) {
+  public @NotNull PsiArrayType createArrayType(PsiAnnotation @NotNull ... annotations) {
     return new PsiArrayType(this, annotations);
   }
 
   /**
    * Returns text of the type that can be presented to a user (references normally non-qualified).
    */
-  @NotNull
-  public @NlsSafe String getPresentableText(boolean annotated) {
+  public @NotNull @NlsSafe String getPresentableText(boolean annotated) {
     return getPresentableText();
   }
 
   /**
    * Same as {@code getPresentableText(false)}.
    */
-  @NotNull
-  public abstract @NlsSafe String getPresentableText();
+  public abstract @NotNull @NlsSafe String getPresentableText();
 
   /**
    * Returns canonical representation of the type (all references fully-qualified).
    */
-  @NotNull
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getCanonicalText();
   }
 
   /**
    * Same as {@code getCanonicalText(false)}.
    */
-  @NotNull
-  public abstract @NlsSafe String getCanonicalText();
+  public abstract @NotNull @NlsSafe String getCanonicalText();
 
   /**
    * Return canonical text of the type with some internal details added for presentational purposes. Use with care.
    * todo[r.sh] merge with getPresentableText()
    */
-  @NotNull
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getCanonicalText();
   }
 
@@ -178,14 +182,20 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   public abstract boolean equalsToText(@NotNull @NonNls String text);
 
   /**
+   * @return nullability of this type
+   */
+  public @NotNull TypeNullability getNullability() {
+    return TypeNullability.UNKNOWN;
+  }
+
+  /**
    * Returns the class type for qualified class name.
    *
    * @param qName qualified class name.
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getTypeByName(@NotNull String qName, @NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getTypeByName(@NotNull String qName, @NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return factory.createTypeByFQClassName(qName, resolveScope);
   }
@@ -197,8 +207,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangObject(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangObject(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_OBJECT, manager.getProject(), resolveScope);
   }
 
@@ -209,8 +218,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangClass(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangClass(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_CLASS, manager.getProject(), resolveScope);
   }
 
@@ -221,8 +229,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangThrowable(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangThrowable(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_THROWABLE, manager.getProject(), resolveScope);
   }
 
@@ -233,8 +240,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangString(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangString(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_STRING, manager.getProject(), resolveScope);
   }
 
@@ -245,8 +251,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangError(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangError(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_ERROR, manager.getProject(), resolveScope);
   }
 
@@ -257,8 +262,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  @NotNull
-  public static PsiClassType getJavaLangRuntimeException(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull PsiClassType getJavaLangRuntimeException(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return getTypeByName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, manager.getProject(), resolveScope);
   }
 
@@ -291,8 +295,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @return the innermost (non-array) component of the type, or {@code this} if the type is not
    *         an array type.
    */
-  @NotNull
-  public final PsiType getDeepComponentType() {
+  public final @NotNull PsiType getDeepComponentType() {
     PsiType type = this;
     while (type instanceof PsiArrayType) {
       type = ((PsiArrayType)type).getComponentType();
@@ -305,8 +308,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    *
    * @return the resolve scope instance, or null if the type is a primitive or an array of primitives.
    */
-  @Nullable
-  public abstract GlobalSearchScope getResolveScope();
+  public abstract @Nullable GlobalSearchScope getResolveScope();
 
   /**
    * Returns the list of superclass types for a class type.
@@ -319,8 +321,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @return provider for this type's annotations. Can be used to construct other PsiType instances
    * without actually evaluating the annotation array, which can be computationally expensive sometimes.
    */
-  @NotNull
-  public final TypeAnnotationProvider getAnnotationProvider() {
+  public final @NotNull TypeAnnotationProvider getAnnotationProvider() {
     return myAnnotationProvider;
   }
 
@@ -343,8 +344,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
     throw new UnsupportedOperationException();
   }
 
@@ -367,24 +367,20 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
       super(annotations);
     }
 
-    @NotNull
     @Override
-    public final String getPresentableText() {
+    public final @NotNull String getPresentableText() {
       return getPresentableText(false);
     }
 
-    @NotNull
     @Override
-    public abstract String getPresentableText(boolean annotated);
+    public abstract @NotNull String getPresentableText(boolean annotated);
 
-    @NotNull
     @Override
-    public final String getCanonicalText() {
+    public final @NotNull String getCanonicalText() {
       return getCanonicalText(false);
     }
 
-    @NotNull
     @Override
-    public abstract String getCanonicalText(boolean annotated);
+    public abstract @NotNull String getCanonicalText(boolean annotated);
   }
 }

@@ -6,14 +6,12 @@ import com.intellij.codeInsight.AbstractBasicJavaEnterActionTest;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.LocalTimeCounter;
 
 public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
@@ -351,36 +349,24 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
   public void testNoCloseJavaDocComment() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean old = settings.CLOSE_COMMENT_ON_ENTER;
-    settings.CLOSE_COMMENT_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.CLOSE_COMMENT_ON_ENTER = false;
       doTextTest("java",
                  "/**<caret>",
                  "/**\n <caret>");
-    }
-    finally {
-      settings.CLOSE_COMMENT_ON_ENTER = old;
-    }
+      return null;
+    });
   }
 
   public void testNoSmartIndentInJavadoc() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean indent = settings.SMART_INDENT_ON_ENTER;
-    settings.SMART_INDENT_ON_ENTER = false;
-    boolean stub = settings.JAVADOC_STUB_ON_ENTER;
-    settings.JAVADOC_STUB_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SMART_INDENT_ON_ENTER = false;
+      settings.JAVADOC_STUB_ON_ENTER = false;
       configureByFile("/codeInsight/enterAction/settings/NoJavadocStub.java");
       performAction();
       checkResultByFile(null, "/codeInsight/enterAction/settings/NoJavadocStub_after.java", true); // side effect...
-    }
-    finally {
-      settings.SMART_INDENT_ON_ENTER = indent;
-      settings.JAVADOC_STUB_ON_ENTER = stub;
-    }
+      return null;
+    });
   }
 
   public void testLineCommentAtTrailingSpaces() {
@@ -392,18 +378,13 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
   public void testNoJavadocStub() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean old = settings.JAVADOC_STUB_ON_ENTER;
-    settings.JAVADOC_STUB_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.JAVADOC_STUB_ON_ENTER = false;
       configureByFile("/codeInsight/enterAction/settings/NoJavadocStub.java");
       performAction();
       checkResultByFile("/codeInsight/enterAction/settings/NoJavadocStub_after.java");
-    }
-    finally {
-      settings.JAVADOC_STUB_ON_ENTER = old;
-    }
+      return null;
+    });
   }
 
 
@@ -1129,22 +1110,75 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
-  public void testPerformance() {
-    configureByFile("/codeInsight/enterAction/Performance.java");
-    Benchmark.newBenchmark("enter in " + getFile(), () -> {
-      performAction();
-      deleteLine();
-      caretUp();
-    }).start();
+  public void testEnterAfterFirstAnnotationOfRecordComponent() {
+    doTextTest("java",
+      """
+        record ExampleRecord(
+                @MyAnno<caret>
+                @MyAnno2
+                String a) { }
+        """,
+      """
+        record ExampleRecord(
+                @MyAnno
+                <caret>
+                @MyAnno2
+                String a) { }
+        """
+    );
   }
 
+  public void testEnterAfterLastAnnotationOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2<caret>
+                         String a) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         <caret>
+                         String a) { }
+                 """
+    );
+  }
 
-  public void testEnterPerformanceAfterDeepTree() {
-    configureFromFileText("a.java", ("class Foo {\n" +
-                                     "  {\n" +
-                                     "    u." +
-                                     StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
-                                    "      x(); } }");
-    Benchmark.newBenchmark("enter", this::performAction).start();
+  public void testEnterBeforeAnnotationOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(<caret>
+                         @MyAnno
+                         @MyAnno2
+                         String a) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         <caret>
+                         @MyAnno
+                         @MyAnno2
+                         String a) { }
+                 """
+    );
+  }
+
+  public void testEnterAfterIdentifierOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         String a,<caret>) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         String a,
+                         <caret>) { }
+                 """
+    );
   }
 }

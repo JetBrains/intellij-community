@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
+
 
 expect class My

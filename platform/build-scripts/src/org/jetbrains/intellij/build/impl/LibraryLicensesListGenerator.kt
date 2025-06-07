@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.core.JsonFactory
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -16,6 +17,21 @@ import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
+
+internal suspend fun createLibraryLicensesListGenerator(
+  context: BuildContext,
+  licenseList: List<LibraryLicense>,
+  usedModulesNames: Set<String>,
+  allowEmpty: Boolean = false,
+): LibraryLicensesListGenerator {
+  val licences = generateLicenses(project = context.project, licensesList = licenseList, usedModulesNames = usedModulesNames)
+  check(allowEmpty || !licences.isEmpty()) {
+    "Empty licenses table for ${licenseList.size} licenses and ${usedModulesNames.size} used modules names"
+  }
+  val generator = createLibraryLicensesListGenerator(context.project, licenseList, usedModulesNames, allowEmpty)
+  checkLibraryUrls(context, generator.libraryLicenses)
+  return generator
+}
 
 fun createLibraryLicensesListGenerator(
   project: JpsProject,
@@ -33,13 +49,17 @@ fun createLibraryLicensesListGenerator(
 fun getLibraryFilename(lib: JpsLibrary): String {
   val name = lib.name
   if (name.startsWith('#')) {
-    // unnamed module libraries in IntelliJ project may have only one root
-    return lib.getPaths(JpsOrderRootType.COMPILED).first().name
+    // unnamed module libraries in the IntelliJ project may have only one root
+    val paths = lib.getPaths(JpsOrderRootType.COMPILED)
+    require(paths.size == 1) {
+      "Unnamed module library has more than one element: ${paths}"
+    }
+    return paths[0].name
   }
   return name
 }
 
-class LibraryLicensesListGenerator internal constructor(private val libraryLicenses: List<LibraryLicense>) {
+class LibraryLicensesListGenerator internal constructor(internal val libraryLicenses: List<LibraryLicense>) {
   fun generateHtml(file: Path) {
     val out = StringBuilder()
     out.append("""

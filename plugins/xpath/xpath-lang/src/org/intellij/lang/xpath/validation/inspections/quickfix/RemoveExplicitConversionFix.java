@@ -34,23 +34,21 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.remove.explicit.type.conversion");
     }
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return super.isAvailable(project, file, startElement, endElement)
+    return super.isAvailable(project, psiFile, startElement, endElement)
         && ((XPathFunctionCall)startElement).getArgumentList().length == 1;
     }
 

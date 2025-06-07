@@ -6,14 +6,14 @@ import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.Function;
@@ -36,7 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
@@ -108,7 +110,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * If class explicitly extends object we shall move it even in Py3K
    */
-  private static boolean isObjectParentDeclaredExplicitly(@NotNull final PyClass clazz) {
+  private static boolean isObjectParentDeclaredExplicitly(final @NotNull PyClass clazz) {
     return ContainerUtil.exists(clazz.getSuperClassExpressions(), o -> PyNames.OBJECT.equals(o.getName()));
   }
 
@@ -118,7 +120,7 @@ public final class PyExtractSuperclassHelper {
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
   
-  private static PyClass placeNewClass(@NotNull final Project project, @NotNull PyClass newClass, @NotNull final PyClass clazz, @NotNull final String targetFile) {
+  private static PyClass placeNewClass(final @NotNull Project project, @NotNull PyClass newClass, final @NotNull PyClass clazz, final @NotNull String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source

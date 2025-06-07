@@ -14,8 +14,8 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
       importProject("""
       |repositories {
       |  maven {
-      |    name "test"
-      |    url "file:///tmp/repo"
+      |    name = "test"
+      |    url = "file:///tmp/repo"
       |  }
       |}
       |

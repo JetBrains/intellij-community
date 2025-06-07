@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -8,15 +8,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.containers.Interner
 
 @Service(Service.Level.APP)
 internal class IntentionsMetadataService {
   companion object {
     @JvmStatic
     fun getInstance(): IntentionsMetadataService = service()
-
-    private val interner = Interner.createWeakInterner<String>()
   }
 
   // guarded by this
@@ -51,7 +48,7 @@ internal class IntentionsMetadataService {
     val metadata = try {
       IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName, extension.skipBeforeAfter)
     }
-    catch (ignore: ExtensionNotApplicableException) {
+    catch (_: ExtensionNotApplicableException) {
       return
     }
 
@@ -72,7 +69,7 @@ internal class IntentionsMetadataService {
     }
     val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName, false)
     synchronized(this) {
-      // not added as searchable option - this method is deprecated and intentionAction extension point must be used instead
+      // not added as a searchable option - this method is deprecated and intentionAction extension point must be used instead
       dynamicRegistrationMeta.add(metadata)
     }
   }

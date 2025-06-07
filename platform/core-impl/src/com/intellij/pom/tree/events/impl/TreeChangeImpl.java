@@ -160,6 +160,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
     return new ArrayList<>(myInitialLengths.keySet());
   }
 
+  @Override
   public String toString() {
     return myParent + ": " + getAllChanges().values();
   }

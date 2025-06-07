@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -73,7 +73,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);
     init();
-    myScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    myScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
   private void validateTargetSelected() {
@@ -109,13 +109,11 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn4idea.checkout.options";
   }
 
-  @Nullable
-  public File getTarget() {
+  public @Nullable File getTarget() {
     Object[] objects = myLocalTargetList.getSelectedValues();
     return (objects == null) || (objects.length != 1) ? null : (File) objects[0];
   }
@@ -129,13 +127,11 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myTopPanel;
   }
 
-  @NotNull
-  public Revision getRevision() throws ConfigurationException {
+  public @NotNull Revision getRevision() throws ConfigurationException {
       return svnSelectRevisionPanel.getRevision();
   }
 

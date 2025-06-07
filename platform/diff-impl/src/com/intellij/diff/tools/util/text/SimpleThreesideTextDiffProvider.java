@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -36,11 +36,10 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     myColorsMode = colorsMode;
   }
 
-  @NotNull
-  public List<FineMergeLineFragment> compare(@NotNull CharSequence text1,
-                                             @NotNull CharSequence text2,
-                                             @NotNull CharSequence text3,
-                                             @NotNull ProgressIndicator indicator) {
+  public @NotNull List<FineMergeLineFragment> compare(@NotNull CharSequence text1,
+                                                      @NotNull CharSequence text2,
+                                                      @NotNull CharSequence text3,
+                                                      @NotNull ProgressIndicator indicator) {
 
     IgnorePolicy ignorePolicy = getIgnorePolicy();
     HighlightPolicy highlightPolicy = getHighlightPolicy();
@@ -72,11 +71,10 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     return result;
   }
 
-  @NotNull
-  private MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
-                                            @NotNull List<? extends CharSequence> sequences,
-                                            @NotNull List<? extends LineOffsets> lineOffsets,
-                                            @NotNull MergeLineFragment fragment) {
+  private @NotNull MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
+                                                     @NotNull List<? extends CharSequence> sequences,
+                                                     @NotNull List<? extends LineOffsets> lineOffsets,
+                                                     @NotNull MergeLineFragment fragment) {
     return switch (myColorsMode) {
       case MERGE_CONFLICT -> MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
       case MERGE_RESULT -> {
@@ -87,11 +85,10 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     };
   }
 
-  @NotNull
-  private static List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<? extends CharSequence> sequences,
-                                              @NotNull List<? extends LineOffsets> lineOffsets,
-                                              @NotNull MergeConflictType conflictType) {
+  private static @NotNull List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
+                                                       @NotNull List<? extends CharSequence> sequences,
+                                                       @NotNull List<? extends LineOffsets> lineOffsets,
+                                                       @NotNull MergeConflictType conflictType) {
     return ThreeSide.map(side -> {
       if (!conflictType.isChange(side)) return null;
 
@@ -103,8 +100,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     });
   }
 
-  @NotNull
-  private static MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
+  private static @NotNull MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
     Type oldDiffType = oldConflictType.getType();
 
     if (oldDiffType != Type.INSERTED && oldDiffType != Type.DELETED) {

@@ -1,4 +1,4 @@
-<idea-plugin package="com.jetbrains.performancePlugin">
+<idea-plugin package="com.jetbrains.performancePlugin" allow-bundled-update="true">
   <id>com.jetbrains.performancePlugin</id>
   <name>Performance Testing</name>
   <vendor>JetBrains</vendor>
@@ -13,6 +13,11 @@
   <content>
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.vcs"/>
+    <module name="intellij.performanceTesting.frontend"/>
+    <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
+    <module name="intellij.driver.model" loading="embedded"/>
+    <module name="intellij.driver.impl" loading="embedded"/>
+    <module name="intellij.driver.client" loading="embedded"/>
   </content>
 
   <dependencies>
@@ -60,6 +65,13 @@
     <projectService overrides="true"
                     serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
+
+    <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
+    <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.snapshotOpener implementation="com.jetbrains.performancePlugin.profilers.LocalFileManagerSnapshotOpener"/>
   </extensions>
 
   <applicationListeners>
@@ -67,6 +79,7 @@
     <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisFileEditorListener"
               topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>

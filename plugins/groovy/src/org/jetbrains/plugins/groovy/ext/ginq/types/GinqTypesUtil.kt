@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.types
 
 import com.intellij.psi.*
@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.typing.box
 
-fun inferDataSourceComponentType(type: PsiType?): PsiType? = when (type) {
+internal fun inferDataSourceComponentType(type: PsiType?): PsiType? = when (type) {
   is PsiArrayType -> type.componentType
   is PsiClassType -> {
     extractComponent(type, CommonClassNames.JAVA_LANG_ITERABLE)
@@ -41,7 +41,7 @@ private fun extractComponent(type: PsiType, className: String): PsiType? {
   }
 }
 
-fun inferGeneralGinqType(macroCall: GrMethodCall?, ginq: GinqExpression, psiGinq: GrExpression, isTop: Boolean): PsiType? {
+internal fun inferGeneralGinqType(macroCall: GrMethodCall?, ginq: GinqExpression, psiGinq: GrExpression, isTop: Boolean): PsiType? {
   val facade = JavaPsiFacade.getInstance(psiGinq.project)
   val containerCanonicalType = getContainerType(macroCall, isTop, ginq, psiGinq, facade) ?: return null
   val componentType = getComponentType(facade, psiGinq, ginq)
@@ -77,11 +77,11 @@ private fun getComponentType(facade: JavaPsiFacade,
   return if (projectionPsiType == PsiTypes.nullType()) PsiWildcardType.createUnbounded(psiGinq.manager) else projectionPsiType.box(psiGinq)
 }
 
-fun inferOverType(expression: GrMethodCall) : PsiType? {
+internal fun inferOverType(expression: GrMethodCall) : PsiType? {
   return expression.invokedExpression.asSafely<GrReferenceExpression>()?.qualifierExpression?.type
 }
 
-fun inferLocalReferenceExpressionType(root: GinqRootPsiElement, refExpr: GrReferenceExpression): PsiType? {
+internal fun inferLocalReferenceExpressionType(root: GinqRootPsiElement, refExpr: GrReferenceExpression): PsiType? {
   val tree = refExpr.getClosestGinqTree(root) ?: return null
   if (refExpr.referenceName == "_g") {
     resolveSyntheticVariable(refExpr, "_g", tree)?.run { return type }

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -26,18 +27,15 @@ public final class TestData extends AbstractExternalEntityData {
     this.sourceFolders = sourceFolders;
   }
 
-  @NotNull
-  public String getTestName() {
+  public @NotNull String getTestName() {
     return testName;
   }
 
-  @NotNull
-  public String getTestTaskName() {
+  public @NotNull String getTestTaskName() {
     return testTaskName;
   }
 
-  @NotNull
-  public Set<String> getSourceFolders() {
+  public @NotNull @Unmodifiable Set<String> getSourceFolders() {
     return Collections.unmodifiableSet(sourceFolders);
   }
 }

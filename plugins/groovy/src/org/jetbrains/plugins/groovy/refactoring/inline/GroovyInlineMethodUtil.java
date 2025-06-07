@@ -52,8 +52,7 @@ public final class GroovyInlineMethodUtil {
   private GroovyInlineMethodUtil() {
   }
 
-  @NotNull
-  public static InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
+  public static @NotNull InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
 
     final Project project = method.getProject();
     if (method.isConstructor()) {
@@ -153,8 +152,7 @@ public final class GroovyInlineMethodUtil {
   /**
    * Shows dialog with question to inline
    */
-  @NotNull
-  private static InlineHandler.Settings inlineMethodDialogResult(GrMethod method, Project project, boolean invokedOnReference) {
+  private static @NotNull InlineHandler.Settings inlineMethodDialogResult(GrMethod method, Project project, boolean invokedOnReference) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
       final InlineMethodDialog dialog = new InlineMethodDialog(project, method, invokedOnReference, checkMethodForRecursion(method));
@@ -265,8 +263,7 @@ public final class GroovyInlineMethodUtil {
     public final int offsetInMethod;
     public final PsiClass containingClass;
 
-    @Nullable
-    public @Nls String getPresentation() {
+    public @Nullable @Nls String getPresentation() {
       return declaration.getName();
     }
 
@@ -420,12 +417,11 @@ public final class GroovyInlineMethodUtil {
     }
   }
 
-  @Nullable
-  private static GrExpression inferArg(GrSignature signature,
-                                       GrParameter[] parameters,
-                                       GrParameter parameter,
-                                       GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,
-                                       Project project) {
+  private static @Nullable GrExpression inferArg(GrSignature signature,
+                                                 GrParameter[] parameters,
+                                                 GrParameter parameter,
+                                                 GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,
+                                                 Project project) {
     if (argInfo == null) return null;
     List<PsiElement> arguments = argInfo.args;
 
@@ -516,14 +512,14 @@ public final class GroovyInlineMethodUtil {
     StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = parameter.getModifierList();
     buffer.append(modifierList.getText().trim());
-    if (buffer.length() > 0) buffer.append(' ');
+    if (!buffer.isEmpty()) buffer.append(' ');
 
     final GrTypeElement typeElement = parameter.getTypeElementGroovy();
     if (typeElement != null) {
       buffer.append(typeElement.getText()).append(' ');
     }
 
-    if (buffer.length() == 0) {
+    if (buffer.isEmpty()) {
       buffer.append("def ");
     }
     buffer.append(varName).append(" = ").append(expression.getText());

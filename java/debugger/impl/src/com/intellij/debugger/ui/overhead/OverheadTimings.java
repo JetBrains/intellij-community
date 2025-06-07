@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -71,8 +71,7 @@ public class OverheadTimings {
     timings.myEventDispatcher.getMulticaster().timingAdded(producer);
   }
 
-  @NotNull
-  private static OverheadTimings getTimings(DebugProcess process) {
+  private static @NotNull OverheadTimings getTimings(DebugProcess process) {
     OverheadTimings data = process.getUserData(KEY);
     if (data == null) {
       data = new OverheadTimings();

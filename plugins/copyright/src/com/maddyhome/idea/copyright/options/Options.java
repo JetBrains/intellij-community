@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,8 +48,7 @@ public class Options implements Cloneable {
     setOptions(LANG_TEMPLATE, options);
   }
 
-  @Nullable
-  public LanguageOptions getMergedOptions(String name) {
+  public @Nullable LanguageOptions getMergedOptions(String name) {
     try {
       LanguageOptions lang = getOptions(name).clone();
       LanguageOptions temp = getTemplateOptions().clone();
@@ -135,6 +134,7 @@ public class Options implements Cloneable {
     logger.debug("options=" + this);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -148,12 +148,14 @@ public class Options implements Cloneable {
     return options.equals(options1.options);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = options.hashCode();
     return result;
   }
 
+  @Override
   public String toString() {
     return "Options" + "{options=" + options + '}';
   }

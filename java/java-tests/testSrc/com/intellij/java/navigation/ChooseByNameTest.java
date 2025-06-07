@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.mock.MockProgressIndicator;
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -31,6 +33,10 @@ import java.util.*;
 
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
+
+  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.enabled");
+  private static final boolean initialFuzzySearchRegistryValue = fuzzySearchRegistryValue.asBoolean();
+
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ChooseByNameTest.class);
@@ -64,12 +70,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_annotation_syntax() {
     PsiClass match = myFixture.addClass("@interface Anno1 {}");
     myFixture.addClass("class Anno2 {}");
-    assertEquals(gotoClass("@Anno").get(0), match);
+    assertEquals(match, gotoClass("@Anno").get(0));
   }
 
   public void test_class_a_in_same_named_package_and_partially_matching_subpackage() {
     PsiClass c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}");
-    assertEquals(gotoClass("templistpa").get(0), c);
+    assertEquals(c, gotoClass("templistpa").get(0));
   }
 
   public void test_no_result_for_empty_patterns() {
@@ -112,9 +118,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                                   }
                                                 }
                                               """).getInnerClasses()[0].getMethods();
-    assertEquals(gotoSymbol("pkg.Cls.Inner.paint"), List.of(method));
-    assertEquals(gotoSymbol("pkg.Cls$Inner.paint"), List.of(method));
-    assertEquals(gotoSymbol("pkg.Cls$Inner#paint"), List.of(method));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls.Inner.paint"));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner.paint"));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner#paint"));
   }
 
   public void test_goto_symbol_by_Copy_Reference_result() {
@@ -127,15 +133,15 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                                  void bar(boolean b) {}\s
                                                  void bar(List<String> l) {}\s
                                                }""").getMethods();
-    assertEquals(gotoSymbol("pkg.Cls.foo"), List.of(methods[0]));
-    assertEquals(gotoSymbol("pkg.Cls#foo"), List.of(methods[0]));
-    assertEquals(gotoSymbol("pkg.Cls#foo(int)"), List.of(methods[0]));
-    assertEquals(Set.copyOf(gotoSymbol("pkg.Cls.bar")), Set.of(methods[1], methods[2], methods[3]));
-    assertEquals(Set.copyOf(gotoSymbol("pkg.Cls#bar")), Set.of(methods[1], methods[2], methods[3]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(int)"), List.of(methods[1]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(boolean)"), List.of(methods[2]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(java.util.List)"), List.of(methods[3]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"), List.of(methods[3]));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls.foo"));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo"));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo(int)"));
+    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls.bar")));
+    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls#bar")));
+    assertEquals(List.of(methods[1]), gotoSymbol("pkg.Cls#bar(int)"));
+    assertEquals(List.of(methods[2]), gotoSymbol("pkg.Cls#bar(boolean)"));
+    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List)"));
+    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"));
   }
 
   public void test_disprefer_underscore() {
@@ -225,7 +231,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     List<PsiFile> objects = gotoFile("Object.java", true);
     assertNotEmpty(objects);
     assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
+
+    // Fuzzy search finds some results for the query `mockJDK/Object.java`, so let's ensure the test runs with fuzzy search disabled.
+    fuzzySearchRegistryValue.setValue(false);
+
     assertEmpty(gotoFile("mockJDK/Object.java", true));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_goto_file_can_go_to_dir() {
@@ -236,6 +248,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
+
+    fuzzySearchRegistryValue.setValue(false);
 
     assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir));
     assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir));
@@ -252,16 +266,69 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
+  }
+
+  public void test_goto_file_can_go_to_dir_with_fuzzy() {
+    PsiFile fooIndex = addEmptyFile("foo/index.html");
+    PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), fooIndex);
+
+    PsiDirectory fooDir = fooIndex.getContainingDirectory();
+    PsiDirectory barDir = barIndex.getContainingDirectory();
+
+    // With fuzzy search enabled, the search also shows files inside the directory.
+    fuzzySearchRegistryValue.setValue(true);
+
+    assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "\\foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/index.html"), List.of(fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "\\index.html"), List.of(fooIndex));
+    assertEmpty(calcContributorElements(contributor, "index.html/"));
+    assertEmpty(calcContributorElements(contributor, "index.html\\"));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt/"), List.of(barDir, barIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt\\"), List.of(barDir, barIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_prefer_files_to_directories_even_if_longer() {
     PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
     PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
 
+    fuzzySearchRegistryValue.setValue(false);
+
     SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
     List<?> popupElements = calcContributorElements(contributor, "foo");
 
     assertOrderedEquals(popupElements, List.of(fooFile, fooDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
+  }
+
+  public void test_prefer_files_to_directories_even_if_longer_with_fuzzy() {
+    PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
+    PsiFile barFile = addEmptyFile("foo/barFile.txt");
+    PsiDirectory fooDir = barFile.getContainingDirectory();
+
+    // With fuzzy search enabled, the search also shows files inside the directory.
+    fuzzySearchRegistryValue.setValue(true);
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
+    List<?> popupElements = calcContributorElements(contributor, "foo");
+
+    assertOrderedEquals(popupElements, List.of(fooFile, fooDir, barFile));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_find_method_by_qualified_name() {
@@ -273,6 +340,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(gotoSymbol("foo.zzzZzz"), List.of(method));
     assertOrderedEquals(gotoSymbol("bar.zzzZzz"), List.of(method));
     assertOrderedEquals(gotoSymbol("bar.goo.zzzZzz"), List.of(method));
+  }
+
+  public void testFindRecordComponent() {
+    PsiClass clazz = myFixture.addClass("package x.y.z; record Point(int momentous, int obsequious) {}");
+    PsiRecordComponent[] components = clazz.getRecordComponents();
+    assertOrderedEquals(gotoSymbol("mom"), components[0]);
+    assertOrderedEquals(gotoSymbol("obse"), components[1]);
   }
 
   public void test_line_and_column_suffix() {
@@ -430,7 +504,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_file_path_matching_with_spaces_instead_of_slashes() {
     PsiFile good = addEmptyFile("config/app.txt");
     addEmptyFile("src/Configuration/ManagesApp.txt");
-    assertEquals(gotoFile("config app.txt").get(0), good);
+    assertEquals(good, gotoFile("config app.txt").get(0));
   }
 
   public void test_multiple_slashes_in_goto_file() {
@@ -461,12 +535,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_fix_keyboard_layout() {
-    assertEquals(gotoClass("Ыекштп", true).get(0).getName(), "String");
+    assertEquals("String", gotoClass("Ыекштп", true).get(0).getName());
     @Nullable Object symbol =
       ContainerUtil.find(gotoSymbol("Ыекштп", true), sym -> sym instanceof PsiClass clazz && clazz.getName().equals("String"));
     assertNotNull(symbol);
-    assertEquals(gotoFile("Ыекштп", true).get(0).getName(), "String.class");
-    assertEquals(gotoFile("дфтпЫекштп", true).get(0).getName(), "String.class");
+    assertEquals("String.class", gotoFile("Ыекштп", true).get(0).getName());
+    assertEquals("String.class", gotoFile("дфтпЫекштп", true).get(0).getName());
   }
 
   public void test_prefer_exact_case_match() {
@@ -551,7 +625,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(gotoSymbol("Request.start"), List.of(m1, m2));
     if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
       assertOrderedEquals(gotoSymbol("start"), List.of(m1, m2)); // can't remove overrides in dumb mode
-    } else {
+    }
+    else {
       assertOrderedEquals(gotoSymbol("start"), List.of(m1));
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -80,7 +80,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
 
   @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
-  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
+  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, final @NotNull C impl)
     throws RemoteException
   {
     if (!myStdOutputConfigured) {
@@ -135,10 +135,10 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
   }
 
   private static final class LineAwarePrintStream extends PrintStream {
-    private LineAwarePrintStream(@NotNull final PrintStream delegate) {
+    private LineAwarePrintStream(final @NotNull PrintStream delegate) {
       super(new OutputStream() {
 
-        @NotNull private final StringBuilder myBuffer = new StringBuilder();
+        private final @NotNull StringBuilder myBuffer = new StringBuilder();
 
         @Override
         public void write(int b) {

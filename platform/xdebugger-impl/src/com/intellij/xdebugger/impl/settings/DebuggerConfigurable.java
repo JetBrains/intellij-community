@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -11,10 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -157,12 +154,12 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "project.propDebugger";
   }
 
-  static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+  static @Unmodifiable @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
     return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList());
   }
 
-  private static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category,
-                                                              List<DebuggerConfigurableProvider> providers) {
+  private static @Unmodifiable @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category,
+                                                                            List<DebuggerConfigurableProvider> providers) {
     List<Configurable> configurables = null;
     for (DebuggerConfigurableProvider provider : providers) {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.PsiConstantEvaluationHelper;
@@ -17,8 +17,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.skipParenthes
 
 public final class GroovyConstantExpressionEvaluator implements ConstantExpressionEvaluator {
 
-  @Nullable
-  public static Object evaluate(@Nullable GrExpression expression) {
+  public static @Nullable Object evaluate(@Nullable GrExpression expression) {
     GrExpression operand = skipParenthesesDownOrNull(expression);
     if (operand instanceof GrLiteral) {
       return ((GrLiteral)operand).getValue();
@@ -60,17 +59,15 @@ public final class GroovyConstantExpressionEvaluator implements ConstantExpressi
   }
 
   @Override
-  @Nullable
-  public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
+  public @Nullable Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
     if (!(expression instanceof GrExpression)) return null;
     return evaluate((GrExpression)expression);
   }
 
   @Override
-  @Nullable
-  public Object computeExpression(PsiElement expression,
-                                  boolean throwExceptionOnOverflow,
-                                  @Nullable PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  public @Nullable Object computeExpression(PsiElement expression,
+                                            boolean throwExceptionOnOverflow,
+                                            @Nullable PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     if (!(expression instanceof GrExpression)) return null;
     return evaluate((GrExpression)expression);
   }

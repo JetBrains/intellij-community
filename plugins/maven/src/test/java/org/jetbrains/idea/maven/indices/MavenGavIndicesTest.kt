@@ -2,9 +2,6 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
@@ -14,9 +11,9 @@ class MavenGavIndicesTest : MavenTestCase() {
 
   fun testUpdateGavIndex() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val path = helper.getTestDataPath("local1")
+    val path = helper.getTestData("local1")
 
-    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path, RepositoryKind.LOCAL))
+    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path.toString(), RepositoryKind.LOCAL))
     gavIndex.update(mavenProgressIndicator!!, false)
     assertSameElements(gavIndex.groupIds, "asm", "commons-io", "junit", "org.deptest", "org.example", "org.intellijgroup", "org.ow2.asm")
     assertSameElements(gavIndex.getArtifactIds("asm"), "asm", "asm-attrs")

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jvm;
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -12,9 +12,8 @@ import static com.intellij.lang.jvm.source.JvmDeclarationSearch.getElementsByIde
 
 public abstract class JvmRunLineMarkerContributor extends RunLineMarkerContributor {
 
-  @Nullable
   @Override
-  public final Info getInfo(@NotNull PsiElement element) {
+  public final @Nullable Info getInfo(@NotNull PsiElement element) {
     if (!Registry.is("ide.jvm.run.marker")) return null;
     for (JvmElement declaration : getElementsByIdentifier(element)) {
       Info info = getInfo(element, declaration);
@@ -25,6 +24,5 @@ public abstract class JvmRunLineMarkerContributor extends RunLineMarkerContribut
     return null;
   }
 
-  @Nullable
-  protected abstract Info getInfo(@NotNull PsiElement psiElement, @NotNull JvmElement element);
+  protected abstract @Nullable Info getInfo(@NotNull PsiElement psiElement, @NotNull JvmElement element);
 }

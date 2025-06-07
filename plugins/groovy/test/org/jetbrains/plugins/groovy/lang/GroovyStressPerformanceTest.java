@@ -69,11 +69,11 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
 
     GroovyFile deepFile = (GroovyFile)myFixture.addFileToProject("DeepTest.groovy", "def test() { return Foo" + max + ".foo() }");
-    assert Object.class.getName().equals(inferredType(deepFile.getScriptClass(), "test"));
+    assertEquals(Object.class.getName(), (inferredType(deepFile.getScriptClass(), "test")));
 
     GroovyFile shallowFile =
       DefaultGroovyMethods.asType(myFixture.addFileToProject("ShallowTest.groovy", "def test() { return Foo2.foo() }"), GroovyFile.class);
-    assert Integer.class.getName().equals(inferredType(shallowFile.getScriptClass(), "test"));
+    assertEquals(Integer.class.getName(), (inferredType(shallowFile.getScriptClass(), "test")));
 
     List<PsiClass> values = classes.values().stream().toList();
 
@@ -83,8 +83,8 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }) + 1;
 
     PsiManager.getInstance(getProject()).dropPsiCaches();
-    assert inferredType(classes.get(border), "foo").equals(Object.class.getName());
-    assert inferredType(classes.get(border - 1), "foo").equals(Integer.class.getName());
+    assertEquals(Object.class.getName(), inferredType(classes.get(border), "foo"));
+    assertEquals(Integer.class.getName(), inferredType(classes.get(border - 1), "foo"));
   }
 
   private static String inferredType(PsiClass clazz, String method) {
@@ -501,7 +501,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     barBodyBuilder.append("}");
     myFixture.configureByText("a.groovy", "");
-    assert myFixture.getFile() instanceof GroovyFile;
+    assertInstanceOf(myFixture.getFile(), GroovyFile.class);
     Benchmark.newBenchmark("many siblings", () -> {
       // clear caches
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -511,7 +511,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
       List<GrReferenceElement> refs = SyntaxTraverser.psiTraverser(myFixture.getFile()).filter(GrReferenceElement.class).toList();
-      assert refs.size() > refCountInBlock * blockCount;
+      assertTrue(refs.size() > refCountInBlock * blockCount);
       for (GrReferenceElement ref : refs) {
         assertNotNull(ref.resolve());
       }
@@ -660,7 +660,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     // a.nn.nn ... .nn
     GroovyFile file = (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn", 500) + ".nn");
     GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assert reference.resolve() != null;
+    assertNotNull(reference.resolve());
   }
 
   public void test_resolve_long_chain_of_method_calls() {
@@ -675,7 +675,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     GroovyFile file =
       (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn()", 250) + ".nn");
     GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assert reference.resolve() != null;
+    assertNotNull(reference.resolve());
   }
 
   public void test_resolve_long_chain_of_operators() {
@@ -689,7 +689,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     GroovyFile file =
       (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(" += a", 500) + " += new Node()");
     GroovyCallReference reference = ((GrAssignmentExpression)DefaultGroovyMethods.last(file.getStatements())).getReference();
-    assert reference.resolve() != null;
+    assertNotNull(reference.resolve());
   }
 
   public void test_do_not_resolve_LHS_and_RHS_of_assignment_when_name_doesn_t_match() {

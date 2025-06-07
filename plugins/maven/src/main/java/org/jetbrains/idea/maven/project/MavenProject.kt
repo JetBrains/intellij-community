@@ -8,11 +8,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +25,6 @@ import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -36,7 +33,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
-import kotlin.Throws
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -72,7 +68,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
   ): MavenProjectChanges {
     val keepPreviousPlugins = keepPreviousArtifacts
@@ -86,7 +82,7 @@ class MavenProject(val file: VirtualFile) {
       readerResult.activatedProfiles,
       setOf(),
       readerResult.nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       false,
       keepPreviousPlugins,
@@ -107,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
     activatedProfiles: MavenExplicitProfiles,
     unresolvedArtifactIds: Set<MavenId>,
     nativeModelMap: Map<String, String>,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
@@ -120,7 +116,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles,
       unresolvedArtifactIds,
       nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
       keepPreviousPlugins,
@@ -133,7 +129,7 @@ class MavenProject(val file: VirtualFile) {
   }
 
   @Internal
-  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginInfo>): MavenProjectChanges {
+  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginWithArtifact>): MavenProjectChanges {
     val newState = myState.copy(
       dependencies = dependencies,
       properties = properties,
@@ -150,9 +146,14 @@ class MavenProject(val file: VirtualFile) {
 
   @Internal
   fun updatePluginArtifacts(pluginIdsToArtifacts: Map<MavenId, MavenArtifact?>) {
-    val newPluginInfos = myState.pluginInfos.map { MavenPluginInfo(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
+    val newPluginInfos = myState.pluginInfos.map { MavenPluginWithArtifact(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
     val newState = myState.copy(pluginInfos = newPluginInfos)
     setState(newState)
+  }
+
+  @Internal
+  fun updateMavenId(newMavenId: MavenId) {
+    setState(myState.copy(mavenId = newMavenId))
   }
 
   private fun setState(newState: MavenProjectState): MavenProjectChanges {
@@ -208,8 +209,8 @@ class MavenProject(val file: VirtualFile) {
   val profilesXmlNioFile: Path?
     get() = MavenUtil.getProfilesXmlNioFile(file)
 
-  fun hasUnrecoverableReadingProblems(): Boolean {
-    return myState.readingProblems.any { !it.isRecoverable }
+  fun hasReadingErrors(): Boolean {
+    return myState.readingProblems.any { it.isError }
   }
 
   val name: @NlsSafe String?
@@ -237,7 +238,7 @@ class MavenProject(val file: VirtualFile) {
     get() = myState.parentId
 
   val packaging: @NlsSafe String
-    get() = myState.packaging!!
+    get() = myState.packaging ?: ""
 
   val finalName: @NlsSafe String
     get() = myState.finalName!!
@@ -250,137 +251,6 @@ class MavenProject(val file: VirtualFile) {
 
   fun getGeneratedSourcesDirectory(testSources: Boolean): @NlsSafe String {
     return buildDirectory + (if (testSources) "/generated-test-sources" else "/generated-sources")
-  }
-
-  fun getAnnotationProcessorDirectory(testSources: Boolean): @NlsSafe String {
-    if (procMode == ProcMode.NONE) {
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      val cfg: Element? = getPluginGoalConfiguration(bscMavenPlugin, if (testSources) "process-test" else "process")
-      if (bscMavenPlugin != null && cfg == null) {
-        return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
-      }
-      if (cfg != null) {
-        var out: String? = findChildValueByPath(cfg, "outputDirectory")
-        if (out == null) {
-          out = findChildValueByPath(cfg, "defaultOutputDirectory")
-          if (out == null) {
-            return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
-          }
-        }
-
-        if (!File(out).isAbsolute) {
-          out = "$directory/$out"
-        }
-
-        return out
-      }
-    }
-
-    val def: String = getGeneratedSourcesDirectory(testSources) + (if (testSources) "/test-annotations" else "/annotations")
-    return findChildValueByPath(
-      compilerConfig, if (testSources) "generatedTestSourcesDirectory" else "generatedSourcesDirectory", def)!!
-  }
-
-  val procMode: ProcMode
-    get() {
-      var compilerConfiguration: Element? = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin",
-                                                                            "default-compile")
-      if (compilerConfiguration == null) {
-        compilerConfiguration = compilerConfig
-      }
-
-      if (compilerConfiguration == null) {
-        return ProcMode.BOTH
-      }
-
-      val procElement: Element? = compilerConfiguration.getChild("proc")
-      if (procElement != null) {
-        val procMode: String = procElement.value
-        return if (("only".equals(procMode, ignoreCase = true))) ProcMode.ONLY
-        else if (("none".equals(procMode, ignoreCase = true))) ProcMode.NONE else ProcMode.BOTH
-      }
-
-      val compilerArgument: String? = compilerConfiguration.getChildTextTrim("compilerArgument")
-      if ("-proc:none" == compilerArgument) {
-        return ProcMode.NONE
-      }
-      if ("-proc:only" == compilerArgument) {
-        return ProcMode.ONLY
-      }
-
-      val compilerArguments: Element? = compilerConfiguration.getChild("compilerArgs")
-      if (compilerArguments != null) {
-        for (element: Element in compilerArguments.children) {
-          val arg: String = element.value
-          if ("-proc:none" == arg) {
-            return ProcMode.NONE
-          }
-          if ("-proc:only" == arg) {
-            return ProcMode.ONLY
-          }
-        }
-      }
-
-      return ProcMode.BOTH
-    }
-
-
-  val annotationProcessorOptions: Map<String, String>
-    get() {
-      val compilerConfig: Element? = compilerConfig
-      if (compilerConfig == null) {
-        return emptyMap()
-      }
-      if (procMode != ProcMode.NONE) {
-        return getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig)
-      }
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      if (bscMavenPlugin != null) {
-        return getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin)
-      }
-      return emptyMap()
-    }
-
-  val declaredAnnotationProcessors: List<String>
-    get() {
-      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
-    }
-
-  private fun getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
-    val result: MutableList<String> = ArrayList()
-    if (procMode != ProcMode.NONE) {
-      val processors: Element? = compilerConfig.getChild("annotationProcessors")
-      if (processors != null) {
-        for (element: Element in processors.getChildren("annotationProcessor")) {
-          val processorClassName: String = element.textTrim
-          if (!processorClassName.isEmpty()) {
-            result.add(processorClassName)
-          }
-        }
-      }
-    }
-    else {
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      if (bscMavenPlugin != null) {
-        var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-        if (bscCfg == null) {
-          bscCfg = bscMavenPlugin.configurationElement
-        }
-
-        if (bscCfg != null) {
-          val bscProcessors: Element? = bscCfg.getChild("processors")
-          if (bscProcessors != null) {
-            for (element: Element in bscProcessors.getChildren("processor")) {
-              val processorClassName: String = element.textTrim
-              if (!processorClassName.isEmpty()) {
-                result.add(processorClassName)
-              }
-            }
-          }
-        }
-      }
-    }
-    return result
   }
 
   val outputDirectory: @NlsSafe String
@@ -574,7 +444,7 @@ class MavenProject(val file: VirtualFile) {
   }
 
   private fun createDependencyProblem(file: VirtualFile, description: String): MavenProjectProblem {
-    return MavenProjectProblem(file.path, description, MavenProjectProblem.ProblemType.DEPENDENCY, false)
+    return MavenProjectProblem(file.path, description, MavenProjectProblem.ProblemType.DEPENDENCY, true)
   }
 
   private fun validateParent(file: VirtualFile, result: MutableList<MavenProjectProblem>) {
@@ -746,7 +616,7 @@ class MavenProject(val file: VirtualFile) {
     }
 
   @get:ApiStatus.Experimental
-  val pluginInfos: List<MavenPluginInfo>
+  val pluginInfos: List<MavenPluginWithArtifact>
     get() {
       return myState.pluginInfos
     }
@@ -757,7 +627,7 @@ class MavenProject(val file: VirtualFile) {
     }
 
   @get:ApiStatus.Experimental
-  val declaredPluginInfos: List<MavenPluginInfo>
+  val declaredPluginInfos: List<MavenPluginWithArtifact>
     get() {
       return myState.declaredPluginInfos
     }
@@ -774,19 +644,6 @@ class MavenProject(val file: VirtualFile) {
     if (plugin == null) return null
     return if (goal == null) plugin.configurationElement else plugin.getGoalConfiguration(goal)
   }
-
-  private fun getPluginExecutionConfiguration(groupId: String?, artifactId: String?, executionId: String): Element? {
-    val plugin: MavenPlugin? = findPlugin(groupId, artifactId)
-    if (plugin == null) return null
-    return plugin.getExecutionConfiguration(executionId)
-  }
-
-  private val compileExecutionConfigurations: List<Element>
-    get() {
-      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
-      if (plugin == null) return emptyList()
-      return plugin.compileExecutionConfigurations
-    }
 
   @JvmOverloads
   fun findPlugin(groupId: String?, artifactId: String?, explicitlyDeclaredOnly: Boolean = false): MavenPlugin? {
@@ -826,71 +683,6 @@ class MavenProject(val file: VirtualFile) {
     }
     return sourceEncoding
   }
-
-  val sourceLevel: String?
-    get() {
-      return getCompilerLevel("source")
-    }
-
-  val targetLevel: String?
-    get() {
-      return getCompilerLevel("target")
-    }
-
-  val releaseLevel: String?
-    get() {
-      return getCompilerLevel("release")
-    }
-
-  val testSourceLevel: String?
-    get() {
-      return getCompilerLevel("testSource")
-    }
-
-  val testTargetLevel: String?
-    get() {
-      return getCompilerLevel("testTarget")
-    }
-
-  val testReleaseLevel: String?
-    get() {
-      return getCompilerLevel("testRelease")
-    }
-
-  private fun getCompilerLevel(level: String): String? {
-    val configs: List<Element> = compilerConfigs
-    if (configs.size == 1) return getCompilerLevel(level, configs[0])
-
-    return configs
-             .mapNotNull { findChildValueByPath(it, level) }
-             .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
-             .maxWithOrNull(Comparator.naturalOrder())
-             ?.toJavaVersion()?.toFeatureString() ?: myState.properties!!.getProperty("maven.compiler.$level")
-  }
-
-  private fun getCompilerLevel(level: String, config: Element): String? {
-    var result: String? = findChildValueByPath(config, level)
-    if (result == null) {
-      result = myState.properties!!.getProperty("maven.compiler.$level")
-    }
-    return result
-  }
-
-  private val compilerConfig: Element?
-    get() {
-      val executionConfiguration: Element? =
-        getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile")
-      if (executionConfiguration != null) return executionConfiguration
-      return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
-    }
-
-  private val compilerConfigs: List<Element>
-    get() {
-      val configurations: List<Element> = compileExecutionConfigurations
-      if (!configurations.isEmpty()) return configurations
-      val configuration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
-      return ContainerUtil.createMaybeSingletonList(configuration)
-    }
 
   val properties: Properties
     get() {
@@ -1022,80 +814,6 @@ class MavenProject(val file: VirtualFile) {
       }
     }
 
-    private fun getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
-      val res: MutableMap<String, String> = LinkedHashMap()
-
-      val compilerArgument: String? = compilerConfig.getChildText("compilerArgument")
-      addAnnotationProcessorOptionFromParameterString(compilerArgument, res)
-
-      val compilerArgs: Element? = compilerConfig.getChild("compilerArgs")
-      if (compilerArgs != null) {
-        for (e: Element in compilerArgs.children) {
-          if (!StringUtil.equals(e.name, "arg")) continue
-          val arg: String = e.textTrim
-          addAnnotationProcessorOption(arg, res)
-        }
-      }
-
-      val compilerArguments: Element? = compilerConfig.getChild("compilerArguments")
-      if (compilerArguments != null) {
-        for (e: Element in compilerArguments.children) {
-          var name: String = e.name
-          name = name.removePrefix("-")
-
-          if (name.length > 1 && name[0] == 'A') {
-            res[name.substring(1)] = e.textTrim
-          }
-        }
-      }
-      return res
-    }
-
-    private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
-      if (!compilerArguments.isNullOrBlank()) {
-        val parametersList = ParametersList()
-        parametersList.addParametersString(compilerArguments)
-
-        for (param: String in parametersList.parameters) {
-          addAnnotationProcessorOption(param, res)
-        }
-      }
-    }
-
-    private fun addAnnotationProcessorOption(compilerArg: String?, optionsMap: MutableMap<String, String>) {
-      if (compilerArg == null || compilerArg.trim { it <= ' ' }.isEmpty()) return
-
-      if (compilerArg.startsWith("-A")) {
-        val idx: Int = compilerArg.indexOf('=', 3)
-        if (idx >= 0) {
-          optionsMap[compilerArg.substring(2, idx)] = compilerArg.substring(idx + 1)
-        }
-        else {
-          optionsMap[compilerArg.substring(2)] = ""
-        }
-      }
-    }
-
-    private fun getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin: MavenPlugin): Map<String, String> {
-      var cfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-      if (cfg == null) {
-        cfg = bscMavenPlugin.configurationElement
-      }
-      val res: LinkedHashMap<String, String> = LinkedHashMap()
-      if (cfg != null) {
-        val compilerArguments = cfg.getChildText("compilerArguments")
-        addAnnotationProcessorOptionFromParameterString(compilerArguments, res)
-
-        val optionsElement: Element? = cfg.getChild("options")
-        if (optionsElement != null) {
-          for (option: Element in optionsElement.children) {
-            res[option.name] = option.text
-          }
-        }
-      }
-      return res
-    }
-
     @JvmStatic
     fun readConfigFile(baseDir: File?, kind: ConfigFileKind): Map<String, String> {
       val configFile = File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath))
@@ -1121,7 +839,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
       nativeModelMap: Map<String, String>,
-      settings: MavenGeneralSettings,
+      effectiveRepositoryPath: Path,
       keepPreviousArtifacts: Boolean,
       keepPreviousProfiles: Boolean,
       keepPreviousPlugins: Boolean,
@@ -1136,7 +854,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginRepositories = LinkedHashSet<MavenRemoteRepository>()
       val newDependencies = LinkedHashSet<MavenArtifact>()
       val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
-      val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
+      val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
       val newManagedDeps = LinkedHashMap<String, MavenId>()
@@ -1155,11 +873,11 @@ class MavenProject(val file: VirtualFile) {
       // either keep all previous plugins or only those that are present in the new list
       if (keepPreviousPlugins) {
         newPluginInfos.addAll(state.pluginInfos)
-        newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
+        newPluginInfos.addAll(model.plugins.map { MavenPluginWithArtifact(it, null) })
       }
       else {
         model.plugins.forEach { newPlugin ->
-          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginInfo(newPlugin, null))
+          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginWithArtifact(newPlugin, null))
         }
       }
 
@@ -1188,7 +906,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveRepositoryPath.toFile(),
+        localRepository = effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,
@@ -1233,7 +951,9 @@ class MavenProject(val file: VirtualFile) {
     private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
-      for (module in mavenModel.modules) {
+      val modules = mavenModel.modules
+      if (null == modules) return result
+      for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
 
@@ -1262,10 +982,10 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
-      if (profiles == null) return emptyList()
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Set<String> {
+      if (profiles == null) return emptySet()
 
-      val result: MutableSet<String> = HashSet(profiles.size)
+      val result = HashSet<String>(profiles.size)
       for (each in profiles) {
         result.add(each.id)
       }

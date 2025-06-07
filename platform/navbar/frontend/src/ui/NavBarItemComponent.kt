@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.frontend.actions.navBarContextMenuActionGroup
@@ -215,7 +214,7 @@ internal class NavBarItemComponent(
   private fun effectiveIcon(presentation: NavBarItemPresentationData): Icon? {
     return when {
       ExperimentalUI.isNewUI() && presentation.isModuleContentRoot -> AllIcons.Nodes.Module8x8
-      Registry.`is`("navBar.show.icons") || vm.isLast || presentation.hasContainingFile -> presentation.icon
+      vm.isLast || presentation.hasContainingFile -> presentation.icon
       else -> null
     }
   }

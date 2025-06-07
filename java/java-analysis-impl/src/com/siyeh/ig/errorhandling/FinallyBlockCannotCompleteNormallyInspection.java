@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,14 +30,12 @@ public final class FinallyBlockCannotCompleteNormallyInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "finally";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finally.block.cannot.complete.normally.problem.descriptor");
   }
@@ -68,7 +67,7 @@ public final class FinallyBlockCannotCompleteNormallyInspection
       final PsiElement[] children = statement.getChildren();
       for (final PsiElement child : children) {
         final String childText = child.getText();
-        if (PsiKeyword.FINALLY.equals(childText)) {
+        if (JavaKeywords.FINALLY.equals(childText)) {
           registerError(child);
           return;
         }

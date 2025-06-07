@@ -25,9 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @ApiStatus.Internal
 public final class DirectByteBufferAllocator {
-  // Fixes IDEA-222358 Linux native memory leak. Please do not replace with BoundedTaskExecutor
+  // Fixes IDEA-222358 Linux native memory leak. Please do not replace it with BoundedTaskExecutor.
+  // This workaround is disabled if the native launcher is used because it fixes the issue differently (via `mallopt`, see JBR-1837)
   private static final ExecutorService singleThreadAllocator =
-    SystemInfoRt.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators", true)
+    SystemInfoRt.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators",
+                                                                System.getProperty("ide.native.launcher") == null)
     ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
     : null;
 
@@ -158,12 +160,12 @@ public final class DirectByteBufferAllocator {
   }
 
   public void release(@NotNull ByteBuffer buffer) {
-    int capacity = buffer.capacity();
     if (useBuffersCache()) {
       // We allow totalSizeOfBuffersInCache to become slightly more than the limit due to race. It is
       // a tradeoff: we have >1 condition to satisfy (totalSizeOfBuffersInCache and POOL_CAPACITY_PER_BUFFER_SIZE),
       // and satisfying them both atomically requires too much effort -- better give a slack to one of them.
       if (totalSizeOfBuffersInCache.get() < maxBuffersToCacheInBytes) {
+        int capacity = buffer.capacity();
         if (buffersPool.computeIfAbsent(capacity, __ -> new ArrayBlockingQueue<>(POOL_CAPACITY_PER_BUFFER_SIZE)).offer(buffer)) {
           totalSizeOfBuffersInCache.addAndGet(capacity);
           reclaimed.incrementAndGet();
@@ -172,13 +174,26 @@ public final class DirectByteBufferAllocator {
       }
     }
 
-    totalSizeOfBuffersAllocated.addAndGet(-capacity);
+    releaseBufferWithoutCaching(buffer);
+  }
+
+  private void releaseBufferWithoutCaching(@NotNull ByteBuffer buffer) {
+    totalSizeOfBuffersAllocated.addAndGet(-buffer.capacity());
     ByteBufferUtil.cleanBuffer(buffer);
     disposed.incrementAndGet();
   }
 
   private static ByteBuffer allocateNewBuffer(int size) {
     return allocate(() -> ByteBuffer.allocateDirect(size));
+  }
+
+  public void releaseCachedBuffers() {
+    for (ArrayBlockingQueue<ByteBuffer> queue : buffersPool.values()) {
+      ByteBuffer buffer;
+      while ((buffer = queue.poll()) != null) {
+        releaseBufferWithoutCaching(buffer);
+      }
+    }
   }
 
   public Statistics getStatistics() {

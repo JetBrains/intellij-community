@@ -1,0 +1,14 @@
+{
+    "modules": [
+        {
+            "name": "A",
+            "content_roots": ["tests", "production"],
+            "dependencies": [
+                { "name": "B", "scope": "COMPILE", "productionOnTest": true },
+                { "name": "C", "scope": "TEST", "productionOnTest": true }
+            ]
+        },
+        { "name": "B", "content_roots": ["tests", "production"] },
+        { "name": "C", "content_roots": ["tests", "production"] }
+    ]
+}

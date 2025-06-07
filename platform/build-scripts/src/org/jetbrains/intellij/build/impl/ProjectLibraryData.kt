@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import java.util.*
+import java.util.TreeMap
 
 enum class LibraryPackMode {
   // merged into some uber-JAR
@@ -10,13 +10,13 @@ enum class LibraryPackMode {
   STANDALONE_MERGED,
   // all JARs of the library are included in the dist separately
   STANDALONE_SEPARATE,
-  // all JARs of the library is included in the dist separately with transformed file names (version suffix is removed)
+  // all JARs of the library are included in the dist separately with transformed file names (version suffix is removed)
   STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 }
 
 class ProjectLibraryData(
   @JvmField val libraryName: String,
-  @JvmField val packMode: LibraryPackMode,
+  @JvmField val packMode: LibraryPackMode = LibraryPackMode.STANDALONE_MERGED,
   @JvmField val reason: String?,
   @JvmField val outPath: String? = null,
 ) {

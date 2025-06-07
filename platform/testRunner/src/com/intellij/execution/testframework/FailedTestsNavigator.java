@@ -59,15 +59,13 @@ class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return getNextName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return getPreviousName();
   }
 

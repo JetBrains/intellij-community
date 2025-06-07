@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.*
@@ -20,12 +20,10 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConditionalContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractConstantValue
-import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractReturnsContractEffectDeclaration.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.booleans.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
@@ -127,29 +125,38 @@ class KotlinFunctionCallInstruction(
             }
 
             is KaContractLogicalNotExpression -> argument.toCondition(factory, callDescriptor, arguments)?.negate()
-            is KaContractIsNullPredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
+            is KaContractIsNullPredicateExpression -> argument.findDfaValue(callDescriptor, arguments)
                 ?.cond(RelationType.equivalence(!isNegated), factory.fromDfType(DfTypes.NULL))
 
-            is KaContractIsInstancePredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
+            is KaContractIsInstancePredicateExpression -> argument.findDfaValue(callDescriptor, arguments)
                 ?.cond(if (isNegated) RelationType.IS_NOT else RelationType.IS, factory.fromDfType(type.toDfType()))
 
             else -> null
         }
     }
 
-    private fun KaParameterSymbol.findDfaValue(
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun KaContractParameterValue.findDfaValue(
         callDescriptor: KaFunctionCall<*>,
         arguments: DfaCallArguments
-    ): DfaValue? {
-        if (this is KaReceiverParameterSymbol) {
-            return arguments.qualifier
+    ): DfaValue? = when (this) {
+        is KaContractExplicitParameterValue -> when (val symbol = symbol) {
+            // TODO: KTIJ-33109 support context parameters
+            is KaContextParameterSymbol -> null
+            is KaValueParameterSymbol -> {
+                val parameterIndex = callDescriptor.argumentMapping.values.map { it.symbol }.indexOf(symbol)
+                if (parameterIndex >= 0 && parameterIndex < arguments.arguments.size) {
+                    arguments.arguments[parameterIndex]
+                } else {
+                    null
+                }
+            }
+
+            is KaReceiverParameterSymbol -> arguments.qualifier
         }
-        val parameterIndex = callDescriptor.argumentMapping.values.map { it.symbol }.indexOf(this)
-        return if (parameterIndex >= 0 && parameterIndex < arguments.arguments.size) {
-            arguments.arguments[parameterIndex]
-        } else {
-            null
-        }
+
+        is KaContractOwnerParameterValue -> arguments.qualifier
     }
 
     @OptIn(KaExperimentalApi::class)

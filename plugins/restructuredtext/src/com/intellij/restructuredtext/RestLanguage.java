@@ -19,9 +19,8 @@ public final class RestLanguage extends Language implements TemplateLanguage  {
     super("ReST");
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return RestBundle.message("rest.language");
   }
 

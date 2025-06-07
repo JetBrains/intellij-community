@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.macro.MacroManager;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 @State(name = "GlobalAntConfiguration", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
@@ -50,9 +51,9 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
 
   public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<>(
     "$GlobalAntConfiguration.INSTANCE", null);
-  @NonNls public static final String ANT_FILE = "ant";
-  @NonNls public static final String LIB_DIR = "lib";
-  @NonNls private static final String ANT_JAR_FILE_NAME = "ant.jar";
+  public static final @NonNls String ANT_FILE = "ant";
+  public static final @NonNls String LIB_DIR = "lib";
+  private static final @NonNls String ANT_JAR_FILE_NAME = "ant.jar";
 
   public GlobalAntConfiguration() {
     myProperties.registerProperty(FILTERS_TABLE_LAYOUT, Externalizer.STORAGE);
@@ -124,8 +125,8 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {
-    Map<AntReference, AntInstallation> map = ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
-                                                                            AntInstallation.REFERENCE_TO_ANT);
+    Map<AntReference, AntInstallation> map = new HashMap<>(ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
+                                                                                          AntInstallation.REFERENCE_TO_ANT));
     map.put(AntReference.BUNDLED_ANT, myBundledAnt);
     return map;
   }

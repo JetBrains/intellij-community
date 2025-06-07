@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.grazie.markdown` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "markdown_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "markdown",
+  module_name = "intellij.grazie.markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//plugins/markdown/core:markdown",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/util-ex",
+  ],
+  runtime_deps = [":markdown_resources"]
+)
+### auto-generated section `build intellij.grazie.markdown` end

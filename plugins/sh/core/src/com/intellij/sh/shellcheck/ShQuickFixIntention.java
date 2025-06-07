@@ -25,15 +25,14 @@ public class ShQuickFixIntention implements IntentionAction {
     this.fix = fix;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return ShBundle.message("sh.shell.script");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return timestamp == file.getModificationStamp();
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return timestamp == psiFile.getModificationStamp();
   }
 
   @Override
@@ -41,14 +40,13 @@ public class ShQuickFixIntention implements IntentionAction {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return message;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (editor == null) return;
     class Replacement {
       final String replacement;

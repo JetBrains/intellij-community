@@ -1,6 +1,7 @@
 {
     "mainFile": "JustKotlinEnum.kt",
     "usages": [
-        "Main.java"
+        "Main.java",
+        "MainKotlin.kt"
     ]
 }

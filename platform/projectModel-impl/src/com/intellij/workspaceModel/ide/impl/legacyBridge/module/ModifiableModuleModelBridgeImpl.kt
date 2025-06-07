@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -21,6 +21,7 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -59,17 +60,25 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getModules(): Array<Module> = currentModuleSet.toTypedArray()
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
-    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
-                                                   dependencies = listOf(ModuleSourceDependency),
-                                                   entitySource = NonPersistentEntitySource
-    )
+    val moduleEntity = diff.addEntity(ModuleEntity(
+      name = moduleName,
+      dependencies = listOf(ModuleSourceDependency),
+      entitySource = NonPersistentEntitySource,
+    ))
 
-    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(
+      symbolicId = moduleEntity.symbolicId,
+      name = moduleName,
+      virtualFileUrl = null,
+      entityStorage = entityStorageOnDiff,
+      diff = diff,
+      init = {},
+    )
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     modulesToAdd.put(moduleName, module)
     currentModuleSet.add(module)
 
-    module.init()
+    module.initNewlyAddedModule()
     module.setModuleType(moduleTypeId)
     return module
   }
@@ -78,7 +87,7 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
-    val canonicalPath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath))
+    val canonicalPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath))
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
@@ -111,22 +120,21 @@ internal class ModifiableModuleModelBridgeImpl(
     return try {
       FileUtil.resolveShortWindowsName(filePath)
     }
-    catch (ignored: IOException) {
+    catch (_: IOException) {
       filePath
     }
   }
 
   private fun createModuleInstance(moduleEntity: ModuleEntity, isNew: Boolean): ModuleBridge {
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity = moduleEntity,
-                                                            versionedStorage = entityStorageOnDiff,
-                                                            diff = diff,
-                                                            isNew = isNew,
-                                                            precomputedExtensionModel = null,
-                                                            plugins = plugins,
-                                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
+    val moduleInstance = moduleManager.createModuleInstance(
+      moduleEntity = moduleEntity,
+      versionedStorage = entityStorageOnDiff,
+      diff = diff,
+      isNew = isNew,
+      precomputedExtensionModel = precomputeModuleLevelExtensionModel(),
+    )
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
-    modulesToAdd[moduleEntity.name] = moduleInstance
+    modulesToAdd.put(moduleEntity.name, moduleInstance)
     currentModuleSet.add(moduleInstance)
     return moduleInstance
   }
@@ -284,8 +292,9 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getNewName(module: Module): String? = newNameToModule.getKeysByValue(module as ModuleBridge)?.single()
   override fun getActualName(module: Module): String = getNewName(module) ?: module.name
 
-  override fun getModuleGroupPath(module: Module): Array<String>? =
-    ModuleManagerBridgeImpl.getModuleGroupPath(module, entityStorageOnDiff)
+  override fun getModuleGroupPath(module: Module): Array<String>? {
+    return ModuleManagerBridgeImpl.getModuleGroupPath(module as ModuleBridge, entityStorageOnDiff)
+  }
 
   override fun hasModuleGroups(): Boolean = ModuleManagerBridgeImpl.hasModuleGroups(entityStorageOnDiff)
 
@@ -296,26 +305,28 @@ internal class ModifiableModuleModelBridgeImpl(
     val groupPathList = groupPath?.toMutableList()
 
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
-    if (moduleGroupEntity?.path != groupPathList) {
-      when {
-        moduleGroupEntity == null && groupPathList != null -> {
-          diff.modifyModuleEntity(moduleEntity) {
-            this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
-          }
-        }
-
-        moduleGroupEntity == null && groupPathList == null -> Unit
-
-        moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
-
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
-          path = groupPathList
-        }
-
-        else -> error("Should not be reached")
-      }
-      moduleGroupsAreModified = true
+    if (moduleGroupEntity?.path == groupPathList) {
+      return
     }
+
+    when {
+      moduleGroupEntity == null && groupPathList != null -> {
+        diff.modifyModuleEntity(moduleEntity) {
+          this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
+        }
+      }
+
+      moduleGroupEntity == null && groupPathList == null -> Unit
+
+      moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
+
+      moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
+        path = groupPathList
+      }
+
+      else -> error("Should not be reached")
+    }
+    moduleGroupsAreModified = true
   }
 
   companion object {

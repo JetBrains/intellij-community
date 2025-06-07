@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -45,9 +45,9 @@ public final class GrPullUpConflictsUtil {
   }
 
   public static MultiMap<PsiElement, @Nls String> checkConflicts(final MemberInfoBase<? extends GrMember>[] infos,
-                                                                 @NotNull final PsiClass subclass,
+                                                                 final @NotNull PsiClass subclass,
                                                                  @Nullable PsiClass superClass,
-                                                                 @NotNull final PsiPackage targetPackage,
+                                                                 final @NotNull PsiPackage targetPackage,
                                                                  @NotNull PsiDirectory targetDirectory,
                                                                  final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                                  boolean movedMembers2Super) {
@@ -228,7 +228,7 @@ public final class GrPullUpConflictsUtil {
       if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-          for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
+          for (PsiClass subClass : ClassInheritorsSearch.search(superClass).asIterable()) {
             if (method.getContainingClass() != subClass) {
               MethodSignature signature = ((PsiMethod) member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
               final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);

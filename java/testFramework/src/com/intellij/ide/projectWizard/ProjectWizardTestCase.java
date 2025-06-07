@@ -48,8 +48,7 @@ import java.util.function.Supplier;
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends HeavyPlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
   protected T myWizard;
-  @Nullable
-  private Project myCreatedProject;
+  private @Nullable Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
   private File contentRoot;
 
@@ -136,7 +135,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected void waitForConfiguration(@NotNull Project project) {
     UIUtil.dispatchAllInvocationEvents();
     IndexingTestUtil.waitUntilIndexesAreReady(project);
-    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project);
+    TestObservation.waitForConfiguration(project, TimeUnit.MINUTES.toMillis(10));
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {

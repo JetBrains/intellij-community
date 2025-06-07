@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +84,8 @@ public class IdeaLogRecordFormatter extends Formatter {
     sb.append(s);
   }
 
-  private static String smartAbbreviate(String category) {
+  @ApiStatus.Internal
+  public static String smartAbbreviate(String category) {
     if (category == null) return null;
 
     StringBuilder result = new StringBuilder();

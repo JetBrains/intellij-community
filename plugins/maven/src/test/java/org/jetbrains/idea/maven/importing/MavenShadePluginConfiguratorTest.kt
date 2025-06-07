@@ -68,6 +68,7 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     val uberJarPath = m2.parent.path + "/target/m2-1.jar"
+    assertModuleModuleDeps("m1", "m2")
     assertModuleLibDep("m1", "Maven Shade: test:m2:1",
                        "jar://$uberJarPath!/")
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.navigation.EmptyNavigatable;
@@ -38,8 +38,7 @@ public final class MavenNavigationUtil {
 
   private MavenNavigationUtil() { }
 
-  @Nullable
-  public static Navigatable createNavigatableForPom(final Project project, final VirtualFile file) {
+  public static @Nullable Navigatable createNavigatableForPom(final Project project, final VirtualFile file) {
     if (file == null || !file.isValid()) return null;
     final PsiFile result = PsiManager.getInstance(project).findFile(file);
     return result == null ? null : new NavigatableAdapter() {
@@ -90,19 +89,16 @@ public final class MavenNavigationUtil {
       ).orElse(EmptyNavigatable.INSTANCE);
   }
 
-  @Nullable
-  public static VirtualFile getArtifactFile(Project project, MavenId id) {
+  public static @Nullable VirtualFile getArtifactFile(Project project, MavenId id) {
     Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getRepositoryPath(), id);
     return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   }
 
-  @Nullable
-  public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
+  public static @Nullable MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
     MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor =
       new MavenDomProjectProcessorUtils.SearchProcessor<>() {
-        @Nullable
         @Override
-        protected MavenDomDependency find(MavenDomDependencies element) {
+        protected @Nullable MavenDomDependency find(MavenDomDependencies element) {
           for (MavenDomDependency dependency : element.getDependencies()) {
             if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
                 Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {

@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
-import com.intellij.driver.sdk.ui.UiText.Companion.allText
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
@@ -16,13 +16,9 @@ import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
 import java.awt.IllegalComponentStateException
 import java.awt.Point
-import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -38,84 +34,12 @@ data class ComponentData(
 private val LOG = logger<UiComponent>()
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
-  companion object {
-    /**
-     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
-    fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
-      findThisComponent(timeout)
-      return this
-    }
-
-    /**
-     * Asserts that the current UI component is found. Doesn't check visibility.
-     *
-     * @return The current UI component.
-     */
-    fun <T : UiComponent> T.assertFound(): T {
-      assert(present()) { "Component '$this' should be found" }
-      return this
-    }
-
-    /**
-     * Waits until the element specified is not found within the parent search context.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
-    fun <T : UiComponent> T.waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-      waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
-              timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-              interval = 1.seconds) {
-        !present()
-      }
-    }
-
-    /**
-     * Asserts that the calling UiComponent is not found in the hierarchy.
-     */
-    fun <T : UiComponent> T.assertNotFound() {
-      assert(!present()) { "Component '$this' should not be found" }
-    }
-
-    fun <T : UiComponent> T.waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is focus owner", timeout = timeout) {
-        component.isFocusOwner()
-      }
-      return this
-    }
-
-    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is visible", timeout = timeout) {
-        component.isVisible()
-      }
-      return this
-    }
-  }
-
-  override fun toString(): String {
-    return this::class.simpleName + "[xpath=${data.xpath}]"
-  }
-
   private var cachedComponent: Component? = null
 
   val component: Component
     get() = data.foundComponent
             ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
             ?: findThisComponent().apply { cachedComponent = this }
-
-  fun setFocus() {
-    withComponent { robot.focus(it) }
-  }
-
-  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component =
-    waitForOne(
-      message = "Find ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
-      timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-      interval = 1.seconds,
-      getter = { data.parentSearchContext.findAll(data.xpath) }
-    )
 
   override val driver: Driver = data.driver
   override val searchService: SearchService = data.searchService
@@ -132,6 +56,47 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       return withComponent { searchService.findAll(xpath, it) }
     }
   }
+
+  companion object {
+    /**
+     * Waits until the element specified is found within the parent search context.
+     *
+     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+     */
+    fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
+      findThisComponent(timeout)
+      return this
+    }
+  }
+
+  /**
+   * Waits until the element specified is not found within the parent search context.
+   *
+   * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+   */
+  fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+            timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+            interval = 1.seconds) {
+      !present()
+    }
+  }
+
+  override fun toString(): String {
+    return this::class.simpleName + "[xpath=${data.xpath}]"
+  }
+
+  fun setFocus() {
+    withComponent { robot.focus(it) }
+  }
+
+  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component =
+    waitForOne(
+      message = "Find ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+      timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+      interval = 1.seconds,
+      getter = { data.parentSearchContext.findAll(data.xpath) }
+    )
 
   fun <T> withComponent(action: (Component) -> T): T {
     var lastException: Exception? = null
@@ -162,36 +127,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /*
     Returns all UiText's matching predicate without waiting
    */
-  fun getAllTexts(predicate: ((UiText) -> Boolean)? = null): List<UiText> {
-    val allText = withComponent { searchService.findAllText(it) }
-      .map { UiText(this, it) }
-    return predicate?.let { allText.filter(predicate) } ?: allText
-  }
-
-  /**
-   * Returns all UiText objects matching the specified text without waiting.
-   * NB: In certain cases (e.g., console output) `getAllTest()` will not much `JEditorUiComponent.text`
-   * and `getAllTest()` will return only currently visible text.
-   *
-   */
-  fun getAllTexts(text: String): List<UiText> {
+  fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
     return withComponent { searchService.findAllText(it) }
+      .filter { text -> filter?.invoke(UiText(this, text)) ?: true }
       .map { UiText(this, it) }
-      .filter { it.text == text }
-  }
-
-  fun allTextAsString(): String {
-    return getAllTexts().allText()
-  }
-
-  /**
-   * Waits for a non-empty list of UiText's.
-   */
-  fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitAny(message = message ?: "Finding at least some texts in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() }
-    )
   }
 
   /**
@@ -219,19 +158,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /**
    * Waits for one UiText with text '$text'.
    */
-  fun waitOneText(text: String, message: String, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message,
+  fun waitOneText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitForOne(message = message ?: "Finding text '$text' in $this",
                       timeout = timeout,
                       getter = { getAllTexts() },
                       checker = { it.text == text }
     )
-  }
-
-  /**
-   * Waits for one UiText with text '$text'.
-   */
-  fun waitOneText(text: String, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitOneText(message = "Finding text '$text' in $this", timeout = timeout, text = text)
   }
 
   /**
@@ -242,17 +174,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                       timeout = timeout,
                       getter = { getAllTexts() },
                       checker = { predicate(it) }
-    )
-  }
-
-  /**
-   * Waits until there is no UiText's.
-   */
-  fun waitNoTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message ?: "Finding no texts in $this",
-            timeout = timeout,
-            getter = { getAllTexts() },
-            checker = { it.isEmpty() }
     )
   }
 
@@ -278,59 +199,36 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     )
   }
 
-  /**
-   * Waits until there is one UiText's with substring '$text'.
-   */
-  fun waitOneContainsText(text: String, message: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message,
-                      timeout = timeout,
-                      getter = { getAllTexts() },
-                      checker = { it.text.contains(text, ignoreCase = ignoreCase) }
-    )
+  fun hasSubtext(subtext: String): Boolean {
+    return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
   }
 
   /**
    * Waits until there is one UiText's with substring '$text'.
    */
-  fun waitOneContainsText(text: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitOneContainsText(message = "Finding the text containing '$text' in $this",
-                               timeout = timeout, text = text, ignoreCase = ignoreCase)
+  fun waitOneContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitForOne(message = message ?: "Finding the text containing '$text' in $this",
+                      timeout = timeout,
+                      getter = { getAllTexts() },
+                      checker = { it.text.contains(other = text, ignoreCase = ignoreCase) }
+    )
   }
 
   /**
    * Waits until all text contains 'text'.
    */
-  fun waitContainsText(text: String, message: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message,
+  fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding the text containing '$text' in $this",
             timeout = timeout,
-            getter = { getAllTexts().allText() },
+            getter = { getAllTexts().asString() },
             checker = { it.contains(text, ignoreCase = ignoreCase) }
     )
   }
 
-  /**
-   * Waits until all text contains 'text'.
-   */
-  fun waitContainsText(text: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) =
-    waitContainsText(message = "Finding the text containing '$text' in $this", timeout = timeout, text = text, ignoreCase = ignoreCase)
-
   fun hasText(text: String): Boolean {
-    return getAllTexts(text).isNotEmpty()
+    return getAllTexts().any { it.text == text }
   }
 
-  fun hasTextSequence(vararg texts: String, indexOffset: Int = 0): Boolean {
-    require(indexOffset >= 0) { "Value must be non-negative" }
-    val stringList = texts.toList()
-    val uiTextList = getAllTexts()
-    return stringList.indices.all { index ->
-      val uiTextIndex = index + indexOffset
-      uiTextIndex in uiTextList.indices && stringList[index] == uiTextList[uiTextIndex].text
-    }
-  }
-
-  fun hasSubtext(subtext: String): Boolean {
-    return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
-  }
 
   /**
    * Retrieves all UI text elements in a vertically ordered manner.
@@ -361,24 +259,21 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * @return A list of `UiText` objects that match the specified conditions.
    */
   fun waitOneMatchInVerticallyOrderedText(
-    message: String? = null,
     text: String,
+    message: String? = null,
     fullMatch: Boolean = true,
     timeout: Duration = DEFAULT_FIND_TIMEOUT,
   ): List<UiText> =
-    waitForOne(message, timeout,
+    waitForOne(message ?: "Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", timeout,
                getter = { getAllVerticallyOrderedUiText() },
                checker = {
                  if (fullMatch) {
-                   text == it.allText()
+                   text == it.asString()
                  }
                  else {
-                   it.allText().contains(text)
+                   it.asString().contains(text)
                  }
                })
-
-  fun waitOneMatchInVerticallyOrderedText(text: String, fullMatch: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> =
-    waitOneMatchInVerticallyOrderedText("Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", text, fullMatch, timeout = timeout)
 
   fun present(): Boolean {
     val found = data.parentSearchContext.findAll(data.xpath)
@@ -402,12 +297,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return !present()
   }
 
-  fun hasText(predicate: (UiText) -> Boolean): Boolean {
-    return getAllTexts().any(predicate)
-  }
-
-  fun isVisible(): Boolean {
-    return withComponent { it.isVisible() }
+  fun isFocusOwner(): Boolean {
+    return withComponent { it.isFocusOwner() }
   }
 
   fun isEnabled(): Boolean {
@@ -415,9 +306,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun hasVisibleComponent(component: UiComponent): Boolean {
+    return hasComponent(component, Component::isShowing)
+  }
+
+  fun hasComponent(component: UiComponent, check: (Component) -> Boolean): Boolean {
     val components = searchContext.findAll(component.data.xpath)
     if (components.isEmpty()) return false
-    return components.any { it.isVisible() }
+    return components.any { check(it) }
   }
 
   fun getParent(): UiComponent {
@@ -427,100 +322,57 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                                      data.parentSearchContext, parent))
   }
 
-  fun getScreenshot(): BufferedImage {
-    val screenshotPath = driver.takeScreenshot(this::class.simpleName)!!
-
-    return withComponent { component ->
-      val screenshot = ImageIO.read(File(screenshotPath))
-        .getSubimage(component.getLocationOnScreen().x, component.getLocationOnScreen().y, component.width, component.height)
-
-      if (SystemInfo.isWindows && this is DialogUiComponent) {
-        screenshot.getSubimage(
-          7,
-          0,
-          component.width - 14,
-          component.height - 7
-        )
-      }
-      else {
-        screenshot
-      }
+  fun getColor(point: Point?, moveMouse: Boolean = true): Color {
+    if (moveMouse) moveMouse(point)
+    return withComponent {
+      Color(robot.getColor(it, point).getRGB())
     }
-  }
-
-  fun getFullScreenScreenshot(): BufferedImage {
-    val screenshotPath = driver.takeScreenshot(this::class.simpleName)!!
-    return ImageIO.read(File(screenshotPath))
   }
 
   // Mouse
-  fun click(point: Point? = null, silent: Boolean = false) {
+  fun click(point: Point? = null) {
+    LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Click at $this: $point")
-      }
       withComponent { robot.click(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Click at '$this'")
-      }
       withComponent { robot.click(it) }
     }
   }
 
-  fun doubleClick(point: Point? = null, silent: Boolean = false) {
+  fun doubleClick(point: Point? = null) {
+    LOG.info("Double click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Double click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 2) }
     }
     else {
-      if (!silent) {
-        LOG.info("Double click at '$this'")
-      }
       withComponent { robot.doubleClick(it) }
     }
   }
 
-  fun rightClick(point: Point? = null, silent: Boolean = false) {
+  fun tripleClick(point: Point) {
+    LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+  }
+
+  fun rightClick(point: Point? = null) {
+    LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Right click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.RIGHT, 1) }
     }
     else {
-      if (!silent) {
-        LOG.info("Right click at $this")
-      }
       withComponent { robot.rightClick(it) }
     }
   }
 
-  fun click(button: RemoteMouseButton, count: Int) {
-    LOG.info("Click with $button $count times at $this")
-    withComponent { robot.click(it, button, count) }
-  }
-
-  fun moveMouse(point: Point? = null, silent: Boolean = false) {
+  fun moveMouse(point: Point? = null) {
+    LOG.info("Move mouse to $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Move mouse to $this: $point")
-      }
       withComponent { robot.moveMouse(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Move mouse to $this")
-      }
       withComponent { robot.moveMouse(it) }
     }
-  }
-
-  fun hasFocus(): Boolean {
-    return withComponent { it.isFocusOwner() }
   }
 
   fun mousePressMoveRelease(from: Point, to: Point) {

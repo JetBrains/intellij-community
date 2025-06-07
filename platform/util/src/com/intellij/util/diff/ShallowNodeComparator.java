@@ -5,9 +5,10 @@ package com.intellij.util.diff;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-public interface ShallowNodeComparator<OT, NT> {
-  @NotNull
-  ThreeState deepEqual(@NotNull OT oldNode, @NotNull NT newNode);
-  boolean typesEqual(@NotNull OT oldNode, @NotNull NT newNode);
-  boolean hashCodesEqual(@NotNull OT oldNode, @NotNull NT newNode);
+public interface ShallowNodeComparator<OldNode, NewNode> {
+  @NotNull ThreeState deepEqual(@NotNull OldNode oldNode, @NotNull NewNode newNode);
+
+  boolean typesEqual(@NotNull OldNode oldNode, @NotNull NewNode newNode);
+
+  boolean hashCodesEqual(@NotNull OldNode oldNode, @NotNull NewNode newNode);
 }

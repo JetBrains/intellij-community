@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -81,7 +81,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             }
         })
 
-    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: ClassId) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
+    private class ChangeTypeToMutableFix(private val type: ClassId) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
@@ -174,14 +174,11 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class JoinWithInitializerFix(@SafeFieldForPreview private val op: KtSingleValueToken) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("join.with.initializer.fix.text")
-
-        override fun getFamilyName() = name
+    private class JoinWithInitializerFix(private val op: KtSingleValueToken) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("join.with.initializer.fix.text")
 
         override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
-            val operationReference = element
-            val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
+            val binaryExpression = element.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val right = binaryExpression.right ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return

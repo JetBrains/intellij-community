@@ -18,17 +18,17 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.venvReader.VirtualEnvReader
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
 val Project.sdks get() = modules.mapNotNull(Module::getSdk)
@@ -53,19 +53,6 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   return data
 }
 
-fun normalizePackageName(packageName: String): String {
-  var name = packageName
-  if (!name.startsWith("_")) {
-    // for cases such as __future__, etc
-    name = name.replace('_', '-')
-  }
-
-  return name
-    .replace(".", "-")
-    .replace("\"", "")
-    .lowercase()
-}
-
 @Deprecated("""
   It makes no sense to add a Python version or something similar to the event.
   If you need to get an event with a specific execution type, interpreter type, or whatsoever, please use the corresponding segment in the analytics platform.
@@ -82,7 +69,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
 }
 
 val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
-val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
+val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("Python"))
 
 
 enum class InterpreterTarget(val value: String) {
@@ -125,6 +112,8 @@ enum class InterpreterType(val value: String) {
   REGULAR("regular"),
   POETRY("poetry"),
   PYENV("pyenv"),
+  UV("uv"),
+  HATCH("hatch"),
 }
 
 enum class InterpreterCreationMode(val value: String) {
@@ -133,12 +122,7 @@ enum class InterpreterCreationMode(val value: String) {
   NA("not_applicable"),
 }
 
-val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
-                                                                    CONDAVENV.value,
-                                                                    VIRTUALENV.value,
-                                                                    REGULAR.value,
-                                                                    POETRY.value,
-                                                                    PYENV.value))
+val INTERPRETER_TYPE = EventFields.String("interpreterType", InterpreterType.entries.map { it.value } )
 
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                        CUSTOM.value,
@@ -159,6 +143,7 @@ val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
+    isUv -> UV
     isPoetry -> POETRY
     PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV

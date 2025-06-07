@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -188,13 +188,11 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
   }
 
-  @NotNull
-  public static GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
+  public static @NotNull GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
     return CodeStyle.getCustomSettings(file, GroovyCodeStyleSettings.class);
   }
 
-  @NotNull
-  public static GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
+  public static @NotNull GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
     return CodeStyle.getSettings(editor).getCustomSettings(GroovyCodeStyleSettings.class);
   }
 }

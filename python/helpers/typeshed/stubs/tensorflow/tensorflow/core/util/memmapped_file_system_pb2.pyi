@@ -16,21 +16,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================
 """
+
 import builtins
 import collections.abc
+import typing
+
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
 import google.protobuf.message
-import sys
-
-if sys.version_info >= (3, 8):
-    import typing as typing_extensions
-else:
-    import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@typing_extensions.final
+@typing.final
 class MemmappedFileSystemDirectoryElement(google.protobuf.message.Message):
     """A message that describes one region of memmapped file."""
 
@@ -49,11 +46,11 @@ class MemmappedFileSystemDirectoryElement(google.protobuf.message.Message):
         name: builtins.str | None = ...,
         length: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["length", b"length", "name", b"name", "offset", b"offset"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["length", b"length", "name", b"name", "offset", b"offset"]) -> None: ...
 
 global___MemmappedFileSystemDirectoryElement = MemmappedFileSystemDirectoryElement
 
-@typing_extensions.final
+@typing.final
 class MemmappedFileSystemDirectory(google.protobuf.message.Message):
     """A directory of regions in a memmapped file."""
 
@@ -67,6 +64,6 @@ class MemmappedFileSystemDirectory(google.protobuf.message.Message):
         *,
         element: collections.abc.Iterable[global___MemmappedFileSystemDirectoryElement] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["element", b"element"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["element", b"element"]) -> None: ...
 
 global___MemmappedFileSystemDirectory = MemmappedFileSystemDirectory

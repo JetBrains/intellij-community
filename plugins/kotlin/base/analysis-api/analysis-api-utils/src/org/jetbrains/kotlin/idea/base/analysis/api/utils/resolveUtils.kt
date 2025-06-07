@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -21,9 +22,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
@@ -36,22 +40,23 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     }
 
     if (candidates.isEmpty()) return emptyList()
-    val fileSymbol = callElement.containingKtFile.symbol
 
-    return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
+    val visibilityChecker = createUseSiteVisibilityChecker(callElement.containingKtFile.symbol, explicitReceiver, callElement)
+    return candidates.filter { filterCandidate(it, callElement, explicitReceiver, visibilityChecker) }
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun filterCandidate(
     candidateInfo: KaCallCandidateInfo,
     callElement: KtElement,
-    fileSymbol: KaFileSymbol,
-    explicitReceiver: KtExpression?
+    explicitReceiver: KtExpression?,
+    visibilityChecker: KaUseSiteVisibilityChecker,
 ): Boolean {
     val candidateCall = candidateInfo.candidate
     if (candidateCall !is KaFunctionCall<*>) return false
     val signature = candidateCall.partiallyAppliedSymbol.signature
-    return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
+    return filterCandidateByReceiverTypeAndVisibility(signature, callElement, explicitReceiver, visibilityChecker)
 }
 
 context(KaSession)
@@ -59,8 +64,8 @@ context(KaSession)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KaFunctionSignature<KaFunctionSymbol>,
     callElement: KtElement,
-    fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?,
+    visibilityChecker: KaUseSiteVisibilityChecker,
     subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
 ): Boolean {
     val candidateSymbol = signature.symbol
@@ -88,10 +93,15 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val receiverTypes = collectReceiverTypesForElement(callElement, explicitReceiver)
 
     val candidateReceiverType = signature.receiverType
-    if (candidateReceiverType != null && receiverTypes.none { it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
+    if (candidateReceiverType != null && receiverTypes.none {
+            it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) ||
+                    it.nullability != KaTypeNullability.NON_NULLABLE && it.withNullability(KaTypeNullability.NON_NULLABLE)
+                        .isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy)
+        }
+    ) return false
 
     // Filter out candidates not visible from call site
-    if (!isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
+    if (!visibilityChecker.isVisible(candidateSymbol)) return false
 
     return true
 }
@@ -124,7 +134,12 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
     val isSafeCall = explicitReceiver.parent is KtSafeQualifiedExpression
 
-    val explicitReceiverType = explicitReceiver.expressionType ?: error("Receiver should have a KaType")
+    val explicitReceiverType = explicitReceiver.expressionType ?: 
+        errorWithAttachment("Receiver should have a KaType") {
+            withPsiEntry("explicitReceiver", explicitReceiver)
+            withPsiEntry("file", explicitReceiver.containingKtFile)
+        }
+    
     val adjustedType = if (isSafeCall) {
         explicitReceiverType.withNullability(KaTypeNullability.NON_NULLABLE)
     } else {
@@ -185,7 +200,10 @@ fun KaCallableMemberCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverVa
     .map { it.unwrapSmartCasts() }
     .filterIsInstance<KaImplicitReceiverValue>()
 
-private tailrec fun KaReceiverValue.unwrapSmartCasts(): KaReceiverValue = when (this) {
+/**
+ * @return receiver value without smart casts if it has any or [this] otherwise
+ */
+tailrec fun KaReceiverValue.unwrapSmartCasts(): KaReceiverValue = when (this) {
     is KaSmartCastedReceiverValue -> original.unwrapSmartCasts()
     else -> this
 }

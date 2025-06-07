@@ -19,7 +19,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
   }
 
   @Test
-  fun `test JUnit 4 assertEquals`() {
+  fun `JUnit 4 assertEquals`() {
     @Language("kotlin") val code = """
       import org.junit.Test
       import kotlin.test.assertEquals
@@ -118,7 +118,8 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  fun `test JUnit 5 assertNotEquals`() {
+  @Test
+  fun `JUnit 5 assertNotEquals`() {
     @Language("kotlin") val code = """
       import org.junit.jupiter.api.Test
       import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -135,7 +136,8 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  fun `test AssertJ assertNotEquals`() {
+  @Test
+  fun `AssertJ assertNotEquals`() {
     @Language("kotlin") val code = """
       import org.junit.jupiter.api.Test
       import org.assertj.core.api.Assertions
@@ -152,7 +154,8 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  fun `test JUnit 4 assertNotSame`() {
+  @Test
+  fun `JUnit 4 assertNotSame`() {
     @Language("kotlin") val code = """
       import org.junit.Test
       import org.junit.Assert.assertNotSame
@@ -1018,6 +1021,124 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
           Assert.assertEquals(actual, expected)
         }
       }""".trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin typealias`() {
+    @Language("kotlin") val code = """
+      import org.junit.Test
+      import org.junit.Assert
+      
+      typealias TypeAlias = Int
+      
+      class MySampleTest {
+        @Test
+        fun myTest() {
+            val expected: TypeAlias = 3
+            Assert.assertEquals(expected, 3)
+            Assert.<warning descr="'assertEquals()' between objects of inconvertible types 'int' and 'String'">assertEquals</warning>(expected, "foo")
+        }
+      }
+      """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Ignore("We are aware of this edge case, but it seems not possible to fix with the current UAST API. See IDEA-362694")
+  @Test
+  fun `Kotlin inline value class (JUnit 4)`() {
+    @Language("kotlin") val code = """
+      import org.junit.Test
+      import org.junit.Assert
+      
+      @JvmInline
+      value class ValueClass(val prop: String)
+      
+      class MySampleTest {
+        @Test
+        fun myTest() {
+          Assert.<warning descr="'assertEquals()' between objects of inconvertible types 'ValueClass' and 'int'">assertEquals</warning>(ValueClass("foo"), 1)
+          Assert.<warning descr="'assertEquals()' between objects of inconvertible types 'ValueClass' and 'String'">assertEquals</warning>(ValueClass("foo"), "foo")
+          Assert.assertEquals(ValueClass("foo"), ValueClass("foo"))
+        }
+      }
+      """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) simple`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class ValueClass(val prop: Int)
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = ValueClass(1)
+        val b = ValueClass(2)
+        Assertions.assertThat(a).isEqualTo(b)
+      }
+    }
+    """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) with companion`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class FileSize(val prop: Long) {
+      val fooProp: Long get() = prop * 10
+     
+      companion object Comp {
+        val ZERO = 0
+      }
+    }
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = FileSize(1024)
+        val b = 1024
+        val c = "bruh"
+        Assertions.assertThat(a).isEqualTo(b)
+        Assertions.assertThat(a).<warning descr="'isEqualTo()' between objects of inconvertible types 'long' and 'String'">isEqualTo</warning>(c)
+      }
+    }
+    """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) reference type`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class ValueClass(val prop: List<String>)
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = ValueClass(listOf("a"))
+        val b = ValueClass(listOf("b"))
+        Assertions.assertThat(a).isEqualTo(b)
+      }
+    }
+    """.trimIndent()
 
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class FindFirstMigration extends BaseStreamApiMigration {
+final class FindFirstMigration extends BaseStreamApiMigration {
   FindFirstMigration(boolean shouldWarn) {
     super(shouldWarn, "findFirst");
   }

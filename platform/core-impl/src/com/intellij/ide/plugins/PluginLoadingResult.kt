@@ -2,30 +2,24 @@
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
-import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.util.PlatformUtils
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-// https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
-// If a plugin does not include any module dependency tags in its plugin.xml,
-// it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
-  private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
+class PluginLoadingResult {
+  private val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
 
   @JvmField
   @ApiStatus.Internal
-  val enabledPluginsById: HashMap<PluginId, IdeaPluginDescriptorImpl> = HashMap()
+  val enabledPluginsById: HashMap<PluginId, PluginMainDescriptor> = HashMap()
 
-  private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
-  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
+  private val idMap = HashMap<PluginId, PluginMainDescriptor>() // FIXME this does not account plugin aliases in content modules
+  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<PluginMainDescriptor>>? = null
   // the order of errors matters
-  private val pluginErrors = LinkedHashMap<PluginId, PluginLoadingError>()
+  private val pluginErrors = LinkedHashMap<PluginId, PluginNonLoadReason>()
 
   @VisibleForTesting
   @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
@@ -35,16 +29,16 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     get() = !pluginErrors.isEmpty()
 
   @get:TestOnly
-  val enabledPlugins: List<IdeaPluginDescriptorImpl>
+  val enabledPlugins: List<PluginMainDescriptor>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
-  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = LinkedHashMap(pluginErrors)
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginNonLoadReason> = LinkedHashMap(pluginErrors)
 
-  fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
+  fun getIncompleteIdMap(): Map<PluginId, PluginMainDescriptor> = incompletePlugins
 
-  fun getIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = idMap
+  fun getIdMap(): Map<PluginId, PluginMainDescriptor> = idMap
 
-  private fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
+  private fun addIncompletePlugin(plugin: PluginMainDescriptor, error: PluginNonLoadReason?) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.pluginId)) {
@@ -64,41 +58,36 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     }
   }
 
-  /**
-   * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
-   */
-  fun addAll(descriptors: Sequence<IdeaPluginDescriptorImpl>, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
-    for (descriptor in descriptors) {
-      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber)
+  fun initAndAddAll(
+    descriptorLoadingResult: PluginDescriptorLoadingResult,
+    initContext: PluginInitializationContext,
+  ) {
+    for (pluginList in descriptorLoadingResult.discoveredPlugins) {
+      for (descriptor in pluginList.plugins) {
+        // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
+        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = pluginList.source is PluginsSourceContext.SystemPropertyProvided, initContext = initContext)
+      }
     }
   }
 
-  @TestOnly
-  fun addAll(descriptors: List<IdeaPluginDescriptorImpl>) {
-    val productBuildNumber = BuildNumber.fromString("2042.42")!!
-    for (descriptor in descriptors) {
-      add(descriptor = descriptor, overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
+  private fun initAndAdd(descriptor: PluginMainDescriptor, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
+    initContext.pluginsPerProjectConfig?.let { conf ->
+      if (conf.isMainProcess && descriptor.pluginId !in initContext.essentialPlugins) {
+        return
+      }
     }
-  }
-
-  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
-    val pluginId = descriptor.pluginId
-    descriptor.isIncomplete?.let { error ->
-      addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
+    descriptor.initialize(initContext)?.let { error ->
+      addIncompletePlugin(plugin = descriptor, error = error.takeIf { it !is PluginIsMarkedDisabled })
       return
     }
 
-    if (checkModuleDependencies && isCheckingForImplicitDependencyNeeded(descriptor)) {
-      addIncompletePlugin(descriptor, PluginLoadingError(
-        plugin = descriptor,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
-        isNotifyUser = true
-      ))
+    if (initContext.requirePlatformAliasDependencyForLegacyPlugins && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(descriptor)) {
+      addIncompletePlugin(descriptor, PluginIsCompatibleOnlyWithIntelliJIDEA(descriptor))
       return
     }
 
     // remove any error that occurred for plugin with the same `id`
+    val pluginId = descriptor.pluginId
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
     val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
@@ -114,7 +103,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       shadowedBundledIds.add(pluginId)
     }
 
-    if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, productBuildNumber) == null &&
+    if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, initContext.productBuildNumber) == null &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
       PluginManagerCore.logger.info("$descriptor overrides $prevDescriptor")
       idMap.put(pluginId, descriptor)
@@ -126,7 +115,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     }
   }
 
-  private fun checkAndAdd(descriptor: IdeaPluginDescriptorImpl, id: PluginId) {
+  private fun checkAndAdd(descriptor: PluginMainDescriptor, id: PluginId) {
     duplicateModuleMap?.get(id)?.let { duplicates ->
       duplicates.add(descriptor)
       return
@@ -139,42 +128,9 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     if (duplicateModuleMap == null) {
       duplicateModuleMap = LinkedHashMap()
     }
-    val list = ArrayList<IdeaPluginDescriptorImpl>(2)
+    val list = ArrayList<PluginMainDescriptor>(2)
     list.add(existingDescriptor)
     list.add(descriptor)
     duplicateModuleMap!!.put(id, list)
   }
-}
-
-// todo merge into PluginSetState?
-@ApiStatus.Internal
-data class PluginManagerState internal constructor(
-  @JvmField val pluginSet: PluginSet,
-  @JvmField val pluginIdsToDisable: Set<PluginId>,
-  @JvmField val pluginIdsToEnable: Set<PluginId>,
-)
-
-// skip our plugins as expected to be up to date whether bundled or not
-internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  return !descriptor.isBundled &&
-         descriptor.packagePrefix == null &&
-         !descriptor.implementationDetail &&
-         descriptor.content.modules.isEmpty() &&
-         descriptor.dependencies.modules.isEmpty() &&
-         descriptor.dependencies.plugins.isEmpty() &&
-         descriptor.pluginId != PluginManagerCore.CORE_ID &&
-         descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-         !hasModuleDependencies(descriptor)
-}
-
-private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  for (dependency in descriptor.pluginDependencies) {
-    val dependencyPluginId = dependency.pluginId
-    if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
-        PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
-        PluginManagerCore.isModuleDependency(dependencyPluginId)) {
-      return true
-    }
-  }
-  return false
 }

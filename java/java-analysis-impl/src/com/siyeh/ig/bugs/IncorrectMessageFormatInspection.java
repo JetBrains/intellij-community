@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -72,9 +72,8 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
     myMethodMatcher.writeSettings(element);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -179,8 +178,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         }
       }
 
-      @Nullable
-      private List<MessageFormatUtil.MessageFormatPlaceholder> checkStringFormatAndGetIndexes(@Nullable PsiExpression expression) {
+      private @Nullable List<MessageFormatUtil.MessageFormatPlaceholder> checkStringFormatAndGetIndexes(@Nullable PsiExpression expression) {
         if (expression == null) {
           return null;
         }
@@ -242,8 +240,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         return null;
       }
 
-      @Nullable
-      private static String getRelatedText(@NotNull String pattern, @NotNull MessageFormatUtil.MessageFormatError error) {
+      private static @Nullable String getRelatedText(@NotNull String pattern, @NotNull MessageFormatUtil.MessageFormatError error) {
         if (error.fromIndex() < 0 || error.toIndex() > pattern.length() || error.toIndex() < error.fromIndex()) {
           return null;
         }
@@ -280,8 +277,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
         }
       }
 
-      @Nullable
-      private static ProblemHighlightType getCustomHighlightType(@NotNull MessageFormatUtil.MessageFormatErrorType type) {
+      private static @Nullable ProblemHighlightType getCustomHighlightType(@NotNull MessageFormatUtil.MessageFormatErrorType type) {
         if (type.getSeverity() == MessageFormatUtil.ErrorSeverity.WARNING ||
             type.getSeverity() == MessageFormatUtil.ErrorSeverity.WEAK_WARNING) {
           return ProblemHighlightType.WEAK_WARNING;
@@ -291,8 +287,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
     };
   }
 
-  @NotNull
-  public static @Nls String getMessageFormatTemplate(@NotNull MessageFormatUtil.MessageFormatErrorType type, @NotNull String relatedText) {
+  public static @NotNull @Nls String getMessageFormatTemplate(@NotNull MessageFormatUtil.MessageFormatErrorType type, @NotNull String relatedText) {
     return switch (type) {
       case QUOTED_PLACEHOLDER ->
         InspectionGadgetsBundle.message("inspection.incorrect.message.format.quotes.around.parameter", relatedText);

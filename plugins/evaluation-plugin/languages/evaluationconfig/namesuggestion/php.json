@@ -1,7 +1,8 @@
 {
   "language": "PHP",
-  "projectPath": "../../ml-eval/laravel.io",
-  "outputDir": "ml-eval-name-suggestion-php-output",
+  "projectPath": "../ml-eval/laravel.io",
+  "repository": "https://github.com/laravelio/laravel.io",
+  "outputDir": "bin/ml-eval-name-suggestion-php-output",
   "strategy": {
     "placeholderName": "DUMMY",
     "suggestionsProvider": "LLM-Rename",
@@ -19,7 +20,8 @@
     "sessionsLimit": 10,
     "filesLimit": 5,
     "order": "LINEAR",
-    "trainTestSplit": 70
+    "trainTestSplit": 70,
+    "registry": ""
   },
   "reports": {
     "evaluationTitle": "Default",

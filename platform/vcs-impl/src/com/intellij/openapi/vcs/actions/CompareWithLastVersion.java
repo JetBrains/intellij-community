@@ -11,12 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class CompareWithLastVersion extends AbstractShowDiffAction {
-  @NotNull
   @Override
-  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                           @NotNull VirtualFile selectedFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
+  protected @NotNull DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                    @NotNull VirtualFile selectedFile,
+                                                    @NotNull Project project,
+                                                    @Nullable Editor editor) {
     return new DiffActionExecutor.DeletionAwareExecutor(diffProvider, selectedFile, project, editor);
   }
 }

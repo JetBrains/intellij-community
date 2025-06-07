@@ -7,6 +7,8 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginModuleDescriptor
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -63,7 +65,7 @@ private val parentListCacheIdCounter = AtomicInteger()
 @ApiStatus.Internal
 class PluginClassLoader(
   classPath: ClassPath,
-  private val parents: Array<IdeaPluginDescriptorImpl>,
+  private val parents: Array<PluginModuleDescriptor>,
   private val pluginDescriptor: PluginDescriptor,
   private val coreLoader: ClassLoader,
   resolveScopeManager: ResolveScopeManager?,
@@ -190,7 +192,8 @@ class PluginClassLoader(
     }
 
     if (c == null) {
-      for (classloader in getAllParents()) {
+      @Suppress("TestOnlyProblems")
+      for (classloader in getAllParentsClassLoaders()) {
         if (classloader is PluginClassLoader) {
           try {
             val consistencyError = classloader.packagePrefix?.let {
@@ -256,7 +259,9 @@ class PluginClassLoader(
     return c
   }
 
-  private fun getAllParents(): Array<ClassLoader> {
+  @TestOnly
+  @ApiStatus.Internal
+  fun getAllParentsClassLoaders(): Array<ClassLoader> {
     var result = allParents
     if (result != null && allParentsLastCacheId == parentListCacheIdCounter.get()) {
       return result
@@ -364,7 +369,8 @@ ${if (exception == null) "" else exception.message}""")
       return null
     }
 
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is UrlClassLoader) {
         classloader.classPath.findResource(name)?.let {
           return it.bytes
@@ -409,7 +415,8 @@ ${if (exception == null) "" else exception.message}""")
       return f1(it)
     }
 
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is PluginClassLoader) {
         classloader.classPath.findResource(canonicalPath)?.let {
           return f1(it)
@@ -432,7 +439,8 @@ ${if (exception == null) "" else exception.message}""")
   override fun findResources(name: String): Enumeration<URL> {
     val resources = ArrayList<Enumeration<URL>>()
     resources.add(classPath.getResources(name))
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is PluginClassLoader) {
         resources.add(classloader.classPath.getResources(name))
       }
@@ -463,7 +471,7 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
-  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).contentModuleName
 
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 

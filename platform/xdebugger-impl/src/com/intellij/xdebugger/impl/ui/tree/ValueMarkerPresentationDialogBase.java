@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
   private static final Color DEFAULT_COLOR = JBColor.RED;
-  @NotNull private final Set<String> myExistingMarkups;
+  private final @NotNull Set<String> myExistingMarkups;
   private SimpleColoredComponent myColorSample;
   private Color myColor;
   private JPanel myMainPanel;
@@ -37,7 +37,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     myExistingMarkups = StreamEx.of(markups).map(ValueMarkup::getText).toSet();
     myLabelField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateLabelSample();
       }
     });
@@ -81,8 +81,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     }
   }
 
-  @Nullable
-  public ValueMarkup getConfiguredMarkup() {
+  public @Nullable ValueMarkup getConfiguredMarkup() {
     final String text = myLabelField.getText().trim();
     return text.isEmpty() ? null : new ValueMarkup(text, myColor, null);
   }

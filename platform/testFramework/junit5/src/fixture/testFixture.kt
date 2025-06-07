@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
+import com.intellij.platform.eel.EelApi
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import org.jetbrains.annotations.TestOnly
+import kotlin.reflect.KProperty
 
 /**
  * Main building block for fixtures.
@@ -36,6 +38,44 @@ sealed interface TestFixture<out T> {
    * @throws IllegalStateException when called during initialization. Use [TestFixtureInitializer.R.init] instead.
    */
   fun get(): T
+
+  /**
+   * Used for implementing property delegates of read-only properties.
+   *
+   * Example:
+   * ```
+   * @TestFixtures
+   * class MyTest {
+   *   private val path by pathFixture(...)
+   * }
+   * ```
+   */
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
+}
+
+sealed interface TestContext {
+
+  /**
+   * Eel this fixture runs on.
+   * It is usually null (local), unless a test is parametrized with eel.
+   * See [EelForFixturesProvider] implementors.
+   */
+  val eel: EelApi?
+
+  /**
+   * Unique test or container ID, for example [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
+   */
+  val uniqueId: String
+
+  /**
+   * Display name for the current test or container, for example [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName]
+   */
+  val testName: String
+
+  /**
+   * Returns the annotation with which a test or container is marked or null if there is none.
+   */
+  fun <T : Annotation> findAnnotation(clazz: Class<T>): T?
 }
 
 /**
@@ -44,12 +84,10 @@ sealed interface TestFixture<out T> {
 fun interface TestFixtureInitializer<T> {
 
   /**
-   * @param uniqueId unique test or container ID, same as [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
-   *
-   * TODO consider passing whole ExtensionContext here
+   * @param context [TestContext] which provides information about the test and allows to query annotations
    */
   @OverrideOnly
-  suspend fun R<T>.initFixture(uniqueId: String): InitializedTestFixture<T>
+  suspend fun R<T>.initFixture(context: TestContext): InitializedTestFixture<T>
 
   sealed interface InitializedTestFixture<T>
 

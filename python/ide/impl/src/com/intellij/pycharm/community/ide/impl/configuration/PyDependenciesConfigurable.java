@@ -14,9 +14,8 @@ public class PyDependenciesConfigurable extends ModuleAwareProjectConfigurable {
     super(project, PyBundle.message("configurable.PyDependenciesConfigurable.display.name"), "reference.settingsdialog.project.dependencies");
   }
 
-  @NotNull
   @Override
-  protected UnnamedConfigurable createModuleConfigurable(Module module) {
+  protected @NotNull UnnamedConfigurable createModuleConfigurable(Module module) {
     return new PyModuleDependenciesConfigurable(module);
   }
 }

@@ -50,20 +50,12 @@ class UIComponentsList<T : UiComponent>(
   }
 
   fun list(): List<T> {
-    LOG.info("Requesting all ${type.simpleName}(s) by xpath = $xpath")
+    LOG.info("Requesting all ${type.simpleName}(s) by xpath = $xpath in ${parentSearchContext.contextAsString}")
 
     val components = parentSearchContext.findAll(xpath).mapIndexed { n, c ->
-      val searchContext = object : SearchContext {
-        override val context: String
-          get() = parentSearchContext.context + xpath + "[$n]"
-
-        override fun findAll(xpath: String): List<Component> {
-          return searchService.findAll(xpath, c)
-        }
-      }
       type.getConstructor(
         ComponentData::class.java
-      ).newInstance(ComponentData(xpath, driver, searchService, robotProvider, searchContext, c))
+      ).newInstance(ComponentData("($xpath)[${n + 1}]", driver, searchService, robotProvider, parentSearchContext, c))
     }
     LOG.info("Returning ${components.size} ${type.simpleName}(s) by xpath = $xpath" +
              "\n${printableString(components.joinToString(", ") { it.toString() })}")

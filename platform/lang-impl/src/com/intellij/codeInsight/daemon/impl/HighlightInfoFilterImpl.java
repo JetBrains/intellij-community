@@ -17,8 +17,8 @@ public final class HighlightInfoFilterImpl implements HighlightInfoFilter {
   }
 
   @Override
-  public boolean accept(@NotNull HighlightInfo info, PsiFile file) {
-    if (file != null && file.getOriginalFile() instanceof PsiCompiledFile) {
+  public boolean accept(@NotNull HighlightInfo info, PsiFile psiFile) {
+    if (psiFile != null && psiFile.getOriginalFile() instanceof PsiCompiledFile) {
       return info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
     }
     if (info.findRegisteredQuickFix((__, __1) -> true) != null) {
@@ -28,7 +28,7 @@ public final class HighlightInfoFilterImpl implements HighlightInfoFilter {
       return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting
     }
 
-    TextAttributes attributes = info.getTextAttributes(file, null);
+    TextAttributes attributes = info.getTextAttributes(psiFile, null);
     // optimization
     return attributes == TextAttributes.ERASE_MARKER ||
            attributes != null &&

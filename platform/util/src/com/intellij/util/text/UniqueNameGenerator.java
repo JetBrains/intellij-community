@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ public class UniqueNameGenerator implements Condition<String> {
     return generateUniqueName(defaultName, "", "", existingNames);
   }
 
-  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Collection<String> existingNames) {
+  public static @NlsSafe @NotNull String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull @Unmodifiable Collection<String> existingNames) {
     return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 

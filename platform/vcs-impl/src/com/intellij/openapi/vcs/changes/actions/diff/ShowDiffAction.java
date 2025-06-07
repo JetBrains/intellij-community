@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffManager;
@@ -48,7 +48,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static boolean canShowDiff(@Nullable Project project, @Nullable List<? extends Change> changes) {
-    if (changes == null || changes.size() == 0) return false;
+    if (changes == null || changes.isEmpty()) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
     }
@@ -56,7 +56,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if  (project == null) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);

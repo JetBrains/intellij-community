@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.util.base.multiplatform` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "multiplatformSupport_provided",
+  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+)
+
+jvm_library(
+  name = "multiplatform",
+  module_name = "intellij.platform.util.base.multiplatform",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-debug",
+    ":multiplatformSupport_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.util.base.multiplatform` end

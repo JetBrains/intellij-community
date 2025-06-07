@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
@@ -51,14 +52,14 @@ public class MavenIndicesTestFixture {
   }
 
   public void setUpBeforeImport() throws Exception {
-    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir.toFile(), ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
+    myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, ArrayUtil.append(myExtraRepoDirs, myLocalRepoDir));
 
     for (String each : myExtraRepoDirs) {
       addToRepository(each);
     }
 
-    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
-      myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+    MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(myRepositoryHelper.getTestData(myLocalRepoDir).toString());
+    MavenSettingsCache.getInstance(myProject).reload();
     Registry.get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable);
   }
 

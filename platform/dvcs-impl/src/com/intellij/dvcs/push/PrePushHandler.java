@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -56,8 +56,7 @@ public interface PrePushHandler {
    * @return handler's decision on whether the push must be performed or canceled
    */
   @CalledInAny
-  @NotNull
-  default Result handle(@NotNull Project project, @NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
+  default @NotNull Result handle(@NotNull Project project, @NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
     return handle(pushDetails, indicator);
   }
 
@@ -65,9 +64,8 @@ public interface PrePushHandler {
    * @deprecated Use {@link #handle(Project, List, ProgressIndicator)} instead
    */
   @CalledInAny
-  @NotNull
   @Deprecated
-  default Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
+  default @NotNull Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
     throw new UnsupportedOperationException("This method is deprecated. Use #handle(Project, List, ProgressIndicator) instead.");
   }
 }

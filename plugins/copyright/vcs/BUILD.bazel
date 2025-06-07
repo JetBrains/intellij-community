@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.copyright.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.copyright.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/copyright",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/platform-api:ide",
+    "//platform/util/progress",
+    "//platform/vcs-impl",
+  ],
+  runtime_deps = [":vcs_resources"]
+)
+### auto-generated section `build intellij.copyright.vcs` end

@@ -76,7 +76,6 @@ org.jetbrains.kotlin.idea.quickfix.RenameUnresolvedReferenceFix
 org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
 org.jetbrains.kotlin.idea.quickfix.RestrictedRetentionForExpressionAnnotationFactory$AddSourceRetentionFix
-org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix
 org.jetbrains.kotlin.idea.quickfix.SmartCastImpossibleInIfThenFactory$createQuickFix$1
 org.jetbrains.kotlin.idea.quickfix.SpecifyOverrideExplicitlyFix
 org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix

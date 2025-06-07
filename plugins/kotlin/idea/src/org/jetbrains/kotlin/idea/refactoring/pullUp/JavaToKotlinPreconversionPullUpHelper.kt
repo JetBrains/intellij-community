@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.j2k.j2kText
-import org.jetbrains.kotlin.idea.refactoring.safeDelete.removeOverrideModifier
+import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -62,7 +62,7 @@ class JavaToKotlinPreconversionPullUpHelper(
         getter?.let { dummyAccessorByName[getterName] = dummyTargetClass.add(it) as PsiMethod }
         setter?.let { dummyAccessorByName[setterName] = dummyTargetClass.add(it) as PsiMethod }
         fieldsToUsages[member] =
-            ReferencesSearch.search(member).mapNotNull { helper.createUsage(encapsulateFieldsDescriptor, fieldDescriptor, it) }
+            ReferencesSearch.search(member).asIterable().mapNotNull { helper.createUsage(encapsulateFieldsDescriptor, fieldDescriptor, it) }
     }
 
     override fun move(info: MemberInfo, substitutor: PsiSubstitutor) {

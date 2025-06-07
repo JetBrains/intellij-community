@@ -54,7 +54,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
         val rootPath = tempDir.newPath()
         directoryContent {
             dir("src") {}
-        }.generate(rootPath.toFile())
+        }.generate(rootPath)
 
         val srcPath = rootPath.resolve("src")
         configureMultiFileTest(subFiles, srcPath)

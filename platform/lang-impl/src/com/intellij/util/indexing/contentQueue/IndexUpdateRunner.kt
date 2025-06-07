@@ -1,16 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VfsUtil
@@ -24,6 +27,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
@@ -36,9 +40,9 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -48,7 +52,6 @@ import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Throws
 import kotlin.time.Duration.Companion.nanoseconds
 
 @ApiStatus.Internal
@@ -183,6 +186,7 @@ class IndexUpdateRunner(
         repeat(INDEXING_PARALLELIZATION) { workerNo ->
           launch {
             try {
+              var i = 0
               for (fileIndexingRequest in channel) {
                 while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
                   delay(1)
@@ -195,7 +199,10 @@ class IndexUpdateRunner(
                     processRequestTask(fileIndexingRequest)
                   }
 
-                yield()
+                i++
+                if (i % 10 == 0) {
+                  yield()
+                }
               }
             }
             //FIXME RC: for profiling, remove afterwards
@@ -265,7 +272,7 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
-
+    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", true)
     private val indexingAttemptCount = AtomicInteger()
     private val indexingSuccessfulCount = AtomicInteger()
 
@@ -282,6 +289,30 @@ class IndexUpdateRunner(
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
         return
+      }
+
+      if (doubleCheckFilesAreStillInProject && !fileIndexingRequest.isDeleteRequest) {
+        // WorkspaceFileIndex.getInstance(project).isInContent(file) does not contain libraries
+        // WorkspaceFileIndex.getInstance(project).isInWorkspace(file) does not contain files contributed via
+        //  indexing contributors (See com.intellij.flex.completion.ActionScriptCompletionTest.testSOE which indexes file
+        //  out/classes/production/intellij.flex/com/intellij/lang/javascript/flex/library/ECMAScript.js2)
+        // ProjectRootManager.isExcluded looks safe enough, but not exactly the same check as done by scanning.
+        // upd: also, files, registered as non indexable (see WorkspaceFileKind.CONTENT_NON_INDEXABLE) should be skipped during indexing.
+        val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
+        val excluded = readAction {
+          val isIndexable = workspaceFileIndex.isIndexable(file)
+          val belongsToContentNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
+          // We don't want to just exclude all !isIndexable,
+          // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
+          // We only want to exclude the files that are explicitly registered as non indexable.
+          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToContentNonIndexable)
+        }
+        if (excluded) {
+          // respect user: only log file names in debug level
+          val fileDebugDetails = if (LOG.isDebugEnabled) file.name else ""
+          LOG.info("File has been excluded: $fileDebugDetails #${(file as VirtualFileWithId).id}")
+          return
+        }
       }
 
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
@@ -400,6 +431,7 @@ class IndexUpdateRunner(
 
   companion object {
     internal val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
+    internal val THROTTLED_LOG = ThrottledLogger(FileBasedIndexImpl.LOG, /*ignoreRepeatedLogsIn: */ 100 /*ms*/)
 
     private val VERBOSE_INDEXES: Scope = Scope(Indexes.name, Indexes.parent, verbose = true)
 
@@ -414,7 +446,10 @@ class IndexUpdateRunner(
      * Single file may be bigger, but until memory is freed indexing is suspended.
      * @see UsedMemorySoftLimiter
      */
-    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY: Long = SystemProperties.getLongProperty(
+      "idea.indexing.total-loaded-file-content-soft-limit-bytes",
+      INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    )
 
     private val loadedFileContentLimiter = UsedMemorySoftLimiter(SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY)
 
@@ -460,10 +495,10 @@ class IndexUpdateRunner(
           FileBasedIndexImpl.LOG.debug(fileUrl, e)
         }
         is IndexOutOfBoundsException, is InvalidVirtualFileAccessException, is IOException -> {
-          FileBasedIndexImpl.LOG.info(fileUrl, e)
+          THROTTLED_LOG.info(fileUrl, e)
         }
         else -> {
-          FileBasedIndexImpl.LOG.error(fileUrl, e)
+          THROTTLED_LOG.error(fileUrl, e)
         }
       }
     }

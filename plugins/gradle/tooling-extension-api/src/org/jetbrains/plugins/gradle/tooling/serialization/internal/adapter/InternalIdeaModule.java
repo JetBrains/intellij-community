@@ -133,6 +133,7 @@ public final class InternalIdeaModule implements IdeaModule {
     return this.getProjectIdentifier().getBuildIdentifier().getRootDir();
   }
 
+  @Override
   public String toString() {
     return "IdeaModule{name='" +
            this.name +

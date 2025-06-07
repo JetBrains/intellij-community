@@ -21,7 +21,7 @@ open class PyVersionAwareElementVisitor(languageLevel: LanguageLevel?) : PyRecur
     }
     val ifParts = sequenceOf(node.ifPart) + node.elifParts.asSequence()
     for (ifPart in ifParts) {
-      val versions = ifPart.condition?.let(PyVersionCheck::convertToVersionRanges)
+      val versions = PyVersionCheck.convertToVersionRanges(ifPart)
       if (versions == null) {
         super.visitPyIfStatement(node)
         return

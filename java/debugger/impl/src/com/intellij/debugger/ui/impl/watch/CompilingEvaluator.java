@@ -29,9 +29,9 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.util.Collection;
 
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
-  @NotNull protected final Project myProject;
-  @NotNull protected final PsiElement myPsiContext;
-  @NotNull protected final LightMethodObjectExtractedData myData;
+  protected final @NotNull Project myProject;
+  protected final @NotNull PsiElement myPsiContext;
+  protected final @NotNull LightMethodObjectExtractedData myData;
 
   public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull LightMethodObjectExtractedData data) {
     myProject = project;
@@ -117,8 +117,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     return classWriter.toByteArray();
   }
 
-  @NotNull
-  public static String getGeneratedClassName() {
+  public static @NotNull String getGeneratedClassName() {
     return GEN_CLASS_NAME;
   }
 
@@ -134,6 +133,5 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
-  @NotNull
-  protected abstract Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
+  protected abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 }

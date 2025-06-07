@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.openapi.module.Module;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -19,8 +20,7 @@ public abstract class SourceScope {
   public abstract Project getProject();
   public abstract GlobalSearchScope getLibrariesScope();
 
-  @NotNull
-  private static Map<Module, Collection<Module>> buildAllDependencies(@NotNull Project project) {
+  private static @NotNull Map<Module, Collection<Module>> buildAllDependencies(@NotNull Project project) {
     Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
     Map<Module, Collection<Module>> result = new HashMap<>();
     for (final Module module : graph.getNodes()) {
@@ -150,12 +150,12 @@ public abstract class SourceScope {
     }
 
     @Override
-    public boolean contains(@NotNull final VirtualFile file) {
+    public boolean contains(final @NotNull VirtualFile file) {
       return findScopeFor(file) != null;
     }
 
     @Override
-    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
+    public int compare(final @NotNull VirtualFile file1, final @NotNull VirtualFile file2) {
       final GlobalSearchScope scope = findScopeFor(file1);
       assert scope != null;
       if (scope.contains(file2)) return scope.compare(file1, file2);
@@ -163,7 +163,7 @@ public abstract class SourceScope {
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+    public boolean isSearchInModuleContent(final @NotNull Module aModule) {
       return myMainScope.isSearchInModuleContent(aModule);
     }
 
@@ -172,14 +172,12 @@ public abstract class SourceScope {
       return true;
     }
 
-    @NotNull
     @Override
-    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myMainScope.getUnloadedModulesBelongingToScope();
     }
 
-    @Nullable
-    private GlobalSearchScope findScopeFor(final VirtualFile file) {
+    private @Nullable GlobalSearchScope findScopeFor(final VirtualFile file) {
       if (myMainScope.contains(file)) return myMainScope;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = myScopes.size(); i < size; i++) {

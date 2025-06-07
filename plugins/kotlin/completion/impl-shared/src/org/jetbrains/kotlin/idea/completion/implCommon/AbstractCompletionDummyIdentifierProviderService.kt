@@ -92,6 +92,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
             ?: isInAnnotationEntry(element)
             ?: isInEndOfTypeReference(element)
             ?: isInEndOfStatement(element)
+            ?: isBeforeTypeBrackets(element)
             ?: isInKDocName(element)
             ?: DEFAULT_PARSING_BREAKER
     }
@@ -111,6 +112,12 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         } else {
             null
         }
+    }
+
+    private fun isBeforeTypeBrackets(tokenBefore: PsiElement): String? {
+        val referenceParent = tokenBefore.parent as? KtNameReferenceExpression ?: return null
+        if (referenceParent.nextSibling is KtTypeArgumentList) return EMPTY_SUFFIX
+        return null
     }
 
     private fun isInEndOfStatement(tokenBefore: PsiElement): String? {
@@ -286,7 +293,6 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
             current = current.prevLeaf(skipEmptyElements = true) ?: return null
         }
     }
-
 
     private fun specialInArgumentListDummyIdentifierSuffix(tokenBefore: PsiElement): String? {
         // If we insert `$` in the argument list of a delegation specifier, this will break parsing

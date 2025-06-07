@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -29,7 +29,7 @@ public final class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     JavaNoVariantsDelegator.ResultTracker tracker = new JavaNoVariantsDelegator.ResultTracker(result);
     result.runRemainingContributors(parameters, tracker);
     final boolean empty = tracker.containsOnlyPackages || suggestAnnotations(parameters);
@@ -114,8 +114,7 @@ public final class GroovyNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static PsiType getPsiType(final Object o) {
+  private static @Nullable PsiType getPsiType(final Object o) {
     if (o instanceof ResolveResult) {
       return getPsiType(((ResolveResult)o).getElement());
     }
@@ -131,8 +130,7 @@ public final class GroovyNoVariantsDelegator extends CompletionContributor {
     return null;
   }
 
-  @Nullable
-  private static GrReferenceElement<?> createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+  private static @Nullable GrReferenceElement<?> createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
       try {

@@ -2,6 +2,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaSuperTypeSearchUtil;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -43,7 +45,6 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -415,14 +416,15 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         final PsiDocComment docComment = PsiTreeUtil.getParentOfType(token, PsiDocComment.class);
         if (docComment == null) return List.of();
         if (docComment.getOwner() instanceof PsiMethod method) {
-          final PsiDocTagImpl docTag = PsiTreeUtil.getParentOfType(token, PsiDocTagImpl.class);
           var containingClass = method.getContainingClass();
           if (containingClass == null) return List.of();
-
-          final var valueElement = token.getParent() instanceof PsiDocTag tag ? tag.getValueElement() : null;
-          final var target = findTargetRecursively(containingClass, method, docTag, valueElement != null ? valueElement.getText() : null, false, new HashSet<>());
-          if (target != null) {
-            return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
+          final var parent = token.getParent();
+          if (!(parent instanceof PsiDocTag docTag)) return List.of();
+          final var valueElement = docTag.getValueElement();
+          final var tagLocator = new JavaDocInfoGenerator.AnyInheritDocTagLocator(docTag, method);
+          final var context = JavaSuperTypeSearchUtil.INSTANCE.automaticSupertypeSearch(containingClass, method, valueElement, tagLocator);
+          if (context != null && context.element() != null) {
+            return List.of(new SnippetRegionSymbol(context.element().getContainingFile(), getSnippetRange(context.element())));
           }
         }
 
@@ -437,73 +439,6 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
           }
         }
         return target.getTextRange();
-      }
-
-      /**
-       * Performs Automatic Supertype Search as described in the JavaDoc Documentation Comment Specification.
-       */
-      private static @Nullable PsiElement findTargetRecursively(@NotNull PsiClass psiClass,
-                                                                @NotNull PsiMethod method,
-                                                                @Nullable PsiDocTag docTag,
-                                                                @Nullable String explicitSuper,
-                                                                boolean checkClass,
-                                                                @NotNull HashSet<PsiClass> visitedSet) {
-        if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
-        if (visitedSet.contains(psiClass)) return null;
-
-        visitedSet.add(psiClass);
-
-        // Check class
-        PsiElement target = null;
-        if (checkClass) target = findTarget(psiClass, method, docTag, explicitSuper);
-        if (target != null) return target;
-
-        // Check super class
-        final PsiClass superClass = psiClass.getSuperClass();
-        if (superClass != null) {
-          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true, visitedSet);
-          if (target != null) return target;
-        }
-
-        // Check interfaces
-        var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
-          .map(type -> type.resolve())
-          .filter(Objects::nonNull)
-          .map(resolvedType -> findTargetRecursively(resolvedType, method, docTag, explicitSuper, true, visitedSet))
-          .filter(Objects::nonNull)
-          .findFirst();
-
-        return targetInInterface.orElse(null);
-      }
-
-      private static @Nullable PsiElement findTarget(@NotNull PsiClass psiClass,
-                                                     @NotNull PsiMethod method,
-                                                     @Nullable PsiDocTag docTag,
-                                                     @Nullable String explicitSuper) {
-        if (explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
-          return null;
-        }
-
-        final var matchedMethod = psiClass.findMethodBySignature(method, false);
-        if (matchedMethod == null) return null;
-
-        PsiDocComment docComment = matchedMethod.getDocComment();
-        if (docComment == null) return null;
-
-        // inheritDoc is not in a tag -> the target is the PsiDocComment
-        if (docTag == null) return docComment;
-
-        // Searching for a matching tag
-        final PsiDocTagValue tagValue = docTag.getValueElement();
-        for (PsiDocTag tag : docComment.findTagsByName(docTag.getName())) {
-          final var matchedTagValueElement = tag.getValueElement();
-          if (tagValue != null && matchedTagValueElement == null) continue;
-          if (tagValue == null || tagValue.getText().equals(matchedTagValueElement.getText())) {
-            return tag;
-          }
-        }
-
-        return null;
       }
     };
   }

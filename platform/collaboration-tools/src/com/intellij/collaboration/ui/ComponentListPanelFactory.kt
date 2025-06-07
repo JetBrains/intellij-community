@@ -1,15 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.async.ComputedListChange
+import com.intellij.collaboration.async.changesFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.UiImmediate
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
-import com.intellij.util.containers.toArray
-import com.intellij.util.diff.Diff
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import java.util.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -59,13 +65,15 @@ object ComponentListPanelFactory {
     return panel
   }
 
-  fun <T : Any> createVertical(cs: CoroutineScope, model: ListModel<T>, gap: Int = 0,
-                               componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
+  fun <T : Any> createVertical(
+    cs: CoroutineScope, model: ListModel<T>, gap: Int = 0,
+    componentFactory: CoroutineScope.(T) -> JComponent,
+  ): JPanel {
     val panel = VerticalListPanel(gap)
-    cs.launchNow(Dispatchers.Main.immediate) {
+    cs.launchNow(Dispatchers.EdtImmediate) {
       val listener = object : ListDataListener {
         private fun addComponent(idx: Int, item: T) {
-          val scope = childScope()
+          val scope = childScope("Child component scope for $item")
           val component = scope.componentFactory(item).also {
             ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
           }
@@ -128,111 +136,90 @@ object ComponentListPanelFactory {
   /**
    * @param T must implement proper equals/hashCode
    */
-  fun <T : Any> createVertical(parentCs: CoroutineScope,
-                               items: Flow<List<T>>,
-                               panelInitializer: JPanel.() -> Unit = {},
-                               gap: Int = 0,
-                               componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
-    return createListPanel(parentCs, items, ::VerticalListPanel, panelInitializer, gap, componentFactory)
+  fun <T : Any> createVertical(
+    parentCs: CoroutineScope,
+    items: Flow<List<T>>,
+    panelInitializer: JPanel.() -> Unit = {},
+    gap: Int = 0,
+    componentFactory: CoroutineScope.(T) -> JComponent,
+  ): JPanel {
+    val panel = VerticalListPanel(gap).apply(panelInitializer)
+    parentCs.launchNow(CoroutineName("List panel scope") + Dispatchers.EDT) {
+      panel.showItems(items, componentFactory)
+    }
+    return panel
   }
 
   /**
    * @param T must implement proper equals/hashCode
    */
-  fun <T : Any> createHorizontal(parentCs: CoroutineScope,
-                                 items: Flow<List<T>>,
-                                 panelInitializer: JPanel.() -> Unit = {},
-                                 gap: Int = 0,
-                                 componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
-    return createListPanel(parentCs, items, ::HorizontalListPanel, panelInitializer, gap, componentFactory)
+  fun <T : Any> createVertical(
+    items: Flow<List<T>>,
+    gap: Int = 0,
+    componentFactory: CoroutineScope.(T) -> JComponent,
+  ): JPanel {
+    return VerticalListPanel(gap).apply {
+      launchOnShow("List panel scope") {
+        withContext(Dispatchers.UiImmediate) {
+          showItems(items, componentFactory)
+        }
+      }
+    }
   }
 
-  private fun <T : Any> createListPanel(
+  /**
+   * @param T must implement proper equals/hashCode
+   */
+  fun <T : Any> createHorizontal(
     parentCs: CoroutineScope,
     items: Flow<List<T>>,
-    panelFactory: (Int) -> JPanel,
     panelInitializer: JPanel.() -> Unit = {},
     gap: Int = 0,
-    componentFactory: CoroutineScope.(T) -> JComponent
+    componentFactory: CoroutineScope.(T) -> JComponent,
   ): JPanel {
-    val cs = parentCs.childScope(Dispatchers.Main)
-    val panel = panelFactory(gap).apply(panelInitializer)
-    val currentList = LinkedList<T>()
-
-    fun addComponent(idx: Int, item: T) {
-      currentList.add(idx, item)
-      val scope = cs.childScope()
-      val component = scope.componentFactory(item).also {
-        ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
-      }
-      panel.add(component, idx)
-    }
-
-    fun removeComponent(idx: Int) {
-      val component = panel.getComponent(idx)
-      val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
-      componentCs?.cancel()
-      panel.remove(idx)
-      currentList.removeAt(idx)
-    }
-
-    cs.launchNow {
-      var firstCollect = true
-      items.collect { items ->
-        var revalidate = firstCollect
-        if (firstCollect) {
-          if (panel.componentCount > 0) panel.removeAll()
-          firstCollect = false
-        }
-
-        if (items.isEmpty()) {
-          for (i in currentList.indices) {
-            removeComponent(i)
-          }
-          revalidate = true
-        }
-        else if (currentList.isEmpty()) {
-          for ((i, item) in items.withIndex()) {
-            addComponent(i, item)
-          }
-          revalidate = true
-        }
-        else {
-          val changes = withContext(Dispatchers.Default) {
-            buildList {
-              var change = Diff.buildChanges(currentList.toArray(), items.toArray(emptyArray<Any>()))
-              while (change != null) {
-                add(change)
-                change = change.link
-              }
-            }
-          }
-
-          for (change in changes.asReversed()) {
-            if (change.deleted > 0) {
-              for (i in change.line0 + change.deleted - 1 downTo change.line0) {
-                removeComponent(i)
-                revalidate = true
-              }
-            }
-          }
-
-          for (change in changes) {
-            if (change.inserted > 0) {
-              for (i in change.line1 until change.line1 + change.inserted) {
-                addComponent(i, items[i])
-                revalidate = true
-              }
-            }
-          }
-        }
-
-        if (revalidate) {
-          panel.revalidate()
-          panel.repaint()
-        }
-      }
+    val panel = HorizontalListPanel(gap).apply(panelInitializer)
+    parentCs.launchNow(CoroutineName("List panel scope") + Dispatchers.EDT) {
+      panel.showItems(items, componentFactory)
     }
     return panel
+  }
+
+  private suspend fun <T : Any> JPanel.showItems(items: Flow<List<T>>, componentFactory: CoroutineScope.(T) -> JComponent): Nothing {
+    coroutineScope {
+      val cs = this
+      fun addComponent(idx: Int, item: T) {
+        val scope = cs.childScope("Child component scope for $item")
+        val component = scope.componentFactory(item).also {
+          ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
+        }
+        add(component, idx)
+      }
+
+      fun removeComponent(idx: Int) {
+        val component = getComponent(idx)
+        val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
+        componentCs?.cancel()
+        remove(idx)
+      }
+
+      val itemsState = items as? StateFlow ?: items.stateIn(this, SharingStarted.Eagerly, emptyList())
+      itemsState.changesFlow().collect { changes ->
+        // apply changes. changesFlow should already order them in an applicable way
+        for (change in changes) {
+          when (change) {
+            is ComputedListChange.Remove -> repeat(change.length) { removeComponent(change.atIndex) }
+            is ComputedListChange.Insert -> change.values.forEachIndexed { i, v ->
+              addComponent(change.atIndex + i, v)
+            }
+          }
+        }
+
+        if (changes.isNotEmpty()) {
+          revalidate()
+          repaint()
+        }
+      }
+    }
+    awaitCancellation()
   }
 }

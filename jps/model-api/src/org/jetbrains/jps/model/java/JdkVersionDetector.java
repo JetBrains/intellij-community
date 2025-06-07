@@ -86,8 +86,8 @@ public abstract class JdkVersionDetector {
 
     public @NotNull @NlsSafe String displayVersionString() {
       var s = "";
-      if (variant != Variant.Unknown) s += variant.displayName + ' ';
-      s += version;
+      final String variantName = variant != Variant.Unknown ? variant.displayName : "Java";
+      s += variantName + ' ' + version;
       if (graalVersion != null) s += " - VM " + graalVersion;
       if (arch == CpuArch.ARM64) s += " - aarch64";
       return s;

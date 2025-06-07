@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
@@ -64,6 +64,11 @@ public class K2IdeK2MultiplatformCodeKotlinEvaluateExpressionTestGenerated exten
     @TestMetadata("functionBreakpointInCommonCode.kt")
     public void testFunctionBreakpointInCommonCode() throws Exception {
         runTest("../testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
+    }
+
+    @TestMetadata("inlineFromFileWithSerializableDeclaration.kt")
+    public void testInlineFromFileWithSerializableDeclaration() throws Exception {
+        runTest("../testData/evaluation/multiplatform/inlineFromFileWithSerializableDeclaration.kt");
     }
 
     @TestMetadata("inlineFunWithDefaultArgument.kt")

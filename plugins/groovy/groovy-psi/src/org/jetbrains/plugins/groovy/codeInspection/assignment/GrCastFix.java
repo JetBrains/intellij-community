@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -28,12 +28,9 @@ public class GrCastFix extends ModCommandQuickFix {
   private final PsiType myExpectedType;
   private final boolean mySafe;
 
-  @NotNull
-  private final SmartPsiElementPointer<GrExpression> pointer;
+  private final @NotNull SmartPsiElementPointer<GrExpression> pointer;
 
-  @NotNull
-  @IntentionName
-  private final String myName;
+  private final @NotNull @IntentionName String myName;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
     this(expectedType, expression, true);
@@ -95,16 +92,13 @@ public class GrCastFix extends ModCommandQuickFix {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return GroovyBundle.message("intention.family.name.add.cast");
   }
 }

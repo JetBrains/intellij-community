@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.webservice
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -40,6 +41,8 @@ internal class UiHierarchyWebService : RestService() {
     val doc = XpathDataModelCreator().create(null)
     return doc.convertToHtml()
   }
+
+  override fun getMaxRequestsPerMinute(): Int = Int.MAX_VALUE
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     try {

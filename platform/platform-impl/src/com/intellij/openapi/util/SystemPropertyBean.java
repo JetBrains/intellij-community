@@ -13,10 +13,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author gregsh
  */
-@ApiStatus.Internal
 public final class SystemPropertyBean implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
 
+  @ApiStatus.Internal
   public static void initSystemProperties() {
     new ExtensionPointName<SystemPropertyBean>("com.intellij.systemProperty").forEachExtensionSafe(bean -> {
       if (System.getProperty(bean.name) == null) {
@@ -31,13 +31,19 @@ public final class SystemPropertyBean implements PluginAware {
   @Attribute("value")
   public String value;
 
+  @ApiStatus.Internal
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 
+  @ApiStatus.Internal
   @Transient
   public @Nullable PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
+  }
+
+  @ApiStatus.Internal
+  public SystemPropertyBean() {
   }
 }

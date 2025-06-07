@@ -846,10 +846,35 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   public void testTypeAliasStatement() {
     checkHTMLOnly();
   }
+  
+  // PY-78119
+  public void testNeverType() {
+    checkHTMLOnly();
+  }
 
   // PY-23067
   public void testFunctoolsWraps() {
     checkHTMLOnly();
+  }
+
+  public void testExplicitCallableParameterListRendering() {
+    checkHTMLOnly();
+  }
+
+  public void testInferredCallableParameterListRendering() {
+    checkHTMLOnly();
+  }
+
+  // PY-77171
+  public void testImplicitResolve() {
+    checkHTMLOnly();
+  }
+
+  // PY-38169
+  public void testUnderscoreCollectionsAbcSymbolRealOrigin() {
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...", ignored -> {
+      checkHTMLOnly();
+    });
   }
 
   @Override

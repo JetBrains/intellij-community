@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -7,6 +7,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -111,9 +113,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
   private static class DeleteRedundantRequiresStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myRequiredModuleName;
-    @SafeFieldForPreview
     private final Set<String> myImportedPackages;
-    @SafeFieldForPreview
     private final Set<String> myDependencies;
 
     DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
@@ -128,17 +128,13 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       return !myDependencies.isEmpty();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.family");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.name", myRequiredModuleName);
     }
 
@@ -150,8 +146,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       statementToDelete.delete();
     }
 
-    @NotNull
-    private Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
+    private @NotNull Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
       Set<String> directDependencies = StreamEx
         .of(currentModule.getRequires().iterator())
         .map(PsiRequiresStatement::getModuleName)
@@ -178,7 +173,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
         .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
         .filter(myImportedPackages::contains)
-        .anyMatch(packageName -> JavaModuleGraphUtil.exports(transitiveModule, packageName, currentModule));
+        .anyMatch(packageName -> JavaPsiModuleUtil.exports(transitiveModule, packageName, currentModule));
     }
 
     private void addTransitiveDependencies(@NotNull PsiRequiresStatement statementToDelete) {
@@ -186,7 +181,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       if (parent instanceof PsiJavaModule currentModule) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : myDependencies) {
-          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeyword.REQUIRES + ' ' + dependencyName, null);
+          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(JavaKeywords.REQUIRES + ' ' + dependencyName, null);
           currentModule.addAfter(requiresStatement, statementToDelete);
         }
       }

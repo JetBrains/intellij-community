@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-final class JarLoader implements Loader {
+@ApiStatus.Internal
+public final class JarLoader implements Loader {
   enum Attribute {
     SPEC_TITLE, SPEC_VERSION, SPEC_VENDOR, CLASS_PATH, IMPL_TITLE, IMPL_VERSION, IMPL_VENDOR
   }
@@ -35,9 +37,9 @@ final class JarLoader implements Loader {
     new AbstractMap.SimpleImmutableEntry<>(Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR)
   };
 
-  final ClassPath configuration;
-  final URL url;
-  final ResourceFile zipFile;
+  public final ClassPath configuration;
+  public final URL url;
+  public final ResourceFile zipFile;
   private final Path path;
 
   JarLoader(@NotNull Path path, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {

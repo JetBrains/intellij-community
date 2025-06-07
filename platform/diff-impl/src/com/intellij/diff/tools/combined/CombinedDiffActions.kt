@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.actions.impl.*
+import com.intellij.diff.actions.impl.DiffNextFileAction
+import com.intellij.diff.actions.impl.DiffPreviousFileAction
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
@@ -11,13 +13,18 @@ import com.intellij.diff.tools.util.text.SmartTextDiffProvider
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 
-internal class CombinedNextBlockAction(private val context: DiffContext) : NextChangeAction() {
+internal class CombinedNextBlockAction(private val context: DiffContext) : DumbAwareAction() {
+  init {
+    copyFrom(this, DiffNextFileAction.ID)
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -39,7 +46,11 @@ internal class CombinedNextBlockAction(private val context: DiffContext) : NextC
   }
 }
 
-internal class CombinedPrevBlockAction(private val context: DiffContext) : PrevChangeAction() {
+internal class CombinedPrevBlockAction(private val context: DiffContext) : DumbAwareAction() {
+  init {
+    copyFrom(this, DiffPreviousFileAction.ID)
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -61,7 +72,11 @@ internal class CombinedPrevBlockAction(private val context: DiffContext) : PrevC
   }
 }
 
-internal class CombinedNextDifferenceAction(private val context: DiffContext) : NextDifferenceAction() {
+internal class CombinedNextDifferenceAction(private val context: DiffContext) : DumbAwareAction() {
+  init {
+    copyFrom(this, IdeActions.ACTION_NEXT_DIFF)
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -83,7 +98,11 @@ internal class CombinedNextDifferenceAction(private val context: DiffContext) : 
   }
 }
 
-internal class CombinedPrevDifferenceAction(private val context: DiffContext) : PrevDifferenceAction() {
+internal class CombinedPrevDifferenceAction(private val context: DiffContext) : DumbAwareAction() {
+  init {
+    copyFrom(this, IdeActions.ACTION_PREVIOUS_DIFF)
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -143,10 +162,11 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
                                                  private val foldingModels: () -> List<FoldingModelSupport>,
                                                  editors: () -> List<Editor>) : SetEditorSettingsActionGroup(settings, editors) {
   init {
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val diffModesSettingsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES)
     val editorSettingsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS)
     val ignorePolicyGroup = CombinedIgnorePolicySettingAction(settings).actions.apply {
       add(Separator.create(message("option.ignore.policy.group.name")), Constraints.FIRST)
@@ -155,7 +175,13 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
       add(Separator.create(message("option.highlighting.policy.group.name")), Constraints.FIRST)
     }
 
+    val isRightToolbarPlace = e != null && e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)
+    val isGutterPlace = e != null && !isRightToolbarPlace
+
     val actions = mutableListOf<AnAction>()
+    if (isRightToolbarPlace) {
+      actions.add(diffModesSettingsGroup)
+    }
     actions.add(editorSettingsGroup)
     actions.add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
     actions.addAll(myActions)
@@ -166,7 +192,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     actions.add(Separator.getInstance())
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
 
-    if (e != null && !e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)) {
+    if (isGutterPlace) {
       val gutterGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP) as ActionGroup
       val result = arrayListOf(*gutterGroup.getChildren(e))
       result.add(Separator.getInstance())

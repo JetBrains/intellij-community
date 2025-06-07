@@ -25,12 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 
 /**
  * @author Vladislav.Soroka
@@ -38,11 +35,9 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 public class IdeModelsProviderImpl implements IdeModelsProvider {
   private static final Logger LOG = Logger.getInstance(IdeModelsProviderImpl.class);
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
-  @NotNull
-  private final Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
+  private final @NotNull Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
 
   private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = new WeakHashMap<>();
 
@@ -56,7 +51,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   @Override
-  public Module @NotNull [] getModules(@NotNull final ProjectData projectData) {
+  public Module @NotNull [] getModules(final @NotNull ProjectData projectData) {
     final List<Module> modules = ContainerUtil.filter(
       getModules(),
       module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
@@ -69,9 +64,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return ModuleRootManager.getInstance(module).getOrderEntries();
   }
 
-  @Nullable
   @Override
-  public Module findIdeModule(@NotNull ModuleData module) {
+  public @Nullable Module findIdeModule(@NotNull ModuleData module) {
     Module cachedIdeModule = myIdeModulesCache.get(module);
     if (cachedIdeModule == null) {
       for (String candidate : suggestModuleNameCandidates(module)) {
@@ -105,15 +99,13 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
            pathsEqual(getExternalProjectPath(ideModule), moduleData.getLinkedExternalProjectPath());
   }
 
-  @Nullable
   @Override
-  public Module findIdeModule(@NotNull String ideModuleName) {
+  public @Nullable Module findIdeModule(@NotNull String ideModuleName) {
     return ModuleManager.getInstance(myProject).findModuleByName(ideModuleName);
   }
 
-  @Nullable
   @Override
-  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
+  public @Nullable UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
     for (String moduleName : suggestModuleNameCandidates(moduleData)) {
       UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
 
@@ -125,9 +117,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public Library findIdeLibrary(@NotNull LibraryData libraryData) {
+  public @Nullable Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     for (Library ideLibrary : libraryTable.getLibraries()) {
       if (isRelated(ideLibrary, libraryData)) return ideLibrary;
@@ -135,9 +126,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
+  public @Nullable ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
     Map<String, List<ModuleOrderEntry>> namesToEntries = myIdeModuleToModuleDepsCache.computeIfAbsent(
       module, (m) -> Arrays.stream(getOrderEntries(m))
                            .filter(ModuleOrderEntry.class::isInstance)
@@ -160,9 +150,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data) {
+  public @Nullable OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data) {
     Module ownerIdeModule = findIdeModule(data.getOwnerModule());
     if (ownerIdeModule == null) return null;
 
@@ -200,10 +189,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @NotNull
   @Override
-  public Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
-                                                                                        @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
+  public @NotNull Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                                 @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
     if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
     Module ownerIdeModule = findIdeModule(moduleData);
     if (ownerIdeModule == null) return Collections.emptyMap();
@@ -256,9 +244,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraries();
   }
 
-  @Nullable
   @Override
-  public Library getLibraryByName(String name) {
+  public @Nullable Library getLibraryByName(String name) {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(name);
   }
 
@@ -268,8 +255,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   @Override
-  @NotNull
-  public List<Module> getAllDependentModules(@NotNull Module module) {
+  public @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     return ModuleUtilCore.getAllDependentModules(module);
   }
 }

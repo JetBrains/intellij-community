@@ -6,14 +6,18 @@ import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.structuralsearch.Matcher
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.io.File
 import kotlin.random.Random
 
-class KotlinSSSanityTest : BasePlatformTestCase() {
+class KotlinSSSanityTest : KotlinLightCodeInsightFixtureTestCase() {
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     private val myConfiguration = SearchConfiguration().apply {
         name = "SSR"
         matchOptions.setFileType(KotlinFileType.INSTANCE)

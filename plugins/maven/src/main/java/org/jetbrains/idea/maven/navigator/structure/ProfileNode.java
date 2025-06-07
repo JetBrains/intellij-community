@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
@@ -56,9 +57,7 @@ class ProfileNode extends MavenSimpleNode {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  protected String getActionId() {
+  protected @Nullable @NonNls String getActionId() {
     return "Maven.ToggleProfile";
   }
 
@@ -69,21 +68,18 @@ class ProfileNode extends MavenSimpleNode {
     return "Maven.ProfileMenu";
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     if (myProject == null) return null;
     final List<MavenDomProfile> profiles = new ArrayList<>();
 
     // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
     // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml
-    for (VirtualFile virtualFile : myMavenProjectsStructure.getProjectsManager().getGeneralSettings().getEffectiveSettingsFiles()) {
-      if (virtualFile != null) {
+    for (VirtualFile virtualFile : MavenSettingsCache.getInstance(myProject).getEffectiveVirtualSettingsFiles()) {
         final MavenDomSettingsModel model = MavenDomUtil.getMavenDomModel(myProject, virtualFile, MavenDomSettingsModel.class);
         if (model != null) {
           addProfiles(profiles, model.getProfiles().getProfiles());
         }
-      }
     }
 
     for (MavenProject mavenProject : myMavenProjectsStructure.getProjectsManager().getProjects()) {
@@ -109,7 +105,7 @@ class ProfileNode extends MavenSimpleNode {
   private record ProfileWithName(MavenDomProfile profile, String name) {
   }
 
-  private static Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
+  private static Navigatable getNavigatable(final @NotNull List<MavenDomProfile> profiles) {
     if (profiles.size() > 1) {
       var profileUrls = new ArrayList<ProfileWithName>();
       for (var profile : profiles) {
@@ -148,13 +144,11 @@ class ProfileNode extends MavenSimpleNode {
     }
   }
 
-  @NlsSafe
-  private static @NotNull String getPresentableUrl(@NotNull XmlElement xmlElement) {
+  private static @NlsSafe @NotNull String getPresentableUrl(@NotNull XmlElement xmlElement) {
     return ReadAction.nonBlocking(() -> xmlElement.getContainingFile().getVirtualFile().getPresentableUrl()).executeSynchronously();
   }
 
-  @Nullable
-  private static Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
+  private static @Nullable Navigatable getNavigatable(final @Nullable MavenDomProfile profile) {
     if (profile == null) return null;
     XmlElement xmlElement = profile.getId().getXmlElement();
     return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;

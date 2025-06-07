@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +28,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns = new FilePatternSetImpl();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -38,9 +37,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.name = name;
   }
 
-  @NotNull
   @Override
-  public Set<File> getSrcDirs() {
+  public @NotNull Set<File> getSrcDirs() {
     return srcDirs;
   }
 
@@ -48,9 +46,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.srcDirs = srcDirs;
   }
 
-  @NotNull
   @Override
-  public File getOutputDir() {
+  public @NotNull File getOutputDir() {
     return outputDir;
   }
 
@@ -58,9 +55,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.outputDir = outputDir;
   }
 
-  @NotNull
   @Override
-  public Collection<File> getGradleOutputDirs() {
+  public @NotNull Collection<File> getGradleOutputDirs() {
     return gradleOutputDirs;
   }
 
@@ -77,9 +73,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.isCompilerOutputInherited = isCompilerOutputInherited;
   }
 
-  @NotNull
   @Override
-  public Set<String> getExcludes() {
+  public @NotNull Set<String> getExcludes() {
     return patterns.getExcludes();
   }
 
@@ -87,9 +82,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns.setExcludes(excludes);
   }
 
-  @NotNull
   @Override
-  public Set<String> getIncludes() {
+  public @NotNull Set<String> getIncludes() {
     return patterns.getIncludes();
   }
 
@@ -97,9 +91,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns.setIncludes(includes);
   }
 
-  @NotNull
   @Override
-  public FilePatternSet getPatterns() {
+  public @NotNull FilePatternSet getPatterns() {
     return patterns;
   }
 
@@ -108,9 +101,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.patterns.setExcludes(patterns.getExcludes());
   }
 
-  @NotNull
   @Override
-  public List<DefaultExternalFilter> getFilters() {
+  public @NotNull List<DefaultExternalFilter> getFilters() {
     return filters;
   }
 

@@ -56,23 +56,23 @@ public data class ExtPropertyMetadata(
  * Both parametrized types and primitive types are supported.
  *
  * E.g.:
- * * @Child val moduleEntity: ModuleEntity --> Entity(entityName = "ModuleEntity", isChild = false, connectionType = ConnectionType.ONE_TO_ONE, isNullable = false)
- * *
- * * List<CustomSealedClass>? --> ParameterizedType(
- * *                                primitive = KnownType(type = "List", isNullable = true),
- * *                                generics = listOf(CustomClass(classMetadata = 'Metadata class for CustomSealedClass', isNullable = false)
- * *                              )
- * *
- * * CustomDataClass<Int?, SymbolicEntityId<ArtifactEntity>>? --> ParameterizedType(
- * *                              primitive = CustomClass(classMetadata = 'Metadata class for CustomDataClass', isNullable = true),
- * *                              generics = listOf(
- * *                                  KnownType(type = "Int", isNullable = true),
- * *                                  ParameterizedType(
- * *                                      primitive = KnownType(type = "SymbolicEntityId", isNullable = false),
- * *                                      generics = listOf(KnownType(type = "ArtifactEntity", isNullable = false))
- * *                                  )
- * *                              )
- * *                           )
+ * ```@Child val moduleEntity: ModuleEntity --> Entity(entityName = "ModuleEntity", isChild = false, connectionType = ConnectionType.ONE_TO_ONE, isNullable = false)
+ *
+ * List<CustomSealedClass>? --> ParameterizedType(
+ *                                primitive = KnownType(type = "List", isNullable = true),
+ *                                generics = listOf(CustomClass(classMetadata = 'Metadata class for CustomSealedClass', isNullable = false)
+ *                              )
+ *
+ * CustomDataClass<Int?, SymbolicEntityId<ArtifactEntity>>? --> ParameterizedType(
+ *                              primitive = CustomClass(classMetadata = 'Metadata class for CustomDataClass', isNullable = true),
+ *                              generics = listOf(
+ *                                  KnownType(type = "Int", isNullable = true),
+ *                                  ParameterizedType(
+ *                                      primitive = KnownType(type = "SymbolicEntityId", isNullable = false),
+ *                                      generics = listOf(KnownType(type = "ArtifactEntity", isNullable = false))
+ *                                  )
+ *                              )
+ *                           )```
  */
 public sealed class ValueTypeMetadata: StorageMetadata {
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -35,13 +36,12 @@ import java.util.concurrent.atomic.AtomicReference
  *  In order to solve this problem, IjentFileSystemApi MUST guarantee idempotency of every call.
  */
 @Suppress("FunctionName")
-suspend fun IjentFailSafeFileSystemPosixApi(
+fun IjentFailSafeFileSystemPosixApi(
   coroutineScope: CoroutineScope,
   delegateFactory: suspend () -> IjentPosixApi,
 ): IjentFileSystemApi {
   val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
-  val user = holder.withDelegateRetrying { user }
-  return IjentFailSafeFileSystemPosixApiImpl(user, holder)
+  return IjentFailSafeFileSystemPosixApiImpl(holder)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
@@ -54,10 +54,11 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private fun getDelegate(): Deferred<I> =
     delegate.updateAndGet { oldDelegate ->
       if (
-        oldDelegate != null &&
-        oldDelegate.isCompleted &&
-        oldDelegate.getCompletionExceptionOrNull() == null &&
-        oldDelegate.getCompleted().isRunning
+        oldDelegate != null && (
+          !oldDelegate.isCompleted ||
+          oldDelegate.getCompletionExceptionOrNull() == null &&
+          oldDelegate.getCompleted().isRunning
+        )
       )
         oldDelegate
       else
@@ -98,28 +99,39 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val user: EelUserPosixInfo,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
+  // TODO Make user suspendable again?
+  override val user: EelUserPosixInfo by lazy {
+    runBlocking {
+      holder.withDelegateRetrying { user }
+    }
+  }
+
+  override val descriptor: EelDescriptor by lazy {
+    runBlocking {
+      holder.withDelegateRetrying { descriptor }
+    }
+  }
+
 
   override suspend fun listDirectory(
-    path: EelPath.Absolute,
+    path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
     holder.withDelegateRetrying {
       listDirectory(path)
     }
 
   override suspend fun createDirectory(
-    path: EelPath.Absolute,
+    path: EelPath,
     attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
-  ) {
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateDirectoryError> =
     holder.withDelegateRetrying {
       createDirectory(path, attributes)
     }
-  }
 
   override suspend fun listDirectoryWithAttrs(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
@@ -128,14 +140,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun canonicalize(
-    path: EelPath.Absolute,
-  ): EelResult<EelPath.Absolute, EelFileSystemApi.CanonicalizeError> =
+    path: EelPath,
+  ): EelResult<EelPath, EelFileSystemApi.CanonicalizeError> =
     holder.withDelegateRetrying {
       canonicalize(path)
     }
 
   override suspend fun stat(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<EelPosixFileInfo, EelFileSystemApi.StatError> =
     holder.withDelegateRetrying {
@@ -143,19 +155,23 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun sameFile(
-    source: EelPath.Absolute,
-    target: EelPath.Absolute,
+    source: EelPath,
+    target: EelPath,
   ): EelResult<Boolean, EelFileSystemApi.SameFileError> =
     holder.withDelegateRetrying {
       sameFile(source, target)
     }
 
   override suspend fun openForReading(
-    path: EelPath.Absolute,
+    path: EelPath,
   ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
       openForReading(path)
     }
+
+  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
+    readFully(path, limit, overflowPolicy)
+  }
 
   override suspend fun openForWriting(
     options: EelFileSystemApi.WriteOptions,
@@ -171,51 +187,56 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: EelPath.Absolute, removeContent: Boolean) {
+  override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     holder.withDelegateRetrying {
       delete(path, removeContent)
     }
-  }
 
-  override suspend fun copy(options: EelFileSystemApi.CopyOptions) {
+  override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
     holder.withDelegateRetrying {
       copy(options)
     }
-  }
 
   override suspend fun move(
-    source: EelPath.Absolute,
-    target: EelPath.Absolute,
+    source: EelPath,
+    target: EelPath,
     replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
     followLinks: Boolean,
-  ) {
+  ): EelResult<Unit, EelFileSystemApi.MoveError> =
     holder.withDelegateRetrying {
       move(source, target, replaceExisting, followLinks)
     }
-  }
 
-  override suspend fun changeAttributes(path: EelPath.Absolute, options: EelFileSystemApi.ChangeAttributesOptions) {
+  override suspend fun changeAttributes(
+    path: EelPath,
+    options: EelFileSystemApi.ChangeAttributesOptions,
+  ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
     holder.withDelegateRetrying {
       changeAttributes(path, options)
     }
-  }
 
-  override suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
+  override suspend fun getDiskInfo(path: EelPath): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
     return holder.withDelegateRetrying {
       getDiskInfo(path)
     }
   }
 
-  override suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) {
+  override suspend fun createSymbolicLink(
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
+    linkPath: EelPath,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
     holder.withDelegateRetrying {
       createSymbolicLink(target, linkPath)
     }
-  }
 
   override suspend fun createTemporaryDirectory(
-    options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-  ): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> =
+    options: EelFileSystemApi.CreateTemporaryEntryOptions,
+  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
     holder.withDelegateRetrying {
       createTemporaryDirectory(options)
     }
+
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> = holder.withDelegateRetrying {
+    createTemporaryFile(options)
+  }
 }

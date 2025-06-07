@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
@@ -23,10 +23,8 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     myProject = project;
   }
 
-  @Nullable
-  public RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
-                             @NotNull VirtualFile projectFile,
-                             @Nullable MavenParentDesc parentDesc) {
+  public @Nullable RESULT_TYPE process(@NotNull VirtualFile projectFile,
+                                       @Nullable MavenParentDesc parentDesc) {
     VirtualFile superPom = MavenUtil.getEffectiveSuperPomWithNoRespectToWrapper(myProject);
     if (superPom == null || projectFile.equals(superPom)) return null;
 
@@ -42,7 +40,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     }
 
     if (result == null && Strings.isEmpty(parentDesc.getParentRelativePath())) {
-      result = findInLocalRepository(generalSettings, parentDesc);
+      result = findInLocalRepository(parentDesc);
       if (result == null) {
         parentDesc = new MavenParentDesc(parentDesc.getParentId(), DEFAULT_RELATIVE_PATH);
       }
@@ -59,17 +57,16 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     }
 
     if (result == null) {
-      result = findInLocalRepository(generalSettings, parentDesc);
+      result = findInLocalRepository(parentDesc);
     }
 
     return result;
   }
 
-  private RESULT_TYPE findInLocalRepository(@NotNull MavenGeneralSettings generalSettings,
-                                            @NotNull MavenParentDesc parentDesc) {
+  private RESULT_TYPE findInLocalRepository(@NotNull MavenParentDesc parentDesc) {
     RESULT_TYPE result = null;
     VirtualFile parentFile;
-    Path parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveRepositoryPath(),
+    Path parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(),
                                                           parentDesc.getParentId(), "pom");
     parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile);
     if (parentFile != null) {
@@ -78,29 +75,23 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     return result;
   }
 
-  @Nullable
-  protected abstract VirtualFile findManagedFile(@NotNull MavenId id);
+  protected abstract @Nullable VirtualFile findManagedFile(@NotNull MavenId id);
 
-  @Nullable
-  protected RESULT_TYPE processManagedParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processManagedParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processRelativeParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processRelativeParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processSuperParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processSuperParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected abstract RESULT_TYPE doProcessParent(VirtualFile parentFile);
+  protected abstract @Nullable RESULT_TYPE doProcessParent(VirtualFile parentFile);
 }

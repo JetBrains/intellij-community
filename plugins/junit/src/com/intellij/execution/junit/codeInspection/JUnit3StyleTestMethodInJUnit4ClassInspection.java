@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.psi.*;
@@ -20,16 +20,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return JUnitBundle.message("junit3.style.test.method.in.junit4.class.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
-    return new AddAnnotationPsiFix("org.junit.Test", (PsiMethod)infos[0]);
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+    return LocalQuickFix.from(new AddAnnotationModCommandAction("org.junit.Test", (PsiMethod)infos[0]));
   }
 
   @Override
@@ -50,7 +48,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
       final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
       if (testFramework != null) {
         if (testFramework.isTestMethod(method, false)) {
-          @NonNls final String testFrameworkName = testFramework.getName();
+          final @NonNls String testFrameworkName = testFramework.getName();
           if (testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5")) return;
         }
         if (AnnotationUtil.isAnnotated(method, "org.junit.Ignore", 0) ||
@@ -78,7 +76,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
     @Override
     public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
-      @NonNls final String qualifiedName = annotation.getQualifiedName();
+      final @NonNls String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.startsWith("org.junit.")) {
         return;
       }

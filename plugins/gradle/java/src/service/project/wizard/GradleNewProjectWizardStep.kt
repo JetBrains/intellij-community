@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindEnumStorage
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
@@ -38,6 +39,7 @@ import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -47,11 +49,13 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
@@ -67,6 +71,7 @@ import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
+import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
@@ -74,31 +79,33 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
-  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
-  final override val gradleDslProperty = propertyGraph.property(GradleDsl.KOTLIN)
+  final override val sdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
+  final override val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.property(null)
+  final override val gradleDslProperty: GraphProperty<GradleDsl> = propertyGraph.property(GradleDsl.KOTLIN)
     .bindEnumStorage("NewProjectWizard.gradleDslState")
 
-
-  final override var sdk by sdkProperty
-  final override var sdkDownloadTask by sdkDownloadTaskProperty
-  final override var gradleDsl by gradleDslProperty
+  final override var sdk: Sdk? by sdkProperty
+  final override var sdkDownloadTask: SdkDownloadTask? by sdkDownloadTaskProperty
+  final override var gradleDsl: GradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
-  protected val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
+  private val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
   private val gradleVersionsProperty = propertyGraph.lazyProperty { suggestGradleVersions() }
   private val autoSelectGradleVersionProperty = propertyGraph.lazyProperty { suggestAutoSelectGradleVersion() }
   private val gradleHomeProperty = propertyGraph.lazyProperty { suggestGradleHome() }
   private val updateDefaultProjectSettingsProperty = propertyGraph.lazyProperty { true }
 
-  protected var distributionType by distributionTypeProperty
-  protected var gradleVersion by gradleVersionProperty
+  private var distributionType by distributionTypeProperty
+  private var gradleVersion by gradleVersionProperty
   private var autoSelectGradleVersion by autoSelectGradleVersionProperty
-  protected var gradleHome by gradleHomeProperty
+  private var gradleHome by gradleHomeProperty
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
 
   init {
     gradleVersionProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
+      if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
+    }
+    gradleVersionProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
     gradleVersionProperty.dependsOn(autoSelectGradleVersionProperty, deleteWhenModified = false) {
@@ -110,9 +117,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     gradleVersionsProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
       suggestGradleVersions()
     }
+    gradleVersionsProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
+      suggestGradleVersions()
+    }
   }
 
-  override fun createView(data: ProjectData) = GradleDataView(data)
+  override fun createView(data: ProjectData): GradleDataView {
+    return GradleDataView(data)
+  }
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
@@ -126,7 +138,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupGradleDslUI(builder: Panel) {
     builder.row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) { text = it.text }
+      val renderer: SegmentedButton.ItemPresentation.(GradleDsl) -> Unit = {
+        text = when (it) {
+          GradleDsl.GROOVY -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
+          GradleDsl.KOTLIN -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
+        }
+      }
+      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY), renderer)
         .bind(gradleDslProperty)
         .whenItemSelectedFromUi { logGradleDslChanged(gradleDsl) }
     }.bottomGap(BottomGap.SMALL)
@@ -193,7 +211,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .bindSelected(updateDefaultProjectSettingsProperty)
           .onApply {
             if (updateDefaultProjectSettings) {
-              GradleDefaultProjectSettings.setInstance(getCurrentDefaultProjectSettings())
+              GradleDefaultProjectSettings.setInstance(getDefaultProjectSettings())
             }
           }
       }.bottomGap(BottomGap.SMALL)
@@ -209,13 +227,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  private fun getCurrentDefaultProjectSettings(): GradleDefaultProjectSettings {
+  private fun getDefaultProjectSettings(): GradleDefaultProjectSettings {
     val settings = GradleDefaultProjectSettings.getInstance().copy()
     settings.distributionType = distributionType.value
     when (distributionType) {
       WRAPPER -> when (autoSelectGradleVersion) {
         true -> settings.gradleVersion = null
-        else -> settings.gradleVersion = getGradleVersionSafe(gradleVersion)
+        else -> settings.gradleVersion = GradleVersion.version(gradleVersion)
       }
       LOCAL -> settings.gradleVersion = null
     }
@@ -301,7 +319,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   /**
    * Is the language of this wizard compatible with the [gradleVersion].
    */
-  protected open fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
+  protected open fun validateGradleVersion(gradleVersion: GradleVersion): Boolean {
     return true
   }
 
@@ -309,7 +327,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
    * Validate that the language is compatible with Gradle and return
    * an appropriate error message if not.
    */
-  protected open fun validateLanguageCompatibility(
+  protected open fun validateGradleVersion(
     builder: ValidationInfoBuilder,
     gradleVersion: GradleVersion,
     withDialog: Boolean
@@ -357,7 +375,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
     return validateIdeaGradleCompatibility(withDialog, gradleVersion)
            ?: validateJdkCompatibility(gradleVersion, withDialog)
-           ?: validateLanguageCompatibility(this, gradleVersion, withDialog)
+           ?: validateGradleVersion(this, gradleVersion, withDialog)
   }
 
   protected fun ValidationInfoBuilder.validationWithDialog(
@@ -377,7 +395,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return error(message)
   }
 
-  private fun ValidationInfoBuilder.errorWithDialog(
+  protected fun ValidationInfoBuilder.errorWithDialog(
     withDialog: Boolean, // dialog shouldn't be shown on text input
     message: @NlsContexts.DialogMessage String,
     dialogTitle: @NlsContexts.DialogTitle String,
@@ -395,11 +413,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun ValidationInfoBuilder.validateGradleHome(withDialog: Boolean): ValidationInfo? {
-    val installationManager = GradleInstallationManager.getInstance()
-    if (!installationManager.isGradleSdkHome(context.project, gradleHome)) {
+    val gradleHomePath = Path.of(gradleHome)
+    if (!GradleInstallationManager.getInstance().isGradleSdkHome(context.project, gradleHomePath)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
+    val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHomePath)
     if (gradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }
@@ -425,7 +443,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       withProject(context.project)
       withJavaVersionFilter(getJdkVersion())
       withFilter {
-        validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+        validateJdkCompatibility(it) && validateGradleVersion(it)
       }
       if (autoSelectGradleVersion) {
         dontCheckDefaultProjectSettingsVersion()
@@ -436,7 +454,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected open fun suggestGradleVersions(): List<String> {
     return GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().filter {
-      validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+      validateJdkCompatibility(it) && validateGradleVersion(it)
     }.map { it.version }
   }
 
@@ -456,11 +474,47 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  fun setupBuilder(builder: AbstractGradleModuleBuilder) {
+  val gradleVersionToUse: GradleVersion by lazy {
+    val rawGradleVersion = when (distributionType) {
+      WRAPPER -> gradleVersion
+      LOCAL -> GradleInstallationManager.getGradleVersion(Path.of(gradleHome))!!
+    }
+    GradleVersion.version(rawGradleVersion)
+  }
+
+  val isCreatingNewLinkedProject: Boolean by lazy {
+    parentData == null
+  }
+
+  val isFoojayPluginSupported: Boolean by lazy {
+    resolveIsFoojayPluginSupported()
+  }
+
+  protected open fun resolveIsFoojayPluginSupported(): Boolean {
+    return isFoojayPluginSupported(gradleVersionToUse)
+  }
+
+  val isCreatingDaemonToolchain: Boolean by lazy {
+    Registry.`is`("gradle.daemon.jvm.criteria.new.project") &&
+    isCreatingNewLinkedProject && isFoojayPluginSupported &&
+    GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersionToUse)
+  }
+
+  @ApiStatus.Internal
+  fun setupProjectFromBuilder(project: Project) {
+    val builder = object : AbstractGradleModuleBuilder() {}
+
     builder.moduleJdk = sdk
+    builder.sdkDownloadTask = sdkDownloadTask
+
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
+    builder.isCreatingWrapper = false
+    builder.isCreatingBuildScriptFile = false
+    builder.isCreatingSettingsScriptFile = false
+    builder.isCreatingEmptyContentRoots = false
+    builder.isCreatingDaemonToolchain = isCreatingDaemonToolchain
     builder.isCreatingNewProject = context.isCreatingNewProject
 
     builder.parentProject = parentData
@@ -470,23 +524,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 
-    builder.setGradleVersion(
-      GradleVersion.version(
-        when (distributionType) {
-          WRAPPER -> gradleVersion
-          LOCAL -> GradleInstallationManager.getGradleVersion(gradleHome)!!
-        }
-      )
-    )
+    builder.setGradleVersion(gradleVersionToUse)
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
-  }
 
-  fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    builder.configureBuildScript(configure)
-  }
-
-  fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
     setupProjectFromBuilder(project, builder)
       ?.also { startJdkDownloadIfNeeded(it) }
   }
@@ -497,11 +538,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     override val presentationName: String = data.externalName
     override val groupId: String = data.group ?: ""
     override val version: String = data.version ?: ""
-  }
-
-  enum class GradleDsl(val text: @Nls String) {
-    KOTLIN(GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")),
-    GROOVY(GradleBundle.message("gradle.dsl.new.project.wizard.groovy"))
   }
 
   protected enum class DistributionTypeItem(val value: DistributionType, val text: @Nls String) {

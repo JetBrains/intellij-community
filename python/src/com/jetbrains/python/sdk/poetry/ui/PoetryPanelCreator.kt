@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
@@ -13,11 +12,11 @@ import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.sdkHomes
-import kotlinx.coroutines.runBlocking
+import com.jetbrains.python.ui.pyModalBlocking
 import java.util.function.Supplier
 
 fun createPoetryPanel(
-  project: Project?,
+  project: Project,
   module: Module?,
   existingSdks: List<Sdk>,
   newProjectPath: String?,
@@ -27,11 +26,11 @@ fun createPoetryPanel(
     allowCreatingNewEnvironments(project) -> PyAddNewPoetryPanel(project, module, existingSdks, null, context)
     else -> null
   }
-  val existingPoetryPanel = PyAddExistingPoetryEnvPanel(project, module, existingSdks, null, context)
+  val existingPoetryPanel = PyAddExistingPoetryEnvPanel(project, module, existingSdks, null)
   val panels = listOfNotNull(newPoetryPanel, existingPoetryPanel)
   val existingSdkPaths = sdkHomes(existingSdks)
   val defaultPanel = when {
-    runBlockingCancellable {
+    pyModalBlocking {
       detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
     }.any { it.isAssociatedWithModule(module) } -> existingPoetryPanel
     newPoetryPanel != null -> newPoetryPanel

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -58,16 +58,14 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     super(moduleType, fixtureBuilder);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
+  public @NotNull JavaModuleFixtureBuilder setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(String libraryName, String @NotNull ... classPath) {
+  public @NotNull JavaModuleFixtureBuilder addLibrary(String libraryName, String @NotNull ... classPath) {
     for (String path : classPath) {
       if (!new File(path).exists()) {
         System.out.println(path + " does not exist");
@@ -78,9 +76,8 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibrary(@NonNls final String libraryName, @NotNull final Map<OrderRootType, String[]> roots) {
+  public @NotNull JavaModuleFixtureBuilder addLibrary(final @NonNls String libraryName, final @NotNull Map<OrderRootType, String[]> roots) {
     myLibraries.add(new Lib(libraryName, roots));
     return this;
   }
@@ -91,9 +88,8 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, String @NotNull ... jars) {
+  public @NotNull JavaModuleFixtureBuilder addLibraryJars(String libraryName, @NotNull String basePath, String @NotNull ... jars) {
     if (!basePath.endsWith("/")) {
       basePath += "/";
     }
@@ -104,15 +100,14 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     return addLibrary(libraryName, classPath);
   }
 
-  @NotNull
   @Override
-  public JavaModuleFixtureBuilder addJdk(@NotNull String jdkPath) {
+  public @NotNull JavaModuleFixtureBuilder addJdk(@NotNull String jdkPath) {
     myJdk = jdkPath;
     return this;
   }
 
   @Override
-  public void setMockJdkLevel(@NotNull final MockJdkLevel level) {
+  public void setMockJdkLevel(final @NotNull MockJdkLevel level) {
     myMockJdkLevel = level;
   }
 

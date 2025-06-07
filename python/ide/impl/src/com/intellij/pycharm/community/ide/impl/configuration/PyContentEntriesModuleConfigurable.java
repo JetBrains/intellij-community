@@ -118,13 +118,12 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[0];
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "python.project.structure";
   }
 

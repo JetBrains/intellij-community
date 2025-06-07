@@ -1,8 +1,6 @@
 package com.intellij.tools.launch.ide
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.environments.LaunchCommand
@@ -19,7 +17,7 @@ data class IdeLaunchContext(
   //val classPathArgFile: PathInLaunchEnvironment,
   val ideDebugOptions: IdeDebugOptions?,
 
-  val platformPrefix: String?,
+  val platformPrefix: String,
   val productMode: ProductMode? = null,
   val xmx: Int = 800,
   val javaArguments: List<String> = emptyList(),
@@ -85,10 +83,6 @@ object IdeLauncher {
         add("-XX:+UnlockDiagnosticVMOptions")
         add("-XX:+BytecodeVerificationLocal")
         add("-Dshared.indexes.download.auto.consent=true")
-
-        if (isIjentWslFsEnabledByDefaultForProduct(context.platformPrefix)) {
-          addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-        }
 
         if (context.specifyUserHomeExplicitly) {
           /* the module-based loader adds JARs from Maven repository (${user.home}/.m2/repository) to the classpath, so we need to ensure that

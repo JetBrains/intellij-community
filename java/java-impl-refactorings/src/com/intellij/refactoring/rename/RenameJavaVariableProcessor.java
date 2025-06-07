@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,15 +37,15 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance(RenameJavaVariableProcessor.class);
 
   @Override
-  public boolean canProcessElement(@NotNull final PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiVariable;
   }
 
   @Override
-  public void renameElement(@NotNull final PsiElement psiElement,
-                            @NotNull final String newName,
-                            final UsageInfo @NotNull [] usages,
-                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
+  public void renameElement(@NotNull PsiElement psiElement,
+                            @NotNull String newName,
+                            UsageInfo @NotNull [] usages,
+                            @Nullable RefactoringElementListener listener) {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<>();
     List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<>();
@@ -55,14 +56,15 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (usage instanceof MemberHidesStaticImportUsageInfo) {
-        staticImportHides.add((MemberHidesStaticImportUsageInfo)usage);
-      } else if (usage instanceof LocalHidesFieldUsageInfo) {
+      if (usage instanceof MemberHidesStaticImportUsageInfo info) {
+        staticImportHides.add(info);
+      }
+      else if (usage instanceof LocalHidesFieldUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiElement resolved = collidingRef.resolve();
 
-        if (resolved instanceof PsiField) {
-          qualifyMember((PsiField)resolved, collidingRef, newName);
+        if (resolved instanceof PsiField field) {
+          qualifyMember(field, collidingRef, newName);
         }
         else {
           // do nothing
@@ -74,13 +76,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
       else {
-        final PsiReference ref;
-        if (usage instanceof MoveRenameUsageInfo) {
-          ref = usage.getReference();
-        }
-        else {
-          ref = element.getReference();
-        }
+        final PsiReference ref = usage instanceof MoveRenameUsageInfo ? usage.getReference() : element.getReference();
         if (ref != null) {
           PsiElement newElem = ref.handleElementRename(newName);
           if (variable instanceof PsiField) {
@@ -95,9 +91,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       listener.elementRenamed(variable);
     }
 
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField field) {
       for (PsiElement occurrence : occurrencesToCheckForConflict) {
-        fixPossibleNameCollisionsForFieldRenaming((PsiField) variable, newName, occurrence);
+        fixPossibleNameCollisionsForFieldRenaming(field, newName, occurrence);
       }
     }
 
@@ -106,8 +102,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   private static void fixPossibleNameCollisionsForFieldRenaming(PsiField field, String newName, PsiElement replacedOccurence) throws IncorrectOperationException {
-    if (!(replacedOccurence instanceof PsiReferenceExpression)) return;
-    PsiElement elem = ((PsiReferenceExpression)replacedOccurence).resolve();
+    if (!(replacedOccurence instanceof PsiReferenceExpression ref)) return;
+    PsiElement elem = ref.resolve();
 
     if (elem == null || elem == field || elem.isEquivalentTo(field)) {
       // If reference is unresolved, then field is not hidden by anyone...
@@ -120,7 +116,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull PsiElement element,
+                              @NotNull String newName,
+                              @NotNull Map<PsiElement, String> allRenames,
+                              @NotNull SearchScope scope) {
     if (element instanceof PsiRecordComponent component) {
       PsiClass containingClass = component.getContainingClass();
       if (containingClass != null) {
@@ -136,16 +135,15 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         }
       }
     }
-    if (element instanceof PsiParameter) {
+    if (element instanceof PsiParameter param) {
       PsiMethod method = PsiTreeUtil.getParentOfType(element.getParent(), PsiMethod.class);
-      if (method == null) return;
-      if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-        PsiRecordComponent recordComponent = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter((PsiParameter)element);
+      if (method != null && JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        PsiRecordComponent recordComponent = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(param);
         allRenames.put(recordComponent, newName);
 
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null) {
-          addGetter(element, newName, allRenames, containingClass, ((PsiParameter)element).getName());
+          addGetter(element, newName, allRenames, containingClass, param.getName());
         }
       }
     }
@@ -154,21 +152,19 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static void addGetter(@NotNull PsiElement element,
                                 @NotNull String newName,
                                 @NotNull Map<PsiElement, String> allRenames,
-                                PsiClass containingClass,
-                                String name) {
-    PsiMethod explicitGetter = ContainerUtil
-      .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
+                                @NotNull PsiClass containingClass,
+                                @NotNull String name) {
+    PsiMethod explicitGetter = ContainerUtil.find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
 
-    if (explicitGetter != null) {
-      AutomaticGetterSetterRenamer
-        .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()),
-                                     allRenames);
+    if (explicitGetter != null && explicitGetter.isPhysical()) {
+      JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(element.getProject());
+      AutomaticGetterSetterRenamer.addOverriddenAndImplemented(explicitGetter, newName, null, newName, styleManager, allRenames);
     }
   }
 
   @Override
-  public void findCollisions(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<? extends PsiElement, String> allRenames,
-                             @NotNull final List<UsageInfo> result) {
+  public void findCollisions(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<? extends PsiElement, String> allRenames,
+                             @NotNull List<UsageInfo> result) {
     if (element instanceof PsiField field) {
       findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
@@ -186,7 +182,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames) {
     for (PsiElement psiElement : allRenames.keySet()) {
-      RenamePsiElementProcessor.forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
+      forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
     }
   }
 
@@ -196,41 +192,35 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField refactoredField) {
       if (newName.equals(refactoredField.getName())) return;
-      ConflictsUtil.checkFieldConflicts(
-        refactoredField.getContainingClass(),
-        newName,
-        conflicts
-      );
+      ConflictsUtil.checkFieldConflicts(refactoredField.getContainingClass(), newName, conflicts);
     }
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpID(final PsiElement element) {
-    if (element instanceof PsiField){
+  public @Nullable @NonNls String getHelpID(PsiElement element) {
+    if (element instanceof PsiField) {
       return HelpID.RENAME_FIELD;
     }
-    else if (element instanceof PsiLocalVariable){
+    else if (element instanceof PsiLocalVariable) {
       return HelpID.RENAME_VARIABLE;
     }
-    else if (element instanceof PsiParameter){
+    else if (element instanceof PsiParameter) {
       return HelpID.RENAME_PARAMETER;
     }
     return null;
   }
 
   @Override
-  public boolean isToSearchInComments(@NotNull final PsiElement element) {
-    if (element instanceof PsiField){
+  public boolean isToSearchInComments(@NotNull PsiElement element) {
+    if (element instanceof PsiField) {
       return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD;
     }
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
   }
 
   @Override
-  public void setToSearchInComments(@NotNull final PsiElement element, final boolean enabled) {
-    if (element instanceof PsiField){
+  public void setToSearchInComments(@NotNull PsiElement element, boolean enabled) {
+    if (element instanceof PsiField) {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
     }
     else {
@@ -239,7 +229,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
+  public boolean isToSearchForTextOccurrences(@NotNull PsiElement element) {
     if (element instanceof PsiField) {
       return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD;
     }
@@ -247,7 +237,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
+  public void setToSearchForTextOccurrences(@NotNull PsiElement element, boolean enabled) {
     if (element instanceof PsiField) {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD = enabled;
     }
@@ -256,9 +246,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<? super UsageInfo> result) {
-    if (field.getContainingClass() == null) return;
-    if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
+  private static void findSubmemberHidesFieldCollisions(PsiField field, String newName, List<? super UsageInfo> result) {
+    if (field.getContainingClass() == null || field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
     Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
     for (PsiClass inheritor : inheritors) {
@@ -281,19 +270,21 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  private static void findLocalHidesFieldCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<? super UsageInfo> result) {
-    if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
+  private static void findLocalHidesFieldCollisions(PsiElement element, String newName, Map<? extends PsiElement, String> allRenames,
+                                                    List<? super UsageInfo> result) {
+    PsiElement scopeElement;
+    if (element instanceof PsiLocalVariable local) {
+      scopeElement = CommonJavaRefactoringUtil.getVariableScope(local);
+    }
+    else if (element instanceof PsiParameter param) {
+      scopeElement = param.getDeclarationScope();
+    }
+    else {
+      return;
+    }
 
     PsiClass toplevel = PsiUtil.getTopLevelClass(element);
     if (toplevel == null) return;
-
-    PsiElement scopeElement;
-    if (element instanceof PsiLocalVariable) {
-      scopeElement = CommonJavaRefactoringUtil.getVariableScope((PsiLocalVariable)element);
-    }
-    else { // Parameter
-      scopeElement = ((PsiParameter) element).getDeclarationScope();
-    }
 
     LOG.assertTrue(scopeElement != null);
     scopeElement.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -313,17 +304,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
   
   @Override
-  public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
-    if (nonJava && element instanceof PsiField field) {
-      PsiClass containingClass = field.getContainingClass();
-      if (containingClass != null) {
-        String qualifiedName = containingClass.getQualifiedName();
-        if (qualifiedName != null) {
-          return StringUtil.getQualifiedName(qualifiedName, newName);
-        }
-      }
-    }
-    
-    return null;
+  public String getQualifiedNameAfterRename(@NotNull PsiElement element, @NotNull String newName, boolean nonJava) {
+    if (!nonJava || !(element instanceof PsiField field)) return null;
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return null;
+    String qualifiedName = containingClass.getQualifiedName();
+    return qualifiedName == null ? null : StringUtil.getQualifiedName(qualifiedName, newName);
   }
 }

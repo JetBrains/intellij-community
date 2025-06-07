@@ -35,7 +35,7 @@ public class a21  {
   void f7(int i) {
     final int j;
     while (i < 4) {
-      <error descr="Variable 'j' might be assigned in loop">j</error> = 2;
+      <error descr="Variable 'j' might be assigned in a loop">j</error> = 2;
       final int ii = 4;
       i+=ii;
     }
@@ -130,7 +130,7 @@ class A {
     final int k;
     A() {
         for (;;) {
-            <error descr="Variable 'k' might be assigned in loop">k</error>=0;
+            <error descr="Variable 'k' might be assigned in a loop">k</error>=0;
         }
     }
 }

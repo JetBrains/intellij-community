@@ -31,54 +31,67 @@ class BreakpointImpl implements Breakpoint {
     myEnabled = true;
   }
 
+  @Override
   public void setEnabled(boolean b) {
     myEnabled = b;
   }
 
+  @Override
   public void setCondition(String expr) {
     myCondition = expr;
   }
 
+  @Override
   public void setLogMessage(String expr) {
     myLogMsg = expr;
   }
 
+  @Override
   public String getTraceMessage() {
     return myTraceMsg;
   }
 
+  @Override
   public void setTraceMessage(String expr) {
     myTraceMsg = expr;
   }
 
+  @Override
   public boolean isSuspend() {
     return mySuspend;
   }
 
+  @Override
   public void setSuspend(boolean suspend) {
     mySuspend = suspend;
   }
 
+  @Override
   public String getCondition() {
     return myCondition;
   }
 
+  @Override
   public String getLogMessage() {
     return myLogMsg;
   }
 
+  @Override
   public String getUri() {
     return myUri;
   }
 
+  @Override
   public int getLine() {
     return myLine;
   }
 
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -89,6 +102,7 @@ class BreakpointImpl implements Breakpoint {
     return myUri.equals(that.myUri);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myUri.hashCode();
@@ -97,6 +111,7 @@ class BreakpointImpl implements Breakpoint {
   }
 
 
+  @Override
   public String toString() {
     return "Breakpoint{" +
            "myUri='" + myUri + '\'' +

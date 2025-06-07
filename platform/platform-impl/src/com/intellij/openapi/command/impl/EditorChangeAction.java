@@ -62,8 +62,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
   }
 
   private void doChange(int fromLength, Object to, int toLength, long toTimeStamp) throws UnexpectedUndoException {
-    //noinspection ConstantConditions
-    DocumentImpl document = (DocumentImpl)getAffectedDocuments()[0].getDocument();
+    DocumentImpl document = (DocumentImpl)getDocumentRef().getDocument();
     assert document != null;
     if (document.getTextLength() != fromLength) throw new UnexpectedUndoException("Unexpected document state");
 
@@ -89,7 +88,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     // `DocumentReference.getDocument()` can throw if it refers to a deleted file
     // (see an implementation for `DocumentReferenceByVirtualFile`),
     // so it's safer to compare two virtual files first
-    DocumentReference affected = getAffectedDocuments()[0];
+    DocumentReference affected = getDocumentRef();
     VirtualFile affectedFile = affected.getFile();
     if (affectedFile != null) {
       return affectedFile.equals(reference.getFile());
@@ -98,9 +97,17 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     }
   }
 
+  private @NotNull DocumentReference getDocumentRef() {
+    //noinspection ConstantConditions
+    return getAffectedDocuments()[0];
+  }
+
   @Override
   public @NonNls String toString() {
-    return "editor change: '" + myOldString + "' to '" + myNewString + "'" + " at: " + myChangeRange.getOffset();
+    String oldString = myOldString.toString().replace("\n", "\\n");
+    String newString = myNewString.toString().replace("\n", "\\n");
+    DocumentReference ref = getDocumentRef();
+    return "DocumentChange{%s:'%s'->'%s', ref=%s}".formatted(myChangeRange.getOffset(), oldString, newString, ref);
   }
 }
 

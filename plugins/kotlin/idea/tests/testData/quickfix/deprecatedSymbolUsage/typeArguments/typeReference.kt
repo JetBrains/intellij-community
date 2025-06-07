@@ -7,4 +7,4 @@ class New<T, U>
 
 fun foo(): <caret>Old<String, Int>? = null
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
-/* IGNORE_K2 */
+// IGNORE_K2

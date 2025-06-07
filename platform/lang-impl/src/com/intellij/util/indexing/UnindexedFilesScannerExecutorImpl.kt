@@ -1,15 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.FilesScanningTask
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -92,7 +96,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         while (true) {
           isRunning.combine(nextTaskExecutionAllowed) { running, allowed -> !running && allowed }.first { it }
           // write action is needed, because otherwise we may get "Constraint inSmartMode cannot be satisfied" in NBRA
-          writeAction {
+          edtWriteAction {
             // we should only set the flag here (if needed), not clear it,
             // otherwise, isRunning may become false in the middle of scanning task execution
             isRunning.value = isRunning.value || scanningTask.value != null
@@ -100,15 +104,22 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         }
       }
 
+      val scanningIndexingMutex = project.service<PerProjectIndexingQueue>().scanningIndexingMutex
+      val mutexOwner = "scanning"
 
       while (true) {
+        var mutexAcquired = false
         try {
           // first wait for isRunning, otherwise we can find ourselves in a situation
           // isRunning=false, hasScheduledTask=false, but in fact we do have a scheduled task
           // which is about to be running.
           isRunning.first { it == true }
+
+          scanningIndexingMutex.lock(mutexOwner)
+          mutexAcquired = true
+
           if (!nextTaskExecutionAllowed.first()) {
-            continue // to finally block which will clear isRunning flag
+            continue // to finally block which will clear isRunning flag and release scanningIndexingMutex
             // There are no situations where we need isRunning to be cleared, neither we have situations where we need isRunning stay intact.
             // Feel free to adjust this logic as needed. Clearing the flag looks like the "least surprising" behavior to me.
           }
@@ -122,37 +133,44 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
             val scanningParameters = task.task.getScanningParameters()
             if (scanningParameters is ScanningIterators) {
-              coroutineScope {
-                runningTask = async(CoroutineName("Scanning")) {
-                  try {
-                    val history = runScanningTask(task.task, scanningParameters)
-                    task.futureHistory.set(history)
-                  }
-                  catch (t: Throwable) {
-                    task.futureHistory.setException(t)
-                    throw t
-                  } finally {
-                    // Scanning may throw exception (or error).
-                    // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-                    val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
-                    if (!indexingScheduled) {
-                      modCount.incrementAndGet()
-                    }
+              val deferred = async(CoroutineName("Scanning")) {
+                try {
+                  runScanningTask(task.task, scanningParameters)
+                }
+                finally {
+                  // Scanning may throw exception (or error).
+                  // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                  // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
+                  //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
+                  val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
+                  if (!indexingScheduled) {
+                    modCount.incrementAndGet()
                   }
                 }
               }
-              logInfo("Task finished: $task")
-            } else {
-              LOG.info("Skipping task: $task")
+              runningTask = deferred
+              val history = deferred.await()
+              task.futureHistory.set(history)
+              logInfo("Task finished (scanning id=${history.scanningSessionId}): $task")
+            }
+            else {
+              logInfo("Skipping task: $task")
             }
           }
           catch (t: Throwable) {
+            task.futureHistory.setException(t)
             logInfo("Task interrupted: $task. ${t.message}")
             project.service<ProjectIndexingDependenciesService>().requestHeavyScanningOnProjectOpen("Task interrupted: $task")
             checkCanceled() // this will re-throw cancellation
 
             // other exceptions: log and forget
-            logError("Failed to execute task $task", t)
+            if (t is ControlFlowException || t is CancellationException) {
+              LOG.infoWithDebug(prepareLogMessage("Task was cancelled: $task. " +
+                                                  "(enable debug log to see cancellation trace)"), RuntimeException(t))
+            }
+            else {
+              logError("Failed to execute task $task", t)
+            }
           }
           finally {
             task.close()
@@ -164,7 +182,13 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           checkCanceled() // this will re-throw cancellation
 
           // other exceptions: log and forget
-          logError("Unexpected exception during scanning (ignored)", t)
+          try {
+            logError("Unexpected exception during scanning (ignored)", t)
+          }
+          catch (_: Throwable) {
+            // If logError throws, we ignore this exception, because this will stop scanning service for the project.
+            // NOTE: logError throws AE in tests.
+          }
         }
         finally {
           // There is no race. When a task is submitted, the reference to scanningTask is updated first (hasQueuedTasks == true), then
@@ -174,6 +198,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // (feel free to add WA if you know why finishing is not desired)
           isRunning.value = hasQueuedTasks
           startedOrStoppedEvent.getAndUpdate(Int::inc)
+          if (mutexAcquired) {
+            scanningIndexingMutex.unlock(mutexOwner)
+            mutexAcquired = false
+          }
         }
       }
     }
@@ -214,8 +242,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
     if (scanningWaitsForNonDumbMode()) {
-      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { state, isDumb ->
-        state.copy(isDumb = isDumb)
+      flow = flow.combine(DumbService.getInstance(project).state) { state, dumbState ->
+        state.copy(isDumb = dumbState.isDumb)
       }.combine(scanningWaitsForNonDumbModeOverride) { state, scanningWaitsOverride ->
         state.copy(shouldWaitForNonDumb = scanningWaitsForNonDumbMode(scanningWaitsOverride))
       }
@@ -250,9 +278,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
         task.applyDelayedPushOperations(scanningHistory)
       }
-      blockingContext {
-        task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
-      }
+      task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
 
       progressScope.cancel()
       return@coroutineScope scanningHistory
@@ -353,10 +379,24 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
     pauseReason.update { it.add(activityName) }
     try {
       DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
+    }
+    finally {
+      pauseReason.update { it.remove(activityName) }
+    }
+  }
+
+  override suspend fun suspendScanningAndIndexingThenExecute(
+    activityName: @ProgressText String,
+    activity: suspend CoroutineScope.() -> Unit,
+  ) {
+    pauseReason.update { it.add(activityName) }
+    try {
+      project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, activity)
     }
     finally {
       pauseReason.update { it.remove(activityName) }

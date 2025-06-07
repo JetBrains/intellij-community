@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.sun.jdi.ObjectReference;
@@ -15,9 +15,8 @@ public class MemoryAgentKindReferringObject extends MemoryAgentSimpleReferringOb
     this.myKind = kind;
   }
 
-  @Nullable
   @Override
-  public String getNodeName(int order) {
+  public @Nullable String getNodeName(int order) {
     return switch (myKind) {
       case PROTECTION_DOMAIN -> "<protection domain>";
       case INTERFACE -> "<interface>";

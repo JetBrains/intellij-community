@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -43,13 +43,11 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myPackagingElements.add(packagingElement);
   }
 
-  @Nullable
-  public CompositePackagingElement<?> getParentElement(PackagingElement<?> element) {
+  public @Nullable CompositePackagingElement<?> getParentElement(PackagingElement<?> element) {
     return myParentElements.get(element);
   }
 
-  @Nullable
-  public CompositePackagingElementNode getParentNode() {
+  public @Nullable CompositePackagingElementNode getParentNode() {
     return myParentNode;
   }
 
@@ -57,8 +55,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return myPackagingElements;
   }
 
-  @Nullable
-  public E getElementIfSingle() {
+  public @Nullable E getElementIfSingle() {
     return myPackagingElements.size() == 1 ? myPackagingElements.get(0) : null;
   }
 
@@ -109,13 +106,11 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myNodeSources.putAll(element, nodeSource);
   }
 
-  @NotNull
-  public Collection<PackagingNodeSource> getNodeSources() {
+  public @NotNull Collection<PackagingNodeSource> getNodeSources() {
     return myNodeSources.values();
   }
 
-  @NotNull
-  public Collection<PackagingNodeSource> getNodeSource(@NotNull PackagingElement<?> element) {
+  public @NotNull Collection<PackagingNodeSource> getNodeSource(@NotNull PackagingElement<?> element) {
     final Collection<PackagingNodeSource> nodeSources = myNodeSources.get(element);
     return nodeSources != null ? nodeSources : Collections.emptyList();
   }

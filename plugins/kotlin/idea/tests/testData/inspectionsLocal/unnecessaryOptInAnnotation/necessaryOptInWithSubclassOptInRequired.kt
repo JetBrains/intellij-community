@@ -1,5 +1,11 @@
 // PROBLEM: none
 // WITH_STDLIB
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
 
 @file:OptIn(ExperimentalSubclassOptIn::class)
 

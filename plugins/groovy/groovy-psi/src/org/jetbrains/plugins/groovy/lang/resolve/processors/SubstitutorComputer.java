@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,8 +89,7 @@ public class SubstitutorComputer {
     myHelper = JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper();
   }
 
-  @Nullable
-  protected PsiType inferContextType() {
+  protected @Nullable PsiType inferContextType() {
     final PsiElement parent = myPlaceToInferContext.getParent();
     if (parent instanceof GrReturnStatement || myExitPoints.getValue().contains(myPlaceToInferContext)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
@@ -186,11 +185,10 @@ public class SubstitutorComputer {
     return partialSubstitutor.putAll(substitutor);
   }
 
-  @NotNull
-  private Deque<InferenceStep> buildInferenceQueue(@NotNull PsiMethod method,
-                                                   PsiTypeParameter @NotNull [] typeParameters,
-                                                   GrClosureParameter[] params,
-                                                   GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos) {
+  private @NotNull Deque<InferenceStep> buildInferenceQueue(@NotNull PsiMethod method,
+                                                            PsiTypeParameter @NotNull [] typeParameters,
+                                                            GrClosureParameter[] params,
+                                                            GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos) {
     Deque<InferenceStep> inferenceQueue = new ArrayDeque<>();
 
     List<PsiType> parameterTypes = new ArrayList<>();
@@ -257,10 +255,9 @@ public class SubstitutorComputer {
   }
 
 
-  @NotNull
-  private InferenceStep handleConversionOfSAMType(@Nullable PsiType targetType,
-                                                  @NotNull PsiType closure,
-                                                  PsiTypeParameter[] typeParameters) {
+  private @NotNull InferenceStep handleConversionOfSAMType(@Nullable PsiType targetType,
+                                                           @NotNull PsiType closure,
+                                                           PsiTypeParameter[] typeParameters) {
     if (!(closure instanceof PsiClassType)) return InferenceStep.EMPTY;
     if (!(targetType instanceof PsiClassType)) return InferenceStep.EMPTY;
 

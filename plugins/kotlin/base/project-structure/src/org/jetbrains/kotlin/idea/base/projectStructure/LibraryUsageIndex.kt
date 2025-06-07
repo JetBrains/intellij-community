@@ -15,5 +15,4 @@ import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 @K1ModeProjectStructureApi
 interface LibraryUsageIndex {
     fun getDependentModules(libraryInfo: LibraryInfo): Sequence<Module>
-    fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean
 }

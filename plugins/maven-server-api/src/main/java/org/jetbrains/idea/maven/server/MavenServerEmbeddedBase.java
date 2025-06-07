@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implements MavenServerEmbedder {
   private final Map<String, LongRunningTaskImpl> myLongRunningTasks = new ConcurrentHashMap<>();
 
-  @NotNull
   @Override
-  public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
+  public @NotNull LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
     MavenServerUtil.checkToken(token);
 
     LongRunningTaskImpl task = myLongRunningTasks.get(longRunningTaskId);
@@ -42,22 +41,21 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     return true;
   }
 
-  @NotNull
-  protected LongRunningTask newLongRunningTask(@NotNull String id,
-                                               int totalRequests,
-                                               @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
+  protected @NotNull LongRunningTask newLongRunningTask(@NotNull String id,
+                                                        int totalRequests,
+                                                        @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
     return new LongRunningTaskImpl(id, totalRequests, indicatorWrapper);
   }
 
   protected class LongRunningTaskImpl implements LongRunningTask {
-    @NotNull private final String myId;
+    private final @NotNull String myId;
     private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
     private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    @NotNull private final MavenServerConsoleIndicatorImpl myIndicator;
+    private final @NotNull MavenServerConsoleIndicatorImpl myIndicator;
 
-    @NotNull private final MavenServerConsoleIndicatorWrapper myIndicatorWrapper;
+    private final @NotNull MavenServerConsoleIndicatorWrapper myIndicatorWrapper;
 
     public LongRunningTaskImpl(@NotNull String id, int totalRequests, @NotNull MavenServerConsoleIndicatorWrapper indicatorWrapper) {
       myId = id;

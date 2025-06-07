@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
@@ -116,7 +116,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myResultList);
-    pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Don't remove this line.
                                                                                     // Without VERTICAL_SCROLLBAR_ALWAYS policy our custom layout
                                                                                     // works incorrectly, see https://youtrack.jetbrains.com/issue/IDEA-72986
@@ -208,8 +208,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     });
   }
 
-  @NotNull
-  public List<MavenId> getResult() {
+  public @NotNull List<MavenId> getResult() {
     TreePath[] selectionPaths = myResultList.getSelectionPaths();
     if (selectionPaths == null) {
       return Collections.emptyList();

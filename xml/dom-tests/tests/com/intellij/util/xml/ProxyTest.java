@@ -83,6 +83,7 @@ public class ProxyTest extends TestCase {
       getFoo();
     }
 
+    @Override
     public String toString() {
       return myField;
     }

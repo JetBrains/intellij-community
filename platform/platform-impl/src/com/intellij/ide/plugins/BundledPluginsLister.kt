@@ -23,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrSelf
 
 private class BundledPluginsLister : ModernApplicationStarter() {
   // not premain because FileTypeManager is used to report extensions
@@ -54,29 +55,28 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           layout.add(LayoutItemDescriptor(
             name = plugin.pluginId.idString,
             kind = ProductInfoLayoutItemKind.plugin,
-            classPath = jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
+            classPath = jarFiles?.map { it.relativeToOrSelf(homeDir).invariantSeparatorsPathString } ?: emptyList()
           ))
 
           pluginIds.add(plugin.pluginId.idString)
           plugin.pluginAliases.mapTo(layout) {
             LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
           }
-          for (module in plugin.content.modules) {
-            val descriptor = module.requireDescriptor()
+          for (module in plugin.contentModules) {
             layout.add(LayoutItemDescriptor(
-              name = module.name,
+              name = module.moduleName,
               kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
                 ProductInfoLayoutItemKind.productModuleV2
               }
               else {
                 ProductInfoLayoutItemKind.moduleV2
               },
-              classPath = descriptor.jarFiles?.map { file ->
+              classPath = module.jarFiles?.map { file ->
                 file.relativeTo(homeDir).invariantSeparatorsPathString
               } ?: emptyList(),
             ))
 
-            descriptor.pluginAliases.mapTo(layout) {
+            module.pluginAliases.mapTo(layout) {
               LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
             }
           }

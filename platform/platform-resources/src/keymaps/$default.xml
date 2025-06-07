@@ -529,6 +529,9 @@
   <action id="Diff.ShowDiff">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="Compare.SameVersion">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="Diff.ShowSettingsPopup">
     <keyboard-shortcut first-keystroke="control shift D"/>
   </action>
@@ -1066,6 +1069,9 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
@@ -1098,9 +1104,6 @@
 
   <action id="PopupHector">
     <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
-  </action>
-  <action id="MaintenanceAction">
-    <keyboard-shortcut first-keystroke="ctrl alt shift SLASH"/>
   </action>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="ctrl TAB"/>
@@ -1167,7 +1170,7 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
-  <action id="GitNewBranchAction">
+  <action id="Git.CreateNewBranch">
     <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
@@ -1306,8 +1309,5 @@
   </action>
   <action id="ResetIdeScaleAction">
     <keyboard-shortcut first-keystroke="shift alt 0"/>
-  </action>
-  <action id="AIAssistant.Chat.AIPopupChat">
-    <keyboard-shortcut first-keystroke="control shift alt BACK_SLASH"/>
   </action>
 </keymap>

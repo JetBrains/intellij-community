@@ -1,0 +1,12 @@
+// FILE: gradle/libs.versions.toml
+## RENAME_TO: some_renamed-bundle
+## FILE_TO_CHECK: build.gradle.kts
+[bundles]
+<caret>some_test-bundle = [ "some_test-library" ]
+
+// FILE: build.gradle.kts
+libs.bundles.some.test.bundle
+
+// FILE: build.gradle.kts.after
+libs.bundles.some.renamed.bundle
+

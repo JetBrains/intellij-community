@@ -1,21 +1,34 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
+import org.assertj.swing.core.BasicComponentFinder
 import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
+import org.assertj.swing.driver.CellRendererReader
 import org.assertj.swing.fixture.JTreeFixture
+import java.awt.Component
+import java.awt.Container
 import java.awt.Point
+import javax.swing.Icon
 import javax.swing.JTree
 
 open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
-  private val cellReader = BasicJTreeCellReader(TextCellRendererReader())
+  private var cellReader = BasicJTreeCellReader(TextCellRendererReader())
 
   init {
+    replaceCellReader(cellReader)
+  }
+
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    cellReader = BasicJTreeCellReader(reader)
     replaceCellReader(cellReader)
   }
 
@@ -27,6 +40,10 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     component.getRowBounds(row).location
   }
 
+  /**
+   * Collects all paths in the tree component along with their corresponding row indices.
+   * The method does not expand nodes.
+   */
   fun collectExpandedPaths(): TreePathToRowList {
     val result = TreePathToRowList()
     computeOnEdt {
@@ -42,9 +59,20 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       }, { paths.add(it) })
       return@computeOnEdt paths
     }.forEachIndexed { index, path ->
-      result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
+      result.add(TreePathToRow(path.filter { it.isNotEmpty() }, index))
     }
     return result
+  }
+
+  fun areTreeNodesLoaded(): Boolean {
+    var isLoaded = true
+    computeOnEdt {
+      TreeUtil.visitVisibleRows(component) { path ->
+        isLoaded = !TreeUtil.isLoadingPath(path)
+        if (!isLoaded) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+      }
+    }
+    return isLoaded
   }
 
   fun collectSelectedPaths(): List<TreePath> {
@@ -59,8 +87,29 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   }
 
   fun expandAll(timeoutMs: Int) {
-    computeOnEdt {
-      TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
+    computeOnEdt { TreeUtil.promiseExpandAll(component) }.blockingGet(timeoutMs)
+  }
+
+  fun collectIconsAtRow(row: Int): List<Icon> {
+    val rowComponent = getComponentAtRow(row)
+    if (rowComponent is Container) {
+      return BasicComponentFinder.finderWithCurrentAwtHierarchy().findAll(rowComponent) {
+        ReflectionUtil.getMethod(it.javaClass,"getIcon") != null
+      }.mapNotNull { ReflectionUtil.getMethod(it.javaClass,"getIcon")!!.invoke(it) as? Icon }
+    }
+    return emptyList()
+  }
+
+  fun getComponentAtRow(row: Int): Component {
+    return computeOnEdt {
+      val tree = target()
+      tree.cellRenderer.getTreeCellRendererComponent(tree,
+                                                     tree.getPathForRow(row).lastPathComponent,
+                                                     tree.isRowSelected(row),
+                                                     tree.isExpanded(row),
+                                                     false,
+                                                     row,
+                                                     tree.hasFocus() && tree.isRowSelected(row))
     }
   }
 }

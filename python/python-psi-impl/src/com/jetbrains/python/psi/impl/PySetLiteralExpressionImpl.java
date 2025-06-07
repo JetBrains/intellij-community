@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.types.PyCollectionTypeUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public class PySetLiteralExpressionImpl extends PySequenceExpressionImpl impleme
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.getInstance(this).createLiteralCollectionType(this, "set", context);
+    return PyCollectionTypeUtil.getSetLiteralType(this, context);
   }
 
   @Override

@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -60,9 +60,8 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     this.compactMiddleDirectories = compactMiddleDirectories;
   }
 
-  @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageInFile usageInFile) {
       VirtualFile file = usageInFile.getFile();
       if (file != null) {
@@ -91,7 +90,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return "UsageGrouping.Directory";
   }
 
-  protected class DirectoryGroup implements UsageGroup, DataProvider {
+  protected class DirectoryGroup implements UsageGroup, UiDataProvider {
     protected final VirtualFile myDir;
     private Icon myIcon;
     private final @NlsSafe String relativePathText;
@@ -115,8 +114,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
 
       if (compactMiddleDirectories) {
         List<String> parentPathList = CompactGroupHelper.pathToPathList(myDir.getPath());
@@ -177,33 +175,24 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof DirectoryGroup)) return false;
       return myDir.equals(((DirectoryGroup)o).myDir);
     }
 
+    @Override
     public int hashCode() {
       return myDir.hashCode();
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myDir;
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, myDir);
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getDirectory();
-      }
-      return null;
+      });
     }
 
     @Override

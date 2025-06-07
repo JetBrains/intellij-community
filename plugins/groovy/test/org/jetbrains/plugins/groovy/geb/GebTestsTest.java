@@ -213,18 +213,18 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
                             }
                             """);
 
-    assert a.getText().equals("""
-                                class A extends geb.Page {
-                                  static at = {
-                                    String x = aaa777
-                                  }
-                                
-                                  static content = {
-                                    aaa777 { "Aaa" }
-                                    bbb { aaa777.length() }
-                                  }
-                                }
-                                """);
+    assertEquals("""
+                   class A extends geb.Page {
+                     static at = {
+                       String x = aaa777
+                     }
+                   
+                     static content = {
+                       aaa777 { "Aaa" }
+                       bbb { aaa777.length() }
+                     }
+                   }
+                   """, a.getText());
   }
 
   public void testRename2() {

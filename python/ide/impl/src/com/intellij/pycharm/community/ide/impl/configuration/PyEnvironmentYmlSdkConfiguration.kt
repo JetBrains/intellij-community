@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -16,54 +18,60 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
+import com.intellij.webcore.packaging.PackageManagementService
+import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.pathValidation.PlatformAndRoot
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvFromFilePanel
+import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.suggestCondaPath
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
-import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
+import com.jetbrains.python.sdk.showSdkExecutionException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
-import java.awt.Insets
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+
+private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
 
 /**
  * This class only supports local, not remote target.
  * TODO: Support remote target (ie \\wsl)
  */
-class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
-
-  private val LOGGER = Logger.getInstance(PyEnvironmentYmlSdkConfiguration::class.java)
-
+internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
+  @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
     PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
   }
-
+  @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
-  private fun getEnvironmentYml(module: Module) = PyUtil.findInRoots(module, "environment.yml")
+  private fun getEnvironmentYml(module: Module) = listOf(
+    "environment.yml",
+    "environment.yaml",
+  ).firstNotNullOfOrNull { findAmongRoots(module, it) }
 
   @RequiresBackgroundThread
   private fun createAndAddSdk(module: Module, source: Source): Sdk? {
@@ -83,7 +91,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private fun askForEnvData(module: Module, source: Source): PyAddNewCondaEnvFromFilePanel.Data? {
     val environmentYml = getEnvironmentYml(module) ?: return null
     // Again: only local conda is supported for now
-    val condaExecutable = runBlocking { suggestCondaPath() }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+    val condaExecutable = runBlockingCancellable { suggestCondaPath() }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
     if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))
@@ -119,7 +127,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     ApplicationManager.getApplication().invokeAndWait {
       LOGGER.debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
       if (!shared) {
-        sdk.setAssociationToModule(module)
+        sdk.setAssociationToModuleAsync(module)
       }
 
       SdkConfigurationUtil.addSdk(sdk)
@@ -135,16 +143,22 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   private fun createCondaEnv(project: Project, condaExecutable: String, environmentYml: String): Sdk? {
     val condaEnvironmentsBefore = safelyListCondaEnvironments(project, condaExecutable) ?: return null
 
-    val sdk = runBlocking {
+    val sdk = runBlockingCancellable {
       val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
       val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml))
       PyCondaCommand(condaExecutable, null)
         .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project)
-    }.getOrElse { e ->
-      if (e !is ExecutionException) throw e
+    }.getOr {
       PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
-      LOGGER.warn("Exception during creating conda environment", e)
-      showSdkExecutionException(null, e, PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"))
+      LOGGER.warn("Exception during creating conda environment $it")
+      PackageManagementService.ErrorDescription.fromMessage(it.error.message)?.let { description ->
+        runInEdt {
+          PackagesNotificationPanel.showError(
+            PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.exception.dialog.title"),
+            description
+          )
+        }
+      }
       return null
     }
 
@@ -183,7 +197,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   }
 
   private class Dialog(module: Module, condaBinary: VirtualFile?, environmentYml: VirtualFile) : DialogWrapper(module.project, false,
-                                                                                                               IdeModalityType.PROJECT) {
+                                                                                                               IdeModalityType.IDE) {
 
     private val panel = PyAddNewCondaEnvFromFilePanel(module, condaBinary?.toNioPath(), environmentYml)
 
@@ -198,7 +212,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
+        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
         val message = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.permission")
 
         add(

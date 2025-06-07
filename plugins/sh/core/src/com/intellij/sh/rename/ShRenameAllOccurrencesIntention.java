@@ -17,15 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShRenameAllOccurrencesIntention extends BaseIntentionAction implements ShortcutProvider, HighPriorityAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.rename.all.occurrences");
   }
 
@@ -35,21 +33,20 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, file)
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, psiFile)
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), null);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (file instanceof ShFile && editor != null) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (psiFile instanceof ShFile && editor != null) {
       ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
     }
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return CommonShortcuts.getRename();
   }
 }

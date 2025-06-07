@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public abstract class PyModuleService {
-  @Nullable
-  public abstract Sdk findPythonSdk(@NotNull Module module);
+  public abstract @Nullable Sdk findPythonSdk(@NotNull Module module);
 
   public void forAllFacets(@NotNull Module module, @NotNull Consumer<Object> facetConsumer) {
   }

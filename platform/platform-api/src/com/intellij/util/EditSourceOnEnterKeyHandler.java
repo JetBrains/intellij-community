@@ -86,10 +86,10 @@ public final class EditSourceOnEnterKeyHandler {
   private static void onEnterKey(@NotNull JComponent component, @NotNull BooleanSupplier action) {
     ActionListener listener = component.getActionForKeyStroke(ENTER);
     component.registerKeyboardAction(event -> {
-      if (!action.getAsBoolean() && listener != null) {
-        // perform previous action if the specified action is failed,
-        // it is needed to expand/collapse a tree node
-        try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        if (!action.getAsBoolean() && listener != null) {
+          // perform previous action if the specified action is failed,
+          // it is needed to expand/collapse a tree node
           listener.actionPerformed(event);
         }
       }

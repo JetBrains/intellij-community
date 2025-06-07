@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.codeVision;
 
@@ -59,6 +59,11 @@ public class KotlinCodeVisionProviderTestGenerated extends AbstractKotlinCodeVis
     @TestMetadata("ClassUsages.kt")
     public void testClassUsages() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/codeVision/ClassUsages.kt");
+    }
+
+    @TestMetadata("EnumClassUsages.kt")
+    public void testEnumClassUsages() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/codeVision/EnumClassUsages.kt");
     }
 
     @TestMetadata("GlobalFunctionUsages.kt")

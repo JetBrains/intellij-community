@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
@@ -18,7 +19,7 @@ public final class Timestamps {
   private final Object2LongMap<ID<?, ?>> myIndexStamps;
   private boolean myIsDirty = false;
 
-  Timestamps() {
+  public Timestamps() {
     this(new Object2LongOpenHashMap<>(5, 0.98f));
   }
 
@@ -26,15 +27,17 @@ public final class Timestamps {
     myIndexStamps = indexStamps;
   }
 
-  TimestampsImmutable toImmutable() {
+  public @NotNull TimestampsImmutable toImmutable() {
     return new TimestampsImmutable(myIndexStamps);
   }
 
-  long get(ID<?, ?> id) {
+  @VisibleForTesting
+  public long get(ID<?, ?> id) {
     return myIndexStamps != null ? myIndexStamps.getLong(id) : IndexingStamp.HAS_NO_INDEXED_DATA_STAMP;
   }
 
-  void set(ID<?, ?> id, long tmst) {
+  @VisibleForTesting
+  public void set(ID<?, ?> id, long tmst) {
     if (tmst == IndexingStamp.INDEX_DATA_OUTDATED_STAMP && !myIndexStamps.containsKey(id)) {
       return;
     }

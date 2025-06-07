@@ -1,0 +1,14 @@
+LineBreakpoint created at privateAssignmentOperators.kt:51
+Run Java
+Connected to the target VM
+privateAssignmentOperators.kt:51
+Compile bytecode for x.intField++
+Compile bytecode for (x.fieldWithMemberInc++).field
+Compile bytecode for (x.fieldWithExtensionInc++).field
+Compile bytecode for x.fieldWithMemberPlusAssign += ClassWithMemberPlusAssign(1); x.fieldWithMemberPlusAssign.field
+Compile bytecode for x.fieldWithExtensionPlusAssign += ClassWithExtensionPlusAssign(1); x.fieldWithExtensionPlusAssign.field
+Compile bytecode for x.fieldWithMemberPlus += ClassWithMemberPlus(1); x.fieldWithMemberPlus.field
+Compile bytecode for x.fieldWithExtensionPlus += ClassWithExtensionPlus(1); x.fieldWithExtensionPlus.field
+Disconnected from the target VM
+
+Process finished with exit code 0

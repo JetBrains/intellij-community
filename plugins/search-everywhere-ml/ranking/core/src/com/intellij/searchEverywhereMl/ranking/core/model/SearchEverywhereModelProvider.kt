@@ -2,38 +2,46 @@ package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 
 class SearchEverywhereModelProvider {
-  private val cache: Cache<String, SearchEverywhereRankingModel> = Caffeine.newBuilder().maximumSize(modelCount.toLong()).build()
+  private val cache: Cache<SearchEverywhereTab.TabWithMlRanking, SearchEverywhereRankingModel> = Caffeine.newBuilder().maximumSize(modelCount.toLong()).build()
   private val modelCount: Int
     get() = SearchEverywhereMLRankingModelLoader.allLoaders.size
 
-  internal fun getModel(tabId: String): SearchEverywhereRankingModel {
-    return cache.get(tabId) {
-      if (isTabWithExactMatchIssue(tabId))
-        return@get getRankingModelForExactMatchIssue(tabId)
+  internal fun getModel(tab: SearchEverywhereTab.TabWithMlRanking): SearchEverywhereRankingModel {
+    return cache.get(tab) {
+      if (isTabWithExactMatchIssue(tab))
+        return@get getRankingModelForExactMatchIssue(tab)
       else
-        return@get getRankingModel(tabId)
+        return@get getRankingModel(tab)
     }
   }
 
   /**
-   * We have tabs that suffer from exact match issue, where the exactly matched result does not appear at the top,
+   * We have tabs that suffer from the exact match issue, where the exactly matched result does not appear at the top,
    * we have introduced additional logic to address that issue.
    */
-  private fun isTabWithExactMatchIssue(tabId: String): Boolean {
-    val tab = SearchEverywhereTabWithMlRanking.findById(tabId)
-    return tab == SearchEverywhereTabWithMlRanking.CLASSES || tab == SearchEverywhereTabWithMlRanking.FILES
+  private fun isTabWithExactMatchIssue(tab: SearchEverywhereTab): Boolean {
+    return (tab == SearchEverywhereTab.Classes || tab == SearchEverywhereTab.Files) || isExactMatchExperiment(tab)
   }
 
-  private fun getRankingModelForExactMatchIssue(tabId: String): SearchEverywhereRankingModel {
-    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
+  /**
+   * True, if the provided tab is associated with the exact match manual fix experiment.
+   */
+  private fun isExactMatchExperiment(tab: SearchEverywhereTab): Boolean {
+    if (tab !is SearchEverywhereTab.TabWithExperiments) return false
+    return tab.currentExperimentType == SearchEverywhereMlExperiment.ExperimentType.ExactMatchManualFix
+  }
+
+  private fun getRankingModelForExactMatchIssue(tab: SearchEverywhereTab.TabWithMlRanking): SearchEverywhereRankingModel {
+    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tab)
     return ExactMatchSearchEverywhereRankingModel(loader.loadModel())
   }
 
-  private fun getRankingModel(tabId: String): SearchEverywhereRankingModel {
-    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
+  private fun getRankingModel(tab: SearchEverywhereTab.TabWithMlRanking): SearchEverywhereRankingModel {
+    val loader = SearchEverywhereMLRankingModelLoader.getForTab(tab)
     return SimpleSearchEverywhereRankingModel(loader.loadModel())
   }
 }

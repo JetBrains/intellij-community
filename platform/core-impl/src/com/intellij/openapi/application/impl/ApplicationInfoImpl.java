@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -18,8 +18,10 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -32,7 +34,7 @@ import java.util.*;
 @ApiStatus.Internal
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
-         static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
+  public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
   private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.info.default.classic.dark.laf";
@@ -72,7 +74,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
-  private String channelListUrl;
   private String pluginDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
@@ -103,7 +104,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @NonInjectable
-  ApplicationInfoImpl(@NotNull XmlElement element) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public ApplicationInfoImpl(@NotNull XmlElement element) {
     // the behavior of this method must be consistent with the `idea/ApplicationInfo.xsd` schema
     for (XmlElement child : element.children) {
       switch (child.name) {
@@ -431,6 +434,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2025, 5, 22);
+      LocalDate endDate = LocalDate.of(2025, 5, 31);
+      LocalDate nowDate = LocalDate.now();
+      String splashUrl = splashImageUrl;
+      if (splashUrl != null && nowDate.isAfter(startDate) && nowDate.isBefore(endDate)) {
+        return splashUrl.replace(".png", "_java_30.png");
+      }
+    }
     return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
   }
 
@@ -452,11 +464,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @ApiStatus.Internal
   public @NotNull String getSmallApplicationSvgIconUrl(boolean isEap) {
     return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
-  }
-
-  @Override
-  public @Nullable String getWelcomeScreenLogoUrl() {
-    return myWelcomeScreenLogoUrl;
   }
 
   @Override
@@ -522,11 +529,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull String getPluginsListUrl() {
     return myPluginsListUrl;
-  }
-
-  @Override
-  public String getChannelListUrl() {
-    return channelListUrl;
   }
 
   @Override
@@ -639,7 +641,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private void readPluginInfo(@Nullable XmlElement element) {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
     String pluginListUrl = null;
-    channelListUrl = null;
     pluginDownloadUrl = null;
     if (element != null) {
       String url = element.getAttributeValue("url");
@@ -650,11 +651,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       String listUrl = element.getAttributeValue("list-url");
       if (listUrl != null) {
         pluginListUrl = listUrl;
-      }
-
-      String channelListUrl = element.getAttributeValue("channel-list-url");
-      if (channelListUrl != null) {
-        this.channelListUrl = channelListUrl;
       }
 
       String downloadUrl = element.getAttributeValue("download-url");
@@ -671,14 +667,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginHost != null) {
       pluginManagerUrl = pluginHost.endsWith("/") ? pluginHost.substring(0, pluginHost.length() - 1) : pluginHost;
-      pluginListUrl = channelListUrl = pluginDownloadUrl = null;
+      pluginListUrl = pluginDownloadUrl = null;
     }
 
     myPluginManagerUrl = pluginManagerUrl;
     myPluginsListUrl = pluginListUrl == null ? (pluginManagerUrl + "/plugins/list/") : pluginListUrl;
-    if (channelListUrl == null) {
-      channelListUrl = pluginManagerUrl + "/channels/list/";
-    }
     if (pluginDownloadUrl == null) {
       pluginDownloadUrl = pluginManagerUrl + "/pluginManager/";
     }

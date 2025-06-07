@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -32,8 +32,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull final Collection<AbstractTreeNode<?>> children, final ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, final @NotNull Collection<AbstractTreeNode<?>> children, final ViewSettings settings) {
     if (parent instanceof ResourceBundleNode) {
       return children;
     }

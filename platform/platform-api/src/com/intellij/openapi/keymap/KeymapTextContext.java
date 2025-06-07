@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -191,7 +191,7 @@ public class KeymapTextContext {
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");
 
-    if (buf.length() > 0) buf.setLength(buf.length() - 1);
+    if (!buf.isEmpty()) buf.setLength(buf.length() - 1);
 
     return buf.toString();
   }

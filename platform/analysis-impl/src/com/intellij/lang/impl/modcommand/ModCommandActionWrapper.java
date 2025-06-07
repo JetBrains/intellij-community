@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
@@ -16,11 +16,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.NewUiValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -29,12 +30,13 @@ import java.util.Objects;
 /**
  * A bridge from {@link ModCommandAction} to {@link IntentionAction} interface.
  */
-/*package*/ final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
-                                                           CustomizableIntentionAction, ReportingClassSubstitutor, PossiblyDumbAware {
+@ApiStatus.Internal
+public final class ModCommandActionWrapper implements IntentionAction, PriorityAction, Iconable, IntentionActionWithFixAllOption,
+                                                                   CustomizableIntentionAction, ReportingClassSubstitutor, PossiblyDumbAware {
   private final @NotNull ModCommandAction myModAction;
   private @Nullable Presentation myPresentation;
 
-  ModCommandActionWrapper(@NotNull ModCommandAction modAction, @Nullable Presentation presentation) {
+  public ModCommandActionWrapper(@NotNull ModCommandAction modAction, @Nullable Presentation presentation) {
     this.myModAction = modAction;
     this.myPresentation = presentation;
   }
@@ -64,23 +66,23 @@ import java.util.Objects;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!DumbService.getInstance(project).isUsableInCurrentContext(myModAction)) return false;
-    Presentation presentation = myModAction.getPresentation(ActionContext.from(editor, file));
+    Presentation presentation = myModAction.getPresentation(ActionContext.from(editor, psiFile));
     if (presentation == null) return false;
     myPresentation = presentation;
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ActionContext context = ActionContext.from(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    ActionContext context = ActionContext.from(editor, psiFile);
     ModCommand command = myModAction.perform(context);
     ModCommandExecutor instance = ModCommandExecutor.getInstance();
-    if (file.isPhysical()) {
+    if (psiFile.isPhysical()) {
       instance.executeInteractively(context, command, editor);
     } else {
-      instance.executeForFileCopy(command, file);
+      instance.executeForFileCopy(command, psiFile);
     }
   }
 
@@ -90,8 +92,8 @@ import java.util.Objects;
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myModAction.generatePreview(ActionContext.from(editor, file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return myModAction.generatePreview(ActionContext.from(editor, psiFile));
   }
 
   @Override
@@ -101,7 +103,7 @@ import java.util.Objects;
 
   @Override
   public Icon getIcon(int flags) {
-    return NewUiValue.isEnabled() || myPresentation == null ? null : myPresentation.icon();
+    return myPresentation == null ? null : myPresentation.icon();
   }
 
   @Override
@@ -111,7 +113,7 @@ import java.util.Objects;
   }
 
   @Override
-  public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+  public @Unmodifiable @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     if (myPresentation == null) return List.of();
     return ContainerUtil.map(myPresentation.rangesToHighlight(), range -> new RangeToHighlight(file, range.range(), range.highlightKey()));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij;
 
@@ -155,12 +155,12 @@ public abstract class FileSetTestCase extends TestSuite {
       UsefulTestCase.assertSameLinesWithFile(myTestFile.getAbsolutePath(), result, true);
     }
 
-    @NotNull
     @Override
-    protected String getTestName(final boolean lowercaseFirstLetter) {
+    protected @NotNull String getTestName(final boolean lowercaseFirstLetter) {
       return "";
     }
 
+    @Override
     public String toString() {
       return myTestFile.getAbsolutePath() + " ";
     }

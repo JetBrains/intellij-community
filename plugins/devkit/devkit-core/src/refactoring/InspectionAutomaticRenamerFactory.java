@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
-import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolverKeys;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
@@ -52,10 +52,8 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
            !isGetShortNameMethodOverridden(inspectionClass);
   }
 
-  @Nls
-  @Nullable
   @Override
-  public String getOptionName() {
+  public @Nls String getOptionName() {
     return DevKitBundle.message("inspection.renamer.option.name");
   }
 
@@ -69,25 +67,9 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     PropertiesComponent.getInstance().setValue(PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME, enabled);
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new InspectionAutomaticRenamer((PsiClass)element, newName);
-  }
-
-
-  /**
-   * @return inspection description file name without extension.
-   */
-  @NotNull
-  private static String getDescriptionFileName(String inspectionClassName) {
-    return StringUtil.trimEnd(inspectionClassName, INSPECTION_CLASS_SUFFIX);
-  }
-
-  @Nullable
-  private static XmlAttribute getInspectionShortNameAttribute(PsiClass inspectionClass) {
-    Extension extension = InspectionDescriptionInfo.findExtension(inspectionClass);
-    return extension == null ? null : extension.getXmlTag().getAttribute("shortName");
   }
 
   private static boolean isGetShortNameMethodOverridden(PsiClass inspectionClass) {
@@ -95,7 +77,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     if (module == null) {
       return false;
     }
-    return InspectionDescriptionInfo.create(module, inspectionClass).getShortNameMethod() != null;
+
+    DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
+    return isGetShortNameMethodOverridden(resolver);
+  }
+
+  private static boolean isGetShortNameMethodOverridden(DescriptionTypeResolver resolver) {
+    return resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_METHOD) != null;
   }
 
 
@@ -108,12 +96,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         return;
       }
 
-      InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
-      if (!descriptionInfo.isShortNameInXml() || descriptionInfo.getShortNameMethod() != null) {
+      DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
+      if (Boolean.FALSE == resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_IN_XML) ||
+          isGetShortNameMethodOverridden(resolver)) {
         return;
       }
 
-      PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
+      PsiFile descriptionFile = resolver.resolveDescriptionFile();
       if (descriptionFile == null) {
         return;
       }
@@ -129,7 +118,7 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         return;
       }
 
-      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
+      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(resolver);
       if (shortNameAttribute == null) {
         return;
       }
@@ -153,15 +142,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     }
 
 
-    @Nls
     @Override
-    public String getDialogTitle() {
+    public @Nls String getDialogTitle() {
       return DevKitBundle.message("inspection.renamer.dialog.title");
     }
 
-    @Nls
     @Override
-    public String getDialogDescription() {
+    public @Nls String getDialogDescription() {
       return DevKitBundle.message("inspection.renamer.dialog.description");
     }
 
@@ -191,13 +178,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
         if (module == null) {
           continue;
         }
-        InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
-        PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
+        DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, inspectionClass);
+        PsiFile descriptionFile = resolver.resolveDescriptionFile();
         if (descriptionFile == null) {
           continue;
         }
 
-        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
+        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(resolver);
         if (shortNameAttribute == null) {
           continue;
         }
@@ -221,6 +208,17 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
                                            newName));
         break;
       }
+    }
+
+    /**
+     * @return inspection description file name without extension.
+     */
+    private static @NotNull String getDescriptionFileName(String inspectionClassName) {
+      return StringUtil.trimEnd(inspectionClassName, INSPECTION_CLASS_SUFFIX);
+    }
+
+    private static @Nullable XmlAttribute getInspectionShortNameAttribute(DescriptionTypeResolver resolver) {
+      return resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_XML_ATTRIBUTE);
     }
   }
 }

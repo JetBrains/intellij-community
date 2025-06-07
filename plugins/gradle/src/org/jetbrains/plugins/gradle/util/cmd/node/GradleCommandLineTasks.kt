@@ -10,6 +10,4 @@ data class GradleCommandLineTasks(
     List<GradleCommandLineTask> by tasks {
 
   override val tokens: List<String> = tasks.flatMap { it.tokens }
-
-  override val text: String = tokens.joinToString(" ")
 }

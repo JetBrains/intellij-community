@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import org.jetbrains.annotations.Nullable;
@@ -29,30 +29,31 @@ public class StatsHttpResponse {
     return myCode;
   }
 
-  @Nullable
-  public Long lastModified() {
+  public @Nullable Long lastModified() {
     return myHttpResponse == null ? null : myHttpResponse.headers().
       allValues("Last-Modified").stream().
       map(value -> parseDate(value)).filter(date -> date != null).map(date -> date.getTime()).
       max(Long::compareTo).orElse(null);
   }
 
-  @Nullable
-  public String readAsString() throws IOException {
+  public @Nullable String readAsString() throws IOException {
     return  myHttpResponse != null && myHttpResponse.body() != null ? myHttpResponse.body() : null;
   }
 
-  @Nullable
-  public InputStream read() throws IOException {
+  public @Nullable InputStream read() throws IOException {
     return myHttpResponse != null && myHttpResponse.body() != null
            ? new ByteArrayInputStream(myHttpResponse.body().getBytes(StandardCharsets.UTF_8)) : null;
   }
 
   private static @Nullable Date parseDate(String string) {
     for (SimpleDateFormat format : DATE_FORMATS) {
-      Date date = format.parse(string, new ParsePosition(0));
-      if (date != null) {
-        return date;
+      try {
+        Date date = format.parse(string, new ParsePosition(0));
+        if (date != null) {
+          return date;
+        }
+      }
+      catch (NumberFormatException ignored) {
       }
     }
     return null;

@@ -1,0 +1,37 @@
+<html>
+<body>
+Reports expressions and conditions that always produce the same result,
+like <code>true</code>, <code>false</code>, <code>null</code>, or <code>0</code>.
+Such expressions can be replaced with the corresponding constant value, or may indicate there is a bug in the code.
+<p>Examples:</p>
+<pre><code>  // always true
+  // cause: || is used instead of &&
+  if (x &gt; 0 || x &lt; 10) {}
+
+  System.out.println(str.trim());
+  // always false
+  // cause: variable was dereferenced before null-check
+  if (str == null) {}
+</code></pre>
+<p>
+  The inspection's behavior may be controlled by annotations, such as
+  <a href="https://www.jetbrains.com/help/idea/nullable-and-notnull-annotations.html">nullability</a> annotations,
+  <code><a href="https://www.jetbrains.com/help/idea/contract-annotations.html">@Contract</a></code> annotation, 
+  <code>@Range</code> annotation and so on.
+</p>
+<!-- tooltip end -->
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Don't report assertions with condition statically proven to be always true</b> option to avoid reporting assertions that were
+    statically proven to be always true. This includes conditions like <code>if (alwaysFalseCondition) throw new IllegalArgumentException();</code>.</li>
+  <li>Use the <b>Ignore assert statements</b> option to control how the inspection treats <code>assert</code> statements.
+    By default, assertions are assumed to be executed (<code>-ea</code> mode).
+    When the option is enabled, assertions will be ignored (<code>-da</code> mode).</li>
+  <li>Use the <b>Warn when constant is stored in variable</b> option to display warnings when a variable is used, whose value is known to be constant.</li>
+</ul>
+<p>
+  Before IntelliJ IDEA 2022.3, this inspection was part of the <i>Constant Conditions & Exceptions</i> inspection.
+  This inspection has been split into two inspections: <i>Constant Values</i> and <i>Nullability and data flow problems</i>.
+</p>
+</body>
+</html>

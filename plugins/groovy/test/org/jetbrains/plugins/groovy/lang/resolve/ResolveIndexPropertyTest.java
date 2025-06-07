@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.PsiMethod;
@@ -81,9 +81,9 @@ public class ResolveIndexPropertyTest extends GroovyResolveTestCase {
                                           ((GrIndexProperty)((GrAssignmentExpression)expression).getLValue()).getLValueReference();
     List<? extends GroovyResolveResult> results = ResolveUtilKt.valid(reference.resolve(false));
     if (methodIndex < 0) {
-      assert results.isEmpty();
+      assertEmpty(results);
     } else {
-      assert results.size() == 1;
+      assertSize(1, results);
       PsiMethod resolved = (PsiMethod)results.get(0).getElement();
       assertNotNull(resolved);
       assertEquals("A", resolved.getContainingClass().getQualifiedName());

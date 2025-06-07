@@ -4,13 +4,9 @@ package org.jetbrains.plugins.gradle.service.task
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
-import org.jetbrains.plugins.gradle.service.execution.loadCommonDebuggerUtilsScript
-import org.jetbrains.plugins.gradle.service.execution.loadCommonTasksUtilsScript
-import org.jetbrains.plugins.gradle.service.execution.loadToolingExtensionProvidingInitScript
+import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 @ApiStatus.Internal
@@ -26,11 +22,7 @@ class GradleTaskManagerExtensionDebuggerBridge : GradleTaskManagerExtension {
     val project = id.findProject()
 
     val toolingInitScripts = listOf(
-      loadToolingExtensionProvidingInitScript(
-        ExternalSystemRtClass::class.java
-      ),
-      loadCommonTasksUtilsScript(),
-      loadCommonDebuggerUtilsScript()
+      loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
     )
 
     val dispatchPort = settings.getUserData(ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY)?.toString()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.serialization.serializer
 
 import com.esotericsoftware.kryo.kryo5.Kryo
@@ -12,6 +12,10 @@ import com.google.common.collect.HashMultimap
 import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentHashMap
+import kotlinx.collections.immutable.toPersistentHashSet
 
 
 internal class DefaultListSerializer<T : List<*>> : CollectionSerializer<T>() {
@@ -50,6 +54,33 @@ internal class DefaultMapSerializer<T : Map<*, *>> : MapSerializer<T>() {
 }
 
 
+internal class PersistentHashMapSerializer : Serializer<PersistentMap<*, *>>(false, true) {
+  override fun write(kryo: Kryo, output: Output, `object`: PersistentMap<*, *>) {
+    val res = `object`.toMap()
+    kryo.writeClassAndObject(output, res)
+  }
+
+  override fun read(kryo: Kryo, input: Input, type: Class<out PersistentMap<*, *>>): PersistentMap<*, *> {
+    val des = kryo.readClassAndObject(input) as Map<*, *>
+    val res = des.toPersistentHashMap()
+    return res
+  }
+}
+
+internal class PersistentHashSetSerializer : Serializer<PersistentSet<*>>(false, true) {
+  override fun write(kryo: Kryo, output: Output, `object`: PersistentSet<*>) {
+    val res = `object`.toSet()
+    kryo.writeClassAndObject(output, res)
+  }
+
+  override fun read(kryo: Kryo, input: Input, type: Class<out PersistentSet<*>>): PersistentSet<*> {
+    val des = kryo.readClassAndObject(input) as Set<*>
+    val res = des.toPersistentHashSet()
+    return res
+  }
+}
+
+
 internal class ObjectOpenHashSetSerializer : Serializer<ObjectOpenHashSet<*>>(false, true) {
   override fun write(kryo: Kryo, output: Output, `object`: ObjectOpenHashSet<*>) {
     output.writeInt(`object`.size)
@@ -79,12 +110,12 @@ internal class HashMultimapSerializer : Serializer<HashMultimap<*, *>>(false, tr
 
   @Suppress("UNCHECKED_CAST")
   override fun read(kryo: Kryo, input: Input, type: Class<out HashMultimap<*, *>>): HashMultimap<*, *> {
-    val res = HashMultimap.create<Any, Any>()
-    val map = kryo.readClassAndObject(input) as HashMap<*, Collection<*>>
+    val result = HashMultimap.create<Any, Any>()
+    val map = kryo.readClassAndObject(input) as HashMap<Any, Collection<Any>>
     map.forEach { (key, values) ->
-      res.putAll(key, values)
+      result.putAll(key, values)
     }
-    return res
+    return result
   }
 }
 
@@ -97,7 +128,7 @@ internal class Int2IntWithDefaultMapSerializer : Serializer<Int2IntWithDefaultMa
   @Suppress("UNCHECKED_CAST")
   override fun read(kryo: Kryo, input: Input, type: Class<out Int2IntWithDefaultMap>): Int2IntWithDefaultMap {
     val des = kryo.readClassAndObject(input) as Map<Int, Int>
-    val res = Int2IntWithDefaultMap()
+    val res = Int2IntWithDefaultMap(des.size)
     des.forEach { key, value ->
       res.put(key, value)
     }

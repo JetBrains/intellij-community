@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.*
@@ -10,18 +10,22 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,6 +33,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ProjectRootManagerImpl>()
 
@@ -44,10 +49,14 @@ open class ProjectRootManagerImpl(
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
+  private val moduleRootManagerInstances = ConcurrentHashMap<Module, ModuleRootManager>()
   private var projectSdkName: String? = null
   private var projectSdkType: String? = null
   private val rootCache: OrderRootsCache
   private var isStateLoaded = false
+
+  @Volatile
+  var shouldFireRootsChanged: Ref<Boolean>? = null
 
   init {
     @Suppress("LeakingThis")
@@ -60,6 +69,11 @@ open class ProjectRootManagerImpl(
           projectSdkName = jdk.getName()
           projectSdkType = jdk.getSdkType().getName()
         }
+      }
+    })
+    project.messageBus.simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        moduleRootManagerInstances.remove(module)
       }
     })
   }
@@ -170,7 +184,7 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
-  protected val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
+  @JvmField val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
     override fun fireRootsChanged(change: Boolean): Boolean {
       return this@ProjectRootManagerImpl.fireRootsChanged(true, emptyList())
     }
@@ -262,7 +276,7 @@ open class ProjectRootManagerImpl(
       return null
     }
 
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(project)
     if (projectSdkType == null) {
       return projectJdkTable.findJdk(projectSdkName!!)
     }
@@ -343,18 +357,23 @@ open class ProjectRootManagerImpl(
     if (app != null) {
       val isStateLoaded = isStateLoaded
       if (stateChanged) {
-        coroutineScope.launch {
-          // make sure we execute it only after any current modality dialog
-          withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        if (!project.isInitialized) {
+          shouldFireRootsChanged = Ref.create(isStateLoaded)
+        }
+        else {
+          coroutineScope.launch {
+            // make sure we execute it only after any current modality dialog
+            withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+            }
+            applyState(isStateLoaded)
           }
-          applyState(isStateLoaded)
         }
       }
     }
     isStateLoaded = true
   }
 
-  private suspend fun applyState(isStateLoaded: Boolean) {
+  internal suspend fun applyState(isStateLoaded: Boolean) {
     if (isStateLoaded) {
       LOG.debug("Run write action for projectJdkChanged()")
       backgroundWriteAction {
@@ -478,6 +497,10 @@ open class ProjectRootManagerImpl(
     return AutoCloseable { rootsChanged.rootsChanged(changes) }
   }
 
+  override fun getModuleRootManager(module: Module): ModuleRootManager {
+    return moduleRootManagerInstances.computeIfAbsent(module) { ModuleRootComponentBridge(module) }
+  }
+
   @ApiStatus.Internal
   var isFiringEvent: Boolean = false
     protected set
@@ -517,4 +540,13 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
+}
+
+private class ProjectRootManagerInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    val projectRootManager = project.serviceAsync<ProjectRootManager>() as? ProjectRootManagerImpl ?: return
+    val shouldFireRootsChanged = projectRootManager.shouldFireRootsChanged?.get() ?: return
+    projectRootManager.shouldFireRootsChanged = null
+    projectRootManager.applyState(shouldFireRootsChanged)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -42,8 +42,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  @NotNull
-  public GrCodeReferenceElement getBaseClassReferenceGroovy() {
+  public @NotNull GrCodeReferenceElement getBaseClassReferenceGroovy() {
     GrTypeDefinitionStub stub = getStub();
     if (stub != null) {
       GrCodeReferenceElement reference = stub.getBaseClassReference();
@@ -60,8 +59,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  @Nullable
-  public GrArgumentList getArgumentListGroovy() {
+  public @Nullable GrArgumentList getArgumentListGroovy() {
     return findChildByClass(GrArgumentList.class); //not null because of definition
   }
 
@@ -71,14 +69,12 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement getBaseClassReference() {
+  public @NotNull PsiJavaCodeReferenceElement getBaseClassReference() {
     return JavaPsiFacade.getElementFactory(getProject()).createReferenceElementByType(getBaseClassType());
   }
 
   @Override
-  @NotNull
-  public PsiClassType getBaseClassType() {
+  public @NotNull PsiClassType getBaseClassType() {
     PsiClassType type = dereference(myCachedBaseType);
     if (type != null && type.isValid()) return type;
 
@@ -88,19 +84,16 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   @Override
-  @Nullable
-  public PsiExpressionList getArgumentList() {
+  public @Nullable PsiExpressionList getArgumentList() {
     return null;
   }
 
-  @Nullable
-  private PsiClass getBaseClass() {
+  private @Nullable PsiClass getBaseClass() {
     return getBaseClassType().resolve();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     //noinspection ConstantConditions
     return getBaseClassReferenceGroovy().getReferenceNameElement();
   }

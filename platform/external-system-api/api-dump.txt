@@ -79,6 +79,7 @@ com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotification
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 - a:getSystemIds():java.util.Set
 - a:isNotificationVisible():Z
+- a:isNotificationVisible(com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - a:notificationExpire():V
 - a:notificationExpire(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId):V
 - a:notificationNotify(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware):V
@@ -142,10 +143,8 @@ com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - a:isLinkedProject(com.intellij.openapi.project.Project,java.lang.String):Z
 - linkAndLoadProject(com.intellij.openapi.project.Project,java.lang.String):V
 - linkAndLoadProjectAsync(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:linkAndLoadProjectAsync$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - a:subscribe(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener,com.intellij.openapi.Disposable):V
 - unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:unlinkProject$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
@@ -307,6 +306,8 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 - a:getProject():com.intellij.openapi.project.Project
+- a:getProjectResolverPolicy():com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
+- a:getRerunAction():java.lang.Runnable
 - a:getUserData():com.intellij.openapi.util.UserDataHolderBase
 - a:getVmOptions():java.lang.String
 - a:isActivateBuildToolWindowOnFailure():Z
@@ -314,6 +315,8 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:isNavigateToError():com.intellij.util.ThreeState
 - a:isPreviewMode():Z
 - a:shouldCreateDirectoriesForEmptyContentRoots():Z
+- a:shouldImportProjectData():Z
+- a:shouldSelectProjectDataToImport():Z
 c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - <init>(com.intellij.openapi.externalSystem.importing.ImportSpec):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
@@ -327,7 +330,16 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - navigateToError():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - use(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - usePreviewMode():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withActivateToolWindowOnStart(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withArguments(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(java.util.concurrent.CompletableFuture):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(java.util.function.Consumer):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withImportProjectData(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withPreviewMode(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withRerunAction(java.lang.Runnable):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withSelectProjectDataToImport(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withVmOptions(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 c:com.intellij.openapi.externalSystem.model.DataNode
@@ -628,22 +640,14 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - getLinkedExternalProjectPath():java.lang.String
 - getModuleFileDirectoryPath():java.lang.String
 - getModuleName():java.lang.String
+- getModuleNameDeduplicationStrategy():com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
 - getModuleTypeId():java.lang.String
 - getProductionModuleId():java.lang.String
 - getProperty(java.lang.String):java.lang.String
 - getPublication():com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
-- getSdkName():java.lang.String
-- getSourceCompatibility():java.lang.String
-- getTargetCompatibility():java.lang.String
 - getVersion():java.lang.String
 - hashCode():I
-- internalSetSdkName(java.lang.String):V
-- internalSetSourceCompatibility(java.lang.String):V
-- internalSetTargetCompatibility(java.lang.String):V
 - isInheritProjectCompileOutputPath():Z
-- isSetSdkName():Z
-- isSetSourceCompatibility():Z
-- isSetTargetCompatibility():Z
 - setArtifacts(java.util.List):V
 - setCompileOutputPath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String):V
 - setDescription(java.lang.String):V
@@ -652,12 +656,10 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - setIdeModuleGroup(java.lang.String[]):V
 - setInheritProjectCompileOutputPath(Z):V
 - setModuleName(java.lang.String):V
+- setModuleNameDeduplicationStrategy(com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy):V
 - setProductionModuleId(java.lang.String):V
 - setProperty(java.lang.String,java.lang.String):V
 - setPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
-- setSdkName(java.lang.String):V
-- setSourceCompatibility(java.lang.String):V
-- setTargetCompatibility(java.lang.String):V
 - setVersion(java.lang.String):V
 - useExternalCompilerOutput(Z):V
 f:com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
@@ -669,6 +671,13 @@ f:com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 - isProductionOnTestDependency():Z
 - setModuleDependencyArtifacts(java.util.Collection):V
 - setProductionOnTestDependency(Z):V
+e:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- sf:NUMBER_SUFFIX:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- sf:PARENT_PATH_NAME:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- s:values():com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy[]
 f:com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 - com.intellij.openapi.externalSystem.model.project.SdkData
 - sf:Companion:com.intellij.openapi.externalSystem.model.project.ModuleSdkData$Companion
@@ -736,6 +745,33 @@ f:com.intellij.openapi.externalSystem.model.project.TestData
 - getSourceFolders():java.util.Set
 - getTestName():java.lang.String
 - getTestTaskName():java.lang.String
+c:com.intellij.openapi.externalSystem.model.project.repository.FileRepositoryData
+- com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.util.List):V
+- equals(java.lang.Object):Z
+- getFiles():java.util.List
+- hashCode():I
+c:com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData
+- sf:KEY:com.intellij.openapi.externalSystem.model.Key
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+c:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData
+- com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type):V
+- equals(java.lang.Object):Z
+- getType():com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- getUrl():java.lang.String
+- hashCode():I
+e:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- java.lang.Enum
+- sf:IVY:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- sf:MAVEN:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- sf:OTHER:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- s:values():com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type[]
 c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 - com.intellij.openapi.util.UserDataHolder
 - java.io.Serializable
@@ -785,6 +821,7 @@ f:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 - findProject():com.intellij.openapi.project.Project
 - getId():J
 - getIdeProjectId():java.lang.String
+- getProject():com.intellij.openapi.project.Project
 - s:getProjectId(com.intellij.openapi.project.Project):java.lang.String
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getType():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -817,7 +854,6 @@ com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationLis
 - onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
 a:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 - <init>():V
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 - beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
@@ -1120,7 +1156,6 @@ a:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettin
 - p:state:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State
 - p:<init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.project.Project):V
 - p:<init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State):V
-- fillState(com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State):V
 - forgetExternalProjects(java.util.Set):V
 - getAvailableProjects():java.util.Map
 - getExternalConfigModificationStamps():java.util.Map

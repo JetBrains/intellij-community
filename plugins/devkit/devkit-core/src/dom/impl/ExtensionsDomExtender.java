@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -39,7 +39,7 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   }
 
   @Override
-  public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
+  public void registerExtensions(final @NotNull Extensions extensions, final @NotNull DomExtensionsRegistrar registrar) {
     Project project = extensions.getManager().getProject();
     VirtualFile currentFile = getVirtualFile(extensions);
     if (currentFile == null || DumbService.isDumb(project)) return;
@@ -59,8 +59,7 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
     registrar.registerCustomChildrenExtension(Extensions.UnresolvedExtension.class, new CustomDomChildrenDescription.TagNameDescriptor());
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(DomElement domElement) {
+  private static @Nullable VirtualFile getVirtualFile(DomElement domElement) {
     final VirtualFile file = DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
     return file instanceof VirtualFileWithId ? file : null;
   }

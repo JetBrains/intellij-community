@@ -7,7 +7,7 @@ Tests for basic usage of generics.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Generic, TypeVar, assert_type
+from typing import Any, Generic, Protocol, TypeVar, assert_type
 
 T = TypeVar("T")
 
@@ -157,6 +157,23 @@ def test_my_map(m1: MyMap1[str, int], m2: MyMap2[int, str]):
     m1[0]  # E
     m2[0]  # E
 
+# > All arguments to ``Generic`` or ``Protocol`` must be type variables.
+
+class Bad1(Generic[int]): ...  # E
+class Bad2(Protocol[int]): ...  # E
+
+# > All type parameters for the class must appear within the ``Generic`` or
+# > ``Protocol`` type argument list.
+
+T_co = TypeVar("T_co", covariant=True)
+S_co = TypeVar("S_co", covariant=True)
+
+class Bad3(Iterable[T_co], Generic[S_co]): ...  # E
+class Bad4(Iterable[T_co], Protocol[S_co]): ...  # E
+
+# > The above rule does not apply to a bare ``Protocol`` base class.
+
+class MyIterator(Iterator[T_co], Protocol): ...  # OK
 
 # > You can use multiple inheritance with ``Generic``
 

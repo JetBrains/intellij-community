@@ -17,10 +17,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -64,8 +64,7 @@ public final class ImplicitNumericConversionInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[1];
     final PsiType expectedType = (PsiType)infos[2];
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiAssignmentExpression
@@ -98,15 +97,13 @@ public final class ImplicitNumericConversionInspection extends BaseInspection {
       }
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("implicit.numeric.conversion.make.explicit.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return m_name;
     }
 
@@ -172,9 +169,7 @@ public final class ImplicitNumericConversionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpression(assignmentExpression, newExpressionText, commentTracker);
     }
 
-    @Nullable
-    @NonNls
-    private static String convertExpression(PsiExpression expression, PsiType expectedType) {
+    private static @Nullable @NonNls String convertExpression(PsiExpression expression, PsiType expectedType) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiLiteralExpression) && !isNegatedLiteral(expression)) {
         return null;
@@ -229,7 +224,7 @@ public final class ImplicitNumericConversionInspection extends BaseInspection {
 
     private static boolean isDecimalLiteral(String text) {
       // should not be binary, octal or hexadecimal: 0b101, 077, 0xFF
-      return text.length() > 0 && text.charAt(0) != '0';
+      return !text.isEmpty() && text.charAt(0) != '0';
     }
 
     private static boolean isNegatedLiteral(PsiExpression expression) {

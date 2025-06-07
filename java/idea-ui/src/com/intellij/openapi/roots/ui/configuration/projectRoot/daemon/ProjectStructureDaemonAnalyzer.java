@@ -204,8 +204,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myResultsUpdateQueue.stop();
   }
 
-  @Nullable
-  public ProjectStructureProblemsHolderImpl getProblemsHolder(@NotNull ProjectStructureElement element) {
+  public @Nullable ProjectStructureProblemsHolderImpl getProblemsHolder(@NotNull ProjectStructureElement element) {
     return myProblemHolders.get(element);
   }
 

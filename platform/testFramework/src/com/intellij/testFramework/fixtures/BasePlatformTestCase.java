@@ -20,10 +20,10 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Base class for light tests.
- * <p/>
- * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform Plugin SDK Docs.
+ * This is a "light" JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link CodeInsightTestFixture}.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html">Light and Heavy Tests (IntelliJ Platform Docs)</a>
  * @see CodeInsightFixtureTestCase for "heavy" tests that require access to the real FS or changes project roots.
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {

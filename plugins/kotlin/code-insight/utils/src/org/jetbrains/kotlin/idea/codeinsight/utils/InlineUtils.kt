@@ -15,13 +15,12 @@ import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-context(KaSession)
 @ApiStatus.Internal
-fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(argument) != null
+fun KaSession.isInlinedArgument(argument: KtFunction, allowCrossinline: Boolean = true): Boolean =
+    getInlineArgumentSymbol(argument, allowCrossinline) != null
 
-context(KaSession)
 @ApiStatus.Internal
-fun getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
+fun KaSession.getInlineArgumentSymbol(argument: KtExpression, allowCrossinline: Boolean = true): KaValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
     val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
@@ -30,6 +29,7 @@ fun getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
 
     if ((symbol is KaNamedFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
         if (argumentSymbol.isNoinline) return null
+        if (!allowCrossinline && argumentSymbol.isCrossinline) return null
         val parameterType = argumentSymbol.returnType
         if (!parameterType.isMarkedNullable
                && (parameterType.isFunctionType || parameterType.isSuspendFunctionType)) {
@@ -41,13 +41,11 @@ fun getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
 }
 
 
-context(KaSession)
 @ApiStatus.Internal
-fun getFunctionSymbol(argument: KtExpression): KaFunctionSymbol? = getCallExpressionSymbol(argument)?.first
+fun KaSession.getFunctionSymbol(argument: KtExpression): KaFunctionSymbol? = getCallExpressionSymbol(argument)?.first
     ?: getDefaultArgumentSymbol(argument)?.first
 
-context(KaSession)
-private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
+private fun KaSession.getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
     val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
@@ -58,9 +56,8 @@ private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionSym
     return symbol to argumentSymbol
 }
 
-context(KaSession)
 @ApiStatus.Internal
-fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
+fun KaSession.getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
     if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
     val parentCall = resolveFunctionCall(parentCallExpression) ?: return null
@@ -70,9 +67,8 @@ fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaVa
     return symbol to argumentSymbol
 }
 
-context(KaSession)
 @ApiStatus.Internal
-fun resolveFunctionCall(expression: KtExpression): KaFunctionCall<*>? {
+fun KaSession.resolveFunctionCall(expression: KtExpression): KaFunctionCall<*>? {
     val successfulCall = expression.resolveToCall()?.successfulFunctionCallOrNull()
     if (successfulCall != null) return successfulCall
     if (!ApplicationManager.getApplication().isUnitTestMode) return null
@@ -80,8 +76,7 @@ fun resolveFunctionCall(expression: KtExpression): KaFunctionCall<*>? {
     return expression.resolveToCallCandidates().firstOrNull()?.candidate as? KaFunctionCall<*>
 }
 
-context(KaSession)
-private fun isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
+private fun KaSession.isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
     fun checkParameters(symbol: KaFunctionSymbol): Boolean {
         return symbol.valueParameters.size == 2
                 && symbol.valueParameters[0].returnType.isIntType

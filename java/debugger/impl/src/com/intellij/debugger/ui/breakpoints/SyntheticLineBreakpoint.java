@@ -83,9 +83,8 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return true;
   }
 
-  @NotNull
   @Override
-  protected JavaLineBreakpointProperties getProperties() {
+  protected @NotNull JavaLineBreakpointProperties getProperties() {
     return myProperties;
   }
 
@@ -93,14 +92,13 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   protected void fireBreakpointChanged() {
   }
 
-  @Nullable
   @Override
-  protected JavaLineBreakpointType getXBreakpointType() {
+  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     return XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType.class);
   }
 
   @Override
-  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
+  protected boolean isMuted(final @NotNull DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
 }

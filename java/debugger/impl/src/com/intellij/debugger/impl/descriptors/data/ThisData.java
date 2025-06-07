@@ -15,12 +15,14 @@ public final class ThisData extends DescriptorData<ThisDescriptorImpl> {
     return new ThisDescriptorImpl(project);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof ThisData)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     return THIS.hashCode();
   }

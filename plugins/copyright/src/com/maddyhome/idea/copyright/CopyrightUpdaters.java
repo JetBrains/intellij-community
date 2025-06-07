@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright;
 
 import com.intellij.lang.Language;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME =
     new ExtensionPointName<>("com.intellij.copyright.updater");
-  public final static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
+  public static final CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
     super(EP_NAME);
@@ -30,8 +30,7 @@ public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsP
     return acceptable == null ? null : super.forFileType(acceptable);
   }
 
-  @Nullable
-  public FileType getRegisteredFileTypeFromLanguageHierarchy(@NotNull FileType type) {
+  public @Nullable FileType getRegisteredFileTypeFromLanguageHierarchy(@NotNull FileType type) {
     if (super.forFileType(type) != null) return type;
 
     while (type instanceof LanguageFileType lft) {

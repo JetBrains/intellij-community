@@ -17,6 +17,9 @@ object InlineDataKeys {
     val WAS_FUNCTION_LITERAL_ARGUMENT_KEY = Key<Unit>("WAS_FUNCTION_LITERAL_ARGUMENT")
 
     @JvmStatic
+    val WAS_CONVERTED_TO_FUNCTION_KEY = Key<Unit>("WAS_CONVERTED_TO_FUNCTION")
+
+    @JvmStatic
     val NEW_DECLARATION_KEY = Key<Unit>("NEW_DECLARATION")
 
     // these keys are used on KtValueArgument
@@ -28,6 +31,9 @@ object InlineDataKeys {
 
     @JvmStatic
     val PARAMETER_VALUE_KEY = Key<Name>("PARAMETER_VALUE")
+
+    @JvmStatic
+    val NON_LOCAL_JUMP_KEY = Key<NonLocalJumpToken>("NON_LOCAL_JUMP")
 
     fun clearUserData(it: KtElement) {
         it.putCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY, null)
@@ -42,5 +48,6 @@ object InlineDataKeys {
         it.putCopyableUserData(MAKE_ARGUMENT_NAMED_KEY, null)
         it.putCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY, null)
         it.putCopyableUserData(PARAMETER_VALUE_KEY, null)
+        it.putCopyableUserData(NON_LOCAL_JUMP_KEY, null)
     }
 }

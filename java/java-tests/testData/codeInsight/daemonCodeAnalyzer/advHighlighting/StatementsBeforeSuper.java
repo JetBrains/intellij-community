@@ -28,14 +28,14 @@ class B extends A {
 
   B(String s) {
     try {
-     <error descr="Call to 'super()' must be a top level statement in constructor body">super(2)</error>;
+     <error descr="Call to 'super()' must be top-level statement in constructor body">super(2)</error>;
     }
     finally {
     }
   }
   B(String s, int i) {
     {
-     <error descr="Call to 'super()' must be a top level statement in constructor body">super(2)</error>;
+     <error descr="Call to 'super()' must be top-level statement in constructor body">super(2)</error>;
     }
   }
   B(boolean b, int i) {
@@ -58,7 +58,7 @@ class D {
 class E extends D {
 
   E() {
-    <error descr="Cannot reference 'D.i' before superclass constructor is called">super.i</error>++;                  // Error
+    <error descr="Cannot reference 'super' before superclass constructor is called">super</error>.i++;                  // Error
     super();
   }
 

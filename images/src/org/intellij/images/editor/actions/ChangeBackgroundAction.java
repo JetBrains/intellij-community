@@ -20,18 +20,19 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class ChangeBackgroundAction extends DumbAwareAction {
+final class ChangeBackgroundAction extends DumbAwareAction {
   private final MyBackgroundIcon myIcon = new MyBackgroundIcon();
-  public ChangeBackgroundAction() {
+
+  ChangeBackgroundAction() {
     getTemplatePresentation().setIcon(myIcon);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (e.getInputEvent() == null) return;
+
     Component component = e.getInputEvent().getComponent();
+
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (component != null && decorator != null) {
       ColorChooserService.getInstance().showPopup(e.getProject(), null, null, new ColorListener() {

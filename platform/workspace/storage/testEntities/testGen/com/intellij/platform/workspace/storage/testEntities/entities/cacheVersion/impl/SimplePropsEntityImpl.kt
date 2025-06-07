@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -75,8 +74,8 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
   }
 
 
-  internal class Builder(result: SimplePropsEntityData?) : ModifiableWorkspaceEntityBase<SimplePropsEntity, SimplePropsEntityData>(
-    result), SimplePropsEntity.Builder {
+  internal class Builder(result: SimplePropsEntityData?) : ModifiableWorkspaceEntityBase<SimplePropsEntity, SimplePropsEntityData>(result),
+                                                           SimplePropsEntity.Builder {
     internal constructor() : this(SimplePropsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -264,7 +263,8 @@ internal class SimplePropsEntityData : WorkspaceEntityData<SimplePropsEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimplePropsEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimplePropsEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): SimplePropsEntityData {

@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.stream.JsonReader
 import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpStatusClass
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.NoMoreRetriesException
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
@@ -21,7 +23,13 @@ import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.jpsCache.*
+import org.jetbrains.intellij.build.jpsCache.awsS3Cli
+import org.jetbrains.intellij.build.jpsCache.getAllCompilationOutputs
+import org.jetbrains.intellij.build.jpsCache.jpsCacheAuthHeader
+import org.jetbrains.intellij.build.jpsCache.jpsCacheCommit
+import org.jetbrains.intellij.build.jpsCache.jpsCacheS3Dir
+import org.jetbrains.intellij.build.jpsCache.jpsCacheUploadUrl
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
@@ -182,7 +190,6 @@ private suspend fun uploadJpsData(
 ) {
   val urlPath = "$urlPathPrefix/caches/$commitHash.zip.zstd"
   if (forceUpload || !checkExists(connection = connection, urlPath = urlPath, logIfExists = true)) {
-    // Level 9 is optimal, the same as for compilation parts. Levels beyond 9 consume more time without a significant reduction in size
     connection.upload(path = urlPath, file = jpsDataDir, zstdCompressContextPool = zstdCompressContextPool, isDir = true)
   }
 }
@@ -234,16 +241,24 @@ internal suspend fun checkExists(
   urlPath: String,
   logIfExists: Boolean = false,
 ): Boolean {
-  val status = connection.head(urlPath)
-  if (status == HttpResponseStatus.OK) {
-    // already exists
-    if (logIfExists) {
-      Span.current().addEvent("File $urlPath already exists on server, nothing to upload")
+  return retryWithExponentialBackOff {
+    when (val status = connection.head(urlPath)) {
+      HttpResponseStatus.OK -> {
+        // already exists
+        if (logIfExists) {
+          Span.current().addEvent("File $urlPath already exists on server, nothing to upload")
+        }
+        true
+      }
+      HttpResponseStatus.NOT_FOUND -> false
+      else -> {
+        Span.current().addEvent("unexpected response status for HEAD request", Attributes.of(AttributeKey.stringKey("status"), status.toString()))
+        val message = "unexpected response status for HEAD request: $status"
+        if (status.codeClass() == HttpStatusClass.SERVER_ERROR || status.code() == 420 || status.code() == 429)
+          throw IllegalStateException(message)
+        else
+          throw NoMoreRetriesException(message)
+      }
     }
-    return true
   }
-  else if (status != HttpResponseStatus.NOT_FOUND) {
-    Span.current().addEvent("unexpected response status for HEAD request", Attributes.of(AttributeKey.stringKey("status"), status.toString()))
-  }
-  return false
 }

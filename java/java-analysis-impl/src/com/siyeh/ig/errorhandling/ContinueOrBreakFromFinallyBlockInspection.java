@@ -32,8 +32,7 @@ public final class ContinueOrBreakFromFinallyBlockInspection extends BaseInspect
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("continue.or.break.from.finally.block.problem.descriptor");
   }
 

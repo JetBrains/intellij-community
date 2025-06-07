@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.ReviseWhenPortedToJDK
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -14,6 +16,7 @@ object VmOptionsGenerator {
 
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
+    "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
@@ -42,7 +45,8 @@ object VmOptionsGenerator {
       val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
       if (customPluginRepositoryUrl == null) it
       else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${customPluginRepositoryUrl}"
-    }
+    },
+    context.productProperties.platformPrefix,
   )
 
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
@@ -59,7 +63,13 @@ object VmOptionsGenerator {
     return null
   }
 
-  internal fun generate(isEAP: Boolean, bundledRuntime: BundledRuntime, customVmMemoryOptions: Map<String, String>, additionalVmOptions: List<String>): List<String> {
+  internal fun generate(
+    isEAP: Boolean,
+    bundledRuntime: BundledRuntime,
+    customVmMemoryOptions: Map<String, String>,
+    additionalVmOptions: List<String>,
+    platformPrefix: String?,
+  ): List<String> {
     val result = ArrayList<String>()
 
     val memory = LinkedHashMap<String, String>(customVmMemoryOptions)
@@ -71,34 +81,36 @@ object VmOptionsGenerator {
 
     result += COMMON_VM_OPTIONS
 
-    @ReviseWhenPortedToJDK("21", description = "Merge into `COMMON_VM_OPTIONS`")
-    result += if (bundledRuntime.build.startsWith("17.")) {
-      listOf(
-        "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
-        "-XX:SoftRefLRUPolicyMSPerMB=50",
-      )
-    }
-    else {
-      listOf(
-        "-XX:+UnlockDiagnosticVMOptions",
-        "-XX:TieredOldPercentage=100000",
-      )
+    if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
+      result += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
     }
 
     result += additionalVmOptions
 
+    var index = result.indexOf("-ea")
+    if (index < 0) index = result.indexOfFirst { it.startsWith("-D") }
+    if (index < 0) index = result.size
+
+    result.addAll(
+      index,
+      @ReviseWhenPortedToJDK("21", description = "Merge into `COMMON_VM_OPTIONS`")
+      if (bundledRuntime.build.startsWith("17.")) {
+        listOf(
+          "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
+          "-XX:SoftRefLRUPolicyMSPerMB=50",
+        )
+      }
+      else listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:TieredOldPercentage=100000")
+    )
+
     if (isEAP) {
-      var place = result.indexOf("-ea")
-      if (place < 0) place = result.indexOfFirst { it.startsWith("-D") }
-      if (place < 0) place = result.size
-      // must be consistent with `ConfigImportHelper#updateVMOptions`
-      result.add(place, "-XX:MaxJavaStackTraceDepth=10000")
+      result.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
     }
 
     return result
   }
 
   internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
-    Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
+    Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
   }
 }

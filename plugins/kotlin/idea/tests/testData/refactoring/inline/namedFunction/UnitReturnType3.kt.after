@@ -6,6 +6,5 @@ class C {
 
     fun x() = doIt<Unit> {
         println(9)
-        nonUnit(10)
-    }
+        nonUnit(10) }
 }

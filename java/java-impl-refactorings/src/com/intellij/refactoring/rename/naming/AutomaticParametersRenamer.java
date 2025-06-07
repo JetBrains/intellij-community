@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename.naming;
 
@@ -15,7 +15,7 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
     if (scope instanceof PsiMethod method) {
       final int parameterIndex = method.getParameterList().getParameterIndex(param);
       if (parameterIndex < 0) return;
-      for (PsiMethod overrider : OverridingMethodsSearch.search(method)) {
+      for (PsiMethod overrider : OverridingMethodsSearch.search(method).asIterable()) {
         final PsiParameter[] parameters = overrider.getParameterList().getParameters();
         if (parameterIndex >= parameters.length) continue;
         final PsiParameter inheritedParam = parameters[parameterIndex];

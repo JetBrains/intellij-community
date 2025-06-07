@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.projectRoots.ex;
 
@@ -24,8 +24,7 @@ import java.util.List;
  */
 public final class PathUtilEx {
 
-  @Nullable
-  public static Sdk getAnyJdk(@NotNull Project project) {
+  public static @Nullable Sdk getAnyJdk(@NotNull Project project) {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
@@ -34,8 +33,7 @@ public final class PathUtilEx {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  @Nullable
-  private static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
+  private static @Nullable Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null && projectJdk.getSdkType() instanceof JavaSdkType) {
       return projectJdk;

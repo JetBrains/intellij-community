@@ -12,7 +12,7 @@ class Test {
 
 class Test1 {
   {
-    Supplier<Runnable> x = foo(() -> <error descr="Multiple non-overriding abstract methods found in interface java.util.List">() -> null</error>);
+    Supplier<Runnable> x = foo(() -> <error descr="Multiple non-overriding abstract methods found in List">() -> null</error>);
   }
 
   static <T> Supplier<T> foo(Supplier<java.util.List<T>> delegate) {

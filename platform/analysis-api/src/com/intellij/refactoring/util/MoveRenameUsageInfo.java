@@ -5,10 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
@@ -95,9 +97,21 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     return checkReferenceRange(element, start -> element.findReferenceAt(start));
   }
 
+  /**
+   * Range that is used to check if the reference was not changed.
+   * Can be overridden in case of reference was modified deliberately.
+   *
+   * @param element of the reference.
+   * @return range of the reference in the document.
+   */
+  protected @NotNull Segment getReferenceRangeToCheck(@NotNull PsiElement element) {
+    return myReferenceRangeMarker;
+  }
+
   private @Nullable PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
-    final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
-    final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
+    var rangeToCheck = getReferenceRangeToCheck(element);
+    final int start = rangeToCheck.getStartOffset() - element.getTextRange().getStartOffset();
+    final int end = rangeToCheck.getEndOffset() - element.getTextRange().getStartOffset();
     final PsiReference reference = fn.fun(start);
     if (reference == null) {
       return null;

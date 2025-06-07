@@ -420,7 +420,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     }
 
     override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
-        analyzeInModalWindow(contextElement = this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        analyzeInModalWindow(contextElement = extractableSubstringInfo?.template ?: this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
                 .filterNot { it.isAssignmentLHS() }
                 .mapNotNull { match ->
@@ -440,7 +440,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         val diagnostics = analyzeInModalWindow(callee, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             callee.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         }
-        return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.NewInferenceNoInformationForParameter })
+        return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }
 
     override fun filterContainersWithContainedLambdasByAnalyze(

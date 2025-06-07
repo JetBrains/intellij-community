@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -12,7 +12,6 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -292,7 +291,7 @@ public final class IntroduceVariableUtil {
   public static @NlsContexts.DialogMessage @Nullable String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
-      return JavaBundle.message("introduce.variable.change.semantics.warning");
+      return JavaRefactoringBundle.message("introduce.variable.message.change.semantics.warning");
     }
     if (expr instanceof PsiClassObjectAccessExpression && PsiUtilCore.hasErrorElementChild(expr)) {
       return JavaRefactoringBundle.message("selected.block.should.represent.an.expression");

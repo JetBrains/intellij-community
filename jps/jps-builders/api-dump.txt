@@ -1627,7 +1627,6 @@ org.jetbrains.jps.builders.BuildOutputConsumer
 - a:registerOutputFile(java.io.File,java.util.Collection):V
 a:org.jetbrains.jps.builders.BuildRootDescriptor
 - <init>():V
-- canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
 - getExcludedRoots():java.util.Set
 - a:getRootFile():java.io.File
@@ -1646,14 +1645,14 @@ org.jetbrains.jps.builders.BuildRootIndex
 - a:getTargetRoots(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.List
 - a:getTempTargetRoots(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.List
 - a:isDirectoryAccepted(java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor):Z
-- a:isFileAccepted(java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor):Z
+- a:isFileAccepted(java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor):Z
 a:org.jetbrains.jps.builders.BuildTarget
 - p:<init>(org.jetbrains.jps.builders.BuildTargetType):V
 - a:computeDependencies(org.jetbrains.jps.builders.BuildTargetRegistry,org.jetbrains.jps.builders.TargetOutputIndex):java.util.Collection
 - a:computeRootDescriptors(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.indices.IgnoredFileIndex,org.jetbrains.jps.builders.storage.BuildDataPaths):java.util.List
 - a:findRootDescriptor(java.lang.String,org.jetbrains.jps.builders.BuildRootIndex):org.jetbrains.jps.builders.BuildRootDescriptor
 - a:getId():java.lang.String
-- a:getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
+- getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - a:getPresentableName():java.lang.String
 - f:getTargetType():org.jetbrains.jps.builders.BuildTargetType
 - writeConfiguration(org.jetbrains.jps.cmdline.ProjectDescriptor,java.io.PrintWriter):V
@@ -1687,6 +1686,7 @@ a:org.jetbrains.jps.builders.BuildTargetType
 - hashCode():I
 - f:isFileBased():Z
 org.jetbrains.jps.builders.DirtyFilesHolder
+- a:getRemoved(org.jetbrains.jps.builders.BuildTarget):java.util.Collection
 - a:getRemovedFiles(org.jetbrains.jps.builders.BuildTarget):java.util.Collection
 - a:hasDirtyFiles():Z
 - a:hasRemovedFiles():Z
@@ -1777,15 +1777,15 @@ c:org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - f:rootFile:java.nio.file.Path
 - f:target:org.jetbrains.jps.incremental.ModuleBuildTarget
 - <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):V
-- canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
 - s:createJavaSourceRootDescriptor(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-- getExcludedRoots():java.util.Set
-- getPackagePrefix():java.lang.String
-- getRootFile():java.io.File
-- getRootId():java.lang.String
-- getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
-- isGenerated():Z
+- f:getExcludedRoots():java.util.Set
+- getFile():java.nio.file.Path
+- f:getPackagePrefix():java.lang.String
+- f:getRootFile():java.io.File
+- f:getRootId():java.lang.String
+- f:getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
+- f:isGenerated():Z
 f:org.jetbrains.jps.builders.java.ResourcesTargetType
 - org.jetbrains.jps.builders.ModuleBasedBuildTargetType
 - sf:ALL_TYPES:java.util.List
@@ -1816,6 +1816,7 @@ f:org.jetbrains.jps.builders.logging.BuildLoggingManager
 - getProjectBuilderLogger():org.jetbrains.jps.builders.logging.ProjectBuilderLogger
 org.jetbrains.jps.builders.logging.ProjectBuilderLogger
 - a:isEnabled():Z
+- a:logCompiled(java.util.Collection,java.lang.String,java.lang.String):V
 - a:logCompiledFiles(java.util.Collection,java.lang.String,java.lang.String):V
 - a:logCompiledPaths(java.util.Collection,java.lang.String,java.lang.String):V
 - a:logDeletedFiles(java.util.Collection):V
@@ -1826,21 +1827,23 @@ f:org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 - getCause():java.io.IOException
 - initCause(java.lang.Throwable):java.lang.Throwable
 org.jetbrains.jps.builders.storage.BuildDataPaths
-- a:getDataStorageRoot():java.io.File
-- a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
+- a:getDataStorageDir():java.nio.file.Path
+- getDataStorageRoot():java.io.File
+- getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
 - a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):java.nio.file.Path
 - a:getTargetDataRootDir(org.jetbrains.jps.builders.BuildTarget):java.nio.file.Path
-- a:getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
-- a:getTargetsDataRoot():java.io.File
+- getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
+- a:getTargetTypeDataRootDir(org.jetbrains.jps.builders.BuildTargetType):java.nio.file.Path
+- a:getTargetsDataRoot():java.nio.file.Path
 org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:appendOutput(java.lang.String,java.lang.String):V
 - a:getOutputs(java.lang.String):java.util.Collection
 - getSources():java.util.Collection
 - a:getSourcesIterator():java.util.Iterator
-- a:remove(java.lang.String):V
+- remove(java.lang.String):V
+- a:remove(java.nio.file.Path):V
 - a:removeOutput(java.lang.String,java.lang.String):V
-- a:setOutput(java.lang.String,java.lang.String):V
-- a:setOutputs(java.lang.String,java.util.List):V
+- a:setOutputs(java.nio.file.Path,java.util.List):V
 a:org.jetbrains.jps.builders.storage.StorageProvider
 - <init>():V
 - createStorage(java.io.File):org.jetbrains.jps.incremental.storage.StorageOwner
@@ -1892,176 +1895,8 @@ f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - getProject():org.jetbrains.jps.model.JpsProject
 - getProjectJavaSdks():java.util.Set
 - getProjectStamps():org.jetbrains.jps.incremental.storage.ProjectStamps
-- getTargetsState():org.jetbrains.jps.incremental.storage.BuildTargetsState
 - incUsageCounter():V
 - release():V
-f:org.jetbrains.jps.dependency.AffectionScopeMetaUsage
-- org.jetbrains.jps.dependency.Usage
-- <init>(org.jetbrains.jps.dependency.ReferenceID):V
-- equals(java.lang.Object):Z
-- getElementOwner():org.jetbrains.jps.dependency.ReferenceID
-- hashCode():I
-- write(org.jetbrains.jps.dependency.GraphDataOutput):V
-org.jetbrains.jps.dependency.BackDependencyIndex
-- s:createEmpty(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
-- a:getDependencies(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
-- a:getKeys():java.lang.Iterable
-- a:getName():java.lang.String
-- a:indexNode(org.jetbrains.jps.dependency.Node):V
-- a:integrate(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.dependency.BackDependencyIndex):V
-org.jetbrains.jps.dependency.BaseMaplet
-- java.io.Closeable
-- java.io.Flushable
-- a:close():V
-- a:containsKey(java.lang.Object):Z
-- a:flush():V
-- a:getKeys():java.lang.Iterable
-- a:remove(java.lang.Object):V
-f:org.jetbrains.jps.dependency.ConfigurationException
-- java.lang.RuntimeException
-- <init>(java.lang.String):V
-org.jetbrains.jps.dependency.DataReader
-- a:load(org.jetbrains.jps.dependency.GraphDataInput):java.lang.Object
-org.jetbrains.jps.dependency.DataWriter
-- a:save(org.jetbrains.jps.dependency.GraphDataOutput,java.lang.Object):V
-org.jetbrains.jps.dependency.Delta
-- org.jetbrains.jps.dependency.Graph
-- a:associate(org.jetbrains.jps.dependency.Node,java.lang.Iterable):V
-- a:getBaseSources():java.util.Set
-- a:getDeletedSources():java.util.Set
-- a:isSourceOnly():Z
-org.jetbrains.jps.dependency.DependencyGraph
-- java.io.Closeable
-- org.jetbrains.jps.dependency.Graph
-- a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
-- a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
-- a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
-org.jetbrains.jps.dependency.DifferentiateContext
-- a:affectNodeSource(org.jetbrains.jps.dependency.NodeSource):V
-- a:affectUsage(java.lang.Iterable,java.util.function.Predicate):V
-- a:affectUsage(org.jetbrains.jps.dependency.Usage):V
-- a:affectUsage(org.jetbrains.jps.dependency.Usage,java.util.function.Predicate):V
-- a:getDelta():org.jetbrains.jps.dependency.Delta
-- a:getGraph():org.jetbrains.jps.dependency.Graph
-- a:getParams():org.jetbrains.jps.dependency.DifferentiateParameters
-- a:isCompiled(org.jetbrains.jps.dependency.NodeSource):Z
-- a:isDeleted(org.jetbrains.jps.dependency.ReferenceID):Z
-org.jetbrains.jps.dependency.DifferentiateParameters
-- a:affectionFilter():java.util.function.Predicate
-- a:belongsToCurrentCompilationChunk():java.util.function.Predicate
-- getSessionName():java.lang.String
-- a:isCalculateAffected():Z
-- a:isProcessConstantsIncrementally():Z
-org.jetbrains.jps.dependency.DifferentiateResult
-- s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.Delta,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
-- a:getAffectedSources():java.lang.Iterable
-- a:getDeletedNodes():java.lang.Iterable
-- a:getDelta():org.jetbrains.jps.dependency.Delta
-- getSessionName():java.lang.String
-- isIncremental():Z
-org.jetbrains.jps.dependency.DifferentiateStrategy
-- a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable):Z
-- isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z
-org.jetbrains.jps.dependency.Enumerator
-org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:write(org.jetbrains.jps.dependency.GraphDataOutput):V
-org.jetbrains.jps.dependency.Externalizer
-- org.jetbrains.jps.dependency.DataReader
-- org.jetbrains.jps.dependency.DataWriter
-- s:forAnyGraphElement():org.jetbrains.jps.dependency.Externalizer
-- s:forGraphElement(org.jetbrains.jps.dependency.DataReader):org.jetbrains.jps.dependency.Externalizer
-org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
-- org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:getFactorData():org.jetbrains.jps.dependency.ExternalizableGraphElement
-org.jetbrains.jps.dependency.Graph
-- a:getDependingNodes(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
-- a:getIndex(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
-- a:getIndices():java.lang.Iterable
-- a:getNodes(org.jetbrains.jps.dependency.NodeSource):java.lang.Iterable
-- getNodes(org.jetbrains.jps.dependency.NodeSource,java.lang.Class):java.lang.Iterable
-- s:getNodesOfType(java.lang.Iterable,java.lang.Class):java.lang.Iterable
-- a:getRegisteredNodes():java.lang.Iterable
-- a:getSources():java.lang.Iterable
-- a:getSources(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
-org.jetbrains.jps.dependency.GraphConfiguration
-- a:getGraph():org.jetbrains.jps.dependency.DependencyGraph
-- a:getPathMapper():org.jetbrains.jps.dependency.NodeSourcePathMapper
-org.jetbrains.jps.dependency.GraphDataInput
-- java.io.DataInput
-- a:readGraphElement():org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:readGraphElementCollection(java.util.Collection):java.util.Collection
-org.jetbrains.jps.dependency.GraphDataOutput
-- java.io.DataOutput
-- a:writeGraphElement(org.jetbrains.jps.dependency.ExternalizableGraphElement):V
-- a:writeGraphElementCollection(java.lang.Class,java.lang.Iterable):V
-org.jetbrains.jps.dependency.Maplet
-- org.jetbrains.jps.dependency.BaseMaplet
-- a:get(java.lang.Object):java.lang.Object
-- a:put(java.lang.Object,java.lang.Object):V
-org.jetbrains.jps.dependency.MapletFactory
-- a:createMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.Maplet
-- a:createSetMultiMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.MultiMaplet
-org.jetbrains.jps.dependency.MultiMaplet
-- org.jetbrains.jps.dependency.BaseMaplet
-- a:appendValue(java.lang.Object,java.lang.Object):V
-- appendValues(java.lang.Object,java.lang.Iterable):V
-- a:get(java.lang.Object):java.lang.Iterable
-- a:put(java.lang.Object,java.lang.Iterable):V
-- a:removeValue(java.lang.Object,java.lang.Object):V
-- removeValues(java.lang.Object,java.lang.Iterable):V
-- update(java.lang.Object,java.lang.Iterable,java.util.function.BiFunction):V
-org.jetbrains.jps.dependency.Node
-- org.jetbrains.jps.dependency.ExternalizableGraphElement
-- org.jetbrains.jps.dependency.diff.DiffCapable
-- a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
-- a:getUsages():java.lang.Iterable
-org.jetbrains.jps.dependency.NodeBuilder
-- a:addUsage(org.jetbrains.jps.dependency.Usage):V
-- a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
-- a:getResult():org.jetbrains.jps.dependency.Node
-org.jetbrains.jps.dependency.NodeSource
-- org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:equals(java.lang.Object):Z
-- a:hashCode():I
-- a:toString():java.lang.String
-org.jetbrains.jps.dependency.NodeSourcePathMapper
-- a:toNodeSource(java.io.File):org.jetbrains.jps.dependency.NodeSource
-- a:toNodeSource(java.lang.String):org.jetbrains.jps.dependency.NodeSource
-- a:toNodeSource(java.nio.file.Path):org.jetbrains.jps.dependency.NodeSource
-- a:toPath(org.jetbrains.jps.dependency.NodeSource):java.nio.file.Path
-org.jetbrains.jps.dependency.ReferenceID
-- org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:equals(java.lang.Object):Z
-- a:hashCode():I
-org.jetbrains.jps.dependency.Usage
-- org.jetbrains.jps.dependency.ExternalizableGraphElement
-- a:equals(java.lang.Object):Z
-- a:getElementOwner():org.jetbrains.jps.dependency.ReferenceID
-- a:hashCode():I
-org.jetbrains.jps.dependency.diff.DiffCapable
-- a:diffHashCode():I
-- a:difference(org.jetbrains.jps.dependency.diff.DiffCapable):org.jetbrains.jps.dependency.diff.Difference
-- a:isSame(org.jetbrains.jps.dependency.diff.DiffCapable):Z
-- s:wrap(java.lang.Object):org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
-- s:wrap(java.lang.Object,java.util.function.BiPredicate,java.util.function.Function,java.util.function.BiFunction):org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
-org.jetbrains.jps.dependency.diff.DiffCapable$Adapter
-- org.jetbrains.jps.dependency.diff.DiffCapable
-- a:getValue():java.lang.Object
-org.jetbrains.jps.dependency.diff.Difference
-- s:deepDiff(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.diff.Difference$Specifier
-- s:deepDiff(java.lang.Iterable,java.lang.Iterable,java.util.function.BiPredicate,java.util.function.Function,java.util.function.BiFunction):org.jetbrains.jps.dependency.diff.Difference$Specifier
-- s:diff(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.diff.Difference$Specifier
-- a:unchanged():Z
-org.jetbrains.jps.dependency.diff.Difference$Change
-- s:create(java.lang.Object,java.lang.Object,org.jetbrains.jps.dependency.diff.Difference):org.jetbrains.jps.dependency.diff.Difference$Change
-- a:getDiff():org.jetbrains.jps.dependency.diff.Difference
-- a:getNow():java.lang.Object
-- a:getPast():java.lang.Object
-org.jetbrains.jps.dependency.diff.Difference$Specifier
-- added():java.lang.Iterable
-- changed():java.lang.Iterable
-- removed():java.lang.Iterable
-- unchanged():Z
 org.jetbrains.jps.incremental.BuildListener
 - java.util.EventListener
 - filesDeleted(org.jetbrains.jps.incremental.messages.FileDeletedEvent):V
@@ -2069,8 +1904,9 @@ org.jetbrains.jps.incremental.BuildListener
 f:org.jetbrains.jps.incremental.BuildOperations
 - s:cleanOutputsCorrespondingToChangedFiles(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.DirtyFilesHolder):java.util.Map
 - s:deleteRecursively(java.lang.String,java.util.Collection,java.util.Set):Z
+- s:deleteRecursivelyAndCollectDeleted(java.nio.file.Path,java.util.Collection,java.util.Set):Z
 - s:ensureFSStateInitialized(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,Z):V
-- s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.impl.BuildTargetChunk):V
+- s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,java.util.Collection):V
 a:org.jetbrains.jps.incremental.BuildTask
 - <init>():V
 - a:build(org.jetbrains.jps.incremental.CompileContext):V
@@ -2127,7 +1963,8 @@ org.jetbrains.jps.incremental.CompileContext
 - a:getLoggingManager():org.jetbrains.jps.builders.logging.BuildLoggingManager
 - a:getProjectDescriptor():org.jetbrains.jps.cmdline.ProjectDescriptor
 - a:getScope():org.jetbrains.jps.incremental.CompileScope
-- a:isProjectRebuild():Z
+- isCanceled():Z
+- isProjectRebuild():Z
 - a:markNonIncremental(org.jetbrains.jps.incremental.ModuleBuildTarget):V
 - a:removeBuildListener(org.jetbrains.jps.incremental.BuildListener):V
 - a:setCompilationStartStamp(java.util.Collection,J):V
@@ -2136,13 +1973,14 @@ org.jetbrains.jps.incremental.CompileContext
 a:org.jetbrains.jps.incremental.CompileScope
 - <init>():V
 - a:isAffected(org.jetbrains.jps.builders.BuildTarget):Z
-- a:isAffected(org.jetbrains.jps.builders.BuildTarget,java.io.File):Z
+- f:isAffected(org.jetbrains.jps.builders.BuildTarget,java.io.File):Z
+- a:isAffected(org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):Z
 - a:isAllTargetsOfTypeAffected(org.jetbrains.jps.builders.BuildTargetType):Z
 - a:isBuildForced(org.jetbrains.jps.builders.BuildTarget):Z
 - a:isBuildForcedForAllTargets(org.jetbrains.jps.builders.BuildTargetType):Z
 - a:isBuildIncrementally(org.jetbrains.jps.builders.BuildTargetType):Z
 - a:isWholeTargetAffected(org.jetbrains.jps.builders.BuildTarget):Z
-- a:markIndirectlyAffected(org.jetbrains.jps.builders.BuildTarget,java.io.File):V
+- a:markIndirectlyAffected(org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):V
 c:org.jetbrains.jps.incremental.CompiledClass
 - com.intellij.openapi.util.UserDataHolderBase
 - <init>(java.io.File,java.io.File,java.lang.String,org.jetbrains.jps.incremental.BinaryContent):V
@@ -2176,33 +2014,34 @@ f:org.jetbrains.jps.incremental.FSOperations
 - s:createDirtyFilesHolderBuilder(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound):org.jetbrains.jps.incremental.FSOperations$DirtyFilesHolderBuilder
 - s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk):Z
 - s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget):Z
-- s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):Z
+- s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path):Z
 - s:lastModified(java.io.File):J
 - s:markDeleted(org.jetbrains.jps.incremental.CompileContext,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk,java.io.FileFilter):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.incremental.ModuleBuildTarget,java.io.FileFilter):V
-- s:markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):V
+- s:markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path):V
 - s:markDirtyRecursively(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk):V
 - s:markDirtyRecursively(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk,java.io.FileFilter):V
 - s:processFilesToRecompile(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk,org.jetbrains.jps.builders.FileProcessor):V
 - s:processFilesToRecompile(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.ModuleBuildTarget,org.jetbrains.jps.builders.FileProcessor):V
 - s:pruneEmptyDirs(org.jetbrains.jps.incremental.CompileContext,java.util.Set):V
-- s:traverseRecursively(org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.builders.BuildRootDescriptor,java.io.File,org.jetbrains.jps.incremental.FSOperations$FileConsumer):V
 org.jetbrains.jps.incremental.FSOperations$DirtyFilesHolderBuilder
 - a:create():org.jetbrains.jps.builders.DirtyFilesHolder
 - a:markDirtyFile(org.jetbrains.jps.builders.BuildTarget,java.io.File):org.jetbrains.jps.incremental.FSOperations$DirtyFilesHolderBuilder
+- markDirtyFile(org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):org.jetbrains.jps.incremental.FSOperations$DirtyFilesHolderBuilder
 org.jetbrains.jps.incremental.FSOperations$FileConsumer
 - a:consume(java.io.File,java.nio.file.attribute.BasicFileAttributes):V
 f:org.jetbrains.jps.incremental.GlobalContextKey
 - com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
 - s:create(java.lang.String):org.jetbrains.jps.incremental.GlobalContextKey
+- getOrCreate(com.intellij.openapi.util.UserDataHolder,java.util.function.Supplier):java.lang.Object
 org.jetbrains.jps.incremental.MessageHandler
 - sf:DEAF:org.jetbrains.jps.incremental.MessageHandler
 - a:processMessage(org.jetbrains.jps.incremental.messages.BuildMessage):V
-f:org.jetbrains.jps.incremental.ModuleBuildTarget
+Fc:org.jetbrains.jps.incremental.ModuleBuildTarget
 - org.jetbrains.jps.builders.ModuleBasedTarget
 - sf:REBUILD_ON_DEPENDENCY_CHANGE:java.lang.Boolean
 - <init>(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.builders.java.JavaModuleBuildTargetType):V
@@ -2387,6 +2226,11 @@ a:org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter
 - <init>():V
 - a:accept(java.lang.String):Z
 - a:shouldBeCopied(java.lang.String,org.jetbrains.jps.cmdline.ProjectDescriptor):Z
+f:org.jetbrains.jps.incremental.dependencies.LibraryDef
+- s:isClassFile(java.lang.String):Z
+- s:isLibraryPath(java.lang.String):Z
+- s:isLibraryPath(java.nio.file.Path):Z
+- s:isLibraryPath(org.jetbrains.jps.dependency.NodeSource):Z
 f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver
 - org.jetbrains.jps.incremental.TargetBuilder
 - sf:TARGET_TYPE_ID:java.lang.String
@@ -2400,7 +2244,6 @@ f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$Project
 - computeRootDescriptors(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.indices.IgnoredFileIndex,org.jetbrains.jps.builders.storage.BuildDataPaths):java.util.List
 - findRootDescriptor(java.lang.String,org.jetbrains.jps.builders.BuildRootIndex):org.jetbrains.jps.builders.BuildRootDescriptor
 - getId():java.lang.String
-- getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - getPresentableName():java.lang.String
 f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$ProjectDependenciesResolvingTargetType
 - org.jetbrains.jps.builders.BuildTargetType
@@ -2411,7 +2254,6 @@ f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$Project
 f:org.jetbrains.jps.incremental.fs.BuildFSState
 - sf:VERSION:I
 - <init>(Z):V
-- beforeChunkBuildStart(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 - beforeNextRoundStart(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk):V
 - clearAll():V
 - clearContextChunk(org.jetbrains.jps.incremental.CompileContext):V
@@ -2419,20 +2261,22 @@ f:org.jetbrains.jps.incremental.fs.BuildFSState
 - clearDeletedPaths(org.jetbrains.jps.builders.BuildTarget):V
 - clearRecompile(org.jetbrains.jps.builders.BuildRootDescriptor):V
 - getAndClearDeletedPaths(org.jetbrains.jps.builders.BuildTarget):java.util.Collection
-- getEventRegistrationStamp(java.io.File):J
+- getEventRegistrationStamp(java.nio.file.Path):J
 - hasUnprocessedChanges(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget):Z
 - hasWorkToDo(org.jetbrains.jps.builders.BuildTarget):Z
 - isInitialScanPerformed(org.jetbrains.jps.builders.BuildTarget):Z
-- isMarkedForRecompilation(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.builders.BuildRootDescriptor,java.io.File):Z
+- isMarkedForRecompilation(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.builders.BuildRootDescriptor,java.nio.file.Path):Z
 - load(java.io.DataInputStream,org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
 - markAllUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,J):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
+- markDirty(org.jetbrains.jps.incremental.CompileContext,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
-- markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
+- markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
+- markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
 - markInitialScanPerformed(org.jetbrains.jps.builders.BuildTarget):V
 - processFilesToRecompile(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.builders.FileProcessor):Z
-- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.io.File):V
-- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.io.File,org.jetbrains.jps.incremental.storage.StampsStorage):V
+- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):V
+- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path,org.jetbrains.jps.incremental.storage.StampsStorage):V
 - save(java.io.DataOutput):V
 e:org.jetbrains.jps.incremental.fs.CompilationRound
 - java.lang.Enum
@@ -2502,7 +2346,6 @@ e:org.jetbrains.jps.incremental.messages.BuildMessage$Kind
 f:org.jetbrains.jps.incremental.messages.BuildProgress
 - <init>(org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.BuildTargetIndex,java.util.List,java.util.function.Predicate):V
 - getAbsoluteBuildTime():J
-- onTargetChunkFinished(org.jetbrains.jps.builders.impl.BuildTargetChunk,org.jetbrains.jps.incremental.CompileContext):V
 - updateExpectedAverageTime():V
 - updateProgress(org.jetbrains.jps.builders.BuildTarget,D,org.jetbrains.jps.incremental.CompileContext):V
 f:org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage
@@ -2549,7 +2392,7 @@ c:org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 - getMessageType():java.lang.String
 f:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
 - org.jetbrains.jps.incremental.messages.BuildMessage
-- s:INSTANCE:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
+- sf:INSTANCE:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
 f:org.jetbrains.jps.incremental.messages.FileDeletedEvent
 - org.jetbrains.jps.incremental.messages.BuildMessage
 - <init>(java.util.Collection):V
@@ -2560,6 +2403,7 @@ f:org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 - add(java.lang.String,java.lang.String):V
 - getPaths():java.util.Collection
 - getSourceTarget():org.jetbrains.jps.builders.BuildTarget
+- isEmpty():Z
 f:org.jetbrains.jps.incremental.messages.ProgressMessage
 - org.jetbrains.jps.incremental.messages.BuildMessage
 - <init>(java.lang.String):V
@@ -2581,6 +2425,7 @@ f:org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - <init>(org.jetbrains.jps.model.JpsProject):V
 - <init>(org.jetbrains.jps.model.JpsProject,java.lang.Boolean):V
 - reportUnhandledPaths():V
+- toAbsoluteFile(java.lang.String):java.nio.file.Path
 - toFull(java.lang.String):java.lang.String
 - toRelative(java.lang.String):java.lang.String
 - toRelative(java.nio.file.Path):java.lang.String
@@ -2613,7 +2458,6 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - cleanStaleTarget(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):V
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V
 - close():V
-- closeSourceToOutputStorages(org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 - createDependencyGraph(java.nio.file.Path,Z):V
 - flush(Z):V
 - getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
@@ -2632,38 +2476,13 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - versionDiffers():Z
 f:org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 - sf:MODULES_WITH_TARGET_CONFIG_CHANGED_KEY:com.intellij.openapi.util.Key
-- <init>(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
-- invalidate():V
 - isTargetDirty(org.jetbrains.jps.cmdline.ProjectDescriptor):Z
 - logDiagnostics(org.jetbrains.jps.incremental.CompileContext):V
 - outputRootWasDeleted(org.jetbrains.jps.incremental.CompileContext):Z
 - save(org.jetbrains.jps.incremental.CompileContext):V
-- storeNonexistentOutputRoots(org.jetbrains.jps.incremental.CompileContext):V
-f:org.jetbrains.jps.incremental.storage.BuildTargetTypeState
-- <init>(org.jetbrains.jps.builders.BuildTargetType,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
-- getAverageTargetBuildTime():J
-- getConfiguration(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
-- getStaleTargetIds():java.util.List
-- getTargetId(org.jetbrains.jps.builders.BuildTarget):I
-- removeStaleTarget(java.lang.String):V
-- save():V
-- setAverageTargetBuildTime(J):V
 f:org.jetbrains.jps.incremental.storage.BuildTargetsState
-- <init>(org.jetbrains.jps.builders.storage.BuildDataPaths,org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
-- clean():V
-- getAverageBuildTime(org.jetbrains.jps.builders.BuildTargetType):J
-- getBuildRootIndex():org.jetbrains.jps.builders.BuildRootIndex
 - getBuildTargetId(org.jetbrains.jps.builders.BuildTarget):I
-- getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
-- getFreeId():I
-- getLastSuccessfulRebuildDuration():J
-- getModel():org.jetbrains.jps.model.JpsModel
-- getStaleTargetIds(org.jetbrains.jps.builders.BuildTargetType):java.util.List
-- getTargetConfiguration(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
-- markUsedId(I):V
 - save():V
-- setAverageBuildTime(org.jetbrains.jps.builders.BuildTargetType,J):V
-- setLastSuccessfulRebuildDuration(J):V
 a:org.jetbrains.jps.incremental.storage.CompositeStorageOwner
 - org.jetbrains.jps.incremental.storage.StorageOwner
 - <init>():V
@@ -2679,27 +2498,24 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - appendData(java.lang.String,java.util.Collection):V
 - getKeysIterator():java.util.Iterator
 - getOutputArray(java.lang.String):java.lang.String[]
-- a:getOutputs(java.lang.String):java.util.Collection
 - getOutputs(java.lang.String):java.util.List
+- getOutputs(java.nio.file.Path):java.util.Collection
 - getState(java.lang.String):java.util.Collection
-- remove(java.lang.String):V
+- remove(java.nio.file.Path):V
 - removeData(java.lang.String,java.lang.String):V
-- setOutputs(java.lang.String,java.util.List):V
+- setOutputs(java.nio.file.Path,java.util.List):V
 f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - org.jetbrains.jps.incremental.storage.StorageOwner
 - sf:PORTABLE_CACHES:Z
 - sf:PORTABLE_CACHES_PROPERTY:java.lang.String
 - sf:TRACK_LIBRARY_CONTENT:Z
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
-- <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
-- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
 - clean():V
 - close():V
 - flush(Z):V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
 - a:getCurrentStampIfUpToDate(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,java.nio.file.attribute.BasicFileAttributes):java.lang.Object
-- a:getStorageRoot():java.nio.file.Path
 - a:removeStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):V
 - a:updateStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,J):V
 org.jetbrains.jps.incremental.storage.StorageOwner

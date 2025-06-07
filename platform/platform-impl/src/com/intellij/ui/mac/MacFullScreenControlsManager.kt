@@ -4,6 +4,9 @@ package com.intellij.ui.mac
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomisedActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -94,13 +97,23 @@ internal object MacFullScreenControlsManager {
 
   fun configureForEmptyToolbarHeader(enter: Boolean) {
     if (enter) {
-      if (enabled() && blockingComputeMainActionGroups(CustomActionsSchema.getInstance()).all { it.first.getChildren(null).isEmpty() }) {
+      if (enabled() && blockingComputeMainActionGroups(CustomActionsSchema.getInstance()).all { isEmptyGroup(it.first) }) {
         configureForDistractionFreeMode(true)
       }
     }
     else if (!DistractionFreeModeController.isDistractionFreeModeEnabled() && UISettings.getInstance().showNewMainToolbar) {
       configureForDistractionFreeMode(false)
     }
+  }
+
+  private fun isEmptyGroup(group: ActionGroup): Boolean {
+    if (group is DefaultActionGroup) {
+      return group.childActionsOrStubs.isEmpty()
+    }
+    if (group is CustomisedActionGroup) {
+      return group.getDefaultChildrenOrStubs().isEmpty()
+    }
+    return group.getChildren(null).isEmpty()
   }
 
   private fun configureForDistractionFreeMode(enter: Boolean) {

@@ -1,33 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.function.Supplier;
 
 /**
  * This is a color producer that allows to dynamically mix two colors.
  */
-public final class MixedColorProducer implements Supplier<@NotNull Color> {
-  private final Couple<@NotNull Color> couple;
-  private double mixer;
+public final class MixedColorProducer {
+  private final @NotNull Color first;
+  private final @NotNull Color second;
+
   private Color cached;
+  private double mixer;
   private int argb0;
   private int argb1;
 
   public MixedColorProducer(@NotNull Color color0, @NotNull Color color1) {
-    couple = Couple.of(color0, color1);
+    first = color0;
+    second = color1;
   }
 
-  public MixedColorProducer(@NotNull Color color0, @NotNull Color color1, double mixer) {
-    this(color0, color1);
-    setMixer(mixer);
-  }
-
-  public void setMixer(double value) {
-    if (Double.isNaN(value) || value < 0 || 1 < value) throw new IllegalArgumentException("mixer[0..1] is " + value);
+  private void updateMixer(double value) {
     if (mixer != value) {
       mixer = value;
       cached = null;
@@ -35,7 +30,7 @@ public final class MixedColorProducer implements Supplier<@NotNull Color> {
   }
 
   private void updateFirstARGB() {
-    int value = couple.first.getRGB();
+    int value = first.getRGB();
     if (argb0 != value) {
       argb0 = value;
       cached = null;
@@ -43,7 +38,7 @@ public final class MixedColorProducer implements Supplier<@NotNull Color> {
   }
 
   private void updateSecondARGB() {
-    int value = couple.second.getRGB();
+    int value = second.getRGB();
     if (argb1 != value) {
       argb1 = value;
       cached = null;
@@ -58,16 +53,14 @@ public final class MixedColorProducer implements Supplier<@NotNull Color> {
   }
 
   public @NotNull Color produce(double mixer) {
-    setMixer(mixer);
-    return get();
-  }
+    if (Double.isNaN(mixer) || mixer < 0 || 1 < mixer) throw new IllegalArgumentException("mixer[0..1] is " + mixer);
+    if (mixer <= 0) return first;
+    if (mixer >= 1) return second;
 
-  @Override
-  public @NotNull Color get() {
-    if (mixer <= 0) return couple.first;
-    if (mixer >= 1) return couple.second;
+    updateMixer(mixer);
     updateFirstARGB();
     updateSecondARGB();
+
     Color result = cached;
     if (result == null) {
       //noinspection UseJBColor

@@ -1,6 +1,8 @@
-// CHOOSE_USE_SITE_TARGET: get
-// IS_APPLICABLE: false
+// NO_OPTION: PROPERTY_GETTER|Add use-site target 'get'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
+@Target(AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY)
+@Repeatable
 annotation class A
 
 class Test {

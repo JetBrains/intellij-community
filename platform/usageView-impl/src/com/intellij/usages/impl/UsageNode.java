@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.pom.Navigatable;
@@ -29,8 +29,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(getUsage(), usageNode.getUsage());
   }
 
-  @NotNull
-  public Usage getUsage() {
+  public @NotNull Usage getUsage() {
     return (Usage)getUserObject();
   }
 
@@ -64,9 +63,8 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return isExcluded();
   }
 
-  @NotNull
   @Override
-  protected String getNodeText() {
+  protected @NotNull String getNodeText() {
     return getUsage().getPresentation().getPlainText();
   }
 

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
 public final class DirectoryUrl extends AbstractUrl {
-  private static final @NonNls String ELEMENT_TYPE = "directory";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_DIRECTORY;
 
   public DirectoryUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.util.SmartList;
@@ -39,15 +39,15 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
 
   @Override
   public void save(@NotNull DataOutput stream, Map<Key, Value> data) throws IOException {
-    final int size = data.size();
+    int size = data.size();
     DataInputOutputUtil.writeINT(stream, size);
     if (size == 0) return;
 
-    final Collection<Key>[] keysForNullValue = new Collection[]{null};
+    Collection<Key>[] keysForNullValue = new Collection[]{null};
     Map<Value, Collection<Key>> keysPerValue = null;
 
-    //Store Map<Key,Value> in 'inverted' form (as Map<Value, Collection<Key>>) because it usually
-    // allows for more compact representation
+    //Store Map[Key -> Value] in 'inverted' form (as Map[Value -> Collection[Key] ]) because it usually
+    // allows for more compact representation (i.e. List[Key] often could be stored with diff-compression)
     if (myValuesAreNullAlways) {
       keysForNullValue[0] = data.keySet();
     }

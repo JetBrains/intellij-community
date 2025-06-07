@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
@@ -94,9 +95,10 @@ fun CharSequence.isCharAt(offset: Int, c: Char) = offset < length && this[offset
 fun Document.isTextAt(offset: Int, text: String) =
     offset + text.length <= textLength && getText(TextRange(offset, offset + text.length)) == text
 
-private data class KeywordConstructLookupObject(
-    private val keyword: String,
-    private val constructToInsert: String
+@ApiStatus.Internal
+data class KeywordConstructLookupObject(
+    val keyword: String,
+    val constructToInsert: String
 ) : KeywordLookupObject()
 
 fun LookupElement.withLineIndentAdjuster(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(

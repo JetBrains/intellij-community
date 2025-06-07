@@ -44,7 +44,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   private Runnable myFinalRunnable;
   private final Project myProject;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final @Nullable Editor myEditor;
   private IntentionSource myIntentionSource = IntentionSource.CONTEXT_ACTIONS;
 
@@ -53,29 +53,29 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
    */
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
-                           @NotNull PsiFile file,
+                           @NotNull PsiFile psiFile,
                            @NotNull Project project,
                            @NotNull CachedIntentions intentions) {
-    this(popup, editor, file, project, (IntentionContainer)intentions);
+    this(popup, editor, psiFile, project, (IntentionContainer)intentions);
   }
 
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
-                           @NotNull PsiFile file,
+                           @NotNull PsiFile psiFile,
                            @NotNull Project project,
                            @NotNull IntentionContainer intentions) {
-    this(popup, editor, file, project, intentions, IntentionSource.CONTEXT_ACTIONS);
+    this(popup, editor, psiFile, project, intentions, IntentionSource.CONTEXT_ACTIONS);
   }
 
   protected IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                               @Nullable Editor editor,
-                              @NotNull PsiFile file,
+                              @NotNull PsiFile psiFile,
                               @NotNull Project project,
                               @NotNull IntentionContainer intentions,
                               @NotNull IntentionSource source) {
     myPopup = popup;
     myProject = project;
-    myFile = file;
+    myPsiFile = psiFile;
     myEditor = editor;
     myCachedIntentions = intentions;
     myMaxIconSize = getMaxIconSize();
@@ -139,19 +139,19 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-      PsiFile file = myEditor != null ? PsiUtilBase.getPsiFileInEditor(myEditor, myProject) : myFile;
-      if (file == null) {
+      PsiFile psiFile = myEditor != null ? PsiUtilBase.getPsiFileInEditor(myEditor, myProject) : myPsiFile;
+      if (psiFile == null) {
         return;
       }
-      chooseActionAndInvoke(cachedAction, file, myProject, myEditor);
+      chooseActionAndInvoke(cachedAction, psiFile, myProject, myEditor);
     };
   }
 
   protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
-                                       @NotNull PsiFile file,
+                                       @NotNull PsiFile psiFile,
                                        @NotNull Project project,
                                        @Nullable Editor editor) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(),
+    ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, cachedAction.getAction(), cachedAction.getText(),
                                                       cachedAction.getFixOffset(), myIntentionSource);
   }
 
@@ -175,14 +175,14 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     intentions.setTitle(title);
 
-    return new IntentionListStep(myPopup, myEditor, myFile, myProject,
-                                 CachedIntentions.create(myProject, myFile, myEditor, intentions), myIntentionSource) {
+    return new IntentionListStep(myPopup, myEditor, myPsiFile, myProject,
+                                 CachedIntentions.create(myProject, myPsiFile, myEditor, intentions), myIntentionSource) {
       @Override
       protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
-                                           @NotNull PsiFile file,
+                                           @NotNull PsiFile psiFile,
                                            @NotNull Project project,
                                            @Nullable Editor editor) {
-        IntentionListStep.this.chooseActionAndInvoke(cachedAction, file, project, editor);
+        IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
       }
     };
   }
@@ -197,7 +197,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
     for (IntentionActionWithTextCaching cached : getValues()) {
       IntentionAction action = cached.getAction();
-      if (ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, action) == null) {
+      if (ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, action) == null) {
         continue;
       }
 
@@ -209,7 +209,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
       List<IntentionAction> options = subActions.stream()
         .map(IntentionActionWithTextCaching::getAction)
-        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myFile, myEditor, option) != null)
+        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, option) != null)
         .collect(Collectors.toList());
       result.put(action, options);
     }

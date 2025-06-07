@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,13 +22,13 @@ import java.util.Map;
 
 public class MergeInfoHolder {
 
-  @NotNull private final DecoratorManager myManager;
-  @NotNull private final SvnMergeInfoCache myMergeInfoCache;
-  @NotNull private final RootsAndBranches myMainPanel;
-  @NotNull private final SvnMergeInfoRootPanelManual myPanel;
+  private final @NotNull DecoratorManager myManager;
+  private final @NotNull SvnMergeInfoCache myMergeInfoCache;
+  private final @NotNull RootsAndBranches myMainPanel;
+  private final @NotNull SvnMergeInfoRootPanelManual myPanel;
 
   // used ONLY when refresh is triggered
-  @NotNull private final Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
+  private final @NotNull Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
 
   public MergeInfoHolder(@NotNull Project project,
                          @NotNull DecoratorManager manager,
@@ -41,13 +41,11 @@ public class MergeInfoHolder {
     myCachedMap = new HashMap<>();
   }
 
-  @NotNull
-  private Pair<WCInfo, Url> getCacheKey() {
+  private @NotNull Pair<WCInfo, Url> getCacheKey() {
     return Pair.create(myPanel.getWcInfo(), myPanel.getBranch().getUrl());
   }
 
-  @Nullable
-  private MergeInfoCached getCurrentCache() {
+  private @Nullable MergeInfoCached getCurrentCache() {
     return myCachedMap.get(getCacheKey());
   }
 
@@ -61,8 +59,7 @@ public class MergeInfoHolder {
     return isEnabledAndConfigured(ignoreEnabled) && getCurrentCache() == null;
   }
 
-  @NotNull
-  public ListMergeStatus refresh(final boolean ignoreEnabled) {
+  public @NotNull ListMergeStatus refresh(final boolean ignoreEnabled) {
     final CommittedChangeListsListener refresher = createRefresher(ignoreEnabled);
     if (refresher != null) {
       myManager.reportLoadedLists(refresher);
@@ -72,8 +69,7 @@ public class MergeInfoHolder {
     return ListMergeStatus.REFRESHING;
   }
 
-  @Nullable
-  public CommittedChangeListsListener createRefresher(boolean ignoreEnabled) {
+  public @Nullable CommittedChangeListsListener createRefresher(boolean ignoreEnabled) {
     CommittedChangeListsListener result = null;
 
     if (refreshEnabled(ignoreEnabled)) {
@@ -90,7 +86,7 @@ public class MergeInfoHolder {
 
   private final class MyRefresher implements CommittedChangeListsListener {
 
-    @NotNull private final WCInfoWithBranches myRefreshedRoot;
+    private final @NotNull WCInfoWithBranches myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
     private final String myBranchPath;
 
@@ -131,14 +127,12 @@ public class MergeInfoHolder {
       });
     }
 
-    @NotNull
-    private Pair<WCInfo, Url> getCacheKey() {
+    private @NotNull Pair<WCInfo, Url> getCacheKey() {
       return Pair.create(myRefreshedRoot, myRefreshedBranch.getUrl());
     }
   }
 
-  @NotNull
-  public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
+  public @NotNull ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
     ListMergeStatus result;
 
     if (!isEnabledAndConfigured(ignoreEnabled) || !(list instanceof SvnChangeList)) {
@@ -154,8 +148,7 @@ public class MergeInfoHolder {
     return result;
   }
 
-  @NotNull
-  public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
+  public @NotNull ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
     MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
     ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
 

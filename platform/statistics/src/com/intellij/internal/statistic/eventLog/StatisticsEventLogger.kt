@@ -11,7 +11,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -32,6 +34,8 @@ interface StatisticsEventLogger {
 }
 
 /**
+ * Represents the recorder.
+ *
  * [useDefaultRecorderId] - When enabled, device and machine ids would match FUS(default) recorder. Must NOT be enabled for non-anonymized recorders.
  */
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
@@ -41,6 +45,26 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val sendLogsOnIdeClose: Boolean = false,
                                              val isCharsEscapingRequired: Boolean = true,
                                              val useDefaultRecorderId: Boolean = false) {
+  open val coroutineScope: CoroutineScope = StatisticsServiceScope.getScope()
+
+  @ApiStatus.Internal
+  val recorderOptionsProvider: RecorderOptionProvider
+
+  init {
+    // add existing options
+    LOG.info("Initialize event logger provider for '$recorderId'")
+    val configOptionsService = EventLogConfigOptionsService.getInstance()
+    recorderOptionsProvider = RecorderOptionProvider(configOptionsService.getOptions(recorderId).allOptions)
+
+    // options can also be changed during the lifetime of the application
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(EventLogConfigOptionsService.TOPIC, object : EventLogConfigOptionsListener {
+      override fun optionsChanged(changedRecorder: String, options: Map<String, String>) {
+        if (changedRecorder == recorderId) {
+          recorderOptionsProvider.update(options)
+        }
+      }
+    })
+  }
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
@@ -83,7 +107,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
-  open val coroutineScope: CoroutineScope = StatisticsServiceScope.getScope()
+
   private val localLogger: StatisticsEventLogger by lazy { createLocalLogger() }
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
   internal val eventLogSystemLogger: EventLogSystemCollector by lazy { EventLogSystemCollector(this) }
@@ -127,7 +151,9 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
-    val productMode = if (currentProductModeId != ProductMode.MONOLITH.id) {
+    val productMode = if (PlatformUtils.isQodana()) {
+      null
+    } else if (currentProductModeId != ProductMode.MONOLITH.id) {
       currentProductModeId
     } else if (detectClionNova()) {
       "nova"
@@ -166,7 +192,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
    * Remove once CLion Nova is deployed 100%
    */
   private fun detectClionNova(): Boolean {
-    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler"
+    return System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.index;
 
 import com.intellij.psi.stubs.StringStubIndexExtension;
@@ -11,8 +11,7 @@ public final class GrMethodNameIndex extends StringStubIndexExtension<GrMethod> 
   public static final StubIndexKey<String, GrMethod> KEY = StubIndexKey.createIndexKey("gr.method.name");
 
   @Override
-  @NotNull
-  public StubIndexKey<String, GrMethod> getKey() {
+  public @NotNull StubIndexKey<String, GrMethod> getKey() {
     return KEY;
   }
 

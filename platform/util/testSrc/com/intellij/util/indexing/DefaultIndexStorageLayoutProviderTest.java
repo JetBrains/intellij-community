@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider;
 
-
 public class DefaultIndexStorageLayoutProviderTest extends IndexStorageLayoutProviderTestBase {
 
   public static final int INPUTS_COUNT_TO_TEST_WITH = 10_000;
@@ -11,5 +10,4 @@ public class DefaultIndexStorageLayoutProviderTest extends IndexStorageLayoutPro
   public DefaultIndexStorageLayoutProviderTest() {
     super(new DefaultIndexStorageLayoutProvider(), INPUTS_COUNT_TO_TEST_WITH);
   }
-
 }

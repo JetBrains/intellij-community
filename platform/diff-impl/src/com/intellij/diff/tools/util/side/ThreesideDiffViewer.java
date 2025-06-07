@@ -38,13 +38,13 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class ThreesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
-  @NotNull protected final SimpleDiffPanel myPanel;
-  @NotNull protected final ThreesideContentPanel myContentPanel;
-  @NotNull protected final JBLoadingPanel myLoadingPanel;
+  protected final @NotNull SimpleDiffPanel myPanel;
+  protected final @NotNull ThreesideContentPanel myContentPanel;
+  protected final @NotNull JBLoadingPanel myLoadingPanel;
 
-  @NotNull private final List<T> myHolders;
+  private final @NotNull List<T> myHolders;
 
-  @NotNull private final FocusTrackerSupport<ThreeSide> myFocusTrackerSupport;
+  private final @NotNull FocusTrackerSupport<ThreeSide> myFocusTrackerSupport;
 
   public ThreesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -94,8 +94,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport.updateContextHints(myRequest, myContext);
   }
 
-  @NotNull
-  protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
+  protected @NotNull List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
     List<T> holders = new ArrayList<>(3);
@@ -112,8 +111,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     }
   }
 
-  @NotNull
-  protected List<JComponent> createTitles() {
+  protected @NotNull List<JComponent> createTitles() {
     return DiffUtil.createSimpleTitles(this, myRequest);
   }
 
@@ -121,21 +119,18 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   // Getters
   //
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
     return getCurrentEditorHolder().getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public ThreeSide getCurrentSide() {
+  public @NotNull ThreeSide getCurrentSide() {
     return myFocusTrackerSupport.getCurrentSide();
   }
 
@@ -143,13 +138,11 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport.setCurrentSide(side);
   }
 
-  @NotNull
-  protected List<T> getEditorHolders() {
+  protected @NotNull List<T> getEditorHolders() {
     return myHolders;
   }
 
-  @NotNull
-  protected T getCurrentEditorHolder() {
+  protected @NotNull T getCurrentEditorHolder() {
     return getCurrentSide().select(getEditorHolders());
   }
 
@@ -163,9 +156,8 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   // Misc
   //
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getCurrentSide().select(getRequest().getContents()).getNavigatable();
   }
 
@@ -192,8 +184,8 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   protected enum PartialDiffMode {LEFT_MIDDLE, RIGHT_MIDDLE, MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_RIGHT}
   protected class ShowPartialDiffAction extends DumbAwareAction {
-    @NotNull protected final ThreeSide mySide1;
-    @NotNull protected final ThreeSide mySide2;
+    protected final @NotNull ThreeSide mySide1;
+    protected final @NotNull ThreeSide mySide2;
 
     public ShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
       String id;
@@ -244,8 +236,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
     }
 
-    @NotNull
-    protected SimpleDiffRequest createRequest() {
+    protected @NotNull SimpleDiffRequest createRequest() {
       List<DiffContent> contents = myRequest.getContents();
       List<String> titles = myRequest.getContentTitles();
       return new SimpleDiffRequest(myRequest.getTitle(),

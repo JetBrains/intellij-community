@@ -1,0 +1,57 @@
+[
+ {
+  name: " ",
+  priority: NORMAL,
+  displayName: " …",
+  offset: 3,
+  completeAfterInsert: true,
+  source: {
+   matchedName: "css/classes/foo",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "foo",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+ {
+  name: "bar",
+  priority: NORMAL,
+  offset: 4,
+  completeAfterChars: [ ],
+  source: {
+   matchedName: "css/classes/bar",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "bar",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+ {
+  name: "foo",
+  priority: NORMAL,
+  offset: 4,
+  completeAfterChars: [ ],
+  source: {
+   matchedName: "css/classes/foo",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "foo",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+]

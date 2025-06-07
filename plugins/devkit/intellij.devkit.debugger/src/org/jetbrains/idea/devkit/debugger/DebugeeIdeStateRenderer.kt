@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.*
@@ -7,9 +7,11 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -18,6 +20,9 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerSettings
 
 /**
@@ -28,7 +33,7 @@ private const val GET_STATE_METHOD_NAME = "getApplicationState"
 private const val GET_STATE_METHOD_SIGNATURE = "()Lcom/intellij/ide/debug/ApplicationDebugState;"
 private const val READ_ACTION_ALLOWED_FIELD_NAME = "readActionAllowed"
 private const val WRITE_ACTION_ALLOWED_FIELD_NAME = "writeActionAllowed"
-private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"
+private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl.NestedLocksThreadingSupport"
 private const val APPLICATION_IMPL_FQN = "com.intellij.openapi.application.impl.ApplicationImpl"
 private const val COROUTINES_KT_FQN = "com.intellij.openapi.application.CoroutinesKt"
 private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
@@ -36,22 +41,25 @@ private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolean?)
 
 internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = try {
-  val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
-  val state = evaluationContext.computeAndKeep {
-    DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
-  } ?: return null
+  wrapIncompatibleThreadStateException {
+    val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
+    val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
+    val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
+    if (!debugProcess.isEvaluationPossible(suspendContext)) return null
+    val state = evaluationContext.computeAndKeep {
+      DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE, emptyList()) as? ObjectReference
+    } ?: return null
 
-  val stateClass = state.referenceType()
-  val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
+    val stateClass = state.referenceType()
+    val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
 
-  val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-  val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-  IdeState(readAllowed = readField, writeAllowed = writeField)
+    val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+    val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+    IdeState(readAllowed = readField, writeAllowed = writeField)
+  }
 }
 catch (e: Exception) {
-  if (!logIncorrectSuspendState(e)) {
-    DebuggerUtilsImpl.logError(e)
-  }
+  DebuggerUtilsImpl.logError(e)
   null
 }
 
@@ -64,12 +72,12 @@ internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
     if (ideState.readAllowed == null && ideState.writeAllowed == null) return
 
     val (isReadActionAllowed, isWriteActionAllowed) = try {
-      (ideState.readAllowed to ideState.writeAllowed).adjustLockStatus(evaluationContext)
+      wrapIncompatibleThreadStateException {
+        (ideState.readAllowed to ideState.writeAllowed).adjustLockStatus(evaluationContext)
+      } ?: return
     }
     catch (e: EvaluateException) {
-      if (!logIncorrectSuspendState(e)) {
-        DebuggerUtilsImpl.logError(e)
-      }
+      DebuggerUtilsImpl.logError(e)
       return
     }
 
@@ -98,7 +106,7 @@ internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
           override fun canNavigateToSource(): Boolean = false
           override fun computePresentation(node: XValueNode, place: XValuePlace) {
             node.setPresentation(icon, null, value.toString(), false)
-            if (value == true && addLink) {
+            if (value && addLink) {
               addLinkToLockAccess(isRead, node, evaluationContext)
             }
           }
@@ -134,6 +142,8 @@ private fun getReadWriteAccessStateBasedOnCurrentFrame(evaluationContext: Evalua
   val currentXFrame = (evaluationContext.suspendContext as SuspendContextImpl).debugProcess.session.xDebugSession?.currentStackFrame
   if (currentXFrame !is JavaStackFrame) return null
   val currentFrame = currentXFrame.stackFrameProxy
+  // No need to adjust as the first frame is always correct
+  if (currentFrame.frameIndex == 0) return null
 
   val thread = evaluationContext.suspendContext.thread ?: return null
   val frames = List(thread.frameCount()) { thread.frame(it) }
@@ -231,15 +241,20 @@ private fun addLinkToLockAccess(
   node: XValueNode,
   evaluationContext: EvaluationContext,
 ) {
-  node.setFullValueEvaluator(object : JavaValue.JavaFullValueEvaluator(DevKitDebuggerBundle.message("debugger.navigate.to.lock.access"), evaluationContext as EvaluationContextImpl) {
+  val evalContext = evaluationContext as? EvaluationContextImpl ?: return
+  node.setFullValueEvaluator(object : JavaValue.JavaFullValueEvaluator(DevKitDebuggerBundle.message("debugger.navigate.to.lock.access"), evalContext) {
     override fun isShowValuePopup() = false
     override fun evaluate(callback: XFullValueEvaluationCallback) {
-      navigateToStackFrame()
-      callback.evaluated("")
+      val suspendContext = evalContext.suspendContext
+      suspendContext.coroutineScope.launch {
+        navigateToStackFrame(suspendContext)
+      }.invokeOnCompletion {
+        callback.evaluated("")
+      }
     }
 
-    private fun navigateToStackFrame() {
-      val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return
+    private suspend fun navigateToStackFrame(suspendContext: SuspendContextImpl) {
+      val debugProcess = suspendContext.debugProcess
       val xDebugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl ?: return
       val framesView = xDebugSession.sessionTab?.framesView ?: return
       val framesList = framesView.framesList
@@ -247,27 +262,32 @@ private fun addLinkToLockAccess(
 
       val asyncFrameIndex = xFrames.indexOfFirst { it is StackFrameItem.CapturedStackFrame }
       val syncXFrames = xFrames.flattenJavaFrames(toIndex = indexOrEndOfList(asyncFrameIndex, xFrames))
-      selectLockFrame(syncXFrames, isRead, framesList)
+      selectLockFrame(suspendContext, syncXFrames, isRead, framesList)
     }
   })
 }
 
-private fun selectLockFrame(
+private suspend fun selectLockFrame(
+  suspendContext: SuspendContextImpl,
   javaFrames: List<JavaStackFrame>,
   isRead: Boolean,
   framesList: XDebuggerFramesList,
-): Boolean {
-  val (targetXFrameIndex, _) = javaFrames.withIndex().reversed()
-    .firstOrNull { (_, frame) -> isLockAccessMethod(frame.stackFrameProxy, isRead) } ?: return false
-  if (targetXFrameIndex < 0) return false
-  var targetXFrame: XStackFrame = javaFrames.getOrNull(targetXFrameIndex + 1) ?: return false
+) {
+  val (targetXFrameIndex, _) = javaFrames.withIndex().reversed().firstOrNull { (_, frame) ->
+    withDebugContext(suspendContext) {
+      isLockAccessMethod(frame.stackFrameProxy, isRead)
+    }
+  } ?: return
+  if (targetXFrameIndex < 0) return
+  var targetXFrame: XStackFrame = javaFrames.getOrNull(targetXFrameIndex + 1) ?: return
   if (!framesList.model.contains(targetXFrame)) {
     val collapsedFrames = framesList.model.items.filterIsInstance<XFramesView.HiddenStackFramesItem>()
-    targetXFrame = collapsedFrames.firstOrNull { it.hiddenFrames.contains(targetXFrame)  } ?: return false
-    if (!framesList.model.contains(targetXFrame)) return false
+    targetXFrame = collapsedFrames.firstOrNull { it.getHiddenFrames().contains(targetXFrame) } ?: return
+    if (!framesList.model.contains(targetXFrame)) return
   }
-  framesList.selectFrame(targetXFrame)
-  return true
+  withContext(Dispatchers.EDT) {
+    framesList.selectFrame(targetXFrame)
+  }
 }
 
 private fun indexOrEndOfList(index: Int, list: List<*>): Int = if (index < 0) list.size else index
@@ -276,7 +296,7 @@ private fun List<XStackFrame>.flattenJavaFrames(toIndex: Int = size) =
   subList(0, toIndex).flatMap { frame ->
     when (frame) {
       is JavaStackFrame -> listOf(frame)
-      is XFramesView.HiddenStackFramesItem -> frame.hiddenFrames.filterIsInstance<JavaStackFrame>()
+      is XFramesView.HiddenStackFramesItem -> frame.getHiddenFrames().filterIsInstance<JavaStackFrame>()
       else -> emptyList()
     }
   }

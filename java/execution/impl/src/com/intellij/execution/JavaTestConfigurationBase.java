@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -57,13 +57,11 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   public abstract TestSearchScope getTestSearchScope();
   public abstract void setSearchScope(TestSearchScope searchScope);
 
-  @Nullable
   @Override
-  public abstract JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  public abstract @Nullable JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
-  @Nullable
   @Override
-  public ShortenCommandLine getShortenCommandLine() {
+  public @Nullable ShortenCommandLine getShortenCommandLine() {
     return myShortenCommandLine;
   }
 

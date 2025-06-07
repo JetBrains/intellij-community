@@ -3,13 +3,12 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.NotNull;
 
 final class SyntaxHighlighterFactoryEP extends LanguageExtensionPoint<SyntaxHighlighterFactory> {
   /**
    * @deprecated use "language" attribute instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Attribute("key")
   public String key;
 }

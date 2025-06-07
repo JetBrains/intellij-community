@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -29,9 +30,8 @@ public final class CheckinHandlerUtil {
     return fileIndex.isExcluded(file) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
   }
 
-  @NotNull
-  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files,
-                                                                     @NotNull Project project) {
+  public static @NotNull @Unmodifiable List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files,
+                                                                                            @NotNull Project project) {
     return ContainerUtil.filter(files, file -> !isGeneratedOrExcluded(project, file));
   }
 

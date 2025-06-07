@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,16 +22,15 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +44,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   private final NotNullLazyValue<? extends FileIndexFacade> myFileIndex;
   private final PsiModificationTracker myModificationTracker;
 
-  private final FileManagerImpl myFileManager;
+  private final FileManagerEx myFileManager;
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -66,6 +66,21 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     myModificationTracker = PsiModificationTracker.getInstance(project);
 
     myFileManager = new FileManagerImpl(this, myFileIndex);
+
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
+  }
+  
+  @NonInjectable
+  @ApiStatus.Internal
+  public PsiManagerImpl(@NotNull Project project, FileManagerEx fileManager) {
+    // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
+    PsiBuilderFactory.getInstance();
+
+    myProject = project;
+    myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
+    myModificationTracker = PsiModificationTracker.getInstance(project);
+
+    myFileManager = fileManager;
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
   }
@@ -144,6 +159,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @NotNull FileManagerEx getFileManagerEx() {
+    return myFileManager;
+  }
+
   @Override
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
@@ -163,10 +184,24 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager.findFile(file);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findFile(file, context);
+  }
+
   @Override
   public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findViewProvider(file, context);
   }
 
   @Override
@@ -230,6 +265,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     fireEvent(event);
   }
 
+  @Override
   public void beforeChildrenChange(@NotNull PsiTreeChangeEventImpl event) {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILDREN_CHANGE);
@@ -239,6 +275,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     fireEvent(event);
   }
 
+  @Override
   public void beforeChildMovement(@NotNull PsiTreeChangeEventImpl event) {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_MOVEMENT);
@@ -248,6 +285,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     fireEvent(event);
   }
 
+  @Override
   public void beforePropertyChange(@NotNull PsiTreeChangeEventImpl event) {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
@@ -262,6 +300,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return value instanceof Object[] ? Arrays.deepToString((Object[])value) : value;
   }
 
+  @Override
   public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED);
     if (LOG.isDebugEnabled()) {
@@ -271,6 +310,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void childRemoved(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED);
     if (LOG.isDebugEnabled()) {
@@ -280,6 +320,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void childReplaced(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED);
     if (LOG.isDebugEnabled()) {
@@ -289,6 +330,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void childMoved(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED);
     if (LOG.isDebugEnabled()) {
@@ -298,6 +340,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void childrenChanged(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED);
     if (LOG.isDebugEnabled()) {
@@ -307,6 +350,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void propertyChanged(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED);
     if (LOG.isDebugEnabled()) {
@@ -321,10 +365,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     afterChange(true);
   }
 
+  @Override
   public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
     myTreeChangePreprocessors.add(preprocessor);
   }
-
+  
+  @Override
   public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
     myTreeChangePreprocessors.remove(preprocessor);
   }
@@ -472,12 +518,14 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @TestOnly
+  @Override
   public void cleanupForNextTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileManager.cleanupForNextTest();
     dropPsiCaches();
   }
 
+  @Override
   public void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator) {
     indicator = ProgressWrapper.unwrap(indicator);
     if (indicator instanceof ProgressIndicatorEx) {

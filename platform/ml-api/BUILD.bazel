@@ -1,26 +1,26 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "ml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ml",
   module_name = "intellij.platform.ml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/core-api:core",
-    "@libraries//:extension",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+    "@lib//:jetbrains-mlapi-ml-api",
   ],
-  exports = ["@libraries//:extension"],
-  runtime_deps = [":resources"]
+  exports = ["@lib//:jetbrains-mlapi-ml-api"],
+  runtime_deps = [":ml_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ml` end

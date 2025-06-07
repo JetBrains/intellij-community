@@ -49,8 +49,10 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    if(myReferenceExpression.isQualified()) return false;
-    PsiStatement anchor = getAnchor(myReferenceExpression);
+    PsiReferenceExpression element = myReferenceExpression.getElement();
+    if (element == null) return false;
+    if (element.isQualified()) return false;
+    PsiStatement anchor = getAnchor(element);
     if (anchor == null) return false;
     if (anchor instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
@@ -70,36 +72,38 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    String varName = myReferenceExpression.getReferenceName();
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiReferenceExpression element = myReferenceExpression.getElement();
+    if (element == null) return;
+    String varName = element.getReferenceName();
+    if (CreateFromUsageUtils.isValidReference(element, false) || varName == null) return;
 
-    if (file.isPhysical()) {
+    if (psiFile.isPhysical()) {
       IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
-    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(element, false);
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
     if (LambdaUtil.notInferredType(type)) {
-      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), file.getResolveScope());
+      type = PsiType.getJavaLangObject(element.getManager(), psiFile.getResolveScope());
     }
 
     PsiExpression initializer = null;
     boolean isInline = false;
-    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(element, PsiMember.class, PsiFile.class);
     PsiStatement anchor = getAnchor(expressions);
     if (anchor == null) {
-      expressions = new PsiExpression[]{myReferenceExpression};
+      expressions = new PsiExpression[]{element};
       anchor = getAnchor(expressions);
       if (anchor == null) return;
     }
     if (anchor instanceof PsiExpressionStatement expressionStatement &&
         expressionStatement.getExpression() instanceof PsiAssignmentExpression assignment &&
-        assignment.getLExpression().textMatches(myReferenceExpression)) {
+        assignment.getLExpression().textMatches(element)) {
       initializer = assignment.getRExpression();
       isInline = true;
     }
@@ -119,12 +123,12 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(psiFile).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
     var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(var);
-    if (var == null || !file.isPhysical()) return;
+    if (var == null || !psiFile.isPhysical()) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(var);
     final PsiTypeElement typeElement = var.getTypeElement();
     LOG.assertTrue(typeElement != null);
@@ -133,7 +137,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    final Editor newEditor = CodeInsightUtil.positionCursor(project, file, var);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, psiFile, var);
     if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -143,7 +147,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
-        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiLocalVariable.class, false);
+        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 
@@ -174,16 +178,18 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       if (parent instanceof PsiCodeBlock) {
         block = (PsiCodeBlock)parent;
         break;
-      } else if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      }
+      else if (parent instanceof PsiSwitchLabeledRuleStatement) {
         parent = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
-      } else {
+      }
+      else {
         parent = parent.getParent();
       }
     }
     if (block == null) return null;
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
-      if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];
+      if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i - 1];
     }
     return statements[statements.length - 1];
   }
@@ -195,6 +201,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(myReferenceExpression, target));
+    PsiReferenceExpression referenceExpression = myReferenceExpression.getElement();
+    if(referenceExpression==null) return null;
+    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(referenceExpression, target));
   }
 }

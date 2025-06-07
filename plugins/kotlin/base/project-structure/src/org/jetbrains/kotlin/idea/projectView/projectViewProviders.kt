@@ -39,7 +39,10 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
 
             if (ktFile != null) {
                 val mainClass = KotlinIconProvider.getSingleClass(ktFile)
-                if (mainClass != null) {
+                if (mainClass != null && mainClass.containingKtFile.declarations.size == 1) {
+                    // Only use a KtClassOrObjectTreeNode if the file contains only the class.
+                    // Otherwise, the move behavior when trying to move the node will only move the mainClass,
+                    // which is unexpected.
                     result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, nestedFileNodes))
                 } else {
                     result.add(KtFileTreeNode(ktFile.project, ktFile, settings, nestedFileNodes))

@@ -40,7 +40,7 @@ class Foo {
       case Triangle t when t.calculateArea() > 100:
         System.out.println("Large triangle");
         break;
-      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Triangle t:
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">Triangle t</error>:
         System.out.println("Small triangle or null");
         break;
       case Color c:
@@ -59,7 +59,7 @@ class Foo {
 
   int foo3(Integer i) {
     return switch (i) {
-      case 1, 2, 3, 4, 5, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, default -> 42;
+      case 1, 2, 3, 4, 5, <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, <error descr="Default label not allowed here: 'default' can only be used as a single case label or paired only with 'null'">default</error> -> 42;
       case 42 -> 666;
     };
   }
@@ -121,7 +121,7 @@ class Bar extends Foo {
       case Triangle t when t.calculateArea() > 100:
         System.out.println("Large triangle");
         break;
-      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Triangle t:
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">Triangle t</error>:
         System.out.println("Small triangle or null");
         break;
       case Color c:
@@ -141,7 +141,7 @@ class Bar extends Foo {
   @Override
   int <warning descr="Method 'foo3()' is identical to its super method">foo3</warning>(Integer i) {
     return switch (i) {
-      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, 4, default, 1, 5, 3, 2 -> 42;
+      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, 4, <error descr="Default label not allowed here: 'default' can only be used as a single case label or paired only with 'null'">default</error>, 1, 5, 3, 2 -> 42;
       case 42 -> 666;
     };
   }

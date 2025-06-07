@@ -1,21 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +30,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
@@ -42,6 +44,7 @@ import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -62,7 +65,7 @@ public class GitImpl extends GitImplBase {
   /**
    * @see GitRebaseUtils#createRebaseEditor(Project, VirtualFile, boolean)
    */
-  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
+  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("%s=%s".formatted(GitConfigUtil.CORE_COMMENT_CHAR, COMMENT_CHAR));
 
   public GitImpl() {
   }
@@ -73,9 +76,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     return runCommand(h);
@@ -139,7 +140,7 @@ public class GitImpl extends GitImplBase {
    * @return Unversioned not ignored files from the given scope.
    */
   @Override
-  public @NotNull Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
+  public @Unmodifiable @NotNull Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<? extends VirtualFile> files) throws VcsException {
     return ContainerUtil.map2SetNotNull(
       untrackedFilePaths(project, root,
@@ -189,8 +190,10 @@ public class GitImpl extends GitImplBase {
     return runCommand(() -> {
       // do not use per-project executable for 'clone' command
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      GitExecutable executable = GitExecutableManager.getInstance().getExecutable(defaultProject, parentDirectory);
-      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, emptyList());
+      GitExecutable executable = GitExecutableManager.getInstance().getExecutable(defaultProject, parentDirectory.toPath());
+
+      List<String> configParameters = SystemInfo.isWindows ? List.of("core.longpaths=true") : emptyList();
+      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, configParameters);
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
@@ -271,9 +274,7 @@ public class GitImpl extends GitImplBase {
     if (additionalParams != null) {
       mergeHandler.addParameters(additionalParams);
     }
-    for (GitLineHandlerListener listener : listeners) {
-      mergeHandler.addLineListener(listener);
-    }
+    addListeners(mergeHandler, listeners);
     return runCommand(mergeHandler);
   }
 
@@ -319,9 +320,7 @@ public class GitImpl extends GitImplBase {
       h.addParameters(withReset ? "-B" : "-b", newBranch, reference);
     }
     h.endOptions();
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
@@ -365,9 +364,7 @@ public class GitImpl extends GitImplBase {
     h.setSilent(false);
     h.addParameters("-d");
     h.addParameters(tagName);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
@@ -384,9 +381,7 @@ public class GitImpl extends GitImplBase {
     h.setStdoutSuppressed(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
@@ -573,6 +568,14 @@ public class GitImpl extends GitImplBase {
   public @NotNull GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
     h.addParameters("--unmerged");
+    h.setSilent(true);
+    return runCommand(h);
+  }
+
+  @Override
+  public @NotNull GitCommandResult getResolvedFiles(@NotNull GitRepository repository) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
+    h.addParameters("--resolve-undo");
     h.setSilent(true);
     return runCommand(h);
   }
@@ -829,7 +832,7 @@ public class GitImpl extends GitImplBase {
   }
 
   public static @NotNull String runBundledCommand(@Nullable Project project, String... args) throws VcsException {
-    if (project != null && !TrustedProjects.isTrusted(project)) {
+    if (project != null && !TrustedProjects.isProjectTrusted(project)) {
       throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
 
@@ -840,7 +843,7 @@ public class GitImpl extends GitImplBase {
 
       StringBuilder output = new StringBuilder();
       OSProcessHandler handler = new OSProcessHandler(command);
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           if (outputType == ProcessOutputTypes.STDOUT) {

@@ -1,10 +1,9 @@
 - name: lib/jsonpath.jar
-  projectLibraries:
-  - name: jsonpath
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2/json-path-2.jar
-    - name: $MAVEN_REPOSITORY$/net/minidev/json-smart/2/json-smart-2.jar
-    - name: $MAVEN_REPOSITORY$/net/minidev/accessors-smart/2/accessors-smart-2.jar
-    reason: <- intellij.jsonpath
   modules:
   - name: intellij.jsonpath
+  library: jsonpath
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2/json-path-2.jar
+  - name: $MAVEN_REPOSITORY$/net/minidev/json-smart/2/json-smart-2.jar
+  - name: $MAVEN_REPOSITORY$/net/minidev/accessors-smart/2/accessors-smart-2.jar
+  reason: <- intellij.jsonpath

@@ -10,7 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.ActionCallback;
@@ -48,7 +48,7 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
     Disposer.register(this, myContentUI);
 
     myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), true, project);
-    myViewsContentManager.addDataProvider((EdtNoGetDataProvider)sink -> {
+    myViewsContentManager.addUiDataProvider(sink -> {
       sink.set(QuickActionProvider.KEY, myContentUI);
       sink.set(RunnerContentUi.KEY, myContentUI);
     });
@@ -338,8 +338,9 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   @Override
   public AnAction @NotNull [] getSettingsActionsList() {
-    final ActionGroup group = (ActionGroup)getSettingsActions();
-    return group.getChildren(null);
+    ActionGroup group = (ActionGroup)getSettingsActions();
+    return group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+           group.getChildren(null);
   }
 
   @Override

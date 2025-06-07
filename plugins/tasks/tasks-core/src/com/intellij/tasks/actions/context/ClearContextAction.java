@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClearContextAction extends BaseTaskAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = getProject(e);
     GlobalUndoableAction action = new GlobalUndoableAction() {
       @Override

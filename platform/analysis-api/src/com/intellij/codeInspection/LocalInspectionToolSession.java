@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,21 +15,22 @@ import org.jetbrains.annotations.Nullable;
  * @see LocalInspectionTool#buildVisitor(ProblemsHolder, boolean, LocalInspectionToolSession)
  */
 public final class LocalInspectionToolSession extends UserDataHolderBase {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final TextRange myPriorityRange;
   private final TextRange myRestrictRange;
   private final HighlightSeverity myMinimumSeverity;
 
-  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange,
-                             @Nullable HighlightSeverity minimumSeverity) {
-    myFile = file;
+  @ApiStatus.Internal
+  public LocalInspectionToolSession(@NotNull PsiFile psiFile, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange,
+                                    @Nullable HighlightSeverity minimumSeverity) {
+    myPsiFile = psiFile;
     myPriorityRange = priorityRange;
     myRestrictRange = restrictRange;
     myMinimumSeverity = minimumSeverity;
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**
@@ -54,7 +56,7 @@ public final class LocalInspectionToolSession extends UserDataHolderBase {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the inspection might choose to ignore it.
    */
-  public HighlightSeverity getMinimumSeverity() {
+  public @Nullable HighlightSeverity getMinimumSeverity() {
     return myMinimumSeverity;
   }
 }

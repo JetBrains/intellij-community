@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,8 +12,10 @@ import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ResourceUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,8 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   private static final Pattern ADDENDUM_PLACE = Pattern.compile("<p><small>New in [\\d.]+</small></p>|(</body>)?\\s*</html>", Pattern.CASE_INSENSITIVE);
 
   protected T myTool;
-  protected final E myEP;
+  @ApiStatus.Internal
+  public final E myEP;
   private @Nullable HighlightDisplayKey myDisplayKey;
 
   private volatile Set<String> applicableToLanguages; // lazy initialized
@@ -181,7 +184,11 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       InputStream descriptionStream = getDescriptionStream();
       if (descriptionStream != null) {
         //noinspection HardCodedStringLiteral(IDEA-249976)
-        return insertAddendum(ResourceUtil.loadText(descriptionStream), getTool().getDescriptionAddendum());
+        return insertAddendum(ResourceUtil.loadText(descriptionStream),
+                              new HtmlBuilder()
+                                .append(getTool().getDescriptionAddendum())
+                                .append(HtmlChunk.p().child(HtmlChunk.tag("small").addText("Inspection ID: " + getShortName())))
+                                .toFragment());
       }
       return null;
     }

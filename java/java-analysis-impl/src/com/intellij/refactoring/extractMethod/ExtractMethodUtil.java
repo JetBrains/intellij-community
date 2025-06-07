@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,21 +10,23 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class ExtractMethodUtil {
   private static final Logger LOG = Logger.getInstance(ExtractMethodUtil.class);
   private static final Key<PsiMethod> RESOLVE_TARGET_KEY = Key.create("RESOLVE_TARGET_KEY");
 
   private ExtractMethodUtil() { }
 
-  static Map<PsiMethodCallExpression, PsiMethod> encodeOverloadTargets(final PsiClass targetClass,
-                                                        final SearchScope processConflictsScope,
-                                                        final String overloadName,
-                                                        final PsiElement extractedFragment) {
+  public static Map<PsiMethodCallExpression, PsiMethod> encodeOverloadTargets(final PsiClass targetClass,
+                                                                              final SearchScope processConflictsScope,
+                                                                              final String overloadName,
+                                                                              final PsiElement extractedFragment) {
     final Map<PsiMethodCallExpression, PsiMethod> ret = new HashMap<>();
     encodeInClass(targetClass, overloadName, extractedFragment, ret);
 
@@ -42,7 +44,7 @@ public final class ExtractMethodUtil {
                                     final Map<PsiMethodCallExpression, PsiMethod> ret) {
     final PsiMethod[] overloads = aClass.findMethodsByName(overloadName, false);
     for (final PsiMethod overload : overloads) {
-      for (final PsiReference ref : ReferencesSearch.search(overload)) {
+      for (final PsiReference ref : ReferencesSearch.search(overload).asIterable()) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiMethodCallExpression call) {
@@ -90,14 +92,14 @@ public final class ExtractMethodUtil {
     }
   }
 
-  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
+  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget, final @NotNull PsiMethodCallExpression call)
     throws IncorrectOperationException {
     addCastsToEnsureResolveTarget(oldTarget, PsiSubstitutor.EMPTY, call);
   }
 
-  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget,
+  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget,
                                                    @NotNull PsiSubstitutor oldSubstitutor,
-                                                   @NotNull final PsiMethodCallExpression call)
+                                                   final @NotNull PsiMethodCallExpression call)
     throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();

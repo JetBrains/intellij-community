@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
@@ -31,30 +32,30 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
-  public static final String ID = "Problems View";
+  public static final String ID = ToolWindowId.PROBLEMS_VIEW;
 
   public static @Nullable ToolWindow getToolWindow(@NotNull Project project) {
     return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
-  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file, @Nullable Document document) {
+  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable Document document) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
     ContentManager contentManager = window.getContentManager();
     HighlightingPanel panel = getSelectedHighlightingPanel(contentManager.getSelectedContent());
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
-    if (file == null || document == null || panel == null || !panel.isShowing()) {
+    if (virtualFile == null || document == null || panel == null || !panel.isShowing()) {
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(contentManager, HighlightingPanel.ID);
       window.setAvailable(true, null);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
-    else if (file.equals(panel.getCurrentFile())) {
+    else if (virtualFile.equals(panel.getCurrentFile())) {
       if(!RedesignedInspectionsManager.isAvailable()) {
         toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
       }
     }
     else {
-      panel.setCurrentFile(new kotlin.Pair<>(file, document));
+      panel.setCurrentFile(virtualFile, document);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
   }
@@ -102,14 +103,14 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
-    var problemsViewTab = get(ProblemsViewTab.class, content);
+    ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
     if (problemsViewTab != null) {
       problemsViewTab.selectionChangedTo(selected);
     }
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
-    var problemsViewTab = get(ProblemsViewTab.class, content);
+    ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
     if (problemsViewTab != null) {
       problemsViewTab.visibilityChangedTo(visible);
     }
@@ -121,7 +122,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return type.isInstance(component) ? (T)component : null;
   }
 
-  public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
+  /**
+   * Add a new panel to the Problems View tool window using the given provider.
+   * @param provider the provider to create the panel
+   */
+  static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
     ToolWindow window = getToolWindow(project);
     assert window != null;
     ContentManager manager = window.getContentManager();
@@ -132,7 +137,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     createContent(manager, panel);
   }
 
-  public static void removePanel(Project project, String id) {
+  /**
+   * Remove the panel with the given id from the Problems View tool window.
+   * @param id the id of the panel to remove
+   */
+  static void removePanel(Project project, String id) {
     Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (content == null || toolWindow == null) {
@@ -203,7 +212,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         boolean vertical = !window.getAnchor().isHorizontal();
         if (vertical != orientation.getAndSet(vertical)) {
           for (Content content : window.getContentManager().getContents()) {
-            var problemsViewTab = get(ProblemsViewTab.class, content);
+            ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
             if (problemsViewTab != null) problemsViewTab.orientationChangedTo(vertical);
           }
         }

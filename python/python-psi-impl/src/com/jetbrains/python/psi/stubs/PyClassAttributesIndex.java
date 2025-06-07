@@ -23,9 +23,8 @@ import java.util.List;
 public final class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.attributes");
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PyClass> getKey() {
+  public @NotNull StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 
@@ -64,8 +63,7 @@ public final class PyClassAttributesIndex extends StringStubIndexExtension<PyCla
    * <p/>
    * This method <b>must not</b> access the AST because it is being called during stub indexing.
    */
-  @NotNull
-  public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
+  public static @NotNull List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
     List<PsiNamedElement> members = ContainerUtil.concat(pyClass.getInstanceAttributes(),
                                                                pyClass.getClassAttributes(),
                                                                Arrays.asList(pyClass.getMethods()));

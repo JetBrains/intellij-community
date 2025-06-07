@@ -16,15 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +32,14 @@ import org.jetbrains.annotations.Nullable;
 public final class EmptySynchronizedStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.synchronized.statement.problem.descriptor");
   }
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
-    return new DeleteUnnecessaryStatementFix(PsiKeyword.SYNCHRONIZED);
+    return new DeleteUnnecessaryStatementFix(JavaKeywords.SYNCHRONIZED);
   }
 
   @Override

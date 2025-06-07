@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -63,8 +63,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     return myDelegate;
   }
 
-  @Nullable
-  public static PsiElement getOnlyNonWhitespaceChild(PsiElement element) {
+  public static @Nullable PsiElement getOnlyNonWhitespaceChild(PsiElement element) {
     PsiElement onlyChild = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (DuplocatorUtil.isIgnoredNode(element) || child.getTextLength() == 0) {
@@ -78,15 +77,13 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     return onlyChild;
   }
 
-  @Nullable
   @Contract("null -> null;!null -> !null;")
-  public static PsiElement skipNodeIfNecessary(PsiElement element) {
+  public static @Nullable PsiElement skipNodeIfNecessary(PsiElement element) {
     return skipNodeIfNecessary(element, null, null);
   }
 
-  @Nullable
   @Contract("null, _, _ -> null;!null, _, _ -> !null;")
-  public static PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
+  public static @Nullable PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
     return DuplocatorUtil.skipNodeIfNecessary(element, descriptor, filter != null ? filter : LexicalNodesFilter.getInstance());
   }
 }

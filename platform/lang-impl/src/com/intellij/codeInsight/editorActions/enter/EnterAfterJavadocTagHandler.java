@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -16,12 +16,13 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
+public final class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();
 
@@ -101,7 +102,8 @@ public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapt
    * @param offset        interested offset
    * @return              object that encapsulates information about javadoc tags within the given text and offset
    */
-  static @NotNull Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
+  @VisibleForTesting
+  public static @NotNull Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
     int asteriskOffset = StringUtil.indexOf(text, '*', startOffset, endOffset);
     if (asteriskOffset < 0) {
       return NOT_MATCHED_CONTEXT;
@@ -175,8 +177,8 @@ public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapt
     return new Context(text, startTagEndOffset, endTagStartOffset, startTag, offset);
   }
 
-  static final class Context {
-
+  @ApiStatus.Internal
+  public static final class Context {
     public final int startTagEndOffset;
     public final int endTagStartOffset;
     public final @Nullable String startTag;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -45,10 +45,7 @@ import com.intellij.util.io.URLUtil;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -62,7 +59,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   static boolean shouldCheckConsistency() {
     return IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()
-           && !Boolean.TRUE.equals(TestModeFlags.get(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST));
+           && !TestModeFlags.is(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST);
   }
 
   @TestOnly
@@ -149,7 +146,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @TestOnly
-  synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
+  public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
     assert !StringUtil.isEmptyOrSpaces(childName);
     @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
     addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
@@ -391,13 +388,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       toUpdate = root.findOrCreateByFile(file);
     }
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS) {
+    if (fs != node.fs) {
       if (url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
         throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
                                            "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
-                                           " but the path part points to " + node.myFS);
+                                           " but the path part points to " + node.fs);
       }
-      LOG.error("fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node);
+      LOG.error("fs=" + fs + "; node.myFS=" + node.fs + "; url=" + url + "; file=" + file + "; node=" + node);
     }
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
@@ -447,7 +444,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
     for (FilePartNode child : root.children) {
       if (child.isUrlBased()) {
-        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.urlOf(child.fileOrUrl));
         if (resolvedChild != null) {
           child = child.replaceWithFPPN(resolvedChild, root);
         }
@@ -482,7 +479,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
     }
     else {
-      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
+      throw new IllegalStateException("Node for " + node.fileOrUrl + " is not a url-based");
     }
   }
 
@@ -542,8 +539,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private record CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
-                                 @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                                 @NotNull List<? extends EventDescriptor> eventList,
+                                 @NotNull List<NodeToUpdate> toUpdateNodes,
+                                 @NotNull List<EventDescriptor> eventList,
                                  long startModCount,
                                  long prepareElapsedMs) {
   }
@@ -668,8 +665,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  @NotNull
-  ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  @VisibleForTesting
+  public @NotNull ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
     myCollectedEvents = collectEvents(events);
     return new ChangeApplier() {
       @Override
@@ -699,7 +696,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return FSRecords.getInstance().getNameId(name);
   }
 
-  synchronized void assertConsistency() {
+  @VisibleForTesting
+  public synchronized void assertConsistency() {
     if (IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()) {
       myLocalRoot.checkConsistency();
       myTempRoot.checkConsistency();
@@ -736,7 +734,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         FilePartNode parent = toUpdate.parent;
         FilePartNode node = toUpdate.node;
 
-        node.update(parent, getRoot(node.myFS), "VFPMI invalidated VFP during update", toUpdate.myEvent);
+        node.update(parent, getRoot(node.fs), "VFPMI invalidated VFP during update", toUpdate.myEvent);
       }
     }
 
@@ -760,7 +758,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.myNode.myFS).removePointer(pointer);
+    getRoot(pointer.myNode.fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;
@@ -835,23 +833,23 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @TestOnly
-  synchronized int numberOfPointers() {
+  public synchronized int numberOfPointers() {
     return dumpAllPointers().size();
   }
 
   @TestOnly
-  synchronized int numberOfListeners() {
+  public synchronized int numberOfListeners() {
     return ContainerUtil.count(dumpAllPointers(), pointer -> ((VirtualFilePointerImpl)pointer).myListener != null);
   }
 
   @TestOnly
-  synchronized int numberOfCachedUrlToIdentity() {
+  public synchronized int numberOfCachedUrlToIdentity() {
     return myUrlToIdentity.size();
   }
 
   // some tests need to operate on the deterministic number of pointers, so we clear all of them out of the way during the test execution
   @TestOnly
-  void shelveAllPointersIn(@NotNull Runnable runnable) {
+  public void shelveAllPointersIn(@NotNull Runnable runnable) {
     FilePartNode[] oldChildren;
     //noinspection SynchronizeOnThis
     FilePartNodeRoot localRoot = myLocalRoot;
@@ -870,7 +868,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  synchronized @NotNull Collection<VirtualFilePointer> dumpAllPointers() {
+  @VisibleForTesting
+  public synchronized @NotNull Collection<VirtualFilePointer> dumpAllPointers() {
     Collection<VirtualFilePointer> result = new ArrayList<>();
     dumpPointersRecursivelyTo(myLocalRoot, result);
     dumpPointersRecursivelyTo(myTempRoot, result);

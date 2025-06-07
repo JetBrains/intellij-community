@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -49,10 +49,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
@@ -109,13 +106,13 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   private boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
-  @NlsSafe private String nonNlsLiteralPattern;
-  @NlsSafe public String nonNlsCommentPattern;
+  private @NlsSafe String nonNlsLiteralPattern;
+  public @NlsSafe String nonNlsCommentPattern;
   private boolean ignoreForEnumConstants;
 
-  @Nullable private Pattern myCachedCommentPattern;
-  @Nullable private Pattern myCachedLiteralPattern;
-  @NonNls private static final String TO_STRING = "toString";
+  private @Nullable Pattern myCachedCommentPattern;
+  private @Nullable Pattern myCachedLiteralPattern;
+  private static final @NonNls String TO_STRING = "toString";
 
   public I18nInspection() {
     setNonNlsCommentPattern("NON-NLS");
@@ -197,14 +194,12 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HardCodedStringLiteral";
   }
 
@@ -282,8 +277,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     );
   }
 
-  @NotNull
-  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
+  private static @NotNull HtmlChunk exampleDescription(@NlsSafe String exampleText) {
     return HtmlChunk.fragment(
       HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
       HtmlChunk.br(),
@@ -321,13 +315,11 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return "nls";
   }
 
-  @NotNull
-  private static LocalQuickFix createIntroduceConstantFix() {
+  private static @NotNull LocalQuickFix createIntroduceConstantFix() {
     return new IntroduceConstantFix();
   }
 
-  @Nullable
-  private static ULocalVariable getVariableToSearch(UExpression passThrough) {
+  private static @Nullable ULocalVariable getVariableToSearch(UExpression passThrough) {
     UElement uastParent = passThrough.getUastParent();
     ULocalVariable uVar = null;
     if (uastParent instanceof ULocalVariable) {
@@ -349,8 +341,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return uVar;
   }
 
-  @Nullable
-  private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
+  private static @Nullable @Unmodifiable List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();
     if (psi != null && psiVar != null) {
@@ -471,9 +462,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           }
         }
         else {
-          fixes.add(new AddAnnotationFix(fqn, target, AnnotationUtil.NON_NLS));
+          fixes.add(LocalQuickFix.from(new AddAnnotationModCommandAction(fqn, target, AnnotationUtil.NON_NLS)));
           if (addNullSafe) {
-            fixes.add(new MarkAsSafeFix(target));
+            fixes.add(LocalQuickFix.from(new AddAnnotationModCommandAction(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS)
+                                           .withPresentation(presentation -> presentation.withPriority(PriorityAction.Priority.LOW))));
           }
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
@@ -519,7 +511,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
             if (!element.getManager().isInProject(element) ||
                 facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-              fixes.add(new NonNlsAnnotationProvider().createFix(element));
+              fixes.add(LocalQuickFix.from(new NonNlsAnnotationProvider().createFix(element)));
             }
           }
         }
@@ -863,7 +855,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent == null || !UastExpressionUtils.isMethodCall(parent)) {
       return false;
     }
-    @NonNls final String methodName = ((UCallExpression)parent).getMethodName();
+    final @NonNls String methodName = ((UCallExpression)parent).getMethodName();
     if (methodName == null) {
       return false;
     }
@@ -928,16 +920,5 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       }
     }
     return false;
-  }
-
-  private static class MarkAsSafeFix extends AddAnnotationFix implements LowPriorityAction {
-    MarkAsSafeFix(PsiModifierListOwner target) {
-      super(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
-    }
   }
 }

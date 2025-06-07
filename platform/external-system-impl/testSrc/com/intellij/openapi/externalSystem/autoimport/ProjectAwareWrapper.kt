@@ -39,12 +39,4 @@ class ProjectAwareWrapper(
     reloadCounter.incrementAndGet()
     delegate.reloadProject(context)
   }
-
-  fun resetAssertionCounters() {
-    reloadCounter.set(0)
-    subscribeCounter.set(0)
-    unsubscribeCounter.set(0)
-    startReloadCounter.set(0)
-    finishReloadCounter.set(0)
-  }
 }

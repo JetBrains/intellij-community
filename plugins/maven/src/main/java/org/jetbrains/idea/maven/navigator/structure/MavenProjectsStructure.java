@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -12,10 +12,11 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.MavenPluginInfo;
+import org.jetbrains.idea.maven.project.MavenPluginWithArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
@@ -135,9 +136,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
-  @NotNull
   @Override
-  public RootNode getRootElement() {
+  public @NotNull RootNode getRootElement() {
     return myRoot;
   }
 
@@ -265,7 +265,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return myProjectToNodeMapping.get(project);
   }
 
-  enum DisplayKind {
+  @ApiStatus.Internal
+  public enum DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
 
@@ -304,15 +305,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginInfo> pluginInfos) {
+  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginWithArtifact> pluginInfos) {
     boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, pluginInfos));
   }
 
   private class UpdatePluginsTreeTask implements Runnable {
-    @NotNull private final PluginsNode myParentNode;
-    private final List<MavenPluginInfo> myPluginInfos;
+    private final @NotNull PluginsNode myParentNode;
+    private final List<MavenPluginWithArtifact> myPluginInfos;
 
-    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginInfo> pluginInfos) {
+    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginWithArtifact> pluginInfos) {
       myParentNode = parentNode;
       myPluginInfos = pluginInfos;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.config;
 
 import com.intellij.util.ArrayUtil;
@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 public final class MavenConfigParser {
   private MavenConfigParser() {}
 
-  @Nullable
-  public static MavenConfig parse(@NotNull String baseDir) {
+  public static @Nullable MavenConfig parse(@NotNull String baseDir) {
     Options options = new Options();
     for (MavenConfigSettings value : MavenConfigSettings.values()) {
       options.addOption(value.toOption());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -7,8 +7,8 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,6 +44,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -264,6 +265,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
            disposeCallback, dataContext, options.getMaxRowCount());
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorActionUtil.collectActionGroupInfo(
         "Menu", actionGroup, actionPlace, ((ActionPopupStep)getStep()).getPresentationFactory()));
+
+      addListener(new JBPopupListener() {
+        @Override
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+          ActionGroupPopupActivity.start(ActionGroupPopup.this, actionGroup, actionPlace);
+        }
+
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          ActionGroupPopupActivity.stop(ActionGroupPopup.this, event.isOk());
+        }
+      });
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -314,6 +327,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Override
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
+      var fusActivity = ActionGroupPopupActivity.getCurrentActivity(this);
+      if (fusActivity != null && item != null) {
+        fusActivity.itemSelected(item.myAction, null);
+      }
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step != null && item != null && step.isSelectable(item) &&
           Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e)) {
@@ -345,9 +362,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (step != null && item != null && step.isSelectable(item) &&
           item.getKeepPopupOnPerform() != KeepPopupOnPerform.Never && item.getAction() instanceof ToggleAction toggle) {
         AnActionEvent event = step.createAnActionEvent(item, keyEvent);
-        ActionUtil.performDumbAwareWithCallbacks(toggle, event, () -> {
-          toggle.setSelected(event, isRightKey);
-        });
+        ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+        actionManager.performWithActionCallbacks(toggle, event, () ->
+          toggle.setSelected(event, isRightKey));
         step.updateStepItems(getList());
         return true;
       }
@@ -638,7 +655,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
-  public @NotNull List<JBPopup> getChildPopups(@NotNull Component component) {
+  public @Unmodifiable @NotNull List<JBPopup> getChildPopups(@NotNull Component component) {
     return AbstractPopup.getChildPopups(component);
   }
 
@@ -817,7 +834,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       updateFromPresentation(presentation, actionPlace);
 
       List<? extends AnAction> inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
-      if (inlineActions == null && myAction instanceof InlineActionsHolder holder) inlineActions = holder.getInlineActions();
       myInlineActions = createInlineItems(presentationFactory, actionPlace, inlineActions);
     }
 
@@ -921,7 +937,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isSubstepSuppressed() { return myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(myPresentation); }
 
     public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
-      if (myAction instanceof KeepingPopupOpenAction) return KeepPopupOnPerform.Always;
       return myPresentation.getKeepPopupOnPerform();
     }
 

@@ -42,8 +42,7 @@ public class PyStringLiteralDecoder {
 
   private static final Map<String, String> escapeMap = initializeEscapeMap();
 
-  @NotNull
-  private static Map<String, String> initializeEscapeMap() {
+  private static @NotNull Map<String, String> initializeEscapeMap() {
     Map<String, String> map = new HashMap<>();
     map.put("\n", "\n");
     map.put("\\", "\\");
@@ -65,18 +64,15 @@ public class PyStringLiteralDecoder {
     myNode = node;
   }
 
-  @NotNull
-  public List<Pair<TextRange, String>> decodeContent() {
+  public @NotNull List<Pair<TextRange, String>> decodeContent() {
     return decodeRange(myNode.getContentRange());
   }
 
-  @NotNull
-  public List<Pair<TextRange, String>> decodeRange(@NotNull TextRange range) {
+  public @NotNull List<Pair<TextRange, String>> decodeRange(@NotNull TextRange range) {
     return decodeFragment(range.substring(myNode.getText()), range.getStartOffset());
   }
 
-  @NotNull
-  private List<Pair<TextRange, String>> decodeFragment(@NotNull String encoded, int offset) {
+  private @NotNull List<Pair<TextRange, String>> decodeFragment(@NotNull String encoded, int offset) {
     final boolean raw = myNode.isRaw();
     final boolean unicode = myNode.isUnicode() || isUnicodeByDefault();
     final boolean formatted = myNode.isFormatted();
@@ -147,8 +143,7 @@ public class PyStringLiteralDecoder {
     return result;
   }
 
-  @Nullable
-  private static String escapeRegexGroup(@NotNull Matcher matcher, EscapeRegexGroup group) {
+  private static @Nullable String escapeRegexGroup(@NotNull Matcher matcher, EscapeRegexGroup group) {
     return matcher.group(group.ordinal());
   }
 

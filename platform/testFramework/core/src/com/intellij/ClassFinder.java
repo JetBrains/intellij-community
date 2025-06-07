@@ -35,8 +35,7 @@ public class ClassFinder {
     }
   }
 
-  @Nullable
-  private String computeClassName(final @NotNull Path path, final @NotNull Path root) {
+  private @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
     if (!includeUnconventionallyNamedTests) {
@@ -78,8 +77,7 @@ public class ClassFinder {
     return false;
   }
 
-  @Nullable
-  private static String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
+  private static @Nullable String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
     String fqn = StringUtil
       .trimEnd(root.relativize(path).toString(), ".class")
       .replace(path.getFileSystem().getSeparator(), ".");

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -42,7 +42,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   public InlineToAnonymousClassProcessor(Project project,
                                          PsiClass psiClass,
-                                         @Nullable final PsiCall callToInline,
+                                         final @Nullable PsiCall callToInline,
                                          boolean inlineThisOnly,
                                          final boolean searchInComments,
                                          final boolean searchInNonJavaFiles) {
@@ -56,8 +56,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myClass);
   }
 
@@ -67,7 +66,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
     Set<UsageInfo> usages = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(myClass, myRefactoringScope)) {
+    for (PsiReference reference : ReferencesSearch.search(myClass, myRefactoringScope).asIterable()) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
@@ -89,9 +88,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     if (!myInlineThisOnly && !myClass.isWritable()) {
       return Collections.emptyList();
     }
@@ -129,7 +127,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts, refUsages.get());
@@ -141,7 +139,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, String> result = new MultiMap<>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       @Override
-      protected void checkAddMember(@NotNull final PsiMember member) {
+      protected void checkAddMember(final @NotNull PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
           return;
         }
@@ -161,7 +159,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         super.visitParameter(parameter);
         if (!myClass.isEquivalentTo(PsiUtil.resolveClassInType(parameter.getType()))) return;
 
-        for (PsiReference psiReference : ReferencesSearch.search(parameter)) {
+        for (PsiReference psiReference : ReferencesSearch.search(parameter).asIterable()) {
           final PsiElement refElement = psiReference.getElement();
           if (refElement instanceof PsiExpression) {
             final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refElement, PsiReferenceExpression.class);
@@ -250,12 +248,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         if (statement != null && !myInlineThisOnly) {
           elementsToDelete.add(statement);
         }
-        else {
-          PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
-          if (typeElement != null) {
-            replaceWithSuperType(typeElement, superType);
+        else if (element instanceof PsiJavaCodeReferenceElement ref) {
+            replaceWithSuperType(ref, superType);
           }
-        }
       }
     }
 
@@ -304,14 +299,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void replaceWithSuperType(final PsiTypeElement typeElement, final PsiClassType superType) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    PsiClassType psiType = (PsiClassType) typeElement.getType();
-    PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
-    PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
-    assert myClass.isEquivalentTo(classResolveResult.getElement());
+  private void replaceWithSuperType(PsiJavaCodeReferenceElement ref, PsiClassType superType) {
+    PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(ref, PsiTypeElement.class);
+    if (typeElement == null) return;
+    PsiClassType type = (PsiClassType) typeElement.getType();
+    PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
+    PsiClassType substType = (PsiClassType)classResolveResult.getSubstitutor().substitute(superType);
     try {
-      PsiElement replaced = typeElement.replace(factory.createTypeElement(substType));
+      PsiJavaCodeReferenceElement replacement = JavaPsiFacade.getElementFactory(myProject).createReferenceElementByType(substType);
+      while (!myClass.isEquivalentTo(ref.resolve()) && ref.getQualifier() instanceof PsiJavaCodeReferenceElement qRef) {
+        ref = qRef;
+      }
+      PsiElement replaced = ref.replace(replacement);
       JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(replaced);
     }
     catch(IncorrectOperationException e) {
@@ -319,8 +318,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
-  public static PsiClassType getSuperType(final PsiClass aClass) {
+  public static @Nullable PsiClassType getSuperType(final PsiClass aClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     PsiClassType superType;
@@ -341,8 +339,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }
 }

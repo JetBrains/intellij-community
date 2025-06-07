@@ -28,13 +28,15 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   public static final @NotNull Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
   private static final String PROFILE_NAME = "Commit Dialog"; // NON-NLS
-  public static final InspectionProfileImpl DEFAULT =
-    new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
+
+  private static @NotNull InspectionProfileImpl createDefaultProfile() {
+    return new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
+  }
 
   private final @NotNull Project myProject;
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
-    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), DEFAULT);
+    super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), createDefaultProfile());
 
     myProject = project;
   }

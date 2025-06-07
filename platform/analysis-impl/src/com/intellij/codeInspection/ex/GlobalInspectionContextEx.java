@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -24,6 +24,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,7 +323,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     return myProfile;
   }
 
-  void updateProfile(VirtualFile virtualFile, long millis) {
+  @ApiStatus.Internal
+  public void updateProfile(VirtualFile virtualFile, long millis) {
     if (myProfile != null) {
       Path path = Paths.get(virtualFile.getPath());
       myProfile.merge(path, millis, Long::sum);

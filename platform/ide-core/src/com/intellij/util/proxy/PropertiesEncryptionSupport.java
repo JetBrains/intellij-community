@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.proxy;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +34,7 @@ public final class PropertiesEncryptionSupport {
     return new SecretKeySpec(bytes, "AES");
   }
 
-  @NotNull
-  public Properties load(@NotNull Path file) throws Exception {
+  public @NotNull Properties load(@NotNull Path file) throws Exception {
     Properties props = new Properties();
     byte[] bytes = decrypt(Files.readAllBytes(file));
     props.load(new ByteArrayInputStream(bytes));

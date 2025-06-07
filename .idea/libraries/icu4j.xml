@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="icu4j" type="repository">
-    <properties maven-id="com.ibm.icu:icu4j:73.2">
+    <properties maven-id="com.ibm.icu:icu4j:77.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/73.2/icu4j-73.2.jar">
-          <sha256sum>29280822f4b0796acef1f79b90b1d0c1edd86c10e876a848e04b8a6298a16bf9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar">
+          <sha256sum>b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/icu4j" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/73.2/icu4j-73.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/73.2/icu4j-73.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

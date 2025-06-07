@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+@ApiStatus.NonExtendable
 public interface ProjectEx extends Project {
   String NAME_FILE = ".name";
 
@@ -16,6 +17,11 @@ public interface ProjectEx extends Project {
   @TestOnly
   default boolean isLight() {
     return false;
+  }
+
+  @ApiStatus.Internal
+  default boolean isComponentCreated() {
+    return true;
   }
 
   /**

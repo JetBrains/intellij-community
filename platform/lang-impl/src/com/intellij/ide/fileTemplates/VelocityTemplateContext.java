@@ -17,7 +17,7 @@ public final class VelocityTemplateContext {
       return computable.compute();
     }
     finally {
-      ourTemplateManager.set(null);
+      ourTemplateManager.remove();
     }
   }
 

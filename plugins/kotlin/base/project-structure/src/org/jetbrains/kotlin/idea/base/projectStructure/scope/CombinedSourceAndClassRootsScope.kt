@@ -26,14 +26,21 @@ import org.jetbrains.annotations.ApiStatus
 class CombinedSourceAndClassRootsScope private constructor(
     override val roots: Object2IntMap<VirtualFile>,
     override val modules: Set<Module>,
-    override val includesLibraryRoots: Boolean,
+    override val includesLibraryClassRoots: Boolean,
+    override val includesLibrarySourceRoots: Boolean,
     project: Project,
 ) : AbstractVirtualFileRootsScope(project), CombinableSourceAndClassRootsScope {
-    override fun getFileRoot(file: VirtualFile): VirtualFile? = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file)
+    override fun getFileRoot(file: VirtualFile): VirtualFile? {
+        myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file)?.let { return it }
+        if (includesLibrarySourceRoots) {
+            return myProjectFileIndex.getSourceRootForFile(file)
+        }
+        return null
+    }
 
     override fun isSearchInModuleContent(aModule: Module): Boolean = aModule in modules
 
-    override fun isSearchInLibraries(): Boolean = includesLibraryRoots
+    override fun isSearchInLibraries(): Boolean = includesLibraryClassRoots || includesLibrarySourceRoots
 
     override fun computeFileEnumeration(): VirtualFileEnumeration? {
         // Extracting virtual file enumerations for combined scopes is expensive and leads to a degradation in many cases.
@@ -53,9 +60,16 @@ class CombinedSourceAndClassRootsScope private constructor(
 
             val roots = computeRoots(scopes)
             val modules = scopes.flatMapTo(mutableSetOf()) { it.modules }.ifEmpty { emptySet() }
-            val includesLibraryRoots = scopes.any { it.includesLibraryRoots }
+            val includesLibraryClassRoots = scopes.any { it.includesLibraryClassRoots }
+            val includesLibrarySourceRoots = scopes.any { it.includesLibrarySourceRoots }
 
-            return CombinedSourceAndClassRootsScope(roots, modules, includesLibraryRoots, project)
+            return CombinedSourceAndClassRootsScope(
+                roots,
+                modules,
+                includesLibraryClassRoots = includesLibraryClassRoots,
+                includesLibrarySourceRoots = includesLibrarySourceRoots,
+                project,
+            )
         }
 
         private fun computeRoots(scopes: List<CombinableSourceAndClassRootsScope>): Object2IntMap<VirtualFile> =

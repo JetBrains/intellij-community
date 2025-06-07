@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.Key;
@@ -34,9 +34,8 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
@@ -50,15 +49,13 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw unsupported();
   }
 
@@ -67,9 +64,8 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     throw unsupported();
   }
 
@@ -78,9 +74,8 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public String getUrl() {
+  public @NotNull String getUrl() {
     throw unsupported();
   }
 
@@ -109,15 +104,13 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
     throw unsupported();
   }
 
@@ -131,9 +124,8 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public VirtualFile copy(Object requestor, @NotNull VirtualFile newParent, @NotNull String copyName) {
+  public @NotNull VirtualFile copy(Object requestor, @NotNull VirtualFile newParent, @NotNull String copyName) {
     throw unsupported();
   }
 
@@ -197,9 +189,8 @@ public class StubVirtualFile extends VirtualFile {
     throw unsupported();
   }
 
-  @NotNull
   @Override
-  public <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value) {
+  public @NotNull <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value) {
     throw unsupported();
   }
 

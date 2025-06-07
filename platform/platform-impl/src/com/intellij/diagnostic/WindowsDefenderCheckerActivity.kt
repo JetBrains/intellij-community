@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.WindowsDefenderChecker.ProjectStatus
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.notification.Notification
@@ -44,15 +45,22 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
         WindowsDefenderStatisticsCollector.configured(project, success)
 
-        if (success) {
-          Notification("WindowsDefender", DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
-            .notify(project)
+        // otherwise, the notification will be shown on project opening
+        if (project != null) {
+          notify(project, success)
         }
-        else {
-          Notification("WindowsDefender", DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
-            .addAction(ShowLogAction.notificationAction())
-            .notify(project)
-        }
+      }
+    }
+
+    private fun notify(project: Project, success: Boolean) {
+      if (success) {
+        Notification("WindowsDefender", DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
+          .notify(project)
+      }
+      else {
+        Notification("WindowsDefender", DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
+          .addAction(ShowLogAction.notificationAction())
+          .notify(project)
       }
     }
   }
@@ -66,7 +74,19 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-    if (checker.isStatusCheckIgnored(project) || checker.isAlreadyProcessed(project)) {
+
+    val projectStatus = checker.isAlreadyProcessed(project)
+    if (projectStatus == ProjectStatus.SKIPPED) {
+      LOG.info("status check is skipped for this run")
+      return
+    }
+    if (projectStatus == ProjectStatus.SUCCEED || projectStatus == ProjectStatus.FAILED) {
+      LOG.info("requested from the \"trust project\" dialog; status=${projectStatus}")
+      notify(project, success = projectStatus == ProjectStatus.SUCCEED)
+      return
+    }
+
+    if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return

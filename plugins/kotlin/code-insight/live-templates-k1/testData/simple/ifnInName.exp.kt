@@ -1,0 +1,1 @@
+fun `do smth ififnInNameb<caret>`() {}

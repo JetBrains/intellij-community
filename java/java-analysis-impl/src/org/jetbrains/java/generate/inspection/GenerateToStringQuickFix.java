@@ -39,14 +39,12 @@ public final class GenerateToStringQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return InspectionGadgetsBundle.message("generate.to.string.quick.fix.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("generate.to.string.quick.fix.family.name");
   }
 

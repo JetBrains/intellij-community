@@ -3,17 +3,15 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 
-abstract class PrecisionMetricBase : Metric {
-  private val sample = mutableListOf<Double>()
+abstract class PrecisionMetricBase : ConfidenceIntervalMetric<Double>() {
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
-    get() = sample.average()
+    get() = compute(sample)
 
-  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
+  override fun compute(sample: List<Double>): Double = sample.average()
 
   override fun evaluate(sessions: List<Session>): Double {
     val lookups = getLookups(sessions)
@@ -22,7 +20,7 @@ abstract class PrecisionMetricBase : Metric {
       for (suggestion in lookup.suggestions) {
         val value = if (suggestion.isRelevant) 1.0 else 0.0
         fileSample.add(value)
-        sample.add(value)
+        coreSample.add(value)
       }
     }
     return fileSample.mean()

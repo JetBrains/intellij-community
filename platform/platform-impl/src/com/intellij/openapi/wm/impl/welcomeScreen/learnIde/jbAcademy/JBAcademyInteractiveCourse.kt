@@ -24,8 +24,7 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
             PlatformUtils.isCLion() ||
             PlatformUtils.isGoIde() ||
             PlatformUtils.isPhpStorm() ||
-            PlatformUtils.isRustRover() ||
-            PlatformUtils.getPlatformPrefix() == "AndroidStudio"
+            PlatformUtils.isRustRover()
 
   override val isEnabled: Boolean = true
 

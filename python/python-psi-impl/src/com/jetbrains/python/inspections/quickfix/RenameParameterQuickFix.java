@@ -22,21 +22,19 @@ public class RenameParameterQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyNamedParameter pyNamedParameter) {
       updater.rename(pyNamedParameter, List.of(myNewName));
     }
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.rename.parameter");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.rename.parameter", myNewName);
   }
 }

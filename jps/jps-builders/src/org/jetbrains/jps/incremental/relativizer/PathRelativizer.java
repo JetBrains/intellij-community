@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * paths back and get the paths to the files on the filesystem itself.
  *
  * <p>If you need to add the support of additional relativizer e.g., Gradle dependencies path, you should implement this
- * interface and add the instance of class to the {@link PathRelativizerService#myRelativizers} list.
+ * interface and add the instance of class to the {@link PathRelativizerService#relativizers} list.
  * Adding the relativizers at the runtime it's not supported because this feature is experimental for now.</p>
  *
  * <p><b>NOTE: Relativizer works with system-independent paths. You shouldn't do any explicit conversion before passing

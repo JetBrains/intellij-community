@@ -180,8 +180,7 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     return null;
   }
 
-  @Nullable
-  private static FileLock tryLockDirectory(@NotNull Path directory) {
+  private static @Nullable FileLock tryLockDirectory(@NotNull Path directory) {
     try {
       Files.createDirectories(directory);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -10,6 +10,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -18,7 +19,6 @@ import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import java.util.*;
-import java.util.function.Function;
 
 public final class CompileScopeUtil {
   private static final Key<List<TargetTypeBuildScope>> BASE_SCOPE_FOR_EXTERNAL_BUILD = Key.create("SCOPE_FOR_EXTERNAL_BUILD");
@@ -60,22 +60,14 @@ public final class CompileScopeUtil {
       return;
     }
     final Map<BuildTargetType<?>, Set<String>> targetsByType = new HashMap<>();
-    final Function<BuildTargetType<?>, Set<String>> idsOf = targetType -> {
-      Set<String> ids = targetsByType.get(targetType);
-      if (ids == null) {
-        ids = new HashSet<>();
-        targetsByType.put(targetType, ids);
-      }
-      return ids;
-    };
     for (ModuleSourceSet set : sets) {
       final BuildTargetType<?> targetType = toTargetType(set);
       assert targetType != null;
-      idsOf.apply(targetType).add(set.getModule().getName());
+      targetsByType.computeIfAbsent(targetType, tt -> new HashSet<>()).add(set.getModule().getName());
     }
     if (!unloadedModules.isEmpty()) {
       for (JavaModuleBuildTargetType targetType : JavaModuleBuildTargetType.ALL_TYPES) {
-        idsOf.apply(targetType).addAll(unloadedModules);
+        targetsByType.computeIfAbsent(targetType, tt -> new HashSet<>()).addAll(unloadedModules);
       }
     }
 
@@ -158,7 +150,7 @@ public final class CompileScopeUtil {
     return allModules.isEmpty();
   }
 
-  public static List<String> fetchFiles(CompileContextImpl context) {
+  public static @Unmodifiable List<String> fetchFiles(CompileContextImpl context) {
     if (context.isRebuild()) {
       return Collections.emptyList();
     }

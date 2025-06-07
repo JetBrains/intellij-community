@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<Experiments>()
 
-// used in tests where mock app is used - do not remove empty constructor
+// used in tests where mock app is used - do not remove the empty constructor
 @Service
 class Experiments @JvmOverloads constructor(coroutineScope: CoroutineScope? = null) {
   private val cache = ConcurrentHashMap<String, Boolean>()
@@ -80,6 +80,11 @@ class Experiments @JvmOverloads constructor(coroutineScope: CoroutineScope? = nu
 }
 
 private fun calcIsFeatureEnabled(feature: ExperimentalFeature, propertyManager: PropertiesComponent): Boolean {
+  val manualOptionIdText = System.getProperty("platform.experiment.ab.manual.option", "")
+  if ("control.option".equals(manualOptionIdText, ignoreCase = true)) {
+    return false
+  }
+
   val key = toPropertyKey(feature)
   return if (propertyManager.isValueSet(key)) propertyManager.getBoolean(key, false) else feature.isEnabled()
 }

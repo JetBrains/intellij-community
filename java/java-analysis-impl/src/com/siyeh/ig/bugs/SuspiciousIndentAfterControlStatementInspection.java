@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SuspiciousIndentAfterControlStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiStatement statement = (PsiStatement)infos[0];
     final PsiElement token = statement.getFirstChild();
     return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.problem.descriptor", token.getText());

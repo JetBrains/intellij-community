@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -55,7 +56,7 @@ import java.util.function.Supplier;
 import static com.intellij.ui.border.NamedBorderKt.withName;
 
 /**
- * @author Dmitry Avdeev
+ * See also {@link InlineBanner} that supports multiple lines
  */
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
 
@@ -368,7 +369,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
                                                          @NotNull @NonNls String actionId,
                                                          boolean showInIntentionMenu) {
-    return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
+    return createActionLabel(text, new ActionHandler() {
+      @Override
+      public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
+        executeAction(actionId, event);
+      }
+
+      @Override
+      public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+      }
+    }, showInIntentionMenu);
   }
 
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
@@ -402,7 +412,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public interface ActionHandler {
     /**
-     * Invoked when an action-link click from the notification panel
+     * Invoked when an action-link clicks from the notification panel
      */
     void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
                                 @NotNull HyperlinkEvent event);
@@ -446,9 +456,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    ActionUtil.performAction(action, event);
+  }
+
+  protected void executeAction(@NonNls String actionId, @NotNull HyperlinkEvent e) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      throw new AssertionError("'" + actionId + "' is not an found");
     }
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createEvent(dataContext, null, getActionPlace(), ActionUiKind.TOOLBAR, e.getInputEvent());
+    ActionUtil.performAction(action, event);
   }
 
   protected @NotNull String getActionPlace() {
@@ -582,8 +600,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myOptions.get(0).invoke(project, editor, file);
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+      myOptions.get(0).invoke(project, editor, psiFile);
     }
 
     @Override
@@ -622,13 +640,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      return myOptions.get(0).generatePreview(project, editor, file);
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      return myOptions.get(0).generatePreview(project, editor, psiFile);
     }
 
     @Override
@@ -655,23 +673,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       if (myLabel instanceof ActionHyperlinkLabel actionLabel) {
-        actionLabel.handleIntentionActionClick(editor, file);
+        actionLabel.handleIntentionActionClick(editor, psiFile);
       } else {
         myLabel.doClick();
       }
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
       if (myLabel instanceof ActionHyperlinkLabel actionLabel) {
-        return actionLabel.myHandler.generatePreview(editor, file);
+        return actionLabel.myHandler.generatePreview(editor, psiFile);
       }
       return IntentionPreviewInfo.EMPTY;
     }
@@ -700,12 +718,12 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       myLabel.dispatchEvent(new MouseEvent(myLabel, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 1, false));
       myLabel.dispatchEvent(new MouseEvent(myLabel, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0, 0, 0, 1, false));
       myLabel.dispatchEvent(new MouseEvent(myLabel, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false));
@@ -722,15 +740,15 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  @NotNull
-  private static Icon getPromoIcon() {
-    // todo it can be different in PyCharm Pro
+  private static @NotNull Icon getPromoIcon() {
+    if (PlatformUtils.isPyCharm()) return AllIcons.Ultimate.PycharmLock;
+
     return AllIcons.Ultimate.Lock;
   }
 
   public enum Status {
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
-    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Debugger.ThreadStates.Idle),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Status.Success),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
     Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
     Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon);

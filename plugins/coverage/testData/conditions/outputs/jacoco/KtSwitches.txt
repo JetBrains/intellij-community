@@ -63,7 +63,7 @@ Line 53 coverage: FULL
 Hits: 1
 Line 56 coverage: PARTIAL
 Hits: 1
-Covered 3/10 branches
+Covered 2/8 branches
 Line 59 coverage: FULL
 Hits: 1
 Line 65 coverage: FULL
@@ -75,9 +75,9 @@ Hits: 1
 Covered 1/2 branches
 Line 72 coverage: FULL
 Hits: 1
-Line 75 coverage: PARTIAL
+Line 75 coverage: FULL
 Hits: 1
-Covered 5/6 branches
+Covered 4/4 branches
 Line 76 coverage: FULL
 Hits: 1
 Line 77 coverage: FULL
@@ -88,9 +88,9 @@ Line 79 coverage: FULL
 Hits: 1
 Line 81 coverage: FULL
 Hits: 1
-Line 84 coverage: PARTIAL
+Line 84 coverage: FULL
 Hits: 1
-Covered 6/7 branches
+Covered 5/5 branches
 Line 85 coverage: FULL
 Hits: 1
 Line 86 coverage: FULL

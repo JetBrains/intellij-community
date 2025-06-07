@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -52,7 +52,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  public void setAutoBases(@NotNull final Collection<? extends VirtualFile> autoBases) {
+  public void setAutoBases(final @NotNull Collection<? extends VirtualFile> autoBases) {
     final String path = myPatch.getBeforeName() == null ? myPatch.getAfterName() : myPatch.getBeforeName();
     for (VirtualFile autoBase : autoBases) {
       final VirtualFile willBeBase = PathMerger.getBase(autoBase, path);
@@ -136,14 +136,12 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
 
   protected abstract ContentRevision getNewContentRevision();
 
-  @NotNull
-  protected FilePath getFilePath() {
+  protected @NotNull FilePath getFilePath() {
     return FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
                                                   : detectNewFilePathForMovedOrModified();
   }
 
-  @NotNull
-  protected FilePath detectNewFilePathForMovedOrModified() {
+  protected @NotNull FilePath detectNewFilePathForMovedOrModified() {
     return FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)
            ? VcsUtil.getFilePath(Objects.requireNonNull(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName())), false)
            : (myCurrentBase != null) ? VcsUtil.getFilePath(myCurrentBase) : VcsUtil.getFilePath(myIoCurrentBase, false);
@@ -191,8 +189,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  @NotNull
-  public abstract DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
+  public abstract @NotNull DiffRequestProducer getDiffRequestProducers(Project project, PatchReader baseContents);
 
   public List<VirtualFile> getAutoBasesCopy() {
     List<VirtualFile> result = new ArrayList<>(myAutoBases.size() + 1);
@@ -248,8 +245,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     return myStrippable.getCurrentPath();
   }
 
-  @NotNull
-  public String getOriginalBeforePath() {
+  public @NotNull String getOriginalBeforePath() {
     return myStrippable.getOriginalBeforePath();
   }
 
@@ -325,8 +321,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
       return mySourcePath.substring(myParts[myCurrentStrip]);
     }
 
-    @NotNull
-    private String getOriginalPath() {
+    private @NotNull String getOriginalPath() {
       return mySourcePath.toString();
     }
 
@@ -425,8 +420,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
       return myParts[0].getCurrentPath();
     }
 
-    @NotNull
-    private String getOriginalBeforePath() {
+    private @NotNull String getOriginalBeforePath() {
       return myParts[myBeforeIdx].getOriginalPath();
     }
 

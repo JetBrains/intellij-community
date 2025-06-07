@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.declarations;
 
@@ -36,6 +36,11 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
         @TestMetadata("ClassDeclarations.kt")
         public void testClassDeclarations() throws Exception {
             runTest("testData/joinLines/addSemicolon/ClassDeclarations.kt");
+        }
+
+        @TestMetadata("FunctionAndProperty.kt")
+        public void testFunctionAndProperty() throws Exception {
+            runTest("testData/joinLines/addSemicolon/FunctionAndProperty.kt");
         }
 
         @TestMetadata("FunctionCalls.kt")
@@ -101,6 +106,21 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
         @TestMetadata("MemberFunctions.kt")
         public void testMemberFunctions() throws Exception {
             runTest("testData/joinLines/addSemicolon/MemberFunctions.kt");
+        }
+
+        @TestMetadata("Properties.kt")
+        public void testProperties() throws Exception {
+            runTest("testData/joinLines/addSemicolon/Properties.kt");
+        }
+
+        @TestMetadata("PropertyAccessors.kt")
+        public void testPropertyAccessors() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertyAccessors.kt");
+        }
+
+        @TestMetadata("PropertyAndFunction.kt")
+        public void testPropertyAndFunction() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertyAndFunction.kt");
         }
 
         @TestMetadata("WhileAndACall.kt")

@@ -8,7 +8,6 @@ import com.intellij.util.ui.EDT
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
-import java.util.concurrent.atomic.AtomicReference
 
 
 /**
@@ -42,19 +41,17 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
  * When the disposable is disposed of its own, there should be no leaks because the subscription to [lifetime] is also terminated on disposal of [this].
  */
 fun Disposable.attachAsChildTo(lifetime: Lifetime) {
-  val disposableRef = AtomicReference(this)
   val childLt = lifetime.createNested()
-  childLt.onTermination {
-    disposableRef.getAndSet(null)?.let {
-      Disposer.dispose(it)
-    }
+  if (!childLt.onTerminationIfAlive {
+      disposeUnderIntentLockIfNeeded(this)
+    }) {
+    disposeUnderIntentLockIfNeeded(this)
+    return
   }
 
   if (!Disposer.tryRegister(this) {
-    disposableRef.getAndSet(null)?.let {
       childLt.terminate()
-    }
-  }) {
+    }) {
     childLt.terminate()
   }
 }
@@ -78,31 +75,22 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
  * If the lifetime was already terminated, the returned disposable will be disposed too,
  */
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
-  val d = Disposer.newDisposable(debugName)
+  val d = Disposer.newDisposable(debugName).apply {
+    attachAsChildTo(this@createNestedDisposable)
+  }
+  return d
+}
 
-  // All disposables that are disposed on EDT expect WriteIntentLock.
-  // But sometimes lifetimes are terminated on background thread without any guarantees
-  // Need to fix all clients and remove conditional lock here
-  val added =
-    this.onTerminationIfAlive {
-      if (EDT.isCurrentThreadEdt()) {
-        WriteIntentReadAction.run {
-          Disposer.dispose(d)
-        }
-      }
-      else {
-        Disposer.dispose(d)
-      }
-    }
-  if (!added) { // false indicates an already-terminated lifetime
-    if (EDT.isCurrentThreadEdt()) {
-      WriteIntentReadAction.run {
-        Disposer.dispose(d)
-      }
-    }
-    else {
+// All disposables that are disposed on EDT expect WriteIntentLock.
+// But sometimes lifetimes are terminated on background thread without any guarantees
+// Need to fix all clients and remove conditional lock here
+private fun disposeUnderIntentLockIfNeeded(d: Disposable) {
+  if (EDT.isCurrentThreadEdt()) {
+    WriteIntentReadAction.run {
       Disposer.dispose(d)
     }
   }
-  return d
+  else {
+    Disposer.dispose(d)
+  }
 }

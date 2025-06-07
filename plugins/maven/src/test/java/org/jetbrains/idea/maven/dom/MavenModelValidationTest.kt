@@ -125,11 +125,38 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testUnknownModelVersion() = runBlocking {
+  fun testUnknownModelVersionMaven4() = runBlocking {
+    assumeMaven4()
     fixture.saveText(projectPom,
                      """
                          <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                           <modelVersion><error descr="Unsupported model version. Only version 4.0.0 is supported.">666</error></modelVersion>
+                           <modelVersion><error descr="Unsupported model version. Only versions [4.0.0, 4.1.0] are supported.">666</error></modelVersion>
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    checkHighlighting()
+  }
+
+  @Test
+  fun testModelVersion41isUnsupportedInMaven3() = runBlocking {
+    assumeMaven3()
+    fixture.saveText(projectPom,
+                     """
+                         <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                           <modelVersion><error descr="Unsupported model version. Only versions [4.0.0] are supported.">4.1.0</error></modelVersion>
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    checkHighlighting()
+  }
+
+  @Test
+  fun testModelVersion41isSupportedInMaven4() = runBlocking {
+    assumeMaven4()
+    fixture.saveText(projectPom,
+                     """
+                         <project xmlns="http://maven.apache.org/POM/4.0.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                           <modelVersion>4.1.0</modelVersion>
                            <artifactId>foo</artifactId>
                          </project>
                          """.trimIndent())
@@ -164,33 +191,6 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
     fixture.saveText(projectPom,
                      """
                          <<error descr="'settings.xml' has syntax errors">project</error>>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
-  }
-
-  @Test
-  fun testAddingProfilesXmlReadingProblemsToProjectTag() = runBlocking {
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                         </project>
-                         """.trimIndent())
-    createProfilesXml("<<<")
-
-    importProjectAsync()
-
-    fixture.saveText(projectPom,
-                     """
-                         <<error descr="'profiles.xml' has syntax errors">project</error>>
                            <modelVersion>4.0.0</modelVersion>
                            <groupId>test</groupId>
                            <artifactId>project</artifactId>

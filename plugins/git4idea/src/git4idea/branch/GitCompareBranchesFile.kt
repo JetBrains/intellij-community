@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -21,7 +22,10 @@ internal class GitCompareBranchesFile(project: Project,
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManger ->
-      val component = compareBranchesUiFactory().create(logManger)
+      val component = compareBranchesUiFactory().create(logManger) {
+        isValid = false
+        FileEditorManager.getInstance(project).closeFile(this)
+      }
       panel.add(component, BorderLayout.CENTER)
     }
     return panel

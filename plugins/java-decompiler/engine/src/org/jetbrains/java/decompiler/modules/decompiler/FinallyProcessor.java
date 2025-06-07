@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -352,8 +352,7 @@ public class FinallyProcessor {
     }
   }
 
-  @NotNull
-  private static BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion, int storeLength) {
+  private static @NotNull BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion, int storeLength) {
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
     seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{value}, 1), -1);
     seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}, storeLength), -1);
@@ -579,7 +578,7 @@ public class FinallyProcessor {
               if (catchBlocks.contains(sucCatch) && !setSample.contains(sucSample)) {
                 List<int[]> lst = entry.lstStoreVars;
 
-                if (sucCatch.getSeq().length() > 0 && sucSample.getSeq().length() > 0) {
+                if (!sucCatch.getSeq().isEmpty() && !sucSample.getSeq().isEmpty()) {
                   Instruction instrCatch = sucCatch.getSeq().getInstr(0);
                   Instruction instrSample = sucSample.getSeq().getInstr(0);
 
@@ -924,7 +923,7 @@ public class FinallyProcessor {
       if ((blockType & 1) > 0) { // first
         if (finallyType == 2 || finallyType == 1) { // `AStore` or `Pop`
           seq.removeInstruction(0);
-          instrOldOffsets.remove(0);
+          // don't delete offset, because it is crucial for line-mapping
         }
       }
 

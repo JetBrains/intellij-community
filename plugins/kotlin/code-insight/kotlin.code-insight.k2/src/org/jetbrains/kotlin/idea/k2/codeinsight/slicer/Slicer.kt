@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 
@@ -12,11 +12,7 @@ import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
@@ -27,8 +23,8 @@ import org.jetbrains.kotlin.idea.base.searching.usages.processAllUsages
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -89,10 +85,11 @@ abstract class Slicer(
 
         HierarchySearchRequest(this, analysisScope)
             .searchOverriders()
+            .asIterable()
             .forEach { it.namedUnwrappedElement?.passToProcessor(mode) }
 
         if (this is KtCallableDeclaration && isExpectDeclaration()) {
-            this.actualsForExpected().forEach {
+            this.actualsForExpect().forEach {
                     it.passToProcessor(mode)
                 }
         }
@@ -137,7 +134,7 @@ abstract class Slicer(
                     add(callable)
                     addAll(callableSymbol.allOverriddenSymbols.mapNotNull { it.psi })
                     if (callableSymbol.isActual) {
-                        addIfNotNull(callable.expectedDeclarationIfAny())
+                        addIfNotNull(callable.expectDeclarationIfAny())
                     }
                 }
             }
@@ -197,7 +194,7 @@ abstract class Slicer(
             val descriptor = declaration.symbol
             if (descriptor is KaCallableSymbol) {
                 if (descriptor.isActual) {
-                    allDeclarations.addIfNotNull(declaration.expectedDeclarationIfAny() as? KtCallableDeclaration)
+                    allDeclarations.addIfNotNull(declaration.expectDeclarationIfAny() as? KtCallableDeclaration)
                 } else {
                     descriptor.allOverriddenSymbols.mapNotNullTo(allDeclarations) { it.psi as? KtCallableDeclaration }
                 }

@@ -6,6 +6,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final List<Filter> myFilters = new SmartList<>();
   private boolean myViewer;
   private boolean myUsePredefinedMessageFilter = true;
+  private boolean useOwnModalityStateForUpdates = false;
 
   public TextConsoleBuilderImpl(@NotNull Project project) {
     this(project, GlobalSearchScope.allScope(project));
@@ -35,8 +37,16 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     return consoleView;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void setUseOwnModalityStateForUpdates(boolean useOwnModalityStateForUpdates) {
+    this.useOwnModalityStateForUpdates = useOwnModalityStateForUpdates;
+  }
+
   protected @NotNull ConsoleView createConsole() {
-    return new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
+    var result = new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
+    result.setUseOwnModalityForUpdates$intellij_platform_lang_impl(useOwnModalityStateForUpdates);
+    return result;
   }
 
   @Override

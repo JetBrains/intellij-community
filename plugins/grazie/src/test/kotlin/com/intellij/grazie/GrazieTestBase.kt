@@ -5,14 +5,15 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
@@ -23,8 +24,10 @@ import kotlinx.coroutines.runBlocking
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
-    val inspectionTools: Array<out LocalInspectionTool> by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
-    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
+    val inspectionTools by lazy {
+      arrayOf<LocalInspectionTool>(GrazieInspection(), SpellCheckingInspection())
+    }
+    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN, Lang.PORTUGAL_PORTUGUESE)
     val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
 
@@ -51,6 +54,9 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         checkingContext = checkingContext
       )
     }
+
+    service<GrazieCheckers>().awaitConfiguration()
+
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
 
     val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
@@ -60,6 +66,8 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   override fun tearDown() {
     try {
       GrazieConfig.update { GrazieConfig.State() }
+
+      service<GrazieCheckers>().awaitConfiguration()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -84,9 +92,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return tokens.flatMap {
       TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
         runBlocking {
-          blockingContext {
-            LanguageToolChecker().check(text)
-          }
+          LanguageToolChecker().check(text)
         }
       }
     }

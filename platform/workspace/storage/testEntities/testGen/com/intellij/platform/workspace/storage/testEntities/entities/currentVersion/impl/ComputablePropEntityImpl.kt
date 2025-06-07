@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEntityData) : ComputablePropEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEntityData) : ComputablePropEntity,
+                                                                                            WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -62,8 +61,8 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
   }
 
 
-  internal class Builder(result: ComputablePropEntityData?) : ModifiableWorkspaceEntityBase<ComputablePropEntity, ComputablePropEntityData>(
-    result), ComputablePropEntity.Builder {
+  internal class Builder(result: ComputablePropEntityData?) :
+    ModifiableWorkspaceEntityBase<ComputablePropEntity, ComputablePropEntityData>(result), ComputablePropEntity.Builder {
     internal constructor() : this(ComputablePropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -205,7 +204,8 @@ internal class ComputablePropEntityData : WorkspaceEntityData<ComputablePropEnti
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ComputablePropEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ComputablePropEntity"
+    ) as EntityMetadata
   }
 
   override fun clone(): ComputablePropEntityData {

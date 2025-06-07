@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.workspaceModel.ide.impl.jps.serialization
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -36,6 +37,7 @@ import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
@@ -46,6 +48,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.Path
@@ -240,14 +243,31 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
     .filterIsInstance<JpsFileEntitySource>()
     .filterNot { it is JpsGlobalFileEntitySource } // Do not check global entity sources in project-level serializers
     .mapTo(HashSet()) { getNonNullActualFileUrl(it) }
-  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
-    .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }.map { it.key }.sorted())
+
+  // iml file can be declared in modules.xml, but there might be no the file itself on the disk. Not sure if we should consider this
+  // situation as an empty module declaration, or no module at all (at the moment we consider this as a no-module).
+  // Either way, we have a serializer (because ModuleListSerializer creates serializers based on what it sees in the modules.xml
+  // file, even if the iml file does not exist on the disk). This should be taken into account during validation.
+  val moduleSerializersWithoutFiles = fileSerializersByUrl.values
+    .mapNotNull { it as? ModuleImlFileEntitiesSerializer }
+    .filter { !Files.exists(Paths.get(it.modulePath.path)) }
+    .toSet()
+  val moduleFileNamesWithoutFiles = moduleSerializersWithoutFiles.map { it.modulePath.moduleName + ".iml" }.toSet()
+  val moduleUrlsWithoutFiles = moduleSerializersWithoutFiles.map { it.fileUrl.url }.toSet()
+
+  // module without iml file is kind of a serializer without entity, but when WSM is loaded from cache, we can find ourselves in a situation
+  // that file on the disk does not exist already, but entities loaded from that file still exist. I.e. urlsFromSources
+  // may (when the model loaded from cache) or may not (when the model loaded from files) contain non-existing module urls.
+  assertEquals((urlsFromSources + moduleUrlsWithoutFiles).sorted(), fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }
+    .filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it) } }
+    .map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.filterIsInstance<JpsProjectFileEntitySource.FileInDirectory>().mapTo(
     HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()
   assertTrue("Some fileNameId aren't registered: ${unregisteredIds}", unregisteredIds.isEmpty())
-  val staleIds = fileIdToFileName.keys.toSet() - fileIdFromEntities
+  val staleIds = (fileIdToFileName.keys.toSet() - fileIdFromEntities).toMutableSet()
+  staleIds.removeIf { moduleFileNamesWithoutFiles.contains(fileIdToFileName[it]) } // module without iml file not producing a stale file id
   assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}",
              staleIds.isEmpty())
 }
@@ -437,10 +457,10 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
       ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java,
                                                          JpsGlobalModelSynchronizerImpl(coroutineScope),
                                                          parentDisposable)
-      ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
+      ApplicationManager.getApplication().replaceService(GlobalWorkspaceModelRegistry::class.java, GlobalWorkspaceModelRegistry(), parentDisposable)
 
       // Entity source for global entities
-      val virtualFileManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
       val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
       val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
@@ -453,7 +473,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
         application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
         val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                         "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-        val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).entityStorage.current
         if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
           optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                       filePathFilter = { it.contains("jdk.table.xml") })

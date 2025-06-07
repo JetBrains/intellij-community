@@ -137,9 +137,8 @@ public interface ModCommandExecutor {
      */
     CONFLICTS;
 
-    @Nls
     @Override
-    public @NotNull String getMessage() {
+    public @Nls @NotNull String getMessage() {
       return switch (this) {
         case SUCCESS -> AnalysisBundle.message("modcommand.result.action.completed.successfully");
         case INTERACTIVE -> AnalysisBundle.message("modcommand.result.action.is.interactive.only.cannot.be.executed.in.batch");
@@ -155,9 +154,8 @@ public interface ModCommandExecutor {
    * @param message user-readable error message
    */
   record Error(@NotNull @NlsContexts.Tooltip String message) implements BatchExecutionResult {
-    @Nls
     @Override
-    public @NotNull String getMessage() {
+    public @Nls @NotNull String getMessage() {
       return message;
     }
   }

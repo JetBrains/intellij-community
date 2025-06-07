@@ -1,6 +1,5 @@
 package com.intellij.remoteDev.downloader
 
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**

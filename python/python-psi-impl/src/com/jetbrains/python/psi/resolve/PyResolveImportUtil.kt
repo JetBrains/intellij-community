@@ -22,11 +22,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.LanguageLevel
@@ -150,7 +148,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
                                                        !context.withMembers,
                                                        !context.withPlainDirectories, context.withoutStubs,
                                                        context.withoutForeign)
-      PyUtil.filterTopPriorityResults(children.toTypedArray())
+      PyUtil.filterTopPriorityElements(children)
     }
   }
 }
@@ -246,10 +244,8 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
 
 private fun resolveWithRelativeLevel(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val footholdFile = context.footholdFile
-  if (context.relativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
-    return resolveModuleAt(name, context.containingDirectory,
-                           context) + relativeResultsForStubsFromRoots(
-      name, context)
+  if (context.relativeLevel >= 0 && footholdFile != null) {
+    return resolveModuleAt(name, context.containingDirectory, context) + relativeResultsForStubsFromRoots(name, context)
   }
   return emptyList()
 }
@@ -277,11 +273,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     val results = if (isModuleSource) moduleResults else sdkResults
     val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
-        root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
         effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
-      return@RootVisitor true
-    }
-    if (effectiveSdk != null && PyBundledStubs.isBundledStubsDirectory(root) && !PyBundledStubs.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }
     if (withoutStubs && (PyTypeShed.isInside(root) ||

@@ -1,0 +1,6 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <rect rx="2" stroke="#CED0D6" stroke-linecap="round" x="1" y="3" width="14" height="10"/>
+  <line stroke="#CED0D6" stroke-linecap="round" x1="11.5" y1="9.5" x2="13.5" y2="7.5"/>
+  <line stroke="#CED0D6" stroke-linecap="round" x1="11.5" y1="9.5" x2="9.5" y2="7.5"/>
+</svg>

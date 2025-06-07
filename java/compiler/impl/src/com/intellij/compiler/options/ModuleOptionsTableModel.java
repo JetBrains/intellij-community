@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class ModuleOptionsTableModel extends AbstractTableModel implements ItemRemovable {
   private static class Item {
@@ -31,8 +31,7 @@ public class ModuleOptionsTableModel extends AbstractTableModel implements ItemR
 
   private final List<Item> myItems = new ArrayList<>();
 
-  @NotNull
-  public Map<String, String> getModuleOptions() {
+  public @NotNull Map<String, String> getModuleOptions() {
     Map<String, String> map = new HashMap<>();
     for (Item item : myItems) {
       map.put(item.module.getName(), item.option);

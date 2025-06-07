@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.slicer;
 
@@ -120,6 +120,16 @@ public class FirSlicerLeafGroupingTestGenerated extends AbstractFirSlicerLeafGro
         runTest("../../idea/tests/testData/slicer/inflow/doubleLambdaResult.kt");
     }
 
+    @TestMetadata("elvis.kt")
+    public void testElvis() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/elvis.kt");
+    }
+
+    @TestMetadata("emptyFun.kt")
+    public void testEmptyFun() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/emptyFun.kt");
+    }
+
     @TestMetadata("enumConstants.kt")
     public void testEnumConstants() throws Exception {
         runTest("../../idea/tests/testData/slicer/inflow/enumConstants.kt");
@@ -198,6 +208,11 @@ public class FirSlicerLeafGroupingTestGenerated extends AbstractFirSlicerLeafGro
     @TestMetadata("ifExpression.kt")
     public void testIfExpression() throws Exception {
         runTest("../../idea/tests/testData/slicer/inflow/ifExpression.kt");
+    }
+
+    @TestMetadata("infiniteRecursion.kt")
+    public void testInfiniteRecursion() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/infiniteRecursion.kt");
     }
 
     @TestMetadata("inlineExtensionImplicitReceiver.kt")

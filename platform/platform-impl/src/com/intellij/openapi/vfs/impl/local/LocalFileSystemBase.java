@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -307,7 +307,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         var actualCS = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
         if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
           // we need to update case sensitivity
-          var event = VirtualDirectoryImpl.generateCaseSensitivityChangedEvent(parent, actualCS);
+          var event = ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEvent(parent, actualCS);
           if (event != null) {
             RefreshQueue.getInstance().processEvents(false, List.of(event));
           }
@@ -355,6 +355,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected static byte @NotNull [] readIfNotTooLarge(Path nioFile) throws IOException {
+    byte[] maybeContent = LocalFileSystemEelUtil.readWholeFileIfNotTooLargeWithEel(nioFile);
+    if (maybeContent != null) {
+      return maybeContent;
+    }
+
     //MAYBE RC: The only reason to get file size here is to check it is not too big. We could skip this check, and start
     //          to load the file, and throw the exception if _loaded_ size exceeds the limit -- huge files are infrequent
     //          cases, so this approach optimizes the fast path.
@@ -362,6 +367,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
     //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
     //          does provide anything -- and my guess: it probably doesn't
+
     var length = Files.size(nioFile);
 
     if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
@@ -503,6 +509,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           // root path should be short. See com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache.assertShortFileName
           if (stringRoot.length() > 1 && (stringRoot.endsWith("\\") || stringRoot.endsWith("/"))) {
             stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
+          }
+
+          if (PathUtilRt.isWindowsUNCRoot(stringRoot, normalizedPath.indexOf('/', 2))) {
+            stringRoot = stringRoot.replace('\\', '/');
           }
 
           return stringRoot;

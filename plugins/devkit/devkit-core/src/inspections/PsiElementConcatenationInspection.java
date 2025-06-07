@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.*;
@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +21,10 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import java.util.HashSet;
 import java.util.Set;
 
-final class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
-  @NotNull
+@ApiStatus.Internal
+public final class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!DevKitInspectionUtil.isAllowed(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     if (!DevKitInspectionUtil.isClassAvailable(holder, PsiElementFactory.class.getName())) {
@@ -107,17 +108,13 @@ final class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspe
       myMethodName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return DevKitBundle.message("inspections.psi.element.concat.add.get.text.name", myMethodName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.psi.element.concat.add.get.text.family.name");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnit5AssertionsConverterInspection
@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 
 abstract class JUnit5AssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = JUnit5AssertionsConverterInspection()
+  override val inspection: JUnit5AssertionsConverterInspection = JUnit5AssertionsConverterInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -20,5 +20,5 @@ abstract class JUnit5AssertionsConverterInspectionTestBase : JvmInspectionTestBa
     }
   }
 
-  override fun getProjectDescriptor() = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

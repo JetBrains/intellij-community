@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 public final class ProjectIndexingComponent implements DumbService.DumbModeListener {
   public static final String PROFILE_INDEXING_COMPONENT = "performancePlugin.isProfileIndexing";
   public static final String PROFILE_WITH_ASYNC = "performancePlugin.isProfileIndexingWithAsync";
-  @NotNull private final Project project;
+  private final @NotNull Project project;
   private static final int TIMEOUT = 500;
   private final Alarm alarm;
 

@@ -6,9 +6,8 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -31,11 +30,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
-import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
-import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
-import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -59,15 +54,14 @@ object DebuggerUtils {
         scope: GlobalSearchScope,
         className: JvmClassName,
         fileName: String,
-    ): KtFile? = runBlockingMaybeCancellable {
-        findSourceFileForClass(
-            project,
-            listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
-            className,
-            fileName,
-            location = null
+    ): KtFile? = ReadAction.nonBlocking<KtFile?> {
+        val scopes = listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project))
+        val files = findSourceFilesForClass(
+            project, scopes, className, fileName,
+            hasLocation = false, classNameResolvesInline = false
         )
-    }
+        files.firstOrNull()
+    }.executeSynchronously()
 
     internal suspend fun findSourceFileForClass(
         project: Project,
@@ -85,6 +79,7 @@ object DebuggerUtils {
         return chooseApplicableFile(files, location)
     }
 
+    @RequiresReadLock
     internal fun findSourceFilesForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
@@ -112,10 +107,8 @@ object DebuggerUtils {
                 return listOf(files.first())
             }
 
-            val singleFile = runReadAction {
-                val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
-                PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
-            }
+            val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
+            val singleFile = PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
 
             if (singleFile != null) {
                 return listOf(singleFile)
@@ -179,7 +172,7 @@ object DebuggerUtils {
     }
 
     private fun isApplicable(file: KtFile, className: JvmClassName): Boolean {
-        val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
+        val classNames = ClassNameCalculator.getInstance().getTopLevelNames(file).map(String::fqnToInternalName)
         return className.internalName.isInnerClassOfAny(classNames)
     }
 

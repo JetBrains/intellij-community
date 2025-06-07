@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfileState;
@@ -21,9 +21,8 @@ public abstract class RunProfileStarter {
    * @deprecated use {@link #executeAsync(ExecutionEnvironment)}
    */
   @SuppressWarnings("unused")
-  @Nullable
   @Deprecated(forRemoval = true)
-  public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public @Nullable RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     throw new AbstractMethodError();
   }
 
@@ -31,8 +30,7 @@ public abstract class RunProfileStarter {
    * You should NOT throw exceptions in this method.
    * Instead return {@link Promises#rejectedPromise(Throwable)} or call {@link org.jetbrains.concurrency.AsyncPromise#setError(Throwable)}
    */
-  @NotNull
-  public Promise<RunContentDescriptor> executeAsync(@NotNull ExecutionEnvironment environment)
+  public @NotNull Promise<RunContentDescriptor> executeAsync(@NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     RunProfileState state = environment.getState();
     return Promises.resolvedPromise(state == null ? null : execute(state, environment));

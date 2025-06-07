@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,11 +51,6 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                          )))),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
-                                       public boolean acceptsTarget(@NotNull PsiElement target) {
-                                         return PropertyReferenceBase.isPropertyPsi(target);
-                                       }
-
-                                       @Override
                                        public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
                                                                                                      @NotNull PsiLanguageInjectionHost host,
                                                                                                      @NotNull ProcessingContext context) {
@@ -65,10 +59,9 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
+  static final class RegistryKeyIdReference extends ExtensionReferenceBase {
 
-  private static final class RegistryKeyIdReference extends ExtensionReferenceBase {
-
-    private RegistryKeyIdReference(@NotNull PsiElement element) {
+    RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);
     }
 
@@ -77,9 +70,8 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return "com.intellij.registryKey";
     }
 
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return DevKitBundle.message("code.convert.registry.key.cannot.resolve", getValue());
     }
 
@@ -89,9 +81,8 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return (GenericAttributeValue<String>)getAttribute(extension, "key");
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       final PropertiesFile file = getRegistryPropertiesFile();
       if (file != null) {
         final IProperty propertyKey = file.findPropertyByKey(getValue());
@@ -154,8 +145,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return StringUtil.strip(description, ch -> ch != '\n' && ch != '\r');
     }
 
-    @Nullable
-    private PropertiesFile getRegistryPropertiesFile() {
+    private @Nullable PropertiesFile getRegistryPropertiesFile() {
       Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
       if (module == null) return null;
 

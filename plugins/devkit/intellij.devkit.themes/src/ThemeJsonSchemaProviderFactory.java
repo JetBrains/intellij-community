@@ -17,30 +17,26 @@ import java.util.List;
 final class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   private static final @NonNls String THEME_SCHEMA = "/schemes/theme.schema.json";
 
-  @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
+  public @NotNull List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
     return Collections.singletonList(new JsonSchemaFileProvider() {
       @Override
       public boolean isAvailable(@NotNull VirtualFile file) {
         return ThemeJsonUtil.isThemeFilename(file.getName());
       }
 
-      @NotNull
       @Override
-      public String getName() {
+      public @NotNull String getName() {
         return DevKitThemesBundle.message("theme.json.display.name");
       }
 
-      @Nullable
       @Override
-      public VirtualFile getSchemaFile() {
+      public @Nullable VirtualFile getSchemaFile() {
         return JsonSchemaProviderFactory.getResourceFile(getClass(), THEME_SCHEMA);
       }
 
-      @NotNull
       @Override
-      public SchemaType getSchemaType() {
+      public @NotNull SchemaType getSchemaType() {
         return SchemaType.embeddedSchema;
       }
     });

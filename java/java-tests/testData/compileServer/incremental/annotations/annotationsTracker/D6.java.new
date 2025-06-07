@@ -1,0 +1,5 @@
+import org.jetbrains.jps.builders.java.dependencyView.MockAnnotation;
+
+@MockAnnotation(param1 = 20)
+public class D6 {
+}

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.PropertyKey
  * [SearchEverywhereSpellCheckResult.Correction] where the suggested query correction along with confidence is specified, or
  * [SearchEverywhereSpellCheckResult.NoCorrection] singleton for cases where query is already correct or suggestion could not be provided
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface SearchEverywhereSpellCheckResult {
   data class Correction(val correction: String, val confidence: Double) : SearchEverywhereSpellCheckResult {
     val presentationText: @Nls String = TypoFixingBundle.message("search.everywhere.typo.suggestion", correction)

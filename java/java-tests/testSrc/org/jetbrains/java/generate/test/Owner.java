@@ -76,6 +76,7 @@ public class Owner {
         this.zip = zip;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -92,6 +93,7 @@ public class Owner {
         return true;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = (firstName != null ? firstName.hashCode() : 0);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
@@ -29,8 +29,7 @@ import java.util.Set;
  */
 public interface CheckinEnvironment {
 
-  @Nullable
-  default RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+  default @Nullable RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     //noinspection deprecation
     return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
   }
@@ -40,14 +39,17 @@ public interface CheckinEnvironment {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  @Nullable
-  default RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+  default @Nullable RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
   }
 
-  @Nullable
-  default @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
+  /**
+   * @deprecated implementations returning non-null messages should be replaced with
+   * {@link com.intellij.openapi.vcs.changes.ui.CommitMessageProvider}.
+   */
+  @Deprecated(forRemoval = true)
+  default @Nullable @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }
 
@@ -58,16 +60,14 @@ public interface CheckinEnvironment {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getCheckinOperationName();
 
-  @Nullable
-  default List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
     return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
   }
 
-  @Nullable
-  default List<VcsException> commit(@NotNull List<? extends Change> changes,
-                                    @NotNull @NlsSafe String commitMessage,
-                                    @NotNull CommitContext commitContext,
-                                    @NotNull Set<? super @DetailedDescription String> feedback) {
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                              @NotNull @NlsSafe String commitMessage,
+                                              @NotNull CommitContext commitContext,
+                                              @NotNull Set<? super @DetailedDescription String> feedback) {
     //noinspection deprecation
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
@@ -77,8 +77,7 @@ public interface CheckinEnvironment {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  @Nullable
-  default List<VcsException> commit(@NotNull List<? extends Change> changes,
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
                                     @NotNull String preparedComment,
                                     @NotNull NullableFunction<Object, Object> parametersHolder,
                                     @NotNull Set<? super @DetailedDescription String> feedback) {
@@ -104,8 +103,7 @@ public interface CheckinEnvironment {
    */
   boolean isRefreshAfterCommitNeeded();
 
-  @Nullable
-  default PostCommitChangeConverter getPostCommitChangeConverter() {
+  default @Nullable PostCommitChangeConverter getPostCommitChangeConverter() {
     return null;
   }
 }

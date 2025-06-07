@@ -15,7 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -27,18 +27,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
-import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
@@ -51,11 +48,9 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.*;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
@@ -86,6 +81,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
@@ -189,27 +185,12 @@ public final class ExternalSystemUtil {
       return;
     }
 
-    final ExternalProjectRefreshCallback callback;
-    if (spec.getCallback() == null) {
-      callback = new MyMultiExternalProjectRefreshCallback(spec.getProject());
-    }
-    else {
-      callback = spec.getCallback();
-    }
-
-    var toRefresh = new HashSet<String>();
+    var externalProjectPaths = new HashSet<String>();
     for (var setting : projectsSettings) {
-      toRefresh.add(setting.getExternalProjectPath());
+      externalProjectPaths.add(setting.getExternalProjectPath());
     }
 
-    if (!toRefresh.isEmpty()) {
-      ExternalSystemNotificationManager.getInstance(spec.getProject())
-        .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
-
-      for (var path : toRefresh) {
-        refreshProject(path, new ImportSpecBuilder(spec).callback(callback));
-      }
-    }
+    refreshProjectImpl(externalProjectPaths, spec);
   }
 
   private static @NotNull String extractDetails(@NotNull Throwable e) {
@@ -223,26 +204,25 @@ public final class ExternalSystemUtil {
     return ExternalSystemApiUtil.stacktraceAsString(e);
   }
 
+  /**
+   * @deprecated use {@link ExternalSystemUtil#refreshProject(String, ImportSpec)} instead
+   */
+  @Deprecated
   public static void refreshProject(final @NotNull Project project,
                                     final @NotNull ProjectSystemId externalSystemId,
                                     final @NotNull String externalProjectPath,
                                     final boolean isPreviewMode,
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
 
   /**
-   * <p>
-   * Import external project.
-   *
-   * @param project             target intellij project to use
-   * @param externalProjectPath path of the target external project's file
-   * @param callback            callback to be notified on refresh result
-   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
+   * @deprecated use {@link ExternalSystemUtil#refreshProject(String, ImportSpec)} instead
    */
+  @Deprecated
   public static void refreshProject(final @NotNull Project project,
                                     final @NotNull ProjectSystemId externalSystemId,
                                     final @NotNull String externalProjectPath,
@@ -251,21 +231,15 @@ public final class ExternalSystemUtil {
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
 
   /**
-   * <p>
-   * Import external project.
-   *
-   * @param project             target intellij project to use
-   * @param externalProjectPath path of the target external project
-   * @param callback            callback to be notified on refresh result
-   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
-   * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
+   * @deprecated use {@link ExternalSystemUtil#refreshProject(String, ImportSpec)} instead
    */
+  @Deprecated
   public static void refreshProject(final @NotNull Project project,
                                     final @NotNull ProjectSystemId externalSystemId,
                                     final @NotNull String externalProjectPath,
@@ -275,9 +249,9 @@ public final class ExternalSystemUtil {
                                     final boolean reportRefreshError) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
-    if (!reportRefreshError) builder.dontReportRefreshErrors();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode)
+      .withActivateToolWindowOnFailure(reportRefreshError);
     refreshProject(externalProjectPath, builder);
   }
 
@@ -286,61 +260,71 @@ public final class ExternalSystemUtil {
   }
 
   public static void refreshProject(final @NotNull String externalProjectPath, final @NotNull ImportSpec importSpec) {
+    refreshProjectImpl(Collections.singleton(externalProjectPath), importSpec);
+  }
+
+  private static void refreshProjectImpl(final @NotNull Set<String> externalProjectPaths, final @NotNull ImportSpec _importSpec) {
+    var importSpec = new ImportSpecBuilder(_importSpec)
+      .withPreviewMode(_importSpec.isPreviewMode() || !TrustedProjects.isProjectTrusted(_importSpec.getProject()))
+      .build();
+
     var project = importSpec.getProject();
     var externalSystemId = importSpec.getExternalSystemId();
     var isPreviewMode = importSpec.isPreviewMode();
+    var progressExecutionMode = importSpec.getProgressExecutionMode();
 
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
-
-    if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
-      }
-      return;
+    if (progressExecutionMode == ProgressExecutionMode.NO_PROGRESS_SYNC ||
+        progressExecutionMode == ProgressExecutionMode.NO_PROGRESS_ASYNC) {
+      throw new IllegalArgumentException("Please, use progress for the project import!");
     }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("Stated " + externalSystemId + " load", new Throwable());
     }
 
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
+
+    ExternalSystemNotificationManager.getInstance(importSpec.getProject())
+      .clearNotifications(null, NotificationSource.PROJECT_SYNC, importSpec.getExternalSystemId());
+
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
-    var projectSyncTypeStorage = localSettings.getProjectSyncType();
-    var previousSyncType = projectSyncTypeStorage.get(externalProjectPath);
-    var syncType = isPreviewMode ? PREVIEW : (previousSyncType == PREVIEW ? IMPORT : RE_IMPORT);
-    projectSyncTypeStorage.put(externalProjectPath, syncType);
 
-    var resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
+    for (var externalProjectPath : externalProjectPaths) {
+      var projectSyncTypeStorage = localSettings.getProjectSyncType();
+      var previousSyncType = projectSyncTypeStorage.get(externalProjectPath);
+      var syncType = isPreviewMode ? PREVIEW : (previousSyncType == PREVIEW ? IMPORT : RE_IMPORT);
+      projectSyncTypeStorage.put(externalProjectPath, syncType);
 
-    var taskId = resolveProjectTask.getId();
-    var projectName = resolveProjectTask.getProjectName();
-    var externalSystemName = externalSystemId.getReadableName();
-    var progressExecutionMode = importSpec.getProgressExecutionMode();
-    var title = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC
-                   ? ExternalSystemBundle.message("progress.import.text", projectName, externalSystemName)
-                   : ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemName);
-    if (progressExecutionMode == ProgressExecutionMode.NO_PROGRESS_SYNC ||
-        progressExecutionMode == ProgressExecutionMode.NO_PROGRESS_ASYNC) {
-      throw new ExternalSystemException("Please, use progress for the project import!");
+      var resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
+
+      var taskId = resolveProjectTask.getId();
+      var projectName = resolveProjectTask.getProjectName();
+      var externalSystemName = externalSystemId.getReadableName();
+      var title = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC
+                  ? ExternalSystemBundle.message("progress.import.text", projectName, externalSystemName)
+                  : ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemName);
+      ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
+
+        @Override
+        public @NotNull ExternalSystemTaskId getId() {
+          return taskId;
+        }
+
+        @Override
+        public void execute(@NotNull ProgressIndicator indicator) {
+          var activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
+          try {
+            ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncProjectTask", __ ->
+              executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator)
+            );
+          }
+          finally {
+            activity.finished();
+          }
+        }
+      });
     }
-    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
-
-      @Override
-      public @NotNull ExternalSystemTaskId getId() {
-        return taskId;
-      }
-
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        var activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
-        try {
-          ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncProjectTask",
-                                                  (ignore) -> executeSync(externalProjectPath, importSpec, resolveProjectTask, indicator));
-        }
-        finally {
-          activity.finished();
-        }
-      }
-    });
   }
 
   private static void executeSync(
@@ -373,11 +357,6 @@ public final class ExternalSystemUtil {
         callback.onFailure(taskId, ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
       }
       return;
-    }
-
-    if (!(callback instanceof MyMultiExternalProjectRefreshCallback)) {
-      ExternalSystemNotificationManager.getInstance(project)
-        .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
     }
 
     if (!isPreviewMode) {
@@ -528,7 +507,7 @@ public final class ExternalSystemUtil {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(false);
-        Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
+        Runnable rerunRunnable = importSpec.getRerunAction();
         if (rerunRunnable == null) {
           refreshProject(externalProjectPath, importSpec);
         }
@@ -582,16 +561,22 @@ public final class ExternalSystemUtil {
     try {
       var error = resolveProjectTask.getError();
       if (error == null) {
-        if (callback != null) {
-          var externalProjectData = ProjectDataManagerImpl.getInstance()
-            .getExternalProjectData(project, externalSystemId, externalProjectPath);
-          if (externalProjectData != null) {
-            var externalProject = externalProjectData.getExternalProjectStructure();
-            if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
-              externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
-            }
-            callback.onSuccess(taskId, externalProject);
+        var projectDataManager = ProjectDataManager.getInstance();
+        var externalProjectData = projectDataManager.getExternalProjectData(project, externalSystemId, externalProjectPath);
+        var externalProject = ObjectUtils.doIfNotNull(externalProjectData, it -> it.getExternalProjectStructure());
+        if (externalProject != null) {
+          if (importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+            externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
           }
+          if (importSpec.shouldImportProjectData()) {
+            if (importSpec.shouldSelectProjectDataToImport()) {
+              selectProjectDataToImport(project, externalProjectData);
+            }
+            projectDataManager.importData(externalProject, project);
+          }
+        }
+        if (callback != null) {
+          callback.onSuccess(taskId, externalProject);
         }
         if (!isPreviewMode) {
           var externalSystemTaskActivator = ExternalProjectsManagerImpl.getInstance(project).getTaskActivator();
@@ -640,6 +625,24 @@ public final class ExternalSystemUtil {
     }
   }
 
+  private static void selectProjectDataToImport(
+    @NotNull Project project,
+    @NotNull ExternalProjectInfo projectInfo
+  ) {
+    var application = ApplicationManager.getApplication();
+    if (!application.isHeadlessEnvironment()) {
+      application.invokeAndWait(() -> {
+        var dialog = new ExternalProjectDataSelectorDialog(project, projectInfo);
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        }
+        else {
+          Disposer.dispose(dialog.getDisposable());
+        }
+      });
+    }
+  }
+
   private static @NotNull FinishBuildEvent getSyncFinishEvent(
     @NotNull ExternalSystemTaskId taskId,
     @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier
@@ -677,7 +680,7 @@ public final class ExternalSystemUtil {
   /**
    * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull Collection<ProjectSystemId> systemIds
@@ -728,26 +731,6 @@ public final class ExternalSystemUtil {
   ) {
     var notificationManager = ExternalSystemNotificationManager.getInstance(project);
     var notificationData = createNotification(title, exception, externalSystemId, project, externalProjectPath, dataContext);
-    if (notificationData == null) {
-      return new FailureResultImpl();
-    }
-    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
-  }
-
-  /**
-   * @deprecated use {@link #createFailureResult(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public static @NotNull FailureResultImpl createFailureResult(
-    @NotNull @Nls(capitalization = Sentence) String title,
-    @NotNull Throwable exception,
-    @NotNull ProjectSystemId externalSystemId,
-    @NotNull Project project,
-    @NotNull DataContext dataContext
-  ) {
-    var notificationManager = ExternalSystemNotificationManager.getInstance(project);
-    var notificationData = notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
     if (notificationData == null) {
       return new FailureResultImpl();
     }
@@ -876,7 +859,11 @@ public final class ExternalSystemUtil {
                              final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
-    TaskExecutionSpec spec = TaskExecutionSpec.create(project, externalSystemId, executorId, taskSettings)
+    TaskExecutionSpec spec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(externalSystemId)
+      .withExecutorId(executorId)
+      .withSettings(taskSettings)
       .withProgressExecutionMode(progressExecutionMode)
       .withCallback(callback)
       .withUserData(userData)
@@ -994,63 +981,69 @@ public final class ExternalSystemUtil {
   }
 
   /**
+   * @deprecated use {@link ExternalSystemUtil#linkExternalProject(ExternalProjectSettings, ImportSpec)} instead
+   */
+  @Deprecated
+  public static void linkExternalProject(
+    final @NotNull ProjectSystemId externalSystemId,
+    final @NotNull ExternalProjectSettings projectSettings,
+    final @NotNull Project project,
+    final @Nullable Consumer<? super Boolean> importResultCallback,
+    boolean isPreviewMode,
+    final @NotNull ProgressExecutionMode progressExecutionMode
+  ) {
+    ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId)
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode)
+      .withCallback(it -> {
+        if (importResultCallback != null) {
+          importResultCallback.accept(it);
+        }
+      });
+    linkExternalProject(projectSettings, builder);
+  }
+
+  public static void linkExternalProject(
+    @NotNull ExternalProjectSettings projectSettings,
+    @NotNull ImportSpecBuilder importSpec
+  ) {
+    linkExternalProject(projectSettings, importSpec.build());
+  }
+
+  /**
    * Tries to obtain external project info implied by the given settings and link that external project to the given ide project.
    *
-   * @param externalSystemId      target external system
-   * @param projectSettings       settings of the external project to link
-   * @param project               target ide project to link external project to
-   * @param importResultCallback  it might take a while to resolve external project info, that's why it's possible to provide
-   *                              a callback to be notified on processing result. It receives {@code true} if an external
-   *                              project info has been successfully obtained, {@code false} otherwise.
-   * @param isPreviewMode         flag which identifies if missing external project binaries should be downloaded
-   * @param progressExecutionMode identifies how progress bar will be represented for the current processing
+   * @param projectSettings settings of the external project to link
+   * @param importSpec      defines the external project sync parameters
    */
-  public static void linkExternalProject(final @NotNull ProjectSystemId externalSystemId,
-                                         final @NotNull ExternalProjectSettings projectSettings,
-                                         final @NotNull Project project,
-                                         final @Nullable Consumer<? super Boolean> importResultCallback,
-                                         boolean isPreviewMode,
-                                         final @NotNull ProgressExecutionMode progressExecutionMode) {
-    var systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
-    var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
-    if (existingSettings != null) {
-      return;
-    }
-
-    //noinspection unchecked
-    systemSettings.linkProject(projectSettings);
-    var callback = new ExternalProjectRefreshCallback() {
-      @Override
-      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
-        if (externalProject == null) {
-          if (importResultCallback != null) {
-            importResultCallback.consume(false);
-          }
-          return;
-        }
-        ProjectDataManager.getInstance().importData(externalProject, project);
-        if (importResultCallback != null) {
-          importResultCallback.consume(true);
-        }
+  public static void linkExternalProject(
+    @NotNull ExternalProjectSettings projectSettings,
+    @NotNull ImportSpec importSpec
+  ) {
+    TrackingUtil.trackActivity(importSpec.getProject(), ExternalSystemActivityKey.INSTANCE, () -> {
+      var systemSettings = ExternalSystemApiUtil.getSettings(importSpec.getProject(), importSpec.getExternalSystemId());
+      var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
+      if (existingSettings != null) {
+        return;
       }
 
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        if (importResultCallback != null) {
-          importResultCallback.consume(false);
-        }
-      }
-    };
+      //noinspection unchecked
+      systemSettings.linkProject(projectSettings);
 
-    var importSpecBuilder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
-    if (isPreviewMode) importSpecBuilder.usePreviewMode();
-    refreshProject(projectSettings.getExternalProjectPath(), importSpecBuilder);
+      if (!Registry.is("external.system.auto.import.disabled")) {
+        ExternalProjectsManager.getInstance(importSpec.getProject()).runWhenInitialized(() -> {
+          refreshProject(projectSettings.getExternalProjectPath(), new ImportSpecBuilder(importSpec)
+            .withSelectProjectDataToImport(systemSettings.showSelectiveImportDialogOnInitialImport())
+          );
+        });
+      }
+    });
   }
 
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {
     var app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
-      assert !((ApplicationEx)app).holdsReadLock();
+      assert !app.holdsReadLock();
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
@@ -1130,11 +1123,9 @@ public final class ExternalSystemUtil {
                                                       @NotNull ProjectSystemId systemId
   ) {
     var future = new CompletableFuture<Void>();
-    ImportSpecImpl spec = new ImportSpecImpl(project, systemId);
-    spec.setProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC);
-    ImportSpecBuilder.DefaultProjectRefreshCallback defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(spec);
-    spec.setCallback(new AsyncExternalProjectRefreshCallback(defaultCallback, future));
-    refreshProject(projectPath, spec);
+    var builder = new ImportSpecBuilder(project, systemId)
+      .withCallback(future);
+    refreshProject(projectPath, builder.build());
     return future;
   }
 
@@ -1197,27 +1188,6 @@ public final class ExternalSystemUtil {
     }
   }
 
-  private static final class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
-    private final Project myProject;
-
-    MyMultiExternalProjectRefreshCallback(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
-      if (externalProject == null) {
-        return;
-      }
-      ProjectDataManager.getInstance().importData(externalProject, myProject);
-    }
-
-    @Override
-    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      LOG.warn(errorMessage + "\n" + errorDetails);
-    }
-  }
-
   private static class AutoCloseableDisposable implements AutoCloseable, Disposable {
 
     @Override
@@ -1226,35 +1196,6 @@ public final class ExternalSystemUtil {
     @Override
     public void close() {
       Disposer.dispose(this);
-    }
-  }
-
-  private static class AsyncExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
-
-    private final @NotNull ExternalProjectRefreshCallback delegate;
-    private final @NotNull CompletableFuture<Void> future;
-
-    private AsyncExternalProjectRefreshCallback(@NotNull ExternalProjectRefreshCallback delegate,
-                                                @NotNull CompletableFuture<Void> future) {
-      this.delegate = delegate;
-      this.future = future;
-    }
-
-    @Override
-    public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
-      try {
-        delegate.onSuccess(externalProject);
-      }
-      catch (Exception e) {
-        future.completeExceptionally(e);
-      }
-      future.complete(null);
-    }
-
-    @Override
-    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-      future.completeExceptionally(new RuntimeException(errorMessage));
-      delegate.onFailure(errorMessage, errorDetails);
     }
   }
 }

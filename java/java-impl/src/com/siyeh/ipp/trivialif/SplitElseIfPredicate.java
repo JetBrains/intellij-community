@@ -15,7 +15,11 @@
  */
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +32,7 @@ class SplitElseIfPredicate implements PsiElementPredicate {
       return false;
     }
     final @NonNls String text = element.getText();
-    if (!PsiKeyword.ELSE.equals(text)) {
+    if (!JavaKeywords.ELSE.equals(text)) {
       return false;
     }
     final PsiElement parent = token.getParent();

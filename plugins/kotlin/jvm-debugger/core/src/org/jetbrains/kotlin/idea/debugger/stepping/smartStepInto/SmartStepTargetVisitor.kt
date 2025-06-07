@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -68,7 +67,7 @@ class SmartStepTargetVisitor(
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
                     return true
                 } else if (declaration is KtNamedFunction) {
-                    val label = KotlinMethodSmartStepTarget.calcLabel(symbol)
+                    val label = calcLabel(symbol)
                     append(
                         KotlinMethodReferenceSmartStepTarget(
                             lines,
@@ -85,9 +84,8 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
+    private fun KaSession.recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         if (expression !is KtNameReferenceExpression && expression !is KtCallableReferenceExpression) return false
         val targetType = expression.computeTargetType()
         if (symbol is KaSyntheticJavaPropertySymbol) {
@@ -97,7 +95,7 @@ class SmartStepTargetVisitor(
             } ?: return false
             val declaration = propertyAccessSymbol.psi
             if (declaration is PsiMethod) {
-                append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                append(MethodSmartStepTarget(declaration, null, expression, false, lines))
                 return true
             }
             return false
@@ -120,15 +118,9 @@ class SmartStepTargetVisitor(
         }
         val property = propertyAccessSymbol.psi as? KtDeclaration ?: return false
         if (property is KtPropertyAccessor && property.hasBody()) {
-            val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) {
-                symbol.javaSetterName ?: return false
-            } else {
-                symbol.javaGetterName
-            }
             val methodInfo = CallableMemberInfo(
                 propertyAccessSymbol,
                 ordinal = countExistingMethodCalls(property),
-                name = methodName.asString()
             )
             val label = propertyAccessLabel(symbol, propertyAccessSymbol)
             appendPropertyFilter(methodInfo, property, label, expression, lines)
@@ -152,9 +144,9 @@ class SmartStepTargetVisitor(
             .singleOrNull()
     }
 
-    context(KaSession)
-    private fun propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
-        "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
+    private fun KaSession.propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol): String {
+        return "${symbol.name}.${calcLabel(propertyAccessSymbol)}"
+    }
 
     private fun KtExpression.computeTargetType(): KtNameReferenceExpressionUsage {
         val potentialLeftHandSide = parent as? KtQualifiedExpression ?: this
@@ -218,8 +210,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KaSession)
-    private fun createJavaLambdaInfo(
+    private fun KaSession.createJavaLambdaInfo(
         declaration: PsiMethod,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -228,8 +219,7 @@ class SmartStepTargetVisitor(
         return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
     }
 
-    context(KaSession)
-    private fun createKotlinLambdaInfo(
+    private fun KaSession.createKotlinLambdaInfo(
         declaration: KtDeclaration,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -244,12 +234,12 @@ class SmartStepTargetVisitor(
                 ?: return null
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
-                isNameMangledInBytecode = funMethodSymbol.containsInlineClassInParameters(),
+                isNameMangledInBytecode = containsInlineClassInParameters(funMethodSymbol),
                 isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString()
             )
         } else {
             val isNameMangledInBytecode = (argumentSymbol.returnType as? KaFunctionType)?.parameterTypes
-                ?.any { it.expandedSymbol?.isInlineClass() == true } == true
+                ?.any { isInlineClass(it.expandedSymbol) } == true
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
                 isNameMangledInBytecode = isNameMangledInBytecode
@@ -329,54 +319,69 @@ class SmartStepTargetVisitor(
         super.visitSimpleNameExpression(expression)
     }
 
-    private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
-        analyze(expression) {
-            val resolvedCall = resolveFunctionCall(expression) ?: return
-            val symbol = resolvedCall.partiallyAppliedSymbol.symbol
-            if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
-                return
-            }
+    private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) = analyze(expression) {
+        analyzeFunctionCall(expression, highlightExpression)
+    }
 
-            val declaration = getFunctionDeclaration(symbol)
-            if (declaration is PsiMethod) {
-                append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
-                return
-            }
+    private fun KaSession.analyzeFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
+        val resolvedCall = resolveFunctionCall(expression) ?: return
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol
+        if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
+            return
+        }
 
-            if (declaration == null && !(symbol.isInvoke())) {
-                return
-            }
+        val declaration = getFunctionDeclaration(symbol)
+        if (declaration is PsiMethod) {
+            append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
+            return
+        }
 
-            if (declaration !is KtDeclaration?) return
+        if (declaration == null && !(symbol.isInvoke())) {
+            return
+        }
 
-            // We can't step into @InlineOnly callables as there is no LVT, so skip them
-            if (declaration is KtCallableDeclaration && declaration.isInlineOnly()) {
-                return
-            }
+        if (declaration !is KtDeclaration?) return
 
-            val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
-            val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
-                "${highlightExpression.text}.$callLabel"
-            } else {
-                callLabel
-            }
+        // We can't step into @InlineOnly callables as there is no LVT, so skip them
+        if (declaration is KtCallableDeclaration && declaration.isInlineOnly()) {
+            return
+        }
 
-            val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
-            append(
-                KotlinMethodSmartStepTarget(
-                    lines,
-                    highlightExpression,
-                    label,
-                    declaration,
-                    ordinal,
-                    CallableMemberInfo(symbol, ordinal)
-                )
+        val callLabel = calcLabel(symbol)
+        val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
+            "${highlightExpression.text}.$callLabel"
+        } else {
+            callLabel
+        }
+
+        val isEqualsNullCall = isEqualsNullCall(highlightExpression)
+        val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
+        append(
+            KotlinMethodSmartStepTarget(
+                lines,
+                highlightExpression,
+                label,
+                declaration,
+                ordinal,
+                CallableMemberInfo(symbol, ordinal, isEqualsNullCall = isEqualsNullCall)
             )
+        )
+    }
+
+    /**
+     * Calls to `==` can be skipped in bytecode in case of trivial comparisons with null.
+     */
+    private fun isEqualsNullCall(expression: KtExpression): Boolean {
+        if (expression !is KtOperationReferenceExpression) return false
+        if (expression.operationSignTokenType != KtTokens.EQEQ) return false
+        val parent = expression.parent
+        if (parent !is KtBinaryExpression) return false
+        return listOfNotNull(parent.left, parent.right).any {
+            it is KtConstantExpression && it.iElementType.debugName == "NULL"
         }
     }
 
-    context(KaSession)
-    private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
+    private fun KaSession.getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
         if (symbol.isInvoke()) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1

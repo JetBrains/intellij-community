@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.application.PathManager
@@ -14,7 +14,6 @@ import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
@@ -38,20 +37,16 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
   private fun addTaskNotificationListener(progressManager: ExternalSystemProgressNotificationManager) {
     val listener = LoggingNotificationListener()
     progressManager.addNotificationListener(listener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(listener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(listener)
     }
   }
 
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
     val notificationListener = StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(notificationListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(notificationListener)
     }
   }
 
@@ -60,10 +55,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     val externalAnnotationsProgressListener = StateExternalAnnotationNotificationListener()
 
     externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
     }
   }
 

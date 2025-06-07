@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.awt.event.InputEvent.ALT_DOWN_MASK;
@@ -37,6 +37,24 @@ public final class KeymapUtil {
   private static RegistryValue ourTooltipKeysProperty;
 
   private KeymapUtil() {
+  }
+
+  /**
+   * Returns the text of some shortcut from the set, giving preference to keyboard shortcuts
+   *
+   * @param set the shortcut set
+   * @return the first keyboard shortcut text, if any, otherwise the first shortcut text, if any, otherwise an empty string
+   */
+  public static @NotNull @NlsSafe String getShortcutText(@NotNull ShortcutSet set) {
+    var keyboardShortcut = getFirstKeyboardShortcutText(set);
+    if (!keyboardShortcut.isEmpty()) {
+      return keyboardShortcut;
+    }
+    var firstShortcut = ArrayUtil.getFirstElement(set.getShortcuts());
+    if (firstShortcut != null) {
+      return getShortcutText(firstShortcut);
+    }
+    return "";
   }
 
   public static @NlsSafe @NotNull String getShortcutText(@NotNull @NonNls String actionId) {

@@ -20,6 +20,9 @@
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="psi.batchReferenceProcessingSuppressor"
+                    interface="com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor"
+                    dynamic="true"/>
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider" dynamic="true"/>
     <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
@@ -79,10 +82,14 @@
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.CodeInsightContextManager"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
+                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
                     serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>

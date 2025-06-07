@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
@@ -22,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.WriteExternalException;
@@ -35,6 +35,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -49,7 +51,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String SHORT_NAME = "DataFlowIssue";
+  private static final @NonNls String SHORT_NAME = "DataFlowIssue";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;
@@ -342,7 +344,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     unreachableLabels.forEach((label, switchBlock) -> {
       if (isThrowing(label)) return;
       // duplicate case label is a compilation error so no need to highlight by the inspection
-      Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+      Set<PsiElement> suspiciousElements = findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
         holder.problem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"))
             .maybeFix(createDeleteLabelFix(label)).register();
@@ -350,8 +352,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  @Nullable
-  protected LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
     return null;
   }
 
@@ -592,7 +593,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       .message("dataflow.message.return.notnull.from.nullable", NullableStuffInspectionBase.getPresentableAnnoName(annotation),
                method.getName());
     holder.problem(annoName, msg)
-      .maybeFix(AddAnnotationPsiFix.createAddNotNullFix(method))
+      .maybeFix(AddAnnotationModCommandAction.createAddNotNullFix(method))
       .fix(new UpdateInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
                                          JavaAnalysisBundle.message(
                                            "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
@@ -657,7 +658,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiParameter parameter = parameters[0];
     if (!BaseIntentionAction.canModify(parameter) || !AnnotationUtil.isAnnotatingApplicable(parameter)) return;
     reporter.registerProblem(methodRef, problem.getMessage(IGNORE_ASSERT_STATEMENTS),
-                             LocalQuickFix.notNullElements(parameters.length == 1 ? AddAnnotationPsiFix.createAddNullableFix(parameter) : null));
+                             LocalQuickFix.notNullElements(
+                               parameters.length == 1
+                               ? LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(parameter))
+                               : null));
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter,
@@ -669,7 +673,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiModifierListOwner target = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
     if (BaseIntentionAction.canModify(target) && AnnotationUtil.isAnnotatingApplicable(target)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(target));
+      fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(target)));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -682,7 +686,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiField field = getAssignedField(top);
     if (field != null) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(field));
+      fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(field)));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -766,7 +770,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (method == null) return;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
-    if (info == null) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
+    if (info == null || info.isInferred()) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
     PsiType returnType = method.getReturnType();
@@ -805,8 +809,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
         final LocalQuickFix fix = surroundingMethod == null ? null :
-                                  new AddAnnotationPsiFix(defaultNullable, surroundingMethod,
-                                                          ArrayUtilRt.toStringArray(manager.getNotNulls()));
+                                  LocalQuickFix.from(new AddAnnotationModCommandAction(defaultNullable, surroundingMethod,
+                                                                                       ArrayUtilRt.toStringArray(manager.getNotNulls())));
         reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
       }
     }
@@ -820,6 +824,42 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   @Override
   public @NotNull String getShortName() {
     return SHORT_NAME;
+  }
+
+  /**
+   * @param switchBlock switch statement/expression to check
+   * @return a set of label elements that are duplicates. If a switch block contains patterns,
+   * then dominated label elements will be also included in the result set.
+   */
+  private static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return Collections.emptySet();
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return Collections.emptySet();
+    List<PsiCaseLabelElement> labelElements =
+      ContainerUtil.filterIsInstance(JavaPsiSwitchUtil.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
+    if (labelElements.isEmpty()) return Collections.emptySet();
+    MultiMap<Object, PsiElement> duplicateCandidates = JavaPsiSwitchUtil.getValuesAndLabels(switchBlock);
+
+    Set<PsiElement> result = new SmartHashSet<>();
+
+    for (Map.Entry<Object, Collection<PsiElement>> entry : duplicateCandidates.entrySet()) {
+      if (entry.getValue().size() <= 1) continue;
+      result.addAll(entry.getValue());
+    }
+
+    // Find only one unconditional pattern, but not all, because if there are
+    // multiple unconditional patterns, they will all be found as duplicates
+    PsiCaseLabelElement unconditionalPattern = ContainerUtil.find(
+      labelElements, element -> JavaPsiPatternUtil.isUnconditionalForType(element, selectorType));
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
+    if (unconditionalPattern != null && defaultElement != null) {
+      result.add(unconditionalPattern);
+      result.add(defaultElement);
+    }
+
+    return StreamEx.ofKeys(JavaPsiSwitchUtil.findDominatedLabels(switchBlock), value -> value instanceof PsiPattern)
+      .into(result);
   }
 
   /**

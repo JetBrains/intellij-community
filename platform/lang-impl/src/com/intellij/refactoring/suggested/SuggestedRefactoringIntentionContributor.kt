@@ -17,10 +17,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal val REFACTORING_DATA_KEY: Key<SuggestedRefactoringData> = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
@@ -117,11 +115,11 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
 
     override fun getText() = text
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile?) = true
+    override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile?) = true
 
     override fun startInWriteAction() = false
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile?) {
+    override fun invoke(project: Project, editor: Editor, psiFile: PsiFile?) {
       performSuggestedRefactoring(project, editor, null, null, showReviewBalloon, ActionPlaces.INTENTION_MENU)
     }
   }

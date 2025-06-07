@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.impl
 
 import org.junit.jupiter.api.extension.DynamicTestInvocationContext
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
-abstract class AbstractInvocationInterceptor : InvocationInterceptor {
+internal abstract class AbstractInvocationInterceptor : InvocationInterceptor {
 
   abstract fun <T> intercept(invocation: Invocation<T>, context: ExtensionContext): T
 

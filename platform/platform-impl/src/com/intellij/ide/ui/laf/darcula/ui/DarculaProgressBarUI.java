@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -69,16 +70,16 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
       Color startColor, endColor;
       Color foreground = progressBar.getForeground();
-      Object statusProperty = progressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
-      if (JBUI.CurrentTheme.ProgressBar.failedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.RED) {
+      Object statusProperty = progressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
+      if (ProgressBarUtil.FAILED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.RED) {
         startColor = JBUI.CurrentTheme.ProgressBar.FAILED;
         endColor = JBUI.CurrentTheme.ProgressBar.FAILED_END;
       }
-      else if (JBUI.CurrentTheme.ProgressBar.passedStatusValue().equals(statusProperty) ||foreground == ColorProgressBar.GREEN) {
+      else if (ProgressBarUtil.PASSED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.GREEN) {
         startColor = JBUI.CurrentTheme.ProgressBar.PASSED;
         endColor = JBUI.CurrentTheme.ProgressBar.PASSED_END;
       }
-      else if (JBUI.CurrentTheme.ProgressBar.warningStatusValue().equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
+      else if (ProgressBarUtil.WARNING_VALUE.equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
         startColor = JBUI.CurrentTheme.ProgressBar.WARNING;
         endColor = JBUI.CurrentTheme.ProgressBar.WARNING_END;
       }
@@ -218,14 +219,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g2.fill(fullShape);
 
       Color foreground = progressBar.getForeground();
-      Object statusProperty = progressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
-      if (JBUI.CurrentTheme.ProgressBar.failedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.RED) {
+      Object statusProperty = progressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
+      if (ProgressBarUtil.FAILED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.RED) {
         g2.setColor(JBUI.CurrentTheme.ProgressBar.FAILED);
       }
-      else if (JBUI.CurrentTheme.ProgressBar.passedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.GREEN) {
+      else if (ProgressBarUtil.PASSED_VALUE.equals(statusProperty) || foreground == ColorProgressBar.GREEN) {
         g2.setColor(JBUI.CurrentTheme.ProgressBar.PASSED);
       }
-      else if (JBUI.CurrentTheme.ProgressBar.warningStatusValue().equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
+      else if (ProgressBarUtil.WARNING_VALUE.equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
         g2.setColor(JBUI.CurrentTheme.ProgressBar.WARNING);
       }
       else {

@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -38,10 +41,7 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
-import org.jetbrains.kotlin.idea.facet.addCompilerArgumentToKotlinFacet
-import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
-import org.jetbrains.kotlin.idea.facet.setLanguageAndApiVersionInKotlinFacet
+import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -217,12 +218,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: error("Kotlin Library has to be created in advance")) as LibraryEx
 
         library.modifiableModel.let { libraryModel ->
-            //  will be performed later on EDT
-            writeActions.addOrExecute { runWriteAction {
-                configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
-                libraryModel.commit()
-            }
-            }
+            configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
+
+            // commit will be performed later on EDT
+            writeActions.addOrExecute { runWriteAction { libraryModel.commit() } }
         }
 
         addLibraryToModuleIfNeeded(module, library, collector, writeActions)
@@ -237,10 +236,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
     }
 
-    /**
-     * Updates KotlinJavaRuntime.xml
-     * Should be performed under a write action.
-     */
     fun configureLibraryJar(
         project: Project,
         library: LibraryEx.ModifiableModelEx,
@@ -364,8 +359,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
         if (facetSettings != null) {
             ModuleRootModificationUtil.updateModel(module) {
-                facetSettings.apiLevel = feature.sinceVersion
-                facetSettings.languageLevel = feature.sinceVersion
+                feature.sinceVersion?.let { sinceVersion ->
+                    facetSettings.apiLevel = sinceVersion
+                    facetSettings.languageLevel = sinceVersion
+                }
                 facetSettings.compilerSettings?.apply {
                     additionalArguments = additionalArguments.replaceLanguageFeature(
                         feature,
@@ -374,6 +371,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                         separator = " ",
                         quoted = false
                     )
+                }
+                KotlinFacet.get(module)?.let { kotlinFacet ->
+                    FacetManager.getInstance(module).facetConfigurationChanged(kotlinFacet)
                 }
             }
         }

@@ -14,24 +14,45 @@ import kotlin.math.floor
 @ApiStatus.Internal
 class GradientTextureCache: Disposable {
   private var texture: TexturePaint? = null
-  private var colorStart: Color? = null
-  private var colorEnd: Color? = null
+  private var colorStart: Int = 0
+  private var colorEnd: Int = 0
   private var x: Int = 0
   private var y: Int = 0
 
   @RequiresEdt
-  fun getTexture(graphics: Graphics2D, width: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
+  fun getHorizontalTexture(graphics: Graphics2D, width: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
     val realWidth = floor(JBUIScale.sysScale(graphics) * width).toInt()
-    return if (realWidth != texture?.image?.width || colorStart != this.colorStart || colorEnd != this.colorEnd || x != this.x || y != this.y) {
+
+    return if (realWidth != texture?.image?.width || checkValues(colorStart, colorEnd, x, y)) {
       AppUIUtil.createHorizontalGradientTexture(graphics, colorStart, colorEnd, width, x, y).also {
-        texture = it
-        this.colorStart = colorStart
-        this.colorEnd = colorEnd
-        this.x = x
-        this.y = y
+        cacheValues(it, colorStart, colorEnd, x, y)
       }
     }
     else texture!!
+  }
+
+  @RequiresEdt
+  fun getVerticalTexture(graphics: Graphics2D, height: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
+    val realHeight = floor(JBUIScale.sysScale(graphics) * height).toInt()
+
+    return if (realHeight != texture?.image?.height || checkValues(colorStart, colorEnd, x, y)) {
+      AppUIUtil.createVerticalGradientTexture(graphics, colorStart, colorEnd, height, x, y).also {
+        cacheValues(it, colorStart, colorEnd, x, y)
+      }
+    }
+    else texture!!
+  }
+
+  private fun checkValues(colorStart: Color, colorEnd: Color, x: Int, y: Int): Boolean {
+    return colorStart.rgb != this.colorStart || colorEnd.rgb != this.colorEnd || x != this.x || y != this.y
+  }
+
+  private fun cacheValues(paint: TexturePaint, colorStart: Color, colorEnd: Color, x: Int, y: Int) {
+    texture = paint
+    this.colorStart = colorStart.rgb
+    this.colorEnd = colorEnd.rgb
+    this.x = x
+    this.y = y
   }
 
   override fun dispose() {

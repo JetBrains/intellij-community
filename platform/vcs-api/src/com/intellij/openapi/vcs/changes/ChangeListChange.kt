@@ -52,9 +52,7 @@ class ChangeListChange(
                                 change.changeListId)
       }
       else {
-        return Change(bRev, aRev, change.fileStatus).also {
-          it.copyFieldsFrom(change)
-        }
+        return Change(bRev, aRev, change.fileStatus, change)
       }
     }
   }

@@ -3,7 +3,7 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.getResolvedPath
@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -30,6 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
+@SystemProperty("idea.trust.headless.disabled", "false")
 abstract class TrustedProjectsHeavyTestCase {
 
   @TestDisposable
@@ -57,7 +59,7 @@ abstract class TrustedProjectsHeavyTestCase {
   suspend fun createProjectAsync(
     relativeProjectRoot: String
   ): Project {
-    val projectRoot = writeAction {
+    val projectRoot = edtWriteAction {
       testRoot.createDirectory(relativeProjectRoot)
     }
     val projectManager = ProjectManagerEx.getInstanceEx()
@@ -75,7 +77,7 @@ abstract class TrustedProjectsHeavyTestCase {
     moduleName: String,
     vararg relativeContentRoots: String
   ) {
-    writeAction {
+    edtWriteAction {
       val entityStorage = MutableEntityStorage.create()
       val contentRoots = relativeContentRoots.map {
         testRoot.findOrCreateDirectory(it)
@@ -93,7 +95,7 @@ abstract class TrustedProjectsHeavyTestCase {
     numContentRoots: Int
   ): Project {
     val projectName = project.name
-    writeAction {
+    edtWriteAction {
       val entityStorage = MutableEntityStorage.create()
       generateModuleAsync(project, entityStorage, "project", numContentRoots)
       repeat(numModules - 1) { index ->

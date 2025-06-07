@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
@@ -79,7 +80,7 @@ public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();
           if (element != null) {
-            new CommentTracker().replaceAndRestoreComments(element, PsiKeyword.VAR);
+            new CommentTracker().replaceAndRestoreComments(element, JavaKeywords.VAR);
           }
         }
         return;

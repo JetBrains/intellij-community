@@ -33,8 +33,10 @@ internal data class BuildProcessSatisfactionDialogData(
     @NlsSafe val kotlinVersion: String,
     val groovyBuildFileCount: Int,
     val ktsBuildFileCount: Int,
-    val monthsOfIdeaUsage: Int,
-    val monthsOfKotlinUsage: Int,
+    val daysOfIdeaUsage: Int,
+    val daysOfKotlinUsage: Int,
+    val daysOfKotlinWithGradleUsage: Int,
+    val daysOfGradleUsage: Int,
     val commonData: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
     override fun serializeToJson(json: Json): JsonElement = json.encodeToJsonElement(this)
@@ -68,8 +70,8 @@ internal class BuildProcessSatisfactionDialog(
         return project.modules.mapNotNull { it.kotlinGradlePluginVersion?.versionString }.distinct()
     }
 
-    private fun LocalDate.monthsSinceDate(): Int {
-        return ChronoUnit.MONTHS.between(this, LocalDate.now()).toInt()
+    private fun LocalDate.daysSinceDate(): Int {
+        return ChronoUnit.DAYS.between(this, LocalDate.now()).toInt()
     }
 
     private fun collectData(): BuildProcessSatisfactionDialogData {
@@ -86,17 +88,21 @@ internal class BuildProcessSatisfactionDialog(
         val gradleVersion = getGradleVersion()?.version ?: "UNKNOWN"
         val kotlinVersion = getKotlinVersions().maxOrNull() ?: "UNKNOWN"
 
-        val monthsOfIdeaUsage = KotlinNewUserTracker.getInstance().getInstallationDate()?.monthsSinceDate() ?: 0
-        val monthsOfKotlinUsage = KotlinNewUserTracker.getInstance().getFirstKotlinUsageDate()?.monthsSinceDate() ?: 0
+        val daysOfIdeaUsage = KotlinNewUserTracker.getInstance().getInstallationDate()?.daysSinceDate() ?: 0
+        val daysOfKotlinUsage = KotlinNewUserTracker.getInstance().getFirstKotlinUsageDate()?.daysSinceDate() ?: 0
+        val daysOfKotlinWithGradleUsage = BuildProcessSatisfactionSurveyStore.getInstance().getFirstKotlinGradleUsageDate()?.daysSinceDate() ?: 0
+        val daysOfGradleUsage = BuildProcessSatisfactionSurveyStore.getInstance().getFirstGradleUsageDate()?.daysSinceDate() ?: 0
 
         return BuildProcessSatisfactionDialogData(
-            gradleVersion,
-            kotlinVersion,
-            groovyCount,
-            ktsCount,
-            monthsOfIdeaUsage,
-            monthsOfKotlinUsage,
-            CommonFeedbackSystemData.getCurrentData(),
+            gradleVersion = gradleVersion,
+            kotlinVersion = kotlinVersion,
+            groovyBuildFileCount = groovyCount,
+            ktsBuildFileCount = ktsCount,
+            daysOfIdeaUsage = daysOfIdeaUsage,
+            daysOfKotlinUsage = daysOfKotlinUsage,
+            daysOfGradleUsage = daysOfGradleUsage,
+            daysOfKotlinWithGradleUsage = daysOfKotlinWithGradleUsage,
+            commonData = CommonFeedbackSystemData.getCurrentData(),
         )
     }
 
@@ -123,11 +129,17 @@ internal class BuildProcessSatisfactionDialog(
             row(GradleFeedbackBundle.message("build.process.info.kts.build.file.count")) {
                 label(mySystemInfoData.ktsBuildFileCount.toString())
             }
-            row(GradleFeedbackBundle.message("build.process.info.months.of.kotlin.usage")) {
-                label(mySystemInfoData.monthsOfKotlinUsage.toString())
+            row(GradleFeedbackBundle.message("build.process.info.days.of.kotlin.usage")) {
+                label(mySystemInfoData.daysOfKotlinUsage.toString())
             }
-            row(GradleFeedbackBundle.message("build.process.info.months.of.idea.usage")) {
-                label(mySystemInfoData.monthsOfIdeaUsage.toString())
+            row(GradleFeedbackBundle.message("build.process.info.days.of.idea.usage")) {
+                label(mySystemInfoData.daysOfIdeaUsage.toString())
+            }
+            row(GradleFeedbackBundle.message("build.process.info.days.of.gradle.usage")) {
+                label(mySystemInfoData.daysOfGradleUsage.toString())
+            }
+            row(GradleFeedbackBundle.message("build.process.info.days.of.kotlin.gradle.usage")) {
+                label(mySystemInfoData.daysOfKotlinWithGradleUsage.toString())
             }
         }
     }

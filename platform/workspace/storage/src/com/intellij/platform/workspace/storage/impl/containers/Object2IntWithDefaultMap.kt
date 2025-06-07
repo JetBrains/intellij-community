@@ -3,7 +3,6 @@
 
 package com.intellij.platform.workspace.storage.impl.containers
 
-import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap.Companion.DEFAULT_VALUE
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap.Companion.DEFAULT_VALUE
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.ints.IntCollection

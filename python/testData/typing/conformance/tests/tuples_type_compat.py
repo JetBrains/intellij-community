@@ -7,7 +7,7 @@ Tests type compatibility rules for tuples.
 # > Because tuple contents are immutable, the element types of a tuple are covariant.
 
 
-from typing import Any, Iterable, Never, Sequence, TypeVar, assert_type
+from typing import Any, Iterable, Never, Sequence, TypeAlias, TypeVar, assert_type
 
 
 def func1(t1: tuple[float, complex], t2: tuple[int, int]):
@@ -67,19 +67,23 @@ def func4(
 
 # NOTE: This type narrowing functionality is optional, not mandated.
 
+Func5Input: TypeAlias = tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int]
 
-def func5(val: tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int]):
+def func5(val: Func5Input):
     if len(val) == 1:
         # Type can be narrowed to tuple[int].
-        assert_type(val, tuple[int])  # tuple[int]
+        assert_type(val, tuple[int])  # E[func5_1]
+        assert_type(val, Func5Input)  # E[func5_1]
 
     if len(val) == 2:
         # Type can be narrowed to tuple[str, str] | tuple[int, int].
-        assert_type(val, tuple[str, str] | tuple[int, int])
+        assert_type(val, tuple[str, str] | tuple[int, int]) # E[func5_2]
+        assert_type(val, Func5Input)  # E[func5_2]
 
     if len(val) == 3:
         # Type can be narrowed to tuple[int, str, int].
-        assert_type(val, tuple[int, str, int])
+        assert_type(val, tuple[int, str, int]) # E[func5_3]
+        assert_type(val, Func5Input)  # E[func5_3]
 
 
 # > This property may also be used to safely narrow tuple types within a match
@@ -87,20 +91,25 @@ def func5(val: tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int])
 
 # NOTE: This type narrowing functionality is optional, not mandated.
 
+Func6Input: TypeAlias = tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int]
 
-def func6(val: tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int]):
+
+def func6(val: Func6Input):
     match val:
         case (x,):
-            # Type can be narrowed to tuple[int].
-            assert_type(val, tuple[int])  # tuple[int]
+            # Type may be narrowed to tuple[int].
+            assert_type(val, tuple[int])  # E[func6_1]
+            assert_type(val, Func6Input)  # E[func6_1]
 
         case (x, y):
-            # Type can be narrowed to tuple[str, str] | tuple[int, int].
-            assert_type(val, tuple[str, str] | tuple[int, int])
+            # Type may be narrowed to tuple[str, str] | tuple[int, int].
+            assert_type(val, tuple[str, str] | tuple[int, int]) # E[func6_2]
+            assert_type(val, Func6Input)  # E[func6_2]
 
         case (x, y, z):
-            # Type can be narrowed to tuple[int, str, int].
-            assert_type(val, tuple[int, str, int])
+            # Type may be narrowed to tuple[int, str, int].
+            assert_type(val, tuple[int, str, int]) # E[func6_3]
+            assert_type(val, Func6Input)  # E[func6_3]
 
 
 # > Type checkers may safely use this equivalency rule (tuple expansion)
@@ -108,13 +117,17 @@ def func6(val: tuple[int] | tuple[str, str] | tuple[int, *tuple[str, ...], int])
 
 # NOTE: This type narrowing functionality is optional, not mandated.
 
+Func7Input: TypeAlias = tuple[int | str, int | str]
 
-def func7(subj: tuple[int | str, int | str]):
+
+def func7(subj: Func7Input):
     match subj:
         case x, str():
-            assert_type(subj, tuple[int | str, str])
+            assert_type(subj, tuple[int | str, str]) # E[func7_1]
+            assert_type(subj, Func7Input)  # E[func7_1]
         case y:
-            assert_type(subj, tuple[int | str, int])
+            assert_type(subj, tuple[int | str, int]) # E[func7_2]
+            assert_type(subj, Func7Input)  # E[func7_2]
 
 
 # > The tuple class derives from Sequence[T_co] where ``T_co`` is a covariant

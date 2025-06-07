@@ -6,10 +6,9 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object CertificateWarningStatisticsCollector: CounterUsagesCollector() {
-  private val certificateWarningGroup = EventLogGroup("certificate.warning.info", 1)
-  
-  private val certificateCount = EventFields.Int("certificate_count")
-  private val certificateAccepted = certificateWarningGroup.registerVarargEvent("certificate_accepted", certificateCount)
+  private val certificateWarningGroup = EventLogGroup("certificate.warning.info", 2)
+
+  private val certificateAccepted = certificateWarningGroup.registerEvent("certificate_accepted")
   private val certificateRejected = certificateWarningGroup.registerEvent("certificate_rejected")
   
   private val usingShowButton = EventFields.Boolean("using_show_button")
@@ -19,8 +18,8 @@ internal object CertificateWarningStatisticsCollector: CounterUsagesCollector() 
     return certificateWarningGroup
   }
   
-  fun certificateAccepted(certificatesCount: Int) {
-    certificateAccepted.log(certificateCount.with(certificatesCount))
+  fun certificateAccepted() {
+    certificateAccepted.log()
   }
   
   fun certificateRejected() {

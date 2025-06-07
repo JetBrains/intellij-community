@@ -67,7 +67,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
     }
 
     companion object {
-        private val KOTLIN_STDLIB_COMMON_KLIB_PATTERN: Pattern = Pattern.compile("kotlin-stdlib-common.*\\.klib")
+        private val KOTLIN_STDLIB_COMMON_KLIB_PATTERN: Pattern = Pattern.compile(".*kotlin-stdlib-.*common.*\\.klib")
 
         @JvmStatic
         fun getInstance(project: Project): IdePlatformKindProjectStructure = project.service()

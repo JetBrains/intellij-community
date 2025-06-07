@@ -158,6 +158,9 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   /** Offsets in this text where exclusions of type {@link ExclusionKind#markup} were applied */
   int[] markupOffsets();
 
+  /** Offsets in this text where exclusions of type {@link ExclusionKind#unknown} were applied */
+  int[] unknownOffsets();
+
   /** Return a copy of this text with the specified character inserted into {@link #markupOffsets()} */
   WithMarkup replaceMarkupWith(char c);
 
@@ -220,8 +223,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
    * @return a concatenation of several text contents (which must have the same domains)
    * with the given whitespace character inserted between each pair of adjacent components.
    */
-  @Nullable
-  static TextContent joinWithWhitespace(char whitespace, List<? extends @NotNull TextContent> components) {
+  static @Nullable TextContent joinWithWhitespace(char whitespace, List<? extends @NotNull TextContent> components) {
     if (!Character.isWhitespace(whitespace) && Character.getType(whitespace) != Character.SPACE_SEPARATOR) {
       throw new IllegalArgumentException("Whitespace expected, got " + StringUtil.escapeStringCharacters(String.valueOf(whitespace)));
     }

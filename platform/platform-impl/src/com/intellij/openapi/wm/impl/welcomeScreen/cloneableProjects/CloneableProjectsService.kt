@@ -2,19 +2,21 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects
 
 import com.intellij.CommonBundle
+import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
-import java.util.*
+import java.nio.file.Path
 
 @Service(Level.APP)
 class CloneableProjectsService {
@@ -38,6 +40,7 @@ class CloneableProjectsService {
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
     val cloneableProject = CloneableProject(projectPath, taskInfo, progressIndicator, CloneStatus.PROGRESS)
     addCloneableProject(cloneableProject)
+    WslUsagesCollector.beforeProjectCreated(Path.of(projectPath), cloneTask)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
@@ -64,7 +67,8 @@ class CloneableProjectsService {
     }
   }
 
-  internal fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
+  @ApiStatus.Internal
+  fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
     val recentProjectManager by lazy { RecentProjectsManager.getInstance() as RecentProjectsManagerBase }
     return cloneableProjects.asSequence().map { cloneableProject ->
       val projectPath = cloneableProject.projectPath
@@ -196,10 +200,10 @@ class CloneableProjectsService {
     val projectPath: @SystemIndependent String,
     val cloneTaskInfo: CloneTaskInfo,
     val progressIndicator: ProgressIndicatorEx,
-    var cloneStatus: CloneStatus
+    var cloneStatus: CloneStatus,
   )
 
-  private class CloneableProjectProgressIndicator(cloneTaskInfo: CloneTaskInfo) : AbstractProgressIndicatorExBase() {
+  private class CloneableProjectProgressIndicator(cloneTaskInfo: CloneTaskInfo) : ProgressIndicatorBase() {
     init {
       setOwnerTask(cloneTaskInfo)
     }

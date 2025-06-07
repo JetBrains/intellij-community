@@ -425,8 +425,6 @@ object TemplateInlayUtil {
                               DataManager.getInstance().getDataContext(editor.component),
                               anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
                               ActionManager.getInstance(), 0)
-    if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(renameAction, event)
-    }
+    ActionUtil.performAction(renameAction, event)
   }
 }

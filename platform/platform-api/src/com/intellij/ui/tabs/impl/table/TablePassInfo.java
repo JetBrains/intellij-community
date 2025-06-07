@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl.table;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -46,7 +47,7 @@ public final class TablePassInfo extends LayoutPassInfo {
   }
 
   @Override
-  public Rectangle getHeaderRectangle() {
+  public @NotNull Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
 

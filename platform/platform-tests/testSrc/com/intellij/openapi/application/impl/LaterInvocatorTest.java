@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,6 +50,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     public void run() {
       LaterInvocator.leaveModal(myWindow1);
     }
+    @Override
     public String toString() {
       return "leave modal later";
     }
@@ -62,6 +62,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(myWindow1);
     }
 
+    @Override
     public String toString() {
       return "enter modal later";
     }
@@ -70,11 +71,13 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     myWindow1 = new Container() {
+      @Override
       public String toString() {
         return "Window1";
       }
     };
     myWindow2 = new Container() {
+      @Override
       public String toString() {
         return "Window2";
       }
@@ -183,6 +186,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
             assertFalse(LaterInvocator.isInModalContext());
           }
 
+          @Override
           public String toString() {
             return "ass2";
           }
@@ -462,7 +466,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(modal2); //[modal1, modal2]
       ModalityState ms_12 = ModalityState.current();
       assertNotSame(ms_1, ms_12);
-      assertTrue(ms_12.dominates(ms_1));
+      assertFalse(ms_12.accepts(ms_1));
 
       UIUtil.dispatchAllInvocationEvents();
       assertEmpty(myOrder);
@@ -477,7 +481,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
       ModalityState ms_2 = ModalityState.current();
       assertSame(ms_12, ms_2);
-      assertTrue(ms_2.dominates(ms_1));
+      assertFalse(ms_2.accepts(ms_1));
 
       ApplicationManager.getApplication().invokeLater(new MyRunnable("m1x"), ms_1);
       ApplicationManager.getApplication().invokeLater(new MyRunnable("m2"), ms_2);

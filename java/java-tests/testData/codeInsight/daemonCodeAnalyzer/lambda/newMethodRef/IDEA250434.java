@@ -16,7 +16,7 @@ class Boo {
 
   public static void main(String[] args) {
     Optional<String> value = Optional.of("value");
-    <error descr="Incompatible types. Found: 'foo.Boo.MyGenericClass<capture<?>>', required: 'foo.Boo.MyGenericClass<java.lang.Integer>'">MyGenericClass<Integer> myClassValue = value.map(MyGenericClass::<Integer>create).orElse(null);</error>
+    MyGenericClass<Integer> myClassValue = value.map(MyGenericClass::<Integer>create).<error descr="Incompatible types. Found: 'foo.Boo.MyGenericClass<capture<?>>', required: 'foo.Boo.MyGenericClass<java.lang.Integer>'">orElse</error>(null);
   }
 
 }

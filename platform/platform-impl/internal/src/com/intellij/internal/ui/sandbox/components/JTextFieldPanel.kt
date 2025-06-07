@@ -21,14 +21,18 @@ internal class JTextFieldPanel : UISandboxPanel {
       withStateLabel {
         textField().applyToComponent {
           isEditable = false
+          text = "Some text"
         }
       }
       withStateLabel {
-        textField().enabled(false)
+        textField().applyToComponent {
+          isEnabled = false
+          text = "Some text"
+        }
       }
       row("With empty text:") {
-        textField().apply {
-          component.emptyText.text = "Type some text here"
+        textField().applyToComponent {
+          emptyText.text = "Type some text here"
         }
       }
 

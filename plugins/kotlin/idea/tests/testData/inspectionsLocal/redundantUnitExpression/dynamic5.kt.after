@@ -1,4 +1,7 @@
+// K2_ERROR: Dynamic type is only supported in Kotlin JS.
+// K2_AFTER_ERROR: Dynamic type is only supported in Kotlin JS.
 // ERROR: Unsupported [Dynamic types are not supported in this context]
+// AFTER_ERROR: Unsupported [Dynamic types are not supported in this context]
 
 fun foo() {
     fun <T> bar(c: () -> T, f: () -> dynamic): Unit {}

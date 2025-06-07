@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.module;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 public interface WorkingDirectoryProvider {
   @Nullable @SystemIndependent
-  String getWorkingDirectoryPath(Module module);
+  String getWorkingDirectoryPath(@NotNull Module module);
 }

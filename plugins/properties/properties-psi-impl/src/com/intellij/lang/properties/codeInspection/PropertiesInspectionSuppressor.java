@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection;
 
 import com.intellij.codeInspection.InspectionSuppressor;
@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PropertiesInspectionSuppressor implements InspectionSuppressor {
-  private final static Logger LOG = Logger.getInstance(PropertiesInspectionSuppressor.class);
+  private static final Logger LOG = Logger.getInstance(PropertiesInspectionSuppressor.class);
 
   @Override
-  public SuppressQuickFix @NotNull [] getSuppressActions(final PsiElement element, @NotNull final String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(final PsiElement element, final @NotNull String toolId) {
     return new SuppressQuickFix[] {new SuppressSinglePropertyFix(toolId), new SuppressForFile(toolId)};
   }
 
@@ -75,8 +75,7 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
@@ -89,7 +88,7 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
       LOG.assertTrue(property != null);
       final int start = property.getTextRange().getStartOffset();
 
-      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      final @NonNls Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
       LOG.assertTrue(doc != null);
       final int line = doc.getLineNumber(start);
       final int lineStart = doc.getLineStartOffset(line);
@@ -118,8 +117,7 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
@@ -128,7 +126,7 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
       final PsiElement element = descriptor.getStartElement();
       final PsiFile file = element.getContainingFile();
 
-      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      final @NonNls Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
       LOG.assertTrue(doc != null, file);
 
       doc.insertString(0, "# suppress inspection \"" +

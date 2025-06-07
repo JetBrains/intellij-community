@@ -58,7 +58,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
     val builder = createEmptyBuilder()
     
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity(
-      someEnum = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum.FIRST,
+      someEnum = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum.A_ENTRY,
       SampleEntitySource("test")
     )
 
@@ -68,7 +68,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
          Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"
            Start comparing cache: Custom type     with current: Custom type
              Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEnum"
-               Cache: enum entries = THIRD, Current: enum entries = NOT_THIRD    Result: not equal
+               Cache: enum entries = CA_ENTRY, Current: enum entries = CB_ENTRY    Result: not equal
              End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEnum"    Result: not equal
            End comparing cache: Custom type     with current: Custom type    Result: not equal
          End comparing cache: Own property "someEnum"     with current: Own property "someEnum"    Result: not equal
@@ -95,7 +95,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
     val builder = createEmptyBuilder()
 
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEntity(
-      someEnum = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum.FIFTH,
+      someEnum = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum.C_ENUM,
       SampleEntitySource("test")
     )
 
@@ -105,7 +105,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
         Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"
           Start comparing cache: Custom type     with current: Custom type
             Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"
-              Cache: enum entries = FIFTH, Current: enum entries = SECOND    Result: not equal
+              Cache: enum entries = C_ENUM, Current: enum entries = B_ENUM    Result: not equal
             End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"    Result: not equal
           End comparing cache: Custom type     with current: Custom type    Result: not equal
         End comparing cache: Own property "someEnum"     with current: Own property "someEnum"    Result: not equal

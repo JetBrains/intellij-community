@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.List;
  * (in any thread) {@code boolean canSilentlyChange = result.canIReally(isFileInContent, extensionsAllowToChangeFileSilently);}
  * </pre>
  */
+@ApiStatus.Internal
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
@@ -50,6 +52,7 @@ final class CanISilentlyChange {
     return false;
   }
 
+  @ApiStatus.Internal
   enum Result {
     UH_HUH, // yes
     UH_UH,  // no
@@ -64,6 +67,7 @@ final class CanISilentlyChange {
     }
   }
 
+  @ApiStatus.Internal
   static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();

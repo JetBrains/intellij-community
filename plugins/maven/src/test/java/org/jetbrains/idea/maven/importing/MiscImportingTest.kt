@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 import java.util.*
 import java.util.function.Function
-import kotlin.io.path.exists
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -150,6 +149,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -161,6 +161,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -261,11 +262,12 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
         }
       })
     updateAllProjects()
-    assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog)
+    assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl", "created LibraryMavenCoordinateEntityImpl"), changeLog)
   }
 
   @Test
   fun testResolvingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -287,61 +289,10 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testTakingProxySettingsIntoAccount() = runBlocking {
-    needFixForMaven4()
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = helper.getTestDataPath("local1")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <dependencies>
-                      <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.0</version>
-                      </dependency>
-                    </dependencies>
-                    """.trimIndent())
-    removeFromLocalRepository("junit")
-    updateAllProjects()
-    val jarFile = repositoryFile.resolve("junit/junit/4.0/junit-4.0.jar")
-    assertTrue(jarFile.exists())
-    projectsManager.listenForExternalChanges()
-    waitForImportWithinTimeout {
-      updateSettingsXml("""
-                        <proxies>
-                         <proxy>
-                            <id>my</id>
-                            <active>true</active>
-                            <protocol>http</protocol>
-                            <host>invalid.host.in.intellij.net</host>
-                            <port>3128</port>
-                          </proxy>
-                        </proxies>
-                        """.trimIndent())
-    }
-    removeFromLocalRepository("junit")
-    assertFalse(jarFile.exists())
-    try {
-      updateAllProjects()
-    }
-    finally {
-      // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
-      System.clearProperty("http.proxyHost")
-      System.clearProperty("http.proxyPort")
-    }
-    assertFalse(jarFile.exists())
-    restoreSettingsFile()
-    updateAllProjects()
-    assertTrue(jarFile.exists())
-  }
-
-  @Test
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "plugins")
-      repositoryPath = helper.getTestDataPath("plugins")
+      repositoryPath = helper.getTestData("plugins")
       mavenGeneralSettings.isWorkOffline = true
       importProjectAsync("""
                       <groupId>test</groupId>

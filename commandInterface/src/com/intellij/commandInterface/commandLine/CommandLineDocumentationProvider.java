@@ -4,16 +4,16 @@ package com.intellij.commandInterface.commandLine;
 import com.intellij.commandInterface.command.Command;
 import com.intellij.commandInterface.command.Help;
 import com.intellij.commandInterface.command.Option;
+import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
+import com.intellij.commandInterface.commandLine.psi.CommandLineCommand;
+import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
+import com.intellij.commandInterface.commandLine.psi.CommandLineVisitor;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
-import com.intellij.commandInterface.commandLine.psi.CommandLineCommand;
-import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
-import com.intellij.commandInterface.commandLine.psi.CommandLineVisitor;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +29,8 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineDocumentationProvider implements DocumentationProvider {
-  @Nullable
   @Override
-  public @Nls String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(final PsiElement element, final @Nullable PsiElement originalElement) {
     final Help help = findHelp(element);
     if (help == null) {
       return null;
@@ -55,12 +54,11 @@ public final class CommandLineDocumentationProvider implements DocumentationProv
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
-                                                  @NotNull final PsiFile file,
-                                                  @Nullable final PsiElement contextElement,
-                                                  int targetOffset) {
+  public @Nullable PsiElement getCustomDocumentationElement(final @NotNull Editor editor,
+                                                            final @NotNull PsiFile file,
+                                                            final @Nullable PsiElement contextElement,
+                                                            int targetOffset) {
 
     // First we try to find required parent for context element. Then, for element to the left of caret to support case "command<caret>"
     for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(targetOffset - 1))) {
@@ -78,8 +76,7 @@ public final class CommandLineDocumentationProvider implements DocumentationProv
    * @param element element to search help for
    * @return help or
    */
-  @Nullable
-  private static Help findHelp(@NotNull final PsiElement element) {
+  private static @Nullable Help findHelp(final @NotNull PsiElement element) {
     if (!(element instanceof CommandLinePart commandLinePart)) {
       return null;
     }
@@ -108,7 +105,7 @@ public final class CommandLineDocumentationProvider implements DocumentationProv
     private Help myResultHelp;
 
     @Override
-    public void visitArgument(@NotNull final CommandLineArgument o) {
+    public void visitArgument(final @NotNull CommandLineArgument o) {
       super.visitArgument(o);
       myResultHelp = o.findBestHelp();
     }
@@ -123,7 +120,7 @@ public final class CommandLineDocumentationProvider implements DocumentationProv
     }
 
     @Override
-    public void visitOption(@NotNull final CommandLineOption o) {
+    public void visitOption(final @NotNull CommandLineOption o) {
       super.visitOption(o);
       final Option option = o.findRealOption();
       if (option == null) {

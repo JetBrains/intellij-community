@@ -506,6 +506,9 @@ public final class MismatchedCollectionQueryUpdateInspection extends BaseInspect
       if (CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+        return false;
+      }
       if (type instanceof PsiArrayType && !(type instanceof PsiEllipsisType)) {
         return false;
       }

@@ -88,7 +88,7 @@ public final class ExcludedGlobPatternsPanel extends ExcludedFilesPanelBase {
     List<String> patterns =
       new ArrayList<>(ContainerUtil.map(settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE), d -> d.getPattern()));
     List<String> convertedPatterns = getConvertedPatterns(settings);
-    myConversionMessage.setVisible(convertedPatterns.size() > 0);
+    myConversionMessage.setVisible(!convertedPatterns.isEmpty());
     patterns.addAll(convertedPatterns);
     return StringUtil.join(patterns, PATTERN_SEPARATOR);
   }

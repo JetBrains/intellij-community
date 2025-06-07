@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -180,9 +180,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                     for (inBlockModification in inBlockModifications) {
                         val resultCtx = analysisResult.bindingContext
 
-                        val stackedCtx =
-                            if (resultCtx is StackedCompositeBindingContextTrace.StackedCompositeBindingContext) resultCtx else null
-
+                        val stackedCtx = resultCtx as? StackedCompositeBindingContextTrace.StackedCompositeBindingContext
                         // no incremental analysis IF it is not applicable
                         if (stackedCtx?.isIncrementalAnalysisApplicable() == false) return@let null
 
@@ -501,7 +499,7 @@ private class StackedCompositeBindingContextTrace(
             return keys + fromParent
         }
 
-        override fun <K : Any?, V : Any?> getSliceContents(slice: ReadOnlySlice<K, V>): ImmutableMap<K, V> {
+        override fun <K : Any, V : Any> getSliceContents(slice: ReadOnlySlice<K, V>): ImmutableMap<K, V> {
             val parentSliceContents = parentContext.getSliceContents(slice).filter {
                 !it.key.containedInReanalyzedElement()
             }

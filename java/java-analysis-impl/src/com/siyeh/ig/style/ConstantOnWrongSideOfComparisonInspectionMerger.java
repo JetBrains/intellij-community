@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
@@ -11,12 +11,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ConstantOnWrongSideOfComparisonInspectionMerger extends InspectionElementsMergerBase {
 
-  @NonNls private static final String CONSTANT_ON_LHS = "ConstantOnLHSOfComparison";
-  @NonNls private static final String CONSTANT_ON_RHS = "ConstantOnRHSOfComparison";
+  private static final @NonNls String CONSTANT_ON_LHS = "ConstantOnLHSOfComparison";
+  private static final @NonNls String CONSTANT_ON_RHS = "ConstantOnRHSOfComparison";
 
-  @NotNull
   @Override
-  public String getMergedToolName() {
+  public @NotNull String getMergedToolName() {
     return "ConstantOnWrongSideOfComparison";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.util.io.DataExternalizer;
@@ -67,12 +67,12 @@ public abstract class StateCache<T> {
   private PersistentHashMap<String, T> createMap(final File file) throws IOException {
     return new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final T value) throws IOException {
+      public void save(final @NotNull DataOutput out, final T value) throws IOException {
         StateCache.this.write(value, out);
       }
 
       @Override
-      public T read(@NotNull final DataInput in) throws IOException {
+      public T read(final @NotNull DataInput in) throws IOException {
         return StateCache.this.read(in);
       }
     });

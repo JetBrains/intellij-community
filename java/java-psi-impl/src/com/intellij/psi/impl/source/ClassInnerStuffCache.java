@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -26,6 +27,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -94,7 +96,7 @@ public final class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
+    return JavaKeywords.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
   }
 
   @Nullable
@@ -118,7 +120,7 @@ public final class ClassInnerStuffCache {
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  private @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
+  private @Unmodifiable @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
     return ContainerUtil.map(members, this::internMember);
   }
 

@@ -27,10 +27,10 @@ import kotlin.coroutines.CoroutineContext
  * _should not_ be replaced by `.softLimitedParallelism(1)`.
  */
 @ExperimentalCoroutinesApi
-fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
   @OptIn(InternalCoroutinesApi::class)
   with(IntellijCoroutines) {
-    return softLimitedParallelism(parallelism)
+    return softLimitedParallelism(parallelism, name)
   }
 }
 
@@ -38,6 +38,7 @@ fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int): CoroutineDispa
  * Behaves like [CoroutineDispatcher.limitedParallelism], but adds "#[dispatcherName]" suffix to its string representation
  */
 @ExperimentalCoroutinesApi
+@Deprecated("Use `limitedParallelism` from Kotlin coroutines", ReplaceWith("limitedParallelism(parallelism, dispatcherName)"))
 fun CoroutineDispatcher.limitedParallelism(parallelism: Int, dispatcherName: String): CoroutineDispatcher =
   limitedParallelism(parallelism).withName(dispatcherName)
 

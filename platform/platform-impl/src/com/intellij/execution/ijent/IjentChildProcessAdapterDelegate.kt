@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.ijent.*
+import com.intellij.platform.eel.EelPosixProcess
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelWindowsProcess
+import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.ijent.spi.IjentThreadPool
-import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.asCompletableFuture
-import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
@@ -19,34 +19,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class IjentChildProcessAdapterDelegate(
   val coroutineScope: CoroutineScope,
-  val ijentChildProcess: IjentChildProcess,
-  redirectStderr: Boolean,
+  val ijentChildProcess: EelProcess,
 ) {
-  val inputStream: InputStream
+  val inputStream: InputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
 
-  val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
+  val outputStream: OutputStream = ijentChildProcess.stdin.asOutputStream(coroutineScope.coroutineContext)
 
-  val errorStream: InputStream
-
-  init {
-    if (redirectStderr) {
-      val merged = Channel<ByteArray>()
-
-      coroutineScope.launch {
-        ijentChildProcess.stdout.consumeEach { chunk -> merged.send(chunk) }
-      }
-      coroutineScope.launch {
-        ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
-      }
-
-      inputStream = ChannelInputStream.forArrays(coroutineScope, merged)
-      errorStream = ByteArrayInputStream(byteArrayOf())
-    }
-    else {
-      inputStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stdout)
-      errorStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stderr)
-    }
-  }
+  val errorStream: InputStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
 
   @RequiresBackgroundThread
   @Throws(InterruptedException::class)
@@ -62,8 +41,7 @@ internal class IjentChildProcessAdapterDelegate(
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
         ijentChildProcess.exitCode.await()
         true
-      }
-      ?: false
+      } == true
     }
 
   fun destroyForcibly() {
@@ -86,7 +64,10 @@ internal class IjentChildProcessAdapterDelegate(
 
   fun destroy() {
     coroutineScope.launch {
-      ijentChildProcess.terminate()
+      when (ijentChildProcess) {
+        is EelPosixProcess -> ijentChildProcess.terminate()
+        is EelWindowsProcess -> ijentChildProcess.kill()
+      }
     }
   }
 
@@ -104,4 +85,10 @@ internal class IjentChildProcessAdapterDelegate(
     }
     return true
   }
+
+  fun supportsNormalTermination(): Boolean =
+    when (ijentChildProcess) {
+      is EelPosixProcess -> true
+      is EelWindowsProcess -> false
+    }
 }

@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 
+const val TYPES_PREFIX = "types-"
 const val STUBS_SUFFIX = "-stubs"
 private val STUB_PACKAGE_KEY = Key<Boolean>("PY_STUB_PACKAGE")
 private val INLINE_PACKAGE_KEY = Key<Boolean>("PY_INLINE_PACKAGE")
@@ -31,11 +32,17 @@ private val INLINE_PACKAGE_KEY = Key<Boolean>("PY_INLINE_PACKAGE")
 fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
   val top = name.firstComponent
 
-  if (top != null && top.endsWith(STUBS_SUFFIX)) {
-    return QualifiedName.fromComponents(top.removeSuffix(STUBS_SUFFIX)).append(name.removeHead(1))
+  return when {
+    top != null && top.endsWith(STUBS_SUFFIX) -> {
+      top.removeSuffix(STUBS_SUFFIX)
+    }
+    top != null && top.startsWith(TYPES_PREFIX) -> {
+      top.removePrefix(TYPES_PREFIX)
+    }
+    else -> return name
+  }.let {
+    QualifiedName.fromComponents(it).append(name.removeHead(1))
   }
-
-  return name
 }
 
 /**
@@ -55,6 +62,15 @@ fun findStubPackage(dir: PsiDirectory,
     if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, dir))) {
       doTransferStubPackageMarker(stubPackage)
       return stubPackage
+    }
+
+    val typesPackageName = "$TYPES_PREFIX$referencedName"
+    val typesPackage = dir.findSubdirectory(typesPackageName)
+
+    // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
+    if (typesPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(typesPackage, dir))) {
+      doTransferStubPackageMarker(typesPackage)
+      return typesPackage
     }
   }
 

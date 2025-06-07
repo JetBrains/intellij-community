@@ -11,6 +11,7 @@ public final class WriteVariableInstruction extends SimpleInstruction {
     this.variable = variable;
   }
 
+  @Override
   public String toString() {
     return "WRITE " + variable.getName();
   }

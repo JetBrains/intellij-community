@@ -1,0 +1,121 @@
+### auto-generated section `build kotlin.refactorings.move.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-refactorings-move-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings-move-k2",
+  module_name = "kotlin.refactorings.move.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/base/facet",
+    "//platform/observable",
+    "//java/openapi:java",
+  ],
+  runtime_deps = [":kotlin-refactorings-move-k2_resources"]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-move-k2_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":kotlin-refactorings-move-k2"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:gson",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/refactoring",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//platform/observable",
+    "//java/openapi:java",
+  ],
+  runtime_deps = [":kotlin-refactorings-move-k2_resources"]
+)
+
+jvm_test(
+  name = "kotlin-refactorings-move-k2_test",
+  runtime_deps = [":kotlin-refactorings-move-k2_test_lib"]
+)
+### auto-generated section `build kotlin.refactorings.move.k2` end

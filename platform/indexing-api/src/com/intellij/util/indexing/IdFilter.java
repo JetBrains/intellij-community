@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -36,7 +21,6 @@ import java.util.BitSet;
 public abstract class IdFilter {
   private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
-  private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
   @Internal
   public enum FilterScopeType {
@@ -59,21 +43,25 @@ public abstract class IdFilter {
       }
     };
 
-    @NonNls
-    @NotNull
-    public abstract String getId();
+    public abstract @NonNls @NotNull String getId();
   }
 
-  @NotNull
-  public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
-    Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
-    CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
-              ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
-    return CachedValuesManager.getManager(project).getCachedValue(project, key, provider, false);
+  public static @NotNull IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
+    if (includeNonProjectItems) {
+      IdFilter filter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+      return filter != null ? filter : new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return false;
+        }
+      };
+    }
+    CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilterForContentFiles(project),
+                                                                                     ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
+    return CachedValuesManager.getManager(project).getCachedValue(project, INSIDE_PROJECT, provider, false);
   }
 
-  @NotNull
-  private static IdFilter buildProjectIdFilter(@NotNull Project project, boolean includeNonProjectItems) {
+  private static @NotNull IdFilter buildProjectIdFilterForContentFiles(@NotNull Project project) {
     long started = System.currentTimeMillis();
     final BitSet idSet = new BitSet();
 
@@ -83,16 +71,11 @@ public abstract class IdFilter {
       return true;
     };
 
-    if (includeNonProjectItems) {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
-    }
-    else {
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
-    }
+    ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
 
     if (LOG.isDebugEnabled()) {
       long elapsed = System.currentTimeMillis() - started;
-      LOG.debug("Done filter (includeNonProjectItems=" + includeNonProjectItems+") "+
+      LOG.debug("Done filter (includeNonProjectItems=" + false+") "+
                 "in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
     }
     return new IdFilter() {
@@ -101,10 +84,9 @@ public abstract class IdFilter {
         return id >= 0 && idSet.get(id);
       }
 
-      @NotNull
       @Override
-      public FilterScopeType getFilteringScopeType() {
-        return includeNonProjectItems ? FilterScopeType.PROJECT_AND_LIBRARIES : FilterScopeType.PROJECT;
+      public @NotNull FilterScopeType getFilteringScopeType() {
+        return FilterScopeType.PROJECT;
       }
     };
   }
@@ -112,8 +94,7 @@ public abstract class IdFilter {
   public abstract boolean containsFileId(int id);
 
   @Internal
-  @NotNull
-  public FilterScopeType getFilteringScopeType() {
+  public @NotNull FilterScopeType getFilteringScopeType() {
     return FilterScopeType.OTHER;
   }
 }

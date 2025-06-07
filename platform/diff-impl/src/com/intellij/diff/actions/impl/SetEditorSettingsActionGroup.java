@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAware {
-  @NotNull private final TextDiffSettings myTextSettings;
+  private final @NotNull TextDiffSettings myTextSettings;
   private final @NotNull Supplier<? extends List<? extends Editor>> myEditors;
-  @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
+  private @Nullable SyncScrollSupport.Support mySyncScrollSupport;
 
   protected final AnAction @NotNull [] myActions;
 
@@ -276,7 +276,7 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     }
 
     private class OptionAction extends ToggleAction implements DumbAware {
-      @NotNull private final HighlightingLevel myLayer;
+      private final @NotNull HighlightingLevel myLayer;
 
       OptionAction(@NotNull HighlightingLevel layer) {
         super(layer.getText(), null, layer.getIcon());
@@ -320,7 +320,7 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     }
 
     private class OptionAction extends ToggleAction implements DumbAware {
-      @NotNull private final BreadcrumbsPlacement myOption;
+      private final @NotNull BreadcrumbsPlacement myOption;
 
       OptionAction(@NotNull BreadcrumbsPlacement option) {
         ActionUtil.copyFrom(this, option.getActionId());

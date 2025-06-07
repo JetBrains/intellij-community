@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -40,5 +41,5 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
 
   protected abstract @NotNull List<Shortcut> getDefaultShortcuts();
 
-  protected abstract @NotNull List<Shortcut> getSingleLineShortcuts();
+  protected abstract @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts();
 }

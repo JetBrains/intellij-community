@@ -13,7 +13,6 @@ import com.intellij.stats.completion.events.LogEvent
 import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions
 import org.mockito.ArgumentMatchers.anyBoolean
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 
 const val runnableInterface = "interface Runnable { void run(); void runFast(); }"

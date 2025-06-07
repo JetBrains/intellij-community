@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,16 +7,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
 
 public class NestedCopyInfo {
-  @NotNull private final VirtualFile myFile;
-  @Nullable private Url myUrl;
-  @NotNull private WorkingCopyFormat myFormat;
-  @NotNull private final NestedCopyType myType;
-  @Nullable private Url myRootURL;
+  private final @NotNull VirtualFile myFile;
+  private @Nullable Url myUrl;
+  private @NotNull WorkingCopyFormat myFormat;
+  private final @NotNull NestedCopyType myType;
+  private @Nullable Url myRootURL;
 
-  public NestedCopyInfo(@NotNull final VirtualFile file,
-                        @Nullable final Url url,
-                        @NotNull final WorkingCopyFormat format,
-                        @NotNull final NestedCopyType type,
+  public NestedCopyInfo(final @NotNull VirtualFile file,
+                        final @Nullable Url url,
+                        final @NotNull WorkingCopyFormat format,
+                        final @NotNull NestedCopyType type,
                         @Nullable Url rootURL) {
     myFile = file;
     myUrl = url;
@@ -29,8 +29,7 @@ public class NestedCopyInfo {
     myUrl = url;
   }
 
-  @Nullable
-  public Url getRootURL() {
+  public @Nullable Url getRootURL() {
     return myRootURL;
   }
 
@@ -38,23 +37,19 @@ public class NestedCopyInfo {
     myFormat = format;
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @Nullable
-  public Url getUrl() {
+  public @Nullable Url getUrl() {
     return myUrl;
   }
 
-  @NotNull
-  public WorkingCopyFormat getFormat() {
+  public @NotNull WorkingCopyFormat getFormat() {
     return myFormat;
   }
 
-  @NotNull
-  public NestedCopyType getType() {
+  public @NotNull NestedCopyType getType() {
     return myType;
   }
 
@@ -79,7 +74,7 @@ public class NestedCopyInfo {
     return key(myFile).hashCode();
   }
 
-  public void setRootURL(@Nullable final Url value) {
+  public void setRootURL(final @Nullable Url value) {
     myRootURL = value;
   }
 }

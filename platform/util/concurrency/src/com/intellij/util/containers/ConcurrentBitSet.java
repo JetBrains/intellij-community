@@ -22,14 +22,12 @@ import java.io.IOException;
  * @see java.util.BitSet
  */
 public interface ConcurrentBitSet {
-  @NotNull
   @Contract("->new")
-  static ConcurrentBitSet create() {
+  static @NotNull ConcurrentBitSet create() {
     return new ConcurrentBitSetImpl();
   }
-  @NotNull
   @Contract("_->new")
-  static ConcurrentBitSet create(int estimatedSize) {
+  static @NotNull ConcurrentBitSet create(int estimatedSize) {
     return new ConcurrentBitSetImpl(estimatedSize);
   }
 
@@ -120,8 +118,7 @@ public interface ConcurrentBitSet {
 
   int @NotNull [] toIntArray();
 
-  @NotNull
-  static ConcurrentBitSet readFrom(@NotNull DataInputStream inputStream) throws IOException {
+  static @NotNull ConcurrentBitSet readFrom(@NotNull DataInputStream inputStream) throws IOException {
     IntList list = new IntArrayList();
     while (inputStream.available() > 0) {
       list.add(inputStream.readInt());

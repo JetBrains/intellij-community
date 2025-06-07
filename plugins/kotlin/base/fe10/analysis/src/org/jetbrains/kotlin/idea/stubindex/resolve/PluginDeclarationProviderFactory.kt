@@ -79,7 +79,7 @@ class PluginDeclarationProviderFactory(
 
     override fun diagnoseMissingPackageFragment(fqName: FqName, file: KtFile?) {
         if (file != null && DumbService.isDumb(file.project) &&
-            FileBasedIndex.getInstance().currentDumbModeAccessType != null) {
+            FileBasedIndex.getInstance().getCurrentDumbModeAccessType(file.project) != null) {
             throw IndexNotReadyException.create()
         }
         val moduleSourceInfo = moduleInfo as? ModuleSourceInfo

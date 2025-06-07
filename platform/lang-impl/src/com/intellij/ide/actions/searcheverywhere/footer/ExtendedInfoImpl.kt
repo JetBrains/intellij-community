@@ -2,10 +2,8 @@
 package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.find.impl.SearchEverywhereItem
-import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.lang.LangBundle
-import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -37,7 +35,8 @@ import javax.swing.JPanel
 @NlsSafe
 private val DEFAULT_TEXT = "<html><br></html>"
 
-internal class ExtendedInfoComponent(private val project: Project?, private val advertisement: ExtendedInfo) {
+@ApiStatus.Internal
+class ExtendedInfoComponent(private val project: Project?, private val advertisement: ExtendedInfo) {
   private val text = JBLabel()
     .apply {
       font = RelativeFont.NORMAL
@@ -98,7 +97,7 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
     private fun context(project: Project?) = project?.let { SimpleDataContext.getProjectContext(it) } ?: SimpleDataContext.EMPTY_CONTEXT
     private fun AnAction.updateIt(event: AnActionEvent) {
       let {
-        ActionUtil.performDumbAwareUpdate(it, event, false)
+        ActionUtil.updateAction(it, event)
       }
     }
 
@@ -106,7 +105,9 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
       text = event.presentation.text ?: DEFAULT_TEXT
       toolTipText = event.presentation.description
       actionListeners.forEach { removeActionListener(it) }
-      addActionListener { _ -> ActionUtil.performActionDumbAwareWithCallbacks(action, event) }
+      addActionListener {
+        ActionUtil.performAction(action, event)
+      }
     }
 
     private fun JBLabel.updateIt(action: AnAction) {
@@ -169,7 +170,9 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   }
 
   val split: (Any) -> AnAction? = fun(item: Any): ExtendedInfoOpenInRightSplitAction? {
+    val originalAction = ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT) ?: return null
     return ExtendedInfoOpenInRightSplitAction(
+      originalAction,
       CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
         sink[CommonDataKeys.PROJECT] = projectFun.invoke(item)
         sink.lazy(CommonDataKeys.PSI_ELEMENT) {
@@ -184,17 +187,18 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   return ExtendedInfo(path, split)
 }
 
-private class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataContext) : AnAction() {
-  val split = OpenInRightSplitAction()
-
+private class ExtendedInfoOpenInRightSplitAction(
+  private val originalAction: AnAction,
+  private val dataContext: DataContext,
+) : AnAction() {
   init {
     templatePresentation.text = LangBundle.message("search.everywhere.advertiser.class.on.in.split")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val event = AnActionEvent.createEvent(split, dataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
-    ActionUtil.invokeAction(split, event, null)
+    val event = AnActionEvent.createEvent(originalAction, dataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
+    ActionUtil.performAction(originalAction, event)
     val seManager = SearchEverywhereManager.getInstance(dataContext.getData(CommonDataKeys.PROJECT))
-    if (seManager.isShown) seManager.currentlyShownUI.closePopup()
+    if (seManager.isShown) seManager.currentlyShownPopupInstance?.closePopup()
   }
 }

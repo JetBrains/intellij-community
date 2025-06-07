@@ -1,6 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: param
+// NO_OPTION: CONSTRUCTOR_PARAMETER|Add use-site target 'param'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 // WITH_STDLIB
-// IS_APPLICABLE: false
 
 annotation class A
 

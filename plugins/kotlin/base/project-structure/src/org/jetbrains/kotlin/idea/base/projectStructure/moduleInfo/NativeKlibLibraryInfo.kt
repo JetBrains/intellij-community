@@ -46,7 +46,8 @@ class NativeKlibLibraryInfo internal constructor(project: Project, library: Libr
  * Provides forward compatibility to klib's 'commonizer_native_targets' property (which is expected in 1.5.20)
  */
 @Suppress("SpellCheckingInspection")
-private object CommonizerNativeTargetsCompat {
+@ApiStatus.Internal
+object CommonizerNativeTargetsCompat {
     /**
      * Similar to [KLIB_PROPERTY_NATIVE_TARGETS] but this will also preserve targets
      * that were unsupported on the host creating this artifact

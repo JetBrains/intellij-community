@@ -3,4 +3,9 @@
     <listener class="org.jetbrains.kotlin.idea.base.fe10.projectStructure.Fe10OrderedWorkspaceModelChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KotlinLibraryDeduplicator"
+                    serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator"/>
+  </extensions>
 </idea-plugin>

@@ -120,7 +120,7 @@ open class EditorCodeVisionContext(
         val groupedLenses = lastFilteredLineLenses.groupBy { codeVisionHost.getAnchorForEntry(it.codeVisionEntryOrThrow) }
 
         val anchoringRange = groupedLenses.first().value.first()
-        val range = TextRange(anchoringRange.startOffset, anchoringRange.endOffset)
+        val range = anchoringRange.textRange
         val handlerLambda = viewService.addCodeLenses(lifetime,
                                                       editor as EditorImpl,
                                                       range,

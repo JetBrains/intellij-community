@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.vcs.log.history
@@ -9,14 +9,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.*
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogHistory
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
@@ -32,7 +35,8 @@ import com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.visible.*
-import com.intellij.vcs.log.visible.filters.*
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.without
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -83,8 +87,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                     commitCount: CommitCountStage): RevisionCollectorTask<CommitMetadataWithPath> {
     val oldHistoryTask = fileHistoryTask
     val oldCollector = oldHistoryTask?.collector
-    if (!commitCount.isInitial &&
-        oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
+    if (oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
         oldCollector.filePath == filePath &&
         oldCollector.hash == hash &&
         oldCollector.filters == filters) {
@@ -123,15 +126,13 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.getName()).use { scope ->
-        val isInitial = commitCount.isInitial
-
         scope.setAttribute("filePath", filePath.toString())
-        scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, isInitial)
+        scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, commitCount.isInitial)
         scope.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
         if (canFilterWithIndex(index, root, dataPack)) {
           cancelLastTask(false)
-          val visiblePack = filterWithIndex(index.dataGetter!!, dataPack, oldVisiblePack, graphOptions, filters, isInitial)
+          val visiblePack = filterWithIndex(index.dataGetter!!, dataPack, oldVisiblePack, graphOptions, filters)
 
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "index")
@@ -235,10 +236,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                 dataPack: DataPack,
                                 oldVisiblePack: VisiblePack,
                                 graphOptions: PermanentGraph.Options,
-                                filters: VcsLogFilterCollection,
-                                isInitial: Boolean): VisiblePack {
+                                filters: VcsLogFilterCollection): VisiblePack {
       val oldFileHistory = oldVisiblePack.fileHistory
-      if (isInitial) {
+      if (oldVisiblePack.filters != filters) {
         return filterWithIndex(indexDataGetter, dataPack, filters, graphOptions,
                                oldFileHistory.commitToRename,
                                FileHistory(emptyMap(), processedAdditionsDeletions = oldFileHistory.processedAdditionsDeletions))
@@ -251,7 +251,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                 dataPack: DataPack,
                                 filters: VcsLogFilterCollection,
                                 graphOptions: PermanentGraph.Options,
-                                oldRenames: MultiMap<UnorderedPair<Int>, Rename>,
+                                oldRenames: MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>,
                                 oldFileHistory: FileHistory): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
       val data = indexDataGetter.createFileHistoryData(filePath).build(oldRenames)
@@ -277,7 +277,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       return VisiblePack(dataPack, visibleGraph, fileHistory.unmatchedAdditionsDeletions.isNotEmpty(), filters).withFileHistory(fileHistory)
     }
 
-    private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
+    private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.getName()).use { span ->
@@ -294,7 +294,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         span.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
         span.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
-        val result = MultiMap<UnorderedPair<Int>, Rename>()
+        val result = MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>()
         renames.forEach { rename -> result.putValue(rename.commits, rename) }
         return result
       }
@@ -335,8 +335,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
     private fun createVisibleGraph(dataPack: DataPack,
                                    graphOptions: PermanentGraph.Options,
-                                   matchingHeads: Set<Int>?,
-                                   matchingCommits: Set<Int>?): VisibleGraph<Int> {
+                                   matchingHeads: Set<VcsLogCommitStorageIndex>?,
+                                   matchingCommits: Set<VcsLogCommitStorageIndex>?): VisibleGraph<VcsLogCommitStorageIndex> {
       if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
         return EmptyVisibleGraph.getInstance()
       }
@@ -363,7 +363,7 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
   return result
 }
 
-private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: CommitFileState)
+private data class CommitMetadataWithPath(@JvmField val commit: VcsLogCommitStorageIndex, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: CommitFileState)
 
 private class FileHistoryCollector(val handler: VcsLogFileHistoryHandler,
                                    val storage: VcsLogStorage,

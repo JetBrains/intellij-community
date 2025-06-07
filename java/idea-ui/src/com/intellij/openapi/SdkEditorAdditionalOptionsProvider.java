@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -22,10 +23,9 @@ public abstract class SdkEditorAdditionalOptionsProvider {
     myType = type;
   }
 
-  public static List<SdkEditorAdditionalOptionsProvider> getSdkOptionsFactory(SdkTypeId sdkType) {
+  public static @Unmodifiable List<SdkEditorAdditionalOptionsProvider> getSdkOptionsFactory(SdkTypeId sdkType) {
     return ContainerUtil.filter(EP_NAME.getExtensions(), (e) -> sdkType == e.myType);
   }
 
-  @Nullable
-  public abstract AdditionalDataConfigurable createOptions(@NotNull Project project, @NotNull Sdk sdk);
+  public abstract @Nullable AdditionalDataConfigurable createOptions(@NotNull Project project, @NotNull Sdk sdk);
 }

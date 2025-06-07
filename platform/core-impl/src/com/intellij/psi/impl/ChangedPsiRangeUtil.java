@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -72,7 +72,8 @@ public final class ChangedPsiRangeUtil {
     return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 
-  static @Nullable ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
+  @ApiStatus.Internal
+  public static @Nullable ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
                                                       @NotNull Document document,
                                                       @NotNull CharSequence oldDocumentText,
                                                       @NotNull CharSequence newDocumentText) {

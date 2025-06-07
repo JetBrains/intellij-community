@@ -104,6 +104,8 @@ fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> {
   }
 }
 
+fun <T> classSetsUnion(vararg classSets: ClassSet<T>): ClassSet<T> = classSetOf(*classSets.flatMap { it.toList() }.toTypedArray())
+
 private val emptyClassSet: ClassSet<Nothing> = object : ClassSet<Nothing> {
   override fun isEmpty() = true
   override fun contains(element: Class<out Nothing>): Boolean = false

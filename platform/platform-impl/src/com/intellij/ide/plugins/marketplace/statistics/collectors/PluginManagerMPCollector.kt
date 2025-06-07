@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerLoc
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerMarketplaceSearchFeatureProvider
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultsFeatureProvider
 import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerUserQueryFeatureProvider
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -52,8 +53,8 @@ class PluginManagerMPCollector : PluginManagerFUSCollector() {
   private val SEARCH_RESET = group.registerEvent("search.reset", PLUGIN_MANAGER_SESSION_ID)
 
   fun performMarketplaceSearch(project: Project?, query: SearchQueryParser.Marketplace,
-                               results: List<IdeaPluginDescriptor>, searchIndex: Int, sessionId: Int,
-                               pluginToScore: Map<IdeaPluginDescriptor, Double>? = null) {
+                               results: List<PluginUiModel>, searchIndex: Int, sessionId: Int,
+                               pluginToScore: Map<PluginUiModel, Double>? = null) {
     MARKETPLACE_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
       add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
         PluginManagerUserQueryFeatureProvider.getSearchStateFeatures(query.searchQuery)
@@ -70,8 +71,8 @@ class PluginManagerMPCollector : PluginManagerFUSCollector() {
   }
 
   fun performInstalledTabSearch(project: Project?, query: SearchQueryParser.Installed,
-                                results: List<IdeaPluginDescriptor>, searchIndex: Int, sessionId: Int,
-                                pluginToScore: Map<IdeaPluginDescriptor, Double>? = null) {
+                                results: List<PluginUiModel>, searchIndex: Int, sessionId: Int,
+                                pluginToScore: Map<PluginUiModel, Double>? = null) {
     INSTALLED_TAB_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
       add(USER_QUERY_FEATURES_DATA_KEY.with(ObjectEventData(
         PluginManagerUserQueryFeatureProvider.getSearchStateFeatures(query.searchQuery)

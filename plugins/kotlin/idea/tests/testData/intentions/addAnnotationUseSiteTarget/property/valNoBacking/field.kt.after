@@ -1,0 +1,10 @@
+// NO_OPTION: FIELD|Add use-site target 'field'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+
+annotation class A
+
+class Property {
+    @property:A
+    val foo: String
+        get() = ""
+}

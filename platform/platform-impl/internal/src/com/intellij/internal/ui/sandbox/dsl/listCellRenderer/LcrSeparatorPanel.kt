@@ -35,18 +35,19 @@ internal class LcrSeparatorPanel : UISandboxPanel {
         panel {
           group("New API") {
             row {
-              jbList(items, newApiRenderer())
+              jbList(null, items, newApiRenderer())
+                .comment("See also tooltips")
             }
             row {
               comboBox(items, newApiRenderer())
-                .comment("isSwingPopup = true")
+                .comment("isSwingPopup = true,<br>tooltips")
                 .applyToComponent {
                   isSwingPopup = true
                 }
             }
             row {
               comboBox(items, newApiRenderer())
-                .comment("isSwingPopup = false,<br>speed search enabled")
+                .comment("isSwingPopup = false,<br>speed search enabled,<br>tooltips")
                 .applyToComponent {
                   isSwingPopup = false
                 }
@@ -56,7 +57,7 @@ internal class LcrSeparatorPanel : UISandboxPanel {
         panel {
           group("Old API") {
             row {
-              jbList(items, MyGroupedItemsListRenderer())
+              jbList(null, items, MyGroupedItemsListRenderer())
             }
             row {
               comboBox(items, MyGroupedComboBoxRenderer())
@@ -79,19 +80,19 @@ internal class LcrSeparatorPanel : UISandboxPanel {
   }
 
   private fun newApiRenderer(): ListCellRenderer<String?> {
-    return listCellRenderer {
+    return listCellRenderer("") {
+      toolTipText = value
       separators[value]?.let {
         separator {
           text = it
         }
       }
-      text(value ?: "")
+      text(value)
     }
   }
 
   private class MyGroupedItemsListRenderer :
-    GroupedItemsListRenderer<String>(MyListItemDescriptor(separators)) {
-  }
+    GroupedItemsListRenderer<String>(MyListItemDescriptor(separators))
 
   private class MyListItemDescriptor(private val separators: Map<String, String>) : ListItemDescriptor<String> {
     override fun getTextFor(value: String?): String? {

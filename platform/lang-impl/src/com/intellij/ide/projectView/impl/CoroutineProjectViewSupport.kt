@@ -16,17 +16,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.TreeCollector
 import com.intellij.ui.tree.TreeStructureDomainModelAdapter
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.project.ProjectFileNode.findArea
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater
-import com.intellij.ui.treeStructure.TreeDomainModel
 import com.intellij.ui.treeStructure.TreeNodeViewModel
 import com.intellij.ui.treeStructure.TreeSwingModel
 import com.intellij.ui.treeStructure.TreeViewModel
+import com.intellij.ui.treeStructure.TreeViewModelVisitor
 import com.intellij.util.SmartList
+import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
 import javax.swing.JTree
@@ -113,7 +116,7 @@ internal class CoroutineProjectViewSupport(
       selectLogger.debug("Updated nodes")
       val job = coroutineScope.launch(CoroutineName("Selecting $value in $file") + Dispatchers.EDT) {
         selectLogger.debug("First attempt: trying to select the element or file")
-        if (trySelect(tree, element, file)) {
+        if (trySelect(element, file)) {
           selectLogger.debug("Selected paths at first attempt. Done")
           return@launch
         }
@@ -121,7 +124,7 @@ internal class CoroutineProjectViewSupport(
         // This silly second attempt is necessary because a file, when visited, may tell us it doesn't contain the element we're looking for.
         // Reportedly, it's the case with top-level Kotlin functions and Kotlin files.
         selectLogger.debug("Second attempt: trying to select the file now")
-        if (trySelect(tree, null, file)) {
+        if (trySelect(null, file)) {
           selectLogger.debug("Selected successfully at the second attempt. Done")
         }
         else {
@@ -135,18 +138,53 @@ internal class CoroutineProjectViewSupport(
     return callback
   }
 
-  private suspend fun trySelect(tree: JTree, element: PsiElement?, file: VirtualFile?): Boolean {
-    val pathsToSelect = SmartList<TreePath>()
-    val visitor = AbstractProjectViewPane.createVisitor(element, file, pathsToSelect)
+  private suspend fun trySelect(element: PsiElement?, file: VirtualFile?): Boolean {
+    val visitor = createSelectVisitor(element, file)
     if (visitor == null) {
       selectLogger.debug("We don't have neither a valid element nor a file. Done")
       return false
     }
-    selectLogger.debug("Collecting paths to select")
-    swingModel.accept(visitor, true).await()
-    selectLogger.debug { "Collected paths to select: $pathsToSelect" }
-    return selectPaths(tree, pathsToSelect, visitor)
+    selectLogger.debug("Collecting nodes to select")
+    viewModel.accept(visitor, allowLoading = true)
+    selectLogger.debug { "Collected ${visitor.nodesToSelect.size} nodes to select: ${visitor.nodesToSelect}" }
+    return selectNodes(visitor.nodesToSelect)
   }
+
+  private fun selectNodes(requestedSelection: SmartList<TreeNodeViewModel>): Boolean {
+    val actualSelection = if (requestedSelection.size > 1 && isMultiSelectionEnabled) {
+      val adjustedNodes = ProjectViewPaneSelectionHelper.getAdjustedNodes(requestedSelection)
+      selectLogger.debug("Adjusted to ${adjustedNodes.size} nodes for multi-selection: $adjustedNodes")
+      if (adjustedNodes.isEmpty()) {
+        selectLogger.debug("Nothing to select after adjustment")
+        return false
+      }
+      adjustedNodes
+    }
+    else if (requestedSelection.isNotEmpty()) {
+      val onlyPath = listOf(requestedSelection.first())
+      selectLogger.debug("Selecting only the first path: $onlyPath")
+      onlyPath
+    }
+    else {
+      selectLogger.debug("Nothing to select")
+      return false
+    }
+    for (node in actualSelection) {
+      node.setExpanded(true)
+    }
+    viewModel.setSelection(actualSelection)
+    viewModel.scrollTo(actualSelection.first())
+    return true
+  }
+
+  private suspend fun createSelectVisitor(element: PsiElement?, file: VirtualFile?): SelectVisitor? =
+    element?.let {
+      readAction {
+        if (element.isValid) ElementSelectVisitor(element, file) else null
+      }
+    } ?: file?.let {
+      FileSelectVisitor(file)
+    }
 
   private fun canTrySelectAgain(element: PsiElement?, file: VirtualFile?): Boolean {
     if (element == null) {
@@ -195,7 +233,79 @@ internal class CoroutineProjectViewSupport(
       }
     }
   }
+
+  private abstract class SelectVisitor : TreeViewModelVisitor {
+    val nodesToSelect = SmartList<TreeNodeViewModel>()
+
+    override suspend fun visit(node: TreeNodeViewModel): TreeVisitor.Action {
+      val domainNode = node.domainModel
+      if (domainNode !is LegacyCompatibilityTreeNode) return TreeVisitor.Action.SKIP_CHILDREN // all "real" nodes are legacy nodes at the moment
+      val userObject = domainNode.getUserObject()
+      if (userObject is AbstractTreeNode<*>) {
+        return readAction {
+          val matcher = createMatcher()
+          if (matcher == null) {
+            TreeVisitor.Action.SKIP_SIBLINGS // The element we're looking for was invalidated.
+          }
+          else if (matcher.matches(userObject)) {
+            nodesToSelect.add(node)
+            TreeVisitor.Action.CONTINUE
+          }
+          else if (matcher.mayContain(userObject)) {
+            TreeVisitor.Action.CONTINUE
+          }
+          else {
+            TreeVisitor.Action.SKIP_CHILDREN
+          }
+        }
+      }
+      else {
+        selectLogger.warn("Unexpected object: $userObject")
+        return TreeVisitor.Action.SKIP_CHILDREN
+      }
+    }
+
+    abstract fun createMatcher(): NodeVisitorMatcher<*>?
+  }
+
+  private class ElementSelectVisitor(element: PsiElement, file: VirtualFile?): SelectVisitor() {
+    private val delegate = ProjectViewNodeVisitor(element, file, null)
+    private val pointer: SmartPsiElementPointer<PsiElement> = SmartPointerManager.createPointer(element)
+
+    override fun createMatcher(): NodeVisitorMatcher<PsiElement>? {
+      val element = pointer.element
+      if (element == null) return null
+      return object : NodeVisitorMatcher<PsiElement> {
+        override val value: PsiElement = element
+
+        override fun matches(node: AbstractTreeNode<*>): Boolean = delegate.matches(node, this)
+
+        override fun mayContain(node: AbstractTreeNode<*>): Boolean = delegate.contains(node, this)
+      }
+    }
+  }
+
+  private class FileSelectVisitor(private val file: VirtualFile): SelectVisitor() {
+    private val delegate = ProjectViewFileVisitor(file, null)
+
+    override fun createMatcher(): NodeVisitorMatcher<VirtualFile>? {
+      return object : NodeVisitorMatcher<VirtualFile> {
+        override val value: VirtualFile
+          get() = file
+
+        override fun matches(node: AbstractTreeNode<*>): Boolean = delegate.matches(node, this)
+
+        override fun mayContain(node: AbstractTreeNode<*>): Boolean = delegate.contains(node, this)
+      }
+    }
+  }
 }
 
-private val CoroutineProjectViewSupport.selectLogger: Logger
+private val selectLogger: Logger
   get() = logger<SelectInProjectViewImpl>()
+
+internal interface NodeVisitorMatcher<T> {
+  val value: T
+  fun matches(node: AbstractTreeNode<*>): Boolean
+  fun mayContain(node: AbstractTreeNode<*>): Boolean
+}

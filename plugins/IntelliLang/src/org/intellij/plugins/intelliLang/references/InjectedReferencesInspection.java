@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.references;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -6,17 +6,15 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public final class InjectedReferencesInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new InjectedReferencesVisitor(holder);
   }
 
@@ -37,7 +35,7 @@ public final class InjectedReferencesInspection extends LocalInspectionTool {
       PsiReference[] injected = InjectedReferencesContributor.getInjectedReferences(element);
       if (injected != null) {
         for (PsiReference reference : injected) {
-          if (reference.resolve() == null) {
+          if (isUnresolved(reference)) {
             TextRange range = reference.getRangeInElement();
             if (range.isEmpty() && range.getStartOffset() == 1 && "\"\"".equals(element.getText())) {
               String message = ProblemsHolder.unresolvedReferenceMessage(reference);
@@ -51,6 +49,13 @@ public final class InjectedReferencesInspection extends LocalInspectionTool {
       }
 
       super.visitElement(element);
+    }
+
+    private static boolean isUnresolved(PsiReference reference) {
+      if (reference instanceof PsiPolyVariantReference polyVariantReference) {
+        return polyVariantReference.multiResolve(false).length == 0;
+      }
+      return reference.resolve() == null;
     }
   }
 }

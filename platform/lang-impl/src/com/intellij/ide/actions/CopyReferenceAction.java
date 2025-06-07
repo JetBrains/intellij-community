@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -89,7 +90,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  protected @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
+  protected @Unmodifiable @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
     return getElementsToCopy(editor, dataContext);
   }
 

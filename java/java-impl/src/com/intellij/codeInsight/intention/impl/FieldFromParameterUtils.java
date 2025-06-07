@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -35,7 +35,7 @@ public final class FieldFromParameterUtils {
     PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
       TextRange range = parameter.getTextRange();
-      if (range.getStartOffset() <= offset && offset <= range.getEndOffset()) return parameter;
+      if (range.containsInclusive(offset)) return parameter;
     }
     return null;
   }
@@ -61,7 +61,9 @@ public final class FieldFromParameterUtils {
     for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
       PsiType bound = TypeConversionUtil.typeParameterErasure(usedTypeParameter);
       PsiManager manager = usedTypeParameter.getManager();
-      subst = subst.put(usedTypeParameter, bound == null ? PsiWildcardType.createUnbounded(manager) : bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? bound : PsiWildcardType.createExtends(manager, bound));
+      subst = subst.put(usedTypeParameter, bound == null || bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+                                           ? PsiWildcardType.createUnbounded(manager)
+                                           : PsiWildcardType.createExtends(manager, bound));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -83,7 +85,7 @@ public final class FieldFromParameterUtils {
   }
 
   public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).asIterable()) {
       if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;
       if (findIndirectAssignments) {
@@ -286,6 +288,12 @@ public final class FieldFromParameterUtils {
       if (!existingField.getType().isAssignableFrom(type) ||
           method.hasModifierProperty(PsiModifier.STATIC) != existingField.hasModifierProperty(PsiModifier.STATIC) ||
           existingField.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
+        return false;
+      }
+    }
+    if (method.isConstructor()) {
+      PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
         return false;
       }
     }

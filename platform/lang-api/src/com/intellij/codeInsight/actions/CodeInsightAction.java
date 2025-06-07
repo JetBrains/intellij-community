@@ -99,25 +99,25 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
       return;
     }
 
-    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (file == null) {
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+    if (psiFile == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    update(presentation, project, editor, file, dataContext, e.getPlace());
+    update(presentation, project, editor, psiFile, dataContext, e.getPlace());
   }
 
-  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    presentation.setEnabled(isValidForFile(project, editor, file));
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    presentation.setEnabled(isValidForFile(project, editor, psiFile));
   }
 
   protected void update(@NotNull Presentation presentation, @NotNull Project project,
-                        @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext, @Nullable String actionPlace) {
-    update(presentation, project, editor, file);
+                        @NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull DataContext dataContext, @Nullable String actionPlace) {
+    update(presentation, project, editor, psiFile);
   }
 
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return true;
   }
 

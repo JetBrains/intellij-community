@@ -17,7 +17,8 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.jsp.IJspCodeBlock;
 
-public interface JspCodeBlock extends PsiCodeBlock {
+public interface JspCodeBlock extends PsiCodeBlock, IJspCodeBlock {
   PsiElement[] getLocalDeclarations();
 }

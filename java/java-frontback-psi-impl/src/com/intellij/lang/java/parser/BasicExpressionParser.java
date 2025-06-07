@@ -13,6 +13,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Function;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicExpressionParser {
   private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", true);
 
@@ -38,8 +43,7 @@ public class BasicExpressionParser {
     myParser = parser;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     if (useNewImplementation) {
       return myNewExpressionParser.parse(builder);
     }
@@ -89,9 +93,8 @@ public class BasicExpressionParser {
   /**
    * @deprecated plugin compatibility, use the one from the StatementParser
    */
-  @Nullable
   @Deprecated
-  public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     return myParser.getStatementParser().parseCaseLabel(builder).first;
   }
 }

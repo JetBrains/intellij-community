@@ -37,6 +37,7 @@ public class LineRange {
     this(element, element);
   }
 
+  @Override
   public @NonNls String toString() {
     return "line range: ["+startLine+"-"+endLine+"]";
   }
@@ -48,4 +49,6 @@ public class LineRange {
   public boolean contains(LineRange range) {
     return startLine <= range.startLine && endLine >= range.endLine;
   }
+
+
 }

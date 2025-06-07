@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -14,25 +14,23 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class JavaCoverageSuite extends BaseCoverageSuite {
-  @NonNls
-  private static final String FILTER = "FILTER";
-  @NonNls
-  private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
-  @NonNls
-  private static final String COVERAGE_RUNNER = "RUNNER";
+  private static final @NonNls String FILTER = "FILTER";
+  private static final @NonNls String EXCLUDED_FILTER = "EXCLUDED_FILTER";
+  private static final @NonNls String COVERAGE_RUNNER = "RUNNER";
   private final CoverageEngine myCoverageEngine;
   private String @Nullable [] myIncludeFilters;
   private String @Nullable [] myExcludePatterns;
   private boolean mySkipUnloadedClassesAnalysis;
 
   //read external only
-  public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
+  public JavaCoverageSuite(final @NotNull CoverageEngine coverageEngine) {
     super();
     myCoverageEngine = coverageEngine;
   }
@@ -46,7 +44,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           @NotNull final CoverageEngine coverageEngine,
+                           final @NotNull CoverageEngine coverageEngine,
                            final Project project) {
     super(name, project, coverageRunner, coverageDataFileProvider, lastCoverageTimeStamp);
     myCoverageEngine = coverageEngine;
@@ -82,15 +80,18 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return getClassNames(myExcludePatterns);
   }
 
-  final String @Nullable [] getIncludeFilters() {
+  @VisibleForTesting
+  public final String @Nullable [] getIncludeFilters() {
     return myIncludeFilters;
   }
 
-  final void setIncludeFilters(String @Nullable [] filters) {
+  @VisibleForTesting
+  public final void setIncludeFilters(String @Nullable [] filters) {
     myIncludeFilters = filters;
   }
 
-  final String @Nullable [] getExcludePatterns() {
+  @VisibleForTesting
+  public final String @Nullable [] getExcludePatterns() {
     return myExcludePatterns;
   }
 

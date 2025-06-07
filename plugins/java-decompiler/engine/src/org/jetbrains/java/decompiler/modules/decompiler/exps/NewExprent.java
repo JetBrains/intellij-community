@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
@@ -34,8 +35,7 @@ public class NewExprent extends Exprent {
   private boolean methodReference = false;
   private boolean enumConst;
   private List<VarType> genericArgs = new ArrayList<>();
-  @Nullable
-  private VarType inferredType;
+  private @Nullable VarType inferredType;
   public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
@@ -70,11 +70,16 @@ public class NewExprent extends Exprent {
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     if (inferredType != null) {
       return inferredType;
     }
-    return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
+    VarType currentType =
+      anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
+    if (currentType == null) {
+      return VarType.VARTYPE_NULL;
+    }
+    return currentType;
   }
 
   @Override

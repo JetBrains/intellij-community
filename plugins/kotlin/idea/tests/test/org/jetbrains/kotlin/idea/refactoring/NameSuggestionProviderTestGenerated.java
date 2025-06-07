@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring;
 
@@ -28,6 +28,11 @@ public class NameSuggestionProviderTestGenerated extends AbstractNameSuggestionP
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("byReturnType.kt")
+    public void testByReturnType() throws Exception {
+        runTest("testData/refactoring/nameSuggestionProvider/byReturnType.kt");
     }
 
     @TestMetadata("localVarAsCallArgument.kt")

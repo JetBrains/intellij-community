@@ -24,8 +24,7 @@ public class PlainTextSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final
-  Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
+  private static final Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b|\\(|\\))");
 
   private static final Pattern MAIL =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
@@ -57,7 +56,7 @@ public class PlainTextSplitter extends BaseSplitter {
   private static final Pattern JWT_PATTERN = Pattern.compile("[A-Za-z0-9+=/_\\-.]+");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (StringUtil.isEmpty(text)) {
       return;
     }
@@ -106,6 +105,9 @@ public class PlainTextSplitter extends BaseSplitter {
         }
         else if (word.startsWith(JWT_COMMON_PREFIX) && JWT_PATTERN.matcher(word).matches()) {
           toCheck = emptyList();
+        }
+        else if (word.startsWith("f'")) {
+          toCheck = List.of(new TextRange(wRange.getStartOffset() + 2, wRange.getEndOffset()));
         }
         else if (wordLength == MD5_HEX_LENGTH && MD5_HEX_PATTERN.matcher(word).matches() ||
                  wordLength == SHA1_HEX_LENGTH && SHA1_HEX_PATTERN.matcher(word).matches() ||

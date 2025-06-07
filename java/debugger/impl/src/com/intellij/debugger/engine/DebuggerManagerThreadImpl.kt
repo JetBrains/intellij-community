@@ -1,17 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
 import com.intellij.debugger.impl.*
+import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -24,24 +25,32 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
+import kotlin.system.measureNanoTime
 
-class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: CoroutineScope) :
-  InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
+class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
+  parent: Disposable,
+  private val parentScope: CoroutineScope,
+  debugProcess: DebugProcess? = null,
+) : InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
 
   @Volatile
   private var myDisposed = false
 
-  private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  val unfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
+  internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
+  private val myDebugProcess = WeakReference(debugProcess)
+  internal val dispatchedCommandsCounter get() = debuggerThreadDispatcher.dispatchedCommandsCounter
 
   @ApiStatus.Internal
-  var coroutineScope = createScope()
+  var coroutineScope: CoroutineScope = createScope()
     private set
 
   init {
@@ -58,14 +67,15 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     progressTitle: @ProgressTitle String,
     progressText: @Nls String,
     deferred: CompletableDeferred<Unit>,
-    howToCancel: () -> Unit
+    howToCancel: () -> Unit,
   ) {
     coroutineScope.launch {
       withBackgroundProgress(project, progressTitle) {
         withProgressText(progressText) {
           try {
             deferred.await()
-          } catch (e: CancellationException) {
+          }
+          catch (e: CancellationException) {
             howToCancel()
             throw e
           }
@@ -77,13 +87,22 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
-    LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...")
+    LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.schedule(...)")
     super.invokeAndWait(managerCommand)
   }
 
+  fun invokeNow(managerCommand: DebuggerCommandImpl) {
+    assertIsManagerThread()
+    LOG.assertTrue(currentThread() === this) { "invokeNow from a different DebuggerManagerThread" }
+    setCommandManagerThread(managerCommand)
+    processEvent(managerCommand)
+  }
+
+  @Deprecated("Use invokeNow if in DebuggerManagerThread or schedule otherwise",
+              ReplaceWith("invokeNow(managerCommand)"))
   fun invoke(managerCommand: DebuggerCommandImpl) {
     if (currentThread() === this) {
-      processEvent(managerCommand)
+      invokeNow(managerCommand)
     }
     else {
       if (isManagerThread()) {
@@ -93,6 +112,8 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     }
   }
 
+  @Deprecated("Use invokeNow if in DebuggerManagerThread or schedule otherwise",
+              ReplaceWith("schedule(priority, runnable)"))
   fun invoke(priority: PrioritizedTask.Priority, runnable: Runnable) {
     invoke(object : DebuggerCommandImpl(priority) {
       override fun action() {
@@ -133,18 +154,19 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   fun terminateAndInvoke(command: DebuggerCommandImpl, terminateTimeoutMillis: Int) {
     val currentCommand = myEvents.currentEvent
 
-    invoke(command)
+    schedule(command)
 
     if (currentCommand != null) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(
         {
           if (currentCommand === myEvents.currentEvent) {
             // if current command is still in progress, cancel it
-            currentRequest.requestStop()
+            val request = currentRequest
+            request.requestStop()
             try {
-              currentRequest.join()
+              request.join()
             }
-            catch (ignored: InterruptedException) {
+            catch (_: InterruptedException) {
             }
             catch (e: Exception) {
               throw RuntimeException(e)
@@ -162,13 +184,19 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   override fun processEvent(managerCommand: DebuggerCommandImpl) {
     assertIsManagerThread()
     val threadCommands = myCurrentCommands.get()
-    threadCommands.push(managerCommand)
+    threadCommands.add(managerCommand)
     try {
       if (myEvents.isClosed) {
         managerCommand.notifyCancelled()
       }
       else {
-        managerCommand.invokeCommand(myDebuggerThreadDispatcher, coroutineScope)
+        val commandTimeNs = measureNanoTime {
+          managerCommand.invokeCommand()
+        }
+        myDebugProcess.get()?.let { debugProcess ->
+          val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
+          StatisticsStorage.addCommandTime(debugProcess, commandTimeMs)
+        }
       }
     }
     catch (e: VMDisconnectedException) {
@@ -188,7 +216,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
       LOG.error(e)
     }
     finally {
-      threadCommands.pop()
+      threadCommands.removeLast()
     }
   }
 
@@ -216,20 +244,25 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     finally {
       val request = getCurrentThreadRequest()
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Switching back to $request")
-      }
+      LOG.debug { "Switching back to $request" }
 
+      var cancelled = false
       super.invokeAndWait(object : DebuggerCommandImpl() {
         override fun action() {
           switchToRequest(request)
         }
 
         override fun commandCancelled() {
-          LOG.debug("Event queue was closed, killing request")
+          cancelled = true
+          LOG.debug { "Event queue was closed, killing request $request" }
           request.requestStop()
         }
       })
+
+      // the queue is already closed - we need to stop asap
+      if (cancelled) {
+        throw VMDisconnectedException()
+      }
     }
   }
 
@@ -258,8 +291,12 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     }
   }
 
-  val isIdle: Boolean
-    get() = myEvents.isEmpty
+  /**
+   * Indicates whether the debugger manager thread is currently idle.
+   * This is determined by checking if there are no pending events.
+   */
+  @ApiStatus.Internal
+  fun isIdle(): Boolean = myEvents.isEmpty && dispatchedCommandsCounter.get() == 0
 
   fun hasAsyncCommands(): Boolean {
     return myEvents.hasAsyncCommands()
@@ -282,7 +319,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
   companion object {
     private val LOG = Logger.getInstance(DebuggerManagerThreadImpl::class.java)
-    private val myCurrentCommands = ThreadLocal.withInitial { LinkedList<DebuggerCommandImpl>() }
+    private val myCurrentCommands = ThreadLocal.withInitial { ArrayDeque<DebuggerCommandImpl>() }
 
     const val COMMAND_TIMEOUT: Int = 3000
 
@@ -308,58 +345,339 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
     @JvmStatic
     fun assertIsManagerThread() {
-      LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...")
+      LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.schedule(...)")
     }
 
     @JvmStatic
-    fun getCurrentCommand(): DebuggerCommandImpl? = myCurrentCommands.get().peek()
+    fun getCurrentCommand(): DebuggerCommandImpl? = myCurrentCommands.get().peekLast()
+
+    /**
+     * Debugger thread runs in a progress indicator itself, so we need to check whether we have any other progress indicator additionally.
+     */
+    @ApiStatus.Internal
+    fun hasNonDefaultProgressIndicator(): Boolean {
+      val hasProgressIndicator = ProgressManager.getInstance().hasProgressIndicator()
+      if (!hasProgressIndicator) return false
+      if (!isManagerThread()) return true
+      val currentIndicator = ProgressManager.getInstance().progressIndicator
+      val debuggerIndicator = currentThread().currentRequest.progressIndicator
+      return currentIndicator !== debuggerIndicator
+    }
   }
 }
 
-@ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFuture<T> {
+private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedTask.Priority, SuspendContextImpl?> {
   DebuggerManagerThreadImpl.assertIsManagerThread()
   val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
   val command = DebuggerManagerThreadImpl.getCurrentCommand()
   val priority = command?.priority ?: PrioritizedTask.Priority.LOW
   val suspendContext = (command as? SuspendContextCommandImpl)?.suspendContext
-  return invokeCommandAsCompletableFuture(managerThread, priority, suspendContext, action)
+  return Triple(managerThread, priority, suspendContext)
 }
 
-@ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(managerThread: DebuggerManagerThreadImpl,
-                                         priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-                                         suspendContext: SuspendContextImpl? = null,
-                                         action: suspend () -> T): CompletableFuture<T> {
-  val res = DebuggerCompletableFuture<T>()
-
-  suspend fun doRun() {
-    try {
-      res.complete(action())
-    }
-    catch (e: Exception) {
-      res.completeExceptionally(e)
-    }
-  }
-
-  if (suspendContext != null) {
-    managerThread.invoke(object : SuspendContextCommandImpl(suspendContext) {
-      override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = doRun()
-      override fun getPriority() = priority
-      override fun commandCancelled() {
-        res.cancel(false)
-      }
-    })
+/**
+ * Executes [action] in debugger manager thread and returns a future.
+ * **This method can only be called in the debugger manager thread.**
+ */
+internal fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
+  val (managerThread, priority, suspendContext) = findCurrentContext()
+  val scope = suspendContext?.coroutineScope ?: managerThread.coroutineScope
+  val provider = if (suspendContext != null) {
+    SuspendContextCommandProvider(suspendContext, priority)
   }
   else {
-    managerThread.invoke(object : DebuggerCommandImpl(priority) {
-      override suspend fun actionSuspend() = doRun()
-      override fun commandCancelled() {
-        res.cancel(false)
-      }
-    })
+    DebuggerCommandProvider(priority)
   }
-
-  return res
+  return scope.future(Dispatchers.Debugger(managerThread) + provider, block = block)
 }
 
+/**
+ * Schedules [block] execution in the debugger manager thread as a [SuspendContextCommandImpl].
+ *
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The started [Job] is canceled if the [suspendContext] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [suspendContext] is resumed.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(suspendContext) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ * @param suspendContext context for starting [SuspendContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ * @return [Job] of the started coroutine.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun executeOnDMT(
+  suspendContext: SuspendContextImpl,
+  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  block: suspend CoroutineScope.() -> Unit,
+): Job = suspendContext.coroutineScope.launch(
+  context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, priority),
+  block = block
+)
+
+/**
+ * Schedules [block] execution in the debugger manager thread as a [DebuggerCommandImpl].
+ *
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The [Job] is started in the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stoped.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(mangerThread) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ *
+ * @param managerThread debugger manager thread to schedule the task
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ * @return [Job] of the started coroutine
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun executeOnDMT(
+  managerThread: DebuggerManagerThreadImpl,
+  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  block: suspend CoroutineScope.() -> Unit,
+): Job = managerThread.coroutineScope.launch(
+  context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority),
+  block = block
+)
+
+
+/**
+ * Schedules [block] execution in the debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
+ *
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The started [Job] is canceled if the [SuspendContextImpl] selected by
+ * [com.intellij.debugger.engine.events.DebuggerContextCommandImpl] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [SuspendContextImpl] is resumed.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(debuggerContext) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ *
+ * @param debuggerContext context for starting [com.intellij.debugger.engine.events.DebuggerContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block to execute
+ * @return [Job] of the started coroutine
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun executeOnDMT(
+  debuggerContext: DebuggerContextImpl,
+  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  block: suspend CoroutineScope.() -> Unit,
+): Job {
+  val managerThread = debuggerContext.managerThread!!
+  return managerThread.coroutineScope.launch {
+    withDebugContext(debuggerContext, priority, block)
+  }
+}
+
+/**
+ * Runs [block] in the debugger manager thread as a [SuspendContextCommandImpl].
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The execution is canceled if the [suspendContext] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [suspendContext] is resumed.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(suspendContext) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(suspendContext) {
+ *     // runs in SuspendContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param suspendContext context for starting [SuspendContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend fun <T> withDebugContext(
+  suspendContext: SuspendContextImpl,
+  priority: PrioritizedTask.Priority? = null,
+  block: suspend CoroutineScope.() -> T,
+): T {
+  val resultPriority = priority ?: priorityInContextOrDefault()
+  return runWithContext(
+    context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, resultPriority),
+    parentScope = suspendContext.coroutineScope,
+    block = block
+  )
+}
+
+/**
+ * Runs [block] in the debugger manager thread as a [DebuggerCommandImpl].
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The started [Job] is tied to the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stoped.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(managerThread) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(suspendContext) {
+ *     // runs in SuspendContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param managerThread debugger manager thread to schedule the task
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend fun <T> withDebugContext(
+  managerThread: DebuggerManagerThreadImpl,
+  priority: PrioritizedTask.Priority? = null,
+  block: suspend CoroutineScope.() -> T,
+): T {
+  val resultPriority = priority ?: priorityInContextOrDefault()
+  return runWithContext(
+    context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(resultPriority),
+    parentScope = managerThread.coroutineScope,
+    block = block
+  )
+}
+
+/**
+ * Runs [block] in the debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The started [Job] is canceled if the [SuspendContextImpl] selected by
+ * [com.intellij.debugger.engine.events.DebuggerContextCommandImpl] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [SuspendContextImpl] is resumed.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(debuggerContext) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(debuggerContext) {
+ *     // runs in DebuggerContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param debuggerContext context for starting [com.intellij.debugger.engine.events.DebuggerContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend fun <T> withDebugContext(
+  debuggerContext: DebuggerContextImpl,
+  priority: PrioritizedTask.Priority? = null,
+  block: suspend CoroutineScope.() -> T,
+): T {
+  val managerThread = debuggerContext.managerThread!!
+  val resultPriority = priority ?: priorityInContextOrDefault()
+  val provider = DebuggerContextCommandProvider(debuggerContext, resultPriority)
+  val scope = provider.findScope() ?: throw CancellationException()
+  return runWithContext(context = Dispatchers.Debugger(managerThread) + provider, parentScope = scope, block = block)
+}
+
+private suspend fun priorityInContextOrDefault(): PrioritizedTask.Priority {
+  val currentProvider = currentCoroutineContext()[DebuggerDispatchedCommandProvider.Key]
+  return currentProvider?.priority ?: PrioritizedTask.Priority.LOW
+}
+
+/**
+ * Instead of calling [withContext], we use [async] with a following [Deferred.await],
+ * because we have to always pass through [DebuggerThreadDispatcher], while [withContext] may not call [CoroutineDispatcher.dispatch],
+ * as it is unnecessary within the same dispatcher.
+ *
+ * Due to [DebuggerThreadDispatcher] having a more complex contract than only thread switching, we need to ensure dispatching here.
+ */
+private suspend fun <T> runWithContext(
+  context: CoroutineContext,
+  parentScope: CoroutineScope,
+  block: suspend CoroutineScope.() -> T,
+): T {
+  // Ensure the job is canceled when the corresponding CoroutineScope is closed.
+  // For example, cancellation of the work performed in Dispatchers.Default within the debugger context
+  // is ensured by this scope attachment.
+  return parentScope.async(context, block = block).await()
+}

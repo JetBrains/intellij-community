@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerFailType
 import java.util.concurrent.Callable
 
 @ApiStatus.Internal
@@ -20,7 +20,9 @@ class CodeFragmentCompilationStats {
     var interruptions: Int = 0
         private set
 
-    var compilerFailType = CompilerFailType.OTHER
+    var origin: XEvaluationOrigin = XEvaluationOrigin.UNSPECIFIED
+
+    var compilerFailExceptionClass: Class<out Throwable>? = null
 
     fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
     fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -101,8 +101,7 @@ final class ModuleRepr extends ClassFileRepr {
     return false;
   }
 
-  public abstract static class Diff extends DifferenceImpl {
-
+  abstract static class Diff extends DifferenceImpl {
     Diff(@NotNull Difference delegate) {
       super(delegate);
     }
@@ -149,7 +148,7 @@ final class ModuleRepr extends ClassFileRepr {
   }
 
   public static DataExternalizer<ModuleRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ModuleRepr>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(final @NotNull DataOutput out, final ModuleRepr value) {
         value.save(out);

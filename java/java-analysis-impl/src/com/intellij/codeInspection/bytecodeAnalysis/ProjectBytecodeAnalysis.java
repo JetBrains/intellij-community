@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -89,8 +89,7 @@ public class ProjectBytecodeAnalysis {
     return null;
   }
 
-  @Nullable
-  public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+  public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return null;
     }
@@ -248,8 +247,7 @@ public class ProjectBytecodeAnalysis {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
-  @Nullable
-  private static String generateAnnotationAttributesText(Map<String, String> attributesMap) {
+  private static @Nullable String generateAnnotationAttributesText(Map<String, String> attributesMap) {
     if (attributesMap.isEmpty()) {
       return null;
     }
@@ -294,8 +292,7 @@ public class ProjectBytecodeAnalysis {
     return cache.get(contractValue);
   }
 
-  @Nullable
-  public EKey getKey(@NotNull PsiModifierListOwner owner) {
+  public @Nullable EKey getKey(@NotNull PsiModifierListOwner owner) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     EKey key = null;
     if (owner instanceof PsiMethod) {
@@ -483,8 +480,7 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  @NotNull
-  private PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
+  private @NotNull PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
@@ -643,8 +639,7 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  @NotNull
-  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
+  private static @NotNull List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
     // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
     // then trivial contract should be used like "_,_->true"
     StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
@@ -673,7 +668,7 @@ public class ProjectBytecodeAnalysis {
     return new StandardMethodContract(constraints, returnValue);
   }
 
-  static abstract class EquationProvider<T extends MemberDescriptor> {
+  abstract static class EquationProvider<T extends MemberDescriptor> {
     final Map<T, List<Equations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
     final Project myProject;
 

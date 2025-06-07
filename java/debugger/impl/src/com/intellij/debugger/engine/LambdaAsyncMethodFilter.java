@@ -66,8 +66,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
     return RequestHint.STOP;
   }
 
-  @Nullable
-  private Value getLambdaReference(StackFrameProxyImpl proxy) throws EvaluateException {
+  private @Nullable Value getLambdaReference(StackFrameProxyImpl proxy) throws EvaluateException {
     return ContainerUtil.getOrElse(proxy.getArgumentValues(), myParamNo, null);
   }
 

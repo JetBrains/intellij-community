@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -33,11 +33,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
     for (Change change : changes) {
       changeList.add(change);
     }
-  }
-
-  @Override
-  public void scheduleUpdate() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -169,6 +164,16 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public @NotNull List<FilePath> getUnversionedFilesPaths() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isResolvedConflict(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull List<FilePath> getResolvedConflictPaths() {
     throw new UnsupportedOperationException();
   }
 

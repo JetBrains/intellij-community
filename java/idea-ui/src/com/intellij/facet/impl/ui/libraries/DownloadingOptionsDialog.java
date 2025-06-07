@@ -53,7 +53,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private final DownloadableLibraryType myLibraryType;
   private FrameworkLibraryVersion myLastSelectedVersion;
 
-  public DownloadingOptionsDialog(@NotNull Component parent, @NotNull final LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
+  public DownloadingOptionsDialog(@NotNull Component parent, final @NotNull LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
                                   final boolean showNameAndLevel) {
     super(parent, true);
     setTitle(JavaUiBundle.message("dialog.title.downloading.options"));
@@ -160,7 +160,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
       myFilesList.setModel(new CollectionListModel<>(
         ContainerUtil.map2Array(downloads, JCheckBox.class, (Function<DownloadableLibraryFileDescription, JCheckBox>)description -> {
           final boolean selected = selectedFiles != null ? selectedFiles.contains(description) : !description.isOptional();
-          @NlsSafe final String name = description.getPresentableFileName();
+          final @NlsSafe String name = description.getPresentableFileName();
           return new JCheckBox(name, selected);
         })));
       if (myNameAndLevelPanel != null) {
@@ -181,16 +181,14 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     return myFilesList;
   }
 
-  @Nullable
-  public FrameworkLibraryVersion getSelectedVersion() {
+  public @Nullable FrameworkLibraryVersion getSelectedVersion() {
     return (FrameworkLibraryVersion)myVersionComboBox.getSelectedItem();
   }
 
-  @Nullable
-  public static LibraryDownloadSettings showDialog(@NotNull JComponent parent,
-                                                   @NotNull LibraryDownloadSettings settings,
-                                                   List<? extends FrameworkLibraryVersion> versions,
-                                                   boolean showNameAndLevel) {
+  public static @Nullable LibraryDownloadSettings showDialog(@NotNull JComponent parent,
+                                                             @NotNull LibraryDownloadSettings settings,
+                                                             List<? extends FrameworkLibraryVersion> versions,
+                                                             boolean showNameAndLevel) {
     final DownloadingOptionsDialog dialog = new DownloadingOptionsDialog(parent, settings, versions, showNameAndLevel);
     if (!dialog.showAndGet()) {
       return null;

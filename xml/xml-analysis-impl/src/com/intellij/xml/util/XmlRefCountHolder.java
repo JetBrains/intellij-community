@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -57,8 +57,7 @@ public final class XmlRefCountHolder {
 
   private static final Pattern PREFIX_PATTERN = Pattern.compile("[\\w_][\\w_.]*:");
 
-  @Nullable
-  public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
+  public static @Nullable XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
     return CACHE.get(xmlRefCountHolderKey, file, null).getValue();
   }
 
@@ -66,23 +65,23 @@ public final class XmlRefCountHolder {
   }
 
 
-  public boolean isDuplicateIdAttributeValue(@NotNull final XmlAttributeValue value) {
+  public boolean isDuplicateIdAttributeValue(final @NotNull XmlAttributeValue value) {
     return myPossiblyDuplicateIds.contains(value);
   }
 
-  public boolean isValidatable(@Nullable final PsiElement element) {
+  public boolean isValidatable(final @Nullable PsiElement element) {
     return !myDoNotValidateParentsList.contains(element);
   }
 
-  public boolean hasIdDeclaration(@NotNull final String idRef) {
+  public boolean hasIdDeclaration(final @NotNull String idRef) {
     return myId2AttributeListMap.get(idRef) != null || myAdditionallyDeclaredIds.contains(idRef);
   }
 
-  public boolean isIdReferenceValue(@NotNull final XmlAttributeValue value) {
+  public boolean isIdReferenceValue(final @NotNull XmlAttributeValue value) {
     return myIdReferences.contains(value);
   }
 
-  private void registerId(@NotNull final String id, @NotNull final XmlAttributeValue attributeValue, final boolean soft) {
+  private void registerId(final @NotNull String id, final @NotNull XmlAttributeValue attributeValue, final boolean soft) {
     List<Pair<XmlAttributeValue, Boolean>> list = myId2AttributeListMap.get(id);
     if (list == null) {
       list = new ArrayList<>();
@@ -117,15 +116,15 @@ public final class XmlRefCountHolder {
     list.add(new Pair<>(attributeValue, soft));
   }
 
-  private void registerAdditionalId(@NotNull final String id) {
+  private void registerAdditionalId(final @NotNull String id) {
     myAdditionallyDeclaredIds.add(id);
   }
 
-  private void registerIdReference(@NotNull final XmlAttributeValue value) {
+  private void registerIdReference(final @NotNull XmlAttributeValue value) {
     myIdReferences.add(value);
   }
 
-  private void registerOuterLanguageElement(@NotNull final PsiElement element) {
+  private void registerOuterLanguageElement(final @NotNull PsiElement element) {
     PsiElement parent = element.getParent();
 
     if (parent instanceof XmlText) {
@@ -152,7 +151,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitElement(@NotNull final PsiElement element) {
+    public void visitElement(final @NotNull PsiElement element) {
       if (element instanceof OuterLanguageElement) {
         visitOuterLanguageElement(element);
       }
@@ -160,7 +159,7 @@ public final class XmlRefCountHolder {
       super.visitElement(element);
     }
 
-    private void visitOuterLanguageElement(@NotNull final PsiElement element) {
+    private void visitOuterLanguageElement(final @NotNull PsiElement element) {
       myHolder.registerOuterLanguageElement(element);
       PsiReference[] references = element.getReferences();
       for (PsiReference reference : references) {
@@ -174,7 +173,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitComment(@NotNull final PsiComment comment) {
+    public void visitComment(final @NotNull PsiComment comment) {
       doVisitAnyComment(comment);
       super.visitComment(comment);
     }
@@ -261,10 +260,11 @@ public final class XmlRefCountHolder {
       }
     }
 
-    private void updateMap(@NotNull final XmlAttribute attribute, @NotNull final XmlAttributeValue value, final boolean soft) {
+    private void updateMap(final @NotNull XmlAttribute attribute, final @NotNull XmlAttributeValue value, final boolean soft) {
       final String id = XmlHighlightVisitor.getUnquotedValue(value, attribute.getParent());
       if (XmlUtil.isSimpleValue(id, value) &&
-          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
+          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null &&
+          !id.isBlank()) {
         myHolder.registerId(id, value, soft);
       }
     }

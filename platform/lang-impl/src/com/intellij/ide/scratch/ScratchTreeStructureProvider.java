@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
@@ -41,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -151,8 +151,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
-    String path = ScratchFileService.getInstance().getRootPath(rootType);
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return ScratchFileService.getInstance().getVirtualFile(rootType);
   }
 
   private static @Nullable AbstractTreeNode<?> createRootTypeNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
@@ -271,7 +270,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
 
     @Override
-    public @NotNull Collection<VirtualFile> getRoots() {
+    public @NotNull @Unmodifiable Collection<VirtualFile> getRoots() {
       return getDefaultRootsFor(getVirtualFile());
     }
 

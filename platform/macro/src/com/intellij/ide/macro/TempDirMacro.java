@@ -1,30 +1,29 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  package com.intellij.ide.macro;
 
  import com.intellij.ide.IdeCoreBundle;
  import com.intellij.openapi.actionSystem.DataContext;
  import com.intellij.openapi.util.SystemInfo;
+ import com.intellij.platform.eel.EelPlatform;
+ import com.intellij.platform.eel.provider.utils.JEelUtils;
  import com.intellij.util.SystemProperties;
  import org.jetbrains.annotations.NotNull;
  import org.jetbrains.annotations.Nullable;
 
  public class TempDirMacro extends Macro {
-   @NotNull
    @Override
-   public String getName() {
+   public @NotNull String getName() {
      return "TempDir";
    }
 
-   @NotNull
    @Override
-   public String getDescription() {
+   public @NotNull String getDescription() {
      return IdeCoreBundle.message("macro.temp.dir");
    }
 
-   @Nullable
    @Override
-   public String expand(@NotNull DataContext dataContext) {
-     if (SystemInfo.isWindows) {
+   public @Nullable String expand(@NotNull DataContext dataContext) {
+     if (isLocalWindowsTarget(dataContext)) {
        String tempDir = System.getenv("TEMP");
        if (tempDir == null) {
          String homeDir = SystemProperties.getUserHome();
@@ -34,5 +33,16 @@
      }
 
      return "/tmp";
+   }
+
+   private static boolean isLocalWindowsTarget(@NotNull DataContext dataContext) {
+     var contextPath = MacroManager.CONTEXT_PATH.getData(dataContext);
+     if (contextPath != null) {
+       var eelPath = JEelUtils.toEelPath(contextPath);
+       if (eelPath != null) {
+         return eelPath.getDescriptor().getPlatform() instanceof EelPlatform.Windows;
+       }
+     }
+     return SystemInfo.isWindows;
    }
  }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library.impl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -9,7 +9,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +54,7 @@ public final class JpsLibraryRootProcessing {
     List<Path> result = new ArrayList<>(urls.size());
     for (String url : urls) {
       if (!JpsPathUtil.isJrtUrl(url)) {
-        result.add(Paths.get(JpsPathUtil.urlToPath(url)));
+        result.add(Path.of(JpsPathUtil.urlToPath(url)));
       }
     }
     return result;

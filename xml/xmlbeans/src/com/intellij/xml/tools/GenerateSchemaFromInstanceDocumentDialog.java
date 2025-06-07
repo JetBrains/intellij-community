@@ -188,8 +188,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return resultSchemaFileName.getText();
   }
 
-  @InspectionMessage
-  private String doValidateWithData() {
+  private @InspectionMessage String doValidateWithData() {
     if (! new File(generateFromUrl.getText()).exists()) {
       return XmlBundle.message("instance.document.file.is.not.exist");
     }
@@ -205,15 +204,14 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("invalid.number.validation.problem");
     }
 
-    if (getTargetSchemaName() == null || getTargetSchemaName().length() == 0) {
+    if (getTargetSchemaName() == null || getTargetSchemaName().isEmpty()) {
       return XmlBundle.message("result.schema.file.name.is.empty.validation.problem");
     }
     return null;
   }
 
   @Override
-  @NotNull
-  protected String getHelpId() {
+  protected @NotNull String getHelpId() {
     return "webservices.GenerateSchemaFromInstanceDocument";
   }
 

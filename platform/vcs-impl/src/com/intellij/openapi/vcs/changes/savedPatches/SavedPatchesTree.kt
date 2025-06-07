@@ -23,6 +23,7 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.TreeVisitor.Action
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -36,7 +37,8 @@ class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
                        private val isProviderVisible: (SavedPatchesProvider<*>) -> Boolean,
                        parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
-  internal val speedSearch: SpeedSearchSupply
+  @ApiStatus.Internal
+  val speedSearch: SpeedSearchSupply
   override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()
 
   internal val visibleProvidersList get() = savedPatchesProviders.filter { isProviderVisible(it) }
@@ -78,7 +80,8 @@ class SavedPatchesTree(project: Project,
     }
   }
 
-  internal fun selectedPatchObjects(): Iterable<SavedPatchesProvider.PatchObject<*>> {
+  @ApiStatus.Internal
+  fun selectedPatchObjects(): Iterable<SavedPatchesProvider.PatchObject<*>> {
     return VcsTreeModelData.selected(this)
       .iterateUserObjects(SavedPatchesProvider.PatchObject::class.java)
   }
@@ -103,12 +106,14 @@ class SavedPatchesTree(project: Project,
     })
   }
 
-  internal fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
+  @ApiStatus.Internal
+  fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
     val providerNode = findNodeForProvider(provider) ?: return
     showFirstUnderNode(providerNode)
   }
 
-  internal fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
+  @ApiStatus.Internal
+  fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
     val providerNode = findNodeForProvider(provider) ?: return
     val node = TreeUtil.findNodeWithObject(providerNode, userObject) ?: providerNode
     showFirstUnderNode(node)

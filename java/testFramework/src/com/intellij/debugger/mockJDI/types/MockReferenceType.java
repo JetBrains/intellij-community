@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.StringReader;
@@ -231,12 +232,12 @@ public abstract class MockReferenceType extends MockType implements ReferenceTyp
   protected abstract List<ReferenceType> getThisAndAllSupers();
 
   @Override
-  public List<Method> methodsByName(String string) {
+  public @Unmodifiable List<Method> methodsByName(String string) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string));
   }
 
   @Override
-  public List<Method> methodsByName(String string, String string1) {
+  public @Unmodifiable List<Method> methodsByName(String string, String string1) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string) && method.signature().equals(string1));
   }
 

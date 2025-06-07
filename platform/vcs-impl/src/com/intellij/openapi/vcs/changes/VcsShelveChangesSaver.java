@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.history.ActivityId;
@@ -18,6 +18,7 @@ import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -40,8 +41,7 @@ public class VcsShelveChangesSaver {
     myStashMessage = stashMessage;
   }
 
-  @NotNull
-  public List<ShelvedChangeList> getShelvedLists() {
+  public @NotNull List<ShelvedChangeList> getShelvedLists() {
     return new ArrayList<>(myShelvedLists.values());
   }
 
@@ -109,9 +109,8 @@ public class VcsShelveChangesSaver {
       .doRollback(changes4Rollback, true, VcsBundle.message("activity.name.shelve"), activityId);
   }
 
-  @NotNull
-  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes,
-                                            @NotNull Set<? extends VirtualFile> rootsToSave) {
+  private @NotNull @Unmodifiable List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes,
+                                                                   @NotNull Set<? extends VirtualFile> rootsToSave) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.filter(changes, change -> {
       return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));

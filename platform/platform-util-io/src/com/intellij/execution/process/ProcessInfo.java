@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -17,12 +17,12 @@ public class ProcessInfo {
 
   private final int myPid;
   private final int myParentPid;
-  @NotNull private final String myCommandLine;
-  @NotNull private final Optional<String> myExecutablePath;
-  @NotNull private final String myExecutableName;
-  @NotNull private final String myArgs;
-  @Nullable private final String myUser;
-  @NotNull private final ThreeState myOwnedByCurrentUser;
+  private final @NotNull String myCommandLine;
+  private final @NotNull Optional<String> myExecutablePath;
+  private final @NotNull String myExecutableName;
+  private final @NotNull String myArgs;
+  private final @Nullable String myUser;
+  private final @NotNull ThreeState myOwnedByCurrentUser;
 
   public ProcessInfo(int pid,
                      @NotNull String commandLine,
@@ -74,21 +74,15 @@ public class ProcessInfo {
     return myParentPid;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getCommandLine() {
+  public @NotNull @NlsSafe String getCommandLine() {
     return myCommandLine;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getExecutableName() {
+  public @NotNull @NlsSafe String getExecutableName() {
     return myExecutableName;
   }
 
-  @NotNull
-  @NlsSafe
-  public Optional<String> getExecutableCannonicalPath() {
+  public @NotNull @NlsSafe Optional<String> getExecutableCannonicalPath() {
     return myExecutablePath.map(s -> {
       try {
         return new File(s).getCanonicalPath();
@@ -99,21 +93,15 @@ public class ProcessInfo {
     });
   }
 
-  @NotNull
-  @NlsSafe
-  public String getExecutableDisplayName() {
+  public @NotNull @NlsSafe String getExecutableDisplayName() {
     return StringUtil.trimEnd(myExecutableName, ".exe", true);
   }
 
-  @NotNull
-  @NlsSafe
-  public String getArgs() {
+  public @NotNull @NlsSafe String getArgs() {
     return myArgs;
   }
 
-  @Nullable
-  @NlsSafe
-  public String getUser() {
+  public @Nullable @NlsSafe String getUser() {
     return myUser;
   }
 
@@ -122,8 +110,7 @@ public class ProcessInfo {
    * {@link ThreeState#YES} if process' user matches the current user who listed processes,
    * {@link ThreeState#NO} otherwise.
    */
-  @NotNull
-  public ThreeState isOwnedByCurrentUser() {
+  public @NotNull ThreeState isOwnedByCurrentUser() {
     return myOwnedByCurrentUser;
   }
 

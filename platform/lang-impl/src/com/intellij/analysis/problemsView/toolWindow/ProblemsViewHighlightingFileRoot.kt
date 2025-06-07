@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsProvider
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -39,7 +40,9 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
   }
 
   override fun getFileProblems(file: VirtualFile): List<HighlightingProblem> = when (this.file == file) {
-    true -> synchronized(problems) { problems.filter(filter) }
+    true -> synchronized(problems) {
+      problems.filter(filter)
+    }
     else -> emptyList()
   }
 
@@ -76,15 +79,42 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     }
   }
 
-  override fun getChildren(node: FileNode): Collection<Node> = when {
-    !panel.state.groupByToolId -> super.getChildren(node)
-    else -> getFileProblems(node.file)
-      .groupBy { it.group }
-      .flatMap { entry ->
-        entry.key?.let {
-          listOf(ProblemsViewGroupNode(node, it, entry.value))
+  private fun getContextGroups(node: FileNode): Map<CodeInsightContext?, List<HighlightingProblem>> {
+    return getFileProblems(node.file).groupBy { it.contextGroup }
+  }
+
+  private fun getAmountOfContexts(node: FileNode): Int {
+    return getContextGroups(node).size
+  }
+
+  private fun getFileNodesWithContext(node: FileNode): Collection<Node> {
+    return getContextGroups(node)
+      .flatMap { (group, problems) ->
+        group?.let {
+          listOf(ProblemsContextNode(node, it, problems) { panel.state.groupByToolId })
         }
-        ?: getNodesForProblems(node, entry.value)
+        ?: getNodesForProblems(node, problems)
       }
+  }
+
+  private fun getFileNodesWithoutContext(node: FileNode): Collection<Node> {
+    return getFileProblems(node.file)
+      .groupBy { it.group }
+      .flatMap { (group, problems) ->
+        if (group != null) {
+          listOf(ProblemsViewGroupNode(node, group, problems))
+        }
+        else {
+          getNodesForProblems(node, problems)
+        }
+      }
+  }
+
+  override fun getChildren(node: FileNode): Collection<Node> = when {
+    getAmountOfContexts(node) > 1 ->
+      getFileNodesWithContext(node)
+    !panel.state.groupByToolId ->
+      super.getChildren(node)
+    else -> getFileNodesWithoutContext(node)
   }
 }

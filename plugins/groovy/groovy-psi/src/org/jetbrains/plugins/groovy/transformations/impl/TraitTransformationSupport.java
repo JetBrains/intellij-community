@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -87,10 +87,9 @@ public final class TraitTransformationSupport implements AstTransformationSuppor
     }
   }
 
-  @NotNull
-  private static List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
-                                                     @NotNull PsiMethod method,
-                                                     @NotNull PsiSubstitutor substitutor) {
+  private static @NotNull List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
+                                                              @NotNull PsiMethod method,
+                                                              @NotNull PsiSubstitutor substitutor) {
     List<PsiMethod> result = new SmartList<>();
     for (PsiMethod expanded : GrClassImplUtil.expandReflectedMethods(method)) {
       result.add(new GrTraitMethod(containingClass, expanded, substitutor));

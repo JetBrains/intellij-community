@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend
 
 import com.intellij.ide.navigationToolbar.NavBarLeftSideExtension
@@ -45,10 +45,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
-/**
- * @author Konstantin Bulenkov
- */
-class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
+internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     const val PANEL_KEY: String = "NavBarPanel"
   }
@@ -111,6 +108,7 @@ private fun createNavBarPanel(scrollPane: JScrollPane, navigationBar: JComponent
   val navBarPanel = NavBarContainer(layout = BorderLayout(), scrollPane = scrollPane, navigationBar = navigationBar)
   navBarPanel.add(scrollPane, BorderLayout.CENTER)
   navBarPanel.isOpaque = !ExperimentalUI.isNewUI()
+  navigationBar.isOpaque = !ExperimentalUI.isNewUI()
   navBarPanel.updateUI()
   if (ExperimentalUI.isNewNavbar) {
     val hoverListener: HoverListener = object : HoverListener() {
@@ -198,13 +196,12 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     //return !UISettings.getInstance().showMainToolbar && runToolbarExists();
   }
 
-  private fun runToolbarExists(): Boolean {
-    if (navToolbarGroupExist == null) {
-      val correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR)
-      navToolbarGroupExist = correctedAction is DefaultActionGroup && correctedAction.childrenCount > 0 ||
-                             correctedAction is CustomisedActionGroup && correctedAction.getFirstAction() != null
-    }
-    return navToolbarGroupExist!!
+  private fun runToolbarExists(): Boolean = navToolbarGroupExist ?: run {
+    when (val o = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR)) {
+      is DefaultActionGroup -> o.childrenCount > 0
+      is CustomisedActionGroup -> o.defaultChildrenOrStubs.size > 0
+      else -> false
+    }.also { navToolbarGroupExist = it }
   }
 
   private fun toggleNavPanel(settings: UISettings) {
@@ -318,15 +315,13 @@ private fun isNeedGap(group: AnAction): Boolean {
 }
 
 private fun getFirstAction(group: AnAction): AnAction? {
-  if (group is CustomisedActionGroup) {
-    return group.getFirstAction()
+  val actionsOrStubs = when (group) {
+    is DefaultActionGroup -> group.childActionsOrStubs
+    is CustomisedActionGroup -> group.defaultChildrenOrStubs
+    else -> AnAction.EMPTY_ARRAY
   }
-  else if (group !is DefaultActionGroup) {
-    return null
-  }
-
   var firstAction: AnAction? = null
-  for (action in group.getChildActionsOrStubs()) {
+  for (action in actionsOrStubs) {
     if (action is DefaultActionGroup) {
       firstAction = getFirstAction(action)
     }

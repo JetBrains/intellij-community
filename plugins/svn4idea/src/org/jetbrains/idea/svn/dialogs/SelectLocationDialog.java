@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -47,34 +47,30 @@ public final class SelectLocationDialog extends DialogWrapper {
   private static final @NonNls String HELP_ID = "vcs.subversion.common";
 
   // todo check that works when authenticated
-  @Nullable
-  public static Url selectLocation(Project project, @NotNull Url url) {
+  public static @Nullable Url selectLocation(Project project, @NotNull Url url) {
     SelectLocationDialog dialog = openDialog(project, url, null, null, true, null);
 
     return dialog == null || !dialog.isOK() ? null : dialog.getSelectedURL();
   }
 
-  @Nullable
-  public static Pair<Url, Url> selectLocationAndRoot(Project project, @NotNull Url url) {
+  public static @Nullable Pair<Url, Url> selectLocationAndRoot(Project project, @NotNull Url url) {
     SelectLocationDialog dialog = new SelectLocationDialog(project, url, null, null, true, true);
     return dialog.showAndGet() ? create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
   }
 
-  @Nullable
-  public static Url selectCopyDestination(@NotNull Project project, @NotNull Url url, @NotNull String dstName) throws SvnBindException {
+  public static @Nullable Url selectCopyDestination(@NotNull Project project, @NotNull Url url, @NotNull String dstName) throws SvnBindException {
     SelectLocationDialog dialog = openDialog(project, url, message("label.copy.select.location.dialog.copy.as"), dstName, false,
                                              message("select.location.invalid.url.message", url));
 
     return dialog == null || !dialog.isOK() ? null : append(Objects.requireNonNull(dialog.getSelectedURL()), dialog.getDestinationName());
   }
 
-  @Nullable
-  private static SelectLocationDialog openDialog(Project project,
-                                                 @NotNull Url url,
-                                                 @NlsContexts.Label @Nullable String dstLabel,
-                                                 String dstName,
-                                                 boolean showFiles,
-                                                 @NlsContexts.DialogMessage @Nullable String errorMessage) {
+  private static @Nullable SelectLocationDialog openDialog(Project project,
+                                                           @NotNull Url url,
+                                                           @NlsContexts.Label @Nullable String dstLabel,
+                                                           String dstName,
+                                                           boolean showFiles,
+                                                           @NlsContexts.DialogMessage @Nullable String errorMessage) {
     try {
       final Url repositoryUrl = initRoot(project, url);
       if (repositoryUrl == null) {
@@ -120,8 +116,7 @@ public final class SelectLocationDialog extends DialogWrapper {
     return "svn.repositoryBrowser";
   }
 
-  @Nullable
-  private static Url initRoot(final Project project, final Url url) throws SvnBindException {
+  private static @Nullable Url initRoot(final Project project, final Url url) throws SvnBindException {
     final Ref<Url> result = new Ref<>();
     final Ref<SvnBindException> excRef = new Ref<>();
 
@@ -233,8 +228,7 @@ public final class SelectLocationDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  private JComponent createToolbar() {
+  private @NotNull JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RepositoryBrowserDialog.EditLocationAction(myRepositoryBrowser));
 
@@ -255,23 +249,20 @@ public final class SelectLocationDialog extends DialogWrapper {
   public boolean isOKActionEnabled() {
     boolean ok = myRepositoryBrowser.getSelectedURL() != null;
     if (ok && myDstText != null) {
-      return myDstText.getText().trim().length() > 0;
+      return !myDstText.getText().trim().isEmpty();
     }
     return ok;
   }
 
-  @NotNull
-  public String getDestinationName() {
+  public @NotNull String getDestinationName() {
     return myDstText.getText().trim();
   }
 
-  @Nullable
-  public Url getSelectedURL() {
+  public @Nullable Url getSelectedURL() {
     return myRepositoryBrowser.getSelectedSVNURL();
   }
 
-  @Nullable
-  public Url getRootUrl() {
+  public @Nullable Url getRootUrl() {
     RepositoryTreeNode node = myRepositoryBrowser.getSelectedNode();
 
     // find the most top parent of type RepositoryTreeNode

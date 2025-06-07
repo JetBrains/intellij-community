@@ -35,7 +35,8 @@ class NewUsersOnboardingExperiment {
    */
   internal class Initializer : ApplicationActivity {
     init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (ApplicationManager.getApplication().isUnitTestMode
+          || ApplicationManager.getApplication().isHeadlessEnvironment) {
         throw ExtensionNotApplicableException.create()
       }
     }

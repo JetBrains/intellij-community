@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,10 @@ public class PsiEllipsisType extends PsiArrayType {
 
   public PsiEllipsisType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider) {
     super(componentType, provider);
+  }
+  
+  private PsiEllipsisType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+    super(componentType, provider, nullability);
   }
 
   @Override
@@ -41,14 +46,18 @@ public class PsiEllipsisType extends PsiArrayType {
            super.equalsToText(text);
   }
 
+  @Override
+  public @NotNull PsiEllipsisType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), nullability);
+  }
+
   /**
    * Converts the ellipsis type to an array type with the same component type.
    *
    * @return the array type instance.
    */
   @Contract(pure = true)
-  @NotNull
-  public PsiType toArrayType() {
+  public @NotNull PsiType toArrayType() {
     return new PsiArrayType(getComponentType(), getAnnotationProvider());
   }
 

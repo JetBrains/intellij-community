@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -14,7 +15,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeStartOfIdentifierOrBlock
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.createStringTemplate
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.templatePrefixLength
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
@@ -45,7 +49,6 @@ class CanUnescapeDollarLiteralInspection :
             element: KtStringTemplateExpression,
             updater: ModPsiUpdater,
         ) {
-            val prefixLength = element.interpolationPrefix?.textLength ?: 0
             if (element.text != context.oldText) return
 
             val psiFactory = KtPsiFactory(project)
@@ -53,40 +56,20 @@ class CanUnescapeDollarLiteralInspection :
                 element.entries[entryIndexToReplace].replace(psiFactory.createLiteralStringTemplateEntry("$"))
             }
             val updatedTemplateText = element.entries.joinToString("") { it.text }
-            val recreatedTemplate = createReplacementTemplate(
-                psiFactory, updatedTemplateText, prefixLength,
-                isSingleQuoted = element.isSingleQuoted(),
+            val recreatedTemplate = psiFactory.createStringTemplate(
+                updatedTemplateText, element.templatePrefixLength, !element.isSingleQuoted()
             )
             element.replace(recreatedTemplate)
-        }
-
-        private fun createReplacementTemplate(
-            ktPsiFactory: KtPsiFactory,
-            updatedTemplateText: String,
-            prefixLength: Int,
-            isSingleQuoted: Boolean,
-        ): KtStringTemplateExpression {
-            return when {
-                prefixLength > 0 -> {
-                    ktPsiFactory.createMultiDollarStringTemplate(updatedTemplateText, prefixLength, forceMultiQuoted = !isSingleQuoted)
-                }
-
-                else -> {
-                    if (isSingleQuoted) {
-                        ktPsiFactory.createStringTemplate(updatedTemplateText)
-                    } else {
-                        // KTIJ-31681
-                        val quote = "\"\"\""
-                        ktPsiFactory.createExpression("$quote$updatedTemplateText$quote") as KtStringTemplateExpression
-                    }
-                }
-            }
         }
     }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix?.textLength?.let { it > 1 } != true
                 || element.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation)
+    }
+
+    override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
+        return element.findTextRangesInParentForEscapedDollars(includeUnsafe = false)
     }
 
     override fun buildVisitor(
@@ -106,9 +89,8 @@ class CanUnescapeDollarLiteralInspection :
      * If the length exceeds `prefixLength - 1`, don't add the index of the last entry as replacing it will change the string.
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
-        val prefixLength = element.interpolationPrefix?.textLength ?: 0
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
+        val prefixLength = element.templatePrefixLength
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()
         val candidateReplaceableIndices = mutableListOf<Int>()

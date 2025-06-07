@@ -86,8 +86,6 @@ class NonIncrementalCellLines private constructor(
   private fun createDocumentListener() = object : PrioritizedDocumentListener {
     private var oldAffectedCells: List<NotebookCellLines.Interval> = emptyList()
 
-    private val postponedEvents = mutableListOf<NotebookCellLinesEvent>()
-
     override fun getPriority(): Int = EditorDocumentPriorities.INLAY_MODEL + 1
 
     override fun beforeDocumentChange(event: DocumentEvent) {
@@ -112,21 +110,13 @@ class NonIncrementalCellLines private constructor(
       intervals = intervalsGenerator.makeIntervals(event.document, event)
       val newAffectedCells = getAffectedCells(intervals, event.document, TextRange(event.offset, event.offset + event.newLength))
       val newEvent = createEvent(oldIntervals, intervals, oldAffectedCells, newAffectedCells, event)
-      if (event.document.isInBulkUpdate) {
-        postponedEvents.add(newEvent)
-      }
-      else {
-        notify(newEvent)
-      }
+      notify(newEvent)
     }
 
     override fun bulkUpdateFinished(document: Document) {
-      if (postponedEvents.isNotEmpty()) {
-        postponedEvents.forEach {
-          notify(it)
-        }
+      catchThrowableAndLog {
+        intervalListeners.multicaster.bulkUpdateFinished()
       }
-      postponedEvents.clear()
     }
   }
 

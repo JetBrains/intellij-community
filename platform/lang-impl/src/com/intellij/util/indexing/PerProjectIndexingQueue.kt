@@ -4,13 +4,10 @@ package com.intellij.util.indexing
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PingProgress
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
@@ -20,98 +17,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.getAndUpdate
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 
-private class PerProviderSinkFactory() {
-  private val activeSinksCount: AtomicInteger = AtomicInteger()
-  private val cancelActiveSinks: AtomicBoolean = AtomicBoolean()
-
-  inner class PerProviderSinkImpl(private val doAddFile: (VirtualFile) -> Unit) : PerProjectIndexingQueue.PerProviderSink {
-    private var closed = false
-
-    init {
-      activeSinksCount.incrementAndGet()
-    }
-
-    override fun addFile(file: VirtualFile) {
-      LOG.assertTrue(!closed, "Should not invoke 'addFile' after 'close'")
-      if (cancelActiveSinks.get()) {
-        ProgressManager.getGlobalProgressIndicator()?.cancel()
-        ProgressManager.checkCanceled()
-        LOG.error("Could not cancel file addition")
-      }
-
-      doAddFile(file)
-    }
-
-    override fun close() {
-      if (!closed) {
-        closed = true
-        activeSinksCount.decrementAndGet()
-      }
-    }
-  }
-
-  fun newSink(addFile: (VirtualFile) -> Unit): PerProjectIndexingQueue.PerProviderSink {
-    if (cancelActiveSinks.get()) {
-      ProgressManager.getGlobalProgressIndicator()?.cancel()
-      ProgressManager.checkCanceled()
-      LOG.error("Could not cancel sink creation")
-    }
-
-    return PerProviderSinkImpl(addFile)
-  }
-
-  fun cancelAllProducersAndWait() {
-    cancelActiveSinks.set(true)
-    ProgressIndicatorUtils.awaitWithCheckCanceled {
-      PingProgress.interactWithEdtProgress()
-      LockSupport.parkNanos(50_000_000)
-      activeSinksCount.get() == 0
-    }
-  }
-
-  fun resumeProducers() {
-    cancelActiveSinks.set(false)
-  }
-
-  companion object {
-    private val LOG = logger<PerProviderSinkFactory>()
-  }
-}
-
 @Internal
 @Service(Service.Level.PROJECT)
 class PerProjectIndexingQueue(private val project: Project) {
-  /**
-   *  Not thread safe. These classes are cheap to construct and use - don't share instances.
-   *  <p>
-   *  Always use try-with-resources when creating instances of this interface, otherwise [cancelAllTasksAndWait] may never end waiting
-   */
-  interface PerProviderSink : AutoCloseable {
-    fun addFile(file: VirtualFile)
-    override fun close()
-  }
-
-  private val sinkFactory = PerProviderSinkFactory()
 
   @Internal
   class QueuedFiles {
     // Files that will be re-indexed
     private val requestsSoFar: MutableStateFlow<PersistentSet<FileIndexingRequest>> = MutableStateFlow(persistentSetOf())
+
+    internal fun currentFilesCount(): Int = requestsSoFar.value.size
 
     internal val estimatedFilesCount: Flow<Int> = requestsSoFar.map { it.size }
 
@@ -182,10 +106,18 @@ class PerProjectIndexingQueue(private val project: Project) {
       LOG.info("Flushing is not allowed at the moment")
       return false
     }
-    val snapshot = getAndResetQueuedFiles()
-    return if (snapshot.size > 0) {
+
+    val queuedFilesCount = queuedFilesLock.readLock().withLock {
+      // note: read lock only ensures that reference to queuedFiles does change during the operation,
+      // so we can safely invoke queuedFiles.value. List of queued files may change (currentFilesCount may change)
+      // In order to prevent currentFilesCount changing, we need a write lock. At the moment this is not a problem, because
+      // currentFilesCount may only grow, and it is expected that this number may change immediately after we release the lock.
+      queuedFiles.value.currentFilesCount()
+    }
+
+    return if (queuedFilesCount > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, snapshot, reason).queue(project)
+      UnindexedFilesIndexer(project, reason).queue(project)
       true
     }
     else {
@@ -199,18 +131,24 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   @TestOnly
-  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Collection<FileIndexingRequest>> {
+  fun <T> disableFlushingDuring(block: () -> T): T {
     allowFlushing = false
     try {
-      val result: T = block()
-      return Pair(result, getAndResetQueuedFiles().requests)
+      return block()
     }
     finally {
       allowFlushing = true
     }
   }
 
-  private fun getAndResetQueuedFiles(): QueuedFiles {
+  @TestOnly
+  fun getQueuedFiles(): QueuedFiles {
+    return queuedFilesLock.readLock().withLock {
+      queuedFiles.value
+    }
+  }
+
+  internal fun getAndResetQueuedFiles(): QueuedFiles {
     return queuedFilesLock.writeLock().withLock {
       queuedFiles.getAndUpdate { QueuedFiles() }
     }
@@ -220,36 +158,25 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Creates new instance of **thread-unsafe** [PerProviderSink]
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
-  fun getSink(provider: IndexableFilesIterator, scanningId: Long): PerProviderSink {
-    return sinkFactory.newSink { vFile ->
-      // readLock here is to make sure that queuedFiles does not change during the operation
-      queuedFilesLock.readLock().withLock {
-        // .value for each file, because we want to put files into a new queue after getAndResetQueuedFiles invocation
-        queuedFiles.value.addFile(vFile, scanningId)
-      }
+  fun addFile(vFile: VirtualFile, scanningId: Long) {
+    // readLock here is to make sure that queuedFiles does not change during the operation
+    queuedFilesLock.readLock().withLock {
+      // .value for each file, because we want to put files into a new queue after getAndResetQueuedFiles invocation
+      queuedFiles.value.addFile(vFile, scanningId)
     }
-  }
-
-  /**
-   * Cancels all the created [PerProviderSink] and waits until all the Sinks are finished (invoke [PerProviderSink.commit()]).
-   * New invocations of [PerProjectIndexingQueue.getSink()] will throw [ProcessCanceledException].
-   * Use [resumeQueue] to resume the queue.
-   * Does nothing if the queue is already suspended.
-   */
-  fun cancelAllTasksAndWait() {
-    sinkFactory.cancelAllProducersAndWait()
-  }
-
-  /**
-   * Resumes the queue after [cancelAllTasksAndWait] invocation.
-   * Does nothing if the queue is already resumed.
-   */
-  fun resumeQueue() {
-    sinkFactory.resumeProducers()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun estimatedFilesCount(): Flow<Int> = queuedFiles.flatMapLatest { it.estimatedFilesCount }
+
+  internal val scanningIndexingMutex = Mutex()
+
+  @Internal
+  internal fun wrapIndexing(indexingRoutine: Runnable) {
+    runBlockingCancellable {
+      scanningIndexingMutex.withLock("indexing", indexingRoutine::run)
+    }
+  }
 
   companion object {
     private val LOG = logger<PerProjectIndexingQueue>()

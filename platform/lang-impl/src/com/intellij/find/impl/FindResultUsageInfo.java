@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindManager;
@@ -14,9 +14,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-final class FindResultUsageInfo extends UsageInfo {
+@ApiStatus.Internal
+public final class FindResultUsageInfo extends UsageInfo {
   private final FindManager myFindManager;
   private final FindModel myFindModel;
   private final SmartPsiFileRange myAnchor;
@@ -26,7 +29,8 @@ final class FindResultUsageInfo extends UsageInfo {
 
   private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
 
-  FindResultUsageInfo(@NotNull FindManager finder,
+  @VisibleForTesting
+  public FindResultUsageInfo(@NotNull FindManager finder,
                              @NotNull PsiFile file,
                              int offset,
                              @NotNull FindModel findModel,

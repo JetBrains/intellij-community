@@ -44,6 +44,7 @@ public final class DuplicatePolicy implements ConflictResolutionPolicy {
     return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
   }
 
+  @Override
   public String toString() {
     return "Duplicate";
   }

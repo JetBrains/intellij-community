@@ -9,7 +9,10 @@ import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +33,22 @@ final class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, V
   }
 
   @Override
-  public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    @NotNull FileIndexingState isIndexed = super.getIndexingStateForFile(fileId, file);
-    if (isIndexed != FileIndexingState.UP_TO_DATE) return isIndexed;
+  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    @NotNull FileIndexingStateWithExplanation isIndexed = super.getIndexingStateForFile(fileId, file);
+    if (isIndexed.updateRequired()) return isIndexed;
     try {
       Collection<FileType> inputData = ((MapInputDataDiffBuilder<FileType, Void>) getKeysDiffBuilder(fileId)).getKeys();
       FileType indexedFileType = ContainerUtil.getFirstItem(inputData);
-      return getExtension().getKeyDescriptor().isEqual(indexedFileType, file.getFileType())
-             ? FileIndexingState.UP_TO_DATE
-             : FileIndexingState.OUT_DATED;
+      IndexExtension<FileType, Void, FileContent> extension = getExtension();
+      FileType actualFileType = file.getFileType();
+      return extension.getKeyDescriptor().isEqual(indexedFileType, actualFileType)
+             ? FileIndexingStateWithExplanation.upToDate()
+             : FileIndexingStateWithExplanation.outdated(
+               () -> "indexedFileType(" + indexedFileType + ") != actualFileType(" + actualFileType + ") according to " +
+                     "getExtension(=" + extension + ").getKeyDescriptor().isEqual()");
     } catch (IOException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("IOException");
     }
   }
 

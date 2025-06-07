@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -23,7 +23,7 @@ internal const val DOT_MOCK = ".mock"
 abstract class VcsRootBaseTest : VcsPlatformTest() {
   protected lateinit var vcs: MockAbstractVcs
 
-  protected lateinit var rootChecker: MockRootChecker
+  internal lateinit var rootChecker: MockRootChecker
   protected lateinit var rootModule: Module
 
   private val extensionPoint: ExtensionPoint<VcsRootChecker>

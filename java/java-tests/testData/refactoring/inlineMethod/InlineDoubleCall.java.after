@@ -1,0 +1,11 @@
+public class Foo {
+
+  public Foo hi() {
+    System.out.println("hi");
+    return this;
+  }
+
+    public static void main(String[] args) {
+        new Foo().hi().hi().hi().hi();
+  }
+}

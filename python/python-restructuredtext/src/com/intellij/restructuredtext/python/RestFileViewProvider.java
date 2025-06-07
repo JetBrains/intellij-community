@@ -31,27 +31,23 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
     super(manager, virtualFile, physical);
   }
 
-  @NotNull
   @Override
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return RestLanguage.INSTANCE;
   }
 
   @Override
-  @NotNull
-  public Language getTemplateDataLanguage() {
+  public @NotNull Language getTemplateDataLanguage() {
     return PythonLanguage.getInstance();
   }
 
-  @NotNull
   @Override
-  protected MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile virtualFile) {
+  protected @NotNull MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile virtualFile) {
     return new RestFileViewProvider(getManager(), virtualFile, false);
   }
 
   @Override
-  @NotNull
-  public Set<Language> getLanguages() {
+  public @NotNull Set<Language> getLanguages() {
     if (myLanguages == null) {
       final Set<Language> languages = new HashSet<>();
       languages.add(getBaseLanguage());
@@ -66,7 +62,7 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
   }
 
   @Override
-  protected PsiFile createFile(@NotNull final Language lang) {
+  protected PsiFile createFile(final @NotNull Language lang) {
     ParserDefinition def = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (def == null) return null;
     if (lang == getTemplateDataLanguage()) {

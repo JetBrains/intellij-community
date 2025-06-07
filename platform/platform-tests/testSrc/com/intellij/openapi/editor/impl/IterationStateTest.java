@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.*;
@@ -308,7 +309,7 @@ public class IterationStateTest extends AbstractEditorTest {
 
   private void verifySplitting0(boolean checkForegroundColor, boolean backward, StateSegment... expectedSegments) {
     EditorEx editor = (EditorEx)getEditor();
-    CaretData caretData = CaretData.createCaretData(editor);
+    CaretData caretData = CaretData.createCaretData(editor.getDocument(), editor.getCaretModel());
     IterationState iterationState = new IterationState(
       editor,
       backward ? editor.getDocument().getTextLength() : 0,
@@ -380,7 +381,9 @@ public class IterationStateTest extends AbstractEditorTest {
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, 3, 0,
                                    new TextAttributes(new Color(random, random, random++), new Color(random, random, random++),
                                    null, null, Font.PLAIN), HighlighterTargetArea.EXACT_RANGE);
-    highlighter.setErrorStripeTooltip(HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1,3).createUnconditionally());
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1, 3).createUnconditionally();
+    highlighter.setErrorStripeTooltip(info);
+    info.setHighlighter((RangeHighlighterEx)highlighter);
     return highlighter;
   }
 

@@ -13,4 +13,4 @@ class A {
     }
 }
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS

@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -50,13 +49,13 @@ private class ReviewToolwindowTabsManager<
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectVm = reviewToolwindowViewModel.projectVm
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(Dispatchers.EDT)
 
   init {
-    contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+    contentManager.addUiDataProvider { sink ->
       sink[ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM] = projectVm.value
       sink[ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM] = reviewToolwindowViewModel
-    })
+    }
 
     cs.launchNow {
       projectVm.collectLatest { vm ->

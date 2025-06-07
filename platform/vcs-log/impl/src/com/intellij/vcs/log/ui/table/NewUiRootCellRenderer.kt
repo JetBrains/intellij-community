@@ -7,6 +7,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.render.RootCell
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Insets
@@ -48,7 +49,7 @@ internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManage
                                              column: Int): Component {
     val renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
 
-    stripePart = getRootPart(value as FilePath?, table, row, column)
+    stripePart = getRootPart(value as RootCell?, table, row, column)
 
     myBorderColor = if (isNarrow) {
       (table as VcsLogGraphTable).getStyle(row, column, hasFocus, false, false).background!!
@@ -75,7 +76,7 @@ internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManage
     private val NARROW_STRIPE_WIDTH
       get() = scale(4)
 
-    private fun getRootPart(current: FilePath?, table: JTable, row: Int, column: Int): RootStripePart {
+    private fun getRootPart(current: RootCell?, table: JTable, row: Int, column: Int): RootStripePart {
       if (current == null) return RootStripePart.SINGLE
       val prev = if (row > 0) table.getValueAt(row - 1, column) else null
       val next = if (row <= table.rowCount - 2) table.getValueAt(row + 1, column) else null

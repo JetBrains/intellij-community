@@ -101,8 +101,8 @@ public final class InspectionsResultUtil {
   }
 
   private static boolean isToolEnabled(@NotNull InspectionProfile profile, @NotNull String shortName) {
-    if (profile instanceof InspectionProfileImpl) {
-      ToolsImpl tools = ((InspectionProfileImpl)profile).getToolsOrNull(shortName, null);
+    if (profile instanceof InspectionProfileImpl impl) {
+      ToolsImpl tools = impl.getToolsOrNull(shortName, null);
       if (tools != null)  {
         return tools.isEnabled();
       }
@@ -132,8 +132,8 @@ public final class InspectionsResultUtil {
       for (InspectionToolWrapper<?, ?> wrapper : wrappers) {
         InspectionToolResultExporter presentation = presentationGetter.apply(wrapper);
         presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
-        if (presentation instanceof AggregateResultsExporter) {
-          ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
+        if (presentation instanceof AggregateResultsExporter exporter) {
+          exporter.exportAggregateResults(aggregateWriter::writeElement);
         }
       }
     }

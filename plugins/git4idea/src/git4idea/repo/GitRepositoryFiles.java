@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String INFO = "info";
   private static final @NonNls String INFO_EXCLUDE = INFO + "/exclude";
   private static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
-  private static final @NonNls String MERGE_MSG = "MERGE_MSG";
+  public static final @NonNls String MERGE_MSG = "MERGE_MSG";
   private static final @NonNls String ORIG_HEAD = "ORIG_HEAD";
   private static final @NonNls String REBASE_APPLY = "rebase-apply";
   private static final @NonNls String REBASE_MERGE = "rebase-merge";
@@ -57,6 +57,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
   private static final @NonNls String WORKTREES_DIR = "worktrees";
+  public static final @NotNull String SUBMODULES_FILE = ".gitmodules";
 
   private static final @NonNls String SEQUENCER_TODO = "sequencer/todo";
 
@@ -181,7 +182,7 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  File getRefsHeadsFile() {
+  public File getRefsHeadsFile() {
     return file(myRefsHeadsDirPath);
   }
 
@@ -376,6 +377,13 @@ public final class GitRepositoryFiles {
    */
   public boolean isMergeFile(String file) {
     return file.equals(myMergeHeadPath);
+  }
+
+  /**
+   * .git/MERGE_MSG
+   */
+  public boolean isMergeMessageFile(@NotNull String path) {
+    return path.equals(myMergeMessagePath);
   }
 
   /**

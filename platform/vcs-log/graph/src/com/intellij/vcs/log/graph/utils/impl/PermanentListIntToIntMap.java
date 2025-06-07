@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.Flags;
@@ -10,13 +10,11 @@ import org.jetbrains.annotations.NotNull;
 public final class PermanentListIntToIntMap extends AbstractIntToIntMap implements IntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
-  @NotNull
-  public static IntToIntMap newInstance(@NotNull Flags visibleIndexes, int shortSize) {
+  public static @NotNull IntToIntMap newInstance(@NotNull Flags visibleIndexes, int shortSize) {
     return newInstance(visibleIndexes, shortSize, DEFAULT_BLOCK_SIZE);
   }
 
-  @NotNull
-  public static IntToIntMap newInstance(@NotNull final Flags visibleIndexes, int shortSize, int blockSize) {
+  public static @NotNull IntToIntMap newInstance(final @NotNull Flags visibleIndexes, int shortSize, int blockSize) {
     if (shortSize < 0) throw new NegativeArraySizeException("shortSize < 0: " + shortSize);
     if (shortSize == 0) return createEmptyIntToIntMap(visibleIndexes);
 
@@ -34,8 +32,7 @@ public final class PermanentListIntToIntMap extends AbstractIntToIntMap implemen
     return new PermanentListIntToIntMap(visibleIndexes, shortSize, blockSize, strongShortIndexes);
   }
 
-  @NotNull
-  private static IntToIntMap createEmptyIntToIntMap(@NotNull final Flags visibleIndexes) {
+  private static @NotNull IntToIntMap createEmptyIntToIntMap(final @NotNull Flags visibleIndexes) {
     return new IntToIntMap() {
       @Override
       public int shortSize() {
@@ -59,7 +56,7 @@ public final class PermanentListIntToIntMap extends AbstractIntToIntMap implemen
     };
   }
 
-  @NotNull private final Flags myVisibleIndexes;
+  private final @NotNull Flags myVisibleIndexes;
 
   private final int myLongSize;
   private final int myShortSize;

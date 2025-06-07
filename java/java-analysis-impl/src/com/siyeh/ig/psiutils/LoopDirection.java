@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -20,8 +20,7 @@ public enum LoopDirection {
    *         {@link LoopDirection#DESCENDING} if counter decreases in the loop e.g. for (int i = 10; i >= 0; i--) {}<br>
    *         null if current loop is uncountable
    */
-  @Nullable
-  public static LoopDirection evaluateLoopDirection(@NotNull PsiVariable counter, @Nullable PsiStatement updateStatement) {
+  public static @Nullable LoopDirection evaluateLoopDirection(@NotNull PsiVariable counter, @Nullable PsiStatement updateStatement) {
     PsiExpressionStatement expressionStatement = tryCast(updateStatement, PsiExpressionStatement.class);
     if (expressionStatement == null) return null;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expressionStatement.getExpression());

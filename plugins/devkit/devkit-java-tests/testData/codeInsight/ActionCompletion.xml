@@ -5,6 +5,7 @@
     <action id="actionId" class="foo.bar.BarAction" text="ActionId Text" description="ActionId description"/>
     <action id="actionId.localized" class="foo.bar.BarAction"/>
     <action id="actionId.missing.localized" class="foo.bar.BarAction"/>
+    <action class="foo.bar.BarAction"/>
 
     <action class="foo.bar.BarAction" use-shortcut-of="<caret>"/>
   </actions>

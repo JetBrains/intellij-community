@@ -16,18 +16,9 @@
 package git4idea.revert
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcsUtil.VcsUtil.getFilePath
-import git4idea.GitContentRevision.createRevision
-import git4idea.GitRevisionNumber
-import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.test.*
-import org.junit.Test
-import java.nio.charset.Charset
 
 /**
  * Revert works in two modes: revert & commit immediately, and show the commit dialog.

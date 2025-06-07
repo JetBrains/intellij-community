@@ -18,7 +18,6 @@ public class GradleModelHolderState implements Serializable {
 
   private final @Nullable DefaultGradleLightBuild myRootBuild;
   private final @NotNull Collection<DefaultGradleLightBuild> myNestedBuilds;
-  private final @Nullable BuildEnvironment myBuildEnvironment;
   private final @NotNull Map<GradleModelId, Object> myModels;
 
   private final @Nullable GradleModelFetchPhase myPhase;
@@ -26,23 +25,20 @@ public class GradleModelHolderState implements Serializable {
   public GradleModelHolderState(
     @Nullable DefaultGradleLightBuild rootBuild,
     @NotNull Collection<DefaultGradleLightBuild> nestedBuilds,
-    @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models
   ) {
-    this(rootBuild, nestedBuilds, buildEnvironment, models, null);
+    this(rootBuild, nestedBuilds, models, null);
   }
 
   public GradleModelHolderState(
     @Nullable DefaultGradleLightBuild rootBuild,
     @NotNull Collection<DefaultGradleLightBuild> nestedBuilds,
-    @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models,
     @Nullable GradleModelFetchPhase phase
   ) {
     myPhase = phase;
     myRootBuild = rootBuild;
     myNestedBuilds = nestedBuilds;
-    myBuildEnvironment = buildEnvironment;
     myModels = models;
   }
 
@@ -54,10 +50,6 @@ public class GradleModelHolderState implements Serializable {
     return myNestedBuilds;
   }
 
-  public @Nullable BuildEnvironment getBuildEnvironment() {
-    return myBuildEnvironment;
-  }
-
   public @NotNull Map<GradleModelId, Object> getModels() {
     return myModels;
   }
@@ -67,12 +59,7 @@ public class GradleModelHolderState implements Serializable {
   }
 
   @Contract(pure = true)
-  public @NotNull GradleModelHolderState current() {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, myPhase);
-  }
-
-  @Contract(pure = true)
   public @NotNull GradleModelHolderState withPhase(@NotNull GradleModelFetchPhase phase) {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, phase);
+    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myModels, phase);
   }
 }

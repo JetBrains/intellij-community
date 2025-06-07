@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 class A {
     private fun <T> receiver(block: () -> T): T = block()
 

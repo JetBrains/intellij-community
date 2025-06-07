@@ -1,28 +1,33 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.dom` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "dom_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "xml-dom",
+jvm_library(
+  name = "dom",
   module_name = "intellij.xml.dom",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "@community//xml/openapi:xml",
-    "@community//platform/lang-api:lang",
-    "@community//platform/platform-api:ide",
-    "@community//platform/extensions",
-    "@community//platform/util",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-ui",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [
+    ":dom_resources",
+    "//platform/backend",
+  ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.dom` end

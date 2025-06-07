@@ -4,6 +4,7 @@ package com.intellij.ui.table;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -530,7 +531,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myBusyIcon != null) {
         remove(myBusyIcon);
-        myBusyIcon.dispose();
+        Disposer.dispose(myBusyIcon);
         myBusyIcon = null;
       }
     }
@@ -1378,11 +1379,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     private boolean canMoveOrResizeColumn(@NotNull MouseEvent e) {
       JTable table = header.getTable();
-      return canMoveOrResizeColumn(table.getColumnModel().getColumnIndexAtX(e.getX()));
+      int modelIndex = table.convertColumnIndexToModel(table.getColumnModel().getColumnIndexAtX(e.getX()));
+      return canMoveOrResizeColumn(modelIndex);
     }
 
-    private boolean canMoveOrResizeColumn(int index) {
-      return ((InvisibleResizableHeader)header).canMoveOrResizeColumn(index);
+    private boolean canMoveOrResizeColumn(int modelIndex) {
+      return ((InvisibleResizableHeader)header).canMoveOrResizeColumn(modelIndex);
     }
   }
 

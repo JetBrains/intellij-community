@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.maven.errorProne.compiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "errorProne-compiler",
+  module_name = "intellij.maven.errorProne.compiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/maven",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.maven.errorProne.compiler` end

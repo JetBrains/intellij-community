@@ -17,8 +17,9 @@ import java.util.function.Predicate;
  * as a top-level component only.
  *
  * @param components list of components on the pane
+ * @param helpId identifier of online help page for this component; null if no online help page is associated with this component
  */
-public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
+public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @Nullable String helpId) {
   public OptPane {
     Set<String> ids = new HashSet<>();
     traverse(components, comp -> {
@@ -29,11 +30,23 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
     });
   }
 
+  public OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
+    this(components, null);
+  }
+
   /**
    * An empty pane that contains no options at all
    */
   public static final OptPane EMPTY = new OptPane(List.of());
 
+  /**
+   * @param helpId identifier of online help page for this component; null if no online help page is associated with this component
+   * @return OptPane with a specified helpId.
+   */
+  public @NotNull OptPane withHelpId(@Nullable String helpId) {
+    return new OptPane(components(), helpId);
+  }
+  
   /**
    * @param bindId ID to find
    * @return control with given ID; null if none
@@ -359,6 +372,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    */
   public static @NotNull OptTable table(@NotNull @NlsContexts.Label String label, @NotNull OptTableColumn @NotNull ... columns) {
     return new OptTable(new PlainMessage(label), List.of(columns), null);
+  }
+
+  /**
+   * @param bindId   identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<OptElement>}.
+   * @param elements list of elements present in the list
+   * @param mode     selection mode
+   * @return a list with elements to select
+   */
+  public static @NotNull OptMultiSelector multiSelector(@Language("jvm-field-name") @NotNull String bindId,
+                                                        @NotNull List<? extends OptMultiSelector.OptElement> elements,
+                                                        @NotNull OptMultiSelector.SelectionMode mode) {
+    return new OptMultiSelector(bindId, elements, mode);
   }
 
   /**

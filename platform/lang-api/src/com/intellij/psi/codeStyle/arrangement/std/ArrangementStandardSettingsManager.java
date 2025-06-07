@@ -13,6 +13,7 @@ import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -60,7 +61,7 @@ public class ArrangementStandardSettingsManager {
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
                                             @NotNull ArrangementColorsProvider colorsProvider,
-                                            @NotNull Collection<StdArrangementRuleAliasToken> aliases)
+                                            @NotNull @Unmodifiable Collection<StdArrangementRuleAliasToken> aliases)
   {
     myDelegate = delegate;
     myColorsProvider = colorsProvider;
@@ -89,7 +90,7 @@ public class ArrangementStandardSettingsManager {
     }
   }
 
-  public @NotNull Collection<StdArrangementRuleAliasToken> getRuleAliases() {
+  public @NotNull @Unmodifiable Collection<StdArrangementRuleAliasToken> getRuleAliases() {
     return myRuleAliases;
   }
 

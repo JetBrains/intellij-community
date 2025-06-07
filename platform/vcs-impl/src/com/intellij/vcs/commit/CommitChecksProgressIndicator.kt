@@ -27,10 +27,10 @@ internal abstract class CommitChecksProgressIndicator : InlineProgressIndicator(
     component.toolTipText = null
 
     addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun cancel()  {
-  queueProgressUpdate()
- // to show "Stopping" text right away
-}
+      override fun cancel() {
+        queueProgressUpdate()
+        // to show "Stopping" text right away
+      }
     })
   }
 

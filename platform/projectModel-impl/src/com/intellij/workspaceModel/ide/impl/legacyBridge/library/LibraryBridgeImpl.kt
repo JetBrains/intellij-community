@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -15,9 +15,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
@@ -45,13 +47,19 @@ interface LibraryBridge : LibraryEx {
 }
 
 @ApiStatus.Internal
+sealed interface LibraryOrigin {
+  class OfProject(val project: Project) : LibraryOrigin
+  class OfDescriptor(val descriptor: EelDescriptor) : LibraryOrigin
+}
+
+@ApiStatus.Internal
 class LibraryBridgeImpl(
   var libraryTable: LibraryTable,
-  val project: Project?,
+  val origin: LibraryOrigin,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  private var targetBuilder: MutableEntityStorage?
-) : LibraryBridge, RootProvider, TraceableDisposable(true) {
+  private var targetBuilder: MutableEntityStorage?,
+) : LibraryBridge, RootProvider, TraceableDisposable(true), Disposable {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
@@ -117,10 +125,10 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
-    val virtualFileUrlManager = if (project == null)
-      GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-    else
-      WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val virtualFileUrlManager = when (origin) {
+      is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).getVirtualFileUrlManager()
+      is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).getVirtualFileUrlManager()
+    }
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 
@@ -176,10 +184,9 @@ class LibraryBridgeImpl(
         null
       }
       val isDisposedGlobally = libraryEntity?.let {
-        val snapshot = if (project != null) {
-          WorkspaceModel.getInstance(project).currentSnapshot
-        } else {
-          GlobalWorkspaceModel.getInstance().currentSnapshot
+        val snapshot = when (origin) {
+          is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).currentSnapshot
+          is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).currentSnapshot
         }
         snapshot.libraryMap.getDataByEntity(it)?.isDisposed
       }
@@ -187,7 +194,11 @@ class LibraryBridgeImpl(
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in ${if (project != null) "project" else "global"} model: ${isDisposedGlobally != false}
+        Is disposed in ${
+        when (origin) {
+          is LibraryOrigin.OfProject -> "project"; is LibraryOrigin.OfDescriptor -> "global (${origin.descriptor})"
+        }
+      } model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {
@@ -234,6 +245,15 @@ class LibraryBridgeImpl(
         return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]))
       }
       return ProjectModelBundle.message("empty.library.title")
+    }
+
+    /**
+     * A temporary function which disposes instances of `Library`. All the usages should be eliminated to fix IJPL-183361.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun disposeLibrary(library: Library) {
+      Disposer.dispose(library as Disposable)
     }
   }
 }

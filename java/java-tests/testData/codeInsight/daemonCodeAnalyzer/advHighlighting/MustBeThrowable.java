@@ -23,16 +23,16 @@ class a60
 {
   public void test() throws <error descr="Incompatible types. Found: 'MyException', required: 'java.lang.Throwable'">MyException</error>
   {
-    throw <error descr="Incompatible types. Found: 'MyException', required: 'java.lang.Throwable'">new MyException()</error>;
+    throw new <error descr="Incompatible types. Found: 'MyException', required: 'java.lang.Throwable'">MyException</error>();
   }
   public void test(int i) {
 	switch (i) {
-		case 1: throw <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Throwable'">false</error>;
-		case 2: throw <error descr="Incompatible types. Found: 'int', required: 'java.lang.Throwable'">1</error>;
-		case 3: throw <error descr="Incompatible types. Found: 'double', required: 'java.lang.Throwable'">1.0</error>;
-		case 4: throw <error descr="Incompatible types. Found: 'char', required: 'java.lang.Throwable'">'a'</error>;
-		case 5: throw <error descr="Incompatible types. Found: 'long', required: 'java.lang.Throwable'">1L</error>;
-		case 6: throw <error descr="Incompatible types. Found: 'float', required: 'java.lang.Throwable'">1.0f</error>;
+		case 1: throw <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Throwable'">false;</error>
+		case 2: throw <error descr="Incompatible types. Found: 'int', required: 'java.lang.Throwable'">1;</error>
+		case 3: throw <error descr="Incompatible types. Found: 'double', required: 'java.lang.Throwable'">1.0;</error>
+		case 4: throw <error descr="Incompatible types. Found: 'char', required: 'java.lang.Throwable'">'a';</error>
+		case 5: throw <error descr="Incompatible types. Found: 'long', required: 'java.lang.Throwable'">1L;</error>
+		case 6: throw <error descr="Incompatible types. Found: 'float', required: 'java.lang.Throwable'">1.0f;</error>
 	}
   }
 }

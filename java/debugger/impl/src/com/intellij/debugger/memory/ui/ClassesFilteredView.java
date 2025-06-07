@@ -210,12 +210,11 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   @Override
   protected void scheduleUpdateClassesCommand(XSuspendContext context) {
     SuspendContextImpl suspendContext = (SuspendContextImpl)context;
-    suspendContext.getDebugProcess().getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
+    suspendContext.getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
   }
 
-  @Nullable
   @Override
-  protected TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
+  protected @Nullable TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
     JavaTypeInfo javaTypeInfo = (JavaTypeInfo)ref;
     return myConstructorTrackedClasses.getOrDefault(javaTypeInfo.getReferenceType(), null);
   }
@@ -256,9 +255,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     }
   }
 
-  @Nullable
   @Override
-  protected XDebugSessionListener getAdditionalSessionListener() {
+  protected @Nullable XDebugSessionListener getAdditionalSessionListener() {
     return additionalSessionListener;
   }
 

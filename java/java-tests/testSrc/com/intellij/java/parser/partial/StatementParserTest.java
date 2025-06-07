@@ -2,7 +2,7 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 
 public class StatementParserTest extends AbstractBasicStatementParserTest {
   public StatementParserTest() {
@@ -11,11 +11,11 @@ public class StatementParserTest extends AbstractBasicStatementParserTest {
 
   @Override
   protected void doBlockParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getStatementParser().parseCodeBlockDeep(builder, true));
   }
 
   @Override
   protected void doParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseStatements(builder));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getStatementParser().parseStatements(builder));
   }
 }

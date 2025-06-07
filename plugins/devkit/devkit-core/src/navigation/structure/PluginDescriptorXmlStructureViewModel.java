@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
@@ -27,9 +25,8 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
   }
 
 
-  @NotNull
   @Override
-  public StructureViewTreeElement getRoot() {
+  public @NotNull StructureViewTreeElement getRoot() {
     XmlFile file = getPsiFile();
     if (DescriptorUtil.isPluginXml(file)) {
       XmlTag rootTag = file.getRootTag();
@@ -75,26 +72,23 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
           return ALPHA_SORTER.isVisible();
         }
 
-        @NotNull
         @Override
-        public ActionPresentation getPresentation() {
+        public @NotNull ActionPresentation getPresentation() {
           return new ActionPresentationData(DevKitBundle.message("structure.sort.alphabetically.in.groups"),
                                             DevKitBundle.message("structure.sort.alphabetically.in.groups.description"),
                                             AllIcons.ObjectBrowser.Sorted);
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return "PluginDescriptorStructureAlphaSorter";
         }
       }
     };
   }
 
-  @NotNull
   @Override
-  protected Class @NotNull [] getSuitableClasses() {
+  protected @NotNull Class @NotNull [] getSuitableClasses() {
     return new Class[]{XmlTag.class};
   }
 }

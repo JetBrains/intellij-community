@@ -12,13 +12,14 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -170,9 +171,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     if (!headless) {
       Dialog.ModalityType modalityType = DialogWrapper.IdeModalityType.IDE.toAwtModality();
-      if (Registry.is("ide.perProjectModality", false)) {
-        modalityType = ideModalityType.toAwtModality();
-      }
       myDialog.setModalityType(modalityType);
     }
   }
@@ -431,18 +429,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    boolean perProjectModality = changeModalityState &&
-                                 project != null &&
-                                 !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
-                                 Registry.is("ide.perProjectModality", false);
+    AccessToken lockContextCleanup;
+    AccessToken lockCleanup;
+
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (perProjectModality) {
-        LaterInvocator.enterModal(project, myDialog.getWindow());
-      }
-      else {
-        LaterInvocator.enterModal(myDialog);
-      }
+      LaterInvocator.enterModal(myDialog);
+      var pair = AppImplKt.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+      lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
+      lockCleanup = pair.getSecond();
+    }
+    else {
+      lockContextCleanup = ThreadContext.resetThreadContext();
+      lockCleanup = AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     if (appStarted) {
@@ -466,19 +465,22 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
+      AccessToken ignore2 = lockCleanup;
+      AccessToken ignore3 = lockContextCleanup
     ) {
-      myDialog.show();
+      if (!isProgressDialog() && !ApplicationManager.getApplication().isReadAccessAllowed()) {
+        WriteIntentReadAction.run((Runnable) () -> {
+          myDialog.show();
+        });
+      } else {
+        myDialog.show();
+      }
     }
     finally {
       if (changeModalityState) {
         commandProcessor.leaveModal();
-        if (perProjectModality) {
-          LaterInvocator.leaveModal(project, myDialog.getWindow());
-        }
-        else {
-          LaterInvocator.leaveModal(myDialog);
-        }
+        LaterInvocator.leaveModal(myDialog);
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));
@@ -730,9 +732,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return actualSize;
     }
 
-    @NotNull
     @Override
-    public Rectangle getBounds() { // just delegate to the above
+    public @NotNull Rectangle getBounds() { // just delegate to the above
       return new Rectangle(getLocation(), getSize());
     }
 
@@ -886,9 +887,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.warn("The dialog wrapper for " + dialogWrapper.getTitle() + " is already disposed");
         return;
       }
-      try (AccessToken ignore = ThreadContext.resetThreadContext()) {
-        super.show();
-      }
+      super.show();
     }
 
     private void logMonitorConfiguration() {
@@ -1230,7 +1229,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setContentPane(JComponent content) {
-    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !isHeadlessEnv()
+    boolean undecorated = myDialog.getWindow() != null && myDialog.getWindow().isUndecorated();
+    myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !undecorated && !isHeadlessEnv()
                             ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
                             : content);
   }

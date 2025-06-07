@@ -14,7 +14,6 @@ import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -37,9 +36,9 @@ import java.util.List;
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
 
 final class ServiceViewActionProvider {
-  @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
-  @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
-  @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
+  private static final @NonNls String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
+  static final @NonNls String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
+  private static final @NonNls String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
 
   static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
 
@@ -112,14 +111,12 @@ final class ServiceViewActionProvider {
     return ContainerUtil.createMaybeSingletonList(additionalActions);
   }
 
-  @Nullable
-  static ServiceView getSelectedView(@NotNull AnActionEvent e) {
+  static @Nullable ServiceView getSelectedView(@NotNull AnActionEvent e) {
     return getSelectedView(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
-  @Nullable
-  static ServiceView getSelectedView(@NotNull DataProvider provider) {
-    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+  static @Nullable ServiceView getSelectedView(@NotNull DataContext dataContext) {
+    return getSelectedView(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
@@ -158,8 +155,7 @@ final class ServiceViewActionProvider {
     }
   }
 
-  @Nullable
-  private static ServiceView getSelectedView(@Nullable Component contextComponent) {
+  private static @Nullable ServiceView getSelectedView(@Nullable Component contextComponent) {
     while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
       if (contextComponent instanceof ServiceViewNavBarPanel navBarPanel) {
         return navBarPanel.getView();

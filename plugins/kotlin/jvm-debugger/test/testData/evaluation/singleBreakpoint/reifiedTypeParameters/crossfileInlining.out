@@ -1,0 +1,11 @@
+LineBreakpoint created at main.kt:5
+Run Java
+Connected to the target VM
+main.kt:5
+foo3.kt:4
+foo2.kt:4
+foo1.kt:6
+Compile bytecode for T::class.toString()
+Disconnected from the target VM
+
+Process finished with exit code 0

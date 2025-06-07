@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -20,6 +20,7 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -37,21 +38,24 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
+  public @Unmodifiable Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
     Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }
 
   @Override
-  public void performOperation(@NotNull final Project project, final Set<PsiJavaFile> javaFiles) {
+  public void performOperation(@NotNull Project project, Set<PsiJavaFile> javaFiles) {
+    if (javaFiles.isEmpty()) return;
+
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
+    ProgressManager progressManager = ProgressManager.getInstance();
     DumbService.getInstance(project).completeJustSubmittedTasks();
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
-    final Runnable findRedundantImports = () -> ReadAction.run(() -> {
+    final Runnable findRedundantImports = () -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
@@ -59,32 +63,33 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
       int i = 0;
       final int fileCount = javaFiles.size();
       for (PsiJavaFile file : javaFiles) {
-        if (file.isValid()) {
+        double fraction = (double)i++ / fileCount;
+        ReadAction.run(() -> {
+          if (!file.isValid()) return;
           final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null) {
-            if (progressIndicator != null) {
-              progressIndicator.setText2(virtualFile.getPresentableUrl());
-              progressIndicator.setFraction((double)i++ / fileCount);
-            }
-            final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
-            if (perFile != null) {
-              for (PsiImportStatementBase redundant : perFile) {
-                redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
-              }
-            }
+          if (virtualFile == null) return;
+          if (progressIndicator != null) {
+            progressIndicator.setText2(virtualFile.getPresentableUrl());
+            progressIndicator.setFraction(fraction);
           }
-        }
+          final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
+          if (perFile == null) return;
+          for (PsiImportStatementBase redundant : perFile) {
+            redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
+          }
+        });
       }
-    });
+    };
 
-    String removingRedundantImportsTitle = JavaRefactoringBundle.message("removing.redundant.imports.progress.title");
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, removingRedundantImportsTitle, false, project)) return;
+    String title = JavaRefactoringBundle.message("removing.redundant.imports.progress.title");
+    if (!progressManager.runProcessWithProgressSynchronously(findRedundantImports, title, false, project)) return;
+    if (redundants.isEmpty()) return;
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, removingRedundantImportsTitle, false);
+      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, title, false);
       progressTask.setMinIterationTime(200);
       progressTask.setTask(new OptimizeImportsTask(progressTask, redundants));
-      ProgressManager.getInstance().run(progressTask);
+      progressManager.run(progressTask);
     });
   }
 }

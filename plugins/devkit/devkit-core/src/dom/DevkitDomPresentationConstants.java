@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import org.jetbrains.annotations.NonNls;
 
 public final class DevkitDomPresentationConstants {
 
-  @NonNls public static final String ACTION = "Action";
-  @NonNls public static final String GROUP = "Group";
+  public static final @NonNls String ACTION = "Action";
+  public static final @NonNls String GROUP = "Group";
 
-  @NonNls public static final String EXTENSION = "Extension";
-  @NonNls public static final String EXTENSION_POINT = "Extension Point";
+  public static final @NonNls String EXTENSION = "Extension";
+  public static final @NonNls String EXTENSION_POINT = "Extension Point";
 
-  @NonNls public static final String PLUGIN = "Plugin";
+  public static final @NonNls String PLUGIN = "Plugin";
 }

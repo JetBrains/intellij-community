@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.analysis.AnalysisScope;
@@ -37,9 +38,8 @@ public class InspectionCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String extension = extractCommandArgument(PREFIX);
 
@@ -53,6 +53,13 @@ public class InspectionCommand extends AbstractCommand {
           super.notifyInspectionsFinished(scope);
           context.message(PerformanceTestingBundle.message("command.inspection.finish"), getLine());
           actionCallback.setDone();
+        }
+
+        @Override
+        protected void canceled() {
+          super.canceled();
+          context.message("inspection was canceled", getLine());
+          actionCallback.reject("inspection was canceled");
         }
       };
 
@@ -69,8 +76,7 @@ public class InspectionCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @Nullable
-  public static AnalysisScope getAnalysisScope(String extension, @NotNull Project project) {
+  public static @Nullable AnalysisScope getAnalysisScope(String extension, @NotNull Project project) {
     AnalysisScope scope;
     if (extension.isEmpty()) {
       scope = new AnalysisScope(project);
@@ -85,8 +91,7 @@ public class InspectionCommand extends AbstractCommand {
     return scope;
   }
 
-  @NotNull
-  private static Collection<VirtualFile> getFiles(@NotNull final String extension, @NotNull Project project) {
+  private static @NotNull Collection<VirtualFile> getFiles(final @NotNull String extension, @NotNull Project project) {
     final Collection<VirtualFile> files = new HashSet<>(100);
     FileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     index.iterateContent(fileOrDir -> {

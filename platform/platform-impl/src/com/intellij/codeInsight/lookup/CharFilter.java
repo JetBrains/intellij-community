@@ -2,7 +2,10 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,6 +21,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CharFilter {
   public static final ExtensionPointName<CharFilter> EP_NAME = ExtensionPointName.create("com.intellij.lookup.charFilter");
+
+  /**
+   * A static key used to control the suppression of default frontend char filters in the Lookup implementation.
+   * Used with {@link EditorImpl}
+   * Now default char filters can choose between different results.
+   * If this flag is active, the last filter will return always ADD_TO_PREFIX
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static final Key<Boolean> CUSTOM_DEFAULT_CHAR_FILTERS = Key.create("CUSTOM_DEFAULT_CHAR_FILTERS");
+
 
   public enum Result {
     /**

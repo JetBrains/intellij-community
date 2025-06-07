@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescriptor> {
@@ -78,13 +79,12 @@ public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescript
 
   @Override
   public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
-    return Collections.singletonList(getOutputRoot(context));
+    return List.of(getOutputRoot(context).toFile());
   }
 
-  @NotNull
-  File getOutputRoot(CompileContext context) {
-    File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyResources");
-    return new File(commonRoot, myModule.getName() + File.separator + getTargetType().getTypeId());
+  @NotNull Path getOutputRoot(CompileContext context) {
+    Path commonRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("groovyResources");
+    return commonRoot.resolve(myModule.getName() + File.separator + getTargetType().getTypeId());
   }
 
   public static final Type PRODUCTION = new Type(false);

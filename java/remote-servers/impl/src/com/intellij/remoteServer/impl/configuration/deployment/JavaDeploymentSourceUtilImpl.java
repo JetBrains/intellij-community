@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.project.Project;
@@ -25,16 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
-  @NotNull
   @Override
-  public ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer) {
+  public @NotNull ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer) {
     return new ArtifactDeploymentSourceImpl(artifactPointer);
   }
 
-  @NotNull
   @Override
-  public List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
-                                                                @NotNull Collection<? extends Artifact> artifacts) {
+  public @NotNull List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
+                                                                         @NotNull Collection<? extends Artifact> artifacts) {
     List<DeploymentSource> sources = new ArrayList<>();
     ArtifactPointerManager pointerManager = ArtifactPointerManager.getInstance(project);
     for (Artifact artifact : artifacts) {
@@ -43,9 +27,8 @@ public final class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil
     return sources;
   }
 
-  @NotNull
   @Override
-  public List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes) {
+  public @NotNull List<DeploymentSource> createArtifactDeploymentSources(Project project, ArtifactType... artifactTypes) {
     if (project.isDefault()) return Collections.emptyList();
     Artifact[] artifacts = ArtifactManager.getInstance(project).getArtifacts();
     List<Artifact> supportedArtifacts = new ArrayList<>();

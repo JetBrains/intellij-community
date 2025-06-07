@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.java.library.JavaLibraryUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -28,8 +29,7 @@ import java.util.stream.IntStream;
 
 public final class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("simplifiable.junit.assertion.problem.descriptor", infos[0]);
   }
 
@@ -49,7 +49,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
   }
 
   private static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
-    return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
+    return (checkTrue ? JavaKeywords.TRUE : JavaKeywords.FALSE).equals(position.getText());
   }
 
   private static boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
@@ -64,10 +64,10 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       return false;
     }
     final String text = expression1.getText();
-    if (PsiKeyword.NULL.equals(text)) {
+    if (JavaKeywords.NULL.equals(text)) {
       return true;
     }
-    if (!PsiKeyword.TRUE.equals(text) && !PsiKeyword.FALSE.equals(text)) {
+    if (!JavaKeywords.TRUE.equals(text) && !JavaKeywords.FALSE.equals(text)) {
       return false;
     }
     final PsiType type = expression2.getType();
@@ -150,8 +150,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
   private static class SimplifyAssertFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
     }
 
@@ -226,7 +225,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
     }
 
     private static void replaceWithFail(AssertHint assertHint) {
-      @NonNls final StringBuilder newExpression = new StringBuilder();
+      final @NonNls StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier("fail", assertHint, newExpression);
       newExpression.append("fail(");
       final PsiExpression message = assertHint.getMessage();
@@ -346,8 +345,8 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       if (!ExpressionUtils.isEvaluatedAtCompileTime(lhs) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         rhs = lhs;
       }
-      @NonNls final String methodName = assertHint.getMethod().getName();
-      @NonNls final String memberName;
+      final @NonNls String methodName = assertHint.getMethod().getName();
+      final @NonNls String memberName;
       if ("assertFalse".equals(methodName) ^ tokenType.equals(JavaTokenType.NE)) {
         memberName = "assertNotNull";
       }
@@ -397,8 +396,8 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       if (rhs == null) {
         return;
       }
-      @NonNls final String methodName = assertHint.getMethod().getName();
-      @NonNls final String memberName;
+      final @NonNls String methodName = assertHint.getMethod().getName();
+      final @NonNls String memberName;
       if ("assertFalse".equals(methodName) ^ tokenType.equals(JavaTokenType.NE)) {
         memberName = "assertNotSame";
       }
@@ -423,7 +422,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
         compareValue = firstTestArgument.getText();
       }
       final String uppercaseLiteralValue = Character.toUpperCase(literalValue.charAt(0)) + literalValue.substring(1);
-      @NonNls final String methodName = "assert" + uppercaseLiteralValue;
+      final @NonNls String methodName = "assert" + uppercaseLiteralValue;
       final String newExpression = compoundMethodCall(methodName, assertHint, compareValue);
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
@@ -491,8 +490,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       return primitiveOverload != null;
     }
 
-    @NonNls
-    private static String getReplacementMethodName(AssertHint assertHint) {
+    private static @NonNls String getReplacementMethodName(AssertHint assertHint) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       final PsiExpression secondArgument = assertHint.getSecondArgument();
       final PsiLiteralExpression literalExpression;

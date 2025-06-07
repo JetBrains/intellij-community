@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -14,6 +14,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsProvider implements
@@ -36,9 +38,8 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
     myLibrariesModel = configurable.getModelProvider().getModifiableModel();
   }
 
-  @NotNull
   @Override
-  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+  public @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
     return myLibrariesModel;
   }
 
@@ -77,5 +78,16 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
   @Override
   public ModalityState getModalityStateForQuestionDialogs() {
     return ModalityState.defaultModalityState();
+  }
+
+  @Override
+  public @NotNull MutableEntityStorage getActualStorageBuilder() {
+    return MutableEntityStorage.create();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean isLibrarySubstituted(@NotNull Library library) {
+    return false;
   }
 }

@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
-  @NonNls private static final String EDITOR_TYPE_ID = "images";
+  private static final @NonNls String EDITOR_TYPE_ID = "images";
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -51,8 +51,7 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     if (IfsUtil.isSVG(file)) {
       TextEditor editor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file);
       if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.svg-viewer.enabled")) {
@@ -78,14 +77,12 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return EDITOR_TYPE_ID;
   }
 
   @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -23,11 +24,13 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,6 +109,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
+  }
+
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
@@ -114,7 +122,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
     toolbar.setTargetComponent(myTable);
     panel.add(toolbar.getComponent(), BorderLayout.EAST);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;
@@ -205,7 +213,9 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(() -> {
         if (myTableModel.getRowCount() != 0) {
-          myTable.getSelectionModel().addSelectionInterval(0, 0);
+          ReadAction.run(() -> {
+            myTable.getSelectionModel().addSelectionInterval(0, 0);
+          });
         }
       });
     }

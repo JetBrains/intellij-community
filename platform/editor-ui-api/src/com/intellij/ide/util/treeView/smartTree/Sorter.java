@@ -47,6 +47,7 @@ public interface Sorter extends TreeAction {
       return true;
     }
 
+    @Override
     public @NonNls String toString() {
       return getName();
     }

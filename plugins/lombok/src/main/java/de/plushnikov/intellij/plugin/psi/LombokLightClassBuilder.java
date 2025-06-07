@@ -43,9 +43,8 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage()).withParent(this);
   }
 
-  @NotNull
   @Override
-  public LombokLightModifierList getModifierList() {
+  public @NotNull LombokLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -62,9 +61,8 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return getContainingClass();
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return myQualifiedName;
   }
 

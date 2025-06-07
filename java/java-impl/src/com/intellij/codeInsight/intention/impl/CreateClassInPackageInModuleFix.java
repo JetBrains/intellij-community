@@ -63,23 +63,23 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return ModuleManager.getInstance(project).findModuleByName(myModuleName) != null;
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Boolean isInterface = IS_INTERFACE.get(file);
-      PsiDirectory rootDir = ROOT_DIR.get(file);
-      String name = NAME.get(file);
+      Boolean isInterface = IS_INTERFACE.get(psiFile);
+      PsiDirectory rootDir = ROOT_DIR.get(psiFile);
+      String name = NAME.get(psiFile);
       if (isInterface != null && rootDir != null && name != null) {
-        WriteAction.run(() -> createClassInPackage(isInterface ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, rootDir, name, file));
+        WriteAction.run(() -> createClassInPackage(isInterface ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, rootDir, name, psiFile));
       }
       return;
     }
@@ -101,7 +101,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
           PsiDirectory rootDir = dialog.getRootDir();
           String name = dialog.getName();
           if (rootDir != null) {
-            PsiClass psiClass = WriteAction.compute(() -> createClassInPackage(kind, rootDir, name, file));
+            PsiClass psiClass = WriteAction.compute(() -> createClassInPackage(kind, rootDir, name, psiFile));
             CreateServiceClassFixBase.positionCursor(psiClass);
           }
         }

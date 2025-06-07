@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -15,14 +16,12 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -39,7 +38,12 @@ import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
+import kotlin.io.copyTo
+import kotlin.io.extension
 import kotlin.io.path.pathString
+import kotlin.io.relativeTo
+import kotlin.io.walkTopDown
+import kotlin.use
 
 internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(WorkspaceModuleImporter.EXTERNAL_SOURCE_ID)
@@ -175,7 +179,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
                                module: ModuleEntity,
                                dependencyMavenId: MavenId,
                                dependencyJarPath: String) {
-    val libraryName = "Maven Shade: ${dependencyMavenId.displayString}"
+    val libraryName = SHADED_MAVEN_LIBRARY_NAME_PREFIX + dependencyMavenId.displayString
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
     val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl("jar://$dependencyJarPath!/")
@@ -222,6 +226,8 @@ private data class MavenProjectShadingData(
   val dependentMavenProjects: Collection<MavenProject>,
 )
 
+@ApiStatus.Internal
+internal val SHADED_MAVEN_LIBRARY_NAME_PREFIX = "Maven Shade: "
 private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, MavenProjectShadingData>>("SHADED_MAVEN_PROJECTS")
 
 internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportConfigurator {
@@ -248,9 +254,7 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
     val projectsTree = projectsManager.projectsTree
     val projectRoot = projectsTree.findRootProject(shadedMavenProjects.keys.first()) // assume there's only one root project
     val baseDir = MavenUtil.getBaseDir(projectRoot.directoryFile).toString()
-    val embeddersManager = projectsManager.embeddersManager
     val syncConsole = projectsManager.syncConsole
-    val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
 
     val userProperties = Properties()
     userProperties["skipTests"] = "true"
@@ -267,7 +271,11 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
     runBlockingMaybeCancellable {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
         reportRawProgress { reporter ->
-          embedder.executeGoal(listOf(request), "package", reporter, syncConsole)
+          val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+          mavenEmbedderWrappers.use {
+            val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
+            embedder.executeGoal(listOf(request), "package", reporter, syncConsole)
+          }
         }
       }
     }
@@ -316,29 +324,33 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
     }
     val projectsManager = MavenProjectsManager.getInstance(project)
     val projectsTree = projectsManager.projectsTree
-    val embeddersManager = projectsManager.embeddersManager
 
     val projectRoots = shadedMavenProjectsAndDependencies.map { projectsTree.findRootProject(it) }.toSet()
 
     val baseDirsToMavenProjects = MavenUtil.groupByBasedir(projectRoots, projectsTree)
 
     for (baseDir in baseDirsToMavenProjects.keySet()) {
-      doCompile(project, embeddersManager, baseDirsToMavenProjects[baseDir], baseDir, projectsManager.syncConsole)
+      doCompile(project, baseDirsToMavenProjects[baseDir], baseDir, projectsManager.syncConsole)
     }
   }
 
   private fun doCompile(project: Project,
-                        embeddersManager: MavenEmbeddersManager,
                         mavenProjects: Collection<MavenProject>,
                         baseDir: String, mavenEventHandler: MavenEventHandler) {
-    val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
-    val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
-    val names = mavenProjects.map { it.displayName }
-    val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
-    runBlockingMaybeCancellable {
-      withBackgroundProgress(project, MavenProjectBundle.message("maven.compiling.uber.jars.dependencies", text), true) {
-        reportRawProgress { reporter ->
-          embedder.executeGoal(requests, "compile", reporter, mavenEventHandler)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    mavenEmbedderWrappers.use {
+      val embedder = runBlockingMaybeCancellable {
+        mavenEmbedderWrappers.getEmbedder(baseDir)
+      }
+
+      val requests = mavenProjects.map { MavenGoalExecutionRequest(File(it.path), MavenExplicitProfiles.NONE) }.toList()
+      val names = mavenProjects.map { it.displayName }
+      val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
+      runBlockingMaybeCancellable {
+        withBackgroundProgress(project, MavenProjectBundle.message("maven.compiling.uber.jars.dependencies", text), true) {
+          reportRawProgress { reporter ->
+            embedder.executeGoal(requests, "compile", reporter, mavenEventHandler)
+          }
         }
       }
     }

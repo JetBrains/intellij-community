@@ -26,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ErrorRethrownInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ErrorNotRethrown";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("error.rethrown.problem.descriptor");
   }
 

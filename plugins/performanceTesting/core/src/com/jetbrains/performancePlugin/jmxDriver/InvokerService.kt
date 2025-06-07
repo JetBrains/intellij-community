@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.jmxDriver
 
 import com.intellij.driver.impl.Invoker
@@ -51,7 +52,7 @@ class InvokerService {
   @Throws(JMException::class)
   fun register(tracerSupplier: Supplier<out IJTracer?>,
                timedContextSupplier: Supplier<out Context?>,
-               screenshotAction: (String) -> String) {
+               screenshotAction: (String) -> String?) {
     val objectName = ObjectName("com.intellij.driver:type=Invoker")
     val server = ManagementFactory.getPlatformMBeanServer()
 

@@ -20,13 +20,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -37,15 +32,16 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.renderer.render
 
 object K2CreateFunctionFromUsageUtil {
     fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
@@ -67,20 +63,18 @@ object K2CreateFunctionFromUsageUtil {
     internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KaSession)
-    fun KtExpression.resolveExpression(): KaSymbol? {
-        mainReference?.resolveToSymbol()?.let { return it }
-        val call = resolveToCall()?.calls?.singleOrNull() ?: return null
-        return if (call is KaCallableMemberCall<*, *>) call.symbol else null
-    }
-
-    context (KaSession)
     internal fun KaType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
 
     context (KaSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
         var expectedType = expectedType
         if (expectedType == null) {
-            val parent = this.parent
+            var parent = this.parent
+            var current = this
+            if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+                current = parent
+                parent = parent.parent
+            }
             expectedType = when {
                 parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.boolean
                 parent is KtStringTemplateEntryWithExpression -> builtinTypes.string
@@ -96,8 +90,12 @@ object K2CreateFunctionFromUsageUtil {
                         argument(ktType)
                     }
                 }
-                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
+                parent is KtParameter && parent.defaultValue == current -> parent.returnType // KT-77254
+                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == current && parent.parent is KtValueArgument -> {
                     (parent.expectedType as? KaFunctionType)?.returnType
+                }
+                parent is KtBinaryExpression && parent.operationToken == KtTokens.EQ && parent.left == current -> {
+                    parent.right?.expressionType
                 }
                 else -> null
             }
@@ -109,9 +107,16 @@ object K2CreateFunctionFromUsageUtil {
             }
         }
         if (expectedType == null) return null
+
+        val receiverExpression = (parent as? KtDotQualifiedExpression)?.receiverExpression
+        val receiverType = receiverExpression?.expressionType
+        if (receiverType is KaClassType) {
+            expectedType = guessAccessibleTypeByArguments(receiverType, expectedType)
+        }
+
         expectedType = makeAccessibleInCreationPlace(expectedType, this) ?: return null
         val jvmType = expectedType.convertToJvmType(this) ?: return null
-        return ExpectedKotlinType(expectedType, jvmType)
+        return ExpectedKotlinType.create(expectedType, jvmType)
     }
 
     // Given: `println("a = ${A().foo()}")`
@@ -139,7 +144,11 @@ object K2CreateFunctionFromUsageUtil {
             e=e.parent
         }
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
-            return e.expectedType ?: withValidityAssertion { useSiteSession.builtinTypes.any }
+            // workaround of the bug when KtFunction.expectedType is always null
+            val expectedType = e.expectedType ?:
+                e.returnType.let { if (it is KaErrorType) null else it } ?:
+                withValidityAssertion { useSiteSession.builtinTypes.any }
+            return expectedType
         }
         return null
     }
@@ -149,22 +158,56 @@ object K2CreateFunctionFromUsageUtil {
     fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KaSession)
-    private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
+    fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KaClassLikeSymbol -> symbol // When the receiver is an object
         else -> expressionType?.expandedSymbol
     }?.psi
 
     context (KaSession)
-    internal fun ValueArgument.getExpectedParameterInfo(defaultParameterName: ()->String): ExpectedParameter {
+    @OptIn(KaExperimentalApi::class)
+    internal fun ValueArgument.getExpectedParameterInfo(
+        defaultParameterName: String,
+        isTheOnlyAnnotationParameter: Boolean,
+        receiverType: KaType?
+    ): ExpectedParameter {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
-        val expectedArgumentType = argumentExpression?.expressionType
-        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
-        val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
-        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)
-        val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf(defaultParameterName.invoke())
-        return expectedParameter(expectedType, *names)
+        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
+        var expectedArgumentType = argumentExpression?.expressionType
+        if (expectedArgumentType != null && receiverType is KaClassType) {
+            expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
+        }
+        val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression!!)
+        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
+        val names = parameterNames?.toList() ?: listOf(defaultParameterName)
+        val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
+        return expectedParameter(expectedType, *nameArray)
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.guessAccessibleTypeByArguments(
+        receiverType: KaClassType, expectedArgumentType: KaType
+    ): KaType {
+        val classLikeSymbol = receiverType.symbol
+        val typeArguments = receiverType.typeArguments
+        if (expectedArgumentType is KaTypeParameterType) {
+            classLikeSymbol.typeParameters.zip(typeArguments).forEach { (typeParameter, typeArgument) ->
+                val argType = typeArgument.type
+                if (argType != null && expectedArgumentType.semanticallyEquals(argType)) {
+                    return buildTypeParameterType(typeParameter)
+                }
+            }
+        }
+        if (expectedArgumentType is KaClassType && expectedArgumentType.symbol == classLikeSymbol &&
+            expectedArgumentType.typeArguments.any { it.type is KaTypeParameterType }) {
+            return buildClassType(classLikeSymbol) {
+                classLikeSymbol.typeParameters.forEach {
+                    argument(buildTypeParameterType(it))
+                }
+            }
+        }
+        return expectedArgumentType
     }
 
     context (KaSession)
@@ -174,15 +217,6 @@ object K2CreateFunctionFromUsageUtil {
             is KtClass -> containerPsi.getContainerClass()
             is KtClassOrObject -> containerPsi.toLightClass()
             else -> getContainerClass()
-        }
-    }
-    context (KaSession)
-    internal fun KtSimpleNameExpression.getReceiverOrContainerPsiElement(): PsiElement? {
-        val receiverExpression = getReceiverExpression()
-        return when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
-            is PsiClass -> ktClassOrPsiClass
-            is KtClassOrObject -> ktClassOrPsiClass
-            else -> K2CreateFunctionFromUsageBuilder.computeImplicitReceiverClass(this) ?: getNonStrictParentOfType<KtClassOrObject>()
         }
     }
 
@@ -195,12 +229,17 @@ object K2CreateFunctionFromUsageUtil {
         }
 
     private fun KtElement.getContainerClass(): JvmClass? {
-        val containingClass = getNonStrictParentOfType<KtClassOrObject>()
+        val containingClass = PsiTreeUtil.getParentOfType(
+            /* element = */ this,
+            /* aClass = */ KtClassOrObject::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
+        )
         return containingClass?.toLightClass() ?: getContainingFileAsJvmClass()
     }
 
     private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
-        containingKtFile.findFacadeClass() ?: KtFileClassProviderImpl(project).getFileClasses(containingKtFile).firstOrNull()
+        containingKtFile.findFacadeClass() ?: JvmClassWrapperForKtClass(containingKtFile).takeUnless { containingKtFile.isCompiled }
 
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
@@ -231,6 +270,31 @@ object K2CreateFunctionFromUsageUtil {
         // Listing variances will cause a syntax error.
         typeProjectionRenderer = KaTypeProjectionRenderer.WITHOUT_VARIANCE
         functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+        // qualified names except starting with "kotlin."
+        classIdRenderer = object: KaClassTypeQualifierRenderer {
+                override fun renderClassTypeQualifier(
+                    analysisSession: KaSession,
+                    type: KaType,
+                    qualifiers: List<KaClassTypeQualifier>,
+                    typeRenderer: KaTypeRenderer,
+                    printer: PrettyPrinter,
+                ) {
+                    printer {
+                        ".".separated(
+                            {
+                                if (type is KaClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL && type.classId.packageFqName.asString() != "kotlin") {
+                                    append(type.classId.packageFqName.render())
+                                }
+                            },
+                            {
+                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
+                                    .renderClassTypeQualifier(analysisSession, type, qualifiers, typeRenderer, printer)
+                            },
+                        )
+                    }
+                }
+            }
+
     }
 
     context (KaSession)
@@ -298,7 +362,7 @@ object K2CreateFunctionFromUsageUtil {
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
-     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
+     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null, if can't figure out which type to use
      */
     context (KaSession)
     private fun makeAccessibleInCreationPlace(ktType: KaType, call: KtElement): KaType? {
@@ -344,9 +408,12 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context(KaSession)
-    fun computeExpectedParams(call: KtCallElement): List<ExpectedParameter> {
+    @OptIn(KaExperimentalApi::class)
+    fun computeExpectedParams(call: KtCallElement, isAnnotation:Boolean=false): List<ExpectedParameter> {
+        val receiverExpression = (call.parent as? KtDotQualifiedExpression)?.receiverExpression
+        val receiverType = receiverExpression?.expressionType
         return call.valueArguments.mapIndexed { index, valueArgument ->
-            valueArgument.getExpectedParameterInfo { "p$index" }
+            valueArgument.getExpectedParameterInfo("p$index", isAnnotation && call.valueArguments.size == 1, receiverType)
         }
     }
 }

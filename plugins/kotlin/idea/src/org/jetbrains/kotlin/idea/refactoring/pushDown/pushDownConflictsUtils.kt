@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 fun analyzePushDownConflicts(
-    context: KotlinPushDownContext,
+    context: K1PushDownContext,
     usages: Array<out UsageInfo>
 ): MultiMap<PsiElement, String> {
     val targetClasses = usages.mapNotNull { it.element?.unwrapped }
@@ -62,7 +62,7 @@ fun analyzePushDownConflicts(
 
 private fun checkConflicts(
     conflicts: MultiMap<PsiElement, String>,
-    context: KotlinPushDownContext,
+    context: K1PushDownContext,
     targetClass: PsiElement,
     membersToKeepAbstract: List<KtNamedDeclaration>,
     membersToPush: ArrayList<KtNamedDeclaration>
@@ -101,7 +101,7 @@ private fun checkConflicts(
 
 private fun checkMemberClashing(
     conflicts: MultiMap<PsiElement, String>,
-    context: KotlinPushDownContext,
+    context: K1PushDownContext,
     member: KtNamedDeclaration,
     membersToKeepAbstract: List<KtNamedDeclaration>,
     substitutor: TypeSubstitutor,
@@ -154,7 +154,7 @@ private fun checkMemberClashing(
 
 private fun checkSuperCalls(
     conflicts: MultiMap<PsiElement, String>,
-    context: KotlinPushDownContext,
+    context: K1PushDownContext,
     member: KtNamedDeclaration,
     membersToPush: ArrayList<KtNamedDeclaration>
 ) {
@@ -187,7 +187,7 @@ internal fun checkExternalUsages(
     targetClassDescriptor: ClassDescriptor,
     resolutionFacade: ResolutionFacade
 ) {
-    for (ref in ReferencesSearch.search(member, member.resolveScope, false)) {
+    for (ref in ReferencesSearch.search(member, member.resolveScope, false).asIterable()) {
         val calleeExpr = ref.element as? KtSimpleNameExpression ?: continue
         val resolvedCall = calleeExpr.getResolvedCall(resolutionFacade.analyze(calleeExpr)) ?: continue
         val callElement = resolvedCall.call.callElement
@@ -202,7 +202,7 @@ internal fun checkExternalUsages(
 
 private fun checkVisibility(
     conflicts: MultiMap<PsiElement, String>,
-    context: KotlinPushDownContext,
+    context: K1PushDownContext,
     member: KtNamedDeclaration,
     targetClassDescriptor: ClassDescriptor
 ) {

@@ -9,7 +9,6 @@ import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.frame.XFramesView
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
 import org.jetbrains.kotlin.idea.debugger.test.util.iterator
 import java.io.PrintWriter
@@ -63,10 +62,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         out("Thread stack trace:")
         for (frame in XDebuggerTestUtil.collectFrames(executionStack)) {
             printStackFrame(frame)
-            if (frame is CoroutinePreflightFrame) {
-                val key = frame.coroutineInfoData.descriptor
-                out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
-            }
         }
     }
 

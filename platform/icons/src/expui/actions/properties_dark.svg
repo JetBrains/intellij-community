@@ -1,0 +1,7 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M2.5 3.5h7m-7 4h2m-2 4h6m3-8h2m-7 4h7m-3 4h3" stroke="#CED0D6" stroke-linecap="round"/>
+  <circle cx="10.5" cy="3.5" r="1" stroke="#CED0D6"/>
+  <circle cx="5.5" cy="7.5" r="1" stroke="#CED0D6"/>
+  <circle cx="9.5" cy="11.5" r="1" stroke="#CED0D6"/>
+</svg>

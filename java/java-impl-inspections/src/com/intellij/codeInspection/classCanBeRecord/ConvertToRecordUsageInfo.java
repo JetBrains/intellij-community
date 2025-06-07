@@ -12,13 +12,13 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 /**
  * Marker interface to distinguish custom usage info from possible existing platform ones.
  */
-interface ConvertToRecordUsageInfo {
+sealed interface ConvertToRecordUsageInfo permits FieldUsageInfo, RenameMethodUsageInfo, BrokenEncapsulationUsageInfo {
 }
 
 /**
- * Encapsulates the field which will be narrowed its visibility as the record introduces a private final field.
+ * Encapsulates the field which will become less accessible the record introduces a private final field.
  */
-class FieldUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
+final class FieldUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final PsiField myField;
 
   FieldUsageInfo(@NotNull PsiField psiField, @NotNull PsiReference ref) {
@@ -30,7 +30,7 @@ class FieldUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
 /**
  * Encapsulates the method which will be renamed by its new name as the record specifies accessors naming.
  */
-class RenameMethodUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
+final class RenameMethodUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final PsiMethod myMethod;
   final String myNewName;
 
@@ -44,7 +44,7 @@ class RenameMethodUsageInfo extends UsageInfo implements ConvertToRecordUsageInf
 /**
  * Encapsulates the method or the field which becomes more accessible.
  */
-class BrokenEncapsulationUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
+final class BrokenEncapsulationUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final @DialogMessage String myErrMsg;
 
   BrokenEncapsulationUsageInfo(@NotNull PsiField psiField, @NotNull @DialogMessage String errMsg) {

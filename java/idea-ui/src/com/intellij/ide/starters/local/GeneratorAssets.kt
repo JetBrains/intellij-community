@@ -11,6 +11,22 @@ sealed class GeneratorAsset {
   abstract val permissions: Set<PosixFilePermission>
 }
 
+class GeneratorFile(
+  override val relativePath: String,
+  override val permissions: Set<PosixFilePermission>,
+  val content: ByteArray,
+) : GeneratorAsset() {
+
+  constructor(relativePath: String, content: ByteArray)
+    : this(relativePath, emptySet(), content)
+
+  constructor(relativePath: String, content: String)
+    : this(relativePath, emptySet(), content)
+
+  constructor(relativePath: String, permissions: Set<PosixFilePermission>, content: String)
+    : this(relativePath, permissions, content.toByteArray())
+}
+
 data class GeneratorTemplateFile(
   override val relativePath: String,
   override val permissions: Set<PosixFilePermission>,

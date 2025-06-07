@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.markdown.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.markdown.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-ui",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/indexing-api:indexing",
+    "//platform/util/coroutines",
+    "//platform/diagnostic",
+    "@lib//:jetbrains-markdown",
+    "//platform/kernel/backend",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core",
+    "//platform/project/shared:project",
+    "//platform/remote-driver/test-sdk:driver-sdk",
+    "//platform/lang-api:lang",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl/rpc",
+  ],
+  exports = ["//plugins/markdown/core:markdown"],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.markdown.backend` end

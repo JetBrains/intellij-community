@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
@@ -15,10 +15,8 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class MLCodeCompletionConfigurableProvider : ConfigurableProvider() {
+private class MLCodeCompletionConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     val configurable = MLCodeCompletionConfigurable()
     if (configurable.configurables.isNotEmpty()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -151,7 +151,8 @@ class JarLoader extends Loader {
   private final AtomicInteger myNumberOfRequests = new AtomicInteger();
   private volatile StrippedIntOpenHashSet myPackageHashesInside;
 
-  private @NotNull
+  @NotNull
+  private
   StrippedIntOpenHashSet buildPackageHashes() {
     try {
       ZipFile zipFile = getZipFile();
@@ -267,7 +268,8 @@ class JarLoader extends Loader {
 
   private static final Object ourLock = new Object();
 
-  protected @NotNull ZipFile getZipFile() throws IOException {
+  @NotNull
+  protected ZipFile getZipFile() throws IOException {
     // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
     // such number of times, so we store reference to ZipFile if we allowed locking the file (assume it isn't changed)
     if (myConfiguration.myCanLockJars) {

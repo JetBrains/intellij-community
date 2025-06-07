@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.*;
@@ -249,7 +250,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myTerminalWidget.createTerminalSession(ttyConnector);
     myTerminalWidget.start();
 
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (attachToProcessOutput) {
@@ -341,7 +342,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @Override
   public AnAction @NotNull [] createConsoleActions() {
-    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    var result = new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    var postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
+    for (var postProcessor : postProcessors) {
+      result = postProcessor.postProcess(this, result);
+    }
+    return result;
   }
 
   @Override
@@ -371,7 +377,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            (process instanceof PtyBasedProcess && ((PtyBasedProcess)process).hasPty());
   }
 
-  private final class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
+  private final class ConsoleTerminalWidget extends JBTerminalWidget {
     private ConsoleTerminalWidget(@NotNull Project project, int columns, int lines, @NotNull JBTerminalSystemSettingsProviderBase provider) {
       super(project, columns, lines, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiElement;
@@ -18,8 +18,7 @@ public abstract class PyPsiPath {
    * @param resolveContext context to be used in resolve
    * @return resolved element
    */
-  @Nullable
-  public abstract PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
+  public abstract @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
 
   public static class ToFile extends PyPsiPath {
     private final QualifiedName myQualifiedName;
@@ -28,9 +27,8 @@ public abstract class PyPsiPath {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       final PyPsiFacade facade = PyPsiFacade.getInstance(context.getProject());
       return facade.resolveQualifiedName(myQualifiedName, facade.createResolveContextFromFoothold(context))
         .stream().findFirst().orElse(null);
@@ -40,13 +38,12 @@ public abstract class PyPsiPath {
   public static class ToClassQName extends PyPsiPath {
     private final QualifiedName myQualifiedName;
 
-    public ToClassQName(@NotNull final String qualifiedName) {
+    public ToClassQName(final @NotNull String qualifiedName) {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       return PyPsiFacade.getInstance(context.getProject()).createClassByQName(myQualifiedName.toString(), context);
     }
   }
@@ -263,9 +260,8 @@ public abstract class PyPsiPath {
       myAssignee = assignee;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    public @Nullable PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       final PsiElement parent = myParent.resolve(context, resolveContext);
       if (parent == null || !resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         return null;

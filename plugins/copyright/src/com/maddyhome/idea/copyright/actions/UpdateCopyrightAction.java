@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.actions;
 
@@ -79,7 +79,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
              PlatformCoreDataKeys.PROJECT_CONTEXT.getData(context) == null) {
-      final PsiElement[] elems = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+      final PsiElement[] elems = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(context);
       if (elems != null) {
         boolean copyrightEnabled = false;
         for (PsiElement elem : elems) {
@@ -105,7 +105,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+  protected void analyze(final @NotNull Project project, final @NotNull AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUi.getUpdateExistingCopyrightsCb().isSelected()), "true");
     Task.Backgroundable task = new UpdateCopyrightTask(project, scope, myUi.getUpdateExistingCopyrightsCb().isSelected(), PerformInBackgroundOption.ALWAYS_BACKGROUND);
     ProgressManager.getInstance().run(task);
@@ -161,7 +161,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
 
   public static class UpdateCopyrightTask extends Task.ConditionalModal {
     private final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
-    private @NotNull final AnalysisScope myScope;
+    private final @NotNull AnalysisScope myScope;
     private final boolean myAllowReplacement;
 
     public UpdateCopyrightTask(@NotNull Project project,
@@ -174,19 +174,19 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       myScope.accept(new PsiElementVisitor() {
         @Override
-        public void visitFile(@NotNull final PsiFile file) {
+        public void visitFile(final @NotNull PsiFile psiFile) {
           if (indicator.isCanceled()) {
             return;
           }
-          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-          final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(file.getProject(), module, file);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
+          final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(psiFile.getProject(), module, psiFile);
           
-          final Runnable runnable = processor.preprocessFile(file, myAllowReplacement);
+          final Runnable runnable = processor.preprocessFile(psiFile, myAllowReplacement);
           if (runnable != EmptyRunnable.getInstance()) {
-            preparations.put(file, runnable);
+            preparations.put(psiFile, runnable);
           }
         }
       });

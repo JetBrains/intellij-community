@@ -20,23 +20,23 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
-public class XsltWithParamImpl extends XsltElementImpl implements XsltWithParam {
-    public XsltWithParamImpl(XmlTag target) {
-        super(target);
-    }
+final class XsltWithParamImpl extends XsltElementImpl implements XsltWithParam {
+  XsltWithParamImpl(XmlTag target) {
+    super(target);
+  }
 
-    @Override
-    public String getParamName() {
-        return getName();
-    }
+  @Override
+  public String getParamName() {
+    return getName();
+  }
 
-    @Override
-    public XPathExpression getExpression() {
-        return XsltCodeInsightUtil.getXPathExpression(this, "select");
-    }
+  @Override
+  public XPathExpression getExpression() {
+    return XsltCodeInsightUtil.getXPathExpression(this, "select");
+  }
 
-    @Override
-    public String toString() {
-        return "XsltWithParam: " + getName();
-    }
+  @Override
+  public String toString() {
+    return "XsltWithParam: " + getName();
+  }
 }

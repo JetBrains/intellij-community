@@ -21,7 +21,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.CollectionListModel
+import com.intellij.ui.FilterComponent
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -37,11 +44,23 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Font
+import java.awt.RenderingHints
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.font.FontRenderContext
+import java.awt.geom.Rectangle2D
 import java.io.IOException
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
@@ -51,10 +70,12 @@ import javax.swing.event.ListSelectionListener
  *
  * UI for installing python packages
  */
-open class ManagePackagesDialog @JvmOverloads constructor(private val myProject: Project,
-                                                          private val myController: PackageManagementService,
-                                                          private val myPackageListener: PackageManagementService.Listener?,
-                                                          notificationPanel: PackagesNotificationPanel = PackagesNotificationPanel())
+open class ManagePackagesDialog @JvmOverloads constructor(
+  private val myProject: Project,
+  private val myController: PackageManagementService,
+  private val myPackageListener: PackageManagementService.Listener?,
+  notificationPanel: PackagesNotificationPanel = PackagesNotificationPanel(),
+)
   : DialogWrapper(myProject, true) {
 
   private var myFilter = MyPackageFilter()
@@ -107,12 +128,30 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
     updateInstalledPackages()
     addManageAction()
     myPackages.setCellRenderer(MyTableRenderer())
+    calculateAndSetCellDimensions()
 
     myInstallToUser.isVisible = myController.canInstallToUser()
     if (myInstallToUser.isVisible) {
       myInstallToUser.isSelected = myController.isInstallToUserSelected
-      myInstallToUser.text = myController.installToUserText
+      myInstallToUser.text =  myController.installToUserText
     }
+  }
+
+  private fun calculateAndSetCellDimensions() {
+    val font = myPackages.font
+    val fontDimensions = getFontDimensions(font)
+
+    myPackages.fixedCellHeight = fontDimensions.height.toInt() + myPackages.getFontMetrics(font).descent
+    myPackages.fixedCellWidth = fontDimensions.width.toInt() * CHARACTERS_PER_CELL
+  }
+
+  private fun getFontDimensions(font: Font): Rectangle2D {
+    val frc = FontRenderContext(
+      null,
+      RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
+      RenderingHints.VALUE_FRACTIONALMETRICS_ON
+    )
+    return font.getMaxCharBounds(frc)
   }
 
   override fun getDimensionServiceKey() = this::class.java.name + ".DimensionServiceKey"
@@ -532,6 +571,8 @@ open class ManagePackagesDialog @JvmOverloads constructor(private val myProject:
   }
 
   companion object {
+    /** Number of characters used to calculate the fixed width of package entry in the list.*/
+    private const val CHARACTERS_PER_CELL = 10
     private val LOG = thisLogger()
   }
 }

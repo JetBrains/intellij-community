@@ -27,8 +27,8 @@ import java.util.List;
 public final class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (pyClass != null) {
       PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
@@ -41,7 +41,7 @@ public final class PyGotoSuperHandler implements CodeInsightActionHandler {
           gotoSuperClassAttributes(editor, (PyTargetExpression)assignment.getTargets()[0], pyClass);
         }
         else {
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, file);
+          final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, psiFile);
           navigateOrChoose(editor, pyClass.getAncestorClasses(context), PyBundle.message("goto.superclass.choose"));
         }
       }

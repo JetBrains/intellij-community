@@ -17,6 +17,7 @@ import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -129,8 +130,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
            || !Objects.equals(myManifestFileConfiguration.getManifestFilePath(), getConfiguredManifestPath()));
   }
 
-  @Nullable
-  private String getConfiguredManifestPath() {
+  private @Nullable String getConfiguredManifestPath() {
     final String path = myManifestPathField.getText();
     return !path.isEmpty() ? FileUtil.toSystemIndependentName(path) : null;
   }
@@ -144,18 +144,16 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     }
   }
 
-  private List<String> getConfiguredClasspath() {
+  private @Unmodifiable List<String> getConfiguredClasspath() {
     return StringUtil.split(myClasspathField.getText(), " ");
   }
 
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return myMainPanel;
   }
 
-  @Nullable
-  private String getConfiguredMainClass() {
+  private @Nullable String getConfiguredMainClass() {
     final String className = myMainClassField.getText();
     return !className.isEmpty() ? className : null;
   }

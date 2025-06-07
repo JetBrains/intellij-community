@@ -171,24 +171,6 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2
       """.trimIndent())
   }
 
-
-  fun `test error type`() {
-    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-        import org.apache.logging.log4j.LogManager
-
-        class Log4j {
-            fun m() {
-              var e = <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: Ce">Ce</error>;
-              LOG.error(<warning descr="Fewer arguments provided (2) than placeholders specified (3)">"1 {} {} {}"</warning> , <error descr="[DEBUG] Resolved to error element">e</error>, <error descr="[DEBUG] Resolved to error element">e</error>)
-            }
-
-            companion object {
-                val LOG = LogManager.getLogger()
-            }
-        }
-      """.trimIndent())
-  }
-
   fun `test formatted log4j with partial known strings`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.dumpCoroutines
@@ -6,6 +6,7 @@ import com.intellij.diagnostic.isCoroutineDumpEnabled
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.inModalContext
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ObjectUtils
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
@@ -35,6 +35,10 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
   cancelAndJoinBlocking(application.getCoroutineScope(), debugString = "Application $application") { containerJob, dumpJob ->
     containerJob.invokeOnCompletion {
+      // Unblock `getNextEvent()` in case it's blocked.
+      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+    }
+    dumpJob.invokeOnCompletion {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
     }
@@ -106,7 +110,7 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
 
   inModalContext(ObjectUtils.sentinel("$debugString shutdown")) { // enter modality to avoid running arbitrary write actions which
     LOG.trace { "$debugString: flushing EDT queue" }
-    IdeEventQueue.getInstance().flushQueue() // flush once to give EDT coroutines a chance to complete
+    IdeEventQueue.getInstance().flushExistingEvents() // flush once to give EDT coroutines a chance to complete
   }
   if (containerJob.isCompleted) {
     val elapsed = System.nanoTime() - start
@@ -119,7 +123,7 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
     return
   }
   // TODO install and use currentThreadCoroutineScope instead OR make this function suspending
-  val applicationScope = (ApplicationManager.getApplication() as ComponentManagerImpl).getCoroutineScope()
+  val applicationScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
   applicationScope.launch(@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class) blockingDispatcher) {
     val dumpJob = launch {
       delay(delayUntilCoroutineDump)

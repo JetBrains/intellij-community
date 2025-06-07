@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -13,7 +13,7 @@ import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -25,10 +25,9 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.uast.UastVisitorAdapter
+import com.siyeh.ig.callMatcher.CallMatcher
 import org.jdom.Element
 import org.jetbrains.uast.*
-
-private val logger = logger<JavaApiUsageInspection>()
 
 private const val EFFECTIVE_LL = "effectiveLL"
 
@@ -51,7 +50,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   private var effectiveLanguageLevel: LanguageLevel? = null
 
   override fun getOptionsPane(): OptPane {
-    var levels: List<OptDropdown.Option> = LanguageLevel.values().map { option(it.name, it.presentableText) }
+    var levels: List<OptDropdown.Option> = LanguageLevel.entries.map { option(it.name, it.presentableText) }
     levels = listOf(option("null", JavaBundle.message("label.forbid.api.usages.project"))) + levels
     return pane(
       dropdown("effectiveLanguageLevel", JavaBundle.message("label.forbid.api.usages"), *levels.toTypedArray())
@@ -91,8 +90,10 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private val holder: ProblemsHolder,
     private val isOnTheFly: Boolean
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
+    private inline val defaultMethods get() = CallMatcher
+      .exactInstanceCall(CommonClassNames.JAVA_UTIL_ITERATOR, "remove")
+      .parameterCount(0)
 
-    private inline val defaultMethods get() = setOf("java.util.Iterator#remove()")
     private inline val overrideModifierLanguages get() = listOf("kotlin", "scala")
 
     override fun visitClass(node: UClass): Boolean {
@@ -103,13 +104,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         if (!effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           val version = JavaVersionService.getInstance().getJavaSdkVersion(javaPsi)
           if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_8)) {
-            val mSignatures = javaPsi.visibleSignatures.filter { defaultMethods.contains(LanguageLevelUtil.getSignature(it.method)) }
-            if (mSignatures.isNotEmpty()) {
-              val jdkName = LanguageLevelUtil.getJdkName(effectiveLanguageLevel)
-              val message = if (mSignatures.size == 1) {
-                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", mSignatures.first().name, jdkName)
-              } else {
-                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", mSignatures.size, jdkName)
+            val signatures = javaPsi.visibleSignatures.filter { signature -> defaultMethods.methodMatches(signature.method) }
+            if (signatures.isNotEmpty()) {
+              val jdkName = effectiveLanguageLevel.shortText
+              val message = if (signatures.size == 1) {
+                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.single.descriptor", signatures.first().name, jdkName)
+              }
+              else {
+                JvmAnalysisBundle.message("jvm.inspections.1.8.problem.descriptor", signatures.size, jdkName)
               }
               holder.registerUProblem(node, message, QuickFixFactory.getInstance().createImplementMethodsFix(javaPsi))
             }
@@ -136,12 +138,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val lastIncompatibleLevel = overriddenMethods.mapNotNull { overriddenMethod ->
-        LanguageLevelUtil.getLastIncompatibleLanguageLevel(overriddenMethod, languageLevel)
+      val firstCompatibleLanguageLevel = overriddenMethods.mapNotNull { overriddenMethod ->
+        JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
-      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
-      registerError(toHighlight, lastIncompatibleLevel, holder, isOnTheFly)
+      if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
+      registerError(toHighlight, firstCompatibleLanguageLevel, holder, isOnTheFly)
     }
   }
 
@@ -151,15 +153,16 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     private inline val generifiedClasses get() = setOf("javax.swing.JComboBox", "javax.swing.ListModel", "javax.swing.JList")
 
     override fun processConstructorInvocation(
-      sourceNode: UElement, instantiatedClass: PsiClass, constructor: PsiMethod?, subclassDeclaration: UClass?
+      sourceNode: UElement, instantiatedClass: PsiClass, constructor: PsiMethod?, subclassDeclaration: UClass?,
     ) {
       constructor ?: return
       val sourcePsi = sourceNode.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(constructor, languageLevel) ?: return
-      if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
-      registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
+      val firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance()
+                                           .firstCompatibleLanguageLevel(constructor, languageLevel) ?: return
+      if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
+      registerError(sourcePsi, firstCompatibleLanguageLevel, holder, isOnTheFly)
     }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
@@ -170,7 +173,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       if (module != null) {
         languageLevel = getEffectiveLanguageLevel(module)
         if (languageLevel.isUnsupported) {
-          languageLevel = languageLevel.nonPreviewLevel
+          languageLevel = languageLevel.getNonPreviewLevel()
         }
       }
       else if (sourcePsi.containingFile.virtualFile is LightVirtualFile) {
@@ -178,9 +181,9 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         languageLevel = sourcePsi.containingFile.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
       }
       if (languageLevel == null) return
-      val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
-      if (lastIncompatibleLevel != null) {
-        if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
+      val firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
+      if (firstCompatibleLanguageLevel != null) {
+        if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -193,14 +196,14 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
             if (isIgnored(superClass)) return
           }
         }
-        registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
+        registerError(sourcePsi, firstCompatibleLanguageLevel, holder, isOnTheFly)
       }
       else if (target is PsiClass && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
         for (generifiedClass in generifiedClasses) {
           if (InheritanceUtil.isInheritor(target, generifiedClass) && !isRawInheritance(generifiedClass, target, mutableSetOf())) {
             val message = JvmAnalysisBundle.message(
               "jvm.inspections.1.7.problem.descriptor",
-              LanguageLevelUtil.getJdkName(languageLevel)
+              languageLevel.toJavaVersion().feature
             )
             holder.registerProblem(sourcePsi, message)
             break
@@ -233,23 +236,18 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
-    val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {
-      logger.error("Unable to get the next language level for $sinceLanguageLevel")
-      return
-    }
     if (reference.getUastParentOfType<UComment>() != null) return
     val message = JvmAnalysisBundle.message(
-      "jvm.inspections.1.5.problem.descriptor", LanguageLevelUtil.getShortMessage(sinceLanguageLevel)
+      "jvm.inspections.1.5.problem.descriptor", sinceLanguageLevel.toJavaVersion().toFeatureString()
     )
     val fix = if (isOnTheFly) {
-      QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(targetLanguageLevel) as LocalQuickFix
+      QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(sinceLanguageLevel) as LocalQuickFix
     }
     else null
     holder.registerProblem(reference, message, *LocalQuickFix.notNullElements(fix))
   }
 
-  fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
+  private fun getEffectiveLanguageLevel(module: Module): LanguageLevel {
     return effectiveLanguageLevel ?: LanguageLevelUtil.getEffectiveLanguageLevel(module)
   }
-
 }

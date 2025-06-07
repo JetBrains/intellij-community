@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -112,7 +112,7 @@ public final class JavaResolveUtil {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (facade.arePackagesTheSame(member, place)) {
+      if (facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) {
         return true;
       }
       if (memberClass == null) {
@@ -162,17 +162,14 @@ public final class JavaResolveUtil {
       }
     }
 
-    if (!facade.arePackagesTheSame(member, place)) return false;
-    //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
+    if (!facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) return false;
     // maybe inheritance lead through package-private class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
     // check only classes since interface members are public,  and if placeClass is interface,
     // then its members are static, and cannot refer to non-static members of memberClass
     if (memberClass.isInterface() || placeClass.isInterface()) return true;
-    PsiClass clazz = accessObjectClass != null ?
-                     accessObjectClass :
-                     placeClass.getSuperClass(); //may start from super class
+    PsiClass clazz = accessObjectClass != null ? accessObjectClass : placeClass.getSuperClass(); //may start from super class
     if (clazz != null && clazz.isInheritor(memberClass, true)) {
       PsiClass superClass = clazz;
       while (!manager.areElementsEquivalent(superClass, memberClass)) {
@@ -329,11 +326,25 @@ public final class JavaResolveUtil {
     return JavaDirectoryService.getInstance().getPackage(directory);
   }
 
+  /**
+   * Processes exported packages of a Java module, replacing "import module..." semantics
+   * for all on-demand imports from these packages.
+   *
+   * @param module     the Java module whose exported packages should be processed
+   * @param processor  the processor used to handle scope declarations
+   * @param state      the current resolution state of the resolver
+   * @param lastParent the parent element from which processing originated
+   * @param place      the code location where this method is called
+   * @return {@code true} if processing should continue, {@code false} if it should stop immediately
+   */
   public static boolean processJavaModuleExports(@NotNull PsiJavaModule module,
                                                  @NotNull PsiScopeProcessor processor,
                                                  @NotNull ResolveState state,
                                                  @Nullable PsiElement lastParent,
                                                  @NotNull PsiElement place) {
+    // Skip processing if inside the module - otherwise, imports within the module won't work because the system would rely only on exports
+    if (PsiTreeUtil.isAncestor(module, place, false)) return true;
+
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, module);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;

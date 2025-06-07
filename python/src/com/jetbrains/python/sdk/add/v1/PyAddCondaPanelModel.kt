@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -16,6 +16,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.validationErrorIf
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.onFailure
+import com.jetbrains.python.onSuccess
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
@@ -128,7 +131,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Loaded list of existing conda envs
    */
-  private var condaEnvs: Result<CondaInfo> = Result.failure(Exception(PyBundle.message("python.sdk.conda.no.exec")))
+  private var condaEnvs: PyResult<CondaInfo> = PyResult.localizedError(PyBundle.message("python.sdk.conda.no.exec"))
 
   private val targetCommandExecutor: TargetCommandExecutor =
     if (introspectable != null) IntrospectableCommandExecutor(introspectable)
@@ -141,22 +144,22 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * Result may contain an error
    */
   suspend fun onLoadEnvsClicked(uiContext: CoroutineContext,
-                                reporter: RawProgressReporter? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
+                                reporter: RawProgressReporter? = null): PyResult<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
     reporter?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
-    PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
+    val envs = PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
       .onFailure {
-        condaEnvs = Result.failure(it)
         condaEnvModel.removeAllElements()
         showCondaActionsPanelRoProp.set(false)
       }
       .onSuccess { condaEnvsList ->
         condaEnvModel.removeAllElements()
-        condaEnvs = Result.success(CondaInfo(path, condaEnvsList))
         condaEnvModel.addAll(condaEnvsList.map { it.envIdentity })
         condaEnvModel.selectedItem = condaEnvModel.getElementAt(0)
         showCondaActionsPanelRoProp.set(true)
       }
+    condaEnvs = envs.mapSuccess { CondaInfo(path, it) }
+    envs
   }
 
 
@@ -171,8 +174,6 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   }
 
   private fun condaPathIsValid(path: FullPathOnTarget): Boolean = path.matches(condaPathRegex)
-
-  fun isCondaPathValid() = condaPathIsValid(condaPathTextBoxRwProp.get())
 
 
   /**
@@ -201,7 +202,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * @return either null (if no error) or localized error string
    */
   fun getValidationError(): @Nls String? {
-    val envIdentities = getEnvIdentities().getOrElse { return it.message ?: PyBundle.message("python.sdk.conda.problem.running") }
+    val envIdentities = getEnvIdentities().getOr { return it.error.message }
 
     return if (showCreateNewEnvPanelRoProp.get()) {
       validateEnvIdentitiesName(envIdentities)
@@ -212,19 +213,10 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   }
 
   /**
-   * This method ignores the error if condaEnvs are not loaded yet
-   * @return either null (if no error in name validation) or localized error string
-   */
-  fun getEnvIdentitiesNameValidationError(): @Nls String? {
-    val envIdentities = getEnvIdentities().getOrElse { return null }
-    return validateEnvIdentitiesName(envIdentities)
-  }
-
-  /**
    * This method returns envIdentities from loaded envs
    */
-  private fun getEnvIdentities(): Result<List<PyCondaEnvIdentity.NamedEnv>> =
-    condaEnvs.map { loadedEnvs ->
+  private fun getEnvIdentities(): PyResult<List<PyCondaEnvIdentity.NamedEnv>> =
+    condaEnvs.mapSuccess { loadedEnvs ->
       loadedEnvs.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>()
     }
 
@@ -252,12 +244,12 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    */
   suspend fun onCondaCreateSdkClicked(uiContext: CoroutineContext,
                                       reporter: RawProgressReporter?,
-                                      targetConfiguration: TargetEnvironmentConfiguration?): Result<Sdk> {
+                                      targetConfiguration: TargetEnvironmentConfiguration?): PyResult<Sdk> {
 
     val pyCondaCommand = PyCondaCommand(condaPathTextBoxRwProp.get(), targetConfiguration, project)
     if (condaActionUseExistingEnvRadioRwProp.get()) {
       // Use existing env
-      return Result.success(
+      return PyResult.success(
         pyCondaCommand.createCondaSdkFromExistingEnv(condaEnvModel.selectedItem as PyCondaEnvIdentity, existingSdks, project))
 
     }

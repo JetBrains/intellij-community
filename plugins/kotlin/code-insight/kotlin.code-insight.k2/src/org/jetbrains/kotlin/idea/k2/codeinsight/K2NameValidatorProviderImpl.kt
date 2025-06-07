@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
@@ -13,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class K2NameValidatorProviderImpl : KotlinNameValidatorProvider {
 
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun createNameValidator(
         container: PsiElement,
         target: KotlinNameSuggestionProvider.ValidatorTarget,
@@ -28,10 +33,16 @@ internal class K2NameValidatorProviderImpl : KotlinNameValidatorProvider {
             visibleDeclarationsContext = context,
             checkVisibleDeclarationsContext = anchor != null,
             target = target,
+            excludedDeclarations = excludedDeclarations
         )
 
-        analyze(context) {
-            validator.validate(name)
+
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(context) {
+                    validator.validate(name)
+                }
+            }
         }
     }
 }

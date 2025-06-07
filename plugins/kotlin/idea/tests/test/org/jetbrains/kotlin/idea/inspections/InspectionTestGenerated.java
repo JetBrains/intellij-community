@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -45,11 +45,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("iterationOverMap/inspectionData/inspections.test")
         public void testIterationOverMap_inspectionData_Inspections_test() throws Exception {
             runTest("testData/intentions/iterationOverMap/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("objectLiteralToLambda/inspectionData/inspections.test")
-        public void testObjectLiteralToLambda_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/intentions/objectLiteralToLambda/inspectionData/inspections.test");
         }
 
         @TestMetadata("removeExplicitSuperQualifier/inspectionData/inspections.test")
@@ -126,11 +121,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/conflictingExtensionProperty/inspectionData/inspections.test");
         }
 
-        @TestMetadata("constantConditionIf/inspectionData/inspections.test")
-        public void testConstantConditionIf_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/constantConditionIf/inspectionData/inspections.test");
-        }
-
         @TestMetadata("convertLambdaToReference/inspectionData/inspections.test")
         public void testConvertLambdaToReference_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/convertLambdaToReference/inspectionData/inspections.test");
@@ -189,11 +179,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("equalsAndHashCode/inspectionData/inspections.test")
         public void testEqualsAndHashCode_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/equalsAndHashCode/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("forEachParameterNotUsed/inspectionData/inspections.test")
-        public void testForEachParameterNotUsed_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/forEachParameterNotUsed/inspectionData/inspections.test");
         }
 
         @TestMetadata("gradleWrongPluginVersion/inspectionData/inspections.test")
@@ -256,11 +241,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/publicApiImplicitType/inspectionData/inspections.test");
         }
 
-        @TestMetadata("recursivePropertyAccessor/inspectionData/inspections.test")
-        public void testRecursivePropertyAccessor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/recursivePropertyAccessor/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantIf/inspectionData/inspections.test")
         public void testRedundantIf_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantIf/inspectionData/inspections.test");
@@ -274,11 +254,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("redundantNotNullExtensionReceiverOfInline/inspectionData/inspections.test")
         public void testRedundantNotNullExtensionReceiverOfInline_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantNotNullExtensionReceiverOfInline/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("redundantSamConstructor/inspectionData/inspections.test")
-        public void testRedundantSamConstructor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
         @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")
@@ -316,11 +291,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/replaceCallWithComparison/inspectionData/inspections.test");
         }
 
-        @TestMetadata("replaceRangeToWithUntil/inspectionData/inspections.test")
-        public void testReplaceRangeToWithUntil_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/replaceRangeToWithUntil/inspectionData/inspections.test");
-        }
-
         @TestMetadata("sealedSubClassCanBeObject/inspectionData/inspections.test")
         public void testSealedSubClassCanBeObject_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/sealedSubClassCanBeObject/inspectionData/inspections.test");
@@ -331,11 +301,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/spelling/inspectionData/inspections.test");
         }
 
-        @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
-        public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
-        }
-
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
         public void testTwoSetOfTypeparameters_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/twoSetOfTypeparameters/inspectionData/inspections.test");
@@ -344,11 +309,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("unusedEquals/inspectionData/inspections.test")
         public void testUnusedEquals_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedEquals/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("unusedImport/inspectionData/inspections.test")
-        public void testUnusedImport_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/unusedImport/inspectionData/inspections.test");
         }
 
         @TestMetadata("unusedLambdaExpressionBody/inspectionData/inspections.test")

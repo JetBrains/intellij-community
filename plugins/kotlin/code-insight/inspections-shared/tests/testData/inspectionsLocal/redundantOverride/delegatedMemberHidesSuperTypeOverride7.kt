@@ -1,0 +1,21 @@
+// WITH_STDLIB
+
+interface Foo {
+    fun foo()
+}
+
+interface Bar : Foo {
+    fun bar()
+}
+
+abstract class Baz : Bar {
+    override fun bar() {
+        println("baz")
+    }
+}
+
+class Boo(bar: Bar) : Baz(), Foo by bar {
+    <caret>override fun bar() {
+        super.bar()
+    }
+}

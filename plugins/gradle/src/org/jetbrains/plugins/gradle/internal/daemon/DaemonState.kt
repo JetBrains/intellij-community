@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon
 
+import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.io.Serializable
 import java.text.DateFormat
@@ -54,4 +55,30 @@ class DaemonState(val pid: Long?,
   }
 
   private fun Long.asFormattedTimestamp() = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(this))
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DaemonState
+
+    if (pid != other.pid) return false
+    if (idleTimeout != other.idleTimeout) return false
+    if (version != other.version) return false
+    if (daemonOpts != other.daemonOpts) return false
+    if (!FileUtil.filesEqual(javaHome, other.javaHome)) return false
+    if (!FileUtil.filesEqual(registryDir, other.registryDir)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = pid?.hashCode() ?: 0
+    result = 31 * result + (idleTimeout ?: 0)
+    result = 31 * result + (version?.hashCode() ?: 0)
+    result = 31 * result + (daemonOpts?.hashCode() ?: 0)
+    result = 31 * result + FileUtil.fileHashCode(javaHome)
+    result = 31 * result + FileUtil.fileHashCode(registryDir)
+    return result
+  }
 }

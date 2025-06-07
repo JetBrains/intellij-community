@@ -1,18 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase
 import org.junit.Test
 
-class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase() {
+class DeclarativeInlayHintsPassTest : DeclarativeInlayHintPassTestBase() {
   @Test
   fun testAddInlay() {
     myFixture.configureByText("test.txt", "my content of file")
@@ -31,15 +29,42 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
         }
       }
     }, "test.inlay.provider", emptyMap())
-    val pass = createPass(passInfo, false)
+    val pass = createPass(passInfo)
 
     collectAndApplyPass(pass)
 
-    assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), getInlays().single().getEntries())
+    assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), getInlineInlays().single().getEntries())
   }
 
-  private fun Inlay<out DeclarativeInlayRenderer>.getEntries(): List<InlayPresentationEntry> {
-    val presentationList = renderer.presentationList
+  @Test
+  fun testAddAndUpdateAndRemoveAboveLineInlay() {
+    myFixture.configureByText("test.txt", "my content of file")
+    var inlayText = "first"
+    val provider = StoredHintsProvider()
+    val passInfo = InlayProviderPassInfo(provider, "test.inlay.provider", emptyMap())
+    val hintAdder: (InlayTreeSink.() -> Unit) = {
+      addPresentation(AboveLineIndentedPosition(0, 0, 0), hintFormat = HintFormat.default) {
+        text(inlayText)
+      }
+    }
+    // add inlay
+    provider.hintAdder = hintAdder
+    runPass(passInfo)
+    assertEquals(listOf("first"), getBlockInlays().map { it.toText() })
+
+    // update inlay
+    inlayText = "second"
+    provider.hintAdder = hintAdder
+    runPass(passInfo)
+    assertEquals(listOf("second"), getBlockInlays().map { it.toText() })
+
+    // remove inlay
+    runPass(passInfo)
+    assertSize(0, getBlockInlays())
+  }
+
+  private fun Inlay<out DeclarativeInlayRendererBase<*>>.getEntries(): List<InlayPresentationEntry> {
+    val presentationList = renderer.presentationLists.single()
     return presentationList.getEntries().toList()
   }
 
@@ -54,13 +79,13 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
       }
     }
 
-    collectAndApplyPass(createPass(providerInfo, false))
+    collectAndApplyPass(createPass(providerInfo))
 
-    assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), getInlays().single().getEntries())
+    assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), getInlineInlays().single().getEntries())
     assertNull(provider.hintAdder) // make sure no inlay is added on the next pass
 
-    collectAndApplyPass(createPass(providerInfo, false))
-    assertEquals(emptyList<Any>(), getInlays())
+    collectAndApplyPass(createPass(providerInfo))
+    assertEquals(emptyList<Any>(), getInlineInlays())
   }
 
   @Test
@@ -74,9 +99,9 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
       }
     }
 
-    collectAndApplyPass(createPass(providerInfo, false))
+    collectAndApplyPass(createPass(providerInfo))
 
-    val inlay = getInlays().single()
+    val inlay = getInlineInlays().single()
     assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), inlay.getEntries())
     provider.hintAdder = {
       addPresentation(InlineInlayPosition(2, true), hasBackground = true) {
@@ -84,8 +109,8 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
       }
     }
 
-    collectAndApplyPass(createPass(providerInfo, false))
-    val newInlay = getInlays().single()
+    collectAndApplyPass(createPass(providerInfo))
+    val newInlay = getInlineInlays().single()
     TestCase.assertSame(inlay, newInlay)
     assertEquals(listOf(TextInlayPresentationEntry("new text", clickArea = null)), newInlay.getEntries())
   }
@@ -110,9 +135,9 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
       }
     }
 
-    collectAndApplyPass(createPass(providerInfo, false))
+    collectAndApplyPass(createPass(providerInfo))
 
-    val entries = getInlays().map { it.getEntries().single() }
+    val entries = getInlineInlays().map { it.getEntries().single() }
     assertEquals(listOf(
       TextInlayPresentationEntry("2", clickArea = null),
       TextInlayPresentationEntry("4", clickArea = null),
@@ -121,10 +146,26 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
     ), entries)
   }
 
-  private fun createPass(providerInfo: InlayProviderPassInfo, isProviderDisabled: Boolean=false): DeclarativeInlayHintsPass {
-    return ActionUtil.underModalProgress(project, "") {
-      DeclarativeInlayHintsPass(myFixture.file, myFixture.editor, listOf(providerInfo), isProviderDisabled, isProviderDisabled)
+  // IJPL-160830
+  @Test
+  fun testInlayTooltipIsUpdatedWhenInlayIsReused() {
+    myFixture.configureByText("test.txt", "content")
+    val provider = StoredHintsProvider()
+    val providerInfo = InlayProviderPassInfo(provider, "test.inlay.provider", emptyMap())
+
+    fun addAndCheckInlayWithTooltip(tooltip: String?) {
+      provider.hintAdder = {
+        addPresentation(InlineInlayPosition(2, true), hintFormat = HintFormat.default, tooltip = tooltip) {
+          text("text")
+        }
+      }
+      collectAndApplyPass(createPass(providerInfo))
+      assertEquals(tooltip, getInlineInlays().single().renderer.presentationList.model.tooltip)
     }
+
+    addAndCheckInlayWithTooltip("1")
+    // the hint is inserted at the same offset, and so the underlying editor inlay should be reused, and it's renderer updated
+    addAndCheckInlayWithTooltip("2")
   }
 
   @Test
@@ -138,39 +179,14 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
       }
     }
 
-    collectAndApplyPass(createPass(providerInfo, false))
-    assertFalse(getInlays().single().renderer.presentationList.isDisabled)
+    collectAndApplyPass(createPass(providerInfo, isProviderDisabled = false))
+    assertFalse(getInlineInlays().single().renderer.presentationList.model.disabled)
     provider.hintAdder = {
       addPresentation(InlineInlayPosition(2, true, priority = 1), hasBackground = true) {
         text("1")
       }
     }
-    collectAndApplyPass(createPass(providerInfo, true))
-    assertTrue(getInlays().single().renderer.presentationList.isDisabled)
-  }
-
-  private fun getInlays(): List<Inlay<out DeclarativeInlayRenderer>> {
-    val editor = myFixture.editor
-    return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength - 1, DeclarativeInlayRenderer::class.java)
-  }
-
-  private fun collectAndApplyPass(pass: DeclarativeInlayHintsPass) {
-    pass.doCollectInformation(DaemonProgressIndicator())
-    pass.applyInformationToEditor()
-  }
-
-  class StoredHintsProvider : InlayHintsProvider {
-    var hintAdder: (InlayTreeSink.() -> Unit)? = null
-    override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
-      return object : SharedBypassCollector {
-        override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
-          val adder = hintAdder
-          if (adder != null) {
-            hintAdder = null
-            adder(sink)
-          }
-        }
-      }
-    }
+    collectAndApplyPass(createPass(providerInfo, isProviderDisabled = true))
+    assertTrue(getInlineInlays().single().renderer.presentationList.model.disabled)
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.exists
 
@@ -26,8 +27,9 @@ object RepositoryBlockedSyncIssue {
       .append(message("maven.sync.quickfixes.repository.blocked"))
       .append("\n")
 
-    val openSettingsXmlQuickFix = MavenProjectsManager.getInstance(project).generalSettings.effectiveUserSettingsIoFile
-      ?.let { if (it.exists()) it else null }
+
+    val openSettingsXmlQuickFix = MavenSettingsCache.getInstance(project).getEffectiveUserSettingsFile()
+      .let { if (it.exists()) it else null }
       ?.let {
         val quickFix = OpenFileQuickFix(it, null)
         quickFixes.add(quickFix)

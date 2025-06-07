@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
@@ -13,14 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class DebuggerInvocationUtil {
-  public static void swingInvokeLater(@Nullable final Project project, @NotNull final Runnable runnable) {
+  public static void swingInvokeLater(final @Nullable Project project, final @NotNull Runnable runnable) {
     if (project == null) {
       return;
     }
 
     SwingUtilities.invokeLater(() -> {
       if (!project.isDisposed()) {
-        ReadAction.run(() -> runnable.run());
+        WriteIntentReadAction.run(runnable);
       }
     });
   }
@@ -37,7 +37,7 @@ public final class DebuggerInvocationUtil {
     }
   }
 
-  public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
+  public static void invokeAndWait(final Project project, final @NotNull Runnable runnable, ModalityState state) {
     if (project != null) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         if (!project.isDisposed()) {

@@ -19,15 +19,20 @@ import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
-import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.getNextSuggestionsString
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -40,6 +45,15 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (parameters.editor.isReworkedTerminalEditor) {
+      fillCompletionVariantsReworked(parameters, result)
+    }
+    else {
+      fillCompletionVariantsDeprecated(parameters, result)
+    }
+  }
+
+  private fun fillCompletionVariantsDeprecated(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
     val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
     val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
@@ -54,7 +68,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return
     }
 
-    if (parameters.editor.getUserData(TerminalCommandCompletionAction.SUPPRESS_COMPLETION) == true) {
+    if (parameters.editor.isSuppressCompletion) {
       result.stopHere()
       return
     }
@@ -84,6 +98,54 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
         submitSuggestions(suggestions, allTokens, result, session.shellIntegration.shellType)
+      }
+    }
+  }
+
+  private fun fillCompletionVariantsReworked(parameters: CompletionParameters, result: CompletionResultSet) {
+    val sessionModel = parameters.editor.getUserData(TerminalSessionModel.KEY) ?: return
+    val runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(parameters.editor.project!!, sessionModel)
+    val generatorsExecutor = ShellDataGeneratorsExecutorReworkedImpl()
+    val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
+    val lastBlock = blocksModel.blocks.lastOrNull() ?: return
+
+    if (parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
+      return
+    }
+
+    if (parameters.editor.isSuppressCompletion) {
+      result.stopHere()
+      return
+    }
+    val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+    val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, ShellType.ZSH)
+
+    val document = parameters.editor.document
+    val caretOffset = parameters.editor.caretModel.offset
+    val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
+      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+    }
+    else {
+      tokens
+    }
+
+    if (allTokens.isEmpty()) {
+      return
+    }
+    tracer.spanBuilder("terminal-completion-all").use {
+      val suggestions = runBlockingCancellable {
+        val expandedTokens = expandAliases(context, allTokens)
+        computeSuggestions(expandedTokens, context)
+      }
+      tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
+        submitSuggestions(suggestions, allTokens, result, ShellType.ZSH)
       }
     }
   }
@@ -256,7 +318,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   private class MyInsertHandler(
     private val suggestion: ShellCompletionSuggestion,
     private val appendPathSeparator: Boolean,
-    private val shellType: ShellType
+    private val shellType: ShellType,
   ) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
       // PowerShell consider both slash and backslash as valid path separators.
@@ -286,7 +348,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,
     val parameters: CompletionParameters,
-    val shellType: ShellType
+    val shellType: ShellType,
   ) {
     val project: Project
       get() = parameters.editor.project!!

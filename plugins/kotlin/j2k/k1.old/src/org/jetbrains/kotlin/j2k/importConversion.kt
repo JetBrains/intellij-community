@@ -145,8 +145,6 @@ private fun renderImportName(fqName: FqName, isOnDemand: Boolean)
         = if (isOnDemand) fqName.render() + ".*" else fqName.render()
 
 private val DEFAULT_IMPORTS_SET: Set<FqName> = JvmPlatformAnalyzerServices.getDefaultImports(
-    // TODO: use the correct LanguageVersionSettings instance here
-    LanguageVersionSettingsImpl.DEFAULT,
     includeLowPriorityImports = true
 ).filter { it.isAllUnder }.map { it.fqName }.toSet()
 

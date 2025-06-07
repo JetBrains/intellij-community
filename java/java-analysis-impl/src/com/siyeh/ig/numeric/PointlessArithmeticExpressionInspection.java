@@ -17,14 +17,15 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
@@ -52,9 +53,6 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC, JavaTokenType.GT,
     JavaTokenType.LT, JavaTokenType.LE, JavaTokenType.GE);
 
-  /**
-   * @noinspection PublicField
-   */
   public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
@@ -69,8 +67,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor",
                                            calculateReplacementExpression((PsiPolyadicExpression)infos[0], null));
   }
@@ -121,7 +118,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK) && isZero(operand) ||
                tokenType.equals(JavaTokenType.PERC) &&
-               (isOne(operand) || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand))) {
+               (isOne(operand) ||
+                EquivalenceChecker.getCanonicalPsiEquivalence()
+                  .expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand))) {
         expressions.clear();
         expressions.add(factory.createExpressionFromText(numberAsText(0, type), operand));
         return expressions;
@@ -150,8 +149,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   private class PointlessArithmeticFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
@@ -216,7 +214,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
         return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]);
       }
       if (type.equals(JavaTokenType.DIV) || type.equals(JavaTokenType.PERC)) {
-        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) && !isZero(expressions[0]) ||
+        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) && !isZeroWithDataflow(expressions[0]) ||
                (type.equals(JavaTokenType.DIV) && isOne(expressions[1]));
       }
       if (type.equals(JavaTokenType.ASTERISK)) {
@@ -263,7 +261,8 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZero(expression))) {
+            (isOne(expression) ||
+             i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZeroWithDataflow(expression))) {
           return true;
         }
         previousExpression = expression;
@@ -277,17 +276,25 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     }
   }
 
-  boolean isZero(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants && PsiUtil.deparenthesizeExpression(expression) instanceof PsiReferenceExpression) {
+  boolean isZeroWithDataflow(@NotNull PsiExpression expression) {
+    return isZero(expression) || (CommonDataflow.computeValue(expression) instanceof Number number && number.doubleValue() == 0.0d);
+  }
+
+  boolean isZero(@NotNull PsiExpression expression) {
+    if (m_ignoreExpressionsContainingConstants && containsReference(expression)) {
       return false;
     }
     return ExpressionUtils.isZero(expression);
   }
 
-  boolean isOne(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants && PsiUtil.deparenthesizeExpression(expression) instanceof PsiReferenceExpression) {
+  boolean isOne(@NotNull PsiExpression expression) {
+    if (m_ignoreExpressionsContainingConstants && containsReference(expression)) {
       return false;
     }
     return ExpressionUtils.isOne(expression);
+  }
+
+  private static boolean containsReference(@NotNull PsiExpression expression) {
+    return PsiTreeUtil.findChildOfType(expression, PsiReferenceExpression.class, false) != null;
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
-import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.DumbService

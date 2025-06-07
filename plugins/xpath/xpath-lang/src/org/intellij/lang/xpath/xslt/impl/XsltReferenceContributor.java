@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -103,8 +103,7 @@ public final class XsltReferenceContributor {
       super(element, range, ReferenceType.TypeReference);
     }
 
-    @Nullable
-    private static TextRange getTextRange(PsiElement element) {
+    private static @Nullable TextRange getTextRange(PsiElement element) {
       final Matcher matcher = NAME_PATTERN.matcher(element.getText());
       if (matcher.find()) {
         return TextRange.create(matcher.start(), matcher.end());
@@ -123,14 +122,12 @@ public final class XsltReferenceContributor {
       return name.equals(text) || text.endsWith(":" + name);
     }
 
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return XPathBundle.message("inspection.message.unknown.type");
     }
 
-    @Nullable
-    public static SchemaTypeReference create(PsiElement element) {
+    public static @Nullable SchemaTypeReference create(PsiElement element) {
       final TextRange range = getTextRange(element);
       return range != null ? new SchemaTypeReference(element, range) : null;
     }

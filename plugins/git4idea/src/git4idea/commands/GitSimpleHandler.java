@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -121,7 +121,7 @@ public class GitSimpleHandler extends GitTextHandler {
     if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
-    int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
+    int last = !lineRest.isEmpty() ? lineRest.charAt(lineRest.length() - 1) : -1;
     int start = 0;
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
@@ -135,7 +135,7 @@ public class GitSimpleHandler extends GitTextHandler {
         }
         if (last != '\r' || savedPos != i) {
           String line;
-          if (lineRest.length() == 0) {
+          if (lineRest.isEmpty()) {
             line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
@@ -192,10 +192,10 @@ public class GitSimpleHandler extends GitTextHandler {
           }
           else {
             String msg = getStderr();
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = getStdout();
             }
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
             exRef.set(new VcsException(msg));
@@ -229,7 +229,7 @@ public class GitSimpleHandler extends GitTextHandler {
   @Override
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     OSProcessHandler process = super.createProcess(commandLine);
-    process.addProcessListener(new ProcessAdapter() {
+    process.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event,
                                   @NotNull Key outputType) {

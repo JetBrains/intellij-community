@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -474,10 +473,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
     readWithProfiles("two")
+
+    moveCaretTo(projectPom, """
+      </profiles>
+      <name>${'$'}{<caret>foo}</name>""".trimIndent())
 
     assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
   }
@@ -560,10 +563,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
     updateAllProjects()
+
+    moveCaretTo(projectPom, """
+      </profiles>
+      <name>${'$'}{<caret>foo}</name>""".trimIndent())
 
     assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
   }
@@ -771,35 +778,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     assertUnresolved(projectPom)
-  }
-
-  @Test
-  fun testResolvingPropertiesInOldStyleProfilesXml() = runBlocking {
-    val profiles = createProfilesXmlOldStyle("""
-                                                       <profile>
-                                                         <id>one</id>
-                                                         <properties>
-                                                           <foo>value</foo>
-                                                         </properties>
-                                                       </profile>
-                                                       <profile>
-                                                         <id>two</id>
-                                                         <properties>
-                                                           <foo>value</foo>
-                                                         </properties>
-                                                       </profile>
-                                                       """.trimIndent())
-
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <name>${'$'}{<caret>foo}</name>
-                       """.trimIndent())
-
-    readWithProfiles("two")
-
-    assertResolved(projectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles::class.java))
   }
 
   @Test
@@ -1032,7 +1010,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                          <groupId>test</groupId>
                          <artifactId>parent</artifactId>
                          <version>1</version>
-                         <relativePath>./parent/pom.xml</version>
+                         <relativePath>./parent/pom.xml</relativePath>
                        </parent>
                        <properties>
                          <pomProp>value</pomProp>
@@ -1051,7 +1029,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>}</name>
                        """.trimIndent())
 
     createProfilesXml("""
@@ -1104,6 +1081,36 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("one")
 
+    updateProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>./parent/pom.xml</version>
+                       </parent>
+                       <properties>
+                         <pomProp>value</pomProp>
+                       </properties>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <pomProfilesProp>value</pomProfilesProp>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <pomProfilesPropInactive>value</pomProfilesPropInactive>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <name>${'$'}{<caret>}</name>
+                       """.trimIndent())
+
     val variants = getCompletionVariants(projectPom)
     assertContain(variants, "pomProp", "pomProfilesProp", "profilesXmlProp")
     assertContain(variants,
@@ -1150,8 +1157,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBraceInOpenTag() = runBlocking {
-    if (ignore()) return@runBlocking
-
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

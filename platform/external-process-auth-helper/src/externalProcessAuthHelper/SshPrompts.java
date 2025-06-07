@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,5 +28,13 @@ public final class SshPrompts {
 
   public static String extractUsername(Matcher matcher) {
     return matcher.group("username");
+  }
+
+  @NlsSafe
+  @NotNull
+  public static String stripConfirmConnectionOptions(@NotNull String description) {
+    // Are you sure you want to continue connecting (yes/no)?
+    // Are you sure you want to continue connecting (yes/no/[fingerprint])?
+    return description.replaceAll(CONFIRM_CONNECTION_PROMPT + " \\(.+?\\)\\?", CONFIRM_CONNECTION_PROMPT + "?");
   }
 }

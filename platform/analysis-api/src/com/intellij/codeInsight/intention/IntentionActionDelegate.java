@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
@@ -11,12 +11,11 @@ public interface IntentionActionDelegate extends ReportingClassSubstitutor, Poss
   IntentionAction getDelegate();
 
   static @NotNull IntentionAction unwrap(@NotNull IntentionAction action) {
-    return action instanceof IntentionActionDelegate ? unwrap(((IntentionActionDelegate)action).getDelegate()) : action;
+    return action instanceof IntentionActionDelegate delegate ? unwrap(delegate.getDelegate()) : action;
   }
 
   @Override
-  @NotNull
-  default Class<?> getSubstitutedClass() {
+  default @NotNull Class<?> getSubstitutedClass() {
     return ReportingClassSubstitutor.getClassToReport(getDelegate());
   }
 

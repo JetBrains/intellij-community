@@ -6,20 +6,23 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
+import com.intellij.util.ConcurrencyUtil
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfoProvider
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.plugins.gradle.ExternalDependencyId
-import org.jetbrains.plugins.gradle.model.*
+import org.jetbrains.plugins.gradle.model.DefaultExternalMultiLibraryDependency
+import org.jetbrains.plugins.gradle.model.ExternalDependency
+import org.jetbrains.plugins.gradle.model.ExternalMultiLibraryDependency
+import org.jetbrains.plugins.gradle.model.FileCollectionDependency
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
@@ -52,7 +55,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
     }
 
     private val ProjectResolverContext.dependencySubstitutionCache
-        get() = getUserData(KLIB_DEPENDENCY_SUBSTITUTION_CACHE) ?: putUserDataIfAbsent(KLIB_DEPENDENCY_SUBSTITUTION_CACHE, HashMap())
+        get() = ConcurrencyUtil.computeIfAbsent(this, KLIB_DEPENDENCY_SUBSTITUTION_CACHE) { HashMap() }
 
     private val klibInfoProvider: KlibInfoProvider? by lazy {
         val kotlinNativeHome = mppModel.kotlinNativeHome.takeIf { it != KotlinMPPGradleModel.NO_KOTLIN_NATIVE_HOME }?.let(::File)

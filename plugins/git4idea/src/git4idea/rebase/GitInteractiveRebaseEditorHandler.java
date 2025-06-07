@@ -66,7 +66,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     GitRebaseEditingResult result;
     try {
       if (myRebaseEditorShown) {
-        String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
+        Charset encoding = GitConfigUtil.getCommitEncodingCharset(myProject, myRoot);
         String originalMessage = FileUtil.loadFile(file, encoding);
         String newMessage = myRewordedCommitMessageProvider.getRewordedCommitMessage(myProject, myRoot, originalMessage);
         if (newMessage == null) {
@@ -76,7 +76,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
                    GitRebaseEditingResult.WasEdited.INSTANCE;
         }
         else {
-          FileUtil.writeToFile(file, newMessage.getBytes(Charset.forName(encoding)));
+          FileUtil.writeToFile(file, newMessage.getBytes(encoding));
           result = GitRebaseEditingResult.WasEdited.INSTANCE;
         }
       }

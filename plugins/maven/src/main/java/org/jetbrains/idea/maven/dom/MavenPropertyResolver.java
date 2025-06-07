@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,10 +7,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomParent;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -63,12 +60,37 @@ public final class MavenPropertyResolver {
   public static Map<String, String> collectPropertyMapFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
     var result = new HashMap<String, String>();
 
-    collectPropertyMapFromDOM(ReadAction.compute(()->projectDom.getProperties()), result);
+    collectPropertyMapFromDOM(ReadAction.compute(() -> projectDom.getProperties()), result);
 
     if (project != null) {
       collectPropertiesForActivatedProfiles(project, projectDom, result);
+      collectPropertiesForMavenDependencyPlugin(project, projectDom, result);
     }
     return result;
+  }
+
+  private static void collectPropertiesForMavenDependencyPlugin(@Nullable MavenProject project,
+                                                                MavenDomProjectModel projectDom,
+                                                                HashMap<String, String> result) {
+    if (project == null || !containsActiveDependencyPropertiesPlugin(project)) return;
+
+    project.getDependencies().forEach(d -> {
+      var clasifier = d.getClassifier();
+      var type = d.getType();
+      if (type == null || type.isBlank()) type = "jar";
+      var propName = d.getGroupId() + ":" + d.getArtifactId() + ":" + type;
+      if (clasifier != null && !clasifier.isBlank()) {
+        propName = propName + ":" + clasifier;
+      }
+      var file = d.getFile().getAbsolutePath();
+      result.put(propName, file);
+    });
+  }
+
+  public static boolean containsActiveDependencyPropertiesPlugin(MavenProject mavenProject) {
+    return mavenProject.getPlugins().stream().filter(
+      p -> p.getGroupId().equals("org.apache.maven.plugins") && p.getArtifactId().equals("maven-dependency-plugin")
+    ).flatMap(p -> p.getExecutions().stream()).flatMap(e -> e.getGoals().stream()).anyMatch(it -> "properties".equals(it));
   }
 
 
@@ -97,8 +119,7 @@ public final class MavenPropertyResolver {
   }
 
   private static class AdditionalPropertySourceImpl implements AdditionalPropertySource {
-    @Nullable
-    private final MavenProject mavenProject;
+    private final @Nullable MavenProject mavenProject;
     private final MavenDomProjectModel projectDom;
 
     private Map<String, String> additionalProperties;
@@ -107,6 +128,7 @@ public final class MavenPropertyResolver {
       this.mavenProject = mavenProject;
       this.projectDom = projectDom;
     }
+
     @Override
     public String get(String key) {
       if (null == additionalProperties) {
@@ -120,8 +142,7 @@ public final class MavenPropertyResolver {
     private static final Pattern pattern = PATTERN;
     private final MavenDomProjectModel projectDom;
     private final MavenProjectsManager mavenProjectsManager;
-    @Nullable
-    private final MavenProject mavenProject;
+    private final @Nullable MavenProject mavenProject;
     private final AdditionalPropertySource additionalPropertySource;
 
     private MavenPropertyResolverHelper(MavenDomProjectModel projectDom,
@@ -210,8 +231,7 @@ public final class MavenPropertyResolver {
       out.append(text, last, text.length());
     }
 
-    @Nullable
-    private String doResolvePropertyForMavenProject(String propName) {
+    private @Nullable String doResolvePropertyForMavenProject(String propName) {
       boolean hasPrefix = false;
       String unprefixed = propName;
 
@@ -297,8 +317,7 @@ public final class MavenPropertyResolver {
       return null;
     }
 
-    @Nullable
-    private String doResolvePropertyForMavenDomModel(String propName) {
+    private @Nullable String doResolvePropertyForMavenDomModel(String propName) {
       if (propName.startsWith("parent.")) {
         MavenDomParent parentDomElement = projectDom.getMavenParent();
         if (!parentDomElement.exists()) {

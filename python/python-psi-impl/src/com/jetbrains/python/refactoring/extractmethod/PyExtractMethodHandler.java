@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -17,8 +18,12 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,17 +31,34 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyExtractMethodHandler implements RefactoringActionHandler {
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      // Get the current offset where the caret is positioned
+      int caretOffset = editor.getCaretModel().getOffset();
+
+      // Find PsiElement at caret
+      PsiElement element = file.findElementAt(caretOffset);
+
+      if (element != null) {
+        PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, false, PyCallExpression.class);
+        if (callExpression != null) {
+          int startOffset = callExpression.getTextRange().getStartOffset();
+          int endOffset = callExpression.getTextRange().getEndOffset();
+          editor.getSelectionModel().setSelection(startOffset, endOffset);
+        }
+      }
+      else {
+        // Default behavior: select the line at caret
+        editor.getSelectionModel().selectLineAtCaret();
+      }
     }
     invokeOnEditor(project, editor, file);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
   }
 
   private static void invokeOnEditor(final Project project, final Editor editor, final PsiFile file) {
@@ -121,8 +143,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     return firstScopeOwner != null && firstScopeOwner == secondScopeOwner;
   }
 
-  @Nullable
-  private static Couple<PsiElement> getStatementsRange(final PsiElement element1, final PsiElement element2) {
+  private static @Nullable Couple<PsiElement> getStatementsRange(final PsiElement element1, final PsiElement element2) {
     final PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent == null) {
       return null;
@@ -142,6 +163,17 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
         element2 == PyPsiUtils.getPrevSignificantLeaf(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
+      return Couple.of(statement1, statement2);
+    }
+
+    // multi-line function call
+    boolean isLeftParen = "(".equals(element2.getText());
+    PsiElement prevSignificantLeaf = PyPsiUtils.getPrevSignificantLeaf(
+      PsiTreeUtil.getDeepestLast(statement2),
+      !(statement2 instanceof PsiComment)
+    );
+    boolean isRightParen = prevSignificantLeaf != null && ")".equals(prevSignificantLeaf.getText());
+    if (isLeftParen && isRightParen) {
       return Couple.of(statement1, statement2);
     }
     return null;

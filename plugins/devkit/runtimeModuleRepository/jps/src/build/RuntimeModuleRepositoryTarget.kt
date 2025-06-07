@@ -4,9 +4,11 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.dynatrace.hash4j.hashing.HashSink
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.runtime.repository.serialization.impl.CompactFileReader
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
 import org.jetbrains.jps.builders.*
 import org.jetbrains.jps.builders.impl.BuildRootDescriptorImpl
@@ -69,11 +71,14 @@ internal class RuntimeModuleRepositoryTarget(
   override fun getOutputRoots(context: CompileContext): Collection<File> {
     val project = context.projectDescriptor.project
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ?: return emptyList()
-    return java.util.List.of(File(JpsPathUtil.urlToFile(outputUrl), JAR_REPOSITORY_FILE_NAME))
+    val outputDir = JpsPathUtil.urlToFile(outputUrl)
+    return java.util.List.of(File(outputDir, JAR_REPOSITORY_FILE_NAME),
+                             File(outputDir, COMPACT_REPOSITORY_FILE_NAME))
   }
 
   override fun computeConfigurationDigest(projectDescriptor: ProjectDescriptor, hash: HashSink) {
     hash.putString(JarFileSerializer.SPECIFICATION_VERSION)
+    hash.putInt(CompactFileReader.FORMAT_VERSION)
     hash.putInt(RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION)
 
     val time = measureTimeMillis {

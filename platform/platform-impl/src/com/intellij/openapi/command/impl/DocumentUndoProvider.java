@@ -102,7 +102,7 @@ public final class DocumentUndoProvider implements DocumentListener {
       return false;
     }
 
-    return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
+    return !UndoDocumentUtil.isCopy(document) // if we don't ignore copy's events, we will receive notification
            // for the same event twice (from original document too)
            // and undo will work incorrectly
            && shouldRecordActions(document);
@@ -134,6 +134,8 @@ public final class DocumentUndoProvider implements DocumentListener {
     if (file != null && UndoUtil.isForceUndoFlagSet(file)) {
       return true;
     }
-    return !UndoManagerImpl.isRefresh() || undoManager.isUndoOrRedoAvailable(ref);
+    return !UndoManagerImpl.isRefresh() ||
+           undoManager.isUndoRedoAvailable(ref, true) ||
+           undoManager.isUndoRedoAvailable(ref, false);
   }
 }

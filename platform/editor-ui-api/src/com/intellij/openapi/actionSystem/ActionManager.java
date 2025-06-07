@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -20,7 +17,7 @@ import java.util.List;
  * Used to register and unregister actions, it also contains utility methods to easily fetch action by id and id by action.
  *
  * @see AnAction
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#buildingToolbarPopupMenu">Building a Toolbar/Popup Menu from Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html#buildingToolbarPopupMenu">Building a Toolbar/Popup Menu from Actions (IntelliJ Platform Docs)</a>
  */
 public abstract class ActionManager {
   /**
@@ -115,7 +112,7 @@ public abstract class ActionManager {
   /**
    * Returns the list of all registered action IDs with the specified prefix.
    */
-  public abstract @NotNull List<@NonNls String> getActionIdList(@NotNull String idPrefix);
+  public abstract @Unmodifiable @NotNull List<@NonNls String> getActionIdList(@NotNull String idPrefix);
 
   /**
    * Checks if the specified action ID represents an action group and not an individual action.
@@ -138,12 +135,6 @@ public abstract class ActionManager {
                                                        @Nullable Component contextComponent,
                                                        @Nullable String place,
                                                        boolean now);
-
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addAnActionListener(AnActionListener listener);
 
   /**
    * @deprecated Use {@link AnActionListener#TOPIC}

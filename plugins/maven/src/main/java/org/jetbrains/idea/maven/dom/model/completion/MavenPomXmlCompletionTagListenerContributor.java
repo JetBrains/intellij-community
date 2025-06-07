@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -28,7 +28,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
   private static final Set<String> myHandledTags = Set.of("dependency", "exclusion");
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     if (TemplateManager.getInstance(parameters.getOriginalFile().getProject()).getActiveTemplate(parameters.getEditor()) != null) {
       return; // Don't brake the template.
     }
@@ -50,7 +50,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
         LookupElement decorator =
           LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<>() {
             @Override
-            public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
+            public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
               lookupElement.handleInsert(context);
               Object object = lookupElement.getObject();
               if (object instanceof XmlTag && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {

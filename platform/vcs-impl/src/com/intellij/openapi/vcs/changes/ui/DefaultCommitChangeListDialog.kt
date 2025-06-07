@@ -25,7 +25,8 @@ class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
   private val browser = MultipleLocalChangeListsBrowser(project, workflow.vcses, true, true,
-                                                        workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled)
+                                                        workflow.isDefaultCommitEnabled,
+                                                        workflow.isPartialCommitEnabled)
 
   init {
     val branchComponent = CurrentBranchComponent(browser.viewer, pathsProvider = { getDisplayedPaths() })

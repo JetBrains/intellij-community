@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodAnalyzerKt;
@@ -96,6 +97,10 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
               if (variables.length != 1) continue;
               PsiVariable output = variables[0];
               if (SideEffectsVisitor.hasSideEffectOrSimilarUseOutside(range, output)) continue;
+              PsiTypeElement typeElement = output.getTypeElement();
+              if (typeElement == null || (typeElement.isInferredType() && !PsiTypesUtil.isDenotableType(output.getType(), output))) {
+                continue;
+              }
 
               List<PsiVariable> inputVariables = wrapper.getInputVariables(fragment, range, variables);
               if (inputVariables.size() > maxParameters) continue;
@@ -154,8 +159,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         return outDecl >= range.length - 1 || VariableAccessUtils.variableIsUsed(output, range[range.length - 1]);
       }
 
-      @NotNull
-      private static BitSet getDeclarations(PsiStatement[] statements) {
+      private static @NotNull BitSet getDeclarations(PsiStatement[] statements) {
         BitSet declarations = new BitSet();
         for (int i = 0; i < statements.length; i++) {
           if (statements[i] instanceof PsiDeclarationStatement decl &&
@@ -180,19 +184,18 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         return false;
       }
 
-      @NotNull
-      private static TextRange getRange(PsiStatement[] statements) {
+      private static @NotNull TextRange getRange(PsiStatement[] statements) {
         PsiElement start = statements[0];
-        while (true) {
-          PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
-          if (prev instanceof PsiComment &&
-              SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
-            start = prev;
-          }
-          else {
-            break;
-          }
-        }
+        //while (true) {
+        //  PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
+        //  if (prev instanceof PsiComment &&
+        //      SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
+        //    start = prev;
+        //  }
+        //  else {
+        //    break;
+        //  }
+        //}
         int startOffset = start.getTextRangeInParent().getStartOffset();
         int endOffset = statements[statements.length - 1].getTextRangeInParent().getEndOffset();
         return TextRange.create(startOffset, endOffset);

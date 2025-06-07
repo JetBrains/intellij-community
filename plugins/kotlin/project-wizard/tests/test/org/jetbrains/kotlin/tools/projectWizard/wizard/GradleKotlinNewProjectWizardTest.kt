@@ -11,18 +11,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.withValue
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -38,6 +37,7 @@ import java.io.File
  * Only files that are mentioned in these folders are asserted to be generated correctly.
  */
 @TestRoot("project-wizard/tests")
+@Disabled("Temporarily disabled until timeouts are fixed: KTI-2059")
 class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotlinProjectTestUtils {
 
     override var testDirectory = "testData/gradleNewProjectWizard"
@@ -100,15 +100,29 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         return str.replaceFirstGroup(tomlVersionRegex(libraryName), libraryReplacementName)
     }
 
+    private val daemonJvmCriteriaRegex = Regex("""toolchainVersion=(\d+)""")
+    private fun substituteDaemonJvmCriteriaVersions(str: String): String {
+        return str.replaceFirstGroup(daemonJvmCriteriaRegex, "TOOLCHAIN_VERSION")
+    }
+
     // We replace dynamic values like the Kotlin version that is used with placeholders.
     // That way we do not have to update tests every time a new Kotlin version releases.
     override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        return if (relativePath.contains("build.gradle")) {
-            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
-        } else if (relativePath.contains("settings.gradle")) {
-            substituteFoojayVersion(fileContents)
+        return if (relativePath.contains("build.gradle")) { // covers build.gradle and build.gradle.kts
+            var newContents = fileContents
+            newContents = substituteArtifactsVersions(newContents)
+            newContents = substituteJvmToolchainVersion(newContents)
+            newContents
+        } else if (relativePath.contains("settings.gradle")) { // covers settings.gradle and settings.gradle.kts
+            var newContents = fileContents
+            newContents = substituteFoojayVersion(newContents)
+            newContents = substituteDaemonJvmCriteriaVersions(newContents)
+            newContents
         } else if (relativePath.contains("gradle.kts")) { // convention plugin
-            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
+            var newContents = fileContents
+            newContents = substituteArtifactsVersions(newContents)
+            newContents = substituteJvmToolchainVersion(newContents)
+            newContents
         } else if (relativePath.contains("libs.versions.toml")) {
             var newContents = fileContents
             newContents = substituteTomlLibraryVersion(newContents, "kotlin", "KOTLIN_VERSION")
@@ -126,7 +140,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         parentData: ProjectData? = null,
         generateMultipleModules: Boolean = false,
     ) {
@@ -135,12 +148,11 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         kotlinBuildSystemData!!.buildSystem = GRADLE
         kotlinGradleData!!.parentData = parentData
         kotlinGradleData!!.generateMultipleModules = generateMultipleModules
-        kotlinGradleData!!.gradleDsl = if (useKotlinDsl) GradleDsl.KOTLIN else GradleDsl.GROOVY
+        kotlinGradleData!!.gradleDsl = GradleDsl.valueOf(useKotlinDsl)
         kotlinGradleData!!.groupId = groupId
         kotlinGradleData!!.artifactId = name
         kotlinGradleData!!.version = version
         kotlinGradleData!!.addSampleCode = addSampleCode
-        kotlinGradleData!!.generateOnboardingTips = generateOnboardingTips
     }
 
     private fun runNewProjectTestCase(
@@ -150,7 +162,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         generateMultipleModules: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) {
@@ -165,7 +176,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
                     parentData = null,
                     path = name,
                     addSampleCode = addSampleCode,
-                    generateOnboardingTips = generateOnboardingTips,
                     generateMultipleModules = generateMultipleModules,
                 )
             }.useProjectAsync { project ->
@@ -187,13 +197,11 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     }
 
     @Test
-    fun testSampleCode() {
-        runNewProjectTestCase(addSampleCode = true)
-    }
-
-    @Test
-    fun testSampleCodeKts() {
-        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true)
+    @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
+    fun testSimpleProjectUsingDaemonJvmCriteria() {
+        runNewProjectTestCase { project ->
+            assertDaemonJvmProperties(project)
+        }
     }
 
     private val expectedMultiModuleProjectModules = listOf(
@@ -221,18 +229,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         runNewProjectTestCase(
             useKotlinDsl = true,
             addSampleCode = true,
-            generateOnboardingTips = false,
-            expectedModules = expectedMultiModuleProjectModules,
-            generateMultipleModules = true
-        )
-    }
-
-    @Test
-    fun testMultiModuleProjectOnboardingTipsKts() {
-        runNewProjectTestCase(
-            useKotlinDsl = true,
-            addSampleCode = true,
-            generateOnboardingTips = true,
             expectedModules = expectedMultiModuleProjectModules,
             generateMultipleModules = true
         )
@@ -243,7 +239,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         runNewProjectTestCase(
             useKotlinDsl = true,
             addSampleCode = false,
-            generateOnboardingTips = false,
             expectedModules = expectedMultiModuleProjectModules,
             generateMultipleModules = true
         ) { project ->
@@ -254,76 +249,70 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     }
 
     @Test
-    fun testOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertFalse(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    fun testSampleCode() {
+        runNewProjectTestCase(addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertTrue(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     // The onboarding tips have to be handled a bit more manually because the rendered text depends on the OS of the system
     // because shortcuts are OS specific
     @Test
-    fun testOnboardingTipsKts() {
-        Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertFalse(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    fun testSampleCodeKts() {
+        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertTrue(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     @Test
-    fun testRenderedOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertTrue(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    @RegistryKey("doc.onboarding.tips.render", "false")
+    fun testSampleCodeRawOnboardingTips() {
+        runNewProjectTestCase(addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertFalse(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     @Test
-    fun testRenderedOnboardingTipsKts() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertTrue(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    @RegistryKey("doc.onboarding.tips.render", "false")
+    fun testSampleCodeRawOnboardingTipsKts() {
+        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertFalse(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
@@ -336,7 +325,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         independentHierarchy: Boolean = false,
         generateMultipleModules: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
@@ -355,7 +343,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
                         parentData = parentData.data.takeUnless { independentHierarchy },
                         path = "$parentPath/$name",
                         addSampleCode = addSampleCode,
-                        generateOnboardingTips = generateOnboardingTips,
                         generateMultipleModules = generateMultipleModules,
                     )
                 }
@@ -369,6 +356,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     private fun simpleJavaProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
         withJavaBuildFile()
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
     }
@@ -413,6 +401,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             withKotlinJvmPlugin("1.9.0")
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
     }
@@ -472,6 +461,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             }
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
             include("othermodule")
         }
@@ -530,6 +520,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             }
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
         withFile(

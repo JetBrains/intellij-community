@@ -12,12 +12,12 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import javax.swing.Icon
 
-sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
+sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?)
 
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.name, repository) {
-  val currentVersion = PyPackageVersionNormalizer.normalize(instance.version)
+class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository?, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.presentableName, repository) {
+  val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
-  val isEditMode = instance.isEditableMode
+  val isEditMode: Boolean = instance.isEditableMode
   val sourceRepoIcon: Icon?
     get() {
       val condaPackage = instance as? CondaPackage ?: return null
@@ -34,17 +34,13 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
       currentVersion ?: return false
       return nextVersion != null && PyPackageVersionComparator.compare(nextVersion, currentVersion) > 0
     }
-
-  fun withNextVersion(newVersion: PyPackageVersion?): InstalledPackage {
-    return InstalledPackage(instance, repository, newVersion)
-  }
 }
 
 
-class InstallablePackage(name: String, repository: PyPackageRepository) : DisplayablePackage(name, repository)
+class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
 
-class ExpandResultNode(var more: Int, repository: PyPackageRepository) : DisplayablePackage("", repository)
+class ExpandResultNode(var more: Int, override val repository: PyPackageRepository) : DisplayablePackage("", repository)
 
-open class PyPackagesViewData(@NlsSafe val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
+open class PyPackagesViewData(val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
 
 class PyInvalidRepositoryViewData(repository: PyPackageRepository) : PyPackagesViewData(repository, emptyList())

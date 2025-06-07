@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -173,8 +173,7 @@ public final class MethodOrClosureScopeChooser {
     }
   }
 
-  @Nullable
-  public static GrVariable findVariableToUse(@NotNull GrParameterListOwner owner) {
+  public static @Nullable GrVariable findVariableToUse(@NotNull GrParameterListOwner owner) {
     final PsiElement parent = owner.getParent();
     if (parent instanceof GrVariable) return (GrVariable)parent;
     if (parent instanceof GrAssignmentExpression &&

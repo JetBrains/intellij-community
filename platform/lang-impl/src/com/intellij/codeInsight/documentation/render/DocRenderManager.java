@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
-import static com.intellij.codeWithMe.ClientId.withClientId;
+import static com.intellij.codeWithMe.ClientId.withExplicitClientId;
 
 public final class DocRenderManager {
   private static final Key<Boolean> DOC_RENDER_ENABLED = Key.create("doc.render.enabled");
@@ -45,7 +45,7 @@ public final class DocRenderManager {
     if (editor.getEditorKind() == EditorKind.DIFF) return false;
     Boolean value = editor.getUserData(DOC_RENDER_ENABLED);
     boolean enabled;
-    try (AccessToken ignored = withClientId(ClientEditorManager.getClientId(editor))) {
+    try (AccessToken ignored = withExplicitClientId(ClientEditorManager.getClientId(editor))) {
       enabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled();
     }
     return value == null ? enabled : value;

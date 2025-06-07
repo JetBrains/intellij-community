@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
@@ -9,10 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,19 +55,35 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract List<? extends AbstractTestProxy> getAllTests();
 
-  @Nullable
-  public Long getDuration() {
+  public @Nullable Long getDuration() {
     return null;
   }
 
-  @Nullable
-  public String getDurationString(TestConsoleProperties consoleProperties) {
+  /**
+   * Retrieves the customized duration for the test, if available.
+   * Must be consistent with {@link AbstractTestProxy#getDurationString(TestConsoleProperties)}, because it is a value,
+   * which users see in UI
+   * Used to show customized raw values (for example, for reports)
+   * @see TestResultsXmlFormatter
+   *
+   * @param testConsoleProperties the console properties used to configure test behavior and output
+   * @return the duration as a {@link Long} if available, or {@code null} if not specified,
+   * default value is {@link AbstractTestProxy#getDuration()}
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
+    return getDuration();
+  }
+
+  @Nls
+  public @Nullable String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }
 
   public abstract boolean shouldSkipRootNodeForExport();
 
-  protected void fireOnNewPrintable(@NotNull final Printable printable) {
+  protected void fireOnNewPrintable(final @NotNull Printable printable) {
     if (myPrinter != null) {
       myPrinter.onNewAvailable(printable);
     }
@@ -87,13 +102,13 @@ public abstract class AbstractTestProxy extends CompositePrintable {
    * @param printable Printable info
    */
   @Override
-  public void addLast(@NotNull final Printable printable) {
+  public void addLast(final @NotNull Printable printable) {
     super.addLast(printable);
     fireOnNewPrintable(printable);
   }
 
   @Override
-  public void insert(@NotNull final Printable printable, int i) {
+  public void insert(final @NotNull Printable printable, int i) {
     super.insert(printable, i);
     fireOnNewPrintable(printable);
   }
@@ -108,25 +123,22 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   @Override
   public int getExceptionMark() {
-    if (myExceptionMark == 0 && getChildren().size() > 0) {
+    if (myExceptionMark == 0 && !getChildren().isEmpty()) {
       return getChildren().get(0).getExceptionMark();
     }
     return myExceptionMark;
   }
 
-  @NotNull
-  public List<DiffHyperlink> getDiffViewerProviders() {
+  public @NotNull @Unmodifiable List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
     return ContainerUtil.createMaybeSingletonList(provider);
   }
 
-  @Nullable
-  public String getStacktrace() {
+  public @Nullable String getStacktrace() {
     return null;
   }
   
-  @Nullable
-  public DiffHyperlink getLeafDiffViewerProvider() {
+  public @Nullable DiffHyperlink getLeafDiffViewerProvider() {
     DiffHyperlink provider = getDiffViewerProvider();
     if (provider != null) return provider;
     if (isDefect()) {
@@ -138,8 +150,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
-  @Nullable
-  public DiffHyperlink getDiffViewerProvider() {
+  public @Nullable DiffHyperlink getDiffViewerProvider() {
     return null;
   }
 
@@ -153,23 +164,19 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return hyperlink;
   }
 
-  @Nullable
-  public String getLocationUrl() {
+  public @Nullable String getLocationUrl() {
     return null;
   }
 
-  @Nullable
-  public String getMetainfo() {
+  public @Nullable String getMetainfo() {
     return null;
   }
 
-  @Nullable
-  public String getErrorMessage() {
+  public @Nullable String getErrorMessage() {
     return null;
   }
 
-  @Nullable
-  public static TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
+  public static @Nullable TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
     if (proxy instanceof TestProxyRoot) {
       return (TestProxyRoot)proxy;
     }

@@ -357,7 +357,7 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
     GrMethod method =
       PsiTreeUtil.findElementOfClassAtOffset(fixture.getFile(), fixture.getEditor().getCaretModel().getOffset(), GrMethod.class, false);
     UsageInfo[] usages = RenameUtil.findUsages(method, "project", false, false, Map.of(method, "project"));
-    assert (usages[0].isNonCodeUsage ? 1 : 0) + (usages[1].isNonCodeUsage ? 1 : 0) == 1;
+    Assert.assertEquals(1, (usages[0].isNonCodeUsage ? 1 : 0) + (usages[1].isNonCodeUsage ? 1 : 0));
   }
 
   @Test
@@ -486,7 +486,7 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.configureByText("Foo.gy", "class Foo {}");
     fixture.renameElement(fixture.findClass("Foo"), "Bar");
-    assert "gy".equals(fixture.getFile().getVirtualFile().getExtension());
+    Assert.assertEquals("gy", fixture.getFile().getVirtualFile().getExtension());
   }
 
   @Test
@@ -627,10 +627,9 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
       }""");
     try {
       fixture.renameElement(method, "f oo");
-      assert false;
+      Assert.fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) {
-      assert true;
     }
   }
 
@@ -818,10 +817,12 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
       """);
     fixture.addFileToProject("p/intentionallyNonClassName.groovy", "package p; class MyList {}");
     fixture.renameElement(fixture.findClass("p.MyList"), "List");
-    assert usage.getText().equals("""
-                                    import java.util.*;
-                                    
-                                    class C implements List, p.List {}
-                                    """);
+    Assert.assertEquals(
+      """
+        import java.util.*;
+        
+        class C implements List, p.List {}
+        """,
+      usage.getText());
   }
 }

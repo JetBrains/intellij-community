@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,13 +48,13 @@ public final class MagicNumberInspection extends BaseInspection {
   public boolean ignoreInitialCapacity = false;
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
-    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
+    final LocalQuickFix fix = SuppressForTestsScopeFix.build(this, context);
     if (fix == null) {
       return new InspectionGadgetsFix[] {new IntroduceConstantFix()};
     }
-    return new InspectionGadgetsFix[] {new IntroduceConstantFix(), fix};
+    return new LocalQuickFix[] {new IntroduceConstantFix(), fix};
   }
 
   @Override

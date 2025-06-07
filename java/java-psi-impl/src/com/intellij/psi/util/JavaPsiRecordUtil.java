@@ -7,15 +7,23 @@ import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
  * Utility methods to support Java records
  */
 public final class JavaPsiRecordUtil {
+  /**
+   * List of names which are illegal as record component names
+   */
+  public static final Set<String> ILLEGAL_RECORD_COMPONENT_NAMES = ContainerUtil.immutableSet(
+    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
+
   /**
    * @param accessor accessor method for record component
    * @return a corresponding record component, or null if the supplied method is not an accessor for the record component.

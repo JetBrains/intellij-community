@@ -3,5 +3,5 @@
   "file": "JS/src/test/test.kt",
   "newName": "Baz",
   "isMultiModule": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

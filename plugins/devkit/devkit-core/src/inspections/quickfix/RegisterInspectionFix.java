@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,26 +34,24 @@ class RegisterInspectionFix implements IntentionAction {
     myEp = ep;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return DevKitBundle.message("register.inspection.fix.name", myPsiClass.getName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return DevKitBundle.message("register.inspection.fix.family.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !DumbService.isDumb(project);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, element -> doFix(element, project, file));
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    PluginDescriptorChooser.show(project, editor, psiFile, element -> doFix(element, project, psiFile));
   }
 
   private void doFix(final DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
@@ -74,7 +72,7 @@ class RegisterInspectionFix implements IntentionAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return IntentionPreviewInfo.EMPTY;
   }
 }

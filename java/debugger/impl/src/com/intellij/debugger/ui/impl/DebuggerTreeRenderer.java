@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -15,11 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -51,8 +47,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @Nullable
-  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
+  public static @Nullable Icon getDescriptorIcon(NodeDescriptor descriptor) {
     if (descriptor instanceof ThreadGroupDescriptorImpl threadGroupDescriptor) {
       return threadGroupDescriptor.isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup;
     }
@@ -81,7 +76,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor, @Nullable ValueDescriptorImpl parentDescriptor) {
     Icon nodeIcon;
-    if (valueDescriptor instanceof FieldDescriptorImpl fieldDescriptor) {
+    if (valueDescriptor instanceof WatchItemDescriptor) {
+      nodeIcon = AllIcons.Debugger.Db_watch;
+    }
+    else if (valueDescriptor instanceof FieldDescriptorImpl fieldDescriptor) {
       nodeIcon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
       if (parentDescriptor != null) {
         Value value = valueDescriptor.getValue();
@@ -114,9 +112,6 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (valueDescriptor.isPrimitive()) {
       nodeIcon = AllIcons.Debugger.Db_primitive;
     }
-    else if (valueDescriptor instanceof WatchItemDescriptor) {
-      nodeIcon = AllIcons.Debugger.Db_watch;
-    }
     else {
       nodeIcon = AllIcons.Debugger.Value;
     }
@@ -129,20 +124,12 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    // if watches in variables enabled, always use watch icon
-    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Db_watch) {
-      XDebugSession session = XDebuggerManager.getInstance(valueDescriptor.getProject()).getCurrentSession();
-      if (session != null) {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-        if (tab != null && tab.isWatchesInVariables()) {
-          nodeIcon = AllIcons.Debugger.Db_watch;
-        }
-      }
-    }
-
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (valueIcon != null) {
-      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
+      // Keep watch icon to make clear the source of a node, prefer the provided icon otherwise
+      nodeIcon = nodeIcon == AllIcons.Debugger.Db_watch
+                 ? IconManager.getInstance().createRowIcon(nodeIcon, valueIcon)
+                 : valueIcon;
     }
     return nodeIcon;
   }

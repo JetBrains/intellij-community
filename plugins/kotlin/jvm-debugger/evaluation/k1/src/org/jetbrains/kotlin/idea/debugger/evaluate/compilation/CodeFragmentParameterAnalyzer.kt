@@ -6,18 +6,19 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.getCallLabelForLambdaArgument
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory.Companion.FAKE_JAVA_CONTEXT_FUNCTION_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.getThisName
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory.Companion.FAKE_JAVA_CONTEXT_FUNCTION_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Dumb
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -34,7 +35,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
 
-class K1CodeFragmentParameterInfo(
+internal class K1CodeFragmentParameterInfo(
     val smartParameters: List<SmartCodeFragmentParameter>,
     override val crossingBounds: Set<Dumb>
 ) : CodeFragmentParameterInfo {
@@ -52,7 +53,7 @@ class K1CodeFragmentParameterInfo(
     The purpose of this class is to figure out what parameters the received code fragment captures.
     It handles both directly mentioned names such as local variables or parameters and implicit values (dispatch/extension receivers).
  */
-class CodeFragmentParameterAnalyzer(
+internal class CodeFragmentParameterAnalyzer(
     private val context: ExecutionContext,
     private val codeFragment: KtCodeFragment,
     private val bindingContext: BindingContext
@@ -450,4 +451,27 @@ private class OnceUsedChecker(private val clazz: Class<*>) {
 
         used = true
     }
+}
+
+fun getCallLabelForLambdaArgument(declaration: KtFunctionLiteral, bindingContext: BindingContext): String? {
+    val lambdaExpression = declaration.parent as? KtLambdaExpression ?: return null
+    val lambdaExpressionParent = lambdaExpression.parent
+
+    if (lambdaExpressionParent is KtLabeledExpression) {
+        lambdaExpressionParent.name?.let { return it }
+    }
+
+    val callExpression = when (val argument = lambdaExpression.parent) {
+        is KtLambdaArgument -> {
+            argument.parent as? KtCallExpression ?: return null
+        }
+        is KtValueArgument -> {
+            val valueArgumentList = argument.parent as? KtValueArgumentList ?: return null
+            valueArgumentList.parent as? KtCallExpression ?: return null
+        }
+        else -> return null
+    }
+
+    val call = callExpression.getResolvedCall(bindingContext) ?: return null
+    return call.resultingDescriptor.name.asString()
 }

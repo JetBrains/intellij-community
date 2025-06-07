@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.producer
 
 import com.intellij.execution.RunManager
@@ -69,6 +69,16 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurati
     noinline testTasksFilter: (TestName) -> Boolean = { true }
   ) {
     verifyRunConfigurationProducer<P>(expectedSettings, *elements) {
+      setTestTasksChooser(testTasksFilter)
+    }
+  }
+
+  protected inline fun <reified P : GradleTestRunConfigurationProducer> assertConfigurationFromContext(
+    expectedSettings: String,
+    noinline context: () -> ConfigurationContext,
+    noinline testTasksFilter: (TestName) -> Boolean = { true }
+  ) {
+    verifyRunConfigurationProducer<P>(expectedSettings, context) {
       setTestTasksChooser(testTasksFilter)
     }
   }

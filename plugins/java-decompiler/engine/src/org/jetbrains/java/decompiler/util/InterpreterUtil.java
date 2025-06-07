@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.util;
 
 import java.io.*;
@@ -75,7 +75,7 @@ public final class InterpreterUtil {
 
     HashSet<Object> set = new HashSet<>(c1);
     set.removeAll(c2);
-    return (set.size() == 0);
+    return (set.isEmpty());
   }
 
   public static String makeUniqueKey(String name, String descriptor) {

@@ -52,14 +52,14 @@ object PyRuntimeDocstringFormatter {
   }
 
   private fun logPy2NotSupported(): String {
-    val message = PyPsiBundle.message("QDOC.docstring.rendering.is.not.supported.for.python.2")
+    val message = PyPsiBundle.message("QDOC.python.3.sdk.needed.to.render.docstrings")
     LOG.warn(message)
     return logErrorToJsonBody(message)
   }
 
   private fun logSdkNotFound(format: DocStringFormat): String {
     LOG.warn("Python SDK for input formatter $format is not found")
-    return logErrorToJsonBody(PyPsiBundle.message("QDOC.local.sdk.not.found"))
+    return logErrorToJsonBody(PyPsiBundle.message("QDOC.python.3.sdk.needed.to.render.docstrings"))
   }
 
   private fun logScriptError(input: String): String? {

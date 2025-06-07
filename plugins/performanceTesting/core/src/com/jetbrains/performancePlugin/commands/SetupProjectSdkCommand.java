@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,8 +74,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
     }
   }
 
-  @NotNull
-  private Sdk setupOrDetectSdk(@NotNull Consumer<String> logMessage) {
+  private @NotNull Sdk setupOrDetectSdk(@NotNull Consumer<String> logMessage) {
     Sdk oldSdk = ProjectJdkTable.getInstance().findJdk(mySdkName);
     if (oldSdk != null) {
       if (Objects.equals(oldSdk.getSdkType().getName(), mySdkName) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {

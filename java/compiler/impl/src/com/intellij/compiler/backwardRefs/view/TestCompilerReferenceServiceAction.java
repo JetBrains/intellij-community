@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -41,8 +41,7 @@ public abstract class TestCompilerReferenceServiceAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(getPsiElement(e.getDataContext()) != null);
   }
 
-  @Nullable
-  private PsiElement getPsiElement(DataContext dataContext) {
+  private @Nullable PsiElement getPsiElement(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return null;
     final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor,

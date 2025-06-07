@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,13 @@ public final class SplitEditorToolbar extends EditorHeaderComponent {
     super();
     setLayout(new GridBagLayout());
     myRightToolbar = rightToolbar;
-    myLeftToolbarEmpty = leftToolbar == null || leftToolbar.getActions().isEmpty();
+    if (leftToolbar == null) {
+      myLeftToolbarEmpty = true;
+    } else if (leftToolbar.getActionGroup() instanceof DefaultActionGroup defaultActionGroup) {
+      myLeftToolbarEmpty = defaultActionGroup.getChildrenCount() == 0 && leftToolbar.getActions().isEmpty();
+    } else {
+      myLeftToolbarEmpty = leftToolbar.getActions().isEmpty();
+    }
 
     if (leftToolbar != null) {
       add(leftToolbar.getComponent());

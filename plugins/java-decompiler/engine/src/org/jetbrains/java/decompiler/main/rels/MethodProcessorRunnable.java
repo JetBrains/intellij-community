@@ -82,6 +82,7 @@ public class MethodProcessorRunnable implements Runnable {
     mt.expandData(cl);
     InstructionSequence seq = mt.getInstructionSequence();
     ControlFlowGraph graph = new ControlFlowGraph(seq);
+    DecompilerContext.getLimitContainer().incrementAndCheckDirectNodeCount(graph);
 
     DeadCodeHelper.removeDeadBlocks(graph);
 
@@ -178,6 +179,14 @@ public class MethodProcessorRunnable implements Runnable {
       ConcatenationHelper.simplifyStringConcat(root);
     }
 
+    if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
+      if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
+        SequenceHelper.condenseSequences(root);
+        StackVarsProcessor.simplifyStackVars(root, mt, cl);
+        varProc.setVarVersions(root);
+      }
+    }
+
     while (true) {
       LabelHelper.cleanUpEdges(root);
 
@@ -197,13 +206,6 @@ public class MethodProcessorRunnable implements Runnable {
         }
       }
 
-      if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
-        if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-          SequenceHelper.condenseSequences(root);
-          StackVarsProcessor.simplifyStackVars(root, mt, cl);
-          varProc.setVarVersions(root);
-        }
-      }
 
       LabelHelper.identifyLabels(root);
 

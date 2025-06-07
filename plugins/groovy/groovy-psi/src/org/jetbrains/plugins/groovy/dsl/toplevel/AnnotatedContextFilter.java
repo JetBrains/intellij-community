@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,7 +44,7 @@ public class AnnotatedContextFilter implements ContextFilter {
     });
   }
 
-  @Nullable public static PsiAnnotation findContextAnnotation(@NotNull PsiElement context, String annoQName) {
+  public static @Nullable PsiAnnotation findContextAnnotation(@NotNull PsiElement context, String annoQName) {
     PsiElement current = context;
     while (current != null) {
       if (current instanceof PsiModifierListOwner) {
@@ -85,7 +71,7 @@ public class AnnotatedContextFilter implements ContextFilter {
     return null;
   }
 
-  @Nullable private static PsiAnnotation findAnnotation(PsiModifierList modifierList, String annoQName) {
+  private static @Nullable PsiAnnotation findAnnotation(PsiModifierList modifierList, String annoQName) {
     return modifierList != null ? modifierList.findAnnotation(annoQName) : null;
   }
 

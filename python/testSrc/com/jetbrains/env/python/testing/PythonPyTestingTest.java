@@ -33,6 +33,7 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -295,7 +296,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                                               "[root](-)\n" +
                                                               ".test_pytest_parametrized(-)\n" +
                                                               "..test_eval(-)\n" +
-                                                              "...(three plus file-8)(-)\n" +
+                                                              "...(three_plus file-8)(-)\n" +
                                                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                                                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
         }
@@ -326,7 +327,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
               else {
                 configuration.setAdditionalArguments("--debug");
               }
-              configuration.setMetaInfo("test_eval[three plus file-8]");
+              configuration.setMetaInfo("test_eval[three.plus file-8]");
             }
           };
         }
@@ -342,7 +343,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             [root](-)
             .test_pytest_parametrized(-)
             ..test_eval(-)
-            ...(three plus file-8)(-)
+            ...(three_plus file-8)(-)
             """, runner.getFormattedTestTree());
         }
       });
@@ -649,6 +650,32 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkConfiguration(@NotNull PyTestConfiguration configuration, @NotNull PsiElement elementToRightClickOn) {
         super.checkConfiguration(configuration, elementToRightClickOn);
         assertThat("Wrong configuration directory set on new config", configuration.getWorkingDirectory(), Matchers.endsWith("src"));
+      }
+    });
+  }
+
+  /**
+   * New configuration should have the module root as the working directory in the absence of an explicit test root
+   */
+  @Test
+  public void testWorkDirIsModuleRoot() {
+    runPythonTest(new CreateConfigurationTestTask<>(getFrameworkId(), PyTestConfiguration.class) {
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        myFixture.configureByFile("conftest_in_parent_dir/tests/subdir/test_test.py");
+        final PyFunction test = myFixture.findElementByText("test_myfixture", PyFunction.class);
+        assert test != null;
+        return Collections.singletonList(test);
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull PyTestConfiguration configuration, @NotNull PsiElement elementToRightClickOn) {
+        super.checkConfiguration(configuration, elementToRightClickOn);
+        final String moduleRoot = myFixture.getTempDirPath();
+        MatcherAssert.assertThat("Wrong configuration directory set on new config",
+                                 configuration.getWorkingDirectory(),
+                                 Matchers.equalTo(moduleRoot));
       }
     });
   }

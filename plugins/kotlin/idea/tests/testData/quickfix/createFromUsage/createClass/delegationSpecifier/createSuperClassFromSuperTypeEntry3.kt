@@ -1,5 +1,5 @@
 // "Create class 'Unknown'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class A() : Unknown<caret> {
     constructor(i: Int) : this()
 }

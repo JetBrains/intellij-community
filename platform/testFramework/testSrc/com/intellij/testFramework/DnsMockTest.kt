@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.platform.testFramework.io.DnsMock
@@ -15,13 +15,16 @@ class DnsMockTest {
   fun `test dns mock changes existent domain`() {
     val domain = "example.com"
     val realAddresses = InetAddress.getAllByName(domain)
+    realAddresses.sortBy { it.toString() }
     Assertions.assertTrue(
       Inet4Address.getByName("1.2.3.4") !in realAddresses.toList(),
       "The address should not be mocked at the start of the test",
     )
     testMock(domain)
+    val addressesAfter = InetAddress.getAllByName(domain)
+    addressesAfter.sortBy { it.toString() }
     Assertions.assertArrayEquals(
-      InetAddress.getAllByName(domain),
+      addressesAfter,
       realAddresses,
       "When the mock is destroyed, domains should be resolved using production resolver"
     )

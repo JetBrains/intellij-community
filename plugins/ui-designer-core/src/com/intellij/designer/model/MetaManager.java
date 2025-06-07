@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.designer.palette.DefaultPaletteItem;
@@ -92,9 +78,8 @@ public abstract class MetaManager extends ModelLoader {
     }
   }
 
-  @NotNull
   @SuppressWarnings("unchecked")
-  protected MetaModel loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
+  protected @NotNull MetaModel loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
     String modelValue = element.getAttributeValue("model");
     Class<RadComponent> model = modelValue == null ? null : (Class<RadComponent>)classLoader.loadClass(modelValue);
     String target = element.getAttributeValue("class");
@@ -150,23 +135,19 @@ public abstract class MetaManager extends ModelLoader {
     return meta;
   }
 
-  @NotNull
-  protected MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
+  protected @NotNull MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
     return new MetaModel(model, target, tag);
   }
 
-  @NotNull
-  protected DefaultPaletteItem createPaletteItem(Element palette) {
+  protected @NotNull DefaultPaletteItem createPaletteItem(Element palette) {
     return new DefaultPaletteItem(palette);
   }
 
-  @NotNull
-  protected VariationPaletteItem createVariationPaletteItem(PaletteItem paletteItem, MetaModel model, Element itemElement) {
+  protected @NotNull VariationPaletteItem createVariationPaletteItem(PaletteItem paletteItem, MetaModel model, Element itemElement) {
     return new VariationPaletteItem(paletteItem, model, itemElement);
   }
 
-  @NotNull
-  protected PaletteGroup createPaletteGroup(String name) {
+  protected @NotNull PaletteGroup createPaletteGroup(String name) {
     return new PaletteGroup(name);
   }
 
@@ -205,8 +186,7 @@ public abstract class MetaManager extends ModelLoader {
   protected void loadOther(MetaModel meta, Element element) throws Exception {
   }
 
-  @NotNull
-  protected PaletteGroup loadGroup(Element element) throws Exception {
+  protected @NotNull PaletteGroup loadGroup(Element element) throws Exception {
     PaletteGroup group = createPaletteGroup(element.getAttributeValue(NAME));
 
     for (Element itemElement : element.getChildren(ITEM)) {
@@ -251,13 +231,11 @@ public abstract class MetaManager extends ModelLoader {
     myCache.put(key, value);
   }
 
-  @Nullable
-  public MetaModel getModelByTag(String tag) {
+  public @Nullable MetaModel getModelByTag(String tag) {
     return myTag2Model.get(tag);
   }
 
-  @Nullable
-  public MetaModel getModelByTarget(String target) {
+  public @Nullable MetaModel getModelByTarget(String target) {
     return myTarget2Model.get(target);
   }
 

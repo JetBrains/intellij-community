@@ -11,9 +11,8 @@ abstract class IntGraphCommit extends AbstractGraphCommit<Integer> {
     myId = id;
   }
 
-  @NotNull
   @Override
-  public Integer getId() {
+  public @NotNull Integer getId() {
     return myId;
   }
 

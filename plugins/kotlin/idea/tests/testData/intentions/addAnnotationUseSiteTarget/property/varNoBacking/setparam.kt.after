@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: setparam
+// CHOSEN_OPTION: SETTER_PARAMETER|Add use-site target 'setparam'
 // AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A

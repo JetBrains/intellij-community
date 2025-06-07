@@ -39,8 +39,8 @@ public final class WeighingComparable<T,Loc> implements Comparable<WeighingCompa
   public void force() {
     for (int i = 0; i < myComputedWeighs.length; i++) {
       Comparable weight = getWeight(i);
-      if (weight instanceof ForceableComparable) {
-        ((ForceableComparable)weight).force();
+      if (weight instanceof ForceableComparable forceable) {
+        forceable.force();
       }
     }
   }
@@ -89,6 +89,7 @@ public final class WeighingComparable<T,Loc> implements Comparable<WeighingCompa
     return result;
   }
 
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder("[");
     for (int i = 0; i < myComputedWeighs.length; i++) {

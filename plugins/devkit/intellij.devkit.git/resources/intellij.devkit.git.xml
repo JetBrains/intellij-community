@@ -4,6 +4,7 @@
     <plugin id="Git4Idea"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinBuildToolsPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinPluginPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.IntelliJPrePushHandler"/>
   </extensions>

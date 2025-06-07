@@ -5,8 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelombokLoggerAction extends AbstractDelombokAction {
   @Override
-  @NotNull
-  protected DelombokHandler createHandler() {
+  protected @NotNull DelombokHandler createHandler() {
     LombokProcessorManager manager = LombokProcessorManager.getInstance();
     return new DelombokHandler(
       manager.getCommonsLogProcessor(),

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,9 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -77,7 +75,7 @@ public final class GlobalSearchScopesCore {
       NamedScopesHolder holder = NamedScopeManager.getInstance(Objects.requireNonNull(project));
       final PackageSet packageSet = mySet.getValue();
       if (packageSet != null) {
-        if (packageSet instanceof PackageSetBase) return ((PackageSetBase)packageSet).contains(file, project, holder);
+        if (packageSet instanceof PackageSetBase packageSetBase) return packageSetBase.contains(file, project, holder);
         PsiFile psiFile = myManager.findFile(file);
         return psiFile != null && packageSet.contains(psiFile, holder);
       }
@@ -158,7 +156,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return ModuleManager.getInstance(Objects.requireNonNull(getProject())).getUnloadedModuleDescriptions();
     }
 
@@ -251,9 +249,9 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof DirectoryScope &&
-             myDirectory.equals(((DirectoryScope)obj).myDirectory) &&
-             myWithSubdirectories == ((DirectoryScope)obj).myWithSubdirectories;
+      return obj instanceof DirectoryScope directoryScope &&
+             myDirectory.equals(directoryScope.myDirectory) &&
+             myWithSubdirectories == directoryScope.myWithSubdirectories;
     }
 
     @Override
@@ -273,7 +271,7 @@ public final class GlobalSearchScopesCore {
       return myWithSubdirectories ? contains(other.myDirectory) : equals(other);
     }
 
-    private static @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
+    private static @Unmodifiable @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
       if (addDir1 && addDir2) return ContainerUtil.newHashSet(dir1, dir2);
       if (addDir1) return Collections.singleton(dir1);
       if (addDir2) return Collections.singleton(dir2);
@@ -286,7 +284,8 @@ public final class GlobalSearchScopesCore {
     }
   }
 
-  static final class DirectoriesScope extends GlobalSearchScope {
+  @ApiStatus.Internal
+  public static final class DirectoriesScope extends GlobalSearchScope {
     private final Set<? extends VirtualFile> myDirectories;
     private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 
@@ -333,9 +332,9 @@ public final class GlobalSearchScopesCore {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof DirectoriesScope &&
-             myDirectories.equals(((DirectoriesScope)obj).myDirectories) &&
-             myDirectoriesWithSubdirectories.equals(((DirectoriesScope)obj).myDirectoriesWithSubdirectories);
+      return obj instanceof DirectoriesScope directoriesScope &&
+             myDirectories.equals(directoriesScope.myDirectories) &&
+             myDirectoriesWithSubdirectories.equals(directoriesScope.myDirectoriesWithSubdirectories);
     }
 
     @Override

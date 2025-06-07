@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -111,7 +111,7 @@ public final class PersistentFSContentAccessor {
     @Override
     public void close() throws IOException {
       super.close();
-      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
       writeContent(fileId, _out.toByteArraySequence(), fixedSize);
     }

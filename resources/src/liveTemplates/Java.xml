@@ -152,13 +152,13 @@
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
             name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
-      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
             name="main" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
-      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
@@ -341,6 +341,21 @@
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
+
+  <template name="stss" value="try (final var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnSuccess()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="stsf" value="try (final var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnFailure()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

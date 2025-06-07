@@ -2,7 +2,7 @@
 package git4idea.remote.hosting.action
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
@@ -31,7 +31,7 @@ abstract class HostedGitRepositoryReferenceActionGroup : ActionGroup, DumbAware 
     val references = findReferences(e.dataContext).distinct()
     e.presentation.isEnabledAndVisible = references.isNotEmpty()
     e.presentation.isPerformGroup = references.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
+    e.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
     e.presentation.isPopupGroup = true
     e.presentation.isDisableGroupIfEmpty = false
   }

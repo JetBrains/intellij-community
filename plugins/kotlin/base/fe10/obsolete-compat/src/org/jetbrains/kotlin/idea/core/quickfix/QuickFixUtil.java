@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.quickfix;
 
 import com.intellij.psi.PsiFile;
@@ -19,9 +19,8 @@ public final class QuickFixUtil {
     /**
      * @deprecated Avoid using unsafe resolution methods and unwrapping 'DeferredType's.
      */
-    @Nullable
     @Deprecated
-    public static KotlinType getDeclarationReturnType(KtNamedDeclaration declaration) {
+    public static @Nullable KotlinType getDeclarationReturnType(KtNamedDeclaration declaration) {
         PsiFile file = declaration.getContainingFile();
         if (!(file instanceof KtFile)) return null;
         DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(declaration, BodyResolveMode.FULL);

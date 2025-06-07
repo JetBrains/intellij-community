@@ -19,8 +19,10 @@ import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 
 @ApiStatus.Internal
-class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
-  FixWidthSegmentedActionToolbarComponent(place, group) {
+class RunToolbarMainWidgetComponent(
+  val presentation: Presentation,
+  place: String, group: ActionGroup
+) : FixWidthSegmentedActionToolbarComponent(place, group), UiDataProvider {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainWidgetComponent::class.java)
     private var counter: MutableMap<Project, Int> = mutableMapOf()
@@ -185,6 +187,15 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     super.removeProject()
   }
 
+  override fun uiDataSnapshot(sink: DataSink) {
+    val project = popupController?.project ?: return
+    val slotManager = RunToolbarSlotManager.getInstance(project)
+    sink[RunToolbarProcessData.RW_SLOT] = slotManager.mainSlotData.id
+    sink[RunToolbarData.RUN_TOOLBAR_DATA_KEY] = slotManager.mainSlotData
+    sink[RunToolbarData.RUN_TOOLBAR_POPUP_STATE_KEY] = isOpened
+    sink[RunToolbarData.RUN_TOOLBAR_MAIN_STATE] = state
+  }
+
   private fun add(project: Project) {
     popupController = RunToolbarPopupController(project, this)
 
@@ -194,25 +205,6 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     if (!RunToolbarProcess.logNeeded) {
       LOG.info("add value $value RunToolbar")
     }
-
-    DataManager.registerDataProvider(component, DataProvider { key ->
-      when {
-        RunToolbarProcessData.RW_SLOT.`is`(key) -> {
-          slotManager.mainSlotData.id
-        }
-        RunToolbarData.RUN_TOOLBAR_DATA_KEY.`is`(key) -> {
-          slotManager.mainSlotData
-        }
-        RunToolbarData.RUN_TOOLBAR_POPUP_STATE_KEY.`is`(key) -> {
-          isOpened
-        }
-        RunToolbarData.RUN_TOOLBAR_MAIN_STATE.`is`(key) -> {
-          state
-        }
-        else -> null
-      }
-    })
-
     if (value == 1) {
       slotManager.stateListeners.addListener(managerStateListener)
       slotManager.active = true

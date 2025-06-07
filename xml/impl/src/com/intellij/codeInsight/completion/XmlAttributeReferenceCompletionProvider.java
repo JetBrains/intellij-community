@@ -64,7 +64,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
     final XmlTag tag = attribute.getParent();
     final PsiFile file = tag.getContainingFile();
     final XmlExtension extension = XmlExtension.getExtension(file);
-    final String prefix = attribute.getName().contains(":") && XmlAttributeImpl.getRealName(attribute).length() > 0
+    final String prefix = attribute.getName().contains(":") && !XmlAttributeImpl.getRealName(attribute).isEmpty()
                           ? attribute.getNamespacePrefix() + ":"
                           : null;
 
@@ -88,7 +88,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
 
           if (file instanceof XmlFile &&
               namespace != null &&
-              namespace.length() > 0 &&
+              !namespace.isEmpty() &&
               !name.contains(":") &&
               tag.getPrefixByNamespace(namespace) == null) {
             insertHandler = new XmlAttributeInsertHandler(namespace);
@@ -100,7 +100,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           }
           LookupElementBuilder element = LookupElementBuilder.create(name);
           if (descriptor instanceof PsiPresentableMetaData presentableMetaData) {
-            if (descriptor instanceof PsiPresentableMetaDataRenderStrategy renderStrategy && renderStrategy.isExpensiveRender()) {
+            if (descriptor instanceof PsiPresentableMetaDataRenderStrategy renderStrategy && renderStrategy.isRenderExpensive()) {
               element = element.withExpensiveRenderer(new LookupElementRenderer<>() {
                 @Override
                 public void renderElement(LookupElement element, LookupElementPresentation presentation) {

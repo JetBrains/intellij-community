@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,8 +35,7 @@ public final class GroovyToJavaGenerator {
     return result;
   }
 
-  @NotNull
-  static String convertToJavaIdentifier(@NotNull String groovyIdentifier) {
+  static @NotNull String convertToJavaIdentifier(@NotNull String groovyIdentifier) {
     LOG.assertTrue(!groovyIdentifier.isEmpty());
     StringBuilder javaIdentifier = new StringBuilder(groovyIdentifier.length());
     if (!Character.isJavaIdentifierStart(groovyIdentifier.charAt(0))) {

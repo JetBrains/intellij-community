@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
@@ -77,14 +79,21 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         }
         is KaFunctionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+            if (type.isSuspend) {
+                text(KtTokens.SUSPEND_KEYWORD.value)
+                text(" ")
+            }
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
             }
-            val iterator = type.parameterTypes.iterator()
+            val iterator = type.parameters.iterator()
             text("(")
             while (iterator.hasNext()) {
-                printKtType(iterator.next())
+                val valueParameter = iterator.next()
+                if (valueParameter.name != null)
+                    text("${valueParameter.name}: ")
+                printKtType(valueParameter.type)
                 if (iterator.hasNext()) {
                     text(", ")
                 }
@@ -240,7 +249,7 @@ private fun truncatedName(classType: KaClassType): String {
         .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
         ?.let { return it }
 
-    var lastJoinString: String = ""
+    var lastJoinString = ""
     for (name in names.reversed()) {
         val nameAsString = name.asString()
         if (lastJoinString.length + nameAsString.length + 1 > PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH) {

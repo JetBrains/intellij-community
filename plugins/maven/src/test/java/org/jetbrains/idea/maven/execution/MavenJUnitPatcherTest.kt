@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
@@ -669,7 +669,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      FileUtil.getRelativePath(File(projectPath), File(it))
+      getRelativePath(projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -789,7 +789,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      FileUtil.getRelativePath(File(projectPath), File(it))
+      getRelativePath(projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -903,7 +903,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      FileUtil.getRelativePath(File(projectPath), File(it))
+      getRelativePath(projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -913,8 +913,8 @@ org.jetbrains:annotations
     )
   }
 
-  private fun buildDir(path: String): File {
-    return File(File(projectPath), path)
+  private fun buildDir(path: String): String {
+    return Paths.get(projectPath.toString(), path).toCanonicalPath().toString()
   }
 
   private suspend fun patchJavaParameters(mavenJUnitPatcher: MavenJUnitPatcher, module: Module, javaParameters: JavaParameters) {

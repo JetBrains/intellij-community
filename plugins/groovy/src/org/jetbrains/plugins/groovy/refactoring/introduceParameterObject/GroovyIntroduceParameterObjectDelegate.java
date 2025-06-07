@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -62,9 +62,8 @@ public final class GroovyIntroduceParameterObjectDelegate
     PsiType classType =
       elementFactory.createTypeByFQClassName(StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName()));
     return new GrParameterInfo(descriptor.getClassName(), null, null, classType, NEW_PARAMETER, false) {
-      @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
+      public @Nullable PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>>
           delegate = findDelegate(callExpression);
         return delegate != null ? delegate.createNewParameterInitializerAtCallSite(callExpression, descriptor, oldMethodParameters, substitutor) : null;

@@ -15,22 +15,20 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
 public final class FinalStaticMethodInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "final.static.method.problem.descriptor");
   }
@@ -60,7 +58,7 @@ public final class FinalStaticMethodInspection extends BaseInspection {
           || !method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
+      if (!JavaPsiModifierUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

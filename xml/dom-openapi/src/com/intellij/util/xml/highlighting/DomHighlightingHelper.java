@@ -5,6 +5,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public abstract class DomHighlightingHelper {
 
-  public abstract @NotNull List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
+  public abstract @Unmodifiable @NotNull List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
 
   public abstract @NotNull List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
 

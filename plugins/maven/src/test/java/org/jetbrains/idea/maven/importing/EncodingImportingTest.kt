@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -14,7 +14,7 @@ class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
     val text = byteArrayOf(-12, -59, -53, -45, -44) // Russian text in koi8-r encoding.
 
     val file = createProjectSubFile("src/main/resources/A.txt")
-    writeAction {
+    edtWriteAction {
       file.setBinaryContent(text)
     }
 
@@ -39,7 +39,7 @@ class EncodingImportingTest : MavenMultiVersionImportingTestCase() {
     val text = byteArrayOf(-12, -59, -53, 45, -44) // Russian text in koi8-r encoding.
 
     val file = createProjectSubFile("src/main/resources/A.txt")
-    writeAction {
+    edtWriteAction {
       file.setBinaryContent(text)
     }
 

@@ -139,9 +139,8 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     state.sshPrivateKeyPath = myPrivateKeyPathField.getText();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 
@@ -155,8 +154,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     setSelected(mySubversionConfigChoice, value);
   }
 
-  @NotNull
-  private SvnConfiguration.SshConnectionType getConnectionChoice() {
+  private @NotNull SvnConfiguration.SshConnectionType getConnectionChoice() {
     JBRadioButton selected = myPasswordChoice.isSelected()
                              ? myPasswordChoice
                              : myPrivateKeyChoice.isSelected()

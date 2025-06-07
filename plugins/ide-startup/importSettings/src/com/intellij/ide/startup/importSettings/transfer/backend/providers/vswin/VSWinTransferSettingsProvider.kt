@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin
 
 import com.intellij.icons.AllIcons
@@ -9,11 +9,11 @@ import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileDetectorUtils
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHiveDetourFileNotFoundException
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 private val logger = logger<VSWinTransferSettingsProvider>()
 class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
-  override val transferableIdeId = TransferableIdeId.VisualStudio
+  override val transferableIdeId: TransferableIdeId = TransferableIdeId.VisualStudio
   override val name: String = "Visual Studio"
 
   private val defaultAdvice: @Nls String = IdeBundle.message("transfersettings.vs.quit.advise")
@@ -80,7 +80,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       val registry = try {
         hive.registry
       }
-      catch (t: VSHiveDetourFileNotFoundException) {
+      catch (_: VSHiveDetourFileNotFoundException) {
         logger.info("File not found. Probably vs was uninstalled")
 
         return@mapNotNull null

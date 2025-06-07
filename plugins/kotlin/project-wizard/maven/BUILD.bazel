@@ -1,0 +1,30 @@
+### auto-generated section `build kotlin.project-wizard.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "maven_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven",
+  module_name = "kotlin.project-wizard.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/idea",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/observable",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/maven",
+  ],
+  runtime_deps = [":maven_resources"]
+)
+### auto-generated section `build kotlin.project-wizard.maven` end

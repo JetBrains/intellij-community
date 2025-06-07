@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * User : ktisha
  */
 public class RestLine extends RestElement implements PsiLanguageInjectionHost {
-  public RestLine(@NotNull final ASTNode node) {
+  public RestLine(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -35,9 +35,8 @@ public class RestLine extends RestElement implements PsiLanguageInjectionHost {
     return this;
   }
 
-  @NotNull
   @Override
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new LiteralTextEscaper<PsiLanguageInjectionHost>(this) {
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {

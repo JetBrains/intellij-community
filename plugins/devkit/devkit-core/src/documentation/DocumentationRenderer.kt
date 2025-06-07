@@ -1,17 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
+import com.intellij.icons.AllIcons
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
+import javax.swing.Icon
 
 private const val HEADER_LEVEL = "#####"
-
-// FIXME: group@class - class links don't work
 
 @Service(Level.PROJECT)
 internal class DocumentationRenderer(private val project: Project) {
@@ -33,8 +35,9 @@ internal class DocumentationRenderer(private val project: Project) {
     val markdownContent = this
       .adjustLinks(baseUrl)
       .deleteSelfLinks(elementPath)
+      .deleteInternalLinks()
       .adjustClassLinks()
-      .deleteCalloutAttributes()
+      .convertCallouts()
     return runReadAction { DocMarkdownToHtmlConverter.convert(project, markdownContent) }
       .removeWritersideSpecificTags()
   }
@@ -67,9 +70,20 @@ internal class DocumentationRenderer(private val project: Project) {
       if (url.startsWith(ELEMENT_PATH_PREFIX) || url.startsWith(ATTRIBUTE_PATH_PREFIX)) {
         val rawPath = url.removePrefix(ELEMENT_PATH_PREFIX).removePrefix(ATTRIBUTE_PATH_PREFIX)
         if (rawPath == elementPathString) text else "[$text]($PSI_ELEMENT_PROTOCOL$url)"
-      } else {
+      }
+      else {
         matchResult.value
       }
+    }
+  }
+
+  private fun CharSequence.deleteInternalLinks(): String {
+    val internalLinkRegex = Regex("\\[([^]]*)]\\(([^ )]*)\\)\\{internal}")
+    val isIntelliJPlatformProject = IntelliJProjectUtil.isIntelliJPlatformProject(project)
+    return internalLinkRegex.replace(this) { matchResult ->
+      val text = matchResult.groupValues[1]
+      val url = matchResult.groupValues[2]
+      if (isIntelliJPlatformProject) "[$text]($url)" else text
     }
   }
 
@@ -82,22 +96,89 @@ internal class DocumentationRenderer(private val project: Project) {
     }
   }
 
-  private fun CharSequence.deleteCalloutAttributes(): String {
-    return this.replace(Regex("\\{style=.*?}"), "")
+  private fun CharSequence.convertCallouts(): String {
+    val content = StringBuilder()
+    val lines = this.lines()
+    var i = 0
+    while (i < lines.size) {
+      val line = lines[i]
+      if (line.trim().startsWith("> ")) {
+        val calloutStart = i
+        i++
+        while (i < lines.size) {
+          val trimmedLine = lines[i].trim()
+          if (trimmedLine.startsWith("> ") || trimmedLine == ">" || trimmedLine.isAttributesLine()) {
+            i++
+          }
+          else {
+            break
+          }
+        }
+        content.appendLine(buildCalloutHeader(lines[i]))
+        for (j in calloutStart until i) {
+          if (!lines[j].isAttributesLine()) {
+            content.appendLine(lines[j])
+          }
+        }
+      }
+      else {
+        content.appendLine(line)
+      }
+      i++
+    }
+    return content.toString()
+  }
+
+  private fun buildCalloutHeader(attributesLine: String): String {
+    val attributes = parseAttributes(attributesLine)
+    val indent = attributesLine.takeWhile { it == ' ' }
+    val style = attributes["style"]
+    val icon = when (style) {
+      "warning" -> "AllIcons.General.Warning" to AllIcons.General.Warning
+      "info" -> "AllIcons.General.Information" to AllIcons.General.Information
+      else -> "AllIcons.Actions.IntentionBulbGrey" to AllIcons.Actions.IntentionBulbGrey
+    }
+    val text = attributes["title"] ?: when (style) {
+      "warning" -> "Warning"
+      "info" -> "Information"
+      else -> "Tip"
+    }
+    return "${indent}> ${buildIconTitle(icon.first, icon.second, text)}<br>"
+  }
+
+  private fun buildIconTitle(iconId: String, icon: Icon, text: String): String {
+    return "${HtmlChunk.icon(iconId, icon)}&nbsp;<b>$text</b>"
+  }
+
+  private fun String.isAttributesLine(): Boolean {
+    return matches(Regex("^\\s*\\{*?}\\s*"))
+  }
+
+  private fun parseAttributes(input: String): Map<String, String> {
+    val attributes = mutableMapOf<String, String>()
+    val pattern = """(\w+)\s*=\s*(?:'([^']*)'|"([^"]*)"|(\S+))""".toRegex()
+    pattern.findAll(input.trim().removeSurrounding("{", "}")).forEach { matchResult ->
+      val (key, singleQuoted, doubleQuoted, unquoted) = matchResult.destructured
+      val value = singleQuoted.ifEmpty { doubleQuoted.ifEmpty { unquoted } }
+      attributes[key] = value
+    }
+    return attributes
   }
 
   private fun StringBuilder.appendElement(element: Element): StringBuilder {
     appendElementPath(element.path)
     appendLine("<hr/>")
-    appendDeprecation(element)
+    appendDeprecation(element.deprecatedSince, element.deprecationNote)
     appendSinceUntil(element.since, element.until)
     element.description?.trim()?.let { appendLine("$it\n") }
+    appendNamespace(element.namespace)
     appendRequirement(element.requirement)
     appendDefaultValue(element.defaultValue)
     appendAttributes(element.attributes)
-    appendChildren(element.children)
+    appendChildren(element)
     appendExamples(element.examples)
     appendReferences(element.references)
+    appendInternalNote(element.getOwnOrParentInternalNote())
     return this
   }
 
@@ -107,31 +188,41 @@ internal class DocumentationRenderer(private val project: Project) {
       if (i > 0) {
         append(" / ")
       }
-      append(elementLink(linkElements[i], linkElements.take(i + 1)))
+      append(elementLinkOrWildcard(linkElements[i], linkElements.take(i + 1)))
     }
     if (linkElements.isNotEmpty()) {
       append(" / ")
     }
     val lastElementName = elementPath.last()
     if (linkForLast) {
-      append(elementLink(lastElementName, elementPath))
+      append(elementLinkOrWildcard(lastElementName, elementPath))
     }
     else {
       append("**`<$lastElementName>`**")
     }
   }
 
-  private fun elementLink(text: String, path: List<String>): String {
-    val linkPath = path.toPathString()
-    return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
+  private fun elementLinkOrWildcard(text: String, path: List<String>): String {
+    if (text != "*") {
+      val linkPath = path.toPathString()
+      return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
+    }
+    else {
+      return "`*`"
+    }
   }
 
-  private fun StringBuilder.appendDeprecation(element: Element) {
-    if (element.deprecatedSince != null) {
+  private fun StringBuilder.appendDeprecation(deprecatedSince: String?, deprecationNote: String?) {
+    if (deprecatedSince != null || deprecationNote != null) {
       append("**_")
-      append("Deprecated since ${element.deprecatedSince}")
+      if (deprecatedSince != null) {
+        append("Deprecated since ${deprecatedSince}")
+      }
+      else {
+        append("Deprecated")
+      }
       append("_**")
-      val deprecationNote = element.deprecationNote
+      val deprecationNote = deprecationNote
       if (deprecationNote != null) {
         append("<br/>")
         val italicDeprecationNote = deprecationNote.lines().joinToString(separator = "\n") { if (it.isNotEmpty()) "_${it}_" else it }
@@ -158,6 +249,12 @@ internal class DocumentationRenderer(private val project: Project) {
       appendLine('_')
       appendLine()
     }
+  }
+
+  private fun StringBuilder.appendNamespace(namespace: String?) {
+    if (namespace == null) return
+    appendLine("$HEADER_LEVEL Namespace")
+    appendLine("`$namespace`")
   }
 
   private fun StringBuilder.appendRequirement(requirement: Requirement?) {
@@ -189,10 +286,14 @@ internal class DocumentationRenderer(private val project: Project) {
   }
 
   private fun StringBuilder.appendAttributes(attributes: List<AttributeWrapper>) {
-    if (attributes.isNotEmpty()) {
+    val includedAttributes = attributes
+      .mapNotNull { it.attribute }
+      .filter { it.isIncludedInDocProvider() }
+    if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
-      for (attribute in attributes.mapNotNull { it.attribute }) {
-        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}${getRequirementSimpleText(attribute.requirement)}")
+      for (attribute in includedAttributes) {
+        val attributeDetails = getDetails(attribute.getOwnOrParentInternalNote(), attribute.requirement)
+        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}$attributeDetails")
       }
     }
   }
@@ -202,25 +303,44 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun getRequirementSimpleText(requirement: Requirement?): String {
-    requirement ?: return ""
-    return when (requirement.required) {
-      Required.YES -> " _required_"
-      Required.YES_FOR_PAID -> " _required for paid/freemium_"
-      else -> ""
+  private fun getDetails(internalNote: String?, requirement: Requirement?): String {
+    val details = mutableListOf<String>()
+    if (internalNote != null) {
+      details.add("internal")
     }
+    if (requirement != null) {
+      val requiredDetails = when (requirement.required) {
+        Required.YES -> "required"
+        Required.YES_FOR_PAID -> "required for paid/freemium"
+        else -> null
+      }
+      if (requiredDetails != null) {
+        details.add("**$requiredDetails**")
+      }
+    }
+    if (details.isEmpty()) return ""
+    return details.joinToString(prefix = " ", separator = "; ") { "_${it}_" }
   }
 
-  private fun StringBuilder.appendChildren(children: List<ElementWrapper>) {
-    if (children.isEmpty()) return
+  private fun StringBuilder.appendChildren(element: Element) {
+    if (element.children.isEmpty() && element.childrenDescription == null) return
     appendLine("\n$HEADER_LEVEL Children")
-    for (child in children) {
-      val childElement = child.element ?: continue
-      val linkText = childElement.name
-      val linkPath = childElement.path.toPathString()
-      appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
+    if (element.childrenDescription != null) {
+      appendLine(element.childrenDescription)
+      appendParagraphSeparator()
     }
-    appendParagraphSeparator()
+    else {
+      for (child in element.children) {
+        val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
+        if (!childElement.isIncludedInDocProvider()) continue
+        val linkText = childElement.name
+        val linkPath = childElement.path.toPathString()
+        val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
+        val childDetails = getDetails(childElement.getOwnOrParentInternalNote(), childElement.requirement)
+        appendLine("- [`<$linkText>`]($linkUrl)$childDetails")
+      }
+      appendParagraphSeparator()
+    }
   }
 
   private fun StringBuilder.appendExamples(examples: List<String>?) {
@@ -244,6 +364,12 @@ internal class DocumentationRenderer(private val project: Project) {
     append(references.joinToString(separator = "\n") { "- $it" })
   }
 
+  private fun StringBuilder.appendInternalNote(internalNote: String?) {
+    internalNote ?: return
+    appendLine("\n###### ${buildIconTitle("AllIcons.General.Warning", AllIcons.General.Warning, "Internal Use Only")}")
+    append(internalNote.trim())
+  }
+
   @NlsSafe
   fun renderAttribute(attribute: Attribute, baseUrl: String): String {
     return StringBuilder().appendAttribute(attribute).toDocHtml(baseUrl, attribute.path)
@@ -252,14 +378,16 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendAttribute(attribute: Attribute): StringBuilder {
     appendAttributePath(attribute.path)
     appendLine("<hr/>")
+    appendDeprecation(attribute.deprecatedSince, attribute.deprecationNote)
     appendSinceUntil(attribute.since, attribute.until)
-    attribute.description?.trim()?.let { append(it) }
+    attribute.description?.trim()?.let { append("$it\n") }
     appendParagraphSeparator()
     appendAttributeRequirement(attribute.requirement)
     appendParagraphSeparator()
     attribute.defaultValue?.trim()?.let {
-      append("Default value: `$it`")
+      append("Default value: $it")
     }
+    appendInternalNote(attribute.getOwnOrParentInternalNote())
     return this
   }
 

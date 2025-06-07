@@ -25,6 +25,16 @@ class SshPromptsTest {
     regexShouldMatch(SshPrompts.PASSWORD_PROMPT, "User1's password:", "User1") { SshPrompts.extractUsername(it) }
   }
 
+  @Test
+  fun testStripConfirmationOptions() {
+    assertEquals("Text. ${SshPrompts.CONFIRM_CONNECTION_PROMPT}?",
+                 SshPrompts.stripConfirmConnectionOptions("Text. Are you sure you want to continue connecting (yes/no)?"))
+    assertEquals(SshPrompts.CONFIRM_CONNECTION_PROMPT + "?",
+                 SshPrompts.stripConfirmConnectionOptions("${SshPrompts.CONFIRM_CONNECTION_PROMPT} (yes/no)?"))
+    assertEquals(SshPrompts.CONFIRM_CONNECTION_PROMPT + "?",
+                 SshPrompts.stripConfirmConnectionOptions("${SshPrompts.CONFIRM_CONNECTION_PROMPT} (yes/no/[fingerprint])?"))
+  }
+
   private fun passphraseRegexShouldMatch(input: String, expected: String) {
     regexShouldMatch(SshPrompts.PASSPHRASE_PROMPT, input, expected) { SshPrompts.extractKeyPath(it) }
   }

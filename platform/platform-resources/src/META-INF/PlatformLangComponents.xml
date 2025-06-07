@@ -1,4 +1,4 @@
-<!--suppress PluginXmlDynamicPlugin -->
+<!--suppress PluginXmlDynamicPlugin, PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
@@ -14,13 +14,15 @@
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
     />
-    <uiDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
-
     <projectService
       serviceInterface="com.intellij.problems.WolfTheProblemSolver"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
       headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
     />
+    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
+                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
+                        serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <!-- no preload="await" - requested by DaemonListeners -->
     <projectService
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
@@ -31,14 +33,8 @@
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
-      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"/>
-    <workspace.bridgeInitializer
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
+      serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
-
-    <initProjectActivity
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
-      order="first"/>
 
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressingStartupActivity" />
 
@@ -89,8 +85,8 @@
     <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
-    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoClientState" client="all"/>
+    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoClientState" client="all"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider"
@@ -106,12 +102,12 @@
     <registryKey
       key="auto.hide.all.tool.windows.on.focus.change"
       description="If enabled, hide all auto-hide tool windows on any focus change, otherwise hide only the one that lost focus"
-      defaultValue="false"
+      defaultValue="true"
     />
     <registryKey
       key="auto.hide.all.tool.windows.on.any.action"
       description="If enabled, any action will cause auto-hide tool windows to be hidden"
-      defaultValue="false"
+      defaultValue="true"
     />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
@@ -157,8 +153,8 @@
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
 
     <applicationService
-      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
-      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo"
+      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingInlaysInfo" />
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     
@@ -175,22 +171,26 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
+
+    <applicationService serviceInterface="com.intellij.util.gist.GistManager"
+                        serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"
+                        serviceImplementation="com.intellij.util.gist.storage.GistStorageImpl"/>
+
+    <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
+                        serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
+
+    <!--XNext-->
+    <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
+                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
+    <!---->
+
+    <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />
+
   </extensions>
 
-  <!--suppress PluginXmlDynamicPlugin -->
-  <module-components>
-    <component>
-      <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.facet.FacetManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge</implementation-class>
-    </component>
-  </module-components>
-
   <applicationListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
@@ -208,7 +208,7 @@
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsListener"
               topic="com.intellij.notification.Notifications"/>
@@ -227,15 +227,12 @@
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
 
-    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener"
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="true" activeInTestMode="false"/>
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-
-    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
               activeInHeadlessMode="false"/>
@@ -269,13 +266,11 @@
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
   <projectListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
-    <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
-              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 

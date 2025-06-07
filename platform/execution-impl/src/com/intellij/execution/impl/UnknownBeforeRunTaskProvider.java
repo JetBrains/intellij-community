@@ -84,6 +84,7 @@ public final class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<Un
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -96,6 +97,7 @@ public final class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<Un
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + JDOMUtil.hashCode(myConfig, false);

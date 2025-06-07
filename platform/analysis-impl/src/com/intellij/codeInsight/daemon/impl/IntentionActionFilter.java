@@ -29,22 +29,22 @@ public interface IntentionActionFilter {
   ExtensionPointName<IntentionActionFilter> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.daemon.intentionActionFilter");
 
   /**
-   * @param file - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
+   * @param psiFile - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
    * @return true if the element must be accepted
    * Default implementation delegates to {@link #accept(IntentionAction, PsiFile, int)}
    */
-  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-    return accept(intentionAction, file, -1);
+  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile) {
+    return accept(intentionAction, psiFile, -1);
   }
   
   /**
-   * @param file - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
+   * @param psiFile - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
    * @param offset - offset within file where the intention is displayed. May be -1 if not known.
    * @return true if the element must be accepted
    * Default implementation delegates to {@link #accept(IntentionAction, PsiFile)}
    */
-  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file, int offset) {
-    return accept(intentionAction, file);
+  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile, int offset) {
+    return accept(intentionAction, psiFile);
   }
 }
 

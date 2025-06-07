@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
@@ -62,7 +62,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
             final TextRange textRange = xmlAttribute.getTextRange();
             caretAt = valueElement == null
                       ? textRange.getStartOffset()
-                      : getClosingQuote(xmlAttribute).length() == 0 ? textRange.getEndOffset() : caretAt;
+                      : getClosingQuote(xmlAttribute).isEmpty() ? textRange.getEndOffset() : caretAt;
           }
 
           if (tagNameText == null) {
@@ -180,7 +180,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
-    return xmlAttribute == null || getClosingQuote(xmlAttribute).length() != 0;
+    return xmlAttribute == null || !getClosingQuote(xmlAttribute).isEmpty();
   }
 
   protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {
@@ -201,7 +201,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     }
 
     final String s = element.getText();
-    if (s != null && s.length() > 0) {
+    if (s != null && !s.isEmpty()) {
       if (s.charAt(0) == '"' && s.charAt(s.length() - 1) != '"') {
         return "\"";
       }

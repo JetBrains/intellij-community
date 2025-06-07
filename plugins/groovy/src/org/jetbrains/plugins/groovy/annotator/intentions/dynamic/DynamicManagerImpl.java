@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -170,8 +170,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @NotNull
-  public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
+  public @NotNull Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
 
     if (classElement != null) {
@@ -181,8 +180,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @Nullable
-  public String getPropertyType(String className, String propertyName) {
+  public @Nullable String getPropertyType(String className, String propertyName) {
     final DPropertyElement dynamicProperty = findConcreteDynamicProperty(getRootElement(), className, propertyName);
 
     if (dynamicProperty == null) return null;
@@ -190,8 +188,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @NotNull
-  public Collection<DClassElement> getAllContainingClasses() {
+  public @NotNull Collection<DClassElement> getAllContainingClasses() {
     //TODO: use iterator
     final DRootElement root = getRootElement();
 
@@ -204,8 +201,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @Nullable
-  public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
+  public @Nullable String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
     if (classElement == null) return null;
 
@@ -221,8 +217,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @Nullable
-  public String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
+  public @Nullable String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
     final DPropertyElement property = findConcreteDynamicProperty(className, propertyName);
 
     if (property == null) return null;
@@ -236,11 +231,10 @@ public final class DynamicManagerImpl extends DynamicManager {
   * Find dynamic property in class with name
   */
 
-  @Nullable
-  private static DMethodElement findConcreteDynamicMethod(DRootElement rootElement,
-                                                          String containingClassName,
-                                                          String methodName,
-                                                          String[] parametersTypes) {
+  private static @Nullable DMethodElement findConcreteDynamicMethod(DRootElement rootElement,
+                                                                    String containingClassName,
+                                                                    String methodName,
+                                                                    String[] parametersTypes) {
     DClassElement classElement = findClassElement(rootElement, containingClassName);
     if (classElement == null) return null;
 
@@ -285,8 +279,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @NotNull
-  public DClassElement getOrCreateClassElement(Project project, String className) {
+  public @NotNull DClassElement getOrCreateClassElement(Project project, String className) {
     DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
     if (classElement == null) {
       return new DClassElement(project, className);
@@ -296,8 +289,7 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @Nullable
-  public DClassElement getClassElementByItem(DItemElement itemElement) {
+  public @Nullable DClassElement getClassElementByItem(DItemElement itemElement) {
     final Collection<DClassElement> classes = getAllContainingClasses();
     for (DClassElement aClass : classes) {
       if (aClass.containsElement(itemElement)) return aClass;
@@ -348,13 +340,11 @@ public final class DynamicManagerImpl extends DynamicManager {
   }
 
   @Override
-  @Nullable
-  public DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName) {
+  public @Nullable DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName) {
     return findConcreteDynamicProperty(getRootElement(), containingClassName, propertyName);
   }
 
-  @Nullable
-  private static DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String containingClassName, final String propertyName) {
+  private static @Nullable DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String containingClassName, final String propertyName) {
     final DClassElement classElement = rootElement.getClassElement(containingClassName);
 
     if (classElement == null) return null;
@@ -362,8 +352,7 @@ public final class DynamicManagerImpl extends DynamicManager {
     return classElement.getPropertyByName(propertyName);
   }
 
-  @Nullable
-  private static DClassElement findClassElement(DRootElement rootElement, final String containingClassName) {
+  private static @Nullable DClassElement findClassElement(DRootElement rootElement, final String containingClassName) {
     return rootElement.getClassElement(containingClassName);
   }
 

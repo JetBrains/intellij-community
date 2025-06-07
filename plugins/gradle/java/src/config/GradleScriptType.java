@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.execution.Location;
@@ -34,9 +34,8 @@ public final class GradleScriptType extends GroovyRunnableScriptType {
     super(GradleConstants.EXTENSION);
   }
 
-  @NotNull
   @Override
-  public Icon getScriptIcon() {
+  public @NotNull Icon getScriptIcon() {
     return GradleIcons.GradleFile;
   }
 
@@ -55,13 +54,12 @@ public final class GradleScriptType extends GroovyRunnableScriptType {
   public GlobalSearchScope patchResolveScopeInner(@Nullable Module module, @NotNull GlobalSearchScope baseScope) {
     if (module == null) return GlobalSearchScope.EMPTY_SCOPE;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return baseScope;
-    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Project project = module.getProject();
     GlobalSearchScope[] jdkScopes = Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
       .filter(entry -> entry instanceof JdkOrderEntry)
       .map(entry -> LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry))
       .toArray(GlobalSearchScope[]::new);
-    result = jdkScopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(jdkScopes);
+    GlobalSearchScope result = jdkScopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(jdkScopes);
 
     String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (modulePath == null) return result;

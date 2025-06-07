@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 
 import java.util.Map;
@@ -177,7 +178,7 @@ public class VarType implements Type {  // TODO: optimize switch
     };
   }
 
-  public VarType decreaseArrayDim() {
+  public @NotNull VarType decreaseArrayDim() {
     if (getArrayDim() > 0) {
       return new VarType(getType(), getArrayDim() - 1, getValue());
     }

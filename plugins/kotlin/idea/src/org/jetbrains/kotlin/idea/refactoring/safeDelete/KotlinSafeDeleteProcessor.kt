@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
@@ -7,7 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
@@ -19,7 +20,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.annotations.TestOnly
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -35,12 +36,14 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -76,7 +79,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                     if (it.hasActualModifier()) it.project.projectScope() else it.useScope(),
                     kotlinOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = true)
                 )
-                ReferencesSearch.search(searchParameters).asSequence()
+                ReferencesSearch.search(searchParameters).asIterable().asSequence()
                     .filterNot { reference -> getIgnoranceCondition().value(reference.element) }
             }
         }
@@ -198,7 +201,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             val parameterList = owner.typeParameters
             val parameterIndex = parameterList.indexOf(parameter)
 
-            for (reference in ReferencesSearch.search(owner)) {
+            for (reference in ReferencesSearch.search(owner).asIterable()) {
                 if (reference !is KtReference) continue
 
                 val referencedElement = reference.element
@@ -294,25 +297,31 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         } ?: getSearchInfo(element)
     }
 
-    override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): MutableCollection<String>? {
+    override fun findConflicts(
+        element: PsiElement,
+        allElementsToDelete: Array<PsiElement>,
+        usages: Array<UsageInfo>,
+        conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>
+    ) {
+        super.findConflicts(element, allElementsToDelete, usages, conflicts)
         if (element is KtNamedFunction || element is KtProperty) {
             val ktClass = element.getNonStrictParentOfType<KtClass>()
-            if (ktClass == null || ktClass.body != element.parent) return null
+            if (ktClass == null || ktClass.body != element.parent) return
 
             val modifierList = ktClass.modifierList
-            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
+            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
 
             val bindingContext = (element as KtElement).analyze()
 
             val declarationDescriptor =
-                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? CallableMemberDescriptor ?: return null
+                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? CallableMemberDescriptor ?: return
 
-            return declarationDescriptor.overriddenDescriptors
+            declarationDescriptor.overriddenDescriptors
                 .asSequence()
                 .filter { overridenDescriptor -> overridenDescriptor.modality == Modality.ABSTRACT }
-                .mapTo(ArrayList()) { overridenDescriptor ->
+                .forEach { overridenDescriptor ->
                     val oElement = DescriptorToSourceUtils.getSourceFromDescriptor(overridenDescriptor)
-                    KotlinBundle.message(
+                    val message = KotlinBundle.message(
                         "override.declaration.x.implements.y",
                         ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT),
                         if (oElement != null) ElementDescriptionUtil.getElementDescription(
@@ -320,10 +329,9 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                             RefactoringDescriptionLocation.WITH_PARENT
                         ) else IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(overridenDescriptor),
                     )
+                    conflicts.putValue(oElement, StringUtil.capitalize(message))
                 }
         }
-
-        return super.findConflicts(element, allElementsToDelete)
     }
 
     /*

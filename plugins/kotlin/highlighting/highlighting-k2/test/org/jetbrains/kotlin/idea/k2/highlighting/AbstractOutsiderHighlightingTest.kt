@@ -11,6 +11,8 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.utils.editor.getVirtualFile
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
@@ -81,6 +83,9 @@ abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtu
             diffVirtualFile.bindTestPath(diffPath)
 
             myFixture.openFileInEditor(diffVirtualFile)
+
+            val diffKaModule = myFixture.file.getKaModule(project, useSiteModule = null)
+            assertInstanceOf(diffKaModule, KaSourceModuleForOutsider::class.java)
 
             // Note: errors from outsider files are explicitly disabled. Use warnings instead.
             // See OutsidersPsiFileSupport.HighlightFilter.

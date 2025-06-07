@@ -3,5 +3,5 @@
  * Legacy (V1) new project API. Only used by DS (will be migrated soon), external plugins and python plugin.
  * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 package com.jetbrains.python.newProject;

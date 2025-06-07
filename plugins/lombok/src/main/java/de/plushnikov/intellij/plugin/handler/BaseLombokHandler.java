@@ -22,13 +22,13 @@ import java.util.Set;
 public abstract class BaseLombokHandler implements CodeInsightActionHandler {
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (file.isWritable()) {
-      PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, file, false);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (psiFile.isWritable()) {
+      PsiClass psiClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, false);
       if (null != psiClass) {
         processClass(psiClass);
 
-        UndoUtil.markPsiFileForUndo(file);
+        UndoUtil.markPsiFileForUndo(psiFile);
       }
     }
   }
@@ -145,8 +145,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     }
   }
 
-  @Nullable
-  protected PsiMethod findPublicNonStaticMethod(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull PsiType returnType, PsiType... params) {
+  protected @Nullable PsiMethod findPublicNonStaticMethod(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull PsiType returnType, PsiType... params) {
     final PsiMethod[] toStringMethods = psiClass.findMethodsByName(methodName, false);
     for (PsiMethod method : toStringMethods) {
       if (method.hasModifierProperty(PsiModifier.PUBLIC) &&

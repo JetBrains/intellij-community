@@ -190,7 +190,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
 
   private static int parseInt(String s) {
     try {
-      return s.length() > 0 ? Integer.parseInt(s) : -1;
+      return !s.isEmpty() ? Integer.parseInt(s) : -1;
     } catch (NumberFormatException e) {
       return -1;
     }

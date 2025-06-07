@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.ide.IdeCoreBundle
@@ -21,14 +21,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 
-@ApiStatus.Internal
-class CommandLineDialog(
+internal class CommandLineDialog(
   project: Project,
   private val commandLineField: CommandLineField,
   private val commandLineInfo: CommandLineInfo

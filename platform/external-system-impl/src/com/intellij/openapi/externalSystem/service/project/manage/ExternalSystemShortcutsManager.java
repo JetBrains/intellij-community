@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
@@ -28,8 +28,7 @@ import java.util.Collection;
 @ApiStatus.Internal
 public class ExternalSystemShortcutsManager implements Disposable {
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
@@ -50,8 +49,7 @@ public class ExternalSystemShortcutsManager implements Disposable {
     });
   }
 
-  @NotNull
-  public String getActionId(@Nullable String projectPath, @Nullable String taskName) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String taskName) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 

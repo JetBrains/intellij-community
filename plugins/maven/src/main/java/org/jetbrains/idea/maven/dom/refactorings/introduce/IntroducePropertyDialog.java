@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.openapi.project.Project;
@@ -83,8 +83,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     return myNameField.getEnteredName().trim();
   }
 
-  @NotNull
-  public MavenDomProjectModel getSelectedProject() {
+  public @NotNull MavenDomProjectModel getSelectedProject() {
     MavenDomProjectModel selectedItem =
       (MavenDomProjectModel)ComboBoxUtil.getSelectedValue((DefaultComboBoxModel)myMavenProjectsComboBox.getModel());
 
@@ -208,7 +207,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static boolean isContainWrongSymbols(@NotNull String text) {
-    return text.length() == 0 || Character.isDigit(text.charAt(0)) || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]");
+    return text.isEmpty() || Character.isDigit(text.charAt(0)) || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]");
   }
 
   private boolean isPropertyExist(@NotNull String text) {

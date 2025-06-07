@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -129,7 +130,14 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBInsets.create(2, 5));
+    getComponent().setMargin(getDefaultMargins(c));
+  }
+
+  private static @NotNull Insets getDefaultMargins(JComponent c) {
+    boolean newBorder = c.getBorder() instanceof DarculaTextBorderNew;
+
+    // See constants in DarculaTextFieldUI.getDefaultMargins
+    return newBorder ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 5);
   }
 
   @Override

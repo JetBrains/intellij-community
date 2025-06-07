@@ -30,9 +30,8 @@ import java.util.Collection;
 public final class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String,PyClass> KEY = StubIndexKey.createIndexKey("Py.class.shortNameInsensitive");
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PyClass> getKey() {
+  public @NotNull StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
-import com.intellij.codeInsight.AbstractBasicJavadocTypedHandlerTest;
+import com.intellij.codeInsight.AbstractJavadocTypedHandlerTest;
 
-public class JavadocTypedHandlerTest extends AbstractBasicJavadocTypedHandlerTest {
+public class JavadocTypedHandlerTest extends AbstractJavadocTypedHandlerTest {
 }

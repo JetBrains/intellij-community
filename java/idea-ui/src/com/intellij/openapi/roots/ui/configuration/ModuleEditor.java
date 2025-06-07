@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -36,15 +36,18 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
+  private static final ExtensionPointName<ModuleConfigurationEditorProvider> EP_NAME =
+    new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
+
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
-  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = new ExtensionPointName<>("com.intellij.moduleConfigurable");
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
@@ -60,7 +63,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-  @NonNls private static final String METHOD_COMMIT = "commit";
+  private static final @NonNls String METHOD_COMMIT = "commit";
   private boolean myEditorsInitialized;
 
   protected History myHistory;
@@ -81,15 +84,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   protected abstract JComponent createCenterPanel();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getSelectedEditor();
+  public abstract @Nullable ModuleConfigurationEditor getSelectedEditor();
 
   public abstract void selectEditor(String displayName);
 
   protected abstract void restoreSelectedEditor();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getEditor(@NotNull String displayName);
+  public abstract @Nullable ModuleConfigurationEditor getEditor(@NotNull String displayName);
 
   protected abstract void disposeCenterPanel();
 
@@ -104,8 +105,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     myEventDispatcher.addListener(listener);
   }
 
-  @Nullable
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myModulesProvider.getModule(myName);
   }
 
@@ -158,11 +158,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return false;
   }
 
-  private void createEditors(@Nullable Module module) {
-    if (module == null) return;
-
+  private void createEditors(@NotNull Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : ModuleConfigurationEditorProvider.EP_NAME.getExtensionList(module)) {
+    for (ModuleConfigurationEditorProvider provider : EP_NAME.getExtensionList(module)) {
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
@@ -194,12 +192,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
   private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
-      LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
+      LOG.error(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
     }
   }
 
-  @NotNull
-  public ModuleConfigurationState createModuleConfigurationState() {
+  public @NotNull ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
       public ModifiableRootModel getModifiableRootModel() {
@@ -219,12 +216,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private @NotNull JPanel createPanel() {
-    getModifiableRootModel(); //initialize model if needed
+    // initialize model if needed
+    getModifiableRootModel();
     getModifiableRootModelProxy();
 
     myGenericSettingsPanel = new ModuleEditorPanel();
 
-    createEditors(getModule());
+    Module module = getModule();
+    if (module  != null) {
+      createEditors(module);
+    }
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);
@@ -235,8 +236,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myGenericSettingsPanel;
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     if (myGenericSettingsPanel == null) {
       myGenericSettingsPanel = createPanel();
     }
@@ -327,14 +327,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private static final Set<String> myCheckedNames = Set.of(
+    private static final @NonNls Set<String> myCheckedNames = Set.of(
       "addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
       "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
@@ -371,7 +370,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
+    private final @NonNls Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(@NotNull LibraryTable table) {
       myDelegateTable = table;
@@ -534,8 +533,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return unwrappedParams;
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     if (myEditors.isEmpty()) {
       return null;
     }

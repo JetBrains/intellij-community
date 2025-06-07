@@ -2,7 +2,7 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 
 public class DeclarationParserTest extends AbstractBasicDeclarationParserTest {
 
@@ -12,6 +12,6 @@ public class DeclarationParserTest extends AbstractBasicDeclarationParserTest {
 
   @Override
   protected void doParserTest(String text, boolean isAnnotation, boolean isEnum) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getDeclarationParser().parseClassBodyWithBraces(builder, isAnnotation, isEnum));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseClassBodyWithBraces(builder, isAnnotation, isEnum));
   }
 }

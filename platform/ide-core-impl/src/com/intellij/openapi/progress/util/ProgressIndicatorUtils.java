@@ -146,11 +146,6 @@ public final class ProgressIndicatorUtils {
   }
 
   @ApiStatus.Internal
-  public static void cancelActionsToBeCancelledBeforeWrite() {
-    ProgressIndicatorUtilService.getInstance(ApplicationManager.getApplication()).cancelActionsToBeCancelledBeforeWrite();
-  }
-
-  @ApiStatus.Internal
   public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
                                                       @NotNull Runnable cancellation,
                                                       @NotNull Runnable action) {

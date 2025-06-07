@@ -82,8 +82,8 @@ assert_type(Class_ParamSpec[[bool, bool]](), Class_ParamSpec[bool, bool])
 
 
 # > ``TypeVarTuple`` defaults are defined using the same syntax as
-# > ``TypeVar`` \ s but use an unpacked tuple of types instead of a single type
-# > or another in-scope ``TypeVarTuple`` (see `Scoping Rules`_).
+# > ``TypeVar`` \ s, but instead of a single type, they use an unpacked tuple
+# > of types or an unpacked, in-scope ``TypeVarTuple`` (see `Scoping Rules`_).
 
 DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
 
@@ -96,19 +96,22 @@ assert_type(Class_TypeVarTuple(), Class_TypeVarTuple[str, int])
 assert_type(Class_TypeVarTuple[int, bool](), Class_TypeVarTuple[int, bool])
 
 
+AnotherDefaultTs = TypeVarTuple("AnotherDefaultTs", default=Unpack[DefaultTs])
+
+
 # > If both ``bound`` and ``default`` are passed, ``default`` must be a
 # > subtype of ``bound``. If not, the type checker should generate an
 # > error.
 
-TypeVar("Ok", bound=float, default=int)  # OK
-TypeVar("Invalid", bound=str, default=int)  # E: the bound and default are incompatible
+Ok1 = TypeVar("Ok1", bound=float, default=int)  # OK
+Invalid1 = TypeVar("Invalid1", bound=str, default=int)  # E: the bound and default are incompatible
 
 # > For constrained ``TypeVar``\ s, the default needs to be one of the
 # > constraints. A type checker should generate an error even if it is a
 # > subtype of one of the constraints.
 
-TypeVar("Ok", float, str, default=float)  # OK
-TypeVar("Invalid", float, str, default=int)  # E: expected one of float or str got int
+Ok2 = TypeVar("Ok2", float, str, default=float)  # OK
+Invalid2 = TypeVar("Invalid2", float, str, default=int)  # E: expected one of float or str got int
 
 
 # > In generic functions, type checkers may use a type parameter's default when the

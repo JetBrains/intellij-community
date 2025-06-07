@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -150,8 +150,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     });
   }
 
-  @Nullable
-  private static GradleExtensions read(final IonReader reader, final ReadContext context) {
+  private static @Nullable GradleExtensions read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -185,8 +184,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleConfiguration readConfiguration(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleConfiguration readConfiguration(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleConfiguration configuration =
@@ -217,8 +215,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleConvention readConvention(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleConvention readConvention(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleConvention convention =
@@ -244,8 +241,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleExtension readExtension(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleExtension readExtension(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleExtension convention =
@@ -271,8 +267,7 @@ public final class GradleExtensionsSerializationService implements Serialization
     return list;
   }
 
-  @Nullable
-  private static DefaultGradleProperty readGradleProperty(final IonReader reader, ReadContext context) {
+  private static @Nullable DefaultGradleProperty readGradleProperty(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     DefaultGradleProperty convention =

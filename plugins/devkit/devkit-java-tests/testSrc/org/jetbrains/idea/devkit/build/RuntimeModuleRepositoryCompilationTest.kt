@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build
 
-//import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RawDescriptorListBuilder
 import com.intellij.devkit.runtimeModuleRepository.jps.build.checkRuntimeModuleRepository

@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.grid` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grid_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "grid",
+  module_name = "intellij.grid",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":grid_resources"]
+)
+### auto-generated section `build intellij.grid` end

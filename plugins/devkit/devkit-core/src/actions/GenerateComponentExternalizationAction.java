@@ -1,4 +1,4 @@
-// Copyright 2000-1021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -21,10 +21,10 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 public class GenerateComponentExternalizationAction extends AnAction implements PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(GenerateComponentExternalizationAction.class);
 
-  @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
-  @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
-  @NonNls private final static String STATE = "com.intellij.openapi.components.State";
-  @NonNls private final static String STORAGE = "com.intellij.openapi.components.Storage";
+  private static final @NonNls String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
+  private static final @NonNls String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
+  private static final @NonNls String STATE = "com.intellij.openapi.components.State";
+  private static final @NonNls String STORAGE = "com.intellij.openapi.components.Storage";
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -84,8 +84,7 @@ public class GenerateComponentExternalizationAction extends AnAction implements 
                                                   DevKitBundle.message("command.implement.externalizable"), null);
   }
 
-  @Nullable
-  private static PsiClass getComponentInContext(DataContext context) {
+  private static @Nullable PsiClass getComponentInContext(DataContext context) {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;

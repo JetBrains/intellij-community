@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -49,8 +48,8 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
   }
 
 
-  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(
-    result), ExcludeUrlEntity.Builder {
+  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(result),
+                                                          ExcludeUrlEntity.Builder {
     internal constructor() : this(ExcludeUrlEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

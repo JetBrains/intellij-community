@@ -38,8 +38,8 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-findUsages") {
-      withSettingsFile {
+    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-findUsages") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-findUsages")
       }
       withFile("gradle/libs.versions.toml", /* language=TOML */ """

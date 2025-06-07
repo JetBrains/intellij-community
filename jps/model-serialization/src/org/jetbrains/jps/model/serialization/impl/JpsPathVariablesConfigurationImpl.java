@@ -21,9 +21,8 @@ public final class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsP
     myPathVariables = new LinkedHashMap<>(pathVariables);
   }
 
-  @NotNull
   @Override
-  public JpsPathVariablesConfigurationImpl createCopy() {
+  public @NotNull JpsPathVariablesConfigurationImpl createCopy() {
     return new JpsPathVariablesConfigurationImpl(myPathVariables);
   }
 
@@ -37,15 +36,13 @@ public final class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsP
     myPathVariables.remove(name);
   }
 
-  @Nullable
   @Override
-  public String getUserVariableValue(@NotNull String name) {
+  public @Nullable String getUserVariableValue(@NotNull String name) {
     return myPathVariables.get(name);
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getAllUserVariables() {
+  public @NotNull Map<String, String> getAllUserVariables() {
     return Collections.unmodifiableMap(myPathVariables);
   }
 }

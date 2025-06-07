@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.remote;
 
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -25,20 +26,19 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
     myDelegate = delegate;
   }
 
-  @Nullable
   @Override
-  public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                  @NotNull String projectPath,
-                                                  boolean isPreviewMode,
-                                                  @Nullable S settings,
-                                                  @Nullable ProjectResolverPolicy resolverPolicy)
+  public @Nullable DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                                            @NotNull String projectPath,
+                                                            boolean isPreviewMode,
+                                                            @Nullable S settings,
+                                                            @Nullable ProjectResolverPolicy resolverPolicy)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
     return execute(id, () ->
       myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, resolverPolicy, getNotificationListener()));
   }
 
   @Override
-  public boolean cancelTask(@NotNull final ExternalSystemTaskId id)
+  public boolean cancelTask(final @NotNull ExternalSystemTaskId id)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
     return myDelegate.cancelTask(id, getNotificationListener());
   }

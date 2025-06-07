@@ -13,9 +13,9 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 public final class DocCommentPanel extends JPanel {
-  private JRadioButton myRbJavaDocAsIs = null;
-  private JRadioButton myRbJavaDocMove = null;
-  private JRadioButton myRbJavaDocCopy = null;
+  private final JRadioButton myRbJavaDocAsIs;
+  private final JRadioButton myRbJavaDocMove;
+  private final JRadioButton myRbJavaDocCopy;
   private final TitledBorder myBorder;
 
   public DocCommentPanel(@NlsContexts.BorderTitle String title) {

@@ -2,54 +2,10 @@
 package com.jetbrains.python.black
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.psi.PyIndentUtil
 
-sealed class BlackFormattingRequest {
-  abstract val fragmentToFormat: String
-  abstract val virtualFile: VirtualFile
+sealed class BlackFormattingRequest(val virtualFile: VirtualFile, val documentText: String) {
 
-  class Fragment(val fragment: String, override val virtualFile: VirtualFile) : BlackFormattingRequest() {
-    private val extractedIndent: String
-    private val whitespaceBefore: String
-    private val whitespaceAfter: String
-    private val endsWithNewLine: Boolean
+  class Fragment(virtualFile: VirtualFile, documentText: String, val lineRanges: List<IntRange>) : BlackFormattingRequest(virtualFile, documentText)
 
-    override val fragmentToFormat: String
-
-    init {
-      val firstNotEmptyLine = fragment.lines().first { it.isNotBlank() }
-
-      extractedIndent = PyIndentUtil.getLineIndent(firstNotEmptyLine)
-      whitespaceBefore = fragment.takeWhile { it.isWhitespace() }
-      whitespaceAfter = fragment.takeLastWhile { it.isWhitespace() }
-      endsWithNewLine = fragment.endsWith("\n")
-
-      fragmentToFormat = PyIndentUtil.removeCommonIndent(fragment, false)
-    }
-
-    fun postProcessResponse(response: String): String {
-      return buildString {
-        val lines = response.trimEnd().lines()
-
-        if (!response.contains('\n')) {
-          append(extractedIndent)
-          append(response)
-          if (endsWithNewLine) {
-            append('\n')
-          }
-          return@buildString
-        }
-
-        append(whitespaceBefore)
-        append(lines.first())
-        for (line in lines.listIterator(1)) {
-          appendLine()
-          append(line.prependIndent(extractedIndent))
-        }
-        append(whitespaceAfter)
-      }
-    }
-  }
-
-  class File(override val fragmentToFormat: String, override val virtualFile: VirtualFile) : BlackFormattingRequest()
+  class File(virtualFile: VirtualFile, documentText: String) : BlackFormattingRequest(virtualFile, documentText)
 }

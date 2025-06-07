@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.pipenv
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
-import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -22,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
@@ -31,28 +31,22 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.findAmongRoots
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.showSdkExecutionException
+import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.io.FileNotFoundException
 import java.nio.file.Path
 
 const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
-const val PIPENV_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
 
 /**
@@ -60,13 +54,6 @@ const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
  */
 @Internal
 suspend fun pipFile(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE) }
-
-/**
- * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
- */
-@Internal
-suspend fun pipFileLockSources(sdk: Sdk): List<String> =
-  sdk.parsePipFileLock().getOrNull()?.meta?.sources?.mapNotNull { it.url } ?: listOf(PIPENV_DEFAULT_SOURCE_URL)
 
 /**
  * Resolves and returns the list of Python requirements from the Pipfile.lock of the SDK's associated module.
@@ -146,14 +133,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
       withBackgroundProgress(module.project, description) {
         val sdk = module.pythonSdk ?: return@withBackgroundProgress
         runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()).onFailure {
-          if (it is ExecutionException) {
-            withContext(Dispatchers.EDT) {
-              showSdkExecutionException(sdk, it, PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"))
-            }
-          }
-          else {
-            throw it
-          }
+          ShowingMessageErrorSync.emit(it)
         }
 
         withContext(Dispatchers.Default) {
@@ -195,19 +175,13 @@ private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, package
       .filterNot { (_, pkg) -> pkg.editable ?: false }
       // TODO: Support requirements markers (PEP 496), currently any packages with markers are ignored due to PY-30803
       .filter { (_, pkg) -> pkg.markers == null }
-      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }.asSequence()
+      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }
       .toList()
 
   val pipFileLock = parsePipFileLock(virtualFile).getOrNull() ?: return null
   val packages = pipFileLock.packages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
   val devPackages = pipFileLock.devPackages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
   return packages + devPackages
-}
-
-private suspend fun Sdk.parsePipFileLock(): Result<PipFileLock> {
-  // TODO: Log errors if Pipfile.lock is not found
-  val file = pipFileLock() ?: return Result.failure(FileNotFoundException("Pipfile.lock not found"))
-  return parsePipFileLock(file)
 }
 
 private val gson = Gson()
@@ -249,6 +223,18 @@ private data class PipFileLockPackage(
 )
 
 @TestOnly
-fun getPipFileLockRequirementsSync(virtualFile: VirtualFile, packageManager: PyPackageManager): List<PyRequirement>? = runBlocking {
-  getPipFileLockRequirements(virtualFile, packageManager)
+fun getPipFileLockRequirementsSync(lockRequirements: VirtualFile): List<PyRequirement>? = runBlockingMaybeCancellable {
+  @RequiresBackgroundThread
+  fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
+    packages
+      .asSequence()
+      .filterNot { (_, pkg) -> pkg.editable == true }
+      .filter { (_, pkg) -> pkg.markers == null }
+      .flatMap { (name, pkg) -> PyRequirementParser.fromText("$name${pkg.version ?: ""}") }
+      .toList()
+
+  val pipFileLock = parsePipFileLock(lockRequirements).getOrNull() ?: return@runBlockingMaybeCancellable null
+  val packages = pipFileLock.packages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
+  val devPackages = pipFileLock.devPackages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
+  return@runBlockingMaybeCancellable packages + devPackages
 }

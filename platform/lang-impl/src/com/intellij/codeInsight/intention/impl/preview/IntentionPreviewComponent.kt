@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.Disposable
-import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
 import com.intellij.util.ui.*
@@ -33,7 +32,6 @@ internal class IntentionPreviewComponent(parent: Disposable) :
 
   init {
     add(multiPanel)
-    border = PopupBorder.Factory.create(true, true)
     setLoadingText(CodeInsightBundle.message("intention.preview.loading.preview"))
   }
 
@@ -47,7 +45,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
       panel.putClientProperty("NO_PREVIEW", true)
       return panel
     }
-    
+
     internal fun JComponent.isNoPreviewPanel(): Boolean = this.getClientProperty("NO_PREVIEW") != null
 
     internal fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {

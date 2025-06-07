@@ -3,7 +3,6 @@ package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,7 +11,7 @@ interface DocumentationDownloader {
 
   suspend fun canHandle(project: Project, file: VirtualFile): Boolean
 
-  fun download(project: Project, file: VirtualFile): ActionCallback
+  suspend fun download(project: Project, file: VirtualFile): Boolean
 
   companion object {
     val EP = ExtensionPointName.create<DocumentationDownloader>("com.intellij.documentation.documentationDownloader")

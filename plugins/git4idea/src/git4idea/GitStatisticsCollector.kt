@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -21,18 +21,17 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.*
-import git4idea.index.getFileStatus
+import git4idea.index.getStatus
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -50,12 +49,12 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 19)
+  private val GROUP = EventLogGroup("git.configuration", 20)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
-    if (!project.isTrusted()) return emptySet()
+    if (!TrustedProjects.isProjectTrusted(project)) return emptySet()
 
     val set = HashSet<MetricEvent>()
 
@@ -123,7 +122,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(repositoryMetric)
 
       for (configDirName in ALL_IDE_CONFIG_NAMES) {
-        getConfigFileStatus(executable, repository, configDirName)?.let { status ->
+        getConfigFileStatus(repository, configDirName)?.let { status ->
           set.add(SHARED_IDE_CONFIG.metric(
             IDE_CONFIG_NAME.with(configDirName),
             IDE_CONFIG_STATUS.with(status)
@@ -190,7 +189,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
     val projectLog = project.serviceIfCreated<VcsProjectLog>() ?: return
-    val ui = projectLog.mainLogUi ?: return
+    val ui = projectLog.mainUi ?: return
 
     addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
     addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
@@ -198,7 +197,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addPropertyMetricIfDiffers(
     metrics: MutableSet<MetricEvent>,
-    ui: VcsLogUiImpl,
+    ui: MainVcsLogUi,
     property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
     eventId: VarargEventId,
   ) {
@@ -290,6 +289,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
   private val ALL_IDE_CONFIG_NAMES = listOf(
+    ".air",
     ".fleet",
     ".idea",
     ".project",
@@ -343,20 +343,22 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
   }
 }
 
-private fun getConfigFileStatus(executable: GitExecutable, repository: GitRepository, configDirName: String): ConfigStatus? {
+private fun getConfigFileStatus(repository: GitRepository, configDirName: String): ConfigStatus? {
   return try {
     val rootPath = repository.root.toNioPath()
     val configDir = rootPath.resolve(configDirName)
-    if (!configDir.exists() || !configDir.isDirectory()) return null
-
-    val file = repository.root.findChild(configDirName) ?: return null
-    val filePath = VcsUtil.getFilePath(file)
-
-    val status = getFileStatus(repository.root, filePath, executable)
-    when (status.getFileStatus()) {
-      FileStatus.IGNORED -> return ConfigStatus.IGNORED
-      else -> ConfigStatus.SHARED
+    if (!configDir.exists() || !configDir.isDirectory()) {
+      return null
     }
+
+    val filePath = VcsUtil.getFilePath(configDir, true)
+
+    val status = getStatus(repository.project, repository.root, listOf(filePath), false, true, true)
+    val fileStatus = status.singleOrNull() ?: return ConfigStatus.SHARED
+    if (fileStatus.isIgnored() && fileStatus.path.path == filePath.path) { // GitFileStatus has invalid FilePath.isDirectory values
+      return ConfigStatus.IGNORED
+    }
+    return ConfigStatus.SHARED
   }
   catch (e: Exception) {
     if (e is ControlFlowException) throw e
@@ -369,7 +371,7 @@ internal enum class ConfigStatus {
   SHARED
 }
 
-enum class FsMonitor { NONE, BUILTIN, EXTERNAL_FS_MONITOR }
+internal enum class FsMonitor { NONE, BUILTIN, EXTERNAL_FS_MONITOR }
 
 private fun GitRepository.detectFsMonitor(): FsMonitor {
   try {

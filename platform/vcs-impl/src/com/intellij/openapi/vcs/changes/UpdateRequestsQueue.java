@@ -68,7 +68,9 @@ public final class UpdateRequestsQueue {
 
   public void schedule(boolean withFastTrack) {
     synchronized (myLock) {
-      if (!myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (!myStarted && ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error("Update was scheduled, but queue wasn't initialized", new Throwable());
+      }
 
       if (myStopped) return;
       if (myRequestSubmitted) return;

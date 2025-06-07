@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -148,11 +148,13 @@ internal class GitRepositoryUpdater(
       BackgroundTaskUtil.syncPublisher(repository.project, GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository)
     }
     if (configChanged) {
+      GitProjectConfigurationCache.getInstance(repository.project).clearForRepo(repository)
       BackgroundTaskUtil.syncPublisher(repository.project, GitConfigListener.TOPIC).notifyConfigChanged(repository)
     }
     if (indexChanged || externallyCommitted || headMoved || headChanged || currentBranchChanged || gitignoreChanged) {
-      VcsDirtyScopeManager.getInstance(repository.project).dirDirtyRecursively(repository.root)
+      VcsDirtyScopeManager.getInstance(repository.project).rootDirty(repository.root)
       repository.untrackedFilesHolder.invalidate()
+      repository.resolvedConflictsFilesHolder.invalidate()
     }
     if (indexChanged) {
       refreshRoots(repository.project, listOf(repository.root))

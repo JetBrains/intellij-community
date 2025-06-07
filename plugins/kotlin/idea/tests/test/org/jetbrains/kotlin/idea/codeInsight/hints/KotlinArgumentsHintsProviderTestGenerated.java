@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -40,9 +40,29 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/functionalTypes.kt");
     }
 
+    @TestMetadata("invokeCallsParameterNames.kt")
+    public void testInvokeCallsParameterNames() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/invokeCallsParameterNames.kt");
+    }
+
+    @TestMetadata("invokeCallsParameterNamesWithContextReceivers.kt")
+    public void testInvokeCallsParameterNamesWithContextReceivers() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/invokeCallsParameterNamesWithContextReceivers.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
+    }
+
+    @TestMetadata("lambdaLastParameter.kt")
+    public void testLambdaLastParameter() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/lambdaLastParameter.kt");
+    }
+
+    @TestMetadata("libraryElement.kt")
+    public void testLibraryElement() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/libraryElement.kt");
     }
 
     @TestMetadata("namedParameters.kt")

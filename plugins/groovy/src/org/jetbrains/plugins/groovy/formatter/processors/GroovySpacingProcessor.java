@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -121,7 +121,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     return false;
   }
 
-  private void _init(@Nullable final ASTNode child) {
+  private void _init(final @Nullable ASTNode child) {
     if (child == null) return;
 
     ASTNode treePrev = child.getTreePrev();
@@ -219,7 +219,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  private void createDependentLFSpacing(final boolean isLineFeed, final boolean isSpace, @NotNull final TextRange range) {
+  private void createDependentLFSpacing(final boolean isLineFeed, final boolean isSpace, final @NotNull TextRange range) {
     if (isLineFeed) {
       myResult = Spacing.createDependentLFSpacing(isSpace ? 1 : 0, isSpace ? 1 : 0, range, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
@@ -417,15 +417,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     return myType1 == GroovyTokenTypes.mSEMI && set.contains(getStatementTypeBySemi(myChild1));
   }
 
-  @Nullable
-  private static IElementType getStatementTypeBySemi(@NotNull ASTNode semi) {
+  private static @Nullable IElementType getStatementTypeBySemi(@NotNull ASTNode semi) {
     final GrTopStatement statement = getStatementBySemicolon(semi.getPsi());
     if (statement == null) return null;
     return statement.getNode().getElementType();
   }
 
-  @Nullable
-  private static GrTopStatement getStatementBySemicolon(@NotNull PsiElement semi) {
+  private static @Nullable GrTopStatement getStatementBySemicolon(@NotNull PsiElement semi) {
     PsiElement prev = semi.getPrevSibling();
     while (prev != null &&
            TokenSets.WHITE_SPACES_OR_COMMENTS.contains(prev.getNode().getElementType()) &&
@@ -1172,8 +1170,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     return type instanceof GrBlockElementType || type == GroovyElementTypes.CONSTRUCTOR_BODY;
   }
 
-  @Nullable
-  private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
+  private static @Nullable ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
     while (current != null) {
       if (current.getElementType() == expected) return current;
       current = forward ? current.getTreeNext() : current.getTreePrev();
@@ -1244,7 +1241,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     myResult = Spacing.createSpacing(0, 0, lf ? 1 : 0, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
   }
 
-  private Spacing createNonLFSpace(int spaces, @Nullable final TextRange dependantRange, final boolean keepLineBreaks) {
+  private Spacing createNonLFSpace(int spaces, final @Nullable TextRange dependantRange, final boolean keepLineBreaks) {
     final ASTNode prev = FormatterUtil.getPreviousNonWhitespaceLeaf(myChild2);
     if (prev != null && prev.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, keepLineBreaks, keepBlankLines());

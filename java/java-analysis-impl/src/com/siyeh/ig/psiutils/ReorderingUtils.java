@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
@@ -17,6 +17,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -125,8 +126,7 @@ public final class ReorderingUtils {
     return and(ThreeState.UNSURE, () -> canExtract(ancestor, expressionParent));
   }
 
-  @NotNull
-  private static ThreeState and(ThreeState state, Supplier<? extends ThreeState> conjunct) {
+  private static @NotNull ThreeState and(ThreeState state, Supplier<? extends ThreeState> conjunct) {
     if (state == ThreeState.NO) return ThreeState.NO;
     ThreeState state2 = conjunct.get();
     if (state2 == ThreeState.NO) return ThreeState.NO;
@@ -134,8 +134,7 @@ public final class ReorderingUtils {
     return ThreeState.YES;
   }
 
-  @NotNull
-  private static ThreeState canMoveToStart(PsiPolyadicExpression polyadicExpression, int operandIndex) {
+  private static @NotNull ThreeState canMoveToStart(PsiPolyadicExpression polyadicExpression, int operandIndex) {
     if (operandIndex == 0) return ThreeState.YES;
     IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.ANDAND && tokenType != JavaTokenType.OROR) return ThreeState.UNSURE;
@@ -356,13 +355,12 @@ public final class ReorderingUtils {
     }
   }
 
-  private static final List<Function<PsiExpression, ExceptionProblem>> PROBLEM_EXTRACTORS = Arrays.asList(
+  private static final @Unmodifiable List<Function<PsiExpression, ExceptionProblem>> PROBLEM_EXTRACTORS = List.of(
     NullDereferenceExceptionProblem::from, ClassCastExceptionProblem::from, ArrayIndexExceptionProblem::from,
     ContractFailExceptionProblem::from
   );
 
-  @NotNull
-  static List<ExceptionProblem> fromExpression(PsiExpression expression) {
+  private static @NotNull List<ExceptionProblem> fromExpression(PsiExpression expression) {
     List<ExceptionProblem> problems = new ArrayList<>();
     for (Function<PsiExpression, ExceptionProblem> extractor : PROBLEM_EXTRACTORS) {
       ExceptionProblem exceptionProblem = extractor.apply(expression);
@@ -384,7 +382,7 @@ public final class ReorderingUtils {
     return false;
   }
 
-  private static boolean isConditionNecessary(PsiExpression condition, List<ExceptionProblem> problems, boolean negated) {
+  private static boolean isConditionNecessary(PsiExpression condition, @Unmodifiable List<? extends ExceptionProblem> problems, boolean negated) {
     condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition == null) return false;
     if (BoolUtils.isNegation(condition)) {

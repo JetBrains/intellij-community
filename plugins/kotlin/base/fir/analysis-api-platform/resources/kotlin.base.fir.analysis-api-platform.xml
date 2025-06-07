@@ -5,9 +5,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinGlobalModificationService"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinDirectInheritorsProvider"/>
     <projectService
@@ -31,20 +28,22 @@
   </extensions>
 
   <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$BuiltinsFileDocumentListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$SingleFileModuleModificationListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$LibraryUpdatesListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$NonWorkspaceModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$FileDocumentListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$ProjectFileDocumentListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$MyDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$SdkChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
 
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.InvalidateCachesAfterDumbMode"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeDumbModeInvalidationListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>
 

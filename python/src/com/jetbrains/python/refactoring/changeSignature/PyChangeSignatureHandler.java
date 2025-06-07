@@ -134,7 +134,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (containingClass == null) {
       return function;
     }
-    if (PyUtil.isInitOrNewMethod(function)) {
+    if (PyUtil.isConstructorLikeMethod(function)) {
       return function;
     }
     final PyFunction deepestSuperMethod = PySuperMethodsSearch.findDeepestSuperMethod(function);

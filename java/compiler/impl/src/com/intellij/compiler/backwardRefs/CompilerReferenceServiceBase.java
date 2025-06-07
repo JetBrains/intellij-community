@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -50,16 +50,14 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.collections.ArraysKt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -124,7 +122,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private boolean hasIndex() {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    Path buildDir = BuildManager.getInstance().getProjectSystemDir(project);
     return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
   }
 
@@ -164,8 +162,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     BY_OS,
     BY_ROOT;
 
-    @NotNull
-    static FsCompilerReferenceType from(@Nullable String text) {
+    static @NotNull FsCompilerReferenceType from(@Nullable String text) {
       for (FsCompilerReferenceType type : values()) {
         if (type.name().equalsIgnoreCase(text)) {
           return type;
@@ -711,7 +708,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   // should not be used in production code
   @NotNull
-  DirtyScopeHolder getDirtyScopeHolder() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
   }
 
@@ -788,11 +787,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     AN_EXCEPTION,
     COMPILATION_STARTED,
     SHUTDOWN
-  }
-
-  protected enum IndexOpenReason {
-    COMPILATION_FINISHED,
-    UP_TO_DATE_CACHE
   }
 
   @FunctionalInterface

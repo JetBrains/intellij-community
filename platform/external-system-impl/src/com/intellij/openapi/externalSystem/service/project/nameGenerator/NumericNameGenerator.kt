@@ -27,7 +27,7 @@ class NumericNameGenerator private constructor(
   }
 
   companion object {
-    private const val MAX_NUMBER_SEQ = 2
+    private const val MAX_NUMBER_SEQ = 5
 
     @JvmStatic
     fun generate(name: String): Iterable<String> {

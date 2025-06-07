@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -20,11 +21,11 @@ public final class PyTypeParameterMapping {
     for (Couple<PyType> couple : mapping) {
       PyType expectedType = couple.getFirst();
       PyType actualType = couple.getSecond();
-      if (expectedType instanceof PyVariadicType && !(actualType instanceof PyVariadicType || actualType == null)) {
-        throw new IllegalArgumentException("Variadic type " + expectedType + " cannot be mapped to a non-variadic type " + actualType);
-      }
-      if (!(expectedType instanceof PyVariadicType) && actualType instanceof PyVariadicType) {
-        throw new IllegalArgumentException("Non-variadic type " + expectedType + " cannot be mapped to a variadic type " + actualType);
+      if (expectedType != null && actualType != null) {
+        if (expectedType instanceof PyPositionalVariadicType ^ actualType instanceof PyPositionalVariadicType ||
+            expectedType instanceof PyCallableParameterVariadicType ^ actualType instanceof PyCallableParameterVariadicType) {
+          throw new IllegalArgumentException("Mapping of incompatible types: " + expectedType + " -> " + actualType);
+        }
       }
     }
     myMappedTypes = mapping;
@@ -34,7 +35,7 @@ public final class PyTypeParameterMapping {
                                                                       @NotNull List<PyCallableParameter> actualParameters,
                                                                       @NotNull TypeEvalContext context) {
     List<PyType> flattenedExpectedParameterTypes = flattenUnpackedTupleTypes(expectedParameterTypes);
-    int expectedArity = ContainerUtil.exists(flattenedExpectedParameterTypes, Conditions.instanceOf(PyVariadicType.class))
+    int expectedArity = ContainerUtil.exists(flattenedExpectedParameterTypes, Conditions.instanceOf(PyPositionalVariadicType.class))
                         ? -1
                         : flattenedExpectedParameterTypes.size();
 
@@ -74,14 +75,14 @@ public final class PyTypeParameterMapping {
     }
 
     if (positionalVarargArgumentTypes.size() > 1 ||
-        positionalVarargArgumentTypes.size() == 1 && !(positionalVarargArgumentTypes.get(0) instanceof PyVariadicType)) {
+        positionalVarargArgumentTypes.size() == 1 && !(positionalVarargArgumentTypes.get(0) instanceof PyPositionalVariadicType)) {
       requiredPositionalArgumentTypes.addAll(optionalPositionalArgumentTypes);
       optionalPositionalArgumentTypes.clear();
       requiredPositionalArgumentTypes.addAll(positionalVarargArgumentTypes);
       positionalVarargArgumentTypes.clear();
     }
 
-    int actualArity = ContainerUtil.exists(requiredPositionalArgumentTypes, Conditions.instanceOf(PyVariadicType.class)) ?
+    int actualArity = ContainerUtil.exists(requiredPositionalArgumentTypes, Conditions.instanceOf(PyPositionalVariadicType.class)) ?
                       -1 :
                       requiredPositionalArgumentTypes.size();
 
@@ -95,7 +96,7 @@ public final class PyTypeParameterMapping {
         0, Math.min(optionalPositionalArgumentTypes.size(), expectedArity - arityAdjustedActualParameterTypes.size())
       ));
       if (!positionalVarargArgumentTypes.isEmpty() && expectedArity - arityAdjustedActualParameterTypes.size() > 0) {
-        assert positionalVarargArgumentTypes.size() == 1 && positionalVarargArgumentTypes.get(0) instanceof PyVariadicType;
+        assert positionalVarargArgumentTypes.size() == 1 && positionalVarargArgumentTypes.get(0) instanceof PyPositionalVariadicType;
         arityAdjustedActualParameterTypes.add(positionalVarargArgumentTypes.get(0));
       }
       return mapByShape(flattenedExpectedParameterTypes, arityAdjustedActualParameterTypes);
@@ -112,8 +113,12 @@ public final class PyTypeParameterMapping {
     EnumSet<Option> optionSet = EnumSet.noneOf(Option.class);
     optionSet.addAll(Arrays.asList(options));
 
-    NullTolerantDeque<PyType> expectedTypesDeque = new NullTolerantDeque<>(flattenUnpackedTupleTypes(expectedTypes));
-    NullTolerantDeque<PyType> actualTypesDeque = new NullTolerantDeque<>(flattenUnpackedTupleTypes(actualTypes));
+    List<PyType> normalizedExpectedTypes = flattenUnpackedTupleTypes(expectedTypes);
+    List<PyType> normalizedActualTypes =
+      replaceExpectedTypesWithParameterList(normalizedExpectedTypes, flattenUnpackedTupleTypes(actualTypes));
+
+    NullTolerantDeque<PyType> expectedTypesDeque = new NullTolerantDeque<>(normalizedExpectedTypes);
+    NullTolerantDeque<PyType> actualTypesDeque = new NullTolerantDeque<>(normalizedActualTypes);
 
     List<Couple<PyType>> leftMappedTypes = new ArrayList<>();
     List<Couple<PyType>> centerMappedTypes = new ArrayList<>();
@@ -123,12 +128,17 @@ public final class PyTypeParameterMapping {
     while (expectedTypesDeque.size() != 0 && actualTypesDeque.size() != 0) {
       PyType leftmostExpected = expectedTypesDeque.peekFirst();
       // Either a variadic type parameter *Ts or an unbounded unpacked tuple *tuple[int, ...] 
-      if (leftmostExpected instanceof PyVariadicType) {
+      if (leftmostExpected instanceof PyPositionalVariadicType) {
         break;
       }
-      // The leftmost expected type is a regular type
       PyType leftmostActual = actualTypesDeque.peekFirst();
-      if (leftmostActual instanceof PyVariadicType) {
+      if (leftmostExpected != null &&
+          leftmostActual != null &&
+          leftmostExpected instanceof PyCallableParameterVariadicType ^ leftmostActual instanceof PyCallableParameterVariadicType) {
+        break;
+      }
+      // The leftmost expected type is a regular type, not variadic
+      if (leftmostActual instanceof PyPositionalVariadicType) {
         break;
       }
       expectedTypesDeque.removeFirst();
@@ -138,16 +148,23 @@ public final class PyTypeParameterMapping {
 
     while (expectedTypesDeque.size() != 0 && actualTypesDeque.size() != 0) {
       PyType rightmostExpected = expectedTypesDeque.peekLast();
-      if (rightmostExpected instanceof PyVariadicType) {
+      if (rightmostExpected instanceof PyPositionalVariadicType) {
+        break;
+      }
+      PyType rightmostActual = actualTypesDeque.peekLast();
+      if (rightmostExpected != null &&
+          rightmostActual != null &&
+          rightmostExpected instanceof PyCallableParameterVariadicType ^ rightmostActual instanceof PyCallableParameterVariadicType) {
         break;
       }
       expectedTypesDeque.removeLast();
-      PyType rightmostActual = actualTypesDeque.peekLast();
-      if (rightmostActual instanceof PyVariadicType rightmostActualVariadic) {
+      if (rightmostActual instanceof PyPositionalVariadicType rightmostActualVariadic) {
+        // [T1, T2] <- [*tuple[T3, ...]]
         if (rightmostActualVariadic instanceof PyUnpackedTupleType unpackedTupleType && unpackedTupleType.isUnbound()) {
           PyType repeatedActualType = unpackedTupleType.getElementTypes().get(0);
           rightMappedTypes.add(Couple.of(rightmostExpected, repeatedActualType));
         }
+        // [T1, T2] <- [*Ts]
         else {
           splittingTypeVarTuple = true;
           break;
@@ -159,10 +176,11 @@ public final class PyTypeParameterMapping {
       }
     }
 
+    // [T1, T2] <- [*tuple[T3, ...]]
     if (expectedTypesDeque.size() != 0 && actualTypesDeque.size() != 0
         && !(expectedTypesDeque.peekFirst() instanceof PyVariadicType)
-        && (actualTypesDeque.peekFirst() instanceof PyVariadicType variadic)) {
-      if (variadic instanceof PyUnpackedTupleType actualUnpackedTupleType && actualUnpackedTupleType.isUnbound()) {
+        && actualTypesDeque.peekFirst() instanceof PyPositionalVariadicType actualPositionalVariadic) {
+      if (actualPositionalVariadic instanceof PyUnpackedTupleType actualUnpackedTupleType && actualUnpackedTupleType.isUnbound()) {
         while (expectedTypesDeque.size() != 0 && !(expectedTypesDeque.peekFirst() instanceof PyVariadicType)) {
           PyType repeatedActualType = actualUnpackedTupleType.getElementTypes().get(0);
           leftMappedTypes.add(Couple.of(expectedTypesDeque.peekFirst(), repeatedActualType));
@@ -178,51 +196,51 @@ public final class PyTypeParameterMapping {
       return null;
     }
 
-    boolean sizeMismatch;
+    if (expectedTypesDeque.size() != 0 && expectedTypesDeque.peekFirst() instanceof PyPositionalVariadicType expectedPositionalVariadic) {
+      // [*Ts] <- [*Ts] or [*Ts] <- [*tuple[T1, ...]]
+      if (actualTypesDeque.size() == 1 && actualTypesDeque.peekFirst() instanceof PyPositionalVariadicType variadicType) {
+        expectedTypesDeque.removeFirst();
+        actualTypesDeque.removeFirst();
+        centerMappedTypes.add(Couple.of(expectedPositionalVariadic, variadicType));
+      }
+      // [*Ts=Unpacked[tuple[int, str]]] <- []
+      else if (actualTypesDeque.size() == 0 && optionSet.contains(Option.USE_DEFAULTS)
+               && expectedPositionalVariadic instanceof PyTypeVarTupleType typeVarTupleType
+               && typeVarTupleType.getDefaultType() != null) {
+        expectedTypesDeque.removeFirst();
+        centerMappedTypes.add(Couple.of(expectedPositionalVariadic, Ref.deref(typeVarTupleType.getDefaultType())));
+      }
+      // [*Ts] <- [T1, *Ts[T2, ...], T2, ...]
+      else {
+        List<PyType> nonParamVariadicActualTypes = new ArrayList<>();
+        while (actualTypesDeque.size() != 0 && !(actualTypesDeque.peekFirst() instanceof PyCallableParameterVariadicType)) {
+          nonParamVariadicActualTypes.add(actualTypesDeque.peekFirst());
+          actualTypesDeque.removeFirst();
+        }
+        expectedTypesDeque.removeFirst();
+        centerMappedTypes.add(Couple.of(expectedPositionalVariadic, PyUnpackedTupleTypeImpl.create(nonParamVariadicActualTypes)));
+      }
+    }
+
+    boolean sizeMismatch = true;
     if (expectedTypesDeque.size() == 0) {
       boolean allActualTypesMatched = actualTypesDeque.size() == 0;
       boolean onlySingleActualVariadicLeft = actualTypesDeque.size() == 1 &&
-                                             actualTypesDeque.peekFirst() instanceof PyVariadicType;
+                                             actualTypesDeque.peekFirst() instanceof PyPositionalVariadicType;
       sizeMismatch = !(allActualTypesMatched || onlySingleActualVariadicLeft);
     }
-    else if (expectedTypesDeque.size() == 1) {
-      PyType onlyLeftExpectedType = expectedTypesDeque.peekFirst();
-      if (onlyLeftExpectedType instanceof PyVariadicType) {
-        // [*Ts] <- [*Ts] or [*Ts] <- [*tuple[T1, ...]]
-        if (actualTypesDeque.size() == 1 && actualTypesDeque.peekFirst() instanceof PyVariadicType variadicType) {
-          centerMappedTypes.add(Couple.of(onlyLeftExpectedType, variadicType));
-        }
-        else {
-          // [*Ts] <- []
-          List<PyType> unmatchedActualTypes = actualTypesDeque.toList();
-          if (optionSet.contains(Option.USE_DEFAULTS)
-              && onlyLeftExpectedType instanceof PyTypeVarTupleType typeVarTupleType
-              && typeVarTupleType.getDefaultType() != null
-              && unmatchedActualTypes.isEmpty()) {
-            centerMappedTypes.add(Couple.of(onlyLeftExpectedType, typeVarTupleType.getDefaultType()));
-          }
-          // [*Ts] <- [T1, *Ts[T2, ...], T2, ...]
-          else {
-            centerMappedTypes.add(Couple.of(onlyLeftExpectedType, PyUnpackedTupleTypeImpl.create(unmatchedActualTypes)));
-          }
-        }
-        sizeMismatch = false;
-      }
-      // [T1] <- []
-      else {
-        Couple<PyType> fallbackMapping = mapToFallback(onlyLeftExpectedType, optionSet);
-        ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
-        sizeMismatch = fallbackMapping == null;
-      }
-    }
-    else {
+    else if (actualTypesDeque.size() == 0) {
       // [T1, T2, ...] <- []
-      sizeMismatch = true;
+      boolean allMapped = true;
       for (PyType unmatchedType : expectedTypesDeque.toList()) {
         Couple<PyType> fallbackMapping = mapToFallback(unmatchedType, optionSet);
-        ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
-        sizeMismatch = fallbackMapping == null;
+        allMapped = fallbackMapping != null;
+        if (!allMapped) {
+          break;
+        }
+        centerMappedTypes.add(fallbackMapping);
       }
+      sizeMismatch = !allMapped;
     }
     if (sizeMismatch) {
       return null;
@@ -234,11 +252,24 @@ public final class PyTypeParameterMapping {
     return new PyTypeParameterMapping(resultMapping);
   }
 
+  // [**P] <- [int, str, bool] is equivalent to [**P] <- [[int, str, bool]]
+  // See https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes
+  private static @NotNull List<PyType> replaceExpectedTypesWithParameterList(@NotNull List<PyType> expectedTypes,
+                                                                             @NotNull List<PyType> actualTypes) {
+    if (ContainerUtil.getOnlyItem(expectedTypes) instanceof PyParamSpecType && 
+        !actualTypes.isEmpty() && !ContainerUtil.exists(actualTypes, o -> o instanceof PyVariadicType)) {
+      PyCallableParameterListType callableParameterListType =
+        new PyCallableParameterListTypeImpl(ContainerUtil.map(actualTypes, PyCallableParameterImpl::nonPsi));
+      return Collections.singletonList(callableParameterListType);
+    }
+    return actualTypes;
+  }
+
   private static @Nullable Couple<PyType> mapToFallback(@Nullable PyType unmatchedExpectedType, @NotNull EnumSet<Option> optionSet) {
     if (optionSet.contains(Option.USE_DEFAULTS) &&
         unmatchedExpectedType instanceof PyTypeParameterType typeParameterType &&
         typeParameterType.getDefaultType() != null) {
-      return Couple.of(unmatchedExpectedType, typeParameterType.getDefaultType());
+      return Couple.of(unmatchedExpectedType, Ref.deref(typeParameterType.getDefaultType()));
     }
     else if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
       return Couple.of(unmatchedExpectedType, null);
@@ -298,5 +329,10 @@ public final class PyTypeParameterMapping {
     public @NotNull List<@Nullable T> toList() {
       return ContainerUtil.map(myDeque, Ref::deref);
     }
+  }
+
+  @Override
+  public String toString() {
+    return StringUtil.join(myMappedTypes, pair -> pair.first + " -> " + pair.second, ", ");
   }
 }

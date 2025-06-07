@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class CondaPackagingToolwindowActionProvider : PythonPackagingToolwindowActionProvider {
   override fun getInstallActions(details: PythonPackageDetails, packageManager: PythonPackageManager): List<PythonPackageInstallAction>? {
-    if (packageManager is CondaPackageManager) {
+    if (packageManager is CondaWithPipFallbackPackageManager) {
       return if (details is CondaPackageDetails) {
         listOf(SimplePythonPackageInstallAction(PyBundle.message("conda.packaging.button.install.with.conda"), packageManager.project))
       } else listOf(SimplePythonPackageInstallAction(PyBundle.message("conda.packaging.button.install.with.pip"), packageManager.project))

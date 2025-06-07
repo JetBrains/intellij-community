@@ -32,15 +32,15 @@ abstract class FileStructureLesson
       actionTask("FileStructurePopup") {
         LessonsBundle.message("file.structure.open.popup", action(it))
       }
-      task(searchSubstring) {
+      task {
         text(LessonsBundle.message("file.structure.request.prefixes", strong(firstWord), strong(secondWord), code(searchSubstring)))
-        stateCheck { checkWordInSearch(it) }
+        stateCheck { checkWordInSearch(searchSubstring) }
         restoreAfterStateBecomeFalse { focusOwner is EditorComponentImpl }
         test {
           ideFrame {
             waitComponent(DnDAwareTree::class.java, "FileStructurePopup")
           }
-          type(it)
+          type(searchSubstring)
         }
       }
       task {
@@ -49,7 +49,6 @@ abstract class FileStructureLesson
         test { invokeActionViaShortcut("ENTER") }
       }
       // There is no Structure tool window in the PyCharm Edu. So added this check.
-      @Suppress("UnresolvedPluginConfigReference") // todo IJPL-165055
       if (ActionManager.getInstance().getAction("ActivateStructureToolWindow") != null) {
         task("ActivateStructureToolWindow") {
           text(LessonsBundle.message("file.structure.toolwindow", action(it)))

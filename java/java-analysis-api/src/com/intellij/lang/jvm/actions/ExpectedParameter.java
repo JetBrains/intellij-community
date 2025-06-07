@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.actions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,13 +18,11 @@ public interface ExpectedParameter {
    * which then will be used to suggest parameter names
    * taking code style parameter prefix into consideration as well as its type.
    */
-  @NotNull
-  default Collection<String> getSemanticNames() {
+  default @NotNull Collection<String> getSemanticNames() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  default Collection<AnnotationRequest> getExpectedAnnotations() {
+  default @NotNull @Unmodifiable Collection<AnnotationRequest> getExpectedAnnotations() {
     return Collections.emptyList();
   }
 

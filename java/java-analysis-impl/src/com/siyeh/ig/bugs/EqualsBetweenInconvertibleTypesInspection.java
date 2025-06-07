@@ -46,8 +46,7 @@ public final class EqualsBetweenInconvertibleTypesInspection extends BaseInspect
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiType comparedType = (PsiType)infos[0];
     final PsiType comparisonType = (PsiType)infos[1];
     final boolean convertible = (boolean)infos[2];

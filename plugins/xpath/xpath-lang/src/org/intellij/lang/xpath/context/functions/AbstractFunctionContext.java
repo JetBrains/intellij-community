@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.Factory;
@@ -18,8 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractFunctionContext implements FunctionContext {
   private static final Map<ContextType, FunctionContext> ourInstances = new ConcurrentHashMap<>();
 
-  @Unmodifiable
-  private final Map<Pair<QName, Integer>, Function> myFunctions;
+  private final @Unmodifiable Map<Pair<QName, Integer>, Function> myFunctions;
   private final Map<QName, Function> myDefaultMap = new HashMap<>();
 
   protected AbstractFunctionContext(ContextType contextType) {
@@ -42,8 +41,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     }
   }
 
-  @Unmodifiable
-  protected abstract Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
+  protected abstract @Unmodifiable Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
 
   private static Map<Pair<QName, Integer>, Function> getProvidedFunctions(ContextType contextType) {
     final Map<Pair<QName, Integer>, Function> map = new HashMap<>();

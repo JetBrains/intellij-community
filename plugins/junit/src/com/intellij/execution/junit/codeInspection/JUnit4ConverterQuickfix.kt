@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.FileModificationService
@@ -32,7 +32,7 @@ import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.util.isInFinallyBlock
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-class JUnit4ConverterQuickfix : LocalQuickFix {
+internal class JUnit4ConverterQuickfix : LocalQuickFix {
   override fun getFamilyName(): String = JUnitBundle.message("jvm.inspections.junit4.converter.quickfix.name")
 
   override fun startInWriteAction(): Boolean = false

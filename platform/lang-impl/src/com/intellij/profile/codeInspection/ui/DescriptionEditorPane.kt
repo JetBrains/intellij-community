@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
 import com.intellij.lang.Language
@@ -10,7 +10,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.util.ui.StyleSheetUtil
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
@@ -68,7 +67,13 @@ fun JEditorPane.readHTML(text: @Nls String) {
  */
 fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   var lang = Language.findLanguageByID(language) ?: PlainTextLanguage.INSTANCE
-  val document = Jsoup.parse(text)
+
+  // IJPL-180212
+  @Suppress("HardCodedStringLiteral")
+  val normalizedText = Regex("</code>\\s*</pre>")
+    .replace(text, "</code></pre>")
+  
+  val document = Jsoup.parse(normalizedText)
 
   // IDEA-318323
   if (text.contains("<body>\n<p>")) {
@@ -85,7 +90,6 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   }
 
   try {
-    @Suppress("HardCodedStringLiteral")
     setText(document.html())
   }
   catch (e: IOException) {

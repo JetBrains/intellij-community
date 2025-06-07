@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.compose.ide.plugin.k1">
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin.k1"/>
+    <module name="intellij.compose.ide.plugin.shared" />
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <highlighterExtension implementation="com.intellij.compose.ide.plugin.k1.highlighting.ComposableHighlightingVisitorExtension"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin"
+                            implementationClass="com.intellij.compose.ide.plugin.k1.completion.K1ComposeModifierCompletionContributor"
+                            order="first, before KotlinCompletionContributor"/>
+  </extensions>
+</idea-plugin>

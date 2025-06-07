@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,7 @@ public class MoveDirectoryCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     Project project = context.getProject();
-    PsiManagerImpl myPsiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+    PsiManager myPsiManager = PsiManager.getInstance(project);
     String input = extractCommandArgument(PREFIX);
     String[] lineAndColumn = input.split(" ");
     final String sourcePath = lineAndColumn[0];

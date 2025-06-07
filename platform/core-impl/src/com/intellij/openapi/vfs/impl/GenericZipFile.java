@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -20,10 +21,21 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public interface GenericZipFile {
-  @Nullable GenericZipEntry getEntry(String entryName) throws IOException;
+  @Nullable GenericZipEntry getEntry(@NotNull String entryName) throws IOException;
 
-  @NotNull List<? extends GenericZipEntry> getEntries();
+  @NotNull List<? extends GenericZipEntry> getEntries() throws IOException;
 
   void close() throws IOException;
-}
 
+  interface GenericZipEntry {
+    long getSize();
+
+    @NotNull String getName();
+
+    long getCrc();
+
+    boolean isDirectory();
+
+    @Nullable InputStream getInputStream() throws IOException;
+  }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,15 +19,14 @@ public final class ConstructorDescriptor implements ItemToReplaceDescriptor {
   private final PsiClass myPsiClass;
 
   // null if and only if default constructor is used
-  @Nullable private final PsiMethod myConstructor;
+  private final @Nullable PsiMethod myConstructor;
   private ConstructorDescriptor(@NotNull PsiNewExpression expression, @Nullable PsiMethod constructor, @NotNull PsiClass psiClass) {
     myNewExpression = expression;
     this.myConstructor = constructor;
     this.myPsiClass = psiClass;
   }
 
-  @Nullable
-  public static ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
+  public static @Nullable ConstructorDescriptor createIfInaccessible(@NotNull PsiNewExpression expression) {
     PsiMethod constructor = expression.resolveConstructor();
     if (constructor != null) {
       PsiClass containingClass = constructor.getContainingClass();
@@ -52,30 +51,47 @@ public final class ConstructorDescriptor implements ItemToReplaceDescriptor {
                       @NotNull PsiMethodCallExpression callExpression) {
     String className = ClassUtil.getJVMClassName(myPsiClass);
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myNewExpression, myPsiClass);
-    PsiExpressionList argumentList = myNewExpression.getArgumentList();
-    if (className == null || argumentList == null || returnType == null) {
+    if (className == null || returnType == null) {
       LOG.warn("code is incomplete: " + myNewExpression);
       return;
     }
-
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, methodName(className));
-    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
-    methodBuilder.accessedConstructor(className)
-      .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-      .setReturnType(returnType);
-    if (myConstructor != null) {
-      methodBuilder.addParameters(myConstructor.getParameterList());
+
+    PsiExpression[] arrayDimensions = myNewExpression.getArrayDimensions();
+    ReflectionAccessMethodBuilder methodBuilder;
+    String args;
+    if (arrayDimensions.length > 0) {
+      methodBuilder = new ReflectionAccessMethodBuilder(methodName);
+      methodBuilder.newArray(className)
+        .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
+        .addParameter("int...", "dimensions")
+        .setReturnType(returnType);
+      args = StreamEx.of(arrayDimensions).map(x -> x.getText()).joining(", ", "(", ")");
+    }
+    else {
+      PsiExpressionList argumentList = myNewExpression.getArgumentList();
+      if (argumentList == null) {
+        LOG.warn("code is incomplete: " + myNewExpression);
+        return;
+      }
+
+      methodBuilder = new ReflectionAccessMethodBuilder(methodName);
+      methodBuilder.accessedConstructor(className)
+        .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
+        .setReturnType(returnType);
+      if (myConstructor != null) {
+        methodBuilder.addParameters(myConstructor.getParameterList());
+      }
+      args = StreamEx.of(argumentList.getExpressions()).map(x -> x.getText()).joining(", ", "(", ")");
     }
 
     PsiMethod newPsiMethod = methodBuilder.build(elementFactory, outerClass);
     outerClass.add(newPsiMethod);
-    String args = StreamEx.of(argumentList.getExpressions()).map(x -> x.getText()).joining(", ", "(", ")");
     String newCallExpression = newPsiMethod.getName() + args;
     myNewExpression.replace(elementFactory.createExpressionFromText(newCallExpression, myNewExpression));
   }
 
-  @NotNull
-  private static String methodName(@NotNull String jvmClassName) {
+  private static @NotNull String methodName(@NotNull String jvmClassName) {
     String name = StringUtil.getShortName(jvmClassName);
     return "new" + StringUtil.capitalize(name);
   }

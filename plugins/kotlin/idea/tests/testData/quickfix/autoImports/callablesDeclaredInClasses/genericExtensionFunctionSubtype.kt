@@ -15,4 +15,4 @@ open class C {
 object CObject : C()
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
-/* IGNORE_K2 */
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

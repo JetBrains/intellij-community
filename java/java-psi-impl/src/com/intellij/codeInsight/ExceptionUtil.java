@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
 
 public final class ExceptionUtil {
   private static final @NonNls String CLONE_METHOD_NAME = "clone";
+  private static final int MAXIMUM_CATCH_BLOCK_COUNT = 30;
 
   private ExceptionUtil() {}
 
@@ -370,8 +372,8 @@ public final class ExceptionUtil {
     return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
   }
 
-  private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
-                                                                            @NotNull PsiMethod method) {
+  private static @Unmodifiable List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
+                                                                                          @NotNull PsiMethod method) {
     PsiFile containingFile = call.getContainingFile();
     MethodResolverProcessor processor = new MethodResolverProcessor(call, containingFile);
     try {
@@ -868,6 +870,57 @@ public final class ExceptionUtil {
         Collections.swap(exceptions, i,i+1);
       }
     }
+  }
+
+
+  /**
+   * Sorts the list of catch sections based on their exception hierarchy.
+   * This method only works with single exceptions in the catch block.
+   *
+   * @param catchSectionList a not-null list of {@code PsiCatchSection} representing the catch sections to be sorted
+   * @return true if the sorting operation was successful; {@code false} otherwise.
+   */
+  public static boolean sortCatchSectionByHierarchy(@NotNull List<? extends PsiCatchSection> catchSectionList) {
+    if (catchSectionList.size() > MAXIMUM_CATCH_BLOCK_COUNT) return false;
+    for (int i = 0; i < catchSectionList.size() - 1; i++) {
+      for (int j = 0; j < catchSectionList.size() - i - 1; j++) {
+        PsiType current = catchSectionList.get(j).getCatchType();
+        PsiType next = catchSectionList.get(j + 1).getCatchType();
+        if (current == null || next == null) return false;
+        if (!(current instanceof PsiClassType) || !(next instanceof PsiClassType)) return false;
+        if (TypeConversionUtil.isAssignable(current, next)) {
+          Collections.swap(catchSectionList, j, j + 1);
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks if there are duplicate exception types across.
+   * This includes both individual exception types and disjunction types in multi-catch blocks.
+   *
+   * @param catchSectionList a list of {@code PsiCatchSection}
+   * @return {@code true} if there is any duplicate exception type across the provided catch sections, {@code false} if it is
+   * impossible to detect an exception type or {@code catchSectionList} contains duplicate exceptions.
+   */
+  public static boolean hasDuplicateExceptions(@NotNull List<? extends PsiCatchSection> catchSectionList) {
+    Set<PsiType> uniqueTypeSet = new HashSet<>();
+    int typesCount = 0;
+    for (PsiCatchSection catchSection : catchSectionList) {
+      PsiType type = catchSection.getCatchType();
+      if (type instanceof PsiDisjunctionType) {
+        List<PsiType> disjunctionTypeList = ((PsiDisjunctionType) type).getDisjunctions();
+        typesCount += disjunctionTypeList.size();
+        uniqueTypeSet.addAll(disjunctionTypeList);
+      } else if (type instanceof PsiClassType) {
+        uniqueTypeSet.add(type);
+        typesCount++;
+      } else {
+        return false;
+      }
+    }
+    return typesCount != uniqueTypeSet.size();
   }
 
   /**

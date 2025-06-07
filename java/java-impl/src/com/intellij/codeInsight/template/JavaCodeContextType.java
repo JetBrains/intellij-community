@@ -1,17 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JShellLanguage;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
@@ -47,7 +50,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
    * Checks whether the element belongs to this context. Could be called inside the dumb mode!
    * 
    * @param element element to check
-   * @return true if given element belongs to this context.
+   * @return true if the given element belongs to this context.
    */
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
@@ -108,13 +111,15 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
+      if (isInJShellContext(element)) {
+        return true;
+      }
       if (isAfterExpression(element) || JavaStringContextType.isStringLiteral(element)) {
         return false;
       }
-      
       PsiElement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
-      if (statement instanceof PsiLambdaExpression) {
-        PsiElement body = ((PsiLambdaExpression)statement).getBody();
+      if (statement instanceof PsiLambdaExpression lambda) {
+        PsiElement body = lambda.getBody();
         if (PsiTreeUtil.isAncestor(body, element, false)) {
           statement = body;
         }
@@ -122,6 +127,14 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
       return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
+  }
+
+  private static boolean isInJShellContext(PsiElement element) {
+    if (!(element.getParent() instanceof PsiReferenceExpression ref)) {
+      return false;
+    }
+    PsiElement parent = ref.getParent();
+    return parent != null && parent.getLanguage() == JShellLanguage.INSTANCE;
   }
 
   public static final class ElsePlace extends JavaCodeContextType {
@@ -206,6 +219,9 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
+      if (isInJShellContext(element)) {
+        return true;
+      }
       if (Statement.isStatementContext(element) || Expression.isExpressionContext(element)) {
         return false;
       }
@@ -227,6 +243,57 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       }
       PsiElement greatGrandParent = grandParent.getParent();
       return greatGrandParent instanceof PsiRecordHeader || greatGrandParent instanceof PsiRecordComponent;
+    }
+  }
+
+  public static final class ImplicitClassDeclaration extends JavaCodeContextType {
+    public ImplicitClassDeclaration() {
+      super(JavaBundle.message("live.template.context.implicit.class.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element)) {
+        return false;
+      }
+      PsiFile containingFile = element.getContainingFile();
+      if (!(containingFile instanceof PsiJavaFile javaFile) || javaFile.getPackageStatement() != null) {
+        return false;
+      }
+      //first element is identifier
+      PsiElement parent = element.getParent();
+      return parent instanceof PsiJavaCodeReferenceElement &&
+             parent.getParent() instanceof PsiTypeElement psiTypeElement &&
+             (psiTypeElement.getParent() instanceof PsiJavaFile || psiTypeElement.getParent() instanceof PsiImplicitClass);
+    }
+  }
+
+  public static final class NormalClassDeclarationBeforeShortMainMethod extends JavaCodeContextType {
+    private final JavaCodeContextType declarationContext = new Declaration();
+
+    public NormalClassDeclarationBeforeShortMainMethod() {
+      super(JavaBundle.message("live.template.context.normal.class.before.instance.main.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return declarationContext.isInContext(element) && !PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element);
+    }
+  }
+
+  public static final class NormalClassDeclarationAfterShortMainMethod extends JavaCodeContextType {
+    private final JavaCodeContextType declarationContext = new Declaration();
+    private final JavaCodeContextType implicitClassContext = new ImplicitClassDeclaration();
+
+    public NormalClassDeclarationAfterShortMainMethod() {
+      super(JavaBundle.message("live.template.context.normal.class.after.instance.main.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element) &&
+             declarationContext.isInContext(element) &&
+             !implicitClassContext.isInContext(element);
     }
   }
 }

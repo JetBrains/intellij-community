@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
@@ -10,20 +10,18 @@ import javax.swing.*;
 
 public final class TerminalSessionFileType extends FakeFileType {
 
-  public final static TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
+  public static final TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
 
   private TerminalSessionFileType() {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Terminal Session";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return getName() + " Fake File Type"; //NON-NLS
   }
 

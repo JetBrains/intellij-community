@@ -5,6 +5,8 @@
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProvider" />
     <inspectionGroupProvider implementation="com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProvider" />
     <appStarter id="inspectopedia-generator" implementation="com.intellij.inspectopedia.extractor.InspectopediaExtractor"/>
+    <registryKey defaultValue="false" description="Use activity-based project configuration in inspect.sh script"
+                 key="ide.inspect.activity.based.inspections.enabled"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="inspectResultsConsumer" interface="com.intellij.codeInspection.InspectResultsConsumer" dynamic="true"/>

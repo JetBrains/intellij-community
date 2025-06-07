@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
@@ -15,16 +14,16 @@ import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBackwardReferenceIndexBuilder.class);
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";
-  private final Set<ModuleBuildTarget> myCompiledTargets = ContainerUtil.newConcurrentSet();
+  private final Set<ModuleBuildTarget> myCompiledTargets = ConcurrentHashMap.newKeySet();
 
   public JavaBackwardReferenceIndexBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -81,8 +80,7 @@ public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder 
 
       if (dirtyFilesHolder.hasRemovedFiles()) {
         for (ModuleBuildTarget target : chunk.getTargets()) {
-          final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
-          writer.processDeletedFiles(files);
+          writer.processDeleted(dirtyFilesHolder.getRemoved(target));
         }
       }
 

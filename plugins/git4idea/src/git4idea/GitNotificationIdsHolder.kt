@@ -116,7 +116,13 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       UNTRACKED_FIES_OVERWITTEN,
       TAGS_LOADING_FAILED,
       OPEN_IN_BROWSER_ERROR,
-      IGNORE_FILE_GENERATION_ERROR
+      IGNORE_FILE_GENERATION_ERROR,
+      UNSHALLOW_SUCCESS,
+      GPG_AGENT_CONFIGURATION_SUCCESS,
+      GPG_AGENT_CONFIGURATION_ERROR,
+      GPG_AGENT_CONFIGURATION_PROPOSE,
+      GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION,
+      MODAL_COMMIT_DEPRECATION,
     )
   }
 
@@ -146,6 +152,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val CHERRY_PICK_ABORT_SUCCESS = "git.cherry.pick.abort.success"
     const val CLONE_FAILED = "git.clone.failed"
     const val CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR = "git.clone.unable.to.create.destination.dir"
+    const val CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR = "git.clone.unable.to.find.destination.dir"
     const val COLLECT_UPDATED_CHANGES_ERROR = "git.rebase.collect.updated.changes.error"
     const val COMMIT_CANCELLED = "git.commit.cancelled"
     const val COMMIT_EDIT_SUCCESS = "git.commit.edit.success"
@@ -232,5 +239,11 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val TAGS_LOADING_FAILED = "git.tags.loading.failed"
     const val OPEN_IN_BROWSER_ERROR: String = "git.open.in.browser.error"
     const val IGNORE_FILE_GENERATION_ERROR: String = "git.ignore.file.generation.error"
+    const val UNSHALLOW_SUCCESS = "git.unshallow.success"
+    const val GPG_AGENT_CONFIGURATION_SUCCESS = "git.gpg.agent.configuration.success"
+    const val GPG_AGENT_CONFIGURATION_ERROR = "git.gpg.agent.configuration.error"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE = "git.gpg.agent.configuration.propose"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION = "git.gpg.agent.configuration.propose.suggestion"
+    const val MODAL_COMMIT_DEPRECATION = "git.commit.modal.deprecation"
   }
 }

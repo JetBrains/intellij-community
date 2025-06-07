@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.text.SemVer
 import io.opentelemetry.api.trace.Span
 import org.jdom.CDATA
 import org.jdom.Element
@@ -53,13 +54,13 @@ internal suspend fun patchPluginXml(
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
   val isBundled = !pluginsToPublish.contains(plugin)
-  val compatibleBuildRange = when {
+  val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
     isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
     context.applicationInfo.isEAP || plugin.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  val pluginVersion = getPluginVersion(plugin, descriptorContent, context)
   @Suppress("TestOnlyProblems")
   val content = try {
     val element = doPatchPluginXml(
@@ -89,6 +90,20 @@ internal suspend fun patchPluginXml(
   }
   // os-specific plugins being built several times - we expect that plugin.xml must be the same
   moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+}
+
+private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")
+
+private suspend fun getPluginVersion(plugin: PluginLayout, descriptorContent: String, context: BuildContext): PluginVersionEvaluatorResult {
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  check(
+    !plugin.semanticVersioning ||
+    SemVer.parseFromText(pluginVersion.pluginVersion) != null ||
+    DEV_BUILD_SCHEME.matches(pluginVersion.pluginVersion)
+  ) {
+    "$plugin version '${pluginVersion.pluginVersion}' is expected to match either '$DEV_BUILD_SCHEME' or the Semantic Versioning, see https://semver.org"
+  }
+  return pluginVersion
 }
 
 @TestOnly
@@ -137,28 +152,6 @@ fun doPatchPluginXml(
     }
   }
 
-  // patch Database plugin for WebStorm, see WEB-48278
-  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB") {
-    Span.current().addEvent("patch $pluginModuleName for WebStorm")
-    val pluginName = rootElement.getChild("name")
-    check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
-    pluginName.text = "Database Tools and SQL for WebStorm"
-    val description = rootElement.getChild("description")
-    val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
-    check(replaced1) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
-
-    val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
-    val replaced2 = replaceInElementText(
-      element = description,
-      oldText = oldText,
-      newText = """
-        The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
-        Owners of an active DataGrip subscription can download the plugin for free.
-        The plugin is also included in <a href="https://www.jetbrains.com/all/">All Products Pack</a> and <a href="https://www.jetbrains.com/community/education/">Student Pack</a>.
-      """.trimIndent()
-    )
-    check(replaced2) { "Could not find \'$oldText\' in plugin description of $pluginModuleName" }
-  }
   return rootElement
 }
 
@@ -176,23 +169,11 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
     val anchorIndex = rootElement.indexOf(anchor)
     // should not happen
     check(anchorIndex >= 0) {
-      "anchor < 0 when getting child index of \'${anchor.name}\' in root element of ${JDOMUtil.write(rootElement)}"
+      "anchor < 0 when getting child index of '${anchor.name}' in root element of ${JDOMUtil.write(rootElement)}"
     }
     rootElement.addContent(anchorIndex + 1, newElement)
   }
   return newElement
-}
-
-@Suppress("SameParameterValue")
-private fun replaceInElementText(element: Element, oldText: String, newText: String): Boolean {
-  val textBefore = element.text
-  val text = textBefore.replace(oldText, newText)
-  if (textBefore == text) {
-    return false
-  }
-
-  element.text = text
-  return true
 }
 
 private fun setProductDescriptorEapAttribute(productDescriptor: Element, isEap: Boolean) {

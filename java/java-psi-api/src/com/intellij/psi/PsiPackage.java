@@ -6,8 +6,13 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Represents a Java package.
@@ -72,6 +77,15 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   PsiClass @NotNull [] getClasses(@NotNull GlobalSearchScope scope);
 
   /**
+   * @param scope scope to limit the query to
+   * @return list of individual files declared as single file source roots that belong to this package and the supplied scope.
+   */
+  @ApiStatus.Experimental
+  default @NotNull @Unmodifiable Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope) {
+    return Collections.emptyList();
+  }
+
+  /**
    * Returns the list of all files in the package, restricted by the specified scope. (This is
    * normally the list of all files in all directories corresponding to the package, but it can
    * be modified by custom language plugins which have a different notion of packages.)
@@ -108,4 +122,11 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   boolean containsClassNamed(@NotNull String name);
 
   PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Returns {@code true} if the package contains a class with short name {@code name} belonging to the provided scope.
+   */
+  default boolean hasClassWithShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    return findClassByShortName(name, scope).length > 0;
+  }
 }

@@ -2,7 +2,10 @@
 package com.intellij.util;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -15,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 public final class ConcurrencyUtil {
 
@@ -86,6 +90,33 @@ public final class ConcurrencyUtil {
     T value = ref.get();
     if (value != null) return value;
     return ref.updateAndGet(prev -> prev == null ? defaultValue : prev);
+  }
+
+  /**
+   * @return defaultValue if the reference contains null (in that case defaultValue is placed there), or reference value otherwise.
+   */
+  public static @NotNull <T> T computeIfAbsent(@NotNull UserDataHolder holder, @NotNull Key<T> key, @NotNull Supplier<? extends @NotNull T> defaultValue) {
+    T data = holder.getUserData(key);
+    if (data != null) {
+      return data;
+    }
+    if (holder instanceof UserDataHolderEx) {
+      return ((UserDataHolderEx)holder).putUserDataIfAbsent(key, defaultValue.get());
+    }
+    return slowPath(holder, key, defaultValue);
+  }
+  // separate method to hint jvm not to inline this code, thus increasing chances of inlining the caller
+  private static <T> T slowPath(@NotNull UserDataHolder holder, @NotNull Key<T> key, @NotNull Supplier<? extends T> defaultValue) {
+    T data;
+    synchronized (holder) {
+      data = holder.getUserData(key);
+      if (data != null) {
+        return data;
+      }
+      data = defaultValue.get();
+      holder.putUserData(key, data);
+      return data;
+    }
   }
 
   public static @NotNull ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls String name) {

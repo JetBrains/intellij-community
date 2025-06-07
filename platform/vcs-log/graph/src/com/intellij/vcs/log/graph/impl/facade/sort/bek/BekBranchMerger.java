@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class BekBranchMerger {
-  private final static Logger LOG = Logger.getInstance(BekBranchMerger.class);
-  @NotNull private final List<? extends BekBranch> myBekBranches;
-  @NotNull private final BekEdgeRestrictions myEdgeRestrictions;
-  @NotNull private final TimestampGetter myTimestampGetter;
+  private static final Logger LOG = Logger.getInstance(BekBranchMerger.class);
+  private final @NotNull List<? extends BekBranch> myBekBranches;
+  private final @NotNull BekEdgeRestrictions myEdgeRestrictions;
+  private final @NotNull TimestampGetter myTimestampGetter;
 
-  @NotNull private final List<Integer> myInverseResultList = new ArrayList<>();
+  private final @NotNull List<Integer> myInverseResultList = new ArrayList<>();
 
   BekBranchMerger(@NotNull List<? extends BekBranch> bekBranches,
                   @NotNull BekEdgeRestrictions edgeRestrictions,
@@ -66,8 +66,7 @@ class BekBranchMerger {
     selectBranch.doneInsertPreparedPart();
   }
 
-  @NotNull
-  public List<Integer> getResult() {
+  public @NotNull List<Integer> getResult() {
     while (prepareLastPartsForBranches()) {
       step();
     }

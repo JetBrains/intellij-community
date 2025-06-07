@@ -38,7 +38,7 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
 
         List<GithubTagInfo> sortedTags = createSortedTagList(tags);
         GithubTagInfo selectedItem = getSelectedValue();
-        if (selectedItem == null && sortedTags.size() > 0) {
+        if (selectedItem == null && !sortedTags.isEmpty()) {
           selectedItem = sortedTags.get(0);
         }
         myComboBox.removeAllItems();

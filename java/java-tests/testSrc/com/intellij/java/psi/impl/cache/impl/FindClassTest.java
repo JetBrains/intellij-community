@@ -71,6 +71,9 @@ public class FindClassTest extends JavaPsiTestCase {
   public void testSimple() {
     PsiClass psiClass = myJavaFacade.findClass("p.A");
     assertEquals("p.A", psiClass.getQualifiedName());
+    assertTrue(myJavaFacade.hasClass("p.A", GlobalSearchScope.projectScope(getProject())));
+    assertNull(myJavaFacade.findClass("p.X"));
+    assertFalse(myJavaFacade.hasClass("p.X", GlobalSearchScope.projectScope(getProject())));
   }
 
   public void testClassDuplicatedInResourceRoot() {
@@ -157,6 +160,8 @@ public class FindClassTest extends JavaPsiTestCase {
     PsiClass psiClass2 = myJavaFacade.findClass("p.A", otherModules.get(0).getModuleWithDependenciesAndLibrariesScope(true));
     assertNotNull(psiClass2);
     assertEquals("p.A", psiClass2.getQualifiedName());
+    assertTrue(myJavaFacade.hasClass("p.A", otherModules.get(0).getModuleWithDependenciesAndLibrariesScope(true)));
+    assertFalse(myJavaFacade.hasClass("p.A", otherModules.get(0).getModuleScope()));
 
     PsiClass packClass2 = myJavaFacade.findClass("pack.MyClass", otherModules.get(0).getModuleWithDependenciesAndLibrariesScope(true));
     assertNotNull(packClass2);
@@ -208,7 +213,11 @@ public class FindClassTest extends JavaPsiTestCase {
     DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
         assertNotNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
+        assertTrue(myJavaFacade.hasClass("p.A", GlobalSearchScope.allScope(myProject)));
         assertNotNull(myJavaFacade.findClass("p.A", new PackageScope(myJavaFacade.findPackage("p"), true, true)));
+        
+        assertNull(myJavaFacade.findClass("p.X", GlobalSearchScope.allScope(myProject)));
+        assertFalse(myJavaFacade.hasClass("p.X", GlobalSearchScope.allScope(myProject)));
 
         PsiClass bClass = myJavaFacade.findClass("p.B", GlobalSearchScope.allScope(myProject));
         assertNotNull(bClass);

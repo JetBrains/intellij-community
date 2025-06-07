@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
@@ -64,7 +64,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                     }
 
                     return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingDeclaration as? KaClassSymbol) ||
-                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
+                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.returnType?.expandedSymbol)
                 }
             }
         }
@@ -97,7 +97,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
             reference.unwrappedTargets.any { target ->
                 if (target is KtDeclaration) {
                     val expectedDeclaration = ExpectActualSupport.getInstance(declaration.project)
-                        .expectedDeclarationIfAny(target)
+                        .expectDeclarationIfAny(target)
                     expectedDeclaration == declaration ||
                             //repeat logic of AbstractKtReference.isReferenceTo for calls on companion objects
                             expectedDeclaration is KtObjectDeclaration && expectedDeclaration.isCompanion() && expectedDeclaration.getNonStrictParentOfType<KtClass>() == declaration
@@ -125,10 +125,10 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                         val targetSymbol = target.symbol as? KaCallableSymbol ?: return@any false
                         val overriddenDeclarationsInCommon = targetSymbol.allOverriddenSymbols.mapNotNull {
                             val originalElement = it.psi?.originalElement as? KtDeclaration
-                            originalElement?.expectedDeclarationIfAny() ?: originalElement
+                            originalElement?.expectDeclarationIfAny() ?: originalElement
                         }
                         //this ignores disabled option `Extracted functions`
-                        (originalDeclaration.expectedDeclarationIfAny() ?: originalDeclaration) in overriddenDeclarationsInCommon
+                        (originalDeclaration.expectDeclarationIfAny() ?: originalDeclaration) in overriddenDeclarationsInCommon
                     }
                 }
                 is PsiMethod -> {
@@ -294,7 +294,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                 val iterator = if (searchDeeply) {
                     member.findAllOverridings().filterIsInstance<KtElement>().iterator()
                 } else {
-                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                    DirectKotlinOverridingCallableSearch.search(member).asIterable().iterator()
                 }
                 for (psiElement in iterator) {
                     if (!processor(member, psiElement)) return false

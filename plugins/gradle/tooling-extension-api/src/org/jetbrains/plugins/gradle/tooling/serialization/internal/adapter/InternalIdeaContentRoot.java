@@ -90,6 +90,7 @@ public final class InternalIdeaContentRoot implements IdeaContentRoot {
     this.excludeDirectories = excludeDirectories;
   }
 
+  @Override
   public String toString() {
     return String.format(
       "IdeaContentRoot{rootDirectory=%s, sourceDirectories count=%d, testDirectories count=%d, resourceDirectories count=%d, testResourceDirectories count=%d, excludeDirectories count=%d}",

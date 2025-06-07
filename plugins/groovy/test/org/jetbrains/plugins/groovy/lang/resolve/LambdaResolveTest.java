@@ -24,7 +24,7 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
             numbers.findAll(it -> it.double<caret>Value())
         }
         """, PsiMethod.class);
-    assert method.getContainingClass().getQualifiedName().equals("java.lang.Number");
+    assertEquals("java.lang.Number", method.getContainingClass().getQualifiedName());
   }
 
   public void testIntersect() {

@@ -45,20 +45,20 @@ class TestNonNarrowingConversion<T extends Z> {
     public T z = null;
 
     public int a() {
-        <error descr="Incompatible types. Found: 'TestNonNarrowingConversion<Z>', required: 'TestNonNarrowingConversion<T>'">TestNonNarrowingConversion<T> x = new TestNonNarrowingConversion<Z>(new Z());</error>
+        TestNonNarrowingConversion<T> x = new <error descr="Incompatible types. Found: 'TestNonNarrowingConversion<Z>', required: 'TestNonNarrowingConversion<T>'">TestNonNarrowingConversion<Z></error>(new Z());
         return 1;
     }
 }
 class TestRecursiveTypeParameter {
   static <<error descr="Cyclic inheritance involving 'T'"></error>T extends T> void test(T t) {
-    <error descr="Incompatible types. Found: 'T', required: 'java.lang.String'">String x = t;</error>
+    String x = <error descr="Incompatible types. Found: 'T', required: 'java.lang.String'">t</error>;
     <error descr="Incompatible types. Found: 'java.lang.String', required: 'T'">t = x</error>;
   }
 
   static <<error descr="Cyclic inheritance involving 'A'"></error>A extends B, B extends A> void test(A a, B b) {
     a = b;
     b = a;
-    <error descr="Incompatible types. Found: 'A', required: 'java.lang.String'">String x = a;</error>
+    String x = <error descr="Incompatible types. Found: 'A', required: 'java.lang.String'">a</error>;
     <error descr="Incompatible types. Found: 'java.lang.String', required: 'A'">a = x</error>;
   }
 }

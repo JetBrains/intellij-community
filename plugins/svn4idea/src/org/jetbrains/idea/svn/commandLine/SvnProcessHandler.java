@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -22,7 +22,7 @@ public class SvnProcessHandler extends OSProcessHandler {
   private final List<String> myCommandLineList;
   private final boolean myForceUtf8;
   private final boolean myForceBinary;
-  @NotNull private final ByteArrayOutputStream myBinaryOutput;
+  private final @NotNull ByteArrayOutputStream myBinaryOutput;
 
   public SvnProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine.getCommandLineString());
@@ -39,20 +39,17 @@ public class SvnProcessHandler extends OSProcessHandler {
     return ParametersListUtil.join(myCommandLineList);
   }
 
-  @NotNull
-  public ByteArrayOutputStream getBinaryOutput() {
+  public @NotNull ByteArrayOutputStream getBinaryOutput() {
     return myBinaryOutput;
   }
 
-  @Nullable
   @Override
-  public Charset getCharset() {
+  public @Nullable Charset getCharset() {
     return myForceUtf8 ? StandardCharsets.UTF_8 : super.getCharset();
   }
 
-  @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader() {
+  protected @NotNull BaseDataReader createOutputDataReader() {
     if (myForceBinary) {
       return new SimpleBinaryOutputReader(myProcess.getInputStream(), readerOptions().policy());
     }
@@ -81,9 +78,8 @@ public class SvnProcessHandler extends OSProcessHandler {
       myBinaryOutput.write(data, 0, size);
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return SvnProcessHandler.this.executeTask(runnable);
     }
   }

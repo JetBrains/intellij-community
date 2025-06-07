@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.find.ngrams.TrigramIndex;
-import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
@@ -57,6 +59,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.*;
@@ -263,10 +266,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, localProcessor);
   }
 
-  @Nullable("null means we did not find common container files")
-  private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
-                                                              @NotNull Collection<? extends WordRequestInfo> data,
-                                                              @NotNull TextIndexQuery query) {
+  private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
+                                                                                                                             @NotNull Collection<? extends WordRequestInfo> data,
+                                                                                                                             @NotNull TextIndexQuery query) {
     String commonName = null;
     short searchContext = 0;
     boolean caseSensitive = true;
@@ -334,17 +336,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         int currentFilesCount = filesCount.incrementAndGet();
 
-        //noinspection deprecation
-        VirtualFile frontFile = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
-        file = frontFile != null ? frontFile : file;
-
         assert file != null;
-        long fileLength = file.isDirectory() ? 0 : file.getLength();
-        //Backed files can have different front file and back file size.
-        // For instance, notebook can be 1mb but there jsut 2 short lines inside where we will search.
-        //noinspection deprecation
-        Float ratio = file.getCopyableUserData(BackFileViewProvider.FRONT_FILE_SIZE_RATIO_KEY);
-        long estimatedLength = ratio != null ? Math.round(fileLength * ratio) : fileLength;
+        long estimatedLength = file.isDirectory() ? 0 : file.getLength();
 
         long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(estimatedLength);
         return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
@@ -616,43 +609,55 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-      PsiFile psiFile = vfile.isValid() ? myManager.findFile(vfile) : null;
+      if (!vfile.isValid()) return;
 
-      //noinspection deprecation
-      if (psiFile != null && psiFile.getViewProvider() instanceof BackFileViewProvider) {
-        //noinspection deprecation
-        psiFile = ((BackFileViewProvider)psiFile.getViewProvider()).getFrontPsiFile();
+      List<CodeInsightContext> allContexts;
+      boolean skipDefaultContext;
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
+        allContexts = CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(vfile);
+        skipDefaultContext = ContainerUtil.find(allContexts, c -> c != CodeInsightContexts.defaultContext()) != null;
       }
-
-      if (psiFile instanceof PsiBinaryFile binaryFile) {
-        PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);
-        if (originalPsiFile != null) {
-          psiFile = originalPsiFile;
-        }
+      else {
+        allContexts = Collections.singletonList(CodeInsightContexts.defaultContext());
+        skipDefaultContext = false;
       }
+      for (CodeInsightContext context : allContexts) {
+        if (skipDefaultContext && context == CodeInsightContexts.defaultContext()) continue;
 
-      if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
-        Project project = myManager.getProject();
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        if (!DumbUtil.getInstance(project).mayUseIndices()) {
-          throw ApplicationUtil.CannotRunReadActionException.create();
+        PsiFile psiFile = myManager.findFile(vfile, context);
+
+
+
+        if (psiFile instanceof PsiBinaryFile binaryFile) {
+          PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);
+          if (originalPsiFile != null) {
+            psiFile = originalPsiFile;
+          }
         }
 
-        FileViewProvider provider = psiFile.getViewProvider();
-        List<PsiFile> psiRoots = provider.getAllFiles();
-        Set<PsiFile> processed = new HashSet<>(psiRoots.size() * 2, (float)0.5);
-        for (PsiFile psiRoot : psiRoots) {
-          ProgressManager.checkCanceled();
-          assert psiRoot != null : "One of the roots of file " + psiFile + " is null. All roots: " + psiRoots + "; ViewProvider: " +
-                                   provider + "; Virtual file: " + provider.getVirtualFile();
-          if (!processed.add(psiRoot)) continue;
-          if (!psiRoot.isValid()) {
-            continue;
+        if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+          Project project = myManager.getProject();
+          if (project.isDisposed()) throw new ProcessCanceledException();
+          if (!DumbUtil.getInstance(project).mayUseIndices()) {
+            throw ApplicationUtil.CannotRunReadActionException.create();
           }
 
-          if (!localProcessor.process(new CandidateFileInfo(vfile, psiRoot))) {
-            stopped.set(true);
-            break;
+          FileViewProvider provider = psiFile.getViewProvider();
+          List<PsiFile> psiRoots = provider.getAllFiles();
+          Set<PsiFile> processed = new HashSet<>(psiRoots.size() * 2, (float)0.5);
+          for (PsiFile psiRoot : psiRoots) {
+            ProgressManager.checkCanceled();
+            assert psiRoot != null : "One of the roots of file " + psiFile + " is null. All roots: " + psiRoots + "; ViewProvider: " +
+                                     provider + "; Virtual file: " + provider.getVirtualFile();
+            if (!processed.add(psiRoot)) continue;
+            if (!psiRoot.isValid()) {
+              continue;
+            }
+
+            if (!localProcessor.process(new CandidateFileInfo(vfile, psiRoot))) {
+              stopped.set(true);
+              break;
+            }
           }
         }
       }
@@ -661,8 +666,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  @Nullable
-  private static PsiFile findOriginalPsiFile(@NotNull PsiBinaryFile psiFile) {
+  private static @Nullable PsiFile findOriginalPsiFile(@NotNull PsiBinaryFile psiFile) {
     List<BinaryFileSourceProvider> providers = BinaryFileSourceProvider.EP.getExtensionList();
     for (BinaryFileSourceProvider provider : providers) {
       PsiFile originalFile = provider.findSourceFile(psiFile);
@@ -867,9 +871,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     CHANGED,
   }
 
-  @NotNull
-  static Processor<? super CandidateFileInfo> localProcessor(@NotNull StringSearcher searcher,
-                                                             @NotNull BulkOccurrenceProcessor processor) {
+  static @NotNull Processor<? super CandidateFileInfo> localProcessor(@NotNull StringSearcher searcher,
+                                                                      @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(CandidateFileInfo candidateFileInfo) {
@@ -1037,7 +1040,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Collection<T> processors = entry.getValue();
       GlobalSearchScope commonScope = uniteScopes(processors);
       // files which are target of the search
-      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> processors.stream().flatMap(p -> p.getSearchSession().getTargetVirtualFiles().stream()).filter(commonScope::contains).collect(Collectors.toSet()));
+      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> {
+        return processors.stream().flatMap(p -> {
+            List<VirtualFile> files = p.getSearchSession().getTargetVirtualFiles();
+            return files.stream();
+          }).filter(commonScope::contains)
+          .collect(Collectors.toSet());
+      });
       // directories in which target files are contained
       Set<VirtualFile> thisTargetDirectories = ContainerUtil.map2SetNotNull(thisTargetFiles, f -> f.getParent());
       Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, key);
@@ -1251,7 +1260,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if (ApplicationManager.getApplication().isReadAccessAllowed() &&
         (!DumbService.isDumb(project) ||
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null)) {
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != null)) {
       return computeQueries(scope, processor, textIndexQueries);
     }
 
@@ -1366,7 +1375,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return new TextIndexQuery(keys, trigrams, context, useOnlyWordHashToSearch, words);
     }
 
-    private static @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
+    private static @Unmodifiable @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
       List<String> words = StringUtil.getWordsInStringLongestFirst(name);
       if (words.isEmpty()) {
         String trimmed = name.trim();

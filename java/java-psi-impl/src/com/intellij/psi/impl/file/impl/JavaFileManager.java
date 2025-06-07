@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public interface JavaFileManager {
   static JavaFileManager getInstance(@NotNull Project project) {
@@ -23,6 +24,8 @@ public interface JavaFileManager {
   PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope);
 
   PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope);
+  
+  boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter);
 
   @NotNull
   Collection<String> getNonTrivialPackagePrefixes();

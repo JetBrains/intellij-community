@@ -29,12 +29,13 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
@@ -150,9 +151,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())
       .setScrollPaneBorder(JBUI.Borders.empty());
-    DefaultActionGroup group = createToolbarActionGroup();
-    if (group != null) {
-      decorator.setActionGroup(group);
+    List<AnAction> actions = createToolbarActions();
+    if (actions != null) {
+      for (AnAction action : actions) {
+        decorator.addExtraAction(action);
+      }
     }
     //left.add(myNorthPanel, BorderLayout.NORTH);
     myMaster = decorator.createPanel();
@@ -242,21 +245,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return myHistory == null || !myHistory.isNavigatingNow();
   }
 
-  protected DefaultActionGroup createToolbarActionGroup() {
-    final List<AnAction> actions = createActions(false);
-    if (actions != null) {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      for (AnAction action : actions) {
-        if (action instanceof ActionGroupWithPreselection) {
-          group.add(new MyActionGroupWrapper((ActionGroupWithPreselection)action));
-        }
-        else {
-          group.add(action);
-        }
-      }
-      return group;
-    }
-    return null;
+  protected @Nullable @Unmodifiable List<AnAction> createToolbarActions() {
+    List<AnAction> actions = createActions(false);
+    if (actions == null) return null;
+    return ContainerUtil.map(actions, o ->
+      o instanceof ActionGroupWithPreselection oo ? new MyActionGroupWrapper(oo) : o);
   }
 
   public void addItemsChangeListener(ItemsChangeListener l) {
@@ -370,7 +363,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (!(userObject instanceof NamedConfigurable)) break;
       final String displayName = current.getDisplayName();
       if (StringUtil.isEmptyOrSpaces(displayName)) break;
-      if (path.length() > 0) {
+      if (!path.isEmpty()) {
         path.append('|');
       }
       path.append(displayName);

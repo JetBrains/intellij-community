@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.SearchService
@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCall
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 object DirectKotlinOverridingCallableSearch {
@@ -39,15 +38,15 @@ object DirectKotlinOverridingCallableSearch {
         }
     }
 
-    fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration): Query<out PsiElement> {
         return search(ktFunction, runReadAction { ktFunction.useScope })
     }
 
-    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<out PsiElement> {
         return search(SearchParameters(ktFunction, searchScope))
     }
 
-    fun search(parameters: SearchParameters): Query<PsiElement> {
+    fun search(parameters: SearchParameters): Query<out PsiElement> {
         return SearchService.getInstance().searchParameters(parameters)
     }
 
@@ -115,7 +114,7 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
 
         return methods.map<PsiMethod, Query<PsiElement>> { lightMethod ->
             EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(lightMethod, parameters.searchScope, true))
-                .flatMapping<PsiElement?> { psiMethod ->
+                .flatMapping { psiMethod ->
                     object : AbstractQuery<PsiElement>() {
                         override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
                             if (psiMethod.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) }) {

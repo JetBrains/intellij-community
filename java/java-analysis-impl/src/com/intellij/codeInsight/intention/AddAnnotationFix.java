@@ -20,13 +20,15 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated prefer {@link AddAnnotationModCommandAction}. If you just need to add an annotation to Java code,
+ * you may use {@link AddAnnotationPsiFix#addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}.
+ */
+@Deprecated
 public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAction {
   public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, String @NotNull ... annotationsToRemove) {
     this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
@@ -48,16 +50,16 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(psiFile)) {
       PsiElement psiElement = getStartElement();
-      if (psiElement == null || psiElement.getContainingFile() != file) return false;
+      if (psiElement == null || psiElement.getContainingFile() != psiFile) return false;
     }
     return isAvailable();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     applyFix();
   }
 }

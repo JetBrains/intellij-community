@@ -5,3 +5,5 @@ fun test1() {
         <caret>this.s = ""
     }
 }
+// KTIJ-32432
+// IGNORE_K2

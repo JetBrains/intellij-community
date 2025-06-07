@@ -43,7 +43,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
-import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
@@ -89,9 +88,7 @@ class PythonOnboardingTourLesson :
 
   val sample: LessonSample = parseLessonSample("""
     def find_average(values)<caret id=3/>:
-        result = 0
-        for v in values:
-            result += v
+        result = sum(values)
         <caret>return result<caret id=2/>
 
 
@@ -185,7 +182,7 @@ class PythonOnboardingTourLesson :
     }
     caret(sample.startOffset)
 
-    toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = { IntRange(13, it - 17) }, checkLine = false) {
+    toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
            LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 20))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1",
@@ -493,31 +490,20 @@ class PythonOnboardingTourLesson :
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage(project)), LessonUtil.rawEnter()))
+      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage(project)), LessonUtil.rawEnter(), LessonUtil.rawEnter()))
       stateCheck {
         val text = editor.document.text
-        previous.sample.text != text && text.contains("object") && !text.contains("values: object")
+        previous.sample.text != text && text.contains("float") && !text.contains("values: object")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     task {
-      lateinit var forRestore: LessonSample
-      before {
-        val text = previous.sample.text
-        val toReplace = "object"
-        forRestore = LessonSample(text.replace(toReplace, ""), text.indexOf(toReplace).takeIf { it != -1 } ?: 0)
-      }
-      text(PythonLessonsBundle.message("python.onboarding.complete.template", code("float"), LessonUtil.rawEnter()))
+      text(PythonLessonsBundle.message("python.onboarding.complete.template", LessonUtil.rawEnter()))
       stateCheck {
         // TODO: make normal check
         val activeTemplate = TemplateManagerImpl.getInstance(project).getActiveTemplate(editor)
-        editor.document.text.contains("float") && activeTemplate == null
-      }
-      proposeRestore {
-        checkExpectedStateOfEditor(forRestore) {
-          "object".contains(it) || "float".contains(it)
-        }
+        activeTemplate == null
       }
     }
   }

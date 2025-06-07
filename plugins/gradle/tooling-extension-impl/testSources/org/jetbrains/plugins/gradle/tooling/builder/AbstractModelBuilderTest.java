@@ -3,17 +3,13 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
-import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +25,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
@@ -45,10 +42,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -151,7 +145,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   private @NotNull GradleIdeaModelHolder runBuildAction(@NotNull List<? extends ProjectImportModelProvider> modelProviders) {
-    GradleModelFetchAction buildAction = new GradleModelFetchAction()
+    GradleModelFetchAction buildAction = new GradleModelFetchAction(gradleVersion)
       .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class))
       .addProjectImportModelProviders(modelProviders);
 
@@ -168,16 +162,19 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(getDaemonMaxIdleTimeSeconds(), TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      GradleModelHolderState state = connection.action(buildAction)
+      GradleIdeaModelHolder models = new GradleIdeaModelHolder();
+      GradleModelHolderState state = SystemPropertiesAdjuster.executeAdjusted(testDir.getAbsolutePath(), () -> {
+        GradleModelHolderState result = connection.action(buildAction)
         .setStandardError(System.err)
         .setStandardOutput(System.out)
         .setJavaHome(new File(gradleJvmHomePath))
         .withArguments(executionSettings.getArguments())
+        .withSystemProperties(Collections.emptyMap())
         .setJvmArguments(executionSettings.getJvmArguments())
         .run();
-      Assert.assertNotNull(state);
-
-      GradleIdeaModelHolder models = new GradleIdeaModelHolder();
+      Assert.assertNotNull(result);
+      return result;
+      });
       models.addState(state);
       return models;
     }
@@ -209,14 +206,10 @@ public abstract class AbstractModelBuilderTest {
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
     return ContainerUtil.newHashSet(
-      ExternalSystemRtClass.class, // intellij.platform.externalSystem.rt
-      GradleToolingExtensionClass.class, // intellij.gradle.toolingExtension
-      GradleToolingExtensionImplClass.class, // intellij.gradle.toolingExtension.impl
       Multimap.class, // repacked gradle guava
       ShortTypeHandling.class, // groovy
       Object2ObjectMap.class, // fastutil
-      IonType.class,  // ion-java jar
-      SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
+      IonType.class  // ion-java jar
     );
   }
 

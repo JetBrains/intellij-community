@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.internal.inspector.PropertyBean;
@@ -257,13 +257,11 @@ public abstract class GroupedElementsRenderer implements Accessible {
     return myRendererComponent.getAccessibleContext();
   }
 
-  @NlsSafe
-  protected String getDelegateAccessibleName() {
+  protected @NlsSafe String getDelegateAccessibleName() {
     return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleName() : null;
   }
 
-  @NlsSafe
-  protected String getDelegateAccessibleDescription() {
+  protected @NlsSafe String getDelegateAccessibleDescription() {
     return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleDescription() : null;
   }
 }

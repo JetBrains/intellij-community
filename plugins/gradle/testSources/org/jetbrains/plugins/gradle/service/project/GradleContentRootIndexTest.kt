@@ -12,13 +12,13 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     val projectPath = Path.of("path/to/project")
     val externalProject = createExternalProject(projectPath)
 
-    val mainSources = createSources(
+    val mainSources = listOf(
       projectPath.resolve("src/main/java"),
-      projectPath.resolve("src/main/resources"),
+      projectPath.resolve("src/main/resources")
     )
-    val testSources = createSources(
+    val testSources = listOf(
       projectPath.resolve("src/test/java"),
-      projectPath.resolve("src/test/resources"),
+      projectPath.resolve("src/test/resources")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -43,13 +43,13 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     val projectPath = Path.of("path/to/project")
     val externalProject = createExternalProject(projectPath)
 
-    val mainSources = createSources(
+    val mainSources = listOf(
       projectPath.resolve("src/java"),
-      projectPath.resolve("src/resources"),
+      projectPath.resolve("src/resources")
     )
-    val testSources = createSources(
+    val testSources = listOf(
       projectPath.resolve("testSrc/java"),
-      projectPath.resolve("testSrc/resources"),
+      projectPath.resolve("testSrc/resources")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -75,11 +75,11 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     val externalProject = createExternalProject(projectPath)
 
     run {
-      val mainSources = createSources(
-        projectPath.resolve("src/main/java"),
+      val mainSources = listOf(
+        projectPath.resolve("src/main/java")
       )
-      val testSources = createSources(
-        projectPath.resolve("src/test/java"),
+      val testSources = listOf(
+        projectPath.resolve("src/test/java")
       )
 
       val contentRootIndex = GradleContentRootIndex()
@@ -100,8 +100,8 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     }
 
     run {
-      val mainSources = createSources(
-        projectPath.resolve("src/main/java"),
+      val mainSources = listOf(
+        projectPath.resolve("src/main/java")
       )
 
       val contentRootIndex = GradleContentRootIndex()
@@ -116,17 +116,63 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
   }
 
   @Test
+  fun `test content root resolution for incomplete external sources`() {
+    val rootPath = Path.of("path/to/root")
+    val externalProject = createExternalProject(rootPath.resolve("externalRoot"))
+
+    run {
+      val mainSources = listOf(
+        rootPath.resolve("externalRoot/src/main/java")
+      )
+      val testSources = listOf(
+        rootPath.resolve("externalRoot/src/test/java")
+      )
+
+      val contentRootIndex = GradleContentRootIndex()
+      contentRootIndex.addSourceRoots(mainSources)
+      contentRootIndex.addSourceRoots(testSources)
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, mainSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/main"),
+      )
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, testSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/test"),
+      )
+    }
+
+    run {
+      val mainSources = listOf(
+        rootPath.resolve("externalRoot/src/main/java")
+      )
+
+      val contentRootIndex = GradleContentRootIndex()
+      contentRootIndex.addSourceRoots(mainSources)
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, mainSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/main"),
+      )
+    }
+  }
+
+  @Test
   fun `test content root resolution for flatten sources`() {
     val projectPath = Path.of("path/to/project")
     val externalProject = createExternalProject(projectPath)
 
-    val mainSources = createSources(
+    val mainSources = listOf(
       projectPath.resolve("src"),
-      projectPath.resolve("resources"),
+      projectPath.resolve("resources")
     )
-    val testSources = createSources(
+    val testSources = listOf(
       projectPath.resolve("testSrc"),
-      projectPath.resolve("testResources"),
+      projectPath.resolve("testResources")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -154,17 +200,15 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     val projectBuildPath = projectPath.resolve("build")
     val externalProject = createExternalProject(projectPath, projectBuildPath)
 
-    val mainSources = createSources(
+    val mainSources = listOf(
       projectPath.resolve("src/main/java"),
       projectPath.resolve("src/main/resources"),
-
-      projectPath.resolve("build/generated/sources/annotationProcessor/java/main"),
+      projectPath.resolve("build/generated/sources/annotationProcessor/java/main")
     )
-    val testSources = createSources(
+    val testSources = listOf(
       projectPath.resolve("src/test/java"),
       projectPath.resolve("src/test/resources"),
-
-      projectPath.resolve("build/generated/sources/annotationProcessor/java/test"),
+      projectPath.resolve("build/generated/sources/annotationProcessor/java/test")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -188,24 +232,21 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
 
   @Test
   fun `test content root resolution for external sources`() {
-    val projectPath = Path.of("path/to/project")
-    val externalPath = Path.of("path/to/external")
-    val projectBuildPath = projectPath.resolve("build")
-    val externalProject = createExternalProject(projectPath, projectBuildPath)
+    val rootPath = Path.of("path/to/root")
+    val projectBuildPath = rootPath.resolve("projectRoot/build")
+    val externalProject = createExternalProject(rootPath.resolve("projectRoot"), projectBuildPath)
 
-    val mainSources = createSources(
-      projectPath.resolve("src/main/java"),
-      projectPath.resolve("src/main/resources"),
-
-      externalPath.resolve("src/main/java"),
-      externalPath.resolve("src/main/resources"),
+    val mainSources = listOf(
+      rootPath.resolve("projectRoot/src/main/java"),
+      rootPath.resolve("projectRoot/src/main/resources"),
+      rootPath.resolve("externalRoot/src/main/java"),
+      rootPath.resolve("externalRoot/src/main/resources")
     )
-    val testSources = createSources(
-      projectPath.resolve("src/test/java"),
-      projectPath.resolve("src/test/resources"),
-
-      externalPath.resolve("src/test/java"),
-      externalPath.resolve("src/test/resources"),
+    val testSources = listOf(
+      rootPath.resolve("projectRoot/src/test/java"),
+      rootPath.resolve("projectRoot/src/test/resources"),
+      rootPath.resolve("externalRoot/src/test/java"),
+      rootPath.resolve("externalRoot/src/test/resources")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -215,19 +256,15 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     Assertions.assertThat(
       contentRootIndex.resolveContentRoots(externalProject, mainSources)
     ).containsExactlyInAnyOrder(
-      projectPath.resolve("src/main"),
-
-      externalPath.resolve("src/main/java"),
-      externalPath.resolve("src/main/resources"),
+      rootPath.resolve("projectRoot/src/main"),
+      rootPath.resolve("externalRoot/src/main")
     )
 
     Assertions.assertThat(
       contentRootIndex.resolveContentRoots(externalProject, testSources)
     ).containsExactlyInAnyOrder(
-      projectPath.resolve("src/test"),
-
-      externalPath.resolve("src/test/java"),
-      externalPath.resolve("src/test/resources"),
+      rootPath.resolve("projectRoot/src/test"),
+      rootPath.resolve("externalRoot/src/test"),
     )
   }
 
@@ -237,21 +274,21 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     val externalProject = createExternalProject(projectPath)
     val moduleExternalProject = createExternalProject(projectPath.resolve("module"))
 
-    val mainSources = createSources(
+    val mainSources = listOf(
       projectPath.resolve("src/main/java"),
-      projectPath.resolve("src/main/resources"),
+      projectPath.resolve("src/main/resources")
     )
-    val testSources = createSources(
+    val testSources = listOf(
       projectPath.resolve("src/test/java"),
-      projectPath.resolve("src/test/resources"),
+      projectPath.resolve("src/test/resources")
     )
-    val moduleMainSources = createSources(
+    val moduleMainSources = listOf(
       projectPath.resolve("module/src/main/java"),
-      projectPath.resolve("module/src/main/resources"),
+      projectPath.resolve("module/src/main/resources")
     )
-    val moduleTestSources = createSources(
+    val moduleTestSources = listOf(
       projectPath.resolve("module/src/test/java"),
-      projectPath.resolve("module/src/test/resources"),
+      projectPath.resolve("module/src/test/resources")
     )
 
     val contentRootIndex = GradleContentRootIndex()

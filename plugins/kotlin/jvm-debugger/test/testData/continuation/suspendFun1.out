@@ -5,7 +5,6 @@ suspendFun1.kt:16
 Thread stack trace:
 	CoroutinePreflightFrame f2:!LINE_NUMBER!, SuspendFun1 (continuation)
 		($completion, $continuation, $result)
-CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, SuspendFun1Kt$main$1 (continuation)
 		($completion, $continuation, $result)
 	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)

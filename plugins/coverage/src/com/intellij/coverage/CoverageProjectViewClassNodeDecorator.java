@@ -21,7 +21,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     if (project == null) {
       return;
     }
-    if (!isShowingCoverageInProjectViewEnabled(project)) return;
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
 
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     CoverageSuitesBundle javaSuite = getJavaSuite(coverageDataManager, project);

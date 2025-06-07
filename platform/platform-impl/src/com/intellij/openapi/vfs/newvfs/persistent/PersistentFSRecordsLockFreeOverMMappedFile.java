@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.Unmappable;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,6 @@ import static java.nio.ByteOrder.nativeOrder;
 public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage,
                                                                          IPersistentFSRecordsStorage,
                                                                          Unmappable {
-
   /**
    * How many un-allocated records (i.e. after {@link #maxAllocatedID()}) to check to be empty (all-zero)
    * by default, if wasClosedProperly=true.
@@ -44,7 +43,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED = UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR * 100;
 
   @VisibleForTesting
-  static final class FileHeader {
+  @ApiStatus.Internal
+  public static final class FileHeader {
     //Forked from PersistentFSHeaders since mmapped impl gained more and more pecularities
 
     //@formatter:off
@@ -67,20 +67,19 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     static final int ERRORS_ACCUMULATED_OFFSET              = 32;  // int32
 
+    static final int FLAGS_OFFSET                           = 36;  // int32
 
-    //reserve couple int32 header fields for the generations to come
     //Header size must be int64-aligned, so records start on int64-aligned offset
-    static final int HEADER_SIZE                            = 40;
+    public static final int HEADER_SIZE                            = 40;
 
     //@formatter:on
   }
 
-
   public static final int NULL_OWNER_PID = 0;
 
-
   @VisibleForTesting
-  static final class RecordLayout {
+  @ApiStatus.Internal
+  public static final class RecordLayout {
     //@formatter:off
     static final int PARENT_REF_OFFSET        = 0;   //int32
     static final int NAME_REF_OFFSET          = 4;   //int32
@@ -93,7 +92,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     static final int TIMESTAMP_OFFSET         = 24;  //int64
     static final int LENGTH_OFFSET            = 32;  //int64
 
-    static final int RECORD_SIZE_IN_BYTES     = 40;
+    public static final int RECORD_SIZE_IN_BYTES     = 40;
     //@formatter:on
   }
 
@@ -377,7 +376,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     private HeaderAccessor(@NotNull PersistentFSRecordsLockFreeOverMMappedFile records) { this.records = records; }
 
     @Override
-    public long getTimestamp() throws IOException {
+    public long getTimestamp() {
       return records.getTimestamp();
     }
 
@@ -387,19 +386,17 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     @Override
-    public int getGlobalModCount() {
+    public int getGlobalModCount() throws IOException {
       return records.getGlobalModCount();
     }
 
     @Override
-    public void setVersion(int version) throws IOException {
+    public void setVersion(int version) {
       records.setVersion(version);
     }
   }
 
-
   // ==== records operations:  ================================================================ //
-
 
   @Override
   public int allocateRecord() throws IOException {
@@ -596,7 +593,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public boolean wasClosedProperly() throws IOException {
+  public boolean wasClosedProperly() {
     return wasClosedProperly;
   }
 
@@ -707,6 +704,27 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
+  public int getFlags() throws IOException {
+    return getIntHeaderField(FileHeader.FLAGS_OFFSET);
+  }
+
+  @Override
+  public boolean updateFlags(int flagsToAdd, int flagsToRemove) throws IOException {
+    ByteBuffer headerBuffer = headerPage().rawPageBuffer();
+
+    while (true) {//CAS-loop
+      int currentFlags = (int)INT_HANDLE.getVolatile(headerBuffer, FileHeader.FLAGS_OFFSET);
+      int newFlags = (currentFlags & ~flagsToRemove) | flagsToAdd;
+      if (newFlags == currentFlags) {
+        return false;
+      }
+      if (INT_HANDLE.compareAndSet(headerBuffer, FileHeader.FLAGS_OFFSET, currentFlags, newFlags)) {
+        return true;
+      }
+    }
+  }
+
+  @Override
   public int recordsCount() {
     return allocatedRecordsCount();
   }
@@ -784,8 +802,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       headerPage = null;
 
       if (currentOwnerPid != NULL_OWNER_PID) {
-        throw new IOException(
-          "Storage is exclusively owned by another process[pid: " + currentOwnerPid + ", our pid: " + ourPid + "]");
+        //important to NOT throw an exception here -- close must be successful regardless of success of ownership acquiring
+        FSRecords.LOG.warn("Storage is exclusively owned by another process[pid: " + currentOwnerPid + ", our pid: " + ourPid + "]");
       }
     }
   }
@@ -807,7 +825,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  long recordOffsetInFileUnchecked(int recordId) {
+  public long recordOffsetInFileUnchecked(int recordId) {
     //recordId is 1-based, convert to 0-based recordNo:
     int recordNo = recordId - 1;
 

@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -73,7 +73,7 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
     if (wrapper == null) return null;
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
     if (block == null) return null;
-    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, block, null)) return null;
+    if (!ControlFlowUtil.isEffectivelyFinal(variable, block)) return null;
     return new WrapWithMutableCollectionFix(variable.getName(), wrapper);
   }
 

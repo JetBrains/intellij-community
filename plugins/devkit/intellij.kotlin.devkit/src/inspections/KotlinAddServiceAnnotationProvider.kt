@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.inspections.getProjectLevelFQN
 import org.jetbrains.idea.devkit.inspections.quickfix.AddServiceAnnotationProvider
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
+import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 
@@ -15,19 +15,16 @@ internal class KotlinAddServiceAnnotationProvider : AddServiceAnnotationProvider
     val ktClass = when (aClass) {
       is KtClass -> aClass
       is KtLightClass -> aClass.kotlinOrigin
-      else -> return
+      else -> null
+    } ?: return
+    val annotationInnerText = when (level) {
+      Service.Level.APP -> null
+      Service.Level.PROJECT -> getProjectLevelFQN()
     }
-    val file = ktClass?.containingFile ?: return
-    val annotationClassId = ClassId.fromString(Service::class.java.canonicalName)
-    val fix = when (level) {
-      Service.Level.APP -> {
-        AddAnnotationFix(ktClass, annotationClassId, AddAnnotationFix.Kind.Self)
-      }
-
-      Service.Level.PROJECT -> {
-        AddAnnotationFix(ktClass, annotationClassId, AddAnnotationFix.Kind.Self, listOf(getProjectLevelFQN()))
-      }
-    }
-    fix.invoke(file.project, null, file)
+    ktClass.addAnnotation(
+      annotationClassId = ClassId.fromString(Service::class.java.canonicalName),
+      annotationInnerText = annotationInnerText,
+      searchForExistingEntry = false,
+    )
   }
 }

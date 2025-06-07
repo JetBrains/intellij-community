@@ -8,4 +8,4 @@ class ALocalInspectionTool extends LocalInspectionTool {
     return com.intellij.codeInspection.InspectionProfileEntry.getShortName(name);
   }
 }
-public class <warning descr="Inspection does not have a description [getShortName()]">MyWithDescriptionAndShortNameInBaseInspection</warning> extends ALocalInspectionTool {}
+public class <error descr="Inspection does not have a description [getShortName()]">MyWithDescriptionAndShortNameInBaseInspection</error> extends ALocalInspectionTool {}

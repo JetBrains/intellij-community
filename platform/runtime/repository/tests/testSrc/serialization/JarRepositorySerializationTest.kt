@@ -11,6 +11,7 @@ import com.intellij.util.io.assertMatches
 import com.intellij.util.io.jarFile
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Path
 
 class JarRepositorySerializationTest {
   @JvmField
@@ -88,6 +89,28 @@ class JarRepositorySerializationTest {
         """.trimIndent())
     }
   }
+  
+  @Test
+  fun `unresolved dependency`() {
+    val descriptors = listOf(
+      RawRuntimeModuleDescriptor.create("ij.foo", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
+    )
+    check(descriptors) {
+      xml("ij.foo.xml", """
+          <module name="ij.foo">
+          </module>
+      """.trimIndent())
+      xml("ij.bar.xml", """
+        <module name="ij.bar">
+          <dependencies>
+            <module name="ij.foo"/>
+            <module name="unresolved"/>
+          </dependencies>
+        </module>
+      """.trimIndent())
+    }
+  }
 
   private fun check(descriptors: List<RawRuntimeModuleDescriptor>, bootstrapModuleName: String? = null,
                     bootstrapClassPath: String? = null, content: DirectoryContentBuilder.() -> Unit) {
@@ -111,19 +134,26 @@ class JarRepositorySerializationTest {
       }
       content()
     }
-    checkSaving(descriptors, bootstrapModuleName, jarFile)
-    checkLoading(jarFile, descriptors)
+    val out = tempDirectory.rootPath
+    val jarFilePath = out.resolve("module-descriptors.jar")
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors, bootstrapModuleName, jarFilePath, 0)
+    jarFilePath.assertMatches(jarFile)
+
+    val compactFilePath = out.resolve("module-descriptors.dat")
+    RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors, bootstrapModuleName, compactFilePath, 0)
+    checkLoadingFromCompactFile(compactFilePath, descriptors)
+    checkLoadingFromJar(jarFile, descriptors)
   }
 
-  private fun checkLoading(zipFileSpec: DirectoryContentSpec, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
-    val repositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir())
+  private fun checkLoadingFromCompactFile(filePath: Path, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
+    val repositoryData = RuntimeModuleRepositorySerialization.loadFromCompactFile(filePath)
     val actualDescriptors = repositoryData.allIds.map { repositoryData.findDescriptor(it)!! }
     UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 
-  private fun checkSaving(descriptors: List<RawRuntimeModuleDescriptor>, bootstrapModuleName: String?, zipFileSpec: DirectoryContentSpec) {
-    val jarFile = tempDirectory.rootPath.resolve("descriptors.jar")
-    RuntimeModuleRepositorySerialization.saveToJar(descriptors, bootstrapModuleName, jarFile, 0)
-    jarFile.assertMatches(zipFileSpec)
+  private fun checkLoadingFromJar(zipFileSpec: DirectoryContentSpec, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
+    val repositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir())
+    val actualDescriptors = repositoryData.allIds.map { repositoryData.findDescriptor(it)!! }
+    UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 }

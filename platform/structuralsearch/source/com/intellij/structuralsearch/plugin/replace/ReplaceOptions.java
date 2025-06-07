@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -23,15 +23,14 @@ public class ReplaceOptions implements JDOMExternalizable {
   private boolean toShortenFQN;
   private boolean myToReformatAccordingToStyle;
   private boolean myToUseStaticImport;
-  @NotNull
-  private final MatchOptions matchOptions;
+  private final @NotNull MatchOptions matchOptions;
 
-  @NonNls private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
-  @NonNls private static final String REPLACEMENT_ATTR_NAME = "replacement";
-  @NonNls private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
-  @NonNls private static final String USE_STATIC_IMPORT_ATTR_NAME = "useStaticImport";
+  private static final @NonNls String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
+  private static final @NonNls String REPLACEMENT_ATTR_NAME = "replacement";
+  private static final @NonNls String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
+  private static final @NonNls String USE_STATIC_IMPORT_ATTR_NAME = "useStaticImport";
 
-  @NonNls private static final String VARIABLE_DEFINITION_TAG_NAME = "variableDefinition";
+  private static final @NonNls String VARIABLE_DEFINITION_TAG_NAME = "variableDefinition";
 
   public ReplaceOptions() {
     this(new MatchOptions());
@@ -54,13 +53,11 @@ public class ReplaceOptions implements JDOMExternalizable {
     matchOptions = options.matchOptions.copy(); // deep copy
   }
 
-  @NotNull
-  public ReplaceOptions copy() {
+  public @NotNull ReplaceOptions copy() {
     return new ReplaceOptions(this);
   }
 
-  @NotNull
-  public @NlsSafe String getReplacement() {
+  public @NotNull @NlsSafe String getReplacement() {
     return replacement;
   }
 
@@ -96,8 +93,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     myToUseStaticImport = useStaticImport;
   }
 
-  @NotNull
-  private Set<String> getUsedVariableNames() {
+  private @NotNull Set<String> getUsedVariableNames() {
     return TemplateImplUtil.parseVariableNames(replacement);
   }
 
@@ -158,6 +154,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ReplaceOptions replaceOptions)) return false;
@@ -172,6 +169,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = replacement.hashCode();
     result = 29 * result + (toShortenFQN ? 1 : 0);
@@ -190,15 +188,13 @@ public class ReplaceOptions implements JDOMExternalizable {
     variableDefs.put(definition.getName(), definition);
   }
 
-  @NotNull
-  public ReplacementVariableDefinition addNewVariableDefinition(@NotNull String name) {
+  public @NotNull ReplacementVariableDefinition addNewVariableDefinition(@NotNull String name) {
     final ReplacementVariableDefinition definition = new ReplacementVariableDefinition(name);
     variableDefs.put(name, definition);
     return definition;
   }
 
-  @NotNull
-  public Collection<ReplacementVariableDefinition> getVariableDefinitions() {
+  public @NotNull Collection<ReplacementVariableDefinition> getVariableDefinitions() {
     return variableDefs.values();
   }
 

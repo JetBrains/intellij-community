@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,17 +49,16 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
    */
   public static class FactoryImpl extends Factory {
     private static final ExtensionPointName<FactoryImpl> EP_NAME =
-      ExtensionPointName.create("org.jetbrains.plugins.gradle.orderEnumerationHandlerFactory");
+      new ExtensionPointName<>("org.jetbrains.plugins.gradle.orderEnumerationHandlerFactory");
 
     @Override
     public boolean isApplicable(@NotNull Module module) {
       return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
 
-    @NotNull
     @Override
-    public GradleOrderEnumeratorHandler createHandler(@NotNull Module module) {
-      for (FactoryImpl factory : EP_NAME.getExtensions()) {
+    public @NotNull GradleOrderEnumeratorHandler createHandler(@NotNull Module module) {
+      for (FactoryImpl factory : EP_NAME.getExtensionList()) {
         if (factory.isApplicable(module)) {
           return factory.createHandler(module);
         }

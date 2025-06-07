@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,7 +204,7 @@ public final class InplaceEditingLayer extends JComponent{
     }
 
     // 5. Block any mouse event to finish editing by any of them
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 
     repaint();
   }
@@ -257,7 +257,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 3. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }
@@ -288,7 +288,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 2. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }

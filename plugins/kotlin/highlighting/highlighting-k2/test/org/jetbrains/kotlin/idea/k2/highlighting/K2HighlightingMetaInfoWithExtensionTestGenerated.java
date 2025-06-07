@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
@@ -33,5 +33,10 @@ public class K2HighlightingMetaInfoWithExtensionTestGenerated extends AbstractK2
     @TestMetadata("Functions.kt")
     public void testFunctions() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithExtension/Functions.kt");
+    }
+
+    @TestMetadata("Properties.kt")
+    public void testProperties() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithExtension/Properties.kt");
     }
 }

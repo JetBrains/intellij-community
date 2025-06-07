@@ -27,8 +27,7 @@ public final class LombokConfigPsiUtil {
     return StringUtil.trim(getNodeText(element.getNode(), LombokConfigTypes.SIGN));
   }
 
-  @Nullable
-  private static String getNodeText(@NotNull ASTNode node, @NotNull IElementType type) {
+  private static @Nullable String getNodeText(@NotNull ASTNode node, @NotNull IElementType type) {
     final ASTNode valueNode = node.findChildByType(type);
     if (valueNode != null) {
       return valueNode.getText();

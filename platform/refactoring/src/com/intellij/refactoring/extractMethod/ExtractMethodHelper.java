@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -33,12 +33,12 @@ import java.util.*;
  * @author Dennis.Ushakov
  */
 public final class ExtractMethodHelper {
-  public static void processDuplicates(@NotNull final PsiElement callElement,
-                                       @NotNull final PsiElement generatedMethod,
+  public static void processDuplicates(final @NotNull PsiElement callElement,
+                                       final @NotNull PsiElement generatedMethod,
                                        final @NotNull List<? extends PsiElement> scope,
-                                       @NotNull final SimpleDuplicatesFinder finder,
-                                       @NotNull final Editor editor,
-                                       @NotNull final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer) {
+                                       final @NotNull SimpleDuplicatesFinder finder,
+                                       final @NotNull Editor editor,
+                                       final @NotNull Consumer<? super Pair<SimpleMatch, PsiElement>> replacer) {
     finder.setReplacement(callElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
@@ -68,8 +68,7 @@ public final class ExtractMethodHelper {
    * @return list of discovered duplicate code fragments or empty list if user interrupted the search
    * @see #replaceDuplicates(PsiElement, Editor, Consumer, List)
    */
-  @NotNull
-  public static List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
+  public static @NotNull List<SimpleMatch> collectDuplicates(@NotNull SimpleDuplicatesFinder finder,
                                                     @NotNull List<? extends PsiElement> searchScopes,
                                                     @NotNull PsiElement generatedMethod) {
     final Project project = generatedMethod.getProject();
@@ -156,8 +155,8 @@ public final class ExtractMethodHelper {
   }
 
 
-  private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
-                                        @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
+  private static void highlightInEditor(final @NotNull Project project, final @NotNull SimpleMatch match,
+                                        final @NotNull Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
     final List<RangeHighlighter> highlighters = new ArrayList<>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final int startOffset = match.getStartElement().getTextRange().getStartOffset();

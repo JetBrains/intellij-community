@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun foo(x: (Int) -> Int) { }
 
 fun test() {

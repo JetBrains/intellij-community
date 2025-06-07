@@ -4,10 +4,9 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
-import git4idea.stash.ui.GitStashContentProvider;
+import git4idea.stash.ui.GitStashUIHandler;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +34,9 @@ public class GitUnstash extends GitRepositoryAction {
   protected void perform(final @NotNull Project project,
                          final @NotNull List<VirtualFile> gitRoots,
                          final @NotNull VirtualFile defaultRoot) {
-    if (isStashTabAvailable() && ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) != null) {
-      showStashes(project, defaultRoot);
+    GitStashUIHandler handler = project.getService(GitStashUIHandler.class);
+    if (handler.isStashTabAvailableInWindow()) {
+      handler.showStashes(defaultRoot);
       return;
     }
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
@@ -48,7 +48,11 @@ public class GitUnstash extends GitRepositoryAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    if (project != null && isStashTabAvailable() && !isStashTabVisible(project)) {
+    if (project == null) {
+      return;
+    }
+    GitStashUIHandler handler = project.getService(GitStashUIHandler.class);
+    if (handler.isStashTabAvailable() && !handler.isStashTabVisible()) {
       e.getPresentation().setEnabled(false);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.AnsiStreamingLexer.AnsiElementType;
@@ -91,11 +91,10 @@ public class AnsiEscapeDecoder {
     }
   }
 
-  @Nullable
-  private List<Pair<String, Key>> processTextChunk(@Nullable List<Pair<String, Key>> buffer,
-                                                   @NotNull String text,
-                                                   @NotNull Key outputType,
-                                                   @NotNull ColoredTextAcceptor textAcceptor) {
+  private @Nullable List<Pair<String, Key>> processTextChunk(@Nullable List<Pair<String, Key>> buffer,
+                                                             @NotNull String text,
+                                                             @NotNull Key outputType,
+                                                             @NotNull ColoredTextAcceptor textAcceptor) {
     Key attributes = getCurrentOutputAttributes(outputType);
     if (textAcceptor instanceof ColoredChunksAcceptor) {
       if (buffer == null) {
@@ -109,8 +108,7 @@ public class AnsiEscapeDecoder {
     return buffer;
   }
 
-  @NotNull
-  protected Key getCurrentOutputAttributes(@NotNull Key outputType) {
+  protected @NotNull Key getCurrentOutputAttributes(@NotNull Key outputType) {
     if (ProcessOutputType.isStdout(outputType)) {
       return myStdoutEmulator.isInitialState() ? outputType : myColoredOutputTypeRegistry.getOutputType(myStdoutEmulator, outputType);
     }

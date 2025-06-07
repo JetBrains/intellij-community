@@ -396,15 +396,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
    */
   @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
-    showColorPickerPopup(project, currentColor, listener, null);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
-    showColorPickerPopup(project, currentColor, listener, location, false);
+    showColorPickerPopup(project, currentColor, listener, null, false);
   }
 
   /**
@@ -550,7 +542,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
       pipette.setRolloverEnabled(true);
       pipette.setIcon(AllIcons.Ide.Pipette);
       pipette.setBorder(JBUI.Borders.empty());
-      pipette.setRolloverIcon(AllIcons.Ide.Pipette_rollover);
+      pipette.setRolloverIcon(AllIcons.Ide.PipetteRollover);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {
         @Override

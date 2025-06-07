@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 
@@ -17,9 +17,8 @@ public class PyThreadEvent extends PyConcurrencyEvent {
     myParentThreadId = parentThreadId;
   }
 
-  @NotNull
   @Override
-  public String getEventActionName() {
+  public @NotNull String getEventActionName() {
     return switch (myType) {
       case CREATE -> " created";
       case START -> " started";
@@ -29,8 +28,7 @@ public class PyThreadEvent extends PyConcurrencyEvent {
     };
   }
 
-  @NotNull
-  public String getParentThreadId() {
+  public @NotNull String getParentThreadId() {
     return myParentThreadId;
   }
 

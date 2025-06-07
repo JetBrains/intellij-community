@@ -3,8 +3,9 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffEditorViewerFileEditor.Companion.reloadDiffEditorsForFiles
 import com.intellij.diff.editor.DiffViewerVirtualFile
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.ProjectManager
@@ -21,10 +22,6 @@ object CombinedDiffRegistry {
 
   fun setCombinedDiffEnabled(enabled: Boolean) {
     AdvancedSettings.setBoolean(COMBINED_DIFF_SETTING_ID, enabled)
-
-    if (enabled) {
-      resetBadge()
-    }
   }
 
   fun getPreloadedBlocksCount(): Int = Registry.intValue("combined.diff.visible.viewport.delta", 3, 1, 100)
@@ -33,11 +30,16 @@ object CombinedDiffRegistry {
 
   fun getFilesLimit(): Int = Registry.intValue("combined.diff.files.limit")
 
-  private const val BADGE_ID = "combined.diff.badge.shown"
-
-  fun showBadge(): Boolean = !PropertiesComponent.getInstance().getBoolean(BADGE_ID, false)
-
-  fun resetBadge() = PropertiesComponent.getInstance().setValue(BADGE_ID, true)
+  fun addStateListener(onEnabledChange: Runnable, disposable: Disposable) {
+    ApplicationManager.getApplication().messageBus.connect(disposable)
+      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+          if (id == COMBINED_DIFF_SETTING_ID) {
+            onEnabledChange.run()
+          }
+        }
+      })
+  }
 }
 
 internal class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {

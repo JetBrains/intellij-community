@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
@@ -7,8 +7,9 @@ import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
@@ -17,21 +18,22 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,13 +41,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JFrame
 
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
-  return runWithModalProgressBlocking(project, "") {
-    withContext(Dispatchers.EDT) {
+  return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
       val wrapper = allocateLightEditFrame(project) { frame ->
-        LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create())
+        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper
       (project.serviceAsync<FileEditorManager>() as LightEditFileEditorManagerImpl).internalInit()
       wrapper
@@ -60,8 +63,8 @@ internal class LightEditFrameWrapper(
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
 
-  override val isLightEdit: Boolean = true
-  override val mainMenuActionGroup: ActionGroup? = getLightEditMainMenuActionGroup()
+  override fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =
+    ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, true, getLightEditMainMenuActionGroup())
 
   override fun getProject(): Project = project
 
@@ -75,7 +78,7 @@ internal class LightEditFrameWrapper(
   }
 
   override fun createStatusBar(): IdeStatusBarImpl {
-    return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
+    return object : IdeStatusBarImpl(parentCs = coroutineScope, getProject = { project }, addToolWindowWidget = false) {
       override fun updateUI() {
         setUI(LightEditStatusBarUI())
       }
@@ -183,7 +186,7 @@ private suspend fun allocateLightEditFrame(project: Project,
       windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
     }
     frameInfo.bounds?.let {
-      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it))
     }
   }
 
@@ -210,9 +213,7 @@ private suspend fun allocateLightEditFrame(project: Project,
     uiFrame.extendedState = frameInfo.extendedState
   }
   uiFrame.isVisible = true
-  if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-    frame.toggleFullScreen(true)
-  }
+  frame.updateFullScreenState(frameInfo?.fullScreen == true)
   uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
   installAppMenuIfNeeded(uiFrame)
 

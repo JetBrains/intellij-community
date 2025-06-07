@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle.message
@@ -36,6 +36,11 @@ import com.intellij.util.applyIf
 import java.nio.file.Path
 import kotlin.io.path.name
 
+/**
+ * Handles the project **Name** and **Location** fields.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html">New Project Wizard API (IntelliJ Platform Docs)</a>
+ */
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
   override val nameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   override val pathProperty: GraphProperty<String> = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
@@ -166,7 +171,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
      *  1. Comment width is dependent on location text field width;
      *  2. Minimum location text field width cannot be less comment width.
      * So this ratio makes a gap between minimum widths of comment and location.
-     * It allows smoothly resizing components (location and comment) when NPW dialog is resized.
+     * It allows smoothly resizing components (location and comment) when the NPW dialog is resized.
      */
     private const val LOCATION_COMMENT_RATIO = 0.9f
 

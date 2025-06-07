@@ -33,7 +33,7 @@ class FirKotlinIconProviderTest : KotlinLightCodeInsightFixtureTestCase() {
     val aClass = myFixture.addClass("public class BaseJavaClass {}")
     myFixture.addFileToProject("foo.kt", "class Foo : BaseJavaClass() {}")
     val psiClass = ClassInheritorsSearch.search(aClass).findFirst()!!
-    val icon = PsiIconUtil.getProvidersIcon(psiClass, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
+    val icon = PsiIconUtil.getIconFromProviders(psiClass, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
     val iconString = (icon.safeAs<RowIcon>()?.allIcons?.joinToString(transform = Icon::toString) ?: icon)?.toString()
     assertEquals("org/jetbrains/kotlin/idea/icons/classKotlin.svg", iconString)
   }

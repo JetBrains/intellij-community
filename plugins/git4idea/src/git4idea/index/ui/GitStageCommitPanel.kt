@@ -30,13 +30,16 @@ private fun GitStageTracker.State.getChanged(): Set<GitFileStatus> =
   rootStates.values.flatMapTo(mutableSetOf()) { it.getChanged() }
 
 private fun GitStageTracker.RootState.getChanged(): Set<GitFileStatus> =
-  statuses.values.filterTo(mutableSetOf()) { it.getStagedStatus() != null || it.getUnStagedStatus() != null }
+  statuses.values.filterTo(mutableSetOf()) { it.isTracked() }
 
 private fun GitStageTracker.RootState.getStagedChanges(project: Project): List<Change> =
   getStaged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.STAGED) }
 
+private fun GitStageTracker.RootState.getTrackedChanges(project: Project): List<Change> =
+  getChanged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.LOCAL) }
+
 class GitStageCommitPanel(project: Project, private val settings: GitStageUiSettings) : NonModalCommitPanel(project) {
-  private val progressPanel = GitStageCommitProgressPanel()
+  private val progressPanel = GitStageCommitProgressPanel(project)
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   @Volatile
@@ -56,12 +59,10 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
   init {
     Disposer.register(this, commitMessage)
 
-    commitMessage.setChangesSupplier { state.stagedChanges }
-    progressPanel.setup(this, commitMessage.editorField, empty(6))
+    commitMessage.setChangesSupplier { state.changesToCommit }
+    progressPanel.setup(this, commitMessage.editorField, empty())
 
-    bottomPanel.add(progressPanel.component)
-    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-    bottomPanel.add(commitActionsPanel)
+    setProgressComponent(progressPanel)
 
     settings.addListener(object : GitStageUiSettingsListener {
       override fun settingsChanged() {
@@ -106,12 +107,18 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
     private val changedRoots: Set<VirtualFile> = trackerState.changedRoots
     val conflictedRoots: Set<VirtualFile> = trackerState.conflictedRoots
 
+    private val includedRootStates
+      get() = trackerState.rootStates.filterKeys { it in includedRoots }.values
+
     val stagedChanges by lazy {
-      trackerState.rootStates.filterKeys {
-        includedRoots.contains(it)
-      }.values.flatMap { it.getStagedChanges(project) }
+      includedRootStates.flatMap { it.getStagedChanges(project) }
+    }
+    val trackedChanges: List<Change> by lazy {
+      includedRootStates.flatMap { it.getTrackedChanges(project) }
     }
     val isCommitAll = isCommitAllEnabled && trackerState.stagedRoots.isEmpty() && trackerState.changedRoots.isNotEmpty()
+    val changesToCommit: List<Change> get() = if (isCommitAll) trackedChanges else stagedChanges
+
     val rootsToCommit: Set<VirtualFile>
       get() {
         if (isCommitAll) {
@@ -129,7 +136,7 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
   }
 }
 
-class GitStageCommitProgressPanel : CommitProgressPanel() {
+class GitStageCommitProgressPanel(project: Project) : CommitProgressPanel(project) {
   var isEmptyRoots by stateFlag()
   var isUnmerged by stateFlag()
   var isCommitAll by stateFlag()

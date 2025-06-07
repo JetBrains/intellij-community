@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.PsiMethod;
@@ -14,8 +14,7 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   @Override
   PsiMethod getElement();
 
-  @NotNull
-  default PsiSubstitutor getPartialSubstitutor() {
+  default @NotNull PsiSubstitutor getPartialSubstitutor() {
     return getSubstitutor();
   }
 
@@ -23,13 +22,11 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   @Override
   PsiSubstitutor getSubstitutor();
 
-  @NotNull
-  default Applicability getApplicability() {
+  default @NotNull Applicability getApplicability() {
     return isApplicable() ? Applicability.applicable : Applicability.inapplicable;
   }
 
-  @Nullable
-  default GroovyMethodCandidate getCandidate() {
+  default @Nullable GroovyMethodCandidate getCandidate() {
     return null;
   }
 }

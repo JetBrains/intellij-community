@@ -68,7 +68,8 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     val b = addModule("b", withTests = true)
     val dependency = b.dependenciesList.addModuleDependency(aTests)
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
-    buildAndCheck { 
+    buildAndCheck {
+      descriptor("a.test", resourceDirName = null)
       testDescriptor("a.test.tests", resourceDirName = "a.test")
       descriptor("b")
       testDescriptor("b.tests", "b", "a.test.tests")
@@ -136,6 +137,15 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     buildAndCheck {
       descriptor("a")
       testDescriptor("a.tests", "a", resourceDirName = "a.tests")
+    }
+  }
+  
+  fun `test module with production roots named like a test module`() {
+    val name = "a.tests.actually.not"
+    addModule(name, withTests = false)
+    buildAndCheck {
+      descriptor(name)
+      descriptor(name)
     }
   }
 

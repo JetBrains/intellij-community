@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
+import com.intellij.icons.AllIcons.Actions.PrettyPrint
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.devkit.actions.*
 import com.intellij.internal.statistic.devkit.actions.scheme.AddGroupToTestSchemeAction
@@ -11,8 +12,7 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,11 +39,13 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
   init {
     val model = StatisticsLogFilterModel()
-    consoleLog = StatisticsEventLogConsole(project, model, recorderId)
+    val logFormatter = StatisticsEventLogFormatter(model)
+    consoleLog = StatisticsEventLogConsole(project, model, recorderId, logFormatter)
     eventLogListener = object : StatisticsEventLogListener {
       override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
         ApplicationManager.getApplication().invokeLater {
-          consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData))
+          val message = messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData)
+          consoleLog.addLogLine(message)
         }
       }
     }
@@ -56,7 +58,11 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
     setContent(consoleLog.component)
 
-    val verticalToolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", consoleLog.orCreateActions, false)
+    val verticalActionGroup = DefaultActionGroup()
+    verticalActionGroup.addAll(consoleLog.getConsoleNotNull().createConsoleActions().toList())
+    verticalActionGroup.add(StatisticsMultilineLogToggleAction(consoleLog))
+
+    val verticalToolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", verticalActionGroup, false)
     verticalToolbar.targetComponent = this
     toolbar = verticalToolbar.component
 
@@ -108,3 +114,21 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 }
 
+private class StatisticsMultilineLogToggleAction(private val consoleLog: StatisticsEventLogConsole) :
+  ToggleAction("Multiline Event Log Presentation", "Show event log in multiline presentation", PrettyPrint) {
+  private var isMultilineLog = false
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return isMultilineLog
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    isMultilineLog = state
+    consoleLog.updateLogPresentation(state)
+    update(e)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+}

@@ -15,29 +15,24 @@ import java.util.function.BiConsumer;
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K> {
+abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K>, ReferenceQueueable {
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   private final @NotNull HashingStrategy<? super K> myHashingStrategy;
 
-  static final float LOAD_FACTOR = 0.75f;
+  static final float DEFAULT_LOAD_FACTOR = 0.75f;
   static final int DEFAULT_CAPACITY = 16;
   static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
   private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super V> myEvictionListener;
 
-  ConcurrentRefHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    myHashingStrategy = this;
-    myMap = new ConcurrentHashMap<>(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);
-    myEvictionListener = evictionListener;
-  }
-
   ConcurrentRefHashMap(int initialCapacity,
                        float loadFactor,
                        int concurrencyLevel,
-                       @Nullable HashingStrategy<? super K> hashingStrategy) {
-    myHashingStrategy = hashingStrategy == THIS ? this : (hashingStrategy == null ? HashingStrategy.canonical() : hashingStrategy);
+                       @Nullable HashingStrategy<? super K> hashingStrategy,
+                       @Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
+    myHashingStrategy = hashingStrategy == null ? this : hashingStrategy;
     myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
-    myEvictionListener = null;
+    myEvictionListener = evictionListener;
   }
 
   @FunctionalInterface
@@ -59,7 +54,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   // returns true if some keys were processed
-  private boolean processQueue() {
+  @Override
+  public boolean processQueue() {
     KeyReference<K> wk;
     boolean processed = false;
     //noinspection unchecked

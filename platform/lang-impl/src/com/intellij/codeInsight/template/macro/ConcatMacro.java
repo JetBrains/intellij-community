@@ -25,6 +25,6 @@ public final class ConcatMacro extends MacroBase {
         result.append(StringUtil.notNullize(paramResult.toString()));
       }
     }
-    return result.length() != 0 ? new TextResult(result.toString()) : null;
+    return !result.isEmpty() ? new TextResult(result.toString()) : null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -45,11 +45,10 @@ import java.util.HashMap;
 import java.util.List;
 
 final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
-  @NonNls public static final String GROOVY_SUPPORT_ID = "groovy";
+  public static final @NonNls String GROOVY_SUPPORT_ID = "groovy";
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return GROOVY_SUPPORT_ID;
   }
 
@@ -58,9 +57,8 @@ final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupp
     return new Class[] {GroovyPatterns.class};
   }
 
-  @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+  public @Nullable BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
     PsiFile containingFile = host.getContainingFile();
     boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);
@@ -91,7 +89,7 @@ final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupp
   }
 
   @Override
-  public boolean removeInjectionInPlace(@Nullable final PsiLanguageInjectionHost psiElement) {
+  public boolean removeInjectionInPlace(final @Nullable PsiLanguageInjectionHost psiElement) {
     if (!isStringLiteral(psiElement)) return false;
 
     GrLiteralContainer host = (GrLiteralContainer)psiElement;
@@ -118,8 +116,8 @@ final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupp
   private static void collectInjections(@NotNull GrLiteralContainer host,
                                         @NotNull Configuration configuration,
                                         @NotNull LanguageInjectionSupport support,
-                                        @NotNull final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
-                                        @NotNull final ArrayList<PsiElement> annotations) {
+                                        final @NotNull HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
+                                        final @NotNull ArrayList<PsiElement> annotations) {
     new GrConcatenationAwareInjector.InjectionProcessor(configuration, support, host) {
       @Override
       protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
@@ -198,8 +196,8 @@ final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupp
     return false;
   }
 
-  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(@NotNull final Project project,
-                                                                        @NotNull final String languageId) {
+  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(final @NotNull Project project,
+                                                                        final @NotNull String languageId) {
     return host -> {
       if (host == null) return false;
 
@@ -227,8 +225,7 @@ final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupp
     return false;
   }
 
-  @NotNull
-  public static PsiElement getTopLevelInjectionTarget(@NotNull final PsiElement host) {
+  public static @NotNull PsiElement getTopLevelInjectionTarget(final @NotNull PsiElement host) {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {

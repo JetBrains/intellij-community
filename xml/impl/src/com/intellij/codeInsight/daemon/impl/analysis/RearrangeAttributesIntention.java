@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class RearrangeAttributesIntention implements IntentionAction {
+final class RearrangeAttributesIntention implements IntentionAction {
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
     return getFamilyName();
@@ -36,8 +36,8 @@ public class RearrangeAttributesIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    XmlTag tag = getTag(editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    XmlTag tag = getTag(editor, psiFile);
     if (tag == null) return false;
     if (tag.getAttributes().length <= 1) return false;
     int offset = editor.getCaretModel().getOffset();
@@ -47,8 +47,8 @@ public class RearrangeAttributesIntention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    XmlTag tag = getTag(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    XmlTag tag = getTag(editor, psiFile);
     if (tag == null) return;
 
     TextRange range = tag.getTextRange();
@@ -59,9 +59,9 @@ public class RearrangeAttributesIntention implements IntentionAction {
                                         startEnd != null ? startEnd.getTextRange().getEndOffset() - 1 : range.getEndOffset());
     RangeMarker marker = editor.getDocument().createRangeMarker(reformatRange);
 
-    new RearrangeCodeProcessor(new ReformatCodeProcessor(project, file, reformatRange, false)) {
+    new RearrangeCodeProcessor(new ReformatCodeProcessor(project, psiFile, reformatRange, false)) {
       @Override
-      public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
+      public Collection<TextRange> getRangesToFormat(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
         return Collections.singleton(marker.getTextRange());
       }
     }.run();
@@ -73,15 +73,15 @@ public class RearrangeAttributesIntention implements IntentionAction {
     return true;
   }
 
-  private static XmlTag getTag(@Nullable Editor editor, PsiFile file) {
-    if (!(file instanceof XmlFile)) return null;
+  private static XmlTag getTag(@Nullable Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return null;
     
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     XmlTag parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (parent != null) return parent;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (parent != null) return parent;
     return null;

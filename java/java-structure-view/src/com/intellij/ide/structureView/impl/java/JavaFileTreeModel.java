@@ -90,7 +90,10 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
       if (element instanceof PsiClass aClass) {
         return aClass.getQualifiedName() != null;
       }
-
+      if (element instanceof PsiRecordComponent recordComponent) {
+        PsiClass parent = recordComponent.getContainingClass();
+        return parent != null && parent.getQualifiedName() != null;
+      }
       return element instanceof PsiLambdaExpression;
     }
     return false;

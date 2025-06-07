@@ -51,8 +51,7 @@ public final class DuplicateConditionInspection extends BaseInspection {
   private static final int LIMIT_DEPTH = 20;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("duplicate.condition.problem.descriptor");
   }
 

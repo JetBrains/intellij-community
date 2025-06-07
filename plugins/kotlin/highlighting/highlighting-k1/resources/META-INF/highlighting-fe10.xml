@@ -7,6 +7,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.base.highlighting.AbstractScriptHighlightHelper"
+                    serviceImplementation="org.jetbrains.kotlin.idea.highlighter.ScriptHighlightHelper"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtFe10ReferenceResolutionHelperImpl"/>

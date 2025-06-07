@@ -12,15 +12,14 @@ public final class ParsingDiagnostics {
   private ParsingDiagnostics() {
   }
 
-  public static void registerParse(@NotNull PsiBuilder builder, @NotNull Language language, long parsingTimeNs){
-    //noinspection IncorrectServiceRetrieving
+  public static void registerParse(@NotNull PsiBuilder builder, @NotNull Language language, long parsingTimeNs) {
     ParserDiagnosticsHandler handler = ApplicationManager.getApplication().getService(ParserDiagnosticsHandler.class);
-    if( handler != null){
+    if (handler != null) {
       handler.registerParse(builder, language, parsingTimeNs);
     }
   }
 
-  public interface ParserDiagnosticsHandler{
+  public interface ParserDiagnosticsHandler {
     void registerParse(@NotNull PsiBuilder builder, @NotNull Language language, long parsingTimeNs);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,15 +14,12 @@ public abstract class XmlQuickFixFactory {
     return ApplicationManager.getApplication().getService(XmlQuickFixFactory.class);
   }
 
-  @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,
-                                                                                         String @NotNull ... values);
+  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,
+                                                                                                  String @NotNull ... values);
 
-  @NotNull
-  public abstract LocalQuickFix createNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                           @NotNull String namespacePrefix,
-                                           @Nullable final XmlToken token);
+  public abstract @NotNull LocalQuickFix createNSDeclarationIntentionFix(final @NotNull PsiElement element,
+                                                                         @NotNull String namespacePrefix,
+                                                                         final @Nullable XmlToken token);
 
-  @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement addAttributeValueFix(@NotNull XmlAttribute attribute);
+  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement addAttributeValueFix(@NotNull XmlAttribute attribute);
 }

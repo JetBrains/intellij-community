@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.Pair;
@@ -144,7 +144,7 @@ public final class BreakpointComment {
   public void done() {
     if (kind != null) throw error("Unprocessed kind '" + kind + "'");
     if (kindValue != null) throw error("Unprocessed kind value '" + kindValue + "'");
-    if (values.size() >= 1) {
+    if (!values.isEmpty()) {
       String valid = String.join(", ", validValues);
       String msg = "Unprocessed %s '%s', %s".formatted(
         values.size() > 1 ? "values" : "value",

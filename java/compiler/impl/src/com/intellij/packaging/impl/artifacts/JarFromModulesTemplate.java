@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.CommonBundle;
@@ -49,11 +49,10 @@ public final class JarFromModulesTemplate extends ArtifactTemplate {
                             dialog.isExtractLibrariesToJar(), dialog.isIncludeTests());
   }
 
-  @Nullable
-  public NewArtifactConfiguration doCreateArtifact(final Module[] modules, final String mainClassName,
-                                                   final String directoryForManifest,
-                                                   final boolean extractLibrariesToJar,
-                                                   final boolean includeTests) {
+  public @Nullable NewArtifactConfiguration doCreateArtifact(final Module[] modules, final String mainClassName,
+                                                             final String directoryForManifest,
+                                                             final boolean extractLibrariesToJar,
+                                                             final boolean includeTests) {
     VirtualFile manifestFile = null;
     final Project project = myContext.getProject();
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {

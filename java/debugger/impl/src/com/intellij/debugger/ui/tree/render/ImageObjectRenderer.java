@@ -64,8 +64,7 @@ final class ImageObjectRenderer extends CompoundRendererProvider {
     return ImageEditorManagerImpl.createImageEditorUI(image);
   }
 
-  @Nullable
-  static ImageIcon getIcon(EvaluationContextImpl evaluationContext, Value obj, String methodName) {
+  static @Nullable ImageIcon getIcon(EvaluationContextImpl evaluationContext, Value obj, String methodName) {
     try {
       byte[] data = getImageBytes(evaluationContext, obj, methodName);
       if (data != null) {
@@ -89,7 +88,7 @@ final class ImageObjectRenderer extends CompoundRendererProvider {
     return null;
   }
 
-  static abstract class IconPopupEvaluator extends CustomPopupFullValueEvaluator<Icon> {
+  abstract static class IconPopupEvaluator extends CustomPopupFullValueEvaluator<Icon> {
     IconPopupEvaluator(@NotNull @Nls String linkText, @NotNull EvaluationContextImpl evaluationContext) {
       super(linkText, evaluationContext);
     }

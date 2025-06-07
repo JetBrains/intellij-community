@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.feedback">
+<idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
                     dynamic="true"/>
@@ -30,8 +30,6 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
-    <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
@@ -39,13 +37,14 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
 
-    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.pirates.SoftwareAccessibilitySurvey"/>
-  </extensions>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
 
-  <applicationListeners>
-    <listener class="com.intellij.platform.feedback.localization.LocalizationFeedbackStartupListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
+    <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
+    <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
+    <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
+    <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
+  </extensions>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
@@ -57,15 +56,14 @@
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
               internal="true"/>
-      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
-              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 
     <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
     <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
-
-    <action class="com.intellij.platform.feedback.pirates.ShowSoftwareAccessibilitySurveyAction" internal="true"
-            text="Show Software Accessibility Survey"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
+            text="Show CSAT Feedback Dialog"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
+            text="Show Next Date for CSAT Feedback Dialog"/>
   </actions>
 </idea-plugin>

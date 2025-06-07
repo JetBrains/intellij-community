@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShCommandsList;
-import com.intellij.sh.psi.ShFile;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -92,8 +91,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         return o instanceof IElementType ? kw2str(((IElementType) o)) : null;
       }
 
-      @Nullable
-      private static String kw2str(IElementType o) {
+      private static @Nullable String kw2str(IElementType o) {
         return ShTokenTypes.HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES.contains(o) ? o.toString() : null;
       }
     };
@@ -108,7 +106,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
         insideCondition(), insideComment()));
   }
 
-  @NonNls private static final List<String> BUILTIN =
+  private static final @NonNls List<String> BUILTIN =
     Arrays.asList("alias", "bg", "bind", "break", "builtin", "caller", "cd", "command", "compgen", "complete", "continue", "declare",
                   "dirs", "disown", "echo", "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts", "hash", "help", "history",
                   "jobs", "kill", "let", "local", "logout", "popd", "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",

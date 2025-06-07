@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="KtfmtSettings">
+    <option name="customBlockIndent" value="4" />
+    <option name="customManageTrailingCommas" value="true" />
+    <option name="customMaxLineLength" value="120" />
+    <option name="enableKtfmt" value="Enabled" />
+    <option name="enabled" value="true" />
+    <option name="uiFormatterStyle" value="Custom" />
+  </component>
+</project>

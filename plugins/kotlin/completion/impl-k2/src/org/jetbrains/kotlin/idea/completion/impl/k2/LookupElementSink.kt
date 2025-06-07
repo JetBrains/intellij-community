@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 
 internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
-    private val parameters: KotlinFirCompletionParameters,
+    internal val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
     private val contributorClass: Class<FirCompletionContributor<*>>? = null,
 ) {
@@ -49,6 +49,13 @@ internal class LookupElementSink(
 
     fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
+    }
+
+    fun runRemainingContributors(
+        parameters: CompletionParameters,
+        consumer: (CompletionResult) -> Unit,
+    ) {
+        resultSet.runRemainingContributors(parameters, consumer)
     }
 
     private fun decorateLookupElement(

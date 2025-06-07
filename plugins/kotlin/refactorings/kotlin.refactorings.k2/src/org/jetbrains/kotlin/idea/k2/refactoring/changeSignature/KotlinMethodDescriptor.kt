@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -28,7 +27,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
 
     private fun findTargetCallable(c: KtNamedDeclaration): KtNamedDeclaration {
 
-        fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpected(c) ?: c) as KtNamedDeclaration
+        fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpect(c) ?: c) as KtNamedDeclaration
 
         return if (ApplicationManager.getApplication().isDispatchThread && !ApplicationManager.getApplication().isWriteAccessAllowed) {
             runWithModalProgressBlocking(
@@ -90,11 +89,30 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
         parameters = allowAnalysisOnEdt {
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
-                receiver?.let { params.add(it) }
+                var oldParamIndex = 0
+                callable.modifierList?.contextReceiverList?.contextParameters()?.forEach { p ->
+                    val parameterInfo = KotlinParameterInfo(
+                        originalIndex = oldParamIndex++,
+                        originalType = KotlinTypeInfo(p.returnType, callable),
+                        name = p.name ?: "",
+                        valOrVar = KotlinValVar.None,
+                        isContextParameter = true,
+                        defaultValueForCall = null,
+                        defaultValueAsDefaultParameter = false,
+                        defaultValue = null,
+                        context = callable
+                    )
+                    params.add(parameterInfo)
+                }
+                oldParamIndex = 0
+                receiver?.let {
+                    params.add(it)
+                    oldParamIndex++
+                }
                 (callable as? KtCallableDeclaration)
                     ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
-                            originalIndex = params.size,
+                            originalIndex = oldParamIndex++,
                             originalType = KotlinTypeInfo(p.returnType, callable),
                             name = p.name ?: "",
                             valOrVar = p.valOrVarKeyword.toValVar(),
@@ -139,6 +157,8 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
         return when {
           callable is KtFunction && callable.isLocal -> false
           (callable.containingClassOrObject as? KtClass)?.isInterface() == true -> false
+          callable is KtConstructor<*> && (callable.containingClassOrObject as? KtClass)?.isEnum() == true -> false
+          callable is KtClass && callable.isEnum() -> false
           else -> true
         }
     }

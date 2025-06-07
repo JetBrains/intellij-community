@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api2;
 
 import com.google.gson.reflect.TypeToken;
@@ -36,39 +37,34 @@ public class JiraRestApi2 extends JiraRestApi {
     super(repository);
   }
 
-  @NotNull
   @Override
-  protected GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
+  protected @NotNull GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
     GetMethod method = super.getMultipleIssuesSearchMethod(jql, max);
     method.setQueryString(method.getQueryString() + "&fields=" + JiraIssueApi2.REQUIRED_RESPONSE_FIELDS);
     return method;
   }
 
-  @NotNull
   @Override
-  protected List<JiraIssue> parseIssues(String response) {
+  protected @NotNull List<JiraIssue> parseIssues(String response) {
     JiraResponseWrapper.Issues<JiraIssueApi2> wrapper = JiraRepository.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
     return new ArrayList<>(wrapper.getIssues());
   }
 
-  @NotNull
   @Override
-  protected GetMethod getSingleIssueSearchMethod(String key) {
+  protected @NotNull GetMethod getSingleIssueSearchMethod(String key) {
     final GetMethod method = super.getSingleIssueSearchMethod(key);
     final String oldParams = method.getQueryString() == null ? "" : method.getQueryString();
     method.setQueryString(oldParams + "&fields=" + JiraIssueApi2.REQUIRED_RESPONSE_FIELDS);
     return method;
   }
 
-  @Nullable
   @Override
-  protected JiraIssue parseIssue(String response) {
+  protected @Nullable JiraIssue parseIssue(String response) {
     return JiraRepository.GSON.fromJson(response, JiraIssueApi2.class);
   }
 
-  @NotNull
   @Override
-  protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
+  protected @NotNull String getRequestForStateTransition(@NotNull CustomTaskState state) {
     assert StringUtil.isNotEmpty(state.getId());
     final String stateId = state.getId();
     final int index = stateId.indexOf(':');
@@ -83,9 +79,8 @@ public class JiraRestApi2 extends JiraRestApi {
     }
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     final GetMethod method = new GetMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
     method.setQueryString("expand=transitions.fields");
     final String response = myRepository.executeMethod(method);
@@ -107,9 +102,8 @@ public class JiraRestApi2 extends JiraRestApi {
     myRepository.executeMethod(method);
   }
 
-  @NotNull
   @Override
-  public ApiType getType() {
+  public @NotNull ApiType getType() {
     return ApiType.REST_2_0;
   }
 }

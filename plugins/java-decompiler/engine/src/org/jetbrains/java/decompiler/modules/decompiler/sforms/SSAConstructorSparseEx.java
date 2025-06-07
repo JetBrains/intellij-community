@@ -83,16 +83,7 @@ public class SSAConstructorSparseEx {
     DotExporter.toDotFile(dgraph, mt, "ssaStatements_" + itteration, outVarVersions);
 
     for (DirectNode node : dgraph.nodes) {
-
-      //			if (node.id.endsWith("_inc")) {
-      //				System.out.println();
-      //
-      //				try {
-      //					DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr1_my.dot"));
-      //				} catch (Exception ex) {
-      //					ex.printStackTrace();
-      //				}
-      //			}
+      DecompilerContext.getLimitContainer().checkSFormsFastMapDirect(this.inVarVersions, this.outVarVersions);
 
       updated.remove(node.id);
       mergeInVarMaps(node, dgraph);
@@ -289,7 +280,8 @@ public class SSAConstructorSparseEx {
     for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
-        mapNew = mapOut.getCopy();
+        //mapOut should always be new!
+        mapNew = mapOut;
       }
       else {
         mergeMaps(mapNew, mapOut);

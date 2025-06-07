@@ -38,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -76,9 +77,10 @@ open class IdeDocumentHistoryImpl(
   private val forwardPlaces = ArrayDeque<PlaceInfo>()
   private var backInProgress = false
   private var forwardInProgress = false
-  private var currentCommandGroupId: Any? = null
+  // weak reference here is to avoid leaking Document when it's used as a group id
+  private var currentCommandGroupId: Reference<Any>? = null
   // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
-  private var lastGroupId: Reference<Any?>? = null
+  private var lastGroupId: Reference<Any>? = null
   private var registeredBackPlaceInLastGroup = false
 
   // change's navigation
@@ -223,7 +225,7 @@ open class IdeDocumentHistoryImpl(
   }
 
   fun onCommandStarted(commandGroupId: Any?) {
-    currentCommandGroupId = commandGroupId
+    currentCommandGroupId = commandGroupId?.let { WeakReference(it) }
     commandStartPlace = getCurrentPlaceInfo()
     currentCommandIsNavigation = false
     currentCommandHasChanges = false
@@ -325,7 +327,8 @@ open class IdeDocumentHistoryImpl(
       state = RecentlyChangedFilesState(changedPaths)
     }
 
-    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = currentCommandGroupId)
+    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = currentCommandGroupId?.get())
+    notifyFileHistoryReordered(placeInfo.file)
     currentIndex = changePlaces.size
   }
 
@@ -585,6 +588,12 @@ open class IdeDocumentHistoryImpl(
     return marker
   }
 
+  private fun notifyFileHistoryReordered(file: VirtualFile) {
+    if (file.isFile) {
+      project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
+    }
+  }
+
   private fun putLastOrMerge(next: PlaceInfo, limit: Int, isChanged: Boolean, groupId: Any?) {
     val list = if (isChanged) changePlaces else backPlaces
     val messageBus = project.getMessageBus()
@@ -654,6 +663,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun dispose() {
     lastGroupId = null
+    currentCommandGroupId = null
     val map = recentFileTimestampMap.valueIfInitialized ?: return
     try {
       map.close()
@@ -717,6 +727,25 @@ open class IdeDocumentHistoryImpl(
       @Suppress("DEPRECATION")
       recentPlaceAdded(changePlace, isChanged)
     }
+  }
+
+  /**
+   * Listens to updates made to files stored in the IdeHistoryManager state. Receives events on the file level.
+   *
+   * A single state change produces a single event on the contrary
+   * with RecentPlacesListener, which creates up to three events that might look like "added, then removed, then added again".
+   * The listener greatly simplifies and improves the UI logic for the recently opened files list.
+   * It does not have to filter subsequent events manually, and its UI representation does not suffer from blinking.
+   */
+  @ApiStatus.Internal
+  interface RecentFileHistoryOrderListener {
+    companion object {
+      @Topic.ProjectLevel
+      @JvmField
+      val TOPIC: Topic<RecentFileHistoryOrderListener> = Topic(RecentFileHistoryOrderListener::class.java, Topic.BroadcastDirection.NONE)
+    }
+
+    fun recentFileUpdated(file: VirtualFile)
   }
 }
 

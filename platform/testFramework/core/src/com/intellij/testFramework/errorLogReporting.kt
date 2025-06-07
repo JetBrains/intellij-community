@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.platform.testFramework.teamCity.convertToHashCodeWithOnlyLetters
 import com.intellij.platform.testFramework.teamCity.generifyErrorMessage
 import com.intellij.platform.testFramework.teamCity.reportTestFailure
 
@@ -21,9 +20,13 @@ internal fun ErrorLog.reportAsFailures() {
 private fun logAsTeamcityTestFailure(error: LoggedError) {
   val message = findMessage(error)
   val stackTraceContent = error.stackTraceToString()
-  val stackTraceHash = convertToHashCodeWithOnlyLetters(generifyErrorMessage(stackTraceContent).hashCode())
-  val generifiedMessage = if (message == null) "Error logged without message" else generifyErrorMessage(message)
-  val testName = "$stackTraceHash ($generifiedMessage)"
+  val testName = if (message == null) {
+    "Error logged without message"
+  } else {
+    generifyErrorMessage(message)
+      .replace("[:.()]".toRegex(), " ")
+      .replace(" +".toRegex(), " ")
+  }
   System.out.reportTestFailure(testName, message ?: "", stackTraceContent)
 }
 

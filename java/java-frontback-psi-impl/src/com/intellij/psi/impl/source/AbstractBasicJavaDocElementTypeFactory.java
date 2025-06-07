@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.tree.IElementType;
@@ -39,6 +39,8 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
 
     public final IElementType DOC_MARKDOWN_REFERENCE_LINK;
 
+    public final IElementType DOC_MARKDOWN_REFERENCE_LABEL;
+
     public JavaDocElementTypeContainer(IElementType DOC_TAG,
                                        IElementType DOC_COMMENT,
                                        IElementType DOC_SNIPPET_TAG,
@@ -54,7 +56,8 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
                                        IElementType DOC_TYPE_HOLDER,
                                        IElementType DOC_PARAMETER_REF,
                                        IElementType DOC_MARKDOWN_CODE_BLOCK,
-                                       IElementType DOC_MARKDOWN_REFERENCE_LINK) {
+                                       IElementType DOC_MARKDOWN_REFERENCE_LINK,
+                                       IElementType DOC_MARKDOWN_REFERENCE_LABEL) {
       this.DOC_TAG = DOC_TAG;
       this.DOC_COMMENT = DOC_COMMENT;
       this.DOC_SNIPPET_TAG = DOC_SNIPPET_TAG;
@@ -71,6 +74,7 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
       this.DOC_PARAMETER_REF = DOC_PARAMETER_REF;
       this.DOC_MARKDOWN_CODE_BLOCK = DOC_MARKDOWN_CODE_BLOCK;
       this.DOC_MARKDOWN_REFERENCE_LINK = DOC_MARKDOWN_REFERENCE_LINK;
+      this.DOC_MARKDOWN_REFERENCE_LABEL = DOC_MARKDOWN_REFERENCE_LABEL;
     }
   }
 

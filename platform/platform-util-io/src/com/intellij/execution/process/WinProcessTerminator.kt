@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WinProcessTerminator")
 @file:Internal
 
@@ -25,12 +25,12 @@ import java.util.concurrent.TimeUnit
  */
 @JvmOverloads
 internal fun terminateWinProcessGracefully(processHandler: KillableProcessHandler,
-                                           processService: ProcessService,
+                                           processService: LocalProcessService,
                                            terminateGracefully: () -> Boolean = {
                                              processService.sendWinProcessCtrlC(processHandler.process)
                                            }): Boolean {
   val questionFoundOrTerminated: CompletableFuture<Void> = CompletableFuture()
-  val processListener = object : ProcessAdapter() {
+  val processListener = object : ProcessListener {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       // Need to match "Terminate batch job (Y/N)?" message, but it's localized. Let's match "?" only.
       if (ProcessOutputType.isStdout(outputType) && "?" in event.text) {
@@ -83,7 +83,7 @@ private fun destroy(processHandler: KillableProcessHandler) {
   processHandler.process.destroy() // If the process is not alive, no action is taken.
 }
 
-private fun isCmdBatchFile(processHandler: KillableProcessHandler, processService: ProcessService): Boolean {
+private fun isCmdBatchFile(processHandler: KillableProcessHandler, processService: LocalProcessService): Boolean {
   return processService.getCommand(processHandler.process).firstOrNull().let {
     it != null && (it.endsWith(".bat") || it.endsWith(".cmd") || it.endsWith("\\cmd.exe"))
   }

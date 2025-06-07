@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -281,7 +282,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       boolean hasBase = p0 > 0;
       int p1 = hasBase ? name.indexOf("$", p0 + 1) : -1;
       String base = hasBase ? name.substring(0, Math.max(p0, p1)) : name;
-      long hash = StringHash.calc(base);
+      long hash = StringHash.buz(base);
 
       Class<?> c = null;
       ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader or "this" if not found
@@ -370,7 +371,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
 
     // used by kotlin engine
-    public @NotNull List<URL> getUrls() {
+    public @Unmodifiable @NotNull List<URL> getUrls() {
       return JBIterable.of(PluginManagerCore.getPlugins())
         .map(PluginDescriptor::getClassLoader)
         .unique()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.internal
 
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
 
-class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
+private class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     @Deprecated(
         "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
                 "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
@@ -37,7 +37,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
-  override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
+    override fun isJvmOrCommonElement(psiElement: PsiElement): Boolean = psiElement.isJvmOrCommonElement
 
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings = element.languageVersionSettings
 

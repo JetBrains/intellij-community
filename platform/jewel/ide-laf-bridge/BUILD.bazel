@@ -1,0 +1,84 @@
+### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "ide-laf-bridge_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "ide-laf-bridge",
+  module_name = "intellij.platform.jewel.ideLafBridge",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jna",
+    "//libraries/skiko",
+    "//platform/core-ui",
+    "//libraries/compose-foundation-desktop",
+    "//platform/editor-ui-ex:editor-ex",
+  ],
+  runtime_deps = [":ide-laf-bridge_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "ide-laf-bridge_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":ide-laf-bridge"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:jna",
+    "//libraries/skiko",
+    "//platform/core-ui",
+    "//libraries/compose-foundation-desktop",
+    "//platform/editor-ui-ex:editor-ex",
+    "//libraries/compose-foundation-desktop-junit",
+  ],
+  runtime_deps = [":ide-laf-bridge_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "ide-laf-bridge_test",
+  runtime_deps = [":ide-laf-bridge_test_lib"]
+)
+### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

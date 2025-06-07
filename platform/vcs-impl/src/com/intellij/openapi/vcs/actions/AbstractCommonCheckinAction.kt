@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.cleanActionText
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 

@@ -7,13 +7,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.LoggedErrorProcessor.Action
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
@@ -44,7 +42,7 @@ class MessageBusTest : MessageBusOwner {
   private val log: MutableList<String> = ArrayList()
   private var parentDisposable: CheckedDisposable? = Disposer.newCheckedDisposable()
 
-  override fun createListener(descriptor: ListenerDescriptor): Any = throw UnsupportedOperationException()
+  override fun createListener(descriptor: PluginListenerDescriptor): Any = throw UnsupportedOperationException()
 
   override fun isDisposed(): Boolean = parentDisposable!!.isDisposed
 

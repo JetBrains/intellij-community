@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.io.URLUtil.urlToPath
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
@@ -21,8 +20,7 @@ import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.UnsupportedCharsetException
 
-@ApiStatus.Internal
-class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
+private class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {

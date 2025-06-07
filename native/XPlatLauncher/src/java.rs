@@ -245,8 +245,7 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
 #[cfg(target_os = "windows")]
 fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
     use {
-        windows::core::{HSTRING, PCSTR},
-        windows::Win32::Foundation::BOOL,
+        windows::core::{BOOL, HSTRING, PCSTR},
         windows::Win32::Globalization::{GetACP, CP_ACP, CP_UTF8, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte}
     };
 
@@ -262,7 +261,7 @@ fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
             let mut acp_bytes = vec![0u8; ucs_str.len()];
             let mut failed = BOOL::default();
             let acp_len = unsafe {
-                WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, ucs_str.as_wide(), Some(&mut acp_bytes), PCSTR::null(), Some(&mut failed))
+                WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, &ucs_str, Some(&mut acp_bytes), PCSTR::null(), Some(&mut failed))
             };
             if acp_len == 0 {
                 bail!("Cannot convert VM option string '{}' to ANSI code page ({}): {}", opt, acp, std::io::Error::last_os_error());

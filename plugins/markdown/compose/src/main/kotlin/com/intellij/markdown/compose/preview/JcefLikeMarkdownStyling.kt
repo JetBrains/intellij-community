@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.compose.preview
+package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,19 +7,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.asComposeFontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
+import org.jetbrains.jewel.bridge.retrievePlatformTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -30,14 +34,17 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
+import java.awt.Font
 
+@OptIn(ExperimentalTextApi::class)
 @Suppress("FunctionName")
-fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
+internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
   val fontSizeDp = fontSize.value.dp
   val defaultTextStyle = TextStyle(
     fontSize = fontSize,
     fontFamily = FontFamily.SansSerif,
     lineHeight = fontSize * 1.6,
+    platformStyle = retrievePlatformTextStyle()
   ).copy(
     color = scheme.foregroundColor.toComposeColor()
   )
@@ -45,11 +52,14 @@ fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): Mar
   val blockVerticalSpacing: Dp = 16.dp
   val baseTextStyle: TextStyle = defaultTextStyle
 
+  val codeFenceFont = Font(FontPreferences.JETBRAINS_MONO, Font.PLAIN, (fontSize.value * 0.9f).toInt()).asComposeFontFamily()
+  val codeFenceTextStyle = baseTextStyle.copy(fontFamily = codeFenceFont)
+
   val inlinesStyling = createInlinesStyling(baseTextStyle, scheme)
   val paragraph = createParagraphStyling(inlinesStyling)
   val heading = createHeadingStyling(scheme, baseTextStyle, fontSizeDp)
   val blockQuote = createBlockQuoteStyling(scheme)
-  val code: Code = createCodeStyling(baseTextStyle, scheme)
+  val code: Code = createCodeStyling(codeFenceTextStyle, scheme)
   val list: List = createListStyling(baseTextStyle)
   val image: Image = createImageStyling()
   val thematicBreak: ThematicBreak = createThematicBreakStyling(scheme)
@@ -91,14 +101,11 @@ private fun createInlinesStyling(
   linkHovered = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
   linkFocused = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
   ),
   linkPressed = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
   ),
-  linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
-  renderInlineHtml = false,
+  linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor())
 )
 
 private fun createParagraphStyling(inlinesStyling: InlinesStyling): Paragraph = Paragraph(inlinesStyling)

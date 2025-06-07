@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.memory.ui.JavaTypeInfo;
@@ -13,14 +13,12 @@ public final class DebuggerActionUtil {
     return e.getData(ClassesTable.SELECTED_CLASS_KEY);
   }
 
-  @Nullable
-  public static ReferenceType getSelectedClass(AnActionEvent e) {
+  public static @Nullable ReferenceType getSelectedClass(AnActionEvent e) {
     TypeInfo typeInfo = getSelectedTypeInfo(e);
     return extractReferenceType(typeInfo);
   }
 
-  @Nullable
-  private static ReferenceType extractReferenceType(@Nullable TypeInfo typeInfo) {
+  private static @Nullable ReferenceType extractReferenceType(@Nullable TypeInfo typeInfo) {
     return typeInfo != null ? ((JavaTypeInfo)typeInfo).getReferenceType() : null;
   }
 }

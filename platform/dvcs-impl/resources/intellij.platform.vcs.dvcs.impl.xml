@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.impl.backend"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="pushSupport"
@@ -33,8 +36,15 @@
     <extensionPoint name="customPushOptionsPanelFactory"
                     interface="com.intellij.dvcs.push.CustomPushOptionsPanelFactory"
                     dynamic="true"/>
+
+    <extensionPoint name="commitModeProvider"
+                    interface="com.intellij.dvcs.commit.DvcsCommitModeProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
+    <action id="Vcs.CopyCurrentBranchName"
+            class="com.intellij.dvcs.actions.CopyCurrentBranchNameAction"
+            icon="AllIcons.Actions.Copy"/>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
     <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
@@ -51,16 +61,16 @@
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
     <group id="Dvcs.FileHistory.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
 
     <group id="Dvcs.Log.Toolbar">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar"/>
     </group>
 
@@ -81,6 +91,7 @@
 
   <projectListeners>
     <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.dvcs.repo.rhizome.RepositoryCountUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +109,6 @@
 
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
   </extensions>
 </idea-plugin>
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -37,10 +37,12 @@ import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -158,7 +160,7 @@ public final class PsiClassImplUtil {
            : ContainerUtil.filter(type.getMembers(aClass), member -> name.equals(member.getName()));
   }
 
-  public static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
+  public static @Unmodifiable @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     return withSubstitutors(aClass, getMap(aClass).getAllMembers(type, null));
   }
 
@@ -283,9 +285,14 @@ public final class PsiClassImplUtil {
     SearchScope searchScope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(file);
     if (searchScope != null) return searchScope;
     PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) {
+      return new LocalSearchScope(containingClass);
+    }
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return containingClass == null ? maximalUseScope : containingClass.getUseScope();
+      // If the containing class is not final, it's possible to expose nested class through public subclass of containing class 
+      return containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL) ? 
+             maximalUseScope : containingClass.getUseScope();
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
       PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
@@ -307,6 +314,11 @@ public final class PsiClassImplUtil {
       if (aPackage != null) {
         SearchScope scope = PackageScope.packageScope(aPackage, false);
         scope = scope.intersectWith(maximalUseScope);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null && !scope.contains(virtualFile)) {
+          // If the current declaration is in a scratch file, it's not included to package scope, so let's add it
+          scope = scope.union(new LocalSearchScope(file));
+        }
         return scope;
       }
 
@@ -465,7 +477,7 @@ public final class PsiClassImplUtil {
                                                     String name,
                                                     @NotNull LanguageLevel languageLevel,
                                                     @NotNull GlobalSearchScope resolveScope) {
-    java.util.function.Function<PsiMember, PsiSubstitutor> finalSubstitutor = new java.util.function.Function<PsiMember, PsiSubstitutor>() {
+    Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
@@ -922,9 +934,9 @@ public final class PsiClassImplUtil {
     return resolved;
   }
 
-  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
-                                                                                                     @NotNull String name,
-                                                                                                     boolean checkBases) {
+  public static @Unmodifiable @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
+                                                                                                                   @NotNull String name,
+                                                                                                                   boolean checkBases) {
     if (!checkBases) {
       PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
       List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<>(methodsByName.length);
@@ -938,7 +950,7 @@ public final class PsiClassImplUtil {
     return withSubstitutors(psiClass, list.toArray(PsiMember.EMPTY_ARRAY));
   }
 
-  private static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull PsiClass psiClass, PsiMember[] members) {
+  private static @Unmodifiable @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull PsiClass psiClass, PsiMember[] members) {
     ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(psiClass, psiClass.getResolveScope());
     LanguageLevel level = PsiUtil.getLanguageLevel(psiClass);
     return ContainerUtil.map(members, member -> {

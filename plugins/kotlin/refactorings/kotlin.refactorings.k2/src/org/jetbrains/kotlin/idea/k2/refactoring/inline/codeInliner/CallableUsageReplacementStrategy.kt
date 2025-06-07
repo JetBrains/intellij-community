@@ -41,7 +41,7 @@ class CallableUsageReplacementStrategy(
 
             usage is KtSimpleNameExpression -> {
                 {
-                    val callElement = if (replacement.originalDeclaration is KtFunction) usage.parent as? KtExpression else null
+                    val callElement = if (replacement.originalDeclaration is KtFunction || replacement.originalDeclaration is KtTypeAlias && replacement.mainExpression is KtCallExpression) usage.parent as? KtExpression else null
                     allowAnalysisOnEdt {
                         allowAnalysisFromWriteAction {
                             CodeInliner(usage, callElement ?: usage, inlineSetter, replacement).doInline()

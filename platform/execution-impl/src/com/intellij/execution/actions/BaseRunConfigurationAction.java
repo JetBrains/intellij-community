@@ -13,7 +13,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -182,12 +181,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   protected void perform(@NotNull RunnerAndConfigurationSettings configurationSettings,
                          @NotNull ConfigurationContext context) {
-    perform(context);
-  }
-
-  /** @deprecated Use {@link #perform(RunnerAndConfigurationSettings, ConfigurationContext)} instead */
-  @Deprecated(forRemoval = true)
-  protected void perform(ConfigurationContext context) {
   }
 
   /** @deprecated Use regular {@link #update(AnActionEvent)} instead */

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -90,7 +90,7 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
-        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getX() < JBUIScale.scale(28) && !myModel.myFullList.isEmpty()) {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           if (e.getClickCount() == 1) {
             showPopup();
@@ -296,7 +296,7 @@ public class SearchTextField extends JPanel {
       final String[] items = history.split("\n");
       ArrayList<String> result = new ArrayList<>();
       for (String item : items) {
-        if (item != null && item.length() > 0) {
+        if (item != null && !item.isEmpty()) {
           result.add(item);
         }
       }
@@ -348,7 +348,7 @@ public class SearchTextField extends JPanel {
         // move item to top of the list
         myFullList.remove(index);
       }
-      else if (myFullList.size() >= myHistorySize && myFullList.size() > 0) {
+      else if (myFullList.size() >= myHistorySize && !myFullList.isEmpty()) {
         // trim list
         myFullList.remove(myFullList.size() - 1);
       }

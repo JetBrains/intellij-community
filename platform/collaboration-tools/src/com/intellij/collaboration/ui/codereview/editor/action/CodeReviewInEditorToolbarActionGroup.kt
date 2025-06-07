@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -42,7 +43,7 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
   init {
     with(templatePresentation) {
       isPopupGroup = true
-      putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       description = CollaborationToolsBundle.message("review.editor.mode.description.title")
       val tooltip = HelpTooltip()
         .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))

@@ -107,8 +107,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     }
   }
 
-  @Nullable
-  private static GrReferenceElement<?> findGroovyReference(@NotNull PsiElement position) {
+  private static @Nullable GrReferenceElement<?> findGroovyReference(@NotNull PsiElement position) {
     final PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
       return (GrReferenceElement<?>)parent;
@@ -126,8 +125,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
            GroovyCompletionUtil.isTupleVarNameWithoutTypeDeclared(position);
   }
 
-  @Nullable
-  private static GrTypeParameterList findTypeParameterListCandidate(@NotNull PsiElement position) {
+  private static @Nullable GrTypeParameterList findTypeParameterListCandidate(@NotNull PsiElement position) {
     final PsiElement parent = position.getParent();
     if (parent instanceof GrVariable) {
       final PsiElement pparent = parent.getParent();
@@ -167,13 +165,12 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     });
   }
 
-  @NotNull
-  static Runnable completeReference(final CompletionParameters parameters,
-                                    final GrReferenceElement<?> reference,
-                                    final JavaCompletionSession inheritorsHolder,
-                                    final PrefixMatcher matcher,
-                                    final @Nullable CompletionResultSet resultSet,
-                                    final Consumer<? super LookupElement> _consumer) {
+  static @NotNull Runnable completeReference(final CompletionParameters parameters,
+                                             final GrReferenceElement<?> reference,
+                                             final JavaCompletionSession inheritorsHolder,
+                                             final PrefixMatcher matcher,
+                                             final @Nullable CompletionResultSet resultSet,
+                                             final Consumer<? super LookupElement> _consumer) {
     final HashSet<LookupElement> addedElements = new HashSet<>();
     final Consumer<LookupElement> consumer = new Consumer<>() {
       final Set<LookupElement> added = addedElements;
@@ -402,9 +399,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     final PsiElement position = parameters.getPosition();
     final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
-      @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
+      protected @NotNull LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return createGlobalMemberElement(member, containingClass, shouldImport);
       }
@@ -461,8 +457,8 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   @Override
   protected final void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+                                      @NotNull ProcessingContext context,
+                                      final @NotNull CompletionResultSet result) {
 
     try (GroovyCompletionConsumer consumer = getCompletionConsumer(result, parameters)) {
       doAddCompletions(parameters, consumer);

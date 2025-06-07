@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
@@ -15,8 +15,8 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
@@ -75,10 +75,9 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
   }
 
 
-  @Nullable("when failed to extract")
-  private static List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
-                                                              @NotNull PsiVariable first,
-                                                              @NotNull PsiVariable second) {
+  private static @Nullable("when failed to extract") List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
+                                                                                                  @NotNull PsiVariable first,
+                                                                                                  @NotNull PsiVariable second) {
     if (statements.length == 0) return null;
     ComparisonBlock firstBlock = ComparisonBlock.extractBlock(statements[0], first, second, null);
     if (firstBlock == null) return null;
@@ -131,8 +130,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
   }
 
   //res == 0 ? first.compareTo(second) : res
-  @Nullable
-  private static ComparisonBlock extractTernaryComparison(@NotNull PsiVariable first,
+  private static @Nullable ComparisonBlock extractTernaryComparison(@NotNull PsiVariable first,
                                                           @NotNull PsiVariable second,
                                                           PsiVariable lastResult,
                                                           PsiExpression returnExpr) {
@@ -163,8 +161,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
    *                  if(res == 0) {int res = o1.second.compareTo(o2.second);}
    * @return statement of then branch
    */
-  @Nullable
-  private static PsiStatement extractZeroCheckedWay(@Nullable PsiStatement statement, @NotNull PsiVariable last) {
+  private static @Nullable PsiStatement extractZeroCheckedWay(@Nullable PsiStatement statement, @NotNull PsiVariable last) {
     PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
     if (ifStatement == null || ifStatement.getElseBranch() != null) return null;
     PsiBinaryExpression binOp = tryCast(ifStatement.getCondition(), PsiBinaryExpression.class);
@@ -212,8 +209,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
      * or
      * res = o1.first.compareTo(o2.first);
      */
-    @Nullable
-    static ComparisonBlock extractBlock(@NotNull PsiStatement statement,
+    static @Nullable ComparisonBlock extractBlock(@NotNull PsiStatement statement,
                                         @NotNull PsiVariable firstParam,
                                         @NotNull PsiVariable secondParam,
                                         @Nullable PsiVariable previousResult) {
@@ -233,11 +229,10 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
     }
 
     @Contract("null, _, _, _ -> null")
-    @Nullable
-    private static ComparisonBlock extractBlock(@Nullable PsiExpression expr,
-                                                @NotNull PsiVariable firstParam,
-                                                @NotNull PsiVariable secondParam,
-                                                @NotNull PsiVariable variable) {
+    private static @Nullable ComparisonBlock extractBlock(@Nullable PsiExpression expr,
+                                                          @NotNull PsiVariable firstParam,
+                                                          @NotNull PsiVariable secondParam,
+                                                          @NotNull PsiVariable variable) {
       PsiExpression first = null;
       PsiExpression second = null;
       if (expr instanceof PsiMethodCallExpression call) {
@@ -282,21 +277,19 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
     }
   }
 
-  @NotNull
-  private static String generateComparison(@NotNull String methodName,
-                                           @Nullable PsiType type,
-                                           @NotNull String varName,
-                                           @NotNull PsiExpression expression,
-                                           @NotNull PsiVariable exprVariable) {
+  private static @NotNull String generateComparison(@NotNull String methodName,
+                                                    @Nullable PsiType type,
+                                                    @NotNull String varName,
+                                                    @NotNull PsiExpression expression,
+                                                    @NotNull PsiVariable exprVariable) {
     String lambdaExpr = getExpressionReplacingReferences(expression, varName, exprVariable);
     String parameter =
       type == null ? varName : "(" + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText() + " " + varName + ")";
     return methodName + "(" + parameter + "->" + lambdaExpr + ")";
   }
 
-  @Nullable
-  private static String generateSimpleCombinator(PsiLambdaExpression lambda,
-                                                 PsiParameter leftVar, PsiParameter rightVar) {
+  private static @Nullable String generateSimpleCombinator(PsiLambdaExpression lambda,
+                                                           PsiParameter leftVar, PsiParameter rightVar) {
     PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
     PsiExpression left;
     @NonNls String methodName = null;
@@ -353,10 +346,9 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
     return text;
   }
 
-  @Nullable
-  private static String generateChainCombinator(@NotNull List<ComparisonBlock> blocks,
-                                                @NotNull PsiVariable firstVar,
-                                                @NotNull PsiVariable secondVar) {
+  private static @Nullable String generateChainCombinator(@NotNull List<ComparisonBlock> blocks,
+                                                          @NotNull PsiVariable firstVar,
+                                                          @NotNull PsiVariable secondVar) {
     if (blocks.size() < 2) return null;
     ComparisonBlock first = blocks.get(0);
     StringBuilder builder = new StringBuilder();
@@ -390,8 +382,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
     return null;
   }
 
-  @Nullable
-  private static String suggestVarName(@NotNull PsiVariable variable) {
+  private static @Nullable String suggestVarName(@NotNull PsiVariable variable) {
     String name = variable.getName();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
     SuggestedNameInfo nameCandidate = null;
@@ -418,6 +409,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
                                                          @NotNull PsiVariable exprVariable) {
     PsiExpression copy = (PsiExpression)expression.copy();
     ReferencesSearch.search(exprVariable, new LocalSearchScope(copy))
+      .asIterable()
       .forEach(reference ->{
         PsiReferenceExpression ref = tryCast(reference.getElement(), PsiReferenceExpression.class);
         if(ref == null) return;
@@ -427,8 +419,7 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  private static String getComparingMethodName(String type) {
+  private static @Nullable String getComparingMethodName(String type) {
     return getComparingMethodName(type, true);
   }
 
@@ -474,18 +465,15 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
       myMethodName = name;
     }
 
-    @NotNull
-    public PsiExpression getKeyExtractor() {
+    public @NotNull PsiExpression getKeyExtractor() {
       return myKeyExtractor;
     }
 
-    @NotNull
-    public String getMethodName() {
+    public @NotNull String getMethodName() {
       return myMethodName;
     }
 
-    @Nullable
-    static private PrimitiveComparison from(PsiMethodCallExpression methodCall) {
+    private static @Nullable PrimitiveComparison from(PsiMethodCallExpression methodCall) {
       PsiMethod method = methodCall.resolveMethod();
       if (method != null && method.getName().equals("compare")) {
         PsiClass containingClass = method.getContainingClass();
@@ -512,17 +500,13 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
       myMessage = message;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myMessage;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.comparator.fix.family.name");
     }
 

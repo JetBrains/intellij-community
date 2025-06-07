@@ -1,0 +1,61 @@
+### auto-generated section `build kotlin.project-configuration` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "project-configuration_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "project-configuration",
+  module_name = "kotlin.project-configuration",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:asm",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/vcs-api:vcs",
+    "//platform/observable",
+    "@lib//:gson",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//platform/util/progress",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/statistics",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/external-system-api:externalSystem",
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//java/compiler/openapi:java-compiler",
+    "//aether-dependency-resolver",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
+    "//platform/core-api:core",
+    "//platform/util/coroutines",
+    "@lib//:maven-resolver-provider",
+    "//platform/util",
+  ],
+  runtime_deps = [":project-configuration_resources"]
+)
+### auto-generated section `build kotlin.project-configuration` end

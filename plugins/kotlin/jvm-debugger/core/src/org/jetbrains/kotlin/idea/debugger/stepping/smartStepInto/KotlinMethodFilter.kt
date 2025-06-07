@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
@@ -12,11 +14,14 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -41,6 +46,7 @@ open class KotlinMethodFilter(
     override fun getSkipCount(): Int = methodInfo.ordinal
 
     override fun locationMatches(process: DebugProcessImpl, location: Location, frameProxy: StackFrameProxyImpl?): Boolean {
+        if (isIntrinsicEqualsMatch(location)) return true
         if (!nameMatches(location, frameProxy)) {
             return false
         }
@@ -50,11 +56,23 @@ open class KotlinMethodFilter(
         }.executeSynchronously()
     }
 
+    override fun onReached(context: SuspendContextImpl, hint: RequestHint): Int {
+        val location = context.location
+        if (location != null && isIntrinsicEqualsMatch(location)) {
+            // Do not stop inside intrinsic method, step into user's equals
+            return StepRequest.STEP_INTO
+        }
+        return super.onReached(context, hint)
+    }
+
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         return locationMatches(process, location, null)
     }
 
-    private fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
+    private fun isIntrinsicEqualsMatch(location: Location): Boolean =
+        methodInfo.name == "equals" && location.safeMethod()?.isIntrinsicEquals() == true
+
+    fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
         val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
         // Stops at first location in dumb mode
         return runDumbAnalyze(currentDeclaration, fallback = true) {
@@ -62,8 +80,13 @@ open class KotlinMethodFilter(
         }
     }
 
-    context(KaSession)
-    private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
+    fun declarationMatches(declaration: KtDeclaration): Boolean {
+        return runDumbAnalyze(declaration, fallback = true) {
+            declarationMatches(declaration)
+        }
+    }
+
+    private fun KaSession.declarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.symbol
         // callable or constructor
         if (currentSymbol !is KaCallableSymbol && currentSymbol !is KaClassSymbol) return false
@@ -116,7 +139,10 @@ open class KotlinMethodFilter(
     }
 }
 
-private fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
+private fun Method.isIntrinsicEquals(): Boolean =
+    isIntrinsicEquals(declaringType().name().fqnToInternalName(), name(), signature())
+
+fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
     val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
         it !is KtProperty || !it.isLocal

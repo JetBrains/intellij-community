@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -90,9 +90,19 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFromJvmModuleToJsModule/moveFromJvmModuleToJsModule.test");
     }
 
+    @TestMetadata("moveInternalDeclarationToAnotherFriendModule/moveInternalDeclarationToFriendModule.test")
+    public void testMoveInternalDeclarationToAnotherFriendModule_MoveInternalDeclarationToFriendModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveInternalDeclarationToAnotherFriendModule/moveInternalDeclarationToFriendModule.test");
+    }
+
     @TestMetadata("moveInternalToAnotherModule/moveInternalToAnotherModule.test")
     public void testMoveInternalToAnotherModule_MoveInternalToAnotherModule() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveInternalToAnotherModule/moveInternalToAnotherModule.test");
+    }
+
+    @TestMetadata("moveInternalUsageInsideFriendModule/moveInternalUsageInsideFriendModule.test")
+    public void testMoveInternalUsageInsideFriendModule_MoveInternalUsageInsideFriendModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveInternalUsageInsideFriendModule/moveInternalUsageInsideFriendModule.test");
     }
 
     @TestMetadata("moveJdkDependentToJsModule/moveJdkDependentToJsModule.test")

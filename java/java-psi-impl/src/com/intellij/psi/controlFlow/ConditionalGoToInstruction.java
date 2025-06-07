@@ -14,6 +14,7 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
     super(offset, expression, role);
   }
 
+  @Override
   public String toString() {
     final @NonNls String sRole = "[" + role + "]";
     return "COND_GOTO " + sRole + " " + offset;

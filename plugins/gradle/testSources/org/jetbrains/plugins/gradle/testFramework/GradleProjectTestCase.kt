@@ -68,11 +68,12 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   }
 
 
-  fun writeTextAndCommit(relativePath: String, text: String) {
+  fun writeTextAndCommit(relativePath: String, text: String): VirtualFile {
     val file = findOrCreateFile(relativePath)
     runWriteActionAndWait {
       file.writeTextAndCommit(text)
     }
+    return file
   }
 
   @RequiresWriteLock
@@ -100,14 +101,14 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   companion object {
 
-    private val EMPTY_PROJECT = GradleTestFixtureBuilder.create("empty-project") {
-      withSettingsFile {
+    private val EMPTY_PROJECT = GradleTestFixtureBuilder.create("empty-project") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("empty-project")
       }
     }
 
     private val JAVA_PROJECT = GradleTestFixtureBuilder.create("java-plugin-project") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("java-plugin-project")
       }
       withBuildFile(gradleVersion) {
@@ -119,7 +120,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
     }
 
     private val GROOVY_PROJECT = GradleTestFixtureBuilder.create("groovy-plugin-project") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("groovy-plugin-project")
       }
       withBuildFile(gradleVersion) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +11,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,8 +68,7 @@ public final class GrClassImplUtil {
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public static PsiClass findInnerClassByName(GrTypeDefinition grType, String name, boolean checkBases) {
+  public static @Nullable PsiClass findInnerClassByName(GrTypeDefinition grType, String name, boolean checkBases) {
     if (!checkBases) {
       for (PsiClass inner : grType.getInnerClasses()) {
         if (name.equals(inner.getName())) return inner;
@@ -83,20 +82,17 @@ public final class GrClassImplUtil {
     }
   }
 
-  @Nullable
-  public static PsiClass getSuperClass(@NotNull GrTypeDefinition grType) {
+  public static @Nullable PsiClass getSuperClass(@NotNull GrTypeDefinition grType) {
     return getSuperClass(grType, grType.getExtendsListTypes());
   }
 
-  @Nullable
-  public static PsiClass getSuperClass(@NotNull GrTypeDefinition grType, PsiClassType @NotNull [] extendsListTypes) {
+  public static @Nullable PsiClass getSuperClass(@NotNull GrTypeDefinition grType, PsiClassType @NotNull [] extendsListTypes) {
     if (extendsListTypes.length == 0) return getBaseClass(grType);
     final PsiClass superClass = extendsListTypes[0].resolve();
     return superClass != null ? superClass : getBaseClass(grType);
   }
 
-  @Nullable
-  public static PsiClass getBaseClass(GrTypeDefinition grType) {
+  public static @Nullable PsiClass getBaseClass(GrTypeDefinition grType) {
     if (grType.isEnum()) {
       return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_ENUM, grType.getResolveScope());
     }
@@ -130,8 +126,7 @@ public final class GrClassImplUtil {
     });
   }
 
-  @NotNull
-  public static List<PsiMethod> getAllMethods(Collection<? extends PsiClass> classes) {
+  public static @NotNull List<PsiMethod> getAllMethods(Collection<? extends PsiClass> classes) {
     List<PsiMethod> allMethods = new ArrayList<>();
     HashSet<PsiClass> visited = new HashSet<>();
 
@@ -388,8 +383,7 @@ public final class GrClassImplUtil {
     return isPlaceGroovy || !(method instanceof GrGdkMethod);
   }
 
-  @Nullable
-  public static PsiMethod findMethodBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+  public static @Nullable PsiMethod findMethodBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (PsiMethod method : findMethodsByName(grType, patternMethod.getName(), checkBases, false)) {
       MethodSignature signature = getSignatureForInheritor(method, grType);
@@ -443,8 +437,7 @@ public final class GrClassImplUtil {
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static MethodSignature getSignatureForInheritor(@NotNull PsiMethod methodFromSuperClass, @NotNull GrTypeDefinition inheritor) {
+  private static @Nullable MethodSignature getSignatureForInheritor(@NotNull PsiMethod methodFromSuperClass, @NotNull GrTypeDefinition inheritor) {
     final PsiClass clazz = methodFromSuperClass.getContainingClass();
     if (clazz == null) return null;
     PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, inheritor, PsiSubstitutor.EMPTY);
@@ -458,10 +451,9 @@ public final class GrClassImplUtil {
     return findMethodsByName(grType, name, checkBases, false);
   }
 
-  @NotNull
-  public static List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(GrTypeDefinition grType,
-                                                                                            String name,
-                                                                                            boolean checkBases) {
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(GrTypeDefinition grType,
+                                                                                                     String name,
+                                                                                                     boolean checkBases) {
     final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
 
     if (!checkBases) {
@@ -484,8 +476,7 @@ public final class GrClassImplUtil {
     return result;
   }
 
-  @NotNull
-  public static List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors(GrTypeDefinition grType) {
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors(GrTypeDefinition grType) {
     final Map<String, List<CandidateInfo>> allMethodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
     List<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
     for (List<CandidateInfo> infos : allMethodsMap.values()) {
@@ -497,8 +488,7 @@ public final class GrClassImplUtil {
     return result;
   }
 
-  @Nullable
-  public static PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
+  public static @Nullable PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
     if (!checkBases) {
       for (PsiField field : CollectClassMembersUtil.getFields(grType, includeSynthetic)) {
         if (name.equals(field.getName())) return field;
@@ -525,8 +515,7 @@ public final class GrClassImplUtil {
     return PsiClassImplUtil.isClassEquivalentTo(definition, another);
   }
 
-  @NotNull
-  public static Collection<? extends PsiMethod> expandReflectedMethods(@NotNull PsiMethod method) {
+  public static @NotNull Collection<? extends PsiMethod> expandReflectedMethods(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       GrReflectedMethod[] methods = ((GrMethod)method).getReflectedMethods();
       if (methods.length > 0) {
@@ -536,8 +525,7 @@ public final class GrClassImplUtil {
     return Collections.singletonList(method);
   }
 
-  @NotNull
-  public static Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
+  public static @NotNull Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
     return CachedValuesManager.getCachedValue(clazz, () -> {
       PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
       MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = new MostlySingularMultiMap<>();
@@ -563,8 +551,7 @@ public final class GrClassImplUtil {
     ));
   }
 
-  @Nullable
-  private static GrAccessorMethod doGetSetter(GrField field) {
+  private static @Nullable GrAccessorMethod doGetSetter(GrField field) {
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return null;
     PsiMethod[] setters = containingClass.findMethodsByName(GroovyPropertyUtils.getSetterName(field.getName()), false);

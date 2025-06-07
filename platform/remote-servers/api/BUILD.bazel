@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.remoteServers` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "remoteServers_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remoteServers",
+  module_name = "intellij.platform.remoteServers",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
+    "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  exports = ["//platform/remote-servers/agent-rt:remoteServers-agent-rt"],
+  runtime_deps = [":remoteServers_resources"]
+)
+### auto-generated section `build intellij.platform.remoteServers` end

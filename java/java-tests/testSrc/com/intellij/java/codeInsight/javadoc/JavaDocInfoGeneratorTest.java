@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -84,6 +84,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInheritedDocInThrows() { doTestMethod(); }
   public void testInheritedDocInThrows1() { doTestMethod(); }
   public void testMultipleThrowsSameType() { doTestMethod(); }
+  public void testEmptyThrows() { doTestMethod(); }
   public void testEscapeValues() { doTestClass(); }
   public void testClassTypeParameter() { doTestClass(); }
   public void testClassTypeParameter1() { doTestClass(); }
@@ -111,6 +112,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testFieldInitializedWithLambda() { doTestField(); }
   public void testFieldInitializedWithArray() { doTestField(); }
   public void testFieldInitializedWithSizedArray() { doTestField(); }
+  public void testFieldInitializedWithPartlySizedArray() { doTestField(); }
   public void testDoubleLt() { doTestClass(); }
   public void testNoSpaceAfterTagName() { doTestClass(); }
   public void testRecordParameters() { doTestClass(); } //j.l.Record is unresolved as there is no mock jdk 14 yet
@@ -121,6 +123,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testHtmlLinkWithRef() { verifyJavaDoc(getTestClass()); }
   public void testMultipleSpacesInLiteral() { useJava8(); verifyJavaDoc(getTestClass()); }
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
+  public void testLinkWithModule() { doTestClass(); }
+  public void testLinkToModule() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
@@ -199,24 +203,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
-  public void testMarkdownJepExample(){
-    doTestMethod();
-  }
-  public void testHtmlCodeInMarkdown() {
-    doTestMethod();
-  }
+  public void testMarkdownJepExample(){ doTestMethod(); }
+  public void testHtmlCodeInMarkdown() { doTestMethod(); }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
-
-  public void testEscapeHtmlCodesInCodeBlock(){
-    doTestClass();
-  }
-  public void testPreTagLeakBeforeCode() {
-    doTestClass();
-  }
-  public void testPreTagStrictBeforeCode(){
-    doTestClass();
-  }
-
+  public void testEscapeHtmlCodesInCodeBlock() { doTestClass(); }
+  public void testPreTagLeakBeforeCode() { doTestClass(); }
+  public void testPreTagStrictBeforeCode(){ doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
@@ -235,17 +227,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavaDoc(method);
   }
 
-  public void testEnumConstant1() {
-    doTestEnumConstant();
-  }
-
-  public void testEnumConstant2() {
-    doTestEnumConstant();
-  }
-
-  public void testEnumConstant3() {
-    doTestEnumConstant();
-  }
+  public void testEnumConstant1() { doTestEnumConstant(); }
+  public void testEnumConstant2() { doTestEnumConstant(); }
+  public void testEnumConstant3() { doTestEnumConstant(); }
 
   public void testClickableFieldReference() {
     PsiClass aClass = getTestClass();

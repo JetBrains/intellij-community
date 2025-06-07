@@ -51,7 +51,6 @@ object TestKotlinArtifacts {
             )
     }
 
-    @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
     @JvmStatic val kotlinCompiler: File by lazy { getJar("kotlin-compiler") }
     @JvmStatic val kotlinDaemon: File by lazy { getJar("kotlin-daemon") }
@@ -98,6 +97,10 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibWasmWasi: File by lazy { getKlib("kotlin-stdlib-wasm-wasi") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
+    @JvmStatic val kotlinStdlibLegacy1922: File by lazy { downloadOrReportUnavailability("kotlin-stdlib", "1.9.22") }
+    // In 1.x, `kotlin-stdlib-common` still contained `.kotlin_metadata` files. 2.x versions of the library contain `.knm` files, since it's
+    // now a klib.
+    @JvmStatic val kotlinStdlibCommonLegacy1922: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-common", "1.9.22") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
@@ -111,6 +114,9 @@ object TestKotlinArtifacts {
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
     @JvmStatic val kotlinxCoroutines: File by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
+    }
+    @JvmStatic val coroutineContext: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlin.coroutines.CoroutineContext"))!!.toFile()
     }
 
     /**

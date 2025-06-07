@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.constraints.ConstrainedExecution.Context
 import com.intellij.openapi.application.constraints.Expiration
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
@@ -53,7 +52,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       if (ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
-          && !ModalityState.current().dominates(modality)) {
+          && ModalityState.current().accepts(modality)) {
         command.run()
       }
       else {
@@ -70,7 +69,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
           && ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
-          && !ModalityState.current().dominates(modality)) {
+          && ModalityState.current().accepts(modality)) {
         command.run()
       }
       else {
@@ -183,7 +182,7 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
   }
 
   override fun isCorrectContext(): Boolean {
-    val correctContext = !project.isDisposed && DumbServiceImpl.getInstance(project).runWhenSmartCondition.asBoolean
+    val correctContext = !project.isDisposed && DumbService.getInstance(project).canRunSmart()
     if (!correctContext) {
       thisLogger().debug("InSmartMode dispatched")
     }

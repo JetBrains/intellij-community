@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -40,9 +40,8 @@ final class JavaInspectionSuppressor implements InspectionSuppressor, RedundantS
     return suppressionScope != null && PsiTreeUtil.isAncestor(elementWithSuppression, suppressionScope, false);
   }
 
-  @Nullable
   @Override
-  public TextRange getHighlightingRange(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
+  public @Nullable TextRange getHighlightingRange(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
     PsiElement annotationOrTagElement = elementWithSuppression instanceof PsiComment
                                         ? null : SuppressManager.getInstance().getElementToolSuppressedIn(elementWithSuppression, toolId);
     if (annotationOrTagElement != null) {
@@ -56,8 +55,7 @@ final class JavaInspectionSuppressor implements InspectionSuppressor, RedundantS
     return getRangeFallback(elementWithSuppression, toolId);
   }
 
-  @Nullable
-  private TextRange getRangeFallback(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
+  private @Nullable TextRange getRangeFallback(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
     if (elementWithSuppression instanceof PsiNameIdentifierOwner owner) {
       PsiElement identifier = owner.getNameIdentifier();
       if (identifier != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor.inspections.incomplete;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -27,6 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -56,8 +57,7 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
     }
   }
 
-  @NotNull
-  public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
+  public @NotNull Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
     return properties -> !isPropertyComplete(properties, resourceBundle)
     ? new ResourceBundleEditorProblemDescriptor[]{new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                                             ResourceBundleEditorBundle.message(
@@ -68,8 +68,7 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
     : null;
   }
 
-  @NotNull
-  public static IncompletePropertyInspection getInstance(PsiElement element) {
+  public static @NotNull IncompletePropertyInspection getInstance(PsiElement element) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(element.getProject());
     InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
     return (IncompletePropertyInspection) inspectionProfile.getUnwrappedTool(TOOL_KEY, element);
@@ -84,10 +83,8 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
       myResourceBundle = bundle;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return ResourceBundleEditorBundle.message("incomplete.property.quick.fix.name");
     }
 
@@ -142,7 +139,7 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
     return mySuffixes;
   }
 
-  public List<PropertiesFile> getPropertiesFilesWithoutTranslation(final ResourceBundle resourceBundle, final String key) {
+  public @Unmodifiable List<PropertiesFile> getPropertiesFilesWithoutTranslation(final ResourceBundle resourceBundle, final String key) {
     return ContainerUtil.filter(resourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.findPropertyByKey(key) == null &&
                                                                                    !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(propertiesFile)));
   }

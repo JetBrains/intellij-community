@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -12,22 +14,33 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
+import org.jetbrains.annotations.ApiStatus
 import java.util.Objects.hash
 
-class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
+class ProblemNode(parent: Node, val file: VirtualFile, override val problem: Problem) : Node(parent), ProblemNodeI {
   init {
     Logger.getInstance(javaClass).assertTrue(project != null, this)
   }
-  var text: String = ""
-    private set
 
-  var line: Int = 0
-    private set
+  private var text: String = ""
 
-  var column: Int = 0
-    private set
+  private var line: Int = 0
 
-  var severity: Int = 0
+  private var column: Int = 0
+
+  private var severity: Int = 0
+
+  override fun getText(): String = text
+
+  override fun getLine(): Int = line
+
+  override fun getColumn(): Int = column
+
+  override fun getSeverity(): Int = severity
+
+  // todo IJPL-339 mark experimental
+  @ApiStatus.Internal
+  var context: CodeInsightContext? = null
     private set
 
   override val descriptor: OpenFileDescriptor
@@ -47,6 +60,7 @@ class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : N
     line = (problem as? FileProblem)?.line ?: -1
     column = (problem as? FileProblem)?.column ?: -1
     severity = (problem as? HighlightingProblem)?.severity ?: -1
+    context = (problem as? HighlightingProblem)?.highlighter?.codeInsightContext
     presentation.addText(text, REGULAR_ATTRIBUTES)
     presentation.setIcon(problem.icon)
     presentation.tooltip = problem.description

@@ -6,7 +6,7 @@ import com.intellij.sh.run.ShRunnerAdditionalCondition;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
-public class PythonFileMarkerContributionAdditionalCondition implements ShRunnerAdditionalCondition {
+final class PythonFileMarkerContributionAdditionalCondition implements ShRunnerAdditionalCondition {
   @Override
   public boolean isRunningProhibitedForElement(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();

@@ -2,27 +2,25 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.junit.Test
-import java.io.File
-import java.util.*
+import java.nio.file.Path
 
 class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
-  private var repoPath: String? = null
 
-  
   override fun setUp() {
     super.setUp()
-    repoPath = File(dir, "repo").path
-    repositoryPath = repoPath
+    repositoryPath = dir.resolve("repo")
   }
 
   @Test
@@ -75,8 +73,8 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     assertTrue("unexpected groovy libs configuration: " + libraries.size, libraries.size > 0)
     val library = libraries[0]
     assertUnorderedPathsAreEqual(
-      Arrays.asList(*library.getUrls(OrderRootType.CLASSES)),
-      Arrays.asList("jar://" + repositoryPath + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
+      listOf(*library.getUrls(OrderRootType.CLASSES)),
+      listOf("jar://$repositoryPathCanonical/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
   }
 
   @Test
@@ -165,10 +163,10 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGroovyEclipsePlugin() = runBlocking {
-    val batchDir = File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
-    batchDir.mkdirs()
-    val batchJar = File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar")
-    batchJar.createNewFile()
+    val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+    batchDir.createDirectories()
+    val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
+    batchJar.createFile()
 
     importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><dependencies>
@@ -225,16 +223,18 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
     val compilerSettings = project.getService(
       GreclipseIdeaCompilerSettings::class.java)
-    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
+    assertEquals(
+      LocalFileSystem.getInstance().findFileByNioFile(batchJar)!!.toNioPath(),
+      Path.of(compilerSettings.state!!.greclipsePath)
+    )
   }
 
   @Test
   fun testGroovyEclipsePluginWhenOnlyCompilerDependency() = runBlocking {
-    val batchDir = File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
-    batchDir.mkdirs()
-    val batchJar = File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar")
-    batchJar.createNewFile()
-
+    val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+    batchDir.createDirectories()
+    val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
+    batchJar.createFile()
 
     importProjectAsync("""
                     <groupId>test</groupId><artifactId>project</artifactId><version>1</version><build>
@@ -283,9 +283,11 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       "src/test/java")
     assertDefaultTestResources("project")
 
-    val compilerSettings = project.getService(
-      GreclipseIdeaCompilerSettings::class.java)
-    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar)!!.getPath(), compilerSettings.state!!.greclipsePath)
+    val compilerSettings = project.getService(GreclipseIdeaCompilerSettings::class.java)
+    assertEquals(
+      LocalFileSystem.getInstance().findFileByNioFile(batchJar)!!.toNioPath(),
+      Path.of(compilerSettings.state!!.greclipsePath)
+    )
   }
 
   @Test
@@ -468,9 +470,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSources() = runBlocking {
-    if (!true) {
-      createStdProjectFolders()
-    }
     createProjectSubDirs("target/generated-sources/xxx/yyy",
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar")
@@ -646,7 +645,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       </build>
                       """.trimIndent())
 
-      writeAction {
+      edtWriteAction {
         val a = MavenRootModelAdapter(
           MavenRootModelAdapterLegacyImpl(projectsTree.findProject(projectPom)!!,
                                           getModule("project"),

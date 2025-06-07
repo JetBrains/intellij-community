@@ -54,9 +54,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       myInfo = info;
     }
 
-    @NotNull
     @Override
-    public String getDebuggerDisplayName() {
+    public @NotNull String getDebuggerDisplayName() {
       return myInfo.getDebuggerName();
     }
 
@@ -85,15 +84,13 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       return myOrder;
     }
 
-    @NotNull
     @Override
-    public String getGroupName() {
+    public @NotNull String getGroupName() {
       return myName;
     }
 
-    @Nls
     @Override
-    public @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    public @Nls @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       LocalAttachInfo attachInfo = getAttachInfo(project, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
       String res;
@@ -160,11 +157,10 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     return info instanceof DebuggerLocalAttachInfo;
   }
 
-  @Nullable
-  private static LocalAttachInfo getAttachInfo(@Nullable Project project,
-                                               int pid,
-                                               String commandLine,
-                                               @Nullable Map<String, LocalAttachInfo> addressMap) {
+  private static @Nullable LocalAttachInfo getAttachInfo(@Nullable Project project,
+                                                         int pid,
+                                                         String commandLine,
+                                                         @Nullable Map<String, LocalAttachInfo> addressMap) {
     LocalAttachInfo res;
     String pidString = String.valueOf(pid);
     if (addressMap != null) {
@@ -182,8 +178,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     return res;
   }
 
-  @Nullable
-  static LocalAttachInfo getProcessAttachInfo(List<String> arguments, String pid) {
+  static @Nullable LocalAttachInfo getProcessAttachInfo(List<String> arguments, String pid) {
     String address;
     boolean socket;
     for (String argument : arguments) {
@@ -229,8 +224,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     return null;
   }
 
-  @Nullable
-  static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
+  static @Nullable LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
     try {
       return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLineForLog(), null);
     }
@@ -239,8 +233,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
   }
 
-  @Nullable
-  private static LocalAttachInfo getProcessAttachInfoInt(String pid, boolean validate) {
+  private static @Nullable LocalAttachInfo getProcessAttachInfoInt(String pid, boolean validate) {
     VirtualMachine vm = null;
     try {
       vm = validate ? JavaDebuggerAttachUtil.attachVirtualMachine(pid) : VirtualMachine.attach(pid);
@@ -377,8 +370,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       mySAJarPath = SAJarPath;
     }
 
-    @Nullable
-    static SAPIDLocalAttachInfo create(Properties systemProperties, String aClass, String pid) throws IOException {
+    static @Nullable SAPIDLocalAttachInfo create(Properties systemProperties, String aClass, String pid) throws IOException {
       File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
       if (saJdiJar.exists()) {
         return new SAPIDLocalAttachInfo(aClass, pid, saJdiJar.getCanonicalPath());
@@ -405,8 +397,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       myCommands = commands;
     }
 
-    @Nullable
-    static LocalAttachInfo create(Properties systemProperties, String aClass, String pid) {
+    static @Nullable LocalAttachInfo create(Properties systemProperties, String aClass, String pid) {
       try {
         List<String> commands =
           SaJdwp.getServerProcessCommand(systemProperties, pid, "0", false, PathUtil.getJarPathForClass(SaJdwp.class));
@@ -428,7 +419,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
   }
 
-  static abstract class LocalAttachInfo {
+  abstract static class LocalAttachInfo {
     final String myClass;
     final String myPid;
 
@@ -443,8 +434,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       return "pid " + myPid;
     }
 
-    @NlsSafe
-    abstract String getDebuggerName();
+    abstract @NlsSafe String getDebuggerName();
 
     @NlsSafe
     String getProcessDisplayText(String text) {
@@ -458,23 +448,20 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     private ProcessAttachDebugExecutor() {
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return "ProcessAttachDebug";
     }
   }
 
   public static final class ProcessAttachDebuggerRunner extends GenericDebuggerRunner {
-    @NotNull
     @Override
-    public String getRunnerId() {
+    public @NotNull String getRunnerId() {
       return "ProcessAttachDebuggerRunner";
     }
 
-    @Nullable
     @Override
-    protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
+    protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
       throws ExecutionException {
       return attachVirtualMachine(state, environment, ((RemoteState)state).getRemoteConnection(), false);
     }
@@ -492,9 +479,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       super(project, ProcessAttachRunConfigurationType.FACTORY, "ProcessAttachRunConfiguration");
     }
 
-    @Nullable
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
       return new RemoteStateState(getProject(), myAttachInfo.createConnection());
     }
   }
@@ -502,9 +488,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
   private static final class ProcessAttachRunConfigurationType implements ConfigurationType {
     static final ProcessAttachRunConfigurationType INSTANCE = new ProcessAttachRunConfigurationType();
     static final ConfigurationFactory FACTORY = new ConfigurationFactory(INSTANCE) {
-      @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ProcessAttachRunConfiguration(project);
       }
 
@@ -514,16 +499,13 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       }
     };
 
-    @NotNull
-    @Nls
     @Override
-    public String getDisplayName() {
+    public @NotNull @Nls String getDisplayName() {
       return JavaDebuggerBundle.message("process.attach.run.configuration.type.name");
     }
 
-    @Nls
     @Override
-    public String getConfigurationTypeDescription() {
+    public @Nls String getConfigurationTypeDescription() {
       return getDisplayName();
     }
 
@@ -532,9 +514,8 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return "ProcessAttachRunConfigurationType";
     }
 

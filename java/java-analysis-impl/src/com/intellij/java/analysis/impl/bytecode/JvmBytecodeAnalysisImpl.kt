@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.analysis.impl.bytecode
 
 import com.intellij.java.analysis.bytecode.ClassFileAnalyzer
@@ -15,7 +15,10 @@ class JvmBytecodeAnalysisImpl : JvmBytecodeAnalysis {
     return ClassFileAnalyzerImpl(processor, null)
   }
 
-  override fun createDeclarationAndReferencesAnalyzer(declarationProcessor: JvmBytecodeDeclarationProcessor, referenceProcessor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer {
+  override fun createDeclarationAndReferencesAnalyzer(
+    declarationProcessor: JvmBytecodeDeclarationProcessor?,
+    referenceProcessor: JvmBytecodeReferenceProcessor?,
+  ): ClassFileAnalyzer {
     return ClassFileAnalyzerImpl(declarationProcessor, referenceProcessor)
   }
 }

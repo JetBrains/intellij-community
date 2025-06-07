@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
@@ -60,7 +60,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   protected final UIState myUiState = new UIState();
   private JBSplitter mySplitter;
   private JComponent myToolbarComponent;
-  @NonNls public static final String CATEGORY = "category";
+  public static final @NonNls String CATEGORY = "category";
   private JComponent myToFocus;
 
   public static class UIState {
@@ -138,28 +138,22 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myObsoleteLibraryFilesRemover = new ObsoleteLibraryFilesRemover(project);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "project.structure";
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("project.settings.display.name");
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     String topic = mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : null;
     return Objects.requireNonNullElse(topic, "reference.settingsdialog.project.structure.general");
   }
@@ -402,7 +396,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   @Override
-  public void queryPlace(@NotNull final Place place) {
+  public void queryPlace(final @NotNull Place place) {
     place.putPath(CATEGORY, mySelectedConfigurable);
     Place.queryFurther(mySelectedConfigurable, place);
   }
@@ -415,7 +409,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return createPlaceFor(myProjectConfig);
   }
 
-  public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
+  public ActionCallback select(final @Nullable String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
     Place place = createModulesPlace();
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
@@ -433,7 +427,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return createModulesPlace().putPath(MasterDetailsComponent.TREE_OBJECT, module);
   }
 
-  public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
+  public ActionCallback select(final @Nullable Facet facetToSelect, final boolean requestFocus) {
     Place place = createModulesPlace();
     if (facetToSelect != null) {
       place = place.putPath(MasterDetailsComponent.TREE_OBJECT, facetToSelect);
@@ -486,12 +480,12 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return navigateTo(place, requestFocus);
   }
 
-  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+  public ActionCallback selectOrderEntry(final @NotNull Module module, final @Nullable OrderEntry orderEntry) {
     return myModulesConfig.selectOrderEntry(module, orderEntry);
   }
 
   @Override
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
     final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
 
     JComponent detailsContent = myDetails.getTargetComponent();
@@ -573,12 +567,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     myDetails.add(myEmptySelection, BorderLayout.CENTER);
   }
 
-  public static ProjectStructureConfigurable getInstance(@NotNull final Project project) {
+  public static ProjectStructureConfigurable getInstance(final @NotNull Project project) {
     return project.getService(ProjectStructureConfigurable.class);
   }
 
-  @NotNull
-  public ProjectSdksModel getProjectJdksModel() {
+  public @NotNull ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }
 

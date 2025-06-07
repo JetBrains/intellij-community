@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.FieldVisibilityProvider
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -19,16 +20,22 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
-import org.jetbrains.kotlin.idea.debugger.base.util.safeType
 import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
 import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
-import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
+import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
+import org.jetbrains.kotlin.idea.debugger.base.util.safeType
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
+import org.jetbrains.kotlin.idea.debugger.core.KotlinMetadataCacheService
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
+import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
+import kotlin.metadata.KmProperty
+import kotlin.metadata.isNotDefault
+import kotlin.metadata.jvm.JvmMethodSignature
+import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.jvm.getterSignature
 
 class KotlinClassRenderer : ClassRenderer() {
     init {
@@ -52,9 +59,12 @@ class KotlinClassRenderer : ClassRenderer() {
         val nodeDescriptorFactory = builder.descriptorManager
         val refType = value.referenceType()
         val gettersFuture = DebuggerUtilsAsync.allMethods(refType)
-            .thenApply { methods -> methods.getters().createNodes(value, parentDescriptor.project, evaluationContext, nodeManager) }
+            .thenApply { methods ->
+                val getters = fetchGettersUsingMetadata(evaluationContext, methods) ?: methods.getters()
+                getters.createNodes(value, parentDescriptor.project, evaluationContext, nodeManager)
+            }
         DebuggerUtilsAsync.allFields(refType).thenCombine(gettersFuture) { fields, getterNodes ->
-            if (fields.isEmpty() && getterNodes.isEmpty()) {
+            if (fields.none { FieldVisibilityProvider.shouldDisplayField(it) } && getterNodes.isEmpty()) {
                 builder.setChildren(listOf(nodeManager.createMessageNode(KotlinDebuggerCoreBundle.message("message.class.has.no.properties"))))
                 return@thenCombine
             }
@@ -75,6 +85,45 @@ class KotlinClassRenderer : ClassRenderer() {
                     builder.setChildren(mergeNodesLists(nodesToShow, getterNodes))
                 }
         }
+    }
+
+    private fun fetchGettersUsingMetadata(
+        context: EvaluationContext,
+        methods: List<Method>
+    ): List<Method>? {
+        val gettersToShow = calculateGettersToShowUsingMetadata(methods, context) ?: return null
+        return methods
+            .filter { method -> gettersToShow.any { it.name == method.name() && it.descriptor == method.signature() } }
+            .distinctBy { it.name() }
+    }
+
+    private fun calculateGettersToShowUsingMetadata(
+        methods: List<Method>,
+        context: EvaluationContext
+    ): Set<JvmMethodSignature>? {
+        val uniqueKotlinDeclaringTypes = methods
+            .mapTo(HashSet()) { it.declaringType() }
+            .filter { it.isInKotlinSources() }
+        val metadataList = KotlinMetadataCacheService.getKotlinMetadataList(
+            uniqueKotlinDeclaringTypes, context
+        ) ?: return null
+        val gettersToShow = mutableSetOf<JvmMethodSignature>()
+        for (metadata in metadataList) {
+            if (metadata !is KotlinClassMetadata.Class) {
+                continue
+            }
+
+            metadata.kmClass.properties
+                .asSequence()
+                .filter { it.shouldBeVisibleInVariablesView() }
+                .mapNotNull { it.getterSignature }
+                .toCollection(gettersToShow)
+        }
+        return gettersToShow
+    }
+
+    private fun KmProperty.shouldBeVisibleInVariablesView(): Boolean {
+        return getter.isNotDefault
     }
 
     override fun calcLabel(

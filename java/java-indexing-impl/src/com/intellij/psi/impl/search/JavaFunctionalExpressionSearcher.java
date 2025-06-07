@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -50,15 +50,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
   private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
@@ -75,8 +73,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     }
   }
 
-  @NotNull
-  private static List<SamDescriptor> calcDescriptors(@NotNull Session session) {
+  private static @NotNull List<SamDescriptor> calcDescriptors(@NotNull Session session) {
     PsiClass aClass = session.elementToSearch;
     Project project = PsiUtilCore.getProjectInReadAction(aClass);
 
@@ -112,16 +109,14 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     return ReadAction.nonBlocking(runnable).inSmartMode(project).executeSynchronously();
   }
 
-  @NotNull
-  private static Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
-                                                 @NotNull Collection<? extends VirtualFile> candidateFiles,
-                                                 @NotNull Project project) {
+  private static @NotNull Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
+                                                          @NotNull Collection<? extends VirtualFile> candidateFiles,
+                                                          @NotNull Project project) {
     final GlobalSearchScope candidateFilesScope = ReadAction.compute(() -> GlobalSearchScope.filesScope(project, candidateFiles));
     return JBIterable.from(descriptors).flatMap(descriptor -> ((SamDescriptor)descriptor).getMostLikelyFiles(candidateFilesScope)).toSet();
   }
 
-  @NotNull
-  private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(@NotNull List<? extends SamDescriptor> descriptors) {
+  private static @NotNull MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(@NotNull List<? extends SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       for (SamDescriptor descriptor : descriptors) {
@@ -170,11 +165,10 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
                      ProgressIndicatorProvider.getGlobalProgressIndicator(), vFileProcessor);
   }
 
-  @NotNull
-  private static Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
-                                                                       @NotNull VirtualFile vFile,
-                                                                       @NotNull Collection<? extends FunExprOccurrence> occurrences,
-                                                                       @NotNull Project project) {
+  private static @NotNull Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
+                                                                                @NotNull VirtualFile vFile,
+                                                                                @NotNull Collection<? extends FunExprOccurrence> occurrences,
+                                                                                @NotNull Project project) {
     return ReadAction.nonBlocking(() -> {
       Map<FunExprOccurrence, Confidence> map = new HashMap<>();
       for (FunExprOccurrence occurrence : occurrences) {
@@ -235,8 +229,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     });
   }
 
-  @Nullable
-  private static PsiFunctionalExpression findPsiByAST(PsiFile file, int offset) {
+  private static @Nullable PsiFunctionalExpression findPsiByAST(PsiFile file, int offset) {
     PsiFunctionalExpression expression =
       PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
     if (expression == null || expression.getTextRange().getStartOffset() != offset) {
@@ -260,10 +253,9 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     return null;
   }
 
-  @NotNull
-  private static PsiFunctionalExpression getNonPhysicalCopy(Map<TextRange, PsiFile> fragmentCache,
-                                                            JavaFunctionalExpressionIndex.IndexEntry entry,
-                                                            PsiFunctionalExpression expression) {
+  private static @NotNull PsiFunctionalExpression getNonPhysicalCopy(Map<TextRange, PsiFile> fragmentCache,
+                                                                     JavaFunctionalExpressionIndex.IndexEntry entry,
+                                                                     PsiFunctionalExpression expression) {
     PsiFile file = expression.getContainingFile();
     FileViewProvider viewProvider = file.getViewProvider();
     try {
@@ -385,8 +377,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       keys = generateKeys();
     }
 
-    @NotNull
-    private List<FunctionalExpressionKey> generateKeys() {
+    private @NotNull List<FunctionalExpressionKey> generateKeys() {
       String name = samClass.isValid() ? samClass.getName() : null;
       if (name == null) return Collections.emptyList();
 
@@ -408,8 +399,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       return result;
     }
 
-    @NotNull
-    private Set<VirtualFile> getMostLikelyFiles(@NotNull GlobalSearchScope searchScope) {
+    private @NotNull Set<VirtualFile> getMostLikelyFiles(@NotNull GlobalSearchScope searchScope) {
       Set<VirtualFile> files = new LinkedHashSet<>();
       dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
@@ -488,9 +478,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       scope = parameters.getEffectiveSearchScope();
     }
 
-    @NotNull
     @TestOnly
-    Set<VirtualFile> getFilesLookedInside() {
+    public @NotNull Set<VirtualFile> getFilesLookedInside() {
       return filesLookedInside;
     }
 

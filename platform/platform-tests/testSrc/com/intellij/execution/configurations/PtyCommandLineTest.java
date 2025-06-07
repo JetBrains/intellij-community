@@ -25,7 +25,7 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
 
   @Override
   protected GeneralCommandLine createCommandLine(String... command) {
-    return new PtyCommandLine(Arrays.asList(command)).withWindowsAnsiColorDisabled();
+    return new PtyCommandLine(Arrays.asList(command));
   }
 
   private static String expandTabs(String s, @SuppressWarnings("SameParameterValue") int tabSize) {

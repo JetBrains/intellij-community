@@ -128,6 +128,8 @@
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
 
+    <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2KotlinNameSuggestionProvider"/>
+
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
 
@@ -140,6 +142,18 @@
                  description="Enable KMP support in the K2 mode for WASM platform"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.auto.import.from.subclass.objects.enabled" 
+                 defaultValue="true" 
+                 description="Enable auto-import of declarations inherited by objects in K2 Mode of Kotlin Plugin"/>
+
+    <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.enabled"
+                 defaultValue="true"
+                 description="Enable auto-import for various diagnostics about mismatched value or type arguments in K2 Mode of Kotlin Plugin"/>
+
+    <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.applicability.filter.enabled"
+                 defaultValue="true"
+                 description="Enable filtering of auto-import candidates by applicability check in K2 Mode of Kotlin Plugin"/>
 
     <!-- inlay hints -->
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
@@ -205,22 +219,38 @@
             providerId="kotlin.values.hints"
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.values.ranges"
-            descriptionKey="inlay.kotlin.values.hints"/>
+            descriptionKey="inlay.kotlin.values.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.ranges"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.ranges"
+              descriptionKey="inlay.kotlin.value.ranges"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.kotlin.time"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.kotlin.time"
+              descriptionKey="inlay.kotlin.value.kotlin.time"/>
+    </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsProvider"
-            isEnabledByDefault="false"
+            isEnabledByDefault="true"
             group="PARAMETERS_GROUP"
             providerId="kotlin.parameters.hints"
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
-      <!--        <option bundle="messages.KotlinBundle"-->
-      <!--              optionId="hints.parameters.excluded"-->
-      <!--              enabledByDefault="false"-->
-      <!--              nameKey="hints.settings.excluded.parameters"-->
-      <!--              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>-->
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.excluded"
+              enabledByDefault="false"
+              nameKey="hints.settings.excluded.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.compiled"
+              enabledByDefault="true"
+              nameKey="hints.settings.compiled.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.compiled"/>
     </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider
@@ -232,6 +262,26 @@
             bundle="messages.JavaBundle"
             nameKey="java.method.chains.inlay.provider.name"
             descriptionKey="inlay.MethodChainsInlayProvider.description" />
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerPluginModalityHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.modality"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.modality"
+            descriptionKey="hints.description.compiler.plugins.modality"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerSupertypesHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.supertypes"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.supertypes"
+            descriptionKey="hints.description.compiler.plugins.supertypes"/>
 
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>

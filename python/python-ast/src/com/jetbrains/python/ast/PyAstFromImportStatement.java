@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -47,13 +46,11 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
    * Returns a reference the module from which import is required.
    * @return reference to module. If the 'from' reference is relative and consists entirely of dots, null is returned.
    */
-  @Nullable
-  default PyAstReferenceExpression getImportSource() {
+  default @Nullable PyAstReferenceExpression getImportSource() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens(), 0);
   }
 
-  @Nullable
-  default QualifiedName getImportSourceQName() {
+  default @Nullable QualifiedName getImportSourceQName() {
     final PyAstReferenceExpression importSource = getImportSource();
     if (importSource == null) {
       return null;
@@ -96,8 +93,7 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
    *
    * @return opening parenthesis token or null
    */
-  @Nullable
-  default PsiElement getLeftParen()  {
+  default @Nullable PsiElement getLeftParen()  {
     return findChildByType(this, PyTokenTypes.LPAR);
   }
 
@@ -106,14 +102,12 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
    *
    * @return closing parenthesis token or null
    */
-  @Nullable
-  default PsiElement getRightParen() {
+  default @Nullable PsiElement getRightParen() {
     return findChildByType(this, PyTokenTypes.RPAR);
   }
 
-  @NotNull
   @Override
-  default List<String> getFullyQualifiedObjectNames() {
+  default @NotNull List<String> getFullyQualifiedObjectNames() {
     final QualifiedName source = getImportSourceQName();
 
     final String prefix = (source != null) ? (source.join(".") + '.') : "";

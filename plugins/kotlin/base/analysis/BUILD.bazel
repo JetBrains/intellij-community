@@ -1,0 +1,70 @@
+### auto-generated section `build kotlin.base.analysis` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "analysis_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis",
+  module_name = "kotlin.base.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:guava",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
+    "//platform/usageView",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util/jdom",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/projectModel-impl",
+    "//platform/analysis-impl",
+    "//platform/diff-impl",
+    "//java/openapi:java",
+    "//java/manifest",
+    "//java/java-impl:impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//java/java-analysis-api:analysis",
+  ],
+  runtime_deps = [":analysis_resources"]
+)
+### auto-generated section `build kotlin.base.analysis` end

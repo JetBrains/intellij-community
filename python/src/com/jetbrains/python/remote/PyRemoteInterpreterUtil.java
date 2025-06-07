@@ -45,11 +45,11 @@ public final class PyRemoteInterpreterUtil {
           ProcessOutput processOutput;
           try {
             try {
-              String[] command = {data.getInterpreterPath(), flavor.getVersionOption()};
+              String[] command = {data.getInterpreterPath(), PythonSdkFlavor.PYTHON_VERSION_ARG};
               processOutput = PyRemoteProcessStarterManagerUtil.getManager(data).executeRemoteProcess(myProject, command, null,
                                                                                                       data, new PyRemotePathMapper());
               if (processOutput.getExitCode() == 0) {
-                final String version = flavor.getVersionStringFromOutput(processOutput);
+                final String version = PythonSdkFlavor.getVersionStringFromOutput(processOutput);
                 if (version != null || nullForUnparsableVersion) {
                   result.set(version);
                   return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -42,6 +43,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -68,8 +70,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements UiDataProvider, Disposable {
-  @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls static final String HELP_ID = "reference.toolWindows.Coverage";
+  private static final @NonNls String ACTION_DRILL_DOWN = "DrillDown";
+  static final @NonNls String HELP_ID = "reference.toolWindows.Coverage";
   private static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;
@@ -235,7 +237,9 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
 
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
-        onModelUpdate(e);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-367691")) {
+          onModelUpdate(e);
+        }
       }
 
       private void onModelUpdate(TreeModelEvent e) {

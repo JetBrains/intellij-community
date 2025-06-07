@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
 import com.intellij.util.IntPair
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
@@ -714,6 +715,7 @@ private fun getLabelsFromComponent(component: Component?): List<String> {
     is JCheckBox -> getLabelFromComponent(component)
     is JRadioButton -> getLabelFromComponent(component)
     is JButton -> getLabelFromComponent(component)
+    is KotlinUIDslRendererComponent ->  component.getCopyText()
     else -> null
   }
   label = label?.takeIf { it.isNotBlank() }

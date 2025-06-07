@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -59,8 +58,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  @Nullable
-  public String getVisibleName() {
+  public @Nullable String getVisibleName() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       final String asName = stub.getAsName();
@@ -79,8 +77,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  @Nullable
-  public PyStatement getContainingImportStatement() {
+  public @Nullable PyStatement getContainingImportStatement() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       PsiElement parent = stub.getParentStub().getPsi();
@@ -95,8 +92,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
 
-      @NotNull
-      private String getRefName(String default_name) {
+      private @NotNull String getRefName(String default_name) {
         PyReferenceExpression ref = getImportReferenceExpression();
         if (ref != null) {
           String refName = ref.getName();
@@ -155,27 +151,23 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   @Override
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public @NotNull Iterable<PyElement> iterateNames() {
     final String visibleName = getVisibleName();
     return visibleName != null ? Collections.singletonList(this) : Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public List<RatedResolveResult> multiResolveName(@NotNull final String name) {
+  public @NotNull List<RatedResolveResult> multiResolveName(final @NotNull String name) {
     return getElementsNamed(name, true);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementNamed(String name, boolean resolveImportElement) {
+  public @Nullable PsiElement getElementNamed(String name, boolean resolveImportElement) {
     final List<RatedResolveResult> results = getElementsNamed(name, resolveImportElement);
     return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
   }
 
-  @NotNull
-  private List<RatedResolveResult> getElementsNamed(@NotNull String name, boolean resolveImportElement) {
+  private @NotNull List<RatedResolveResult> getElementsNamed(@NotNull String name, boolean resolveImportElement) {
     String asName = getAsName();
     if (asName != null) {
       if (!Objects.equals(name, asName)) {
@@ -201,16 +193,14 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final List<RatedResolveResult> results = multiResolve();
     return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
   }
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> multiResolve() {
+  public @NotNull List<RatedResolveResult> multiResolve() {
     final QualifiedName qName = getImportedQName();
     return qName == null ? Collections.emptyList() : ResolveImportUtil.multiResolveImportElement(this, qName);
   }
@@ -226,8 +216,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return String.format("%s:%s", super.toString(), qName != null ? qName : "null");
   }
 
-  @Nullable
-  private PsiElement createImportedModule(String name) {
+  private @Nullable PsiElement createImportedModule(String name) {
     final PsiFile file = getContainingFile();
     if (file instanceof PyFile) {
       return new PyImportedModule(this, (PyFile)file, QualifiedName.fromComponents(name));

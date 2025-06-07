@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.util.Predicates;
@@ -85,8 +85,7 @@ public final class TreeTestUtil {
   }
 
 
-  @NotNull
-  public static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
+  public static @NotNull DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
     if (object instanceof DefaultMutableTreeNode && ArrayUtil.isEmpty(children)) return (DefaultMutableTreeNode)object;
     if (object instanceof TreeNode) throw new IllegalArgumentException("do not use a tree node as a node content");
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(object);

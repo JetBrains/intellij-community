@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.GotoFrameSourceAction;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -30,8 +30,8 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public final class ThreadsPanel extends DebuggerTreePanel {
-  @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
-  @NonNls private static final String HELP_ID = "debugging.debugThreads";
+  private static final @NonNls String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
+  private static final @NonNls String HELP_ID = "debugging.debugThreads";
   private final SingleEdtTaskScheduler updateLabelsAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private static final int LABELS_UPDATE_DELAY_MS = 200;
 
@@ -81,9 +81,9 @@ public final class ThreadsPanel extends DebuggerTreePanel {
             final ThreadsDebuggerTree tree = getThreadsTree();
             final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)tree.getModel().getRoot();
             if (root != null) {
-              final DebugProcessImpl process = getContext().getDebugProcess();
-              if (process != null) {
-                process.getManagerThread().invoke(new DebuggerCommandImpl() {
+              DebuggerManagerThreadImpl managerThread = getContext().getManagerThread();
+              if (managerThread != null) {
+                managerThread.schedule(new DebuggerCommandImpl() {
                   @Override
                   protected void action() {
                     try {

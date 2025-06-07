@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,24 +86,24 @@ public final class NanoXmlUtil {
   }
 
   public static @NotNull XmlFileHeader parseHeaderWithException(Reader reader) {
-    return parseHeader(new MyXMLReader(reader));
+    return doParseHeader(new MyXMLReader(reader));
   }
 
   public static @NotNull XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
     try (InputStream stream = file.getInputStream()) {
-      return parseHeader(new MyXMLReader(stream));
+      return doParseHeader(new MyXMLReader(stream));
     }
   }
 
   public static @NotNull XmlFileHeader parseHeader(final Reader reader) {
-    return parseHeader(new MyXMLReader(reader));
+    return doParseHeader(new MyXMLReader(reader));
   }
 
   public static @NotNull XmlFileHeader parseHeader(PsiFile file) {
-    return parseHeader(createReader(file));
+    return doParseHeader(createReader(file));
   }
 
-  private static @NotNull XmlFileHeader parseHeader(final MyXMLReader r) {
+  private static @NotNull XmlFileHeader doParseHeader(final MyXMLReader r) {
     final RootTagInfoBuilder builder = new RootTagInfoBuilder();
     parse(r, builder);
     return new XmlFileHeader(builder.getRootTagName(), builder.getNamespace(), r.publicId, r.systemId);

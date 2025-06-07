@@ -1,5 +1,5 @@
 // "Change the signature of lambda expression" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun main(args: Array<String>) {
     Test<String>().perform("") <caret>{  }

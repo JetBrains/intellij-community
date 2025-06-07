@@ -2,7 +2,6 @@
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager

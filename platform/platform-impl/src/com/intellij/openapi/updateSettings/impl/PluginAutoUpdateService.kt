@@ -7,8 +7,13 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -20,6 +25,7 @@ import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.move
+import com.intellij.util.messages.Topic
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -68,11 +74,14 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private fun CoroutineScope.launchDownloadManager(): Job {
     return launch(CoroutineName("Download manager")) {
       for (downloaders in pendingDownloads) {
-        ensureActive()
         if (!isAutoUpdateEnabled()) {
-          throw CancellationException(("auto-update disabled"))
+          currentCoroutineContext().cancel()
         }
+        ensureActive()
         LOG.debug { "new plugin updates: ${downloaders.joinToString { it.pluginName }}" }
+        if (downloaders.isEmpty()) {
+          continue
+        }
         val activeProject = ProjectUtil.getActiveProject()
         val downloadedList = if (activeProject != null) {
           withBackgroundProgress(activeProject, IdeBundle.message("update.downloading.plugins.progress"), true) {
@@ -101,7 +110,9 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
-    val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
+    val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
+      listOf(it.contentModuleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+    }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
       if (PluginManagerCore.getPlugin(downloader.id) == null) {
@@ -114,7 +125,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
       }
       val unsatisfiedDependencies = findUnsatisfiedDependencies(
         updateDescriptor = downloader.toPluginNode().dependencies,
-        enabledModules = enabledModules,
+        enabledPluginsAndModulesIds = enabledPluginsAndModules,
       )
       if (unsatisfiedDependencies.isNotEmpty()) {
         LOG.debug {
@@ -168,7 +179,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
              "(${updatesState.size} updates are prepared in total)")
   }
 
-  fun onPluginUpdatesCheck(updates: List<PluginDownloader>) {
+  fun onPluginUpdatesChecked(updates: List<PluginDownloader>) {
     LOG.debug { "onPluginUpdateCheck: ${updates.joinToString { it.pluginName }}" }
     val sent = pendingDownloads.trySend(updates)
     if (sent.isFailure) {
@@ -186,6 +197,8 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     cs.launch {
       setupDownloadManager()
     }
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(PluginAutoUpdateListener.TOPIC).settingsChanged()
   }
 
   private fun dropDownloadedUpdates() {
@@ -215,6 +228,15 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   }
 }
 
+internal interface PluginAutoUpdateListener {
+  fun settingsChanged()
+
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<PluginAutoUpdateListener> = Topic<PluginAutoUpdateListener>(PluginAutoUpdateListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+  }
+}
+
 private data class DownloadedUpdate(@JvmField val pluginId: PluginId, @JvmField val version: String, @JvmField val updatePath: Path)
 
 private val LOG
@@ -228,13 +250,31 @@ private val LOG
 @ApiStatus.Internal
 fun findUnsatisfiedDependencies(
   updateDescriptor: Collection<IdeaPluginDependency>,
-  enabledModules: Collection<PluginId>,
+  enabledPluginsAndModulesIds: Collection<String>,
 ): List<IdeaPluginDependency> {
   return updateDescriptor.filter { dep ->
     if (dep.isOptional) {
       return@filter false
     }
-    val dependencySatisfied = enabledModules.any { it == dep.pluginId }
+    val dependencySatisfied = enabledPluginsAndModulesIds.any { it == dep.pluginId.idString }
     !dependencySatisfied
+  }
+}
+
+internal class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
+  override fun getId() = "PluginAutoUpdate"
+
+  override fun getOptions(): List<BooleanOptionDescription> {
+    if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+      return emptyList()
+    }
+    return listOf(object : BooleanOptionDescription(IdeBundle.message("updates.plugins.autoupdate.se.option"), null) {
+      override fun isOptionEnabled() = UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+
+      override fun setOptionState(enabled: Boolean) {
+        UpdateSettings.getInstance().isPluginsAutoUpdateEnabled = enabled
+        service<PluginAutoUpdateService>().onSettingsChanged()
+      }
+    })
   }
 }

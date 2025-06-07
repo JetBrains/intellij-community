@@ -78,7 +78,7 @@ public class PathTokenizer {
    *                                tokenizer's path.
    */
   public String nextToken() throws NoSuchElementException {
-    String token = null;
+    String token;
     if (lookahead != null) {
       token = lookahead;
       lookahead = null;

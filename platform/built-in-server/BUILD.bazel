@@ -1,0 +1,104 @@
+### auto-generated section `build intellij.platform.builtInServer.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "builtInServer-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "builtInServer-impl",
+  module_name = "intellij.platform.builtInServer.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core/plugins",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "@lib//:gson",
+    "@lib//:commons-imaging",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/diff-api:diff",
+    "@lib//:kotlin-stdlib",
+    "@lib//:netty-codec-http",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:jackson-jr-objects",
+    "@lib//:netty-buffer",
+    "@lib//:caffeine",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/util/progress",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:netty-codec-compression",
+  ],
+  exports = ["//platform/built-in-server-api:builtInServer"],
+  runtime_deps = [":builtInServer-impl_resources"]
+)
+### auto-generated section `build intellij.platform.builtInServer.impl` end
+
+### auto-generated section `build intellij.platform.builtInServer.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "builtInServer-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+java_library(
+  name = "builtInServer-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "builtInServer-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = ["//platform/built-in-server:builtInServer-impl"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "@lib//:gson",
+    "@lib//:commons-imaging",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/vcs-api:vcs",
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "@lib//:netty-codec-http",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+  ],
+  runtime_deps = [":builtInServer-tests_test_resources"]
+)
+
+jvm_test(
+  name = "builtInServer-tests_test",
+  runtime_deps = [":builtInServer-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.builtInServer.tests` end

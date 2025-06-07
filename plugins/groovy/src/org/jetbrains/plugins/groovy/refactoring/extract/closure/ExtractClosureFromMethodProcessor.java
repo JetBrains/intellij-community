@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -85,7 +86,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {
               conflicts.putValue(statements[0], JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                         CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
+                         CommonRefactoringUtil.htmlEmphasize(JavaKeywords.SUPER)));
               break;
             }
           }
@@ -115,7 +116,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
-    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
+    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true).asIterable()) {
       PsiElement ref = ref1.getElement();
       if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));
@@ -212,9 +213,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       myWrapper = new GrExpressionWrapper(myClosure);
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -223,9 +223,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myMethod;
     }
 
-    @NotNull
     @Override
-    public PsiMethod getMethodToSearchFor() {
+    public @NotNull PsiMethod getMethodToSearchFor() {
       return (PsiMethod)myHelper.getToSearchFor();
     }
 
@@ -234,9 +233,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myWrapper;
     }
 
-    @NotNull
     @Override
-    public String getParameterName() {
+    public @NotNull String getParameterName() {
       return myHelper.getName();
     }
 
@@ -255,16 +253,14 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return false; //todo
     }
 
-    @NotNull
     @Override
-    public PsiType getForcedType() {
+    public @NotNull PsiType getForcedType() {
       PsiType type = myHelper.getSelectedType();
       return type != null ? type : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     }
 
-    @NotNull
     @Override
-    public IntList getParameterListToRemove() {
+    public @NotNull IntList getParameterListToRemove() {
       return myHelper.parametersToRemove();
     }
 

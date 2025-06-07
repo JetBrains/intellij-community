@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -117,11 +117,6 @@ public final class FSRecordsImpl implements Closeable {
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
 
-  /**
-   * Wrap {@link AlreadyDisposedException} in {@link ProcessCanceledException} if under progress indicator or Job.
-   * See containerUtil.isUnderIndicatorOrJob()
-   */
-  private static final boolean WRAP_ADE_IN_PCE = getBooleanProperty("vfs.wrap-ade-in-pce", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -166,7 +161,7 @@ public final class FSRecordsImpl implements Closeable {
 
   public static int currentImplementationVersion() {
     //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
-    final int mainVFSFormatVersion = 64;
+    int mainVFSFormatVersion = 64;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
@@ -177,7 +172,7 @@ public final class FSRecordsImpl implements Closeable {
            nextMask(true,  // former USE_ATTRIBUTES_OVER_MMAPPED_FILE, free to re-use
            nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
            nextMask(true,  // former PersistentHashMapValueStorage.COMPRESSION_ENABLED, feel free to re-use
-           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+           nextMask(false, // former FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS, feel free to re-use
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
            nextMask(true,  // former USE_FAST_NAMES_IMPLEMENTATION, free to reuse
            nextMask(true   /* former USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, free to reuse */, 0)))))))))))));
@@ -305,37 +300,29 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  //TODO RC: Thread-safety is organized in a tricky way in PersistentFSImpl/FSRecordsImpl. Historically, all VFS modifications
-  //         are done in WriteAction, and all reads in ReadAction (same as for other 'model' accesses in IJ platform) -- which
-  //         means WA/RA locks protects VFS, and there is no need for additional locks.
-  //         The issue is: because VFS is basically a cache on top of real FSes, read-access to VFS could require modification
-  //         of VFS internal data structures, if it is a cache-miss, and new chunk of data must be cached as a result. So the
-  //         read-lock provided by RA is not enough, and all cache modifications should be protected by exclusive lock.
-  //         Historically, though, the issues with concurrent modifications during RA were most visible for _hierarchy_ updates
-  //         -- i.e. changing of parent-children relationship. Children lists processing is much longer than individual file-record
-  //         fields update, hence a window for concurrent modifications is much larger. So the exclusive lock was introduced only
-  //         for hierarchy updates: .update() method protected by fileHierarchyLock -- while updates of individual file record
-  //         files (flags, nameId, timestamp, etc) are volatile, but not lock-protected, and attributes update was protected by
-  //         its own lock.
-  //         This schema is not 100% bulletproof, and it generates _some_ % of errors in VFS -- but not too much, so it was used
-  //         for quite a while.
-  //
-  //         Now, as we're moving forward, we'd like to get rid of those errors altogether. Also, we're in the process of
-  //         reconsidering WA/RA for VFS access (IJPL-418), and probably will decide to move VFS accesses out of WA/RA.
-  //         Both goals require accurate in-VFS thread-safety. For that fileRecordLock was introduced, and all the logical
-  //         modifications of >1 fields are now done via .updateRecordFields() method, which is fileRecordLock-protected.
-  //
-  //         Ideally, we'd like to merge fileHierarchyLock and fileRecordLock, and use a single unified locking scheme across
-  //         VFS. Unfortunately, there are multiple issues with that:
-  //         - Hierarchy updates often quite complicated and heavy, include IO, so could keep lock for a long time. File-record
-  //           fields updates are very short, so low-overhead lock is desirable (StampedLock segmented by fileId is used now).
-  //         - Hierarchy updates often include creating new VFS records, or updating existing in the process -- so they require
-  //           to lock >1 record, which (in case of segmented record lock) is deadlock-prone, and requires re-entrancy (which
-  //           StampedLock doesn't provide)
-  //         So far I see no good solution to these issues, so we go with (obviously not bulletproof) schema with separate locks
-  //         for per-record and hierarchy updates.
-
-  /** Lock to protect individual file-records updates */
+  /**
+   * Lock to protect individual file-records updates.
+   * <b>BEWARE</b>: FileRecordLock is not-reentrant (see it's docs), i.e. repeated attempt to lock in the same thread causes deadlock.
+   * This property makes locking with this lock quite fragile and bad (leaky) abstraction -- which is why all the usages of this
+   * lock should be contained in this class, otherwise it will very hard to ensure the correct usage.
+   * <p>
+   * Details of thread-safety:
+   * <ul>
+   * <li>All <b>read-only</b> accesses to file records, attributes, children must be done under {@link FileRecordLock#lockForRead(int)}.
+   *   Special case: single-field reads from {@link PersistentFSRecordsStorage} (but not from attributes, and not from children!)
+   *   could be done without the lock, because all fields accessors have volatile semantics -- this is an option for optimization.</li>
+   * <li>All <b>write</b> accesses of file records, attributes must be done under {@link FileRecordLock#lockForWrite(int)} inside
+   *   this class. {@link #updateRecordFields(int, RecordUpdater)} should be used by clients outside of this class.</li>
+   * <li><b>Children</b> access has some specifics: read/write accesses to the children must be done under {@link FileRecordLock#lockForRead(int)}
+   *   {@link FileRecordLock#lockForWrite(int)}, as usual (because currently children are stored in file attributes), but
+   *   <b>read-modify-write</b> operations on children must be _additionally_ protected by {@link FileRecordLock#lockForHierarchyUpdate(int)}
+   *   </li>
+   * </ul>
+   * Why dedicated 'hierarchyUpdateLock' was introduced: because read-modify-write updates on children could be quite long, and sometimes
+   * even involve IO (see {@link #update(VirtualFile, int, Function)} method, and it's usages), while per-record accesses are mostly short,
+   * so StampedLock could be used quite effectively. Protecting children read-modify-write ops with regular write lock prevents concurrent
+   * reads, which is undesirable -- hence the trick.
+   */
   private final FileRecordLock fileRecordLock = new FileRecordLock();
 
   /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
@@ -380,7 +367,7 @@ public final class FSRecordsImpl implements Closeable {
     }
 
     if (BACKGROUND_VFS_FLUSH) {
-      final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
+      ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
       flushingTask = PersistentFSConnection.startFlusher(scheduler, connection, USE_GENTLE_FLUSHER);
     }
     else {
@@ -460,11 +447,7 @@ public final class FSRecordsImpl implements Closeable {
       alreadyDisposed.addSuppressed(closedStackTrace);
     }
 
-    if (!WRAP_ADE_IN_PCE) {
-      return alreadyDisposed;
-    }
-
-    return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
+    return alreadyDisposed;
   }
 
 
@@ -503,7 +486,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== FS records persistence: ========================================
 
   @TestOnly
-  void force() {
+  public void force() {
     checkNotClosed();
     try {
       connection.force();
@@ -514,14 +497,15 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @TestOnly
-  boolean isDirty() {
+  public boolean isDirty() {
     checkNotClosed();
     return connection.isDirty();
   }
 
   //========== record allocations: ========================================
 
-  int createRecord() {
+  @VisibleForTesting
+  public int createRecord() {
     checkNotClosed();
     try {
       return recordAccessor.createRecord(fileIdIndexedStorages);
@@ -565,14 +549,8 @@ public final class FSRecordsImpl implements Closeable {
     childrenIds.add(fileId);
     for (int i = 0; i < childrenIds.size(); i++) {
       int id = childrenIds.getInt(i);
-      fileRecordLock.lockForHierarchyUpdate(id);
-      try {
-        //FiXME RC: what if id is already deleted -> listIds(id) fails with 'attribute already deleted'?
-        childrenIds.addElements(childrenIds.size(), treeAccessor.listIds(id));
-      }
-      finally {
-        fileRecordLock.unlockForHierarchyUpdate(id);
-      }
+      //FIXME RC: what if id is already deleted -> listIds(id) fails with 'attribute already deleted'?
+      childrenIds.addElements(childrenIds.size(), listIds(id));
     }
 
     PersistentFSRecordsStorage records = connection.records();
@@ -603,18 +581,14 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== FS roots manipulation: ========================================
 
-  int @NotNull [] listRoots() {
+  @VisibleForTesting
+  public int @NotNull [] listRoots() {
     checkNotClosed();
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
-      return treeAccessor.listRoots();
+      return withRecordReadLock(PersistentFSTreeAccessor.SUPER_ROOT_ID, treeAccessor::listRoots);
     }
     catch (IOException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     }
   }
 
@@ -622,9 +596,11 @@ public final class FSRecordsImpl implements Closeable {
     checkNotClosed();
 
     //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
+    //MAYBE RC: Combine (lockForHierarchyUpdate + writeLock) into a single method, with some useless repetition removed?
+    //          Not sure how much performance benefits it provides though
     fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
-      return treeAccessor.findOrCreateRootRecord(rootUrl);
+      return withRecordWriteLock(PersistentFSTreeAccessor.SUPER_ROOT_ID, () -> treeAccessor.findOrCreateRootRecord(rootUrl));
     }
     catch (Throwable t) {
       //not only IOException: almost everything thrown from .findOrCreateRootRecord() is a sign of VFS structure corruption
@@ -636,21 +612,28 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
+    forEachRoot((rootId, rootUrlId) -> {
+      String rootUrl = getNameByNameId(rootUrlId);
+      rootConsumer.accept(rootUrl, rootId);
+      return true;
+    });
+  }
+
+  void forEachRoot(@NotNull PersistentFSTreeAccessor.RootsConsumer rootConsumer) {
     checkNotClosed();
 
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
-      treeAccessor.forEachRoot((rootId, rootUrlId) -> {
-        String rootUrl = getNameByNameId(rootUrlId);
-        rootConsumer.accept(rootUrl, rootId);
-      });
+      //could be a long lock acquisition...
+      withRecordReadLock(
+        PersistentFSTreeAccessor.SUPER_ROOT_ID,
+        () -> {
+          treeAccessor.forEachRoot(rootConsumer);
+          return null;
+        }
+      );
     }
     catch (IOException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     }
   }
 
@@ -669,7 +652,13 @@ public final class FSRecordsImpl implements Closeable {
   void deleteRootRecord(int fileId) {
     fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
-      treeAccessor.deleteRootRecord(fileId);
+      withRecordWriteLock(
+        PersistentFSTreeAccessor.SUPER_ROOT_ID,
+        () -> {
+          treeAccessor.deleteRootRecord(fileId);
+          return null;
+        }
+      );
     }
     catch (IOException e) {
       throw handleError(e);
@@ -695,44 +684,50 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   boolean mayHaveChildren(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
-      return treeAccessor.mayHaveChildren(fileId);
+      StampedLock lock = fileRecordLock.lockFor(fileId);
+      long readLockStamp = lock.readLock();
+      try {
+        return treeAccessor.mayHaveChildren(fileId);
+      }
+      finally {
+        lock.unlockRead(readLockStamp);
+      }
     }
     catch (IOException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
     }
   }
 
   boolean wereChildrenAccessed(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
-      return treeAccessor.wereChildrenAccessed(fileId);
+      StampedLock lock = fileRecordLock.lockFor(fileId);
+      long readLockStamp = lock.readLock();
+      try {
+        return treeAccessor.wereChildrenAccessed(fileId);
+      }
+      finally {
+        lock.unlockRead(readLockStamp);
+      }
     }
     catch (IOException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
-    }
   }
 
   public int @NotNull [] listIds(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
-      return treeAccessor.listIds(fileId);
+      StampedLock lock = fileRecordLock.lockFor(fileId);
+      long readLockStamp = lock.readLock();
+      try {
+        return treeAccessor.listIds(fileId);
+      }
+      finally {
+        lock.unlockRead(readLockStamp);
+      }
     }
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
     }
   }
 
@@ -740,28 +735,23 @@ public final class FSRecordsImpl implements Closeable {
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
   public @NotNull ListResult list(int parentId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(parentId);
     try {
-      return treeAccessor.doLoadChildren(parentId);
+      return loadChildrenUnderRecordLock(parentId);
     }
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(parentId);
-    }
   }
 
 
-  @Unmodifiable
-  public @NotNull List<CharSequence> listNames(int parentId) {
+  public @Unmodifiable @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
   /** Perform operation on children and save the list atomically */
   @NotNull
-  ListResult update(@NotNull VirtualFile parent,
+  @VisibleForTesting
+  public ListResult update(@NotNull VirtualFile parent,
                     int parentId,
                     @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
@@ -771,7 +761,8 @@ public final class FSRecordsImpl implements Closeable {
 
     fileRecordLock.lockForHierarchyUpdate(parentId);
     try {
-      ListResult children = treeAccessor.doLoadChildren(parentId);
+      ListResult children = loadChildrenUnderRecordLock(parentId);
+
       ListResult modifiedChildren = childrenConvertor.apply(children);
 
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
@@ -780,7 +771,7 @@ public final class FSRecordsImpl implements Closeable {
         //TODO RC: why we update symlinks here, under the lock?
         updateSymlinksForNewChildren(parent, children, modifiedChildren);
 
-        treeAccessor.doSaveChildren(parentId, modifiedChildren);
+        saveChildrenUnderRecordLock(parentId, modifiedChildren);
       }
       return modifiedChildren;
     }
@@ -814,7 +805,7 @@ public final class FSRecordsImpl implements Closeable {
       fileRecordLock.lockForHierarchyUpdate(maxId);
       try {
         try {
-          ListResult childrenToMove = treeAccessor.doLoadChildren(fromParentId);
+          ListResult childrenToMove = loadChildrenUnderRecordLock(fromParentId);
 
           for (ChildInfo childToMove : childrenToMove.children) {
             int fileId = childToMove.getId();
@@ -825,9 +816,9 @@ public final class FSRecordsImpl implements Closeable {
             connection.records().setParent(fileId, toParentId);
           }
 
-          treeAccessor.doSaveChildren(toParentId, childrenToMove);
+          saveChildrenUnderRecordLock(toParentId, childrenToMove);
 
-          treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
+          saveChildrenUnderRecordLock(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
         }
         catch (CancellationException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -871,7 +862,7 @@ public final class FSRecordsImpl implements Closeable {
       fileRecordLock.lockForHierarchyUpdate(maxId);
       try {
         try {
-          ListResult firstParentChildren = treeAccessor.doLoadChildren(fromParentId);
+          ListResult firstParentChildren = loadChildrenUnderRecordLock(fromParentId);
           ListResult fromParentChildrenWithoutChildMoved = firstParentChildren.remove(childToMoveId);
           if (fromParentChildrenWithoutChildMoved == firstParentChildren) {
             //RC: this means childToMove doesn't present among fromParent's children. It seems natural to fail move
@@ -886,7 +877,7 @@ public final class FSRecordsImpl implements Closeable {
               "child.parent(#" + connection.records().getParent(childToMoveId) + ")");
           }
 
-          ListResult toParentChildren = treeAccessor.doLoadChildren(toParentId);
+          ListResult toParentChildren = loadChildrenUnderRecordLock(toParentId);
 
           // check that names are not duplicated:
           int childToMoveNameId = connection.records().getNameId(childToMoveId);
@@ -906,8 +897,8 @@ public final class FSRecordsImpl implements Closeable {
           );
 
           connection.records().setParent(childToMoveId, toParentId);
-          treeAccessor.doSaveChildren(fromParentId, fromParentChildrenWithoutChildMoved);
-          treeAccessor.doSaveChildren(toParentId, toParentChildrenUpdated);
+          saveChildrenUnderRecordLock(fromParentId, fromParentChildrenWithoutChildMoved);
+          saveChildrenUnderRecordLock(toParentId, toParentChildrenUpdated);
         }
         catch (CancellationException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
@@ -926,6 +917,31 @@ public final class FSRecordsImpl implements Closeable {
     }
     finally {
       fileRecordLock.unlockForHierarchyUpdate(minId);
+    }
+  }
+
+  /** Reads children of parentId, under record-level read lock (not a hierarchy lock!) */
+  private @NotNull ListResult loadChildrenUnderRecordLock(int parentId) throws IOException {
+    StampedLock recordLock = fileRecordLock.lockFor(parentId);
+    long stamp = recordLock.readLock();
+    try {
+      return treeAccessor.doLoadChildren(parentId);
+    }
+    finally {
+      recordLock.unlockRead(stamp);
+    }
+  }
+
+  /** Saves children for parentId, under record-level write lock (not a hierarchy lock!) */
+  private void saveChildrenUnderRecordLock(int parentId,
+                                           @NotNull ListResult modifiedChildren) throws IOException {
+    StampedLock recordLock = fileRecordLock.lockFor(parentId);
+    long stamp = recordLock.writeLock();
+    try {
+      treeAccessor.doSaveChildren(parentId, modifiedChildren);
+    }
+    finally {
+      recordLock.unlockWrite(stamp);
     }
   }
 
@@ -966,7 +982,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== symlink manipulation: ========================================
 
   @VisibleForTesting
-  void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
+  public void updateSymlinksForNewChildren(@NotNull VirtualFile parent,
                                     @NotNull ListResult oldChildren,
                                     @NotNull ListResult newChildren) {
     // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
@@ -1079,7 +1095,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== file record fields accessors: ========================================
 
   @PersistentFS.Attributes
-  int getFlags(int fileId) {
+  public int getFlags(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getFlags(fileId);
@@ -1099,7 +1115,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getModCount(int fileId) {
+  public int getModCount(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getModCount(fileId);
@@ -1127,8 +1143,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setParent(int fileId,
-                 int parentId) {
+  @VisibleForTesting
+  public void setParent(int fileId, int parentId) {
     if (fileId == parentId) {
       LOG.error("Cyclic parent/child relations");
       return;
@@ -1214,8 +1230,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setFlags(int fileId,
-                @PersistentFS.Attributes int flags) {
+  @VisibleForTesting
+  public void setFlags(int fileId, @PersistentFS.Attributes int flags) {
     checkNotClosed();
     try {
       connection.records().setFlags(fileId, flags);
@@ -1225,7 +1241,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  long getLength(int fileId) {
+  @VisibleForTesting
+  public long getLength(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getLength(fileId);
@@ -1237,8 +1254,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setLength(int fileId,
-                 long len) {
+  @VisibleForTesting
+  public void setLength(int fileId, long len) {
     checkNotClosed();
     try {
       connection.records().setLength(fileId, len);
@@ -1248,7 +1265,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  long getTimestamp(int fileId) {
+  @VisibleForTesting
+  public long getTimestamp(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getTimestamp(fileId);
@@ -1260,8 +1278,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
-  void setTimestamp(int fileId,
-                    long value) {
+  @VisibleForTesting
+  public void setTimestamp(int fileId, long value) {
     checkNotClosed();
     try {
       connection.records().setTimestamp(fileId, value);
@@ -1281,7 +1299,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getAttributeRecordId(int fileId) {
+  @VisibleForTesting
+  public int getAttributeRecordId(int fileId) {
     checkNotClosed();
     try {
       return connection.records().getAttributeRecordId(fileId);
@@ -1294,11 +1313,11 @@ public final class FSRecordsImpl implements Closeable {
   /**
    * @return nameId > 0
    */
-  int updateRecordFields(int fileId,
-                         int parentId,
-                         @NotNull FileAttributes attributes,
-                         @NotNull String name,
-                         boolean cleanAttributeRef) {
+  public int updateRecordFields(int fileId,
+                                int parentId,
+                                @NotNull FileAttributes attributes,
+                                @NotNull String name,
+                                boolean cleanAttributeRef) {
     checkNotClosed();
 
     int nameId = getNameId(name);
@@ -1416,8 +1435,8 @@ public final class FSRecordsImpl implements Closeable {
   //    So beware: if you change the attribute storage implementation, re-view the locking below
 
 
-  @Nullable AttributeInputStream readAttribute(int fileId,
-                                               @NotNull FileAttribute attribute) {
+  @VisibleForTesting
+  public @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) {
     StampedLock lock = fileRecordLock.lockFor(fileId);
     long lockStamp = lock.readLock();
     try {
@@ -1431,8 +1450,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @NotNull AttributeOutputStream writeAttribute(int fileId,
-                                                @NotNull FileAttribute attribute) {
+  @VisibleForTesting
+  public @NotNull AttributeOutputStream writeAttribute(int fileId, @NotNull FileAttribute attribute) {
     StampedLock lock = fileRecordLock.lockFor(fileId);
     long lockStamp = lock.writeLock();
     try {
@@ -1446,13 +1465,18 @@ public final class FSRecordsImpl implements Closeable {
         }
 
         @Override
-        public void close() {
+        public void close() throws IOException {
           long lockStamp = lock.writeLock();
           try {
             super.close();
           }
+          catch (FileTooBigException e) {
+            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")", e);
+            //don't mark VFS as corrupted, error is due to data supplied from outside
+            throw e;
+          }
           catch (Throwable t) {
-            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")", t);
             throw handleError(t);
           }
           finally {
@@ -1507,8 +1531,8 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== file content accessors: ========================================
 
-  @Nullable
-  InputStream readContent(int fileId) {
+  @VisibleForTesting
+  public @Nullable InputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1571,8 +1595,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  DataOutputStream writeContent(int fileId,
-                                boolean fixedSize) {
+  @VisibleForTesting
+  public DataOutputStream writeContent(int fileId, boolean fixedSize) {
     return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, fixedSize)) {
       @Override
       public void close() {
@@ -1586,9 +1610,8 @@ public final class FSRecordsImpl implements Closeable {
     };
   }
 
-  void writeContent(int fileId,
-                    @NotNull ByteArraySequence bytes,
-                    boolean fixedSize) {
+  @VisibleForTesting
+  public void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize) {
     try {
       contentAccessor.writeContent(fileId, bytes, fixedSize);
     }
@@ -1629,16 +1652,51 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== aux: ========================================
 
+  private <T, E extends Exception> T withRecordReadLock(int fileId,
+                                                        @NotNull ThrowableComputable<T, E> lambda) throws E {
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long stamp = lock.readLock();
+    try {
+      return lambda.compute();
+    }
+    finally {
+      lock.unlockRead(stamp);
+    }
+  }
+
+  private <T, E extends Exception> T withRecordWriteLock(int fileId,
+                                                         @NotNull ThrowableComputable<T, E> lambda) throws E {
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long stamp = lock.writeLock();
+    try {
+      return lambda.compute();
+    }
+    finally {
+      lock.unlockWrite(stamp);
+    }
+  }
+
   /**
    * This method creates 'VFS rebuild marker', which forces VFS to rebuild on the next startup.
    * If cause argument is not null -- this scenario is considered an 'error', and warnings are
    * logged, if cause is null -- the scenario is considered not an 'error', but a regular
    * request -- e.g. no errors logged.
    */
-  public void scheduleRebuild(final @Nullable String diagnosticMessage,
-                              final @Nullable Throwable cause) {
+  public void scheduleRebuild(@Nullable String diagnosticMessage,
+                              @Nullable Throwable cause) {
     checkNotClosed();
     connection.scheduleVFSRebuild(diagnosticMessage, cause);
+  }
+
+  /**
+   * Mark VFS to defragment on next restart.
+   * Currently, defragmentation implementation == rebuild.
+   * The difference between this method and {@linkplain #scheduleRebuild(String, Throwable)} is that this method is not about
+   * 'rebuild VFS because it is corrupted', but 'defragment VFS because it may contain al lot of garbage' -- this is why there
+   * is no 'message' nor 'errorCause' parameters.
+   */
+  public void scheduleDefragmentation() throws IOException {
+    connection.scheduleDefragmentation();
   }
 
   /**
@@ -1716,15 +1774,18 @@ public final class FSRecordsImpl implements Closeable {
     return contentAccessor;
   }
 
-  PersistentFSAttributeAccessor attributeAccessor() {
+  @VisibleForTesting
+  public PersistentFSAttributeAccessor attributeAccessor() {
     return attributeAccessor;
   }
 
-  PersistentFSTreeAccessor treeAccessor() {
+  @VisibleForTesting
+  public PersistentFSTreeAccessor treeAccessor() {
     return treeAccessor;
   }
 
-  PersistentFSRecordAccessor recordAccessor() {
+  @VisibleForTesting
+  public PersistentFSRecordAccessor recordAccessor() {
     return recordAccessor;
   }
 
@@ -1756,7 +1817,6 @@ public final class FSRecordsImpl implements Closeable {
       }
     };
   }
-
 
   public interface ErrorHandler {
 

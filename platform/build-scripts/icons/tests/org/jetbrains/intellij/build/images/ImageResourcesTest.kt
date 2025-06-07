@@ -157,7 +157,10 @@ abstract class ImageResourcesTestBase {
       val home = getHomePath(root)
       return model.project.modules
         .filter {
-          !(root == TestRoot.ULTIMATE && isCommunityModule(home, it)) && !it.name.startsWith("fleet.") && it.name != "fleet"
+          !(root == TestRoot.ULTIMATE && isCommunityModule(home, it)) &&
+          !it.name.startsWith("fleet.") &&
+          it.name != "fleet" &&
+          !it.name.startsWith("toolbox.")
         }
     }
 

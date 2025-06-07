@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -32,7 +32,7 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/expui/review/commentUnread.svg", "icons/review/commentUnread.svg", 1972289510, 0);
     /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", 2062007617, 2);
     /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/expui/comment.svg", "icons/review/commentUnresolved.svg", 75435315, 0);
-    /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -5156320, 0);
+    /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/expui/review/defaultAvatar.svg", "icons/review/defaultAvatar.svg", -5156320, 0);
     /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/expui/review/fileUnread.svg", "icons/review/fileUnread.svg", 776396787, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", 717316511, 0);
 

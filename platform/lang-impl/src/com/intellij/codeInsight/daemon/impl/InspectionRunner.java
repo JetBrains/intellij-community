@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -27,10 +28,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +37,7 @@ import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,9 +82,9 @@ class InspectionRunner {
   record InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                            @NotNull InspectionProblemHolder holder,
                            @NotNull PsiElementVisitor visitor,
-                           @NotNull List<? extends PsiElement> elementsInside,
-                           @NotNull List<? extends PsiElement> elementsOutside,
-                           @NotNull List<? extends Class<?>> acceptingPsiTypes,
+                           @NotNull @Unmodifiable List<? extends PsiElement> elementsInside,
+                           @NotNull @Unmodifiable List<? extends PsiElement> elementsOutside,
+                           @NotNull @Unmodifiable List<? extends Class<?>> acceptingPsiTypes,
                            // The containing file this tool was called for. In the case of injected context, this will be the injected file.
                            @NotNull PsiFile psiFile) {
     @Override
@@ -93,12 +93,14 @@ class InspectionRunner {
     }
   }
 
-  @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                     @Nullable HighlightSeverity minimumSeverity,
-                                                     boolean addRedundantSuppressions,
-                                                     @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                                     @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+  @Unmodifiable
+  @NotNull
+  List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                            @Nullable HighlightSeverity minimumSeverity,
+                                            boolean addRedundantSuppressions,
+                                            @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
+                                            @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                            @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
@@ -142,7 +144,7 @@ class InspectionRunner {
                                     "\n"+" inside:"+restrictedInside.size()+ ": "+restrictedInside+
                                     "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, null, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
         LocalInspectionTool tool = toolWrapper.getTool();
@@ -283,10 +285,18 @@ class InspectionRunner {
     });
   }
 
-  private void registerSuppressedElements(@NotNull PsiElement element, @NotNull String id, @Nullable String alternativeID) {
+  private void registerSuppressedElements(@NotNull PsiElement element, @NotNull LocalInspectionToolWrapper tool) {
+    String id = tool.getID();
     mySuppressedElements.computeIfAbsent(id, __ -> new HashSet<>()).add(element);
+    String alternativeID = tool.getAlternativeID();
     if (alternativeID != null && !alternativeID.equals(id)) {
       mySuppressedElements.computeIfAbsent(alternativeID, __ -> new HashSet<>()).add(element);
+    }
+    InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
+    if (elementsMerger != null) {
+      for (String suppressId : elementsMerger.getSuppressIds()) {
+        mySuppressedElements.computeIfAbsent(suppressId, __ -> new HashSet<>()).add(element);
+      }
     }
   }
 
@@ -302,7 +312,7 @@ class InspectionRunner {
       for (ProblemDescriptor descriptor : context.holder.getResults()) {
         PsiElement element = descriptor.getPsiElement();
         if (element != null && tool.isSuppressedFor(element)) {
-          registerSuppressedElements(element, toolWrapper.getID(), toolWrapper.getAlternativeID());
+          registerSuppressedElements(element, toolWrapper);
         }
       }
     }
@@ -464,7 +474,7 @@ class InspectionRunner {
           isSuppressedForHost = wrapper.getTool().isSuppressedFor(host);
         }
         if (isSuppressedForHost || descriptorPsiElement != null && wrapper.getTool().isSuppressedFor(descriptorPsiElement)) {
-          registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
+          registerSuppressedElements(host, wrapper);
           // remove descriptor at index i from applying
           descriptors = ContainerUtil.concat(descriptors.subList(0, i), descriptors.subList(i+1, descriptors.size()));
           if (LOG.isTraceEnabled()) {
@@ -545,14 +555,14 @@ class InspectionRunner {
     private int resultCount;
     final ToolStampInfo toolStamps;
 
-    InspectionProblemHolder(@NotNull PsiFile file,
+    InspectionProblemHolder(@NotNull PsiFile psiFile,
                             @NotNull LocalInspectionToolWrapper toolWrapper,
                             boolean isOnTheFly,
                             @NotNull InspectionProfileWrapper inspectionProfileWrapper,
                             @NotNull AtomicInteger toolWasProcessed,
                             @NotNull ToolStampInfo toolStamps,
                             @NotNull ApplyIncrementallyCallback applyIncrementallyCallback) {
-      super(InspectionManager.getInstance(file.getProject()), file, isOnTheFly);
+      super(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly);
       myToolWrapper = toolWrapper;
       myProfileWrapper = inspectionProfileWrapper;
       this.applyIncrementallyCallback = applyIncrementallyCallback;
@@ -560,6 +570,28 @@ class InspectionRunner {
       this.toolStamps = toolStamps;
     }
 
+    @Override
+    public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
+      PsiElement psiElement = problemDescriptor.getPsiElement();
+      if (psiElement != null && !isInPsiFile(psiElement)) {
+        ExternallyDefinedPsiElement external = PsiTreeUtil.getParentOfType(psiElement, ExternallyDefinedPsiElement.class, false);
+        if (external != null) {
+          PsiElement newTarget = external.getProblemTarget();
+          if (newTarget != null) {
+            redirectProblem(problemDescriptor, newTarget);
+            return;
+          }
+        }
+        if (isOnTheFly()) {
+          LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
+           " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+           " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+           "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        }
+      }
+
+      saveProblem(problemDescriptor);
+    }
     @Override
     protected void saveProblem(@NotNull ProblemDescriptor descriptor) {
       synchronized (this) {
@@ -594,14 +626,14 @@ class InspectionRunner {
     }
   }
 
-  private static boolean shouldInspect(@NotNull PsiFile file) {
+  private static boolean shouldInspect(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(psiFile.getProject());
     // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
     return highlightingLevelManager != null
-           && highlightingLevelManager.shouldInspect(file)
-           && !highlightingLevelManager.runEssentialHighlightingOnly(file);
+           && highlightingLevelManager.shouldInspect(psiFile)
+           && !highlightingLevelManager.runEssentialHighlightingOnly(psiFile);
   }
 
   @NotNull

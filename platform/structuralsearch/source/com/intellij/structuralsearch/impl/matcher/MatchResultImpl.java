@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
@@ -110,8 +110,7 @@ public final class MatchResultImpl extends MatchResult {
     myChildren.clear();
   }
 
-  @NotNull
-  public MatchResult removeLastChild() {
+  public @NotNull MatchResult removeLastChild() {
     return myChildren.remove(myChildren.size() - 1);
   }
 

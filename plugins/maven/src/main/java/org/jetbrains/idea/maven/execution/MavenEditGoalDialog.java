@@ -23,7 +23,7 @@ import java.util.Collection;
 public class MavenEditGoalDialog extends DialogWrapper {
 
   private final Project myProject;
-  @Nullable private final Collection<String> myHistory;
+  private final @Nullable Collection<String> myHistory;
 
   private JPanel contentPane;
 
@@ -91,9 +91,8 @@ public class MavenEditGoalDialog extends DialogWrapper {
     workDirectoryField.addBrowseFolderListener(myProject, new MavenPomFileChooserDescriptor(myProject).withTitle(RunnerBundle.message("maven.select.working.directory")));
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     if (workDirectoryField.getText().trim().isEmpty()) {
       return new ValidationInfo(TasksBundle.message("maven.tasks.edit.working.dir.is.empty"), workDirectoryField);
     }
@@ -101,8 +100,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     return null;
   }
 
-  @NotNull
-  public String getGoals() {
+  public @NotNull String getGoals() {
     if (goalsComboBox != null) {
       return (String)goalsComboBox.getEditor().getItem();
     }
@@ -119,8 +117,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     goalsEditor.setText(goals);
   }
 
-  @NotNull
-  public String getWorkDirectory() {
+  public @NotNull String getWorkDirectory() {
     return workDirectoryField.getText();
   }
 

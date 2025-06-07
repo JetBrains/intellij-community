@@ -25,7 +25,7 @@ public class IntroduceVariableErrorFixAction extends LocalQuickFixAndIntentionAc
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -51,8 +51,8 @@ public class IntroduceVariableErrorFixAction extends LocalQuickFixAndIntentionAc
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = PsiTreeUtil.findSameElementInCopy(myStartElement.getElement(), file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(myStartElement.getElement(), psiFile);
     if (element == null) return IntentionPreviewInfo.EMPTY;
     RefactoringActionHandler handler = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
     assert handler != null;

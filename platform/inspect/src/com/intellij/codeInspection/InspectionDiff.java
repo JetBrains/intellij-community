@@ -22,22 +22,14 @@ import java.util.Objects;
 
 final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
-  @NonNls
-  private static final String FILE_ELEMENT = "file";
-  @NonNls
-  private static final String CLASS_ELEMENT = "class";
-  @NonNls
-  private static final String FIELD_ELEMENT = "field";
-  @NonNls
-  private static final String METHOD_ELEMENT = "method";
-  @NonNls
-  private static final String CONSTRUCTOR_ELEMENT = "constructor";
-  @NonNls
-  private static final String INTERFACE_ELEMENT = "interface";
-  @NonNls
-  private static final String PROBLEM_CLASS_ELEMENT = "problem_class";
-  @NonNls
-  private static final String DESCRIPTION_ELEMENT = "description";
+  private static final @NonNls String FILE_ELEMENT = "file";
+  private static final @NonNls String CLASS_ELEMENT = "class";
+  private static final @NonNls String FIELD_ELEMENT = "field";
+  private static final @NonNls String METHOD_ELEMENT = "method";
+  private static final @NonNls String CONSTRUCTOR_ELEMENT = "constructor";
+  private static final @NonNls String INTERFACE_ELEMENT = "interface";
+  private static final @NonNls String PROBLEM_CLASS_ELEMENT = "problem_class";
+  private static final @NonNls String DESCRIPTION_ELEMENT = "description";
 
   public static void main(String[] args) {
     if (args.length != 3 && args.length != 2) {

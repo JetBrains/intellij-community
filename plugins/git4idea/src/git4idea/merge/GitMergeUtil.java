@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.diff.merge.ConflictType;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -34,10 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static git4idea.GitUtil.CHERRY_PICK_HEAD;
 import static git4idea.GitUtil.MERGE_HEAD;
@@ -47,6 +48,7 @@ import static git4idea.GitUtil.MERGE_HEAD;
  */
 public final class GitMergeUtil {
   private static final Logger LOG = Logger.getInstance(GitMergeUtil.class);
+  private static final String REVERT_MERGED_ERROR = "Failed to revert files using 'git checkout -m'";
 
   static final int ORIGINAL_REVISION_NUM = 1; // common parent
   static final int YOURS_REVISION_NUM = 2; // file content on the local branch: "Yours"
@@ -57,6 +59,35 @@ public final class GitMergeUtil {
     new byte[]{0x0a, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d, 0x3d}, // \n=======
     new byte[]{0x0a, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e, 0x3e}  // \n>>>>>>>
   };
+
+  /**
+   * Executes "git checkout -m" for each file marked as merged and revert to merge conflict state
+   *
+   * @param project the project
+   * @param files   the collection of files to revert to merge conflict state
+   */
+  public static void revertMergedFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    if (files.isEmpty()) return;
+
+    try {
+      for (Map.Entry<VirtualFile, List<VirtualFile>> entry : GitUtil.sortFilesByGitRoot(project, files).entrySet()) {
+        VirtualFile root = entry.getKey();
+        List<String> paths = ContainerUtil.map(entry.getValue(), file -> VcsFileUtil.relativePath(root, file));
+        GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
+        handler.addParameters("-m");
+        handler.endOptions();
+        handler.addParameters(paths);
+
+        GitCommandResult result = Git.getInstance().runCommand(handler);
+        if (!result.success()) {
+          LOG.warn(REVERT_MERGED_ERROR + ": " + result.getErrorOutputAsJoinedString());
+        }
+      }
+    }
+    catch (VcsException e) {
+      LOG.error(REVERT_MERGED_ERROR, e);
+    }
+  }
 
   /**
    * A private constructor for utility class
@@ -122,11 +153,10 @@ public final class GitMergeUtil {
     return mergeData;
   }
 
-  @Nullable
-  private static GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
-                                                              @NotNull VirtualFile root,
-                                                              @Nullable VcsRevisionNumber yoursRevision,
-                                                              @Nullable VcsRevisionNumber theirsRevision) {
+  private static @Nullable GitRevisionNumber findOriginalRevisionNumber(@NotNull Project project,
+                                                                        @NotNull VirtualFile root,
+                                                                        @Nullable VcsRevisionNumber yoursRevision,
+                                                                        @Nullable VcsRevisionNumber theirsRevision) {
     if (yoursRevision == null || theirsRevision == null) return null;
     try {
       return GitHistoryUtils.getMergeBase(project, root, yoursRevision.asString(), theirsRevision.asString());
@@ -198,11 +228,10 @@ public final class GitMergeUtil {
     }
   }
 
-  @Nullable
-  private static ConflictType getConflictType(boolean isReversed,
-                                              boolean hasOriginal,
-                                              boolean hasYours,
-                                              boolean hasTheirs) {
+  private static @Nullable ConflictType getConflictType(boolean isReversed,
+                                                        boolean hasOriginal,
+                                                        boolean hasYours,
+                                                        boolean hasTheirs) {
     if (hasOriginal && hasYours && hasTheirs) return ConflictType.DEFAULT;
 
     if (hasYours && hasTheirs) {
@@ -250,7 +279,9 @@ public final class GitMergeUtil {
           || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
-          || m.startsWith("fatal: Not a valid object name")) {
+          || m.startsWith("fatal: Not a valid object name")
+          || m.startsWith("error: cannot read object")) {
+        LOG.warn("Failed to load revision content for %s (stage %d): '%s'\nAssuming missing side".formatted(path, stageNum, m));
         return null; // assume missing side of 'Deleted-Modified', 'Deleted-Deleted', 'Added-Added' conflicts
       }
       else {

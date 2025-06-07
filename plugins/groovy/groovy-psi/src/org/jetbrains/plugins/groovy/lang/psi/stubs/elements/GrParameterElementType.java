@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.IndexSink;
@@ -26,9 +26,8 @@ public class GrParameterElementType extends GrStubElementType<GrParameterStub, G
     return new GrParameterImpl(stub);
   }
 
-  @NotNull
   @Override
-  public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
+  public @NotNull GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
     return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
                                GrStubUtils.getTypeText(
                                  psi.getTypeElementGroovy()),
@@ -43,9 +42,8 @@ public class GrParameterElementType extends GrStubElementType<GrParameterStub, G
     dataStream.writeVarInt(stub.getFlags());
   }
 
-  @NotNull
   @Override
-  public GrParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     final StringRef name = dataStream.readName();
     final String[] annotations = GrStubUtils.readStringArray(dataStream);
     final String typeText = GrStubUtils.readNullableString(dataStream);

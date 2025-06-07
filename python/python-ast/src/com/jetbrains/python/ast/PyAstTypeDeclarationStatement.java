@@ -27,14 +27,12 @@ import static com.jetbrains.python.ast.PyAstElementKt.findNotNullChildByClass;
  */
 @ApiStatus.Experimental
 public interface PyAstTypeDeclarationStatement extends PyAstStatement, PyAstAnnotationOwner {
-  @NotNull
-  default PyAstExpression getTarget() {
+  default @NotNull PyAstExpression getTarget() {
     return findNotNullChildByClass(this, PyAstExpression.class);
   }
 
   @Override
-  @Nullable
-  default PyAstAnnotation getAnnotation() {
+  default @Nullable PyAstAnnotation getAnnotation() {
     return findChildByClass(this, PyAstAnnotation.class);
   }
 

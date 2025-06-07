@@ -105,6 +105,22 @@ public class ContainerUtilCollectionsTest extends Assert {
     Map<Object, Object> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
+  @Test(timeout = TIMEOUT)
+  public void testSoftMapTossedEvenWithCustomStrategy() {
+    Map<Object, Object> map = CollectionFactory.createSoftMap(new HashingStrategy<>() {
+      @Override
+      public int hashCode(Object object) {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object o1, Object o2) {
+        return o1.equals(o2);
+      }
+    }, (__, ___) -> {
+    });
+    checkKeyTossedEventually(map);
+  }
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
@@ -133,6 +149,11 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
+    checkKeyTossedEventually(map);
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWeakMapWithStrategyTossed() {
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
 
@@ -176,6 +197,14 @@ public class ContainerUtilCollectionsTest extends Assert {
     ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     checkKeyTossedEventually(map);
   }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSoftMapWithStrategyAndListenerTossed() {
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
+      assertSame(map.get(), thisMap);
+    }));
+    checkKeyTossedEventually(map.get());
+  }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakValueMapTossed() {
@@ -196,6 +225,8 @@ public class ContainerUtilCollectionsTest extends Assert {
     Reference<Object> ref = new SoftReference<>(value);
     map.put(1, value);
     assertEquals(1, map.size());
+    //Help GC, even in interpreter mode
+    //noinspection UnusedAssignment
     value = null;
 
     do {
@@ -878,12 +909,42 @@ public class ContainerUtilCollectionsTest extends Assert {
     map.get().remove(""); // to call processQueue()
     assertSame(value, evicted.get());
   }
+  @Test
+  public void testKeyEvictionListenerWorksInConcurrentSoftMapWithHashingStrategy() {
+    AtomicReference<Object> evicted = new AtomicReference<>();
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
+      assertTrue(evicted.compareAndSet(null, value));
+      assertSame(map.get(), thisMap);
+    }));
+    Object value = new Object();
+    map.get().put(new Object(), value);
+
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
+    map.get().remove(""); // to call processQueue()
+    assertSame(value, evicted.get());
+  }
 
   @Test
   public void testKeyEvictionListenerWorksInSoftMap() {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
     map.set(CollectionFactory.createSoftMap((thisMap, value) -> {
+      assertTrue(evicted.compareAndSet(null, value));
+      assertSame(map.get(), thisMap);
+    }));
+    Object value = new Object();
+    map.get().put(new Object(), value);
+
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
+    map.get().remove(""); // to call processQueue()
+    assertSame(value, evicted.get());
+  }
+  @Test
+  public void testKeyEvictionListenerWorksInSoftMapWithCustomStrategy() {
+    AtomicReference<Object> evicted = new AtomicReference<>();
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createSoftMap(HashingStrategy.identity(), (thisMap, value) -> {
       assertTrue(evicted.compareAndSet(null, value));
       assertSame(map.get(), thisMap);
     }));

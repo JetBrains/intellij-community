@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
@@ -10,6 +10,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -82,6 +83,11 @@ public final class RegisteredIndexes {
   @NotNull
   OrphanDirtyFilesQueue getOrphanDirtyFilesQueue() {
     return getInitializationResult().myOrphanDirtyFilesQueue;
+  }
+
+  @Nullable
+  OrphanDirtyFilesQueueDiscardReason getOrphanDirtyFilesQueueDiscardReason() {
+    return getInitializationResult().myOrphanDirtyFilesQueueDiscardReason;
   }
 
   private @NotNull FileBasedIndexDataInitializationResult getInitializationResult() {
@@ -200,7 +206,7 @@ public final class RegisteredIndexes {
     }
 
     @Override
-    void doProcess(Document document, Project project) {
+    protected void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
   }

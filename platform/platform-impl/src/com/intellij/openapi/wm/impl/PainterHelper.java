@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -19,6 +19,8 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,6 +160,12 @@ final class PainterHelper implements Painter.Listener {
     else {
       rootComponent.repaint();
     }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  void addFallbackBackgroundPainter(@NotNull Painter fallbackBackgroundPainter) {
+    addPainter(fallbackBackgroundPainter, null);
   }
 
   static void initWallpaperPainter(@NotNull String propertyName, @NotNull PainterHelper painters) {
@@ -505,7 +513,7 @@ final class PainterHelper implements Painter.Listener {
       boolean newOk = newImage != null;
       if (prevOk || newOk) {
         ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-        if (modalityState.dominates(ModalityState.nonModal())) {
+        if (!modalityState.accepts(ModalityState.nonModal())) {
           ComponentUtil.getActiveWindow().repaint();
         }
         else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -44,6 +44,46 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();
+  /**
+   * Checks whether the module should be excluded from automatic resolution when loaded from the classpath.
+   * This method reads the module resolution attributes from {@code module-info.class}, as specified in JEP 11.
+   *
+   * @return {@code true} if the module is marked with {@code DO_NOT_RESOLVE_BY_DEFAULT}, preventing automatic resolution;
+   *         {@code false} otherwise.
+   * @see <a href="https://openjdk.org/jeps/11">JEP 11: Incubator Modules</a>
+   */
+  boolean doNotResolveByDefault();
+  /**
+   * Checks whether the module is marked as deprecated.
+   * This method reads the module resolution attributes from {@code module-info.class}, as specified in JEP 11.
+   *
+   * @return {@code true} if the module is marked with {@code WARN_DEPRECATED}, indicating that it is deprecated;
+   *         {@code false} otherwise.
+   * @see <a href="https://openjdk.org/jeps/11">JEP 11: Incubator Modules</a>
+   */
+  boolean warnDeprecated();
+
+  /**
+   * Checks whether the module is deprecated and scheduled for removal in a future release.
+   * This method reads the module resolution attributes from {@code module-info.class}, as specified in JEP 11.
+   *
+   * @return {@code true} if the module is marked with {@code WARN_DEPRECATED_FOR_REMOVAL}, indicating that
+   *         it is deprecated and will be removed in a future release;
+   *         {@code false} otherwise.
+   * @see <a href="https://openjdk.org/jeps/11">JEP 11: Incubator Modules</a>
+   */
+  boolean warnDeprecatedForRemoval();
+
+  /**
+   * Checks whether the module is in incubating mode, meaning it is not yet standardized.
+   * This method reads the module resolution attributes from {@code module-info.class}, as specified in JEP 11.
+   *
+   * @return {@code true} if the module is marked with {@code WARN_INCUBATING}, indicating that it is an
+   *         incubator module and subject to change in future releases;
+   *         {@code false} otherwise.
+   * @see <a href="https://openjdk.org/jeps/11">JEP 11: Incubator Modules</a>
+   */
+  boolean warnIncubating();
 
   @NotNull Iterable<PsiRequiresStatement> getRequires();
   @NotNull Iterable<PsiPackageAccessibilityStatement> getExports();

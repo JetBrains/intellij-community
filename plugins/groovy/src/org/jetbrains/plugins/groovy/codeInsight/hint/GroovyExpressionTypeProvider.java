@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint;
 
 import com.intellij.lang.ExpressionTypeProvider;
@@ -15,22 +15,19 @@ import java.util.List;
 
 public final class GroovyExpressionTypeProvider extends ExpressionTypeProvider<GrExpression> {
 
-  @NotNull
   @Override
-  public @HintText String getInformationHint(@NotNull GrExpression element) {
+  public @NotNull @HintText String getInformationHint(@NotNull GrExpression element) {
     final PsiType type = element.getType();
     return StringUtil.escapeXmlEntities(type == null ? GroovyBundle.message("expression.type.unknown") : type.getPresentableText());
   }
 
-  @NotNull
   @Override
-  public @HintText String getErrorHint() {
+  public @NotNull @HintText String getErrorHint() {
     return GroovyBundle.message("expression.type.no.expression");
   }
 
-  @NotNull
   @Override
-  public List<GrExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
+  public @NotNull List<GrExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
     return GrIntroduceHandlerBase.collectExpressions(elementAt, true);
   }
 }

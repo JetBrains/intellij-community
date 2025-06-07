@@ -29,14 +29,12 @@ import org.jetbrains.annotations.Nullable;
 public final class ThreadWithDefaultRunMethodInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "InstantiatingAThreadWithDefaultRunMethod";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.with.default.run.method.problem.descriptor");
   }
@@ -116,8 +114,7 @@ public final class ThreadWithDefaultRunMethodInspection extends BaseInspection {
       return false;
     }
 
-    @Nullable
-    private static PsiMethodCallExpression getSuperCall(@NotNull PsiMethod method) {
+    private static @Nullable PsiMethodCallExpression getSuperCall(@NotNull PsiMethod method) {
       PsiCodeBlock body = method.getBody();
       if (body == null) {
         return null;

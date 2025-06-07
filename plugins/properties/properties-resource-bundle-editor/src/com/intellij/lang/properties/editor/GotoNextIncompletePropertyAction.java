@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Batkovich
  */
 public class GotoNextIncompletePropertyAction extends AnAction {
-  private final static Logger LOG = Logger.getInstance(GotoNextIncompletePropertyAction.class);
+  private static final Logger LOG = Logger.getInstance(GotoNextIncompletePropertyAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

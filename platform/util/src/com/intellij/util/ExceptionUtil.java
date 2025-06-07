@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
@@ -12,13 +11,17 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ExceptionUtil {
   private ExceptionUtil() { }
 
   public static @NotNull Throwable getRootCause(@NotNull Throwable e) {
     while (true) {
-      if (e.getCause() == null) return e;
+      if (e.getCause() == null) {
+        return e;
+      }
       e = e.getCause();
     }
   }
@@ -34,7 +37,15 @@ public final class ExceptionUtil {
   /**
    * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
    */
-  public static <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
+  public static @Unmodifiable @NotNull <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
+    return causeAndSuppressed(error, klass).collect(Collectors.toList());
+  }
+
+  /**
+   * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
+   */
+  @ApiStatus.Internal
+  public static <T> @NotNull Stream<T> causeAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
     Collection<Throwable> allThrowables = new LinkedHashSet<>();
     Deque<Throwable> deque = new ArrayDeque<>();
     deque.add(error);
@@ -49,7 +60,7 @@ public final class ExceptionUtil {
         }
       }
     }
-    return ContainerUtil.filterIsInstance(allThrowables, klass);
+    return allThrowables.stream().filter(klass::isInstance).map(klass::cast);
   }
 
   public static @NotNull Throwable makeStackTraceRelative(@NotNull Throwable th, @NotNull Throwable relativeTo) {
@@ -78,11 +89,11 @@ public final class ExceptionUtil {
     return ExceptionUtilRt.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
-  public static @NlsSafe @NotNull String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
-    String result = getThrowableText(aThrowable, "com.intellij.");
-    if (!result.contains("\n\tat") && aThrowable.getStackTrace().length > 0) {
+  public static @NlsSafe @NotNull String getUserStackTrace(@NotNull Throwable throwable, @NotNull Logger logger) {
+    String result = getThrowableText(throwable, "com.intellij.");
+    if (!result.contains("\n\tat") && throwable.getStackTrace().length > 0) {
       // no 3rd party stack frames found, log as error
-      logger.error(aThrowable);
+      logger.error(throwable);
     }
     else {
       return result.trim() + " (no stack trace)";
@@ -149,7 +160,7 @@ public final class ExceptionUtil {
 
   public static @NotNull @NlsSafe String getNonEmptyMessage(@NotNull Throwable t, @NotNull @Nls String defaultMessage) {
     String message = t.getMessage();
-    return !StringUtil.isEmptyOrSpaces(message) ? message : defaultMessage;
+    return !StringUtilRt.isEmptyOrSpaces(message) ? message : defaultMessage;
   }
 
   public static @Nullable Exception runAndCatch(@NotNull ThrowableRunnable<? extends Exception> runnable) {
@@ -208,7 +219,7 @@ public final class ExceptionUtil {
   @SafeVarargs
   @ApiStatus.Internal
   public static <E extends Exception>
-  void runAllAndRethrowAllExceptions(@NotNull Function<List<? extends Throwable>, E> exceptionsCombiner,
+  void runAllAndRethrowAllExceptions(@NotNull Function<? super List<? extends Throwable>, E> exceptionsCombiner,
                                      ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
     List<Throwable> exceptions = null;
     for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {

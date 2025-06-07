@@ -55,8 +55,7 @@ internal class ConvertToForEachFunctionCallIntention :
     }
 
 
-    context(KaSession)
-    override fun prepareContext(element: KtForExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtForExpression): Unit? {
         val loopRange = element.loopRange ?: return null
 
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression

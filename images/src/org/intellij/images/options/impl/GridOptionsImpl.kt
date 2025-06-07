@@ -16,13 +16,9 @@
 package org.intellij.images.options.impl
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.util.JDOMExternalizable
-import com.intellij.openapi.util.JDOMExternalizer
 import com.intellij.ui.JBColor
-import com.intellij.util.addOptionTag
 import org.intellij.images.options.DefaultImageEditorSettings
 import org.intellij.images.options.GridOptions
-import org.jdom.Element
 import java.awt.Color
 import java.beans.PropertyChangeSupport
 

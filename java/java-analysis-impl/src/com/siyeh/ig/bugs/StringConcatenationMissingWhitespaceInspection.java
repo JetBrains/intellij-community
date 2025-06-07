@@ -1,11 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -28,9 +27,8 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
   @SuppressWarnings("PublicField")
   public boolean ignoreNonStringLiterals = true;
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.problem.descriptor");
   }
 
@@ -57,9 +55,11 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
       final boolean formatCall = FormatUtils.isFormatCallArgument(expression);
       final PsiExpression[] operands = expression.getOperands();
       PsiExpression lhs = operands[0];
+      boolean stringSeen = ExpressionUtils.hasStringType(lhs);
       for (int i = 1; i < operands.length; i++) {
         final PsiExpression rhs = operands[i];
-        if (isMissingWhitespace(lhs, rhs, formatCall)) {
+        stringSeen |= ExpressionUtils.hasStringType(rhs);
+        if (stringSeen && isMissingWhitespace(lhs, rhs, formatCall)) {
           final PsiJavaToken token = expression.getTokenBeforeOperand(rhs);
           if (token != null) {
             registerError(token);
@@ -70,7 +70,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
     }
 
     private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs, boolean formatCall) {
-      @NonNls final String lhsLiteral = computeStringValue(lhs);
+      final @NonNls String lhsLiteral = computeStringValue(lhs);
       if (lhsLiteral != null) {
         final int length = lhsLiteral.length();
         if (length == 0 || formatCall && lhsLiteral.endsWith("%n")) {
@@ -84,7 +84,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
       else if (ignoreNonStringLiterals && ExpressionUtils.hasStringType(lhs)) {
         return false;
       }
-      @NonNls final String rhsLiteral = computeStringValue(rhs);
+      final @NonNls String rhsLiteral = computeStringValue(rhs);
       if (rhsLiteral != null) {
         if (rhsLiteral.isEmpty() || formatCall && rhsLiteral.startsWith("%n")) {
           return false;
@@ -100,8 +100,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
       return true;
     }
 
-    @Nullable
-    public String computeStringValue(@Nullable PsiExpression expression) {
+    public @Nullable String computeStringValue(@Nullable PsiExpression expression) {
       final Object value = ExpressionUtils.computeConstantExpression(expression);
       return value == null ? null : value.toString();
     }

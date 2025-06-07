@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <actions>
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
@@ -84,7 +85,7 @@
     <group id="RunConfigurationsActionGroup" class="com.intellij.execution.ui.RunConfigurationsActionGroup"/>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
-      <reference id="ExecutionTargets"/>
+      <reference ref="ExecutionTargets"/>
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
@@ -98,12 +99,22 @@
     <!--endregion-->
 
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
+    <group id="Resume.Ref">
+      <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
+    </group>
+    <group id="Pause.Ref">
+      <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
+    </group>
+    <group id="StepOver.Ref">
+      <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction"
+              icon="AllIcons.Actions.TraceOver"/>
+    </group>
     <group id="DebugMainMenu">
       <separator/>
       <group id="DebuggingActionsGroup" popup="true">
         <group id="DebugReloadGroup"/>
         <separator/>
-        <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
+        <reference ref="StepOver.Ref"/>
         <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.ForceStepOver"/>
         <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
         <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
@@ -112,8 +123,8 @@
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.ForceRunToCursor"/>
         <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
-        <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
-        <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
+        <reference ref="Pause.Ref"/>
+        <reference ref="Resume.Ref"/>
         <separator/>
         <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="AllIcons.Debugger.EvaluateExpression"/>
         <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
@@ -183,18 +194,21 @@
     <!--region TouchBar -->
     <group id="TouchBarDebug">
       <reference ref="Rerun"/>
-      <reference ref="Resume"/>
-      <reference ref="Pause"/>
+      <reference ref="Resume.Ref"/>
+      <reference ref="Pause.Ref"/>
       <reference ref="Stop"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.flexible"/>
       <group id="TouchBarDebug.StepButtons" compact="true">
-        <reference ref="StepOver"/>
+        <reference ref="StepOver.Ref"/>
         <reference ref="StepInto"/>
         <reference ref="StepOut"/>
       </group>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
       <group id="TouchBarDebug_alt">
         <reference ref="ViewBreakpoints"/>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
         <separator text="type.flexible"/>
         <group id="TouchBarDebug.ForceStepButtons" compact="true">
           <reference ref="RunToCursor"/>
@@ -202,6 +216,7 @@
           <reference ref="ForceStepInto"/>
           <reference ref="SmartStepInto"/>
         </group>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
         <separator text="type.small"/>
       </group>
 
@@ -212,13 +227,15 @@
       <reference ref="RunConfiguration"/>
       <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
       <reference ref="Stop"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.large"/>
 
       <add-to-group group-id="TouchBarDefault" anchor="first"/>
     </group>
 
-    <reference id="ToggleLineBreakpoint">
+    <reference ref="ToggleLineBreakpoint">
       <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
     </reference>
     <!--endregion-->

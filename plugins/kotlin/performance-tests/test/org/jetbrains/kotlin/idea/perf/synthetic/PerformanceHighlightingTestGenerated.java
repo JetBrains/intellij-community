@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -194,6 +194,16 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("../idea/tests/testData/highlighter/AutoCreatedItParameter.kt");
+        }
+
+        @TestMetadata("DataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../idea/tests/testData/highlighter/DataClass.kt");
+        }
+
+        @TestMetadata("DataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../idea/tests/testData/highlighter/DataObject.kt");
         }
 
         @TestMetadata("DefinitelyNonNullableType.kt")

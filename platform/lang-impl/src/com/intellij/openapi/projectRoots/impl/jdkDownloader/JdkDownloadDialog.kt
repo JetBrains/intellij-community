@@ -8,16 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.ui.*
-import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
@@ -108,27 +110,23 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
   init {
     isSwingPopup = false
 
-    renderer = object: GroupedComboBoxRenderer<JdkVersionVendorItem>(this) {
-      override fun getText(item: JdkVersionVendorItem): String {
-        return item.item.product.packagePresentationText
+    renderer = listCellRenderer<JdkVersionVendorItem>("") {
+      text(value.item.product.packagePresentationText)
+
+      text(value.item.jdkVersion) {
+        foreground = greyForeground
       }
 
-      override fun separatorFor(value: JdkVersionVendorItem): ListSeparator? {
-        if (itemWithSeparator == value) {
-          return ListSeparator(ProjectBundle.message("dialog.row.jdk.other.versions"))
+      value.item.presentableArchIfNeeded?.let {
+        text(it) {
+          foreground = greyForeground
         }
-        return null
       }
 
-      override fun customize(item: SimpleColoredComponent, value: JdkVersionVendorItem, index: Int, isSelected: Boolean, hasFocus: Boolean) {
-        item.append(value.item.product.packagePresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-
-        val additionalInfo = mutableListOf<String>()
-        val jdkVersion = value.item.jdkVersion
-        additionalInfo.add("  $jdkVersion")
-        value.item.presentableArchIfNeeded?.let { archIfNeeded -> additionalInfo.add("  $archIfNeeded") }
-
-        item.append(additionalInfo.joinToString(""), SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
+      if (itemWithSeparator == value) {
+        separator {
+          text = ProjectBundle.message("dialog.row.jdk.other.versions")
+        }
       }
     }
   }
@@ -142,8 +140,11 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
-  val groups =  allItems
+  val availableItems = allItems
     .filter { itemFilter.invoke(it) }
+    .filter { Registry.`is`("jdk.downloader.show.other.arch", false) || CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+
+  val groups = availableItems
     .groupBy { it.versionGroupId() }
     .mapValues { (jdkVersion, groupItems) ->
       val majorVersion = groupItems.first().jdkMajorVersion
@@ -160,7 +161,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
-          //first try to find closest newer version
+          // first try to find the closest newer version
           jdkItems
             .filter { it.jdkMajorVersion >= majorVersion }
             .minWithOrNull(comparator)
@@ -180,14 +181,14 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
                      excludedItems.sortedForUI())
     }
 
-  //assign parent relation
-  groups.values.forEach { parent -> parent.excludedItems.forEach { it.parent = groups.getValue(it.item.versionGroupId()) } }
+  // assign the parent relation
+  groups.values.forEach { parent -> parent.excludedItems.forEach { it.parent = groups[it.item.versionGroupId()] } }
 
   val versionItems = groups.values
     .sortedWith(Comparator.comparing(Function<JdkVersionItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR).reversed())
 
-  val defaultItem = allItems.firstOrNull { it.isDefaultItem } /*pick the newest default JDK */
-                    ?: allItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+  val defaultItem = availableItems.firstOrNull { it.isDefaultItem } /* pick the newest default JDK */
+                    ?: availableItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                     ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
   val defaultJdkVersionItem = versionItems.firstOrNull { group -> group.includedItems.any { it.item == defaultItem } }
@@ -260,7 +261,7 @@ internal class JdkDownloadDialog(
     var archiveSizeCell: Cell<*>? = null
 
     row(ProjectBundle.message("dialog.row.jdk.version")) {
-      versionComboBox = comboBox(listOf<JdkVersionItem>().toMutableList(), textListCellRenderer { it!!.jdkVersion })
+      versionComboBox = comboBox(listOf<JdkVersionItem>().toMutableList(), textListCellRenderer { it?.jdkVersion })
         .align(AlignX.FILL)
         .component
     }
@@ -272,6 +273,7 @@ internal class JdkDownloadDialog(
           val itemArch = CpuArch.fromString(it.item.item.arch)
           when {
             itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+            it.item.item.isPreview -> warning(ProjectBundle.message("dialog.jdk.preview.validation"))
             else -> null
           }
         }
@@ -382,7 +384,7 @@ internal class JdkDownloadDialog(
       installDirTextField!!.text = relativePath
     }
     else {
-      installDirCombo!!.model = CollectionComboBoxModel(getSuggestedInstallDirs(newVersion), relativePath)
+      installDirCombo!!.model = CollectionComboBoxModel(getSuggestedInstallDirs(newVersion).toMutableList(), relativePath)
     }
     selectedPath = path
     selectedItem = newVersion

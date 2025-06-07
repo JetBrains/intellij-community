@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
@@ -12,9 +12,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 final class GotoPropertyParentDeclarationHandler extends GotoDeclarationHandlerBase {
-  @Nullable
   @Override
-  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement sourceElement, Editor editor) {
+  public @Nullable PsiElement getGotoDeclarationTarget(@Nullable PsiElement sourceElement, Editor editor) {
     Property property = findProperty(sourceElement);
     if (property == null) return null;
     final String key = property.getKey();

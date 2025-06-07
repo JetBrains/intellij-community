@@ -1,19 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 
 /**
  * This class allows to disable (temporarily or permanently) showing certain popups on mouse hover (currently, error/warning descriptions
@@ -25,7 +29,7 @@ public final class EditorMouseHoverPopupControl {
   private static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupControl.class);
   private static final Key<Integer> MOUSE_TRACKING_DISABLED_COUNT = Key.create("MOUSE_TRACKING_DISABLED_COUNT");
 
-  private final Collection<Runnable> listeners = new CopyOnWriteArrayList<>();
+  private final Collection<BiConsumer<@NotNull UserDataHolder, Boolean>> listeners = new CopyOnWriteArrayList<>();
 
   public static EditorMouseHoverPopupControl getInstance() {
     return ApplicationManager.getApplication().getService(EditorMouseHoverPopupControl.class);
@@ -67,7 +71,9 @@ public final class EditorMouseHoverPopupControl {
     if ((userData == null) != (count == 0)) {
       EditorMouseHoverPopupControl instance = getInstance();
       if (instance != null) {
-        instance.listeners.forEach(Runnable::run);
+        instance.listeners.forEach((listener) -> {
+          listener.accept(holder, value);
+        });
       }
     }
   }
@@ -81,6 +87,14 @@ public final class EditorMouseHoverPopupControl {
   }
 
   public void addListener(@NotNull Runnable listener) {
+    listeners.add((holder, isDisabled) -> {
+      listener.run();
+    });
+  }
+
+  @ApiStatus.Internal
+  public void addListener(@NotNull BiConsumer<@NotNull UserDataHolder, Boolean> listener, @NotNull Disposable parentDisposable) {
     listeners.add(listener);
+    Disposer.register(parentDisposable, () -> listeners.remove(listener));
   }
 }

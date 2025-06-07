@@ -78,7 +78,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     return myRepositories.hashCode();
   }
 
-  static class State {
+  public static final class State {
     @Tag("remote-repository")
     static class Repo {
       public String id;

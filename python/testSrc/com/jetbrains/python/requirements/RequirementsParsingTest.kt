@@ -2,7 +2,6 @@
 package com.jetbrains.python.requirements
 
 import com.intellij.testFramework.ParsingTestCase
-import com.jetbrains.python.requirements.RequirementsParserDefinition
 
 class RequirementsParsingTest : ParsingTestCase("requirements/parsing", "requirements.txt",
                                                 RequirementsParserDefinition()) {

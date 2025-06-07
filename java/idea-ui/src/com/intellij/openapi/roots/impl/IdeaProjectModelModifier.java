@@ -57,9 +57,9 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull final Collection<? extends Module> modules,
-                                                    @NotNull final ExternalLibraryDescriptor descriptor,
-                                                    @NotNull final DependencyScope scope) {
+  public Promise<Void> addExternalLibraryDependency(final @NotNull Collection<? extends Module> modules,
+                                                    final @NotNull ExternalLibraryDescriptor descriptor,
+                                                    final @NotNull DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
     List<String> classesRoots;
     Module firstModule = ContainerUtil.getFirstItem(modules);

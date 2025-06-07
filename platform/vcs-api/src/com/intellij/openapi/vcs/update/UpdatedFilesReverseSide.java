@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +15,7 @@ public class UpdatedFilesReverseSide {
   // file path, group
   private final Map<String, FileGroup> myFileIdx;
 
-  private final static List<String> ourStoppingGroups = Arrays.asList(
+  private static final List<String> ourStoppingGroups = Arrays.asList(
       FileGroup.MERGED_WITH_CONFLICT_ID, FileGroup.UNKNOWN_ID, FileGroup.SKIPPED_ID);
 
   public UpdatedFilesReverseSide(final UpdatedFiles files) {
@@ -155,8 +155,8 @@ public class UpdatedFilesReverseSide {
   }
 
   public abstract static class DuplicateLevel {
-    private final static List<String> ourErrorGroups = Arrays.asList(FileGroup.UNKNOWN_ID, FileGroup.SKIPPED_ID);
-    private final static List<String> ourLocals = Arrays.asList(FileGroup.LOCALLY_ADDED_ID, FileGroup.LOCALLY_REMOVED_ID);
+    private static final List<String> ourErrorGroups = Arrays.asList(FileGroup.UNKNOWN_ID, FileGroup.SKIPPED_ID);
+    private static final List<String> ourLocals = Arrays.asList(FileGroup.LOCALLY_ADDED_ID, FileGroup.LOCALLY_REMOVED_ID);
 
     abstract boolean searchPreviousContainment(final String groupId);
     abstract boolean doesExistingWin(final String groupId, final String existingGroupId);

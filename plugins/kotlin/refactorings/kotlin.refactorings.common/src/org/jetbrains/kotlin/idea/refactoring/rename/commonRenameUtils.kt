@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.CommonBundle
@@ -20,6 +20,7 @@ import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewTypeLocation
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -111,7 +112,8 @@ private fun PsiElement.getOverriddenFunctionWithDefaultValues(allRenames: Map<ou
         .firstOrNull { it !in elementsToRename && it.valueParameters.any { it.hasDefaultValue() } }
 }
 
-private fun KtParameter.dropDefaultValue() {
+@ApiStatus.Internal
+fun KtParameter.dropDefaultValue() {
     val from = equalsToken ?: return
     val to = defaultValue ?: from
     deleteChildRange(from, to)

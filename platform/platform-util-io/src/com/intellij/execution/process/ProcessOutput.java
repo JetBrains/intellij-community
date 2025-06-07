@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -37,11 +38,11 @@ public class ProcessOutput {
   }
 
   public void appendStdout(@Nullable String text) {
-    myStdoutBuilder.append(text);
+    appendWithBackspaceHandling(myStdoutBuilder, text);
   }
 
   public void appendStderr(@Nullable String text) {
-    myStderrBuilder.append(text);
+    appendWithBackspaceHandling(myStderrBuilder, text);
   }
 
   public @NotNull @NlsSafe String getStdout() {
@@ -52,23 +53,23 @@ public class ProcessOutput {
     return myStderrBuilder.toString();
   }
 
-  public @NotNull List<@NlsSafe String> getStdoutLines() {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
-  public @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
-  public @NotNull List<@NlsSafe String> getStderrLines() {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines() {
     return getStderrLines(true);
   }
 
-  public @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
-  private static List<String> splitLines(String s, boolean excludeEmptyLines) {
+  private static @Unmodifiable List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n", true, excludeEmptyLines);
   }
@@ -135,5 +136,29 @@ public class ProcessOutput {
            ", stdout=" + myStdoutBuilder +
            ", stderr=" + myStderrBuilder +
            '}';
+  }
+
+  private static void appendWithBackspaceHandling(@NotNull StringBuilder builder, @Nullable String text) {
+    if (text == null) {
+      return;
+    }
+
+    if (text.contains("\b")) {
+      for (int i = 0; i < text.length(); i++) {
+        char c = text.charAt(i);
+        if (c == '\b') {
+          int length = builder.length();
+          if (length > 0) {
+            builder.deleteCharAt(length - 1);
+          }
+        }
+        else {
+          builder.append(c);
+        }
+      }
+    }
+    else {
+      builder.append(text);
+    }
   }
 }

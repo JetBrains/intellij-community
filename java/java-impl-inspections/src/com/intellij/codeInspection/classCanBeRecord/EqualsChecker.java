@@ -27,18 +27,20 @@ final class EqualsChecker {
     );
 
 
+  /**
+   * Detects standard equals method implementation with identity check, null/class check, and field-by-field comparison, in the form of:
+   * <pre>
+   *   public boolean equals(Object obj) {
+   *     if (obj == this) return true;
+   *     if (obj == null || obj.getClass() != this.getClass()) return false;
+   *     var that = (Person)obj;
+   *     return Objects.equals(this.name, that.name) &&
+   *     this.age == that.age;
+   *   }
+   * </pre>
+   */
   static boolean isStandardEqualsMethod(@Nullable PsiMethod method, @NotNull Set<PsiField> fields) {
     if (method == null) return false;
-    /*
-    Finds equals in the form
-      public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (Person)obj;
-        return Objects.equals(this.name, that.name) &&
-        this.age == that.age;
-      }
-     */
     PsiCodeBlock body = method.getBody();
     if (body == null) return false;
     PsiParameter parameter = method.getParameterList().getParameter(0);

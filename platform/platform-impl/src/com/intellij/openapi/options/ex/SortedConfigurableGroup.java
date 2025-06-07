@@ -22,7 +22,7 @@ public class SortedConfigurableGroup
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
-  List<Configurable> myList = new ArrayList<>();
+  List<@NotNull Configurable> myList = new ArrayList<>();
 
   public SortedConfigurableGroup(@NonNls @NotNull String id,
                                  @NlsContexts.ConfigurableName @NotNull String displayName,
@@ -37,7 +37,7 @@ public class SortedConfigurableGroup
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     myList.sort(COMPARATOR);
     Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();

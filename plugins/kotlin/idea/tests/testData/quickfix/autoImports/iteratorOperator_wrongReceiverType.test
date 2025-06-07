@@ -1,0 +1,23 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: For-loop range must have an 'iterator()' method
+// WITH_STDLIB
+
+package bar
+
+import foo.Foo
+
+fun foo(start: Foo, end: Foo) {
+    for (date in start<caret>..end) {}
+}
+
+// FILE: second.kt
+package foo
+
+class Foo : Comparable<Foo> {
+    override fun compareTo(other: Foo): Int = TODO()
+}
+
+class Unrelated
+
+operator fun Unrelated.iterator(): Iterator<Foo> = TODO()

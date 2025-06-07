@@ -163,7 +163,9 @@ public final class ModifierKeyDoubleClickHandler {
 
     public boolean dispatch(@NotNull KeyEvent event) {
       int keyCode = event.getKeyCode();
-      LOG.debug("", this, event);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(this + " " + event);
+      }
       if (keyCode == myModifierKeyCode) {
         if (hasOtherModifiers(event)) {
           resetState();
@@ -280,11 +282,8 @@ public final class ModifierKeyDoubleClickHandler {
 
         DataContext context = calculateContext();
         AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
-        if (!ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
-          return false;
-        }
-        ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
-        return true;
+        AnActionResult result = ActionUtil.performAction(action, actionEvent);
+        return !result.isIgnored();
       }
       finally {
         myIsRunningAction = false;

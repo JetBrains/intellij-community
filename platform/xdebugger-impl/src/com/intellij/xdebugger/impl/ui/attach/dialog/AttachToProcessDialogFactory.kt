@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -12,8 +12,10 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.util.isAlive
 import com.intellij.xdebugger.impl.util.onTermination
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class AttachToProcessDialogFactory(private val project: Project) {
   companion object {
     // used externally

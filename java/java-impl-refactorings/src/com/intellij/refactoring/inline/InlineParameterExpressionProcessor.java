@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -39,8 +39,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private final PsiCallExpression myMethodCall;
-  @NotNull
-  private final PsiMethod myMethod;
+  private final @NotNull PsiMethod myMethod;
   private final PsiParameter myParameter;
   private PsiExpression myInitializer;
   private final boolean mySameClass;
@@ -67,15 +66,13 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return InlineParameterHandler.getRefactoringName();
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myParameter);
   }
 
@@ -134,7 +131,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     });
 
     if (!myCreateLocal) {
-      for (PsiReference ref : ReferencesSearch.search(myParameter).findAll()) {
+      for (PsiReference ref : ReferencesSearch.search(myParameter).asIterable()) {
         result.add(new UsageInfo(ref));
       }
     }
@@ -208,7 +205,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
     for (PsiVariable var : vars) {
-      for (PsiReference ref : ReferencesSearch.search(var)) {
+      for (PsiReference ref : ReferencesSearch.search(var).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiExpression exp && isAccessedForWriting(exp)) {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.parameter.initializer.depends.on.inaccessible.value"));
@@ -292,8 +289,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
   }
 
-  @Nullable
-  private PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
+  private @Nullable PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
     PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
     if (call != null) {
       return call.getParent();
@@ -312,13 +308,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       myReplacement = replacement;
     }
 
-    @Nullable
-    public PsiElement getReplacement() {
+    public @Nullable PsiElement getReplacement() {
       return myReplacement.isValid() ? myReplacement : null;
     }
 
-    @Nullable
-    public PsiVariable getVariable() {
+    public @Nullable PsiVariable getVariable() {
       return myVariable != null && myVariable.isValid() ? myVariable : null;
     }
   }

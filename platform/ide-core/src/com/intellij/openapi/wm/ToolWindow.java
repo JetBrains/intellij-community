@@ -30,6 +30,7 @@ import java.util.function.Supplier;
  */
 public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
+  Key<Boolean> SHOW_CONTENT_TAB_LABEL_TEXT = new Key<>("ContentTabLabelText");
 
   @NonNls @NotNull String getId();
 
@@ -162,7 +163,7 @@ public interface ToolWindow extends BusyObject {
   void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
 
   @ApiStatus.Internal
-  @Nullable default Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
+  default @Nullable Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
     return null;
   }
 

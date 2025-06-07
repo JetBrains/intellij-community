@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,16 +18,13 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.JpsDependencyElement;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.module.JpsTestModuleProperties;
+import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsTestModulePropertiesImpl;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,27 +32,23 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
-  @NotNull
   @Override
-  public JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
+  public @NotNull JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
     return project.getContainer().getOrSetChild(JavaProjectExtensionRole.INSTANCE);
   }
 
-  @Nullable
   @Override
-  public JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project) {
+  public @Nullable JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project) {
     return project.getContainer().getChild(JavaProjectExtensionRole.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module) {
+  public @NotNull JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module) {
     return module.getContainer().getOrSetChild(JavaModuleExtensionRole.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency) {
+  public @NotNull JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency) {
     return dependency.getContainer().getOrSetChild(JpsJavaDependencyExtensionRole.INSTANCE);
   }
 
@@ -68,8 +62,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   }
 
   @Override
-  @Nullable
-  public JpsJavaModuleExtension getModuleExtension(@NotNull JpsModule module) {
+  public @Nullable JpsJavaModuleExtension getModuleExtension(@NotNull JpsModule module) {
     if (module.getProject() instanceof JpsJavaAwareProject) {
       return ((JpsJavaAwareProject)module.getProject()).getJavaModuleExtension(module);
     }
@@ -77,20 +70,17 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   }
 
   @Override
-  @NotNull
-  public ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module) {
+  public @NotNull ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module) {
     return module.getContainer().getOrSetChild(ExplodedDirectoryModuleExtensionImpl.ExplodedDirectoryModuleExtensionRole.INSTANCE);
   }
 
   @Override
-  @Nullable
-  public ExplodedDirectoryModuleExtension getExplodedDirectoryExtension(@NotNull JpsModule module) {
+  public @Nullable ExplodedDirectoryModuleExtension getExplodedDirectoryExtension(@NotNull JpsModule module) {
     return module.getContainer().getChild(ExplodedDirectoryModuleExtensionImpl.ExplodedDirectoryModuleExtensionRole.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public List<JpsDependencyElement> getDependencies(JpsModule module, JpsJavaClasspathKind classpathKind, boolean exportedOnly) {
+  public @NotNull List<JpsDependencyElement> getDependencies(JpsModule module, JpsJavaClasspathKind classpathKind, boolean exportedOnly) {
     final List<JpsDependencyElement> result = new ArrayList<>();
     for (JpsDependencyElement dependencyElement : module.getDependenciesList().getDependencies()) {
       final JpsJavaDependencyExtension extension = getDependencyExtension(dependencyElement);
@@ -125,11 +115,51 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     return forTests ? extension.getTestOutputUrl() : extension.getOutputUrl();
   }
 
-  @Nullable
   @Override
-  public File getOutputDirectory(JpsModule module, boolean forTests) {
+  public @Nullable File getOutputDirectory(JpsModule module, boolean forTests) {
     String url = getOutputUrl(module, forTests);
     return url != null ? JpsPathUtil.urlToFile(url) : null;
+  }
+
+  @Override
+  public @Nullable Path getOutputDirectoryPath(JpsModule module, boolean forTests) {
+    String url = getOutputUrl(module, forTests);
+    return url != null ? JpsPathUtil.urlToNioPath(url) : null;
+  }
+
+  @Override
+  public @Nullable Path findSourceFile(@NotNull JpsModuleSourceRoot root, @NotNull String relativePath) {
+    var properties = root.getProperties();
+    var prefix = 
+      properties instanceof JavaSourceRootProperties ? ((JavaSourceRootProperties)properties).getPackagePrefix().replace('.', '/') :
+      properties instanceof JavaResourceRootProperties ? ((JavaResourceRootProperties)properties).getRelativeOutputPath() : "";
+
+    var normalizedPrefix = StringUtil.trimStart(prefix, "/");
+    if (!normalizedPrefix.isEmpty() && !normalizedPrefix.endsWith("/")) {
+      normalizedPrefix += "/";
+    }
+
+    var normalizedRelativePath = StringUtil.trimStart(relativePath, "/");
+    if (normalizedRelativePath.startsWith(normalizedPrefix)) {
+      var result = root.getPath().resolve(normalizedRelativePath.substring(normalizedPrefix.length()));
+      if (Files.exists(result)) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable Path findSourceFileInProductionRoots(@NotNull JpsModule module, @NotNull String relativePath) {
+    for (JpsModuleSourceRoot root : module.getSourceRoots()) {
+      if (!root.getRootType().isForTests()) {
+        Path file = findSourceFile(root, relativePath);
+        if (file != null) {
+          return file;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -138,22 +168,20 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     assert jdkInfo != null : homePath;
     String version = JdkVersionDetector.formatVersionString(jdkInfo.version);
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
-    List<Path> roots = JavaSdkUtil.getJdkClassesRoots(Paths.get(homePath), false);
+    List<Path> roots = JavaSdkUtil.getJdkClassesRoots(Path.of(homePath), false);
     for (Path root : roots) {
       sdk.addRoot(root.toFile(), JpsOrderRootType.COMPILED);
     }
     return sdk;
   }
 
-  @NotNull
   @Override
-  public JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project) {
+  public @NotNull JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project) {
     return project.getContainer().getOrSetChild(JpsJavaCompilerConfigurationImpl.ROLE);
   }
 
-  @Nullable
   @Override
-  public JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module) {
+  public @Nullable JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module) {
     if (module.getProject() instanceof JpsJavaAwareProject) {
       return ((JpsJavaAwareProject)module.getProject()).getTestModuleProperties(module);
     }
@@ -165,52 +193,44 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     module.getContainer().setChild(JpsTestModulePropertiesImpl.ROLE, new JpsTestModulePropertiesImpl(productionModuleReference));
   }
 
-  @NotNull
   @Override
-  public JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
-                                                                        @NotNull JpsSdkReference<?> wrapperReference) {
+  public @NotNull JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
+                                                                                 @NotNull JpsSdkReference<?> wrapperReference) {
     return new JpsWrappedJavaSdkReferenceImpl(sdkType, wrapperReference);
   }
 
-  @NotNull
   @Override
-  public JpsApplicationRunConfigurationProperties createRunConfigurationProperties(JpsApplicationRunConfigurationState state) {
+  public @NotNull JpsApplicationRunConfigurationProperties createRunConfigurationProperties(JpsApplicationRunConfigurationState state) {
     return new JpsApplicationRunConfigurationPropertiesImpl(state);
   }
 
-  @NotNull
   @Override
-  public JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated) {
+  public @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated) {
     return new JavaSourceRootProperties(packagePrefix, isGenerated);
   }
 
-  @NotNull
   @Override
-  public JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix) {
+  public @NotNull JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix) {
     return createSourceRootProperties(packagePrefix, false);
   }
 
-  @NotNull
   @Override
-  public JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource) {
+  public @NotNull JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource) {
     return new JavaResourceRootProperties(relativeOutputPath, forGeneratedResource);
   }
 
   @Override
-  @NotNull
-  public JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference) {
+  public @NotNull JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsProductionModuleOutputPackagingElementImpl(moduleReference);
   }
 
   @Override
-  @NotNull
-  public JpsProductionModuleSourcePackagingElement createProductionModuleSource(@NotNull JpsModuleReference moduleReference) {
+  public @NotNull JpsProductionModuleSourcePackagingElement createProductionModuleSource(@NotNull JpsModuleReference moduleReference) {
     return new JpsProductionModuleSourcePackagingElementImpl(moduleReference);
   }
 
   @Override
-  @NotNull
-  public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
+  public @NotNull JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
   }
 
@@ -229,9 +249,8 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     return new JpsJavaDependenciesEnumeratorImpl(Collections.singleton(module));
   }
 
-  @NotNull
   @Override
-  public JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project) {
+  public @NotNull JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project) {
     return project.getContainer().getOrSetChild(JavaModuleIndexRole.INSTANCE, () -> getCompilerConfiguration(project).getCompilerExcludes());
   }
 }

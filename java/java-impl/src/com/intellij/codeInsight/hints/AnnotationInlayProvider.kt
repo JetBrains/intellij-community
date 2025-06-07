@@ -1,316 +1,285 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
-import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.java.JavaBundle
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.BlockInlayPriority
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsActions
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiUtil
-import com.intellij.ui.dsl.builder.panel
-import java.awt.Font
-import javax.swing.JComponent
-import kotlin.reflect.KMutableProperty0
+import com.intellij.psi.util.createSmartPointer
+import org.jetbrains.annotations.PropertyKey
 
-class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
+private const val LIST_OWNER_ELEMENT = "list.owner.element"
+private const val TOGGLES_TO_SHOW = "toggles.to.show"
+private const val SHOW_EXTERNAL_TOGGLE_TAG = "e"
+private const val SHOW_EXTERNAL_AND_INTERNAL_TOGGLES_TAG = "b"
+private val EXTERNAL_AND_INFERRED_TOGGLES_PAYLOAD =
+  InlayPayload(TOGGLES_TO_SHOW, StringInlayActionPayload(SHOW_EXTERNAL_AND_INTERNAL_TOGGLES_TAG))
+private val TYPE_ANNOTATION_PAYLOADS = listOf(InlayPayload(TOGGLES_TO_SHOW, StringInlayActionPayload(SHOW_EXTERNAL_TOGGLE_TAG)))
 
-  override val group: InlayGroup
-    get() = InlayGroup.ANNOTATIONS_GROUP
+private val ARRAY_TYPE_START = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.ELLIPSIS)
 
-  private val arrayTypeStart = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.ELLIPSIS)
+private val HINT_FORMAT = HintFormat(
+  HintColorKind.Default,
+  HintFontSize.ABitSmallerThanInEditor,
+  HintMarginPadding.OnlyPadding,
+)
 
-  override fun getCollectorFor(file: PsiFile,
-                               editor: Editor,
-                               settings: Settings,
-                               sink: InlayHintsSink): InlayHintsCollector {
+class AnnotationInlayProvider : InlayHintsProvider {
+  companion object {
+    const val PROVIDER_ID: String = "java.annotation.hints"
+    const val SHOW_INFERRED: String = "showInferred"
+    const val SHOW_EXTERNAL: String = "showExternal"
+  }
+
+  override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     val project = file.project
-    val document = PsiDocumentManager.getInstance(project).getDocument(file)
-    return object : FactoryInlayHintsCollector(editor) {
-      override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (DumbService.getInstance(file.project).isDumb) return false
-        if (file.project.isDefault) return false
-        if (element is PsiTypeElement && settings.showExternal) {
-          val originalElement = element.originalElement
-          if (originalElement is PsiTypeElement && originalElement is PsiCompiledElement) {
-            val type = originalElement.type
-            collectTypeAnnotations(type, element, sink)
+    if (project.isDefault) return null
+    return object : SharedBypassCollector {
+      override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+        if (element is PsiTypeElement) {
+          sink.whenOptionEnabled(SHOW_EXTERNAL) {
+            val originalElement = element.originalElement
+            if (originalElement is PsiTypeElement && originalElement is PsiCompiledElement) {
+              val type = originalElement.type
+              val offset = element.textRange.startOffset
+              val manager = ExternalAnnotationsManager.getInstance(project)
+              type.annotations
+                .filter(manager::isExternalAnnotation)
+                .forEach {
+                  sink.addAnnotationPresentation(it, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+                }
+            }
           }
         }
         else if (element is PsiModifierListOwner) {
-          var annotations = emptySequence<PsiAnnotation>()
-          val previewAnnotation = PREVIEW_ANNOTATION_KEY.get(element)
-          if (previewAnnotation != null) {
-            annotations += previewAnnotation
-          } else {
-            if (settings.showExternal) {
-              annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element)
-            }
-            if (settings.showInferred) {
-              annotations += InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)
-            }
-          }
-
+          val typeHintPos by lazy(LazyThreadSafetyMode.NONE) { calcTypeHintPosition(element) }
+          val modifierListHintPos by lazy(LazyThreadSafetyMode.NONE) { calcModifierListHintPosition(element) }
+          val inlayPayloads = listOf(
+            InlayPayload(LIST_OWNER_ELEMENT, PsiPointerInlayActionPayload(element.createSmartPointer())),
+            EXTERNAL_AND_INFERRED_TOGGLES_PAYLOAD
+          )
           val shownAnnotations = mutableSetOf<String>()
-          val modifierListPresentations = mutableListOf<InlayPresentation>()
-          val typePresentations = mutableListOf<InlayPresentation>()
-          annotations.forEach { annotation ->
+
+          fun InlayTreeSink.addAnnotationIfNotDuplicated(annotation: PsiAnnotation) {
             val nameReferenceElement = annotation.nameReferenceElement
-            if (nameReferenceElement != null && element.modifierList != null) {
-              if (shownAnnotations.add(nameReferenceElement.qualifiedName) ||
-                  JavaDocInfoGenerator.isRepeatableAnnotationType(annotation)) {
-                val typeAnno = isTypeAnno(annotation)
-                val targetList = if (typeAnno) typePresentations else modifierListPresentations
-                targetList.add(createPresentation(annotation, element))
-              }
+            if (nameReferenceElement != null &&
+                element.modifierList != null &&
+                (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
+              val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
+              addAnnotationPresentation(annotation, project, hintPos, HINT_FORMAT, inlayPayloads)
             }
           }
-          addModifierListPresentations(modifierListPresentations, element, document)
-          addTypePresentations(typePresentations, element)
-        }
-        return true
-      }
 
-      private fun isTypeAnno(annotation: PsiAnnotation): Boolean {
-        val qualifiedName = annotation.qualifiedName ?: return false
-        val typeAnno = qualifiedName == AnnotationUtil.NOT_NULL ||
-                       qualifiedName == AnnotationUtil.NULLABLE ||
-                       qualifiedName == AnnotationUtil.UNKNOWN_NULLABILITY ||
-                       qualifiedName == Mutability.UNMODIFIABLE_ANNOTATION ||
-                       qualifiedName == Mutability.UNMODIFIABLE_VIEW_ANNOTATION
-        return typeAnno && PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, annotation)
-      }
-
-      private fun addTypePresentations(typePresentations: List<InlayPresentation>, element: PsiModifierListOwner) {
-        if (typePresentations.isEmpty()) return
-        val typeElement = when (element) {
-          is PsiVariable -> element.typeElement
-          is PsiMethod -> element.returnTypeElement
-          else -> null
-        } ?: return
-        val anchor = typeElement.children.firstOrNull { PsiUtil.isJavaToken(it, arrayTypeStart) } ?: typeElement
-        val presentation: InlayPresentation = SequencePresentation(typePresentations)
-        val offset = anchor.textRange.startOffset
-        sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
-      }
-
-      private fun addModifierListPresentations(
-        modifierListPresentations: List<InlayPresentation>,
-        element: PsiModifierListOwner,
-        document: Document?,
-      ) {
-        if (modifierListPresentations.isEmpty()) return
-        val offset = element.modifierList?.textRange?.startOffset ?: return
-        val presentation = SequencePresentation(modifierListPresentations)
-        val prevSibling = element.prevSibling
-        when {
-          // element is first in line
-          prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') && document != null -> {
-            val line = document.getLineNumber(offset)
-            val startOffset = document.getLineStartOffset(line)
-            val shifted = factory.inset(presentation, left = EditorUtil.textWidth(editor, document.charsSequence, startOffset, offset, Font.PLAIN, 0))
-            sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
+          sink.whenOptionEnabled(SHOW_EXTERNAL) {
+            ExternalAnnotationsManager.getInstance(project)
+              .findExternalAnnotations(element)
+              .forEach { sink.addAnnotationIfNotDuplicated(it) }
           }
-          else -> {
-            sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
+          sink.whenOptionEnabled(SHOW_INFERRED) {
+            InferredAnnotationsManager.getInstance(project)
+              .findInferredAnnotations(element)
+              .forEach { sink.addAnnotationIfNotDuplicated(it) }
           }
         }
       }
-
-      private fun collectTypeAnnotations(type: PsiType, anchor: PsiElement, sink: InlayHintsSink) {
-        val manager = ExternalAnnotationsManager.getInstance(project)
-        val presentations = type.annotations.filter(manager::isExternalAnnotation).map(this::annotationPresentation)
-        if (presentations.isNotEmpty()) {
-          val offset = anchor.textRange.startOffset
-          var presentation: InlayPresentation = SequencePresentation(presentations)
-          presentation = MenuOnClickPresentation(presentation, project) {
-            listOf(
-              ToggleSettingsAction(JavaBundle.message("settings.inlay.java.turn.off.external.annotations"), settings::showExternal, settings)
-            )
-          }
-          sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
-        }
-      }
-
-      private fun createPresentation(
-        annotation: PsiAnnotation,
-        element: PsiModifierListOwner
-      ): MenuOnClickPresentation {
-        val presentation = annotationPresentation(annotation)
-        return MenuOnClickPresentation(presentation, project) {
-          val makeExplicit = InsertAnnotationAction(project, file, element)
-          listOf(
-            makeExplicit,
-            ToggleSettingsAction(JavaBundle.message("settings.inlay.java.turn.off.external.annotations"), settings::showExternal, settings),
-            ToggleSettingsAction(JavaBundle.message("settings.inlay.java.turn.off.inferred.annotations"), settings::showInferred, settings)
-          )
-        }
-      }
-
-      private fun annotationPresentation(annotation: PsiAnnotation): InlayPresentation = with(factory) {
-        val nameReferenceElement = annotation.nameReferenceElement
-        val parameterList = annotation.parameterList
-
-        val presentations = mutableListOf(
-          smallText("@"),
-          psiSingleReference(smallText(nameReferenceElement?.referenceName ?: "")) { nameReferenceElement?.resolve() }
-        )
-
-        parametersPresentation(parameterList)?.let {
-          presentations.add(it)
-        }
-        roundWithBackground(SequencePresentation(presentations))
-      }
-
-      private fun parametersPresentation(parameterList: PsiAnnotationParameterList): InlayPresentation? {
-        val attributes = parameterList.attributes
-        return when {
-          attributes.isEmpty() -> null
-          else -> insideParametersPresentation(attributes, collapsed = parameterList.textLength > 60)
-        }
-      }
-
-      private fun insideParametersPresentation(attributes: Array<PsiNameValuePair>, collapsed: Boolean) = with(factory) {
-        collapsible(
-          smallText("("),
-          smallText("..."),
-          {
-            join(
-              presentations = attributes.map { pairPresentation(it) },
-              separator = { smallText(", ") }
-            )
-          },
-          smallText(")"),
-          collapsed
-        )
-      }
-
-      private fun pairPresentation(attribute: PsiNameValuePair) = with(factory) {
-        when (val attrName = attribute.name) {
-          null -> attrValuePresentation(attribute)
-          else -> seq(
-            psiSingleReference(smallText(attrName), resolve = { attribute.reference?.resolve() }),
-            smallText(" = "),
-            attrValuePresentation(attribute)
-          )
-        }
-      }
-
-      private fun PresentationFactory.attrValuePresentation(attribute: PsiNameValuePair) =
-        smallText(attribute.value?.text ?: "")
     }
-  }
-
-  override fun createSettings(): Settings = Settings()
-
-  override val name: String
-    get() = JavaBundle.message("settings.inlay.java.annotations")
-  override val key: SettingsKey<Settings>
-    get() = ourKey
-
-  override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
-    when (case.id) {
-      "inferred.annotations" -> return JavaBundle.message("inlay.annotation.hints.inferred.annotations")
-      "external.annotations" -> return JavaBundle.message("inlay.annotation.hints.external.annotations")
-    }
-    return null
-  }
-
-  override val previewText: String? = null
-
-  private val PREVIEW_ANNOTATION_KEY = Key.create<PsiAnnotation>("preview.annotation.key")
-
-  override fun preparePreview(editor: Editor, file: PsiFile, settings: Settings) {
-    val psiMethod = (file as PsiJavaFile).classes[0].methods[0]
-    val factory = PsiElementFactory.getInstance(file.project)
-    if (psiMethod.parameterList.isEmpty) {
-      PREVIEW_ANNOTATION_KEY.set(psiMethod, factory.createAnnotationFromText("@Deprecated", psiMethod))
-    }
-    else
-      PREVIEW_ANNOTATION_KEY.set(psiMethod.parameterList.getParameter(0), factory.createAnnotationFromText("@NotNull", psiMethod))
-  }
-
-  override fun createConfigurable(settings: Settings): ImmediateConfigurable {
-    return object : ImmediateConfigurable {
-      override fun createComponent(listener: ChangeListener): JComponent = panel {}
-
-      override val mainCheckboxText: String
-        get() = JavaBundle.message("settings.inlay.java.show.hints.for")
-
-      override val cases: List<ImmediateConfigurable.Case>
-        get() = listOf(
-          ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.inferred.annotations"), "inferred.annotations", settings::showInferred),
-          ImmediateConfigurable.Case(JavaBundle.message("settings.inlay.java.external.annotations"), "external.annotations", settings::showExternal)
-        )
-    }
-  }
-
-  data class Settings(var showInferred: Boolean = false, var showExternal: Boolean = true)
-
-
-  class ToggleSettingsAction(@NlsActions.ActionText val text: String, val prop: KMutableProperty0<Boolean>, val settings: Settings) : AnAction() {
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.text = text
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val project = e.project ?: return
-      prop.set(!prop.get())
-      val storage = InlayHintsSettings.instance()
-      storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "AnnotationInlayProvider.ToggleSettingsAction.actionPerformed")
-    }
-
   }
 }
 
-class InsertAnnotationAction(
-  private val project: Project,
-  private val file: PsiFile,
-  private val element: PsiModifierListOwner
-) : AnAction() {
-  override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = file.virtualFile?.isInLocalFileSystem == true
-    e.presentation.text = JavaBundle.message("settings.inlay.java.insert.annotation")
+private fun InlayTreeSink.addAnnotationPresentation(
+  annotation: PsiAnnotation,
+  project: Project,
+  position: InlayPosition,
+  hintFormat: HintFormat,
+  payloads: List<InlayPayload>,
+) {
+  addPresentation(position, hintFormat = hintFormat, payloads = payloads) {
+    text("@")
+    text(annotation.nameReferenceElement?.referenceName ?: "",
+         annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+    val parameterList = annotation.parameterList
+    val attributes = parameterList.attributes
+    if (attributes.isNotEmpty()) {
+      collapsibleList(
+        state = if (parameterList.textLength > 60) CollapseState.Collapsed else CollapseState.Expanded,
+        collapsedState = {
+          toggleButton { text("(...)") }
+        },
+        expandedState = {
+          toggleButton { text("(") }
+          attributes.joinPresentations(separator = { text(", ") }) { attribute ->
+            val name = attribute.name
+            if (name != null) {
+              text(name, attribute.reference?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+              text(" = ")
+            }
+            text(attribute.value?.text ?: "")
+          }
+          toggleButton { text(")") }
+        }
+      )
+    }
   }
+}
 
+private fun calcModifierListHintPosition(element: PsiModifierListOwner): InlayPosition? {
+  val offset = element.modifierList?.textRange?.startOffset ?: return null
+  val prevSibling = element.prevSibling
+  return when {
+    // element is first in line
+    prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') -> {
+      AboveLineIndentedPosition(offset, verticalPriority = BlockInlayPriority.ANNOTATIONS)
+    }
+    else -> {
+      InlineInlayPosition(offset, relatedToPrevious = false, priority = 1)
+    }
+  }
+}
+
+private fun calcTypeHintPosition(element: PsiModifierListOwner): InlineInlayPosition? {
+  val typeElement = when (element) {
+                      is PsiVariable -> element.typeElement
+                      is PsiMethod -> element.returnTypeElement
+                      else -> null
+                    } ?: return null
+  val anchor = typeElement.children.firstOrNull { PsiUtil.isJavaToken(it, ARRAY_TYPE_START) } ?: typeElement
+  val offset = anchor.textRange.startOffset
+  return InlineInlayPosition(offset, relatedToPrevious = false, priority = 0)
+}
+
+private fun isTypeAnno(annotation: PsiAnnotation): Boolean {
+  val qualifiedName = annotation.qualifiedName ?: return false
+  val typeAnno = qualifiedName == AnnotationUtil.NOT_NULL ||
+                 qualifiedName == AnnotationUtil.NULLABLE ||
+                 qualifiedName == AnnotationUtil.UNKNOWN_NULLABILITY ||
+                 qualifiedName == Mutability.UNMODIFIABLE_ANNOTATION ||
+                 qualifiedName == Mutability.UNMODIFIABLE_VIEW_ANNOTATION
+  return typeAnno && PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, annotation)
+}
+
+private fun SmartPsiElementPointer<*>.toNavigateInlayAction(): InlayActionData {
+  return InlayActionData(PsiPointerInlayActionPayload(this), PsiPointerInlayActionNavigationHandler.HANDLER_ID)
+}
+
+private fun <T> Array<T>.joinPresentations(separator: () -> Unit, transform: (T) -> Unit) {
+  if (isEmpty()) return
+  transform(first())
+  for (i in 1..<size) {
+    separator()
+    transform(get(i))
+  }
+}
+
+class InsertAnnotationAction() : AnAction() {
+  override fun update(e: AnActionEvent) {
+    if (e.hasAnnotationProviderId()) {
+      e.presentation.isEnabledAndVisible = e.psiFile?.virtualFile?.isInLocalFileSystem == true
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    if (!e.hasAnnotationProviderId()) return
+    val project = e.project ?: return
+    val file = e.psiFile ?: return
+    val payload = e.inlayPayloads?.get(LIST_OWNER_ELEMENT) as? PsiPointerInlayActionPayload ?: return
     val intention = MakeInferredAnnotationExplicit()
+    val element = payload.pointer.element as? PsiModifierListOwner ?: return
     if (intention.isAvailable(file, element)) {
       intention.makeAnnotationsExplicit(project, file, element)
     }
   }
 }
 
-private val ourKey: SettingsKey<AnnotationInlayProvider.Settings> = SettingsKey("annotation.hints")
+abstract class ToggleAnnotationsOptionAction(
+  private val optionId: String,
+  private val turnOnKey: @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String,
+  private val turnOffKey: @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String,
+  private val shouldEnableAndShowToggle: (tag: String) -> Boolean,
+) : AnAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    if (e.editor != null && e.hasAnnotationProviderId() && shouldEnableAndShowToggle(e.togglesToShowTag)) {
+      e.presentation.isEnabledAndVisible = true
+      val isOptionEnabled = DeclarativeInlayHintsSettings.getInstance()
+        .isOptionEnabled(optionId, AnnotationInlayProvider.PROVIDER_ID) == true
+      e.presentation.text = JavaBundle.message(
+        if (isOptionEnabled) turnOffKey
+        else turnOnKey
+      )
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val editor = e.editor ?: return
+    val project = e.project ?: return
+    WriteAction.run<Throwable> {
+      DeclarativeInlayHintsSettings.getInstance().apply {
+        val isOptionEnabled = isOptionEnabled(optionId, AnnotationInlayProvider.PROVIDER_ID) == true
+        setOptionEnabled(optionId, AnnotationInlayProvider.PROVIDER_ID, !isOptionEnabled)
+      }
+    }
+    DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
+  }
+}
+
+class ToggleInferredAnnotationsAction : ToggleAnnotationsOptionAction(
+  optionId = AnnotationInlayProvider.SHOW_INFERRED,
+  turnOnKey = "settings.inlay.java.turn.on.showInferred.annotations",
+  turnOffKey = "settings.inlay.java.turn.off.showInferred.annotations",
+  shouldEnableAndShowToggle = { tag -> tag == SHOW_EXTERNAL_AND_INTERNAL_TOGGLES_TAG }
+)
+
+class ToggleExternalAnnotationsAction : ToggleAnnotationsOptionAction(
+  optionId = AnnotationInlayProvider.SHOW_EXTERNAL,
+  turnOnKey = "settings.inlay.java.turn.on.showExternal.annotations",
+  turnOffKey = "settings.inlay.java.turn.off.showExternal.annotations",
+  shouldEnableAndShowToggle = { true }
+)
+
+private fun AnActionEvent.hasAnnotationProviderId(): Boolean =
+  getData(InlayHintsProvider.PROVIDER_ID) == AnnotationInlayProvider.PROVIDER_ID
+
+private val AnActionEvent.inlayPayloads: Map<String, InlayActionPayload>?
+  get() = getData(InlayHintsProvider.INLAY_PAYLOADS)
+
+private val AnActionEvent.togglesToShowTag: String
+  get() = inlayPayloads
+            ?.get(TOGGLES_TO_SHOW)
+            ?.let { (it as? StringInlayActionPayload)?.text }
+          ?: error("Annotation inlay hint does not specify option toggles correctly")
+
+private val AnActionEvent.editor: Editor?
+  get() = CommonDataKeys.EDITOR.getData(this.dataContext)
+
+private val AnActionEvent.psiFile: PsiFile?
+  get() = getData(CommonDataKeys.PSI_FILE)

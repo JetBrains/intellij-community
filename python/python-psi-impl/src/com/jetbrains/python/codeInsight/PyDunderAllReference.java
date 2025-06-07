@@ -87,8 +87,7 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
     return ArrayUtil.toObjectArray(result);
   }
 
-  @NotNull
-  private static LookupElement toLookupElement(@NotNull String name, @NotNull PsiElement element, boolean withIcon) {
+  private static @NotNull LookupElement toLookupElement(@NotNull String name, @NotNull PsiElement element, boolean withIcon) {
     final LookupElementBuilder builder = LookupElementBuilder.createWithSmartPointer(name, element);
     return withIcon ? builder.withIcon(element.getIcon(0)) : builder;
   }

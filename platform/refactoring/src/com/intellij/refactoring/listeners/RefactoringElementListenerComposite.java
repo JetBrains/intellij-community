@@ -16,14 +16,14 @@ public final class RefactoringElementListenerComposite implements RefactoringEle
   }
 
   @Override
-  public void elementMoved(@NotNull final PsiElement newElement){
+  public void elementMoved(final @NotNull PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementMoved(newElement);
     }
   }
 
   @Override
-  public void elementRenamed(@NotNull final PsiElement newElement){
+  public void elementRenamed(final @NotNull PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementRenamed(newElement);
     }

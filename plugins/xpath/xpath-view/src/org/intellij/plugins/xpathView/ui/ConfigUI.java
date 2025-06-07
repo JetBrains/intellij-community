@@ -106,8 +106,7 @@ public class ConfigUI extends JPanel {
         colors.add(chooseContext, constraints);
     }
 
-    @NotNull
-    public Config getConfig() {
+    public @NotNull Config getConfig() {
         final Config config = new Config();
         config.setHighlightStartTagOnly(highlightStartTagOnly.isSelected());
         config.setUseContextAtCursor(useContextAtCursor.isSelected());

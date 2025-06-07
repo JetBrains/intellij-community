@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -66,9 +65,8 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     return canCopyClass(fromUpdate, elements);
   }
 
-  @NotNull
   @Override
-  public String getActionName(PsiElement[] elements) {
+  public @NotNull String getActionName(PsiElement[] elements) {
     if (elements.length == 1 && !(elements[0] instanceof PsiPackage) && !(elements[0] instanceof PsiDirectory)) {
       return JavaRefactoringBundle.message("copy.handler.copy.class.with.dialog");
     }
@@ -84,11 +82,10 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     return convertToTopLevelClasses(elements, fromUpdate, null, null) != null;
   }
 
-  @Nullable
-  private static Map<PsiFile, PsiClass[]> convertToTopLevelClasses(final PsiElement[] elements,
-                                                                   final boolean fromUpdate,
-                                                                   String relativePath,
-                                                                   Map<PsiFile, String> relativeMap) {
+  private static @Nullable Map<PsiFile, PsiClass[]> convertToTopLevelClasses(final PsiElement[] elements,
+                                                                             final boolean fromUpdate,
+                                                                             String relativePath,
+                                                                             Map<PsiFile, String> relativeMap) {
     final Map<PsiFile, PsiClass[]> result = new HashMap<>();
     for (PsiElement element : elements) {
       final PsiElement navigationElement = element.getNavigationElement();
@@ -107,7 +104,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
           if (element instanceof PsiDirectory) {
             if (!fromUpdate) {
               final String name = ((PsiDirectory)element).getName();
-              final String path = relativePath != null ? (relativePath.length() > 0 ? (relativePath + "/") : "") + name : null;
+              final String path = relativePath != null ? (!relativePath.isEmpty() ? (relativePath + "/") : "") + name : null;
               final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), false, path, relativeMap);
               if (map == null) return null;
               for (Map.Entry<PsiFile, PsiClass[]> entry : map.entrySet()) {
@@ -139,8 +136,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     }
   }
 
-  @Nullable
-  private static String normalizeRelativeMap(Map<PsiFile, String> relativeMap) {
+  private static @Nullable String normalizeRelativeMap(Map<PsiFile, String> relativeMap) {
     String vector = null;
     for (String relativePath : relativeMap.values()) {
       if (vector == null) {
@@ -215,7 +211,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
         openInEditor = dialog.isOpenInEditor();
         targetDirectory = dialog.getTargetDirectory();
         className = dialog.getClassName();
-        if (className == null || className.length() == 0) return;
+        if (className == null || className.isEmpty()) return;
       }
     }
     else {
@@ -324,11 +320,10 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     processor.executeCommand(project, command, commandName, null);
   }
 
-  @NotNull
-  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                                  final String copyClassName,
-                                                  final PsiDirectory targetDirectory,
-                                                  final Project project) throws IncorrectOperationException {
+  public static @NotNull Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+                                                           final String copyClassName,
+                                                           final PsiDirectory targetDirectory,
+                                                           final Project project) throws IncorrectOperationException {
     return doCopyClasses(fileToClasses, null, copyClassName, targetDirectory, project);
   }
 
@@ -357,39 +352,33 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
   private static <E extends IncorrectOperationException> void runWriteAction(@NotNull Project project,
                                                                              @NotNull @NlsContexts.ProgressTitle String title,
                                                                              @NotNull ThrowableConsumer<@Nullable ProgressIndicator, E> consumer) throws E {
-    if (Registry.is("run.refactorings.under.progress")){
-      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-      AtomicReference<Throwable> thrown = new AtomicReference<>();
-      if (!application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
-        try {
-          consumer.consume(progress);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          thrown.set(e);
-        }
-      })) {
-        return;
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
+    if (!application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
+      try {
+        consumer.consume(progress);
       }
-      Throwable throwable = thrown.get();
-      if (throwable instanceof IncorrectOperationException) {
-        throw (IncorrectOperationException) throwable;
-      } else if (throwable != null) {
-        throw new IncorrectOperationException(throwable);
+      catch (ProcessCanceledException e) {
+        throw e;
       }
+      catch (Throwable e) {
+        thrown.set(e);
+      }
+    })) {
+      return;
     }
-    else {
-      WriteAction.run(() -> consumer.consume(null));
+    Throwable throwable = thrown.get();
+    if (throwable instanceof IncorrectOperationException) {
+      throw (IncorrectOperationException) throwable;
+    } else if (throwable != null) {
+      throw new IncorrectOperationException(throwable);
     }
   }
 
-  @NotNull
-  public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                                  @Nullable HashMap<PsiFile, String> fileToRelativePath, final String copyClassName,
-                                                  final PsiDirectory targetDirectory,
-                                                  final Project project) throws IncorrectOperationException {
+  public static @NotNull Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
+                                                           @Nullable HashMap<PsiFile, String> fileToRelativePath, final String copyClassName,
+                                                           final PsiDirectory targetDirectory,
+                                                           final Project project) throws IncorrectOperationException {
     final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     final DumbService dumbService = DumbService.getInstance(project);
@@ -521,9 +510,8 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     return "";
   }
 
-  @NotNull
-  private static MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper buildRelativeDir(final @NotNull PsiDirectory directory,
-                                                                                           final @Nullable String relativePath) {
+  private static @NotNull MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper buildRelativeDir(final @NotNull PsiDirectory directory,
+                                                                                                    final @Nullable String relativePath) {
     if (StringUtil.isEmpty(relativePath)) return new MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper(directory);
     MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper current = null;
     for (String pathElement : relativePath.split("/")) {
@@ -545,8 +533,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     return classCopy;
   }
 
-  @Nullable
-  private static PsiClass findByName(PsiClass[] classes, String name) {
+  private static @Nullable PsiClass findByName(PsiClass[] classes, String name) {
     if (name != null) {
       for (PsiClass aClass : classes) {
         if (name.equals(aClass.getName())) {
@@ -563,7 +550,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     final LocalSearchScope searchScope = new LocalSearchScope(element);
     for (PsiClass aClass : oldToNewMap.keySet()) {
       final PsiElement newClass = oldToNewMap.get(aClass);
-      for (PsiReference reference : ReferencesSearch.search(aClass, searchScope)) {
+      for (PsiReference reference : ReferencesSearch.search(aClass, searchScope).asIterable()) {
         rebindExpressions.add(reference.bindToElement(newClass));
       }
     }

@@ -1,21 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.EelUserInfo
-import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
-import kotlin.Throws
-
-val EelFileSystemApi.pathOs: EelPath.Absolute.OS
-  get() = when (this) {
-    is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
-    is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
-    else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
-  }
 
 val EelFileSystemApi.pathSeparator: String
   get() = when (this) {
@@ -24,9 +15,11 @@ val EelFileSystemApi.pathSeparator: String
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
   }
 
-fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPath.Absolute {
-  return EelPath.Absolute.parse(pathOs, string, *other)
+fun EelFileSystemApi.getPath(string: String): EelPath {
+  return EelPath.parse(string, descriptor)
 }
+
+interface LocalEelFileSystemApi : EelFileSystemApi
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
@@ -38,10 +31,13 @@ interface EelFileSystemApi {
    */
   val user: EelUserInfo
 
+  val descriptor: EelDescriptor
+
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
-  suspend fun listDirectory(path: EelPath.Absolute): EelResult<
+  @CheckReturnValue
+  suspend fun listDirectory(path: EelPath): EelResult<
     Collection<String>,
     ListDirectoryError>
 
@@ -53,12 +49,33 @@ interface EelFileSystemApi {
    * [symlinkPolicy] controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
+  @CheckReturnValue
+  @Deprecated("Use the method with the builder")
   suspend fun listDirectoryWithAttrs(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: SymlinkPolicy,
   ): EelResult<
     Collection<Pair<String, EelFileInfo>>,
     ListDirectoryError>
+
+  /**
+   * Returns names of files in a directory and the attributes of the corresponding files.
+   * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
+   *  TODO Is it an expected behaviour?
+   *
+   * [symlinkPolicy] controls resolution of symlinks among children.
+   *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
+   */
+  @CheckReturnValue
+  suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: ListDirectoryWithAttrsArgs): EelResult<
+    Collection<Pair<String, EelFileInfo>>,
+    ListDirectoryError> =
+    listDirectoryWithAttrs(path = args.path, symlinkPolicy = args.symlinkPolicy)
+
+  interface ListDirectoryWithAttrsArgs {
+    val path: EelPath
+    val symlinkPolicy: SymlinkPolicy get() = SymlinkPolicy.DO_NOT_RESOLVE
+  }
 
   @Suppress("unused")
   sealed interface ListDirectoryError : EelFsError {
@@ -71,8 +88,9 @@ interface EelFileSystemApi {
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
-  suspend fun canonicalize(path: EelPath.Absolute): EelResult<
-    EelPath.Absolute,
+  @CheckReturnValue
+  suspend fun canonicalize(path: EelPath): EelResult<
+    EelPath,
     CanonicalizeError>
 
   sealed interface CanonicalizeError : EelFsError {
@@ -86,7 +104,21 @@ interface EelFileSystemApi {
   /**
    * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
    */
-  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): EelResult<EelFileInfo, StatError>
+  @CheckReturnValue
+  @Deprecated("Use the method with the builder")
+  suspend fun stat(path: EelPath, symlinkPolicy: SymlinkPolicy): EelResult<EelFileInfo, StatError>
+
+  /**
+   * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
+   */
+  @CheckReturnValue
+  suspend fun stat(@GeneratedBuilder args: StatArgs): EelResult<EelFileInfo, StatError> =
+    stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
+
+  interface StatArgs {
+    val path: EelPath
+    val symlinkPolicy: SymlinkPolicy get() = SymlinkPolicy.DO_NOT_RESOLVE
+  }
 
   /**
    * Defines the behavior of FS operations on symbolic links
@@ -122,7 +154,8 @@ interface EelFileSystemApi {
    * On Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
-  suspend fun sameFile(source: EelPath.Absolute, target: EelPath.Absolute): EelResult<
+  @CheckReturnValue
+  suspend fun sameFile(source: EelPath, target: EelPath): EelResult<
     Boolean,
     SameFileError>
 
@@ -137,7 +170,8 @@ interface EelFileSystemApi {
   /**
    * Opens the file only for reading
    */
-  suspend fun openForReading(path: EelPath.Absolute): EelResult<
+  @CheckReturnValue
+  suspend fun openForReading(path: EelPath): EelResult<
     EelOpenedFile.Reader,
     FileReaderError>
 
@@ -150,20 +184,47 @@ interface EelFileSystemApi {
     interface Other : FileReaderError, EelFsError.Other
   }
 
+  enum class OverflowPolicy {
+    DROP,
+    RETAIN,
+  }
+
+  sealed interface FullReadResult {
+    interface Overflow : FullReadResult
+    interface BytesOverflown : FullReadResult {
+      val bytes: ByteArray
+    }
+
+    interface Bytes : FullReadResult {
+      val bytes: ByteArray
+    }
+  }
+
+  @CheckReturnValue
+  suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: OverflowPolicy): EelResult<FullReadResult, FullReadError>
+
+  sealed interface FullReadError : EelFsError {
+    interface DoesNotExist : FullReadError, EelFsError.DoesNotExist
+    interface PermissionDenied : FullReadError, EelFsError.PermissionDenied
+    interface NotFile : FullReadError, EelFsError.NotFile
+    interface Other : FullReadError, EelFsError.Other
+  }
+
   /**
    * Opens the file only for writing
    */
+  @CheckReturnValue
   suspend fun openForWriting(
-    options: WriteOptions,
+    @GeneratedBuilder options: WriteOptions,
   ): EelResult<
     EelOpenedFile.Writer,
     FileWriterError>
 
   sealed interface WriteOptions {
-    val path: EelPath.Absolute
-    val append: Boolean
-    val truncateExisting: Boolean
-    val creationMode: FileWriterCreationMode
+    val path: EelPath
+    val append: Boolean get() = false
+    val truncateExisting: Boolean get() = true
+    val creationMode: FileWriterCreationMode get() = FileWriterCreationMode.ALLOW_CREATE
 
     interface Builder {
       /**
@@ -188,7 +249,7 @@ interface EelFileSystemApi {
     }
 
     companion object {
-      fun Builder(path: EelPath.Absolute): Builder = WriteOptionsImpl(path)
+      fun Builder(path: EelPath): Builder = WriteOptionsImpl2(path)
     }
   }
 
@@ -205,43 +266,35 @@ interface EelFileSystemApi {
     interface Other : FileWriterError, EelFsError.Other
   }
 
-  suspend fun openForReadingAndWriting(options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
+  @CheckReturnValue
+  suspend fun openForReadingAndWriting(@GeneratedBuilder options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
 
-  @Throws(DeleteException::class)
-  suspend fun delete(path: EelPath.Absolute, removeContent: Boolean)
+  @CheckReturnValue
+  suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, DeleteError>
 
-  sealed class DeleteException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                             additionalMessage), EelFsError.DoesNotExist
-
-    class DirNotEmpty(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                            additionalMessage), EelFsError.DirNotEmpty
-
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                                 additionalMessage), EelFsError.PermissionDenied
+  sealed interface DeleteError : EelFsError {
+    interface DoesNotExist : DeleteError, EelFsError.DoesNotExist
+    interface DirNotEmpty : DeleteError, EelFsError.DirNotEmpty
+    interface PermissionDenied : DeleteError, EelFsError.PermissionDenied
 
     /**
      * Thrown only when `followLinks` is specified for [delete]
      */
-    class UnresolvedLink(where: EelPath.Absolute) : DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
-    class Other(where: EelPath.Absolute, additionalMessage: String)
-      : DeleteException(where, additionalMessage), EelFsError.Other
+    interface UnresolvedLink : DeleteError
+    interface Other : DeleteError, EelFsError.Other
   }
 
-  @Throws(CopyException::class)
-  suspend fun copy(options: CopyOptions)
+  @CheckReturnValue
+  suspend fun copy(@GeneratedBuilder options: CopyOptions): EelResult<Unit, CopyError>
 
   sealed interface CopyOptions {
-    val source: EelPath.Absolute
-    val target: EelPath.Absolute
-    val copyRecursively: Boolean
-    val replaceExisting: Boolean
-    val preserveAttributes: Boolean
-    val interruptible: Boolean
-    val followLinks: Boolean
+    val source: EelPath
+    val target: EelPath
+    val copyRecursively: Boolean get() = false
+    val replaceExisting: Boolean get() = false
+    val preserveAttributes: Boolean get() = false
+    val interruptible: Boolean get() = false
+    val followLinks: Boolean get() = false
 
     interface Builder {
       /**
@@ -263,20 +316,20 @@ interface EelFileSystemApi {
     }
 
     companion object {
-      fun Builder(source: EelPath.Absolute, target: EelPath.Absolute): Builder = CopyOptionsImpl(source, target)
+      fun Builder(source: EelPath, target: EelPath): Builder = CopyOptionsImpl2(source, target)
     }
   }
 
-  sealed class CopyException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : CopyException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class TargetAlreadyExists(where: EelPath.Absolute) : CopyException(where, "Target already exists"), EelFsError.AlreadyExists
-    class PermissionDenied(where: EelPath.Absolute) : CopyException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NotEnoughSpace(where: EelPath.Absolute) : CopyException(where, "Not enough space"), EelFsError.NotEnoughSpace
-    class NameTooLong(where: EelPath.Absolute) : CopyException(where, "Name too long"), EelFsError.NameTooLong
-    class ReadOnlyFileSystem(where: EelPath.Absolute) : CopyException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-    class FileSystemError(where: EelPath.Absolute, additionalMessage: String) : CopyException(where, additionalMessage), EelFsError.Other
-    class TargetDirNotEmpty(where: EelPath.Absolute) : CopyException(where, "Target directory is not empty"), EelFsError.DirNotEmpty
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CopyException(where, additionalMessage), EelFsError.Other
+  sealed interface CopyError : EelFsError {
+    interface SourceDoesNotExist : CopyError, EelFsError.DoesNotExist
+    interface TargetAlreadyExists : CopyError, EelFsError.AlreadyExists
+    interface PermissionDenied : CopyError, EelFsError.PermissionDenied
+    interface NotEnoughSpace : CopyError, EelFsError.NotEnoughSpace
+    interface NameTooLong : CopyError, EelFsError.NameTooLong
+    interface ReadOnlyFileSystem : CopyError, EelFsError.ReadOnlyFileSystem
+    interface FileSystemError : CopyError, EelFsError.Other
+    interface TargetDirNotEmpty : CopyError, EelFsError.DirNotEmpty
+    interface Other : CopyError, EelFsError.Other
   }
 
   enum class ReplaceExistingDuringMove {
@@ -288,18 +341,35 @@ interface EelFileSystemApi {
     DO_NOT_REPLACE,
   }
 
-  @Throws(MoveException::class)
-  suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: ReplaceExistingDuringMove, followLinks: Boolean)
+  @CheckReturnValue
+  @Deprecated("Use the method with the builder")
+  suspend fun move(
+    source: EelPath,
+    target: EelPath,
+    replaceExisting: ReplaceExistingDuringMove,
+    followLinks: Boolean,
+  ): EelResult<Unit, MoveError>
 
-  sealed class MoveException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class TargetAlreadyExists(where: EelPath.Absolute) : MoveException(where, "Target already exists"), EelFsError.AlreadyExists
-    class TargetIsDirectory(where: EelPath.Absolute) : MoveException(where, "Target already exists and it is a directory"), EelFsError.AlreadyExists
-    class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), EelFsError.NameTooLong
-    class ReadOnlyFileSystem(where: EelPath.Absolute) : MoveException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-    class FileSystemError(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
-    class Other(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
+  @CheckReturnValue
+  suspend fun move(@GeneratedBuilder args: MoveArgs): EelResult<Unit, MoveError> =
+    move(source = args.source, target = args.target, replaceExisting = args.replaceExisting, followLinks = args.followLinks)
+
+  interface MoveArgs {
+    val source: EelPath
+    val target: EelPath
+    val replaceExisting: ReplaceExistingDuringMove get() = ReplaceExistingDuringMove.REPLACE_EVERYTHING
+    val followLinks: Boolean get() = false
+  }
+
+  sealed interface MoveError : EelFsError {
+    interface SourceDoesNotExist : MoveError, EelFsError.DoesNotExist
+    interface TargetAlreadyExists : MoveError, EelFsError.AlreadyExists
+    interface TargetIsDirectory : MoveError, EelFsError.AlreadyExists
+    interface PermissionDenied : MoveError, EelFsError.PermissionDenied
+    interface NameTooLong : MoveError, EelFsError.NameTooLong
+    interface ReadOnlyFileSystem : MoveError, EelFsError.ReadOnlyFileSystem
+    interface FileSystemError : MoveError, EelFsError.Other
+    interface Other : MoveError, EelFsError.Other
   }
 
   /**
@@ -312,9 +382,10 @@ interface EelFileSystemApi {
   }
 
   interface ChangeAttributesOptions {
-    val accessTime: TimeSinceEpoch?
-    val modificationTime: TimeSinceEpoch?
-    val permissions: EelFileInfo.Permissions?
+    val path: EelPath
+    val accessTime: TimeSinceEpoch? get() = null
+    val modificationTime: TimeSinceEpoch? get() = null
+    val permissions: EelFileInfo.Permissions? get() = null
 
     interface Builder {
       fun permissions(permissions: EelFileInfo.Permissions): Builder
@@ -325,47 +396,56 @@ interface EelFileSystemApi {
     }
 
     companion object {
-      fun Builder(): Builder = ChangeAttributesOptionsImpl()
+      fun Builder(): Builder = ChangeAttributesOptionsImpl2()
     }
   }
 
-  sealed class ChangeAttributesException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : ChangeAttributesException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class PermissionDenied(where: EelPath.Absolute) : ChangeAttributesException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NameTooLong(where: EelPath.Absolute) : ChangeAttributesException(where, "Name too long"), EelFsError.NameTooLong
-    class Other(where: EelPath.Absolute, additionalMessage: String) : ChangeAttributesException(where, additionalMessage), EelFsError.Other
+  sealed interface ChangeAttributesError : EelFsError {
+    interface SourceDoesNotExist : ChangeAttributesError, EelFsError.DoesNotExist
+    interface PermissionDenied : ChangeAttributesError, EelFsError.PermissionDenied
+    interface NameTooLong : ChangeAttributesError, EelFsError.NameTooLong
+    interface Other : ChangeAttributesError, EelFsError.Other
   }
 
-  @Throws(ChangeAttributesException::class)
-  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions)
+  @CheckReturnValue
+  @Deprecated("Use the method with the builder")
+  suspend fun changeAttributes(path: EelPath, options: ChangeAttributesOptions): EelResult<Unit, ChangeAttributesError>
 
-  suspend fun createTemporaryDirectory(options: CreateTemporaryDirectoryOptions): EelResult<
-    EelPath.Absolute,
-    CreateTemporaryDirectoryError>
+  @CheckReturnValue
+  suspend fun changeAttributes(@GeneratedBuilder args: ChangeAttributesOptions): EelResult<Unit, ChangeAttributesError> =
+    changeAttributes(path = args.path, options = args)
 
-  interface CreateTemporaryDirectoryOptions {
-    val prefix: String
-    val suffix: String
-    val deleteOnExit: Boolean
-    val parentDirectory: EelPath.Absolute?
+  @CheckReturnValue
+  suspend fun createTemporaryDirectory(@GeneratedBuilder options: CreateTemporaryEntryOptions): EelResult<
+    EelPath,
+    CreateTemporaryEntryError>
+
+  @CheckReturnValue
+  suspend fun createTemporaryFile(@GeneratedBuilder options: CreateTemporaryEntryOptions): EelResult<EelPath, CreateTemporaryEntryError>
+
+  interface CreateTemporaryEntryOptions {
+    val prefix: String get() = ""
+    val suffix: String get() = ""
+    val deleteOnExit: Boolean get() = false
+    val parentDirectory: EelPath? get() = null
 
     interface Builder {
       fun prefix(prefix: String): Builder
       fun suffix(suffix: String): Builder
       fun deleteOnExit(deleteOnExit: Boolean): Builder
-      fun parentDirectory(parentDirectory: EelPath.Absolute?): Builder
-      fun build(): CreateTemporaryDirectoryOptions
+      fun parentDirectory(parentDirectory: EelPath?): Builder
+      fun build(): CreateTemporaryEntryOptions
     }
 
     companion object {
-      fun Builder(): Builder = CreateTemporaryDirectoryOptionsImpl()
+      fun Builder(): Builder = CreateTemporaryEntryOptionsImpl2()
     }
   }
 
-  sealed interface CreateTemporaryDirectoryError : EelFsError {
-    interface NotDirectory : CreateTemporaryDirectoryError, EelFsError.NotDirectory
-    interface PermissionDenied : CreateTemporaryDirectoryError, EelFsError.PermissionDenied
-    interface Other : CreateTemporaryDirectoryError, EelFsError.Other
+  sealed interface CreateTemporaryEntryError : EelFsError {
+    interface NotDirectory : CreateTemporaryEntryError, EelFsError.NotDirectory
+    interface PermissionDenied : CreateTemporaryEntryError, EelFsError.PermissionDenied
+    interface Other : CreateTemporaryEntryError, EelFsError.Other
   }
 
   companion object Arguments {
@@ -376,7 +456,8 @@ interface EelFileSystemApi {
   /**
    * Returns information about a logical disk that contains [path].
    */
-  suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<DiskInfo, DiskInfoError>
+  @CheckReturnValue
+  suspend fun getDiskInfo(path: EelPath): EelResult<DiskInfo, DiskInfoError>
 
   interface DiskInfo {
     /**
@@ -398,22 +479,121 @@ interface EelFileSystemApi {
     interface NameTooLong : DiskInfoError, EelFsError.NameTooLong
     interface Other : DiskInfoError, EelFsError.Other
   }
-}
 
-sealed interface EelOpenedFile {
-  val path: EelPath.Absolute
-
-  @Throws(CloseException::class)
-  suspend fun close()
-
-  sealed class CloseException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class Other(where: EelPath.Absolute, additionalMessage: String)
-      : CloseException(where, additionalMessage), EelFsError.Other
+  /**
+   * Adds the watched paths from the specified set of file paths and provides a flow of change events.
+   * A path is watched till [unwatch] method is explicitly called for it.
+   *
+   * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
+   * ```
+   * val flow = eel.fs.watchChanges(
+   *     WatchOptionsBuilder()
+   *         .changeTypes(setOf(EelFileSystemApi.FileChangeType.CHANGED))
+   *         .paths(setOf(eelPath))
+   *         .build())
+   * ```
+   *
+   * @param watchOptions The options to use for file watching. See [WatchOptions]
+   * @return A flow emitting [PathChange] instances that indicate the path and type of change.
+   *         Each path is an absolute path on the target system (container), for example, `/home/myproject/myfile.txt`
+   * @throws UnsupportedOperationException if the method isn't implemented for the file system.
+   */
+  @Throws(UnsupportedOperationException::class)
+  suspend fun watchChanges(@GeneratedBuilder watchOptions: WatchOptions): Flow<PathChange> {
+    throw UnsupportedOperationException()
   }
 
+  /**
+   * Unregisters a previously watched path.
+   *
+   * @param unwatchOptions The options specifying the path to be unwatched. See [UnwatchOptions].
+   * @return True if the operation was successful. False if the path hadn't been previously watched or unwatch failed.
+   *
+   * @throws UnsupportedOperationException if the method isn't implemented for the file system.
+   */
+  @Throws(UnsupportedOperationException::class)
+  suspend fun unwatch(@GeneratedBuilder unwatchOptions: UnwatchOptions): Boolean {
+    throw UnsupportedOperationException()
+  }
+
+  /**
+   * Represents a change detected in a specific path within the file system. It can be a change in the child directory if a recursive
+   * watch is enabled.
+   *
+   * @property path The absolute path in the file system associated with the change.
+   *                For example, "/home/user/documents/file.txt".
+   * @property type The type of change that occurred. See [FileChangeType],
+   */
+  interface PathChange {
+    val path: String
+    val type: FileChangeType
+  }
+
+  /**
+   * Provides configurations for specifying which file paths should be monitored and what types of file system changes should be watched.
+   *
+   * @property paths The set of file paths to monitor for changes with additional watch properties. See [WatchedPath]
+   * @property changeTypes The types of file system changes to monitor. This is a set of [FileChangeType] values.
+   */
+  interface WatchOptions {
+    val paths: Set<WatchedPath> get() = emptySet()
+    val changeTypes: Set<FileChangeType> get() = emptySet()
+  }
+
+
+  /**
+   * Represents a file system path being monitored for changes.
+   *
+   * @property path The file system path being watched.
+   * @property recursive Whether the file system changes should be monitored recursively within the specified path.
+   * @see [watchChanges]
+   */
+  interface WatchedPath {
+    val path: EelPath
+    val recursive: Boolean
+
+    interface Builder {
+      fun build(): WatchedPath
+      fun recursive(boolean: Boolean): Builder
+    }
+
+    companion object {
+      fun Builder(path: EelPath): Builder = WatchedPathBuilder(path)
+    }
+  }
+
+  /**
+   * Represents the options required to unregister a previously watched path in the file system.
+   *
+   * @property path The file system path to unwatch. Must be specified as an instance of [EelPath].
+   * @see [unwatch]
+   */
+  interface UnwatchOptions {
+    val path: EelPath
+  }
+
+  /**
+   * Represents the type of change that can occur to a file in the file system.
+   *
+   * - `CREATED`: A file has been created.
+   * - `DELETED`: A file has been deleted.
+   * - `CHANGED`: A file has been modified (either its content or attributes have changed).
+   */
+  enum class FileChangeType { CREATED, DELETED, CHANGED }
+}
+
+
+sealed interface EelOpenedFile {
+  val path: EelPath
+
+  @CheckReturnValue
+  suspend fun close(): EelResult<Unit, CloseError>
+
+  sealed interface CloseError : EelFsError {
+    interface Other : CloseError, EelFsError.Other
+  }
+
+  @CheckReturnValue
   suspend fun tell(): EelResult<
     Long,
     TellError>
@@ -422,6 +602,7 @@ sealed interface EelOpenedFile {
     interface Other : TellError, EelFsError.Other
   }
 
+  @CheckReturnValue
   suspend fun seek(offset: Long, whence: SeekWhence): EelResult<
     Long,
     SeekError>
@@ -442,6 +623,7 @@ sealed interface EelOpenedFile {
    * Sometimes, the files are inaccessible via [EelFileSystemApi.stat] -- for example, if they are deleted.
    * In this case, one can get the information about the opened file with the use of this function.
    */
+  @CheckReturnValue
   suspend fun stat(): EelResult<EelFileInfo, StatError>
 
 
@@ -450,14 +632,16 @@ sealed interface EelOpenedFile {
     /**
      * Reads data from the current position of the file (see [tell])
      *
-     * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
-     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes].
-     * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
+     * If the remote file is read completely,
+     * then this function returns [ReadResult] with [ReadResult.EOF].
+     * Otherwise, if there are any data left to read, then it returns [ReadResult.NOT_EOF].
+     * See [ReadResult] for usage receipts.
      *
      * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
      *
      * The implementation MAY read less data than the capacity of the buffer even if it's possible to read the whole requested buffer.
      */
+    @CheckReturnValue
     suspend fun read(buf: ByteBuffer): EelResult<ReadResult, ReadError>
 
     /**
@@ -467,14 +651,8 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY read less than [offset] bytes even if it's possible to read the whole requested buffer.
      */
+    @CheckReturnValue
     suspend fun read(buf: ByteBuffer, offset: Long): EelResult<ReadResult, ReadError>
-
-    sealed interface ReadResult {
-      interface EOF : ReadResult
-      interface Bytes : ReadResult {
-        val bytesRead: Int
-      }
-    }
 
     sealed interface ReadError : EelFsError {
       interface UnknownFile : ReadError, EelFsError.UnknownFile
@@ -489,6 +667,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
+    @CheckReturnValue
     suspend fun write(buf: ByteBuffer): EelResult<
       Int,
       WriteError>
@@ -498,6 +677,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
+    @CheckReturnValue
     suspend fun write(buf: ByteBuffer, pos: Long): EelResult<
       Int,
       WriteError>
@@ -514,35 +694,29 @@ sealed interface EelOpenedFile {
       interface Other : WriteError, EelFsError.Other
     }
 
-    @Throws(FlushException::class)
-    suspend fun flush()
+    @CheckReturnValue
+    suspend fun flush(): EelResult<Unit, FlushError>
 
-    sealed class FlushException(
-      where: EelPath.Absolute,
-      additionalMessage: String,
-    ) : EelFsIOException(where, additionalMessage) {
-      class Other(where: EelPath.Absolute, additionalMessage: String)
-        : FlushException(where, additionalMessage), EelFsError.Other
+    sealed interface FlushError : EelFsError {
+      interface Other : FlushError, EelFsError.Other
     }
 
-    @Throws(TruncateException::class)
-    suspend fun truncate(size: Long)
+    @CheckReturnValue
+    suspend fun truncate(size: Long): EelResult<Unit, TruncateError>
 
-    sealed class TruncateException(
-      where: EelPath.Absolute,
-      additionalMessage: String,
-    ) : EelFsIOException(where, additionalMessage) {
-      class UnknownFile(where: EelPath.Absolute) : TruncateException(where, "Could not find opened file"), EelFsError.UnknownFile
-      class NegativeOffset(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
-      class OffsetTooBig(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
-      class ReadOnlyFs(where: EelPath.Absolute) : TruncateException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-      class Other(where: EelPath.Absolute, additionalMessage: String)
-        : TruncateException(where, additionalMessage), EelFsError.Other
+    sealed interface TruncateError : EelFsError {
+      interface UnknownFile : TruncateError, EelFsError.UnknownFile
+      interface NegativeOffset : TruncateError
+      interface OffsetTooBig : TruncateError
+      interface ReadOnlyFs : TruncateError, EelFsError.ReadOnlyFileSystem
+      interface Other : TruncateError, EelFsError.Other
     }
   }
 
   interface ReaderWriter : Reader, Writer
 }
+
+interface LocalEelFileSystemPosixApi : EelFileSystemPosixApi, LocalEelFileSystemApi
 
 interface EelFileSystemPosixApi : EelFileSystemApi {
   override val user: EelUserPosixInfo
@@ -551,77 +725,120 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     // todo
   }
 
-  @Throws(CreateDirectoryException::class)
-  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>)
+  @CheckReturnValue
+  suspend fun createDirectory(path: EelPath, attributes: List<CreateDirAttributePosix>): EelResult<Unit, CreateDirectoryError>
 
-  sealed class CreateDirectoryException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class DirAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                          additionalMessage), EelFsError.AlreadyExists
-
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                           additionalMessage), EelFsError.AlreadyExists
-
-    class ParentNotFound(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                        additionalMessage), EelFsError.DoesNotExist
-
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                          additionalMessage), EelFsError.PermissionDenied
-
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.Other
+  sealed interface CreateDirectoryError : EelFsError {
+    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
+    interface Other : CreateDirectoryError, EelFsError.Other
   }
 
+  @Deprecated("Use the method with the builder")
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
+  @CheckReturnValue
+  override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
+    Collection<Pair<String, EelPosixFileInfo>>,
+    EelFileSystemApi.ListDirectoryError> =
+    listDirectoryWithAttrs(args)
+
+  @Deprecated("Use the method with the builder")
+  @CheckReturnValue
+  override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelPosixFileInfo,
     StatError>
 
+  @CheckReturnValue
+  override suspend fun stat(@GeneratedBuilder args: EelFileSystemApi.StatArgs): EelResult<EelPosixFileInfo, StatError> =
+    stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
 
   /**
    * Notice that the first argument is the target of the symlink,
    * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
+   *
+   * Here we provide a way to create symlinks to either relative or absolute location.
    */
-  @Throws(CreateSymbolicLinkException::class)
-  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute)
+  @CheckReturnValue
+  suspend fun createSymbolicLink(target: SymbolicLinkTarget, linkPath: EelPath): EelResult<Unit, CreateSymbolicLinkError>
 
-  sealed class CreateSymbolicLinkException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
+  sealed interface SymbolicLinkTarget {
+    companion object {
+      @JvmStatic
+      fun Absolute(path: EelPath): Absolute {
+        return AbsoluteSymbolicLinkTarget(path)
+      }
+
+      @JvmStatic
+      fun Relative(parts: List<String>): Relative {
+        return RelativeSymbolicLinkTarget(parts)
+      }
+    }
+
+    /**
+     * The created link will be pointing to some fixed location on an environment.
+     */
+    interface Absolute : SymbolicLinkTarget {
+      val path: EelPath
+    }
+
+    /**
+     * The created link will be pointing to a location relative to the path of the **link**.
+     * Such symbolic links may be safe to copy even between different machines.
+     *
+     * Example:
+     *
+     * Before:
+     * ```sh
+     * /tmp/d$ ls -l
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * ```
+     * After `createSymbolicLink(Relative("./d1/.."), EelPath.parse("/tmp/d/link"))`:
+     * ```sh
+     * /tmp/d$ ls -l
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> ./d1/..
+     * /tmp/d$ ls -l link2
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> ./d1/..
+     * ```
+     */
+    interface Relative : SymbolicLinkTarget {
+      val reference: List<String>
+    }
+  }
+
+  sealed interface CreateSymbolicLinkError : EelFsError {
     /**
      * Example: `createSymbolicLink("anywhere", "/directory_that_does_not_exist")`
      */
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                         additionalMessage), EelFsError.DoesNotExist
+    interface DoesNotExist : CreateSymbolicLinkError, EelFsError.DoesNotExist
 
     /**
      * Examples:
      * * `createSymbolicLink("anywhere", "/etc/passwd")`
      * * `createSymbolicLink("anywhere", "/home")`
      */
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                              additionalMessage), EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateSymbolicLinkError, EelFsError.AlreadyExists
 
     /**
      * Example: `createSymbolicLink("anywhere", "/etc/passwd/oops")`
      */
-    class NotDirectory(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                         additionalMessage), EelFsError.NotDirectory
+    interface NotDirectory : CreateSymbolicLinkError, EelFsError.NotDirectory
 
     /**
      * Example:
      * * With non-root permissions: `createSymbolicLink("anywhere", "/root/oops")`
      */
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                             additionalMessage), EelFsError.PermissionDenied
+    interface PermissionDenied : CreateSymbolicLinkError, EelFsError.PermissionDenied
 
     /**
      * Everything else, including `ELOOP`.
@@ -632,44 +849,74 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
      * createSymbolicLink("anywhere", "/tmp/foobar/oops") // Other("something about ELOOP")
      * ```
      */
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                  additionalMessage), EelFsError.Other
+    interface Other : CreateSymbolicLinkError, EelFsError.Other
   }
 }
+
+interface LocalEelFileSystemWindowsApi : EelFileSystemWindowsApi, LocalEelFileSystemApi
 
 interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo
 
-  suspend fun getRootDirectories(): Collection<EelPath.Absolute>
+  suspend fun getRootDirectories(): Collection<EelPath>
 
+  @Deprecated("Use the method with the builder")
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
+  @CheckReturnValue
+  override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
+    Collection<Pair<String, EelWindowsFileInfo>>,
+    EelFileSystemApi.ListDirectoryError> =
+    listDirectoryWithAttrs(path = args.path, symlinkPolicy = args.symlinkPolicy)
+
+  @Deprecated("Use the method with the builder")
+  @CheckReturnValue
+  override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     StatError>
+
+  @CheckReturnValue
+  override suspend fun stat(@GeneratedBuilder args: EelFileSystemApi.StatArgs): EelResult<EelWindowsFileInfo, StatError> =
+    stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
 }
 
-suspend fun EelFileSystemApi.changeAttributes(path: EelPath.Absolute, setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit) {
+@CheckReturnValue
+@Deprecated("Use the method with the builder")
+suspend fun EelFileSystemApi.changeAttributes(
+  path: EelPath,
+  setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit,
+): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> {
   val options = EelFileSystemApi.ChangeAttributesOptions.Builder().apply(setup).build()
   return changeAttributes(path, options)
 }
 
-suspend fun EelFileSystemApi.openForWriting(path: EelPath.Absolute, setup: (EelFileSystemApi.WriteOptions.Builder).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
+@CheckReturnValue
+@Deprecated("Use the method with the builder")
+suspend fun EelFileSystemApi.openForWriting(path: EelPath, setup: (EelFileSystemApi.WriteOptions.Builder).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
   val options = EelFileSystemApi.WriteOptions.Builder(path).apply(setup).build()
   return openForWriting(options)
 }
 
-suspend fun EelFileSystemApi.copy(source: EelPath.Absolute, target: EelPath.Absolute, setup: (EelFileSystemApi.CopyOptions.Builder).() -> Unit) {
+@CheckReturnValue
+@Deprecated("Use the method with the builder")
+suspend fun EelFileSystemApi.copy(
+  source: EelPath,
+  target: EelPath,
+  setup: (EelFileSystemApi.CopyOptions.Builder).() -> Unit,
+): EelResult<Unit, EelFileSystemApi.CopyError> {
   val options = EelFileSystemApi.CopyOptions.Builder(source, target).apply(setup).build()
   return copy(options)
 }
 
-suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder).() -> Unit): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> {
-  val options = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply(setup).build()
+@CheckReturnValue
+@Deprecated("Use the method with the builder")
+suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryEntryOptions.Builder).() -> Unit): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
+  val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply(setup).build()
   return createTemporaryDirectory(options)
 }

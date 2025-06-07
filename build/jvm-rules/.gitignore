@@ -1,0 +1,5 @@
+.idea
+bazel-*
+.bazelbsp/
+jps-build-standalone.jar
+kotlin-compiler.jar

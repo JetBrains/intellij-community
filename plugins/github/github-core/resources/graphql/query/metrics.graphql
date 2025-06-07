@@ -1,0 +1,36 @@
+query metrics(
+  $allPRCountQuery: String!,
+  $openPRCountQuery: String!,
+  $openAuthoredPRCountQuery: String!,
+  $openAssigneePRCountQuery: String!,
+  $openReviewedPRCountQuery: String!,
+  $openReviewAssignedPRCountQuery: String!,
+) {
+  allPRCount: search(type: ISSUE, query: $allPRCountQuery) {
+    issueCount
+  }
+
+  openPRCount: search(type: ISSUE, query: $openPRCountQuery) {
+    issueCount
+  }
+
+  openAuthoredPRCount: search(type: ISSUE, query: $openAuthoredPRCountQuery) {
+    issueCount
+  }
+
+  openAssigneePRCount: search(type: ISSUE, query: $openAssigneePRCountQuery) {
+    issueCount
+  }
+
+  openReviewedPRCount: search(type: ISSUE, query: $openReviewedPRCountQuery) {
+    issueCount
+  }
+
+  openReviewAssignedPRCount: search(type: ISSUE, query: $openReviewAssignedPRCountQuery) {
+    issueCount
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
@@ -99,6 +100,16 @@ public final class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  static void addFallbackBackgroundPainter(IdeGlassPaneImpl glassPane, @NotNull Painter fallbackBackgroundPainter) {
+    PainterHelper painters = glassPane.getNamedPainters(EDITOR_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+
+    painters = glassPane.getNamedPainters(FRAME_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+  }
+
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
     PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
@@ -154,6 +165,39 @@ public final class IdeBackgroundUtil {
     createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 
+  /**
+   * Allows painting anything as a background for component and its children
+   */
+  @ApiStatus.Experimental
+  public static void createTemporaryBackgroundTransform(JComponent root,
+                                                        Painter painter,
+                                                        Disposable disposable) {
+    PainterHelper paintersHelper = new PainterHelper(root);
+    // In order not to expose MyGraphics class, we need to have a delegate that unwraps MyGraphics to Graphics2D
+    paintersHelper.addPainter(new Painter() {
+      @Override
+      public boolean needsRepaint() {
+        return painter.needsRepaint();
+      }
+
+      @Override
+      public void paint(Component component, Graphics2D g) {
+        painter.paint(component, MyGraphics.unwrap(g));
+      }
+
+      @Override
+      public void addListener(@NotNull Listener listener) {
+        painter.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Listener listener) {
+        painter.removeListener(listener);
+      }
+    }, root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
   private static void createTemporaryBackgroundTransform(JComponent root, PainterHelper painterHelper, Disposable disposable) {
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((c, g) -> {
       if (!UIUtil.isAncestor(root, c)) {
@@ -188,7 +232,8 @@ public final class IdeBackgroundUtil {
     }
   }
 
-  static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;

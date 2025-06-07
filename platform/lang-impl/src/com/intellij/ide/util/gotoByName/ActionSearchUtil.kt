@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
+import com.intellij.ide.ui.RegistryTextOptionDescriptor
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -9,12 +11,21 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.text.Matcher
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
 import kotlin.math.max
 
 private const val BONUS_FOR_SPACE_IN_PATTERN = 100
 private const val SETTINGS_PENALTY = 100
 
+@ApiStatus.Internal
+fun getGroupName(@NotNull description: OptionDescription): @Nls @NotNull String {
+  if (description is RegistryTextOptionDescriptor) return LangBundle.message("group.registry")
+  val groupName: String? = description.groupName
+  val settings: String = LangBundle.message("group.settings")
+  return if (groupName == null || groupName == description.hit) settings else "$settings > $groupName"
+}
 
 fun getActionText(value: Any?): @Nls String? {
   if (value is OptionDescription) return value.hit

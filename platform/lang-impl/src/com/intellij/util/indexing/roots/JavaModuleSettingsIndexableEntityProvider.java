@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -61,7 +62,7 @@ final class JavaModuleSettingsIndexableEntityProvider implements IndexableEntity
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRootUrls, oldRootUrls);
   }
 
-  private static @NotNull List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
+  private static @Unmodifiable @NotNull List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 }

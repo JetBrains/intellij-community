@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,8 +34,7 @@ public class ExceptionInfo {
   /**
    * @return a predicate that matches an element within the source line that is likely an exception source
    */
-  @NotNull
-  public ExceptionLineRefiner getPositionRefiner() {
+  public @NotNull ExceptionLineRefiner getPositionRefiner() {
     return new AfterExceptionRefiner(this);
   }
 
@@ -59,8 +59,7 @@ public class ExceptionInfo {
     return myExceptionMessage;
   }
 
-  @Nullable
-  public static ExceptionInfo parseMessage(String line, int textEndOffset) {
+  public static @Nullable ExceptionInfo parseMessage(String line, int textEndOffset) {
     int firstSpace = line.indexOf(' ');
     int colonPos = -1;
     TextRange classRange = null;
@@ -153,7 +152,7 @@ public class ExceptionInfo {
     public RefinerMatchResult matchElement(@NotNull PsiElement current) {
       PsiElement newException = findNewException(current);
       if (newException != null) return RefinerMatchResult.of(newException);
-      if (current instanceof PsiKeyword && current.textMatches(PsiKeyword.THROW)) {
+      if (current instanceof PsiKeyword && current.textMatches(JavaKeywords.THROW)) {
         PsiElement nextLeaf = PsiTreeUtil.nextVisibleLeaf(current);
         newException = findNewException(nextLeaf);
         if (newException != null) return onTheSameLineFor(current, newException, true);
@@ -163,7 +162,7 @@ public class ExceptionInfo {
 
     private @Nullable PsiElement findNewException(PsiElement element) {
       // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
-      if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
+      if (element instanceof PsiKeyword && element.textMatches(JavaKeywords.NEW)) {
         PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
         if (newExpression != null) {
           PsiType type = newExpression.getType();
@@ -199,10 +198,9 @@ public class ExceptionInfo {
   private static boolean isEmpty(@NotNull PsiElement element) {
     return StringUtil.isEmptyOrSpaces(element.getText());
   }
-  @Nullable
-  static ExceptionLineRefiner.RefinerMatchResult onTheSameLineFor(@Nullable PsiElement from,
-                                                                  @Nullable PsiElement reason,
-                                                                  boolean forward) {
+  static @Nullable ExceptionLineRefiner.RefinerMatchResult onTheSameLineFor(@Nullable PsiElement from,
+                                                                            @Nullable PsiElement reason,
+                                                                            boolean forward) {
     if (from == null || reason == null) {
       return null;
     }

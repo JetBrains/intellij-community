@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.WriteAction;
@@ -36,23 +36,19 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 import java.io.IOException;
 import java.util.function.Function;
 
-public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
-  @NotNull
+final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @Override
-  @NonNls
-  public String getID() {
+  public @NotNull @NonNls String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getDescription() {
+  public @NotNull @Nls String getDescription() {
     return getDescr();
   }
 
   @Override
-  public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
+  public void assertCompatible(final @NotNull ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry libraryEntry) {
@@ -91,7 +87,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
     ModuleEntity moduleEntity = ModuleBridgeUtils.findModuleEntity(moduleBridge, moduleEntityStorage);
     if (moduleEntity != null) {
       EntitySource entitySource = moduleEntity.getEntitySource();
-      ModuleManagerBridgeImpl
+      ModuleManagerBridgeImpl.Companion
         .changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
     }
   }
@@ -120,8 +116,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
     }
   }
 
-  @NotNull
-  static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
+  static @NotNull CachedXmlDocumentSet getFileCache(@NotNull Module module) {
     EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {

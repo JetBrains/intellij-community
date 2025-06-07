@@ -14,20 +14,17 @@ import java.util.List;
 
 public abstract class VcsCherryPicker {
 
-  @NonNls public static final ExtensionPointName<VcsCherryPicker> EXTENSION_POINT_NAME =
+  public static final @NonNls ExtensionPointName<VcsCherryPicker> EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.cherryPicker");
   /**
    * @return - return vcs for current cherryPicker
    */
-  @NotNull
-  public abstract VcsKey getSupportedVcs();
+  public abstract @NotNull VcsKey getSupportedVcs();
 
   /**
    * @return CherryPick Action name for supported vcs
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getActionTitle();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getActionTitle();
 
   /**
    * Cherry-pick selected commits to current branch of appropriate repository
@@ -35,7 +32,7 @@ public abstract class VcsCherryPicker {
    * @param commits to cherry-pick
    * @return true if cherry-pick was successful
    */
-  public abstract boolean cherryPick(@NotNull final List<? extends VcsCommitMetadata> commits);
+  public abstract boolean cherryPick(final @NotNull List<? extends VcsCommitMetadata> commits);
 
   /**
    * Return true if cherry picker can manage all commits from roots

@@ -66,6 +66,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     interpreter.getListener().beforeAssignment(valueToStore, arrayElementValue, stateBefore, getDfaAnchor());
     if (arrayElementValue instanceof DfaVariableValue) {
       stateBefore.setVarValue((DfaVariableValue)arrayElementValue, valueToStore);
+      interpreter.getListener().afterAssignment(valueToStore, arrayElementValue, stateBefore, getDfaAnchor());
       pushResult(interpreter, stateBefore, arrayElementValue);
     }
     else {

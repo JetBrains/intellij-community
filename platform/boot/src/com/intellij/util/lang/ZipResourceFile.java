@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.lang.ZipFile.ZipResource;
@@ -22,16 +22,15 @@ final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
   private final boolean defineClassUsingBytes;
 
-  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes) {
+  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes, @Nullable ZipFilePool zipFilePool) {
     this.defineClassUsingBytes = defineClassUsingBytes;
 
-    ZipFilePool pool = ZipFilePool.POOL;
     try {
-      if (pool == null) {
+      if (zipFilePool == null) {
         zipFile = ZipFile.load(file);
       }
       else {
-        Object zipFile = pool.loadZipFile(file);
+        Object zipFile = zipFilePool.loadZipFile(file);
         this.zipFile = (ZipFile)zipFile;
       }
     }
@@ -184,8 +183,8 @@ final class ZipResourceFile implements ResourceFile {
   }
 
   private static final class MyJarUrlStreamHandler extends URLStreamHandler {
-    private @NotNull final ZipResource entry;
-    private @NotNull final JarLoader jarLoader;
+    private final @NotNull ZipResource entry;
+    private final @NotNull JarLoader jarLoader;
 
     private URL original;
 

@@ -14,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.function.Function;
 
-abstract class PyTypeProviderWithCustomContext<Context> extends PyTypeProviderBase {
+@ApiStatus.Internal
+public abstract class PyTypeProviderWithCustomContext<Context> extends PyTypeProviderBase {
   @Override
   public final @Nullable PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
     return withCustomContext(context, customContext -> {

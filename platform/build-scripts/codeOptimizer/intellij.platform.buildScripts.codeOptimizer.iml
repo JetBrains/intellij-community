@@ -4,31 +4,32 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="proguard" type="repository">
-        <properties maven-id="com.guardsquare:proguard-base:7.5.0">
+        <properties maven-id="com.guardsquare:proguard-base:7.6.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.5.0/proguard-base-7.5.0.jar">
-              <sha256sum>04f507bf11e57d798d972b6640cd026302e0b54800cd75813dc4715da66f3ab5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1.jar">
+              <sha256sum>c2650e666c3443781dc5e9eaee5de8721593f00be44e9d87cec761406357c770</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.4/proguard-core-9.1.4.jar">
-              <sha256sum>c51bb89ac5668280e3db7e4ab6c16f454ec5132ed356c840a4f930f16ef6ed51</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar">
+              <sha256sum>db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0.jar">
               <sha256sum>ad8f1c7dbc5ac46f5cbd2d2e5de39c56c9db65dd7de716a84e01ce208758aee6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0.jar">
-              <sha256sum>ff112f54ce874b8ae899cfd68f0315d96c9f406a338b8eca80c76d10e2e5a2f7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1.jar">
+              <sha256sum>2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.19.0/log4j-api-2.19.0.jar">
-              <sha256sum>5ccb24ad9f92e768d0bc456d3061a737951262df803e004d2cad096b75a88d60</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.24.2/log4j-api-2.24.2.jar">
+              <sha256sum>0ca3ecbd4c315bdd5f2ef6af127712df718c78334cce5bf6fb7b4aa17fdab126</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.19.0/log4j-core-2.19.0.jar">
-              <sha256sum>b4a1796fab7bfc36df015c1b4052459147997e8d215a7199d71d05f9e747e4f4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.24.2/log4j-core-2.24.2.jar">
+              <sha256sum>7a7b90db866c86a1093b3fde758ca28398ebb2a533da0d79a30cc0a78506b9df</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/json/json/20231013/json-20231013.jar">
               <sha256sum>0f18192df289114e17aa1a0d0a7f8372cc9f5c7e4f7e39adcf8906fe714fa7d3</sha256sum>
@@ -43,22 +44,22 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.5.0/proguard-base-7.5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.4/proguard-core-9.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.19.0/log4j-api-2.19.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.19.0/log4j-core-2.19.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.24.2/log4j-api-2.24.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.24.2/log4j-core-2.24.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20231013/json-20231013.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.5.0/proguard-base-7.5.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.4/proguard-core-9.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.19.0/log4j-api-2.19.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.19.0/log4j-core-2.19.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.24.2/log4j-api-2.24.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.24.2/log4j-core-2.24.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20231013/json-20231013-sources.jar!/" />
         </SOURCES>
       </library>

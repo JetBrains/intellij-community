@@ -15,6 +15,7 @@ interface MLFeatureProvider {
     private val EP_NAME = LanguageExtension<MLFeatureProvider>("com.intellij.internal.ml.featureProvider")
 
     fun applicableProviders(context: MLContext): List<MLFeatureProvider> =
-      EP_NAME.allForLanguageOrAny(context.position.language).filter { it.isApplicable(context) }
+      EP_NAME.allForLanguageOrAny(context.position.language).filter {
+        it.isApplicable(context) }
   }
 }

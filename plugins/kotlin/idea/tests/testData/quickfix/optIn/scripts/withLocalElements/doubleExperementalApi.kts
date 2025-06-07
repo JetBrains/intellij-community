@@ -1,4 +1,5 @@
 // "Opt in for 'Library' on statement" "true"
+// PRIORITY: HIGH
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Introduce local variable
@@ -24,4 +25,4 @@ val foo: MockLibrary = MockLibrary();
         foo.bar<caret>()
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

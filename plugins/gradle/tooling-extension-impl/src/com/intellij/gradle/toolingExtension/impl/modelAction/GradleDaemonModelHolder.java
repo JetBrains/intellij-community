@@ -7,16 +7,15 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 import org.jetbrains.plugins.gradle.model.DefaultBuildController;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
 
 import java.io.File;
 import java.util.*;
@@ -52,32 +51,28 @@ public class GradleDaemonModelHolder {
   private final @NotNull GradleBuild myRootGradleBuild;
   private final @NotNull Collection<? extends GradleBuild> myNestedGradleBuilds;
 
-  private final @NotNull BuildEnvironment myBuildEnvironment;
+  private final @NotNull GradleVersion myGradleVersion;
 
   private final @NotNull BlockingQueue<Future<DefaultGradleLightBuild>> myConvertedRootBuild = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<Collection<DefaultGradleLightBuild>>> myConvertedNestedBuilds = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<ConvertedModel>> myConvertedModelQueue = new LinkedBlockingQueue<>();
-  private final @NotNull BlockingQueue<Future<BuildEnvironment>> myConvertedBuildEnvironment = new LinkedBlockingQueue<>();
 
   public GradleDaemonModelHolder(
     @NotNull ExecutorService converterExecutor,
     @NotNull ToolingSerializerConverter serializer,
     @NotNull GradleBuild rootGradleBuild,
     @NotNull Collection<? extends GradleBuild> nestedGradleBuilds,
-    @NotNull BuildEnvironment buildEnvironment
+    @NotNull GradleVersion gradleVersion
   ) {
     mySerializer = serializer;
     myRootGradleBuild = rootGradleBuild;
     myNestedGradleBuilds = nestedGradleBuilds;
-    myBuildEnvironment = buildEnvironment;
+    myGradleVersion = gradleVersion;
     GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedRootBuild, () -> {
       return DefaultGradleLightBuild.convertGradleBuild(rootGradleBuild);
     });
     GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedNestedBuilds, () -> {
       return convertNestedGradleBuilds(nestedGradleBuilds);
-    });
-    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedBuildEnvironment, () -> {
-      return InternalBuildEnvironment.convertBuildEnvironment(myBuildEnvironment);
     });
   }
 
@@ -89,7 +84,7 @@ public class GradleDaemonModelHolder {
   }
 
   public @NotNull BuildController createBuildController(@NotNull BuildController parentController) {
-    return new DefaultBuildController(parentController, myRootGradleBuild, myBuildEnvironment);
+    return new DefaultBuildController(parentController, myRootGradleBuild, myGradleVersion);
   }
 
   public @NotNull GradleModelConsumer createModelConsumer(@NotNull ExecutorService converterExecutor) {
@@ -117,8 +112,7 @@ public class GradleDaemonModelHolder {
     DefaultGradleLightBuild rootBuild = pollPendingConvertedRootBuild();
     Collection<DefaultGradleLightBuild> nestedBuilds = pollPendingConvertedNestedBuilds();
     Map<GradleModelId, Object> models = pollAllPendingConvertedModels();
-    BuildEnvironment buildEnvironment = pollPendingBuildEnvironment();
-    return new GradleModelHolderState(rootBuild, nestedBuilds, buildEnvironment, models);
+    return new GradleModelHolderState(rootBuild, nestedBuilds, models);
   }
 
   private @Nullable DefaultGradleLightBuild pollPendingConvertedRootBuild() {
@@ -137,10 +131,6 @@ public class GradleDaemonModelHolder {
       modelMap.put(convertedModel.myId, convertedModel.myModel);
     }
     return modelMap;
-  }
-
-  private @Nullable BuildEnvironment pollPendingBuildEnvironment() {
-    return GradleExecutorServiceUtil.poolPendingResult(myConvertedBuildEnvironment);
   }
 
   private static @NotNull Collection<DefaultGradleLightBuild> convertNestedGradleBuilds(

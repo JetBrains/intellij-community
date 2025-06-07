@@ -11,5 +11,15 @@
     <orderEntry type="module" module-name="intellij.platform.project.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.bookmarks.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.editor.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.identifiers.highlighting.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.spellchecker.xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.find.backend" scope="RUNTIME" />
   </component>
 </module>

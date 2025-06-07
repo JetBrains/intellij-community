@@ -24,7 +24,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
         file.parentFile.mkdirs()
         file.writeText("")
         val filePath = file.toPath()
-        val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(filePath)
+        val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(filePath)
             ?: error("Failed to find virtual file at ${filePath}")
         return PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Returned file was not a KtFile")
     }

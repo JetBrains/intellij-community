@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -61,9 +61,8 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return myPanel;
   }
 
-  @Nullable
-  public String getAuthorFilter() {
-    if (myUseAuthorFilter.isSelected() && myAuthorField.getText().length() > 0) {
+  public @Nullable String getAuthorFilter() {
+    if (myUseAuthorFilter.isSelected() && !myAuthorField.getText().isEmpty()) {
       return myAuthorField.getText();
     }
     else {
@@ -86,9 +85,8 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return SvnBundle.message("error.revision.to.must.be.a.valid.number");
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return getPanel();
   }
 }

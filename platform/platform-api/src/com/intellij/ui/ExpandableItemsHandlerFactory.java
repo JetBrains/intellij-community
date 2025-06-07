@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -39,7 +40,7 @@ public abstract class ExpandableItemsHandlerFactory {
     }
 
     @Override
-    public @NotNull Collection<Object> getExpandedItems() {
+    public @NotNull @Unmodifiable Collection<Object> getExpandedItems() {
       return Collections.emptyList();
     }
   };

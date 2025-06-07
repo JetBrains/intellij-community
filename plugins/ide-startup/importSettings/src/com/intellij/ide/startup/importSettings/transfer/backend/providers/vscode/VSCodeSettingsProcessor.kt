@@ -16,30 +16,28 @@ import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
 
-class VSCodeSettingsProcessor(private val scope: CoroutineScope) {
-  companion object {
-    private val homeDirectory = System.getProperty("user.home")
+open class VSCodeSettingsProcessor(private val scope: CoroutineScope, appFolder: String = "Code", pluginFolder: String = ".vscode") {
+  private val homeDirectory = System.getProperty("user.home")
 
-    internal val vsCodeHome: String = when {
-      SystemInfo.isMac -> "$homeDirectory/Library/Application Support/Code"
-      SystemInfo.isWindows -> "${WindowsEnvVariables.applicationData}/Code"
-      else -> "$homeDirectory/.config/Code"
-    }
-
-    internal val storageFile: File = File("$vsCodeHome/storage.json")
-    internal val keyBindingsFile: File = File("$vsCodeHome/User/keybindings.json")
-    internal val generalSettingsFile: File = File("$vsCodeHome/User/settings.json")
-    internal val pluginsDirectory: File = File("$homeDirectory/.vscode/extensions")
-    internal val database: File = File("$vsCodeHome/User/globalStorage/state.vscdb")
-
-    fun getDefaultSettings(): Settings = Settings(
-      laf = KnownLafs.Darcula,
-      syntaxScheme = KnownColorSchemes.Darcula,
-      keymap = if (SystemInfoRt.isMac) KnownKeymaps.VSCodeMac else KnownKeymaps.VSCode
-    )
-
-    private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
+  internal val vsCodeHome: String = when {
+    SystemInfo.isMac -> "$homeDirectory/Library/Application Support/$appFolder"
+    SystemInfo.isWindows -> "${WindowsEnvVariables.applicationData}/$appFolder"
+    else -> "$homeDirectory/.config/$appFolder"
   }
+
+  internal val storageFile: File = File("$vsCodeHome/storage.json")
+  internal val keyBindingsFile: File = File("$vsCodeHome/User/keybindings.json")
+  internal val generalSettingsFile: File = File("$vsCodeHome/User/settings.json")
+  internal val pluginsDirectory: File = File("$homeDirectory/$pluginFolder/extensions")
+  internal val database: File = File("$vsCodeHome/User/globalStorage/state.vscdb")
+
+  fun getDefaultSettings(): Settings = Settings(
+    laf = KnownLafs.Darcula,
+    syntaxScheme = KnownColorSchemes.Darcula,
+    keymap = if (SystemInfoRt.isMac) KnownKeymaps.VSCodeMac else KnownKeymaps.VSCode
+  )
+
+  private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
 
   fun willDetectAtLeastSomething(): Boolean {
     if (generalSettingsFile.exists())
@@ -71,7 +69,7 @@ class VSCodeSettingsProcessor(private val scope: CoroutineScope) {
     }
   }
 
-  fun getProcessedSettings(): Settings {
+  open fun getProcessedSettings(): Settings {
     val settings = getDefaultSettings()
     if (keyBindingsFile.exists()) {
       KeyBindingsParser(settings).process(keyBindingsFile)

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.execution.wsl.WslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
+import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate.Companion.getError
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
@@ -20,6 +21,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.AddJdkService
@@ -34,17 +36,15 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelApiKey
-import com.intellij.platform.eel.provider.LocalEelKey
-import com.intellij.platform.eel.provider.getEelApi
-import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.provider.getEelApiKey
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
@@ -56,55 +56,45 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
+import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.nio.file.Paths
 import javax.accessibility.AccessibleContext
-import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
-import kotlin.text.isNotEmpty
-
-/**
- * Represents an intent to set up a JDK:
- *
- * - [NoJdk] - Create the project without selecting a JDK.
- * - [DownloadJdk] - Download a JDK on project creation.
- * - [ExistingJdk] - Use a JDK already configured, or from a location selected by the user.
- * - [DetectedJdk] - Configure a JDK detected by the IDE.
- */
-sealed class ProjectWizardJdkIntent {
-  data object NoJdk : ProjectWizardJdkIntent()
-
-  data class DownloadJdk(val task: SdkDownloadTask) : ProjectWizardJdkIntent()
-
-  data class ExistingJdk(val jdk: Sdk) : ProjectWizardJdkIntent()
-
-  data object AddJdkFromPath : ProjectWizardJdkIntent()
-
-  data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
-
-  data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
-}
 
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
 ): Cell<ProjectWizardJdkComboBox> {
+  return projectWizardJdkComboBox(row, sdkProperty, sdkDownloadTaskProperty, null, null)
+}
+
+fun NewProjectWizardStep.projectWizardJdkComboBox(
+  row: Row,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
+  jdkPredicate: ProjectWizardJdkPredicate?,
+): Cell<ProjectWizardJdkComboBox> {
   return projectWizardJdkComboBox(
     row, sdkProperty, sdkDownloadTaskProperty,
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
     }.pathProperty,
+    intentProperty,
     { sdk -> context.projectJdk = sdk },
     context.disposable,
     context.projectJdk,
+    jdkPredicate = jdkPredicate,
   )
 }
 
@@ -113,22 +103,25 @@ fun projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   locationProperty: GraphProperty<String>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
   setProjectJdk: (Sdk?) -> Unit,
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
+  jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
   val sdkPropertyId = StdModuleTypes.JAVA
   val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
 
-  val combo = ProjectWizardJdkComboBox(projectJdk, locationProperty.get(), disposable)
+  val combo = ProjectWizardJdkComboBox(projectJdk, disposable)
 
   locationProperty.afterPropagation {
     val path = locationProperty.get()
     if (path.isEmpty()) {
       return@afterPropagation
     }
-    combo.projectLocationChanged(locationProperty.get())
+    val newDescriptor = guardEelDescriptor { Path(locationProperty.get()).getEelDescriptor() } ?: LocalEelDescriptor
+    combo.eelChanged(newDescriptor)
   }
 
   combo.filterItems { sdkFilter(it) }
@@ -140,6 +133,13 @@ fun projectWizardJdkComboBox(
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
+    }
+    .validationInfo {
+      val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@validationInfo null
+      val version = intent.versionString ?: return@validationInfo null
+      val name = intent.name
+      val error = jdkPredicate?.getError(version, name ?: version) ?: return@validationInfo null
+      warning(error)
     }
     .validationOnApply {
       val intent = it.selectedItem
@@ -157,13 +157,13 @@ fun projectWizardJdkComboBox(
       null
     }
     .onChanged {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
     }
     .onApply {
       val selected = combo.selectedItem
 
       if (selected is DetectedJdk) {
-        registerJdk(selected.home, combo)
+        sdkProperty.set(service<AddJdkService>().createIncompleteJdk(selected.home))
       }
 
       setProjectJdk.invoke(sdkProperty.get())
@@ -184,7 +184,7 @@ fun projectWizardJdkComboBox(
       }
     }
     .apply {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
     }
 }
 
@@ -218,10 +218,12 @@ private fun updateGraphProperties(
   combo: ProjectWizardJdkComboBox,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
   selectedJdkProperty: String,
 ) {
   val stateComponent = PropertiesComponent.getInstance()
-  val (sdk, downloadTask) = when (val intent = combo.selectedItem) {
+  val intent = combo.selectedItem
+  val (sdk, downloadTask) = when (intent) {
     is ExistingJdk -> {
       stateComponent.setValue(selectedJdkProperty, intent.jdk.name)
       (intent.jdk to null)
@@ -231,6 +233,7 @@ private fun updateGraphProperties(
   }
   sdkProperty.set(sdk)
   sdkDownloadTaskProperty.set(downloadTask)
+  intentProperty?.set(intent as? ProjectWizardJdkIntent)
 }
 
 @Service(Service.Level.APP)
@@ -240,7 +243,7 @@ internal class ProjectWizardJdkComboBoxService(
   fun childScope(name: String): CoroutineScope = coroutineScope.childScope(name)
 }
 
-private inline fun guardEelKey(producer: () -> EelApiKey): EelApiKey? {
+private inline fun guardEelDescriptor(producer: () -> EelDescriptor): EelDescriptor? {
   return if (Registry.`is`("java.home.finder.use.eel")) {
     producer()
   }
@@ -251,34 +254,31 @@ private inline fun guardEelKey(producer: () -> EelApiKey): EelApiKey? {
 
 class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
-  var projectLocation: String,
   disposable: Disposable,
-) : ComboBox<ProjectWizardJdkIntent>(), UiDataProvider {
+) : ComboBox<ProjectWizardJdkIntent>(MutableCollectionComboBoxModel()), UiDataProvider {
 
-  // used in third-party plugin
-  @Suppress("unused")
-  @Deprecated("Use constructor with location parameter", ReplaceWith("ProjectWizardJdkComboBox(projectJdk, projectLocation, disposable)"))
-  constructor(projectSdk: Sdk?, disposable: Disposable) : this(projectSdk, System.getProperty("user.home"), disposable)
+  override fun getModel(): CollectionComboBoxModel<ProjectWizardJdkIntent> {
+    return super.getModel() as CollectionComboBoxModel<ProjectWizardJdkIntent>
+  }
 
-  val registered: MutableList<ExistingJdk> = mutableListOf()
-  val detectedJDKs: MutableList<DetectedJdk> = mutableListOf()
-  val jdkItems: MutableList<ProjectWizardJdkIntent> = mutableListOf()
+  val registered: List<ExistingJdk>
+    get() = model.items.filterIsInstance<ExistingJdk>()
+  val detectedJDKs: List<DetectedJdk>
+    get() = model.items.filterIsInstance<DetectedJdk>()
   var isLoadingDownloadItem: Boolean = false
   var isLoadingExistingJdks: Boolean = true
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
-  val coroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
-  var downloadOpenJdkJob: Job? = null
-  var addExistingJdkJob: Job? = null
+  val coroutineScope: CoroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
+  private var downloadOpenJdkJob: Job? = null
+  private var addExistingJdkJob: Job? = null
 
-  // todo: remote nullability from EelApiKey here we enable Eel by default in JDK detection
-  var currentEelKey: EelApiKey? = guardEelKey { LocalEelKey }
+  // todo: remove nullability from EelDescriptor here we enable Eel by default in JDK detection
+  var currentEelDescriptor: EelDescriptor? = guardEelDescriptor { LocalEelDescriptor }
 
   init {
-    model = DefaultComboBoxModel(Vector())
-
     disposable.whenDisposed { coroutineScope.cancel() }
 
-    reloadJdks(guardEelKey { LocalEelKey })
+    reloadJdks(guardEelDescriptor { LocalEelDescriptor })
 
     isSwingPopup = false
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -336,7 +336,8 @@ class ProjectWizardJdkComboBox(
         return when (item) {
           is DownloadJdk, is AddJdkFromJdkListDownloader -> AllIcons.Actions.Download
           is AddJdkFromPath -> AllIcons.Nodes.PpJdk
-          is ExistingJdk, is DetectedJdk -> JavaSdk.getInstance().icon
+          is ExistingJdk -> JavaSdk.getInstance().icon
+          is DetectedJdk -> if (item.isSymlink) AllIcons.Nodes.Related else AllIcons.Nodes.PpJdk
           else -> EmptyIcon.ICON_16
         }
       }
@@ -363,46 +364,33 @@ class ProjectWizardJdkComboBox(
     }
   }
 
-
-  fun projectLocationChanged(newLocation: String) {
-    projectLocation = newLocation
-    val key = guardEelKey { Path(newLocation).getEelApiKey() }
-    if (key != currentEelKey) {
-      currentEelKey = key
-      reloadJdks(key)
+  @RequiresEdt
+  fun eelChanged(descriptor: EelDescriptor) {
+    if (descriptor != currentEelDescriptor) {
+      currentEelDescriptor = descriptor
+      reloadJdks(descriptor)
     }
   }
 
-  private fun reloadJdks(key: EelApiKey?) {
-    for (item in jdkItems) {
-      removeItem(item)
-    }
-    jdkItems.clear()
+  @RequiresEdt
+  private fun reloadJdks(key: EelDescriptor?) {
+    model.removeAll()
 
-    registered.clear()
-    registered.addAll(computeRegisteredSdks(key))
-    for (registeredItem in registered) {
-      jdkItems.add(registeredItem)
-      addItem(registeredItem)
-    }
+    model.add(computeRegisteredSdks(key))
+    model.add(computeHelperJdks(registered))
 
-    val helperJdks = computeHelperJdks(registered)
-    for (helperItem in helperJdks) {
-      jdkItems.add(helperItem)
-      addItem(helperItem)
-    }
+    selectedIndex = 0
 
     downloadOpenJdkJob?.cancel()
     isLoadingDownloadItem = false
-    if (registered.isEmpty()) {
+    if (registered.isEmpty() || registered.none { it.isAtLeast(8) }) {
       isLoadingDownloadItem = true
       downloadOpenJdkJob = coroutineScope.getDownloadOpenJdkIntent(this)
     }
 
-    detectedJDKs.clear()
     isLoadingExistingJdks = false
     addExistingJdkJob?.cancel()
-    addExistingJdkJob = coroutineScope.findExistingJdks(projectLocation, this)
+    addExistingJdkJob = coroutineScope.findExistingJdks(currentEelDescriptor, this)
   }
 
   @RequiresEdt
@@ -413,8 +401,7 @@ class ProjectWizardJdkComboBox(
     }
 
     insertItemAt(task, lastRegisteredJdkIndex)
-    jdkItems.add(lastRegisteredJdkIndex, task)
-    if (selectedItem is NoJdk) selectedIndex = 1
+    if (selectedItem is NoJdk || !(selectedItem as ProjectWizardJdkIntent).isAtLeast(8)) selectedIndex = 1
     isLoadingDownloadItem = false
   }
 
@@ -423,15 +410,14 @@ class ProjectWizardJdkComboBox(
     detected
       .filter { d -> registered.none { r -> FileUtil.pathsEqual(d.home, r.jdk.homePath) } }
       .forEach {
-        detectedJDKs.add(it)
-        jdkItems.add(it)
         addItem(it)
       }
     if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detected.any()) {
-      val regex = "(\\d+)".toRegex()
       detected
-        .maxBy { regex.find(it.version)?.value?.toInt() ?: 0 }
-        .let { selectedItem = it }
+        .map { it to JavaVersion.tryParse(it.version) }
+        .filter { it.second?.isAtLeast(8) ?: false }
+        .maxBy { it.second!!.feature }
+        .let { selectedItem = it.first }
     }
     isLoadingExistingJdks = false
   }
@@ -455,7 +441,11 @@ class ProjectWizardJdkComboBox(
   }
 
   fun filterItems(sdkFilter: (Sdk) -> Boolean) {
-    registered.removeAll { !sdkFilter(it.jdk) }
+    registered.forEach {
+      if (!sdkFilter(it.jdk)) {
+        removeItem(it)
+      }
+    }
     for (i in itemCount - 1 downTo 0) {
       val item = getItemAt(i)
       if (item is ExistingJdk && !sdkFilter(item.jdk)) {
@@ -464,7 +454,7 @@ class ProjectWizardJdkComboBox(
     }
   }
 
-  val lastRegisteredJdkIndex
+  val lastRegisteredJdkIndex: Int
     get() = (0 until itemCount).firstOrNull { getItemAt(it) is AddJdkFromJdkListDownloader } ?: 0
 
   val comment: String?
@@ -483,7 +473,9 @@ class ProjectWizardJdkComboBox(
     }
     sink[JDK_DOWNLOADER_EXT] = object : JdkDownloaderDialogHostExtension {
       override fun getEel(): EelApi {
-        return Path.of(projectLocation).getEelApiBlocking()
+        return runBlockingMaybeCancellable {
+          currentEelDescriptor?.toEelApi() ?: localEel
+        }
       }
     }
   }
@@ -491,31 +483,27 @@ class ProjectWizardJdkComboBox(
 
 private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   combo.popup?.hide()
-  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, Path(combo.projectLocation)) { path: String ->
+  val path = if (Registry.`is`("java.home.finder.use.eel")) {
+    EelPathUtils.getHomePath(combo.currentEelDescriptor ?: LocalEelDescriptor)
+  }
+  else {
+    Path.of(System.getProperty("user.home"))
+  }
+  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
-    val comboItem = DetectedJdk(version ?: "", path)
-    combo.detectedJDKs.add(comboItem)
+    val comboItem = DetectedJdk(version ?: "", path, containsSymbolicLink(path))
     combo.addItem(comboItem)
     combo.selectedItem = comboItem
   }
 }
 
-private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
-  service<AddJdkService>().createJdkFromPath(path) {
-    JdkComboBoxCollector.jdkRegistered(it)
-    combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
-      combo.removeItem(item)
-      combo.detectedJDKs.remove(item)
-    }
-    val comboItem = ExistingJdk(it)
-    val index = combo.lastRegisteredJdkIndex
-    combo.registered.add(comboItem)
-    combo.insertItemAt(comboItem, index)
-    combo.selectedIndex = index
-  }
+private fun containsSymbolicLink(path: String): Boolean {
+  val p = Paths.get(path)
+  return try { p.toRealPath() != p }
+         catch (_: IOException) { false }
 }
 
-private fun computeRegisteredSdks(key: EelApiKey?): List<ExistingJdk> {
+private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
   // Add JDKs from the ProjectJdkTable
   return ProjectJdkTable.getInstance().allJdks
     .filter { jdk ->
@@ -543,9 +531,22 @@ private fun computeHelperJdks(registered: List<ExistingJdk>): List<ProjectWizard
 
 // Suggests to download OpenJDK if nothing else is available in the IDE
 private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkComboBox): Job = launch {
+  val eel = if (Registry.`is`("java.home.finder.use.eel")) {
+    comboBox.currentEelDescriptor?.toEelApi() ?: localEel
+  }
+  else {
+    null
+  }
+  val predicate = if (eel != null) {
+    JdkPredicate.forEel(eel)
+  }
+  else {
+    JdkPredicate.default()
+  }
+
   val item = JdkListDownloader.getInstance()
-    .downloadModelForJdkInstaller(null)
-    .filter { it.matchesVendor("openjdk") }
+    .downloadModelForJdkInstaller(null, predicate)
+    .filter { it.isDefaultItem }
     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
     .maxByOrNull { it.jdkMajorVersion }
 
@@ -557,8 +558,8 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
   }
 
   val jdkInstaller = JdkInstaller.getInstance()
-  val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item))
-  val task = JdkDownloaderBase.newDownloadTask(item, request, null)
+  val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item, eel))
+  val task = JdkDownloadTask(item, request, null)
 
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     val task = DownloadJdk(task)
@@ -568,25 +569,42 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 
 
 // Searches for JDKs located on the computer, but not added to the IDE
-private fun CoroutineScope.findExistingJdks(location: String?, comboBox: ProjectWizardJdkComboBox): Job = launch {
-  val javaSdk = JavaSdk.getInstance()
-  val homePaths = if (Registry.`is`("java.home.finder.use.eel")) {
-    val eel = location?.takeIf { it.isNotEmpty() }?.let { Path(it).getEelApi() } ?: localEel
-    JavaHomeFinder.suggestHomePaths(eel, false)
-  }
-  else {
-    JavaHomeFinder.suggestHomePaths()
-  }
-  val detected = homePaths.mapNotNull { homePath: String ->
-    val version = javaSdk.getVersionString(homePath)
-    when {
-      version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath)
-      else -> null
+private fun CoroutineScope.findExistingJdks(descriptor: EelDescriptor?, comboBox: ProjectWizardJdkComboBox): Job = launch {
+  val detected = when {
+    Registry.`is`("java.home.finder.use.eel") -> {
+      val eelDescriptor = descriptor ?: LocalEelDescriptor
+      findExistingJdksEel(eelDescriptor)
+    }
+    else -> {
+      val homePaths = JavaHomeFinder.suggestHomePaths()
+      val javaSdk = JavaSdk.getInstance()
+      homePaths.mapNotNull { homePath: String ->
+        val version = javaSdk.getVersionString(homePath)
+        when {
+          version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath, false)
+          else -> null
+        }
+      }
     }
   }
 
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     comboBox.addExistingJdks(detected)
+  }
+}
+
+private fun findExistingJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk> {
+  val javaSdk = JavaSdk.getInstance()
+  val jdks = JavaHomeFinder.findJdks(eelDescriptor, false)
+
+  return jdks.mapNotNull {
+    val version = it.versionInfo
+    val symlink = containsSymbolicLink(it.path)
+
+    when {
+      version != null && javaSdk.isValidSdkHome(it.path) -> DetectedJdk(version.displayVersionString(), it.path, symlink)
+      else -> null
+    }
   }
 }
 

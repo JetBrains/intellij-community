@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -6,12 +6,11 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -61,7 +60,7 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
-  public abstract @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
+  public abstract @Unmodifiable @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
   public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs);
@@ -112,12 +111,6 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract void releaseContent(int contentId);
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
-
-  /** @deprecated bypasses async listeners and is too low-level in general; avoid */
-  @Deprecated(forRemoval = true)
-  public void processEvents(@NotNull List<? extends @NotNull VFileEvent> events) {
-    RefreshQueue.getInstance().processEvents(false, events);
-  }
 
   // 'true' if the FS persisted at least one child, or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);

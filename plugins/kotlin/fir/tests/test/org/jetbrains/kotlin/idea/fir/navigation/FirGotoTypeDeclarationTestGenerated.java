@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.navigation;
 
@@ -68,6 +68,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
     @TestMetadata("functionCall.test")
     public void testFunctionCall() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/functionCall.test");
+    }
+
+    @TestMetadata("genericTypeInParameter.test")
+    public void testGenericTypeInParameter() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/genericTypeInParameter.test");
     }
 
     @TestMetadata("itExtensionLambda.test")

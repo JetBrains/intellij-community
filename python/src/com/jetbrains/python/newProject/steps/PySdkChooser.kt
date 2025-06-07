@@ -28,7 +28,7 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.newProject.steps")
 
 internal fun createPythonSdkComboBox(sdks: List<Sdk>, initialSelection: Sdk?): ComboBox<Sdk> {
   val comboBox = ComboBox<Sdk>()
-  comboBox.model = CollectionComboBoxModel(sdks, initialSelection)
+  comboBox.model = CollectionComboBoxModel(sdks.toMutableList(), initialSelection)
   comboBox.renderer = PySdkListCellRenderer()
   comboBox.addActionListener { comboBox.updateTooltip() }
   ComboboxSpeedSearch.installOn(comboBox)

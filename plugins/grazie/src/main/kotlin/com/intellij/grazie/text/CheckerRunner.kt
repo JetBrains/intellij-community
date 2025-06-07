@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
@@ -18,7 +19,6 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAct
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -54,7 +54,7 @@ class CheckerRunner(val text: TextContent) {
       val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
         when (checker) {
           is ExternalTextChecker -> async { checker.checkExternally(text) }
-          else -> async(start = CoroutineStart.LAZY) { blockingContext { checker.check(text) } }
+          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
         }
       }
       launch {
@@ -184,7 +184,7 @@ class CheckerRunner(val text: TextContent) {
   // used in rider
   @ApiStatus.Experimental
   fun findSentence(problem: TextProblem): String? {
-    return sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
+    return sentences.find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.first, sentence.range.last) } }?.token
   }
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
@@ -200,10 +200,11 @@ class CheckerRunner(val text: TextContent) {
 
     problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
 
-    result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
-      override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-        GrazieFUSCounter.quickFixInvoked(problem.rule, project, "add.exception")
-        super.applyFix(project, file, editor)
+    val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
+    result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
+      override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+        GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
+        super.applyFix(project, psiFile, editor)
       }
     })
     result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))

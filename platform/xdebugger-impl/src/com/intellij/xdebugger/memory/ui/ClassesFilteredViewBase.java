@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -167,16 +167,14 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     return myFilterTextField;
   }
 
-  @NotNull
-  protected ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
+  protected @NotNull ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
     return new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,
       memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly);
   }
 
   protected abstract void scheduleUpdateClassesCommand(XSuspendContext context);
 
-  @Nullable
-  protected TrackerForNewInstancesBase getStrategy(@NotNull TypeInfo ref) {
+  protected @Nullable TrackerForNewInstancesBase getStrategy(@NotNull TypeInfo ref) {
     return null;
   }
 
@@ -275,8 +273,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     }
   }
 
-  @Nullable
-  protected XDebugSessionListener getAdditionalSessionListener() {
+  protected @Nullable XDebugSessionListener getAdditionalSessionListener() {
     return null;
   }
 

@@ -13,6 +13,6 @@ class NotebookCellToolbarGutterLineMarkerRenderer(private val highlighter: Range
     editor as EditorImpl
     val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
     val inlayBounds = getInlayBounds(editor, lines) ?: return
-    paintNotebookCellBackgroundGutter(editor, g, r, lines, inlayBounds.y, inlayBounds.height)
+    paintNotebookCellBackgroundGutter(editor, g, r, inlayBounds.y, inlayBounds.height)
   }
 }

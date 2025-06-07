@@ -6,11 +6,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 
@@ -24,7 +27,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 6)
+  private val GROUP = EventLogGroup("python.packages", 8)
 
   //full list is stored in metadata, see FUS-1218 for more details
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,
@@ -60,6 +63,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     return result
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   private fun getInstalledPackages(project: Project): Set<MetricEvent> {
     val result = HashSet<MetricEvent>()
     val pypiPackages = PyPIPackageCache.getInstance()
@@ -69,7 +73,10 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
       if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) continue
       val executionType = sdk.executionType
       val interpreterType = sdk.interpreterType
-      PythonPackageManager.forSdk(project, sdk).installedPackages
+      val installedPackages = runBlockingCancellable {
+        PythonPackageManager.forSdk(project, sdk).listInstalledPackages()
+      }
+      installedPackages
         .filter { pypiPackages.containsPackage(it.name) }
         .forEach { pythonPackage ->
           val version = pythonPackage.version

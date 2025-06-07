@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,10 +27,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,6 +43,8 @@ import java.util.stream.IntStream;
 @ApiStatus.Internal
 public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
+
+  private static final @NotNull Logger LOG = Logger.getInstance(TextEditorHighlightingPassRegistrarImpl.class);
 
   private final Int2ObjectMap<PassConfig> myRegisteredPassFactories = new Int2ObjectOpenHashMap<>(); // guarded by this
   private volatile PassConfig[] myFrozenPassConfigs; // passId -> PassConfig; contents is immutable, updated by COW
@@ -63,7 +73,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }, project);
   }
 
-  void reRegisterFactories() {
+  @VisibleForTesting
+  public void reRegisterFactories() {
     synchronized (this) {
       myRegisteredPassFactories.clear();
       myFrozenPassConfigs = null;
@@ -89,7 +100,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @ApiStatus.Internal
-  void serializeCodeInsightPasses(boolean flag) {
+  public void serializeCodeInsightPasses(boolean flag) {
     serializeCodeInsightPasses = flag;
     reRegisterFactories();
   }
@@ -128,8 +139,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
     myFrozenPassConfigs = null; // clear cache
-    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
-      myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
+    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory dirty) {
+      myDirtyScopeTrackingFactories.add(dirty);
     }
     return passId;
   }
@@ -154,7 +165,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
   }
 
-  int getNextAvailableId() {
+  @ApiStatus.Internal
+  public int getNextAvailableId() {
     return nextAvailableId.incrementAndGet();
   }
 
@@ -163,16 +175,22 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    GlobalInspectionContextBase.assertUnderDaemonProgress();
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
-    PsiFile fileFromDoc = documentManager.getPsiFile(document);
-    if (!(fileFromDoc instanceof PsiCompiledElement)) {
-      assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
+    PsiFile psiFileFromDoc = documentManager.getPsiFile(document, context);
+    if (!(psiFileFromDoc instanceof PsiCompiledElement)) {
+      assert psiFileFromDoc == psiFile : "Files are different: " + psiFile + ";" + psiFileFromDoc;
       Document documentFromFile = documentManager.getDocument(psiFile);
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
+    CodeInsightContext psiFileContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    if (!psiFileContext.equals(context)) {
+      LOG.error("PsiFile's context does not match the context of the editor. File's context= " + psiFileContext + "; Editor's context = " + context);
+    }
+
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
@@ -194,6 +212,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         else {
           // init with editor's color scheme
           pass.setColorsScheme(editor.getColorsScheme());
+          pass.setContext(context);
 
           IntList ids = passConfig.completionPredecessorIds.length == 0 ? IntList.of() : new IntArrayList(passConfig.completionPredecessorIds.length);
           for (int id : passConfig.completionPredecessorIds) {
@@ -219,7 +238,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
     for (int i = 0; i < passesRefusedToCreate.size(); i++) {
       int id = passesRefusedToCreate.getInt(i);
-      statusMap.markFileUpToDate(document, id);
+      statusMap.markFileUpToDate(document, context, id, indicator);
     }
     if (!shouldHighlightFile) {
       // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart
@@ -235,13 +254,15 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     Set<TextEditorHighlightingPass> ids = new HashSet<>();
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     for (int passId = 0; passId < frozenPassConfigs.length; passId++) {
       PassConfig passConfig = frozenPassConfigs[passId];
       if (passConfig == null) continue;
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      if (factory instanceof MainHighlightingPassFactory) {
-        TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
+      if (factory instanceof MainHighlightingPassFactory main) {
+        TextEditorHighlightingPass pass = main.createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
         if (pass != null) {
+          pass.setContext(context);
           ids.add(pass);
           pass.setId(passId);
         }

@@ -17,6 +17,7 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -45,6 +46,9 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
 
   @NotNull
   List<JpsModule> getModules();
+  
+  @Nullable 
+  JpsModule findModuleByName(@NotNull String name);
 
   @NotNull
   <P extends JpsElement>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +22,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
-import git4idea.telemetry.GitTelemetrySpan.Log;
+import git4idea.telemetry.GitBackendTelemetrySpan.Log;
 import io.opentelemetry.api.trace.Tracer;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,8 +33,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
@@ -173,6 +173,12 @@ public final class GitLogUtil {
   public static @NotNull VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
                                                                         @NotNull VirtualFile root,
                                                                         String... params) throws VcsException {
+    return collectMetadata(project, root, new GitLogCommandParameters(Collections.emptyList(), Arrays.asList(params)));
+  }
+
+  public static @NotNull VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
+                                                                        @NotNull VirtualFile root,
+                                                                        @NotNull GitLogCommandParameters parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return LogDataImpl.empty();
@@ -193,11 +199,11 @@ public final class GitLogUtil {
     };
 
     try {
-      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
+      GitLineHandler handler = createGitHandler(project, root, parameters.getConfigParameters(), false);
       GitLogParser.GitLogOption[] options = ArrayUtil.append(COMMIT_METADATA_OPTIONS, REF_NAMES);
       GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, options);
       handler.setStdoutSuppressed(true);
-      handler.addParameters(params);
+      handler.addParameters(parameters.getFilterParameters());
       handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
       handler.addParameters("--decorate=full");
       handler.endOptions();

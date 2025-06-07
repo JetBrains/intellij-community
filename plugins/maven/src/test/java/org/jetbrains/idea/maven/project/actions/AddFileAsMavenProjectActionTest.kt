@@ -5,7 +5,7 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
@@ -29,7 +29,7 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     }
 
     // make a change but do not save
-    writeAction {
+    edtWriteAction {
       document.setText(createPomXml("<groupId>test</groupId>" +
                                     "<artifactId>project-new</artifactId>" +
                                     "<version>1</version>"))

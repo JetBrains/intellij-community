@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -72,13 +72,13 @@ public abstract class SyntheticLibrary {
     return myComparisonId;
   }
 
-  public abstract @NotNull Collection<VirtualFile> getSourceRoots();
+  public abstract @NotNull @Unmodifiable Collection<VirtualFile> getSourceRoots();
 
-  public @NotNull Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getBinaryRoots() {
     return Collections.emptyList();
   }
 
-  public @NotNull Set<VirtualFile> getExcludedRoots() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getExcludedRoots() {
     return Collections.emptySet();
   }
 
@@ -184,13 +184,11 @@ public abstract class SyntheticLibrary {
     return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
   }
 
-  @Unmodifiable
-  public final @NotNull Collection<VirtualFile> getAllRoots() {
+  public final @Unmodifiable @NotNull Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
-  @Unmodifiable
-  private @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+  private @Unmodifiable @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();
       Collection<VirtualFile> binaryRoots = getBinaryRoots();
@@ -220,7 +218,7 @@ public abstract class SyntheticLibrary {
     return contains(file, true, true);
   }
 
-  private static @NotNull Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
+  private static @NotNull @Unmodifiable Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof Set ? (Set<? extends VirtualFile>)collection : new HashSet<>(collection);
   }
 

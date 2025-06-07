@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -40,9 +40,8 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
    */
   boolean matches(@NotNull String message);
 
-  @NotNull
   @Override
-  default VcsLogFilterCollection.FilterKey<VcsLogTextFilter> getKey() {
+  default @NotNull VcsLogFilterCollection.FilterKey<VcsLogTextFilter> getKey() {
     return TEXT_FILTER;
   }
 
@@ -51,9 +50,8 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
     return matches(details.getFullMessage());
   }
 
-  @NotNull
   @Override
-  default String getDisplayText() {
+  default @NotNull String getDisplayText() {
     return "'" + getText() + "'";
   }
 }

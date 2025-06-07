@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -35,11 +35,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -53,7 +55,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
@@ -76,16 +77,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
  */
 public class SMTestRunnerResultsForm extends TestResultsPanel
   implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
-  @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
-  @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
+  public static final @NonNls String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
+  private static final @NonNls String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
   private static final Color RED = new JBColor(new Color(250, 220, 220), new Color(104, 67, 67));
@@ -162,7 +163,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @ApiStatus.Internal
   @Override
   protected JComponent createTestTreeView() {
-    myTreeView = new SMTRunnerTestTreeView();
+    if (myProperties instanceof SMTRunnerTestTreeViewProvider provider) {
+      myTreeView = provider.createSMTRunnerTestTreeView();
+    }
+    else {
+      myTreeView = new SMTRunnerTestTreeView();
+    }
 
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
@@ -228,7 +234,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.updateFromRoot();
 
     // Status line
-    myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.passedStatusValue());
+    myStatusLine.setStatus(ProgressBarUtil.PASSED_VALUE);
 
     // Tests tree
     selectAndNotify(myTestsRootNode);
@@ -270,6 +276,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     updateStatusLabel(true);
     updateIconProgress(true);
+    myStatusLine.setIndeterminate(false);
+
+    if (Registry.is("test.view.hide.progress.bar.on.tests.finished", false)) {
+      myStatusLine.hideProgressBar();
+    }
 
     myRequests.clear();
     myUpdateTreeRequests.cancelAllRequests();
@@ -341,7 +352,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @ApiStatus.Internal
   @Override
-  public void onTestStarted(@NotNull final SMTestProxy testProxy) {
+  public void onTestStarted(final @NotNull SMTestProxy testProxy) {
     if (!testProxy.isConfig() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(testProxy.getName())) {
       updateOnTestStarted(false);
     }
@@ -364,7 +375,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @ApiStatus.Internal
   @Override
-  public void onTestFailed(@NotNull final SMTestProxy test) {
+  public void onTestFailed(final @NotNull SMTestProxy test) {
     if (Comparing.equal(test, myLastFailed)) return;
     myLastFailed = test;
     updateOnTestFailed(false);
@@ -388,7 +399,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @ApiStatus.Internal
   @Override
-  public void onTestIgnored(@NotNull final SMTestProxy test) {
+  public void onTestIgnored(final @NotNull SMTestProxy test) {
     updateOnTestIgnored(test);
   }
 
@@ -401,7 +412,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @ApiStatus.Internal
   @Override
-  public void onSuiteStarted(@NotNull final SMTestProxy newSuite) {
+  public void onSuiteStarted(final @NotNull SMTestProxy newSuite) {
     _addTestOrSuite(newSuite);
   }
 
@@ -432,7 +443,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @ApiStatus.Internal
   @Override
-  public void onTestFinished(@NotNull final SMTestProxy test) {
+  public void onTestFinished(final @NotNull SMTestProxy test) {
     if (!test.isConfig()) {
       updateOnTestFinished(false);
     }
@@ -441,13 +452,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @ApiStatus.Internal
   @Override
-  public void onSuiteFinished(@NotNull final SMTestProxy suite) {
+  public void onSuiteFinished(final @NotNull SMTestProxy suite) {
     //Do nothing
   }
 
   @Override
-  @NotNull
-  public SMTestProxy.SMRootTestProxy getTestsRootNode() {
+  public @NotNull SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }
 
@@ -457,7 +467,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   @Override
-  public void setFilter(@NotNull final Filter filter) {
+  public void setFilter(final @NotNull Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
     final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
     treeStructure.setFilter(filter);
@@ -490,8 +500,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   @Override
-  @NotNull
-  public AbstractTestProxy getRoot() {
+  public @NotNull AbstractTestProxy getRoot() {
     return myTestsRootNode;
   }
 
@@ -510,7 +519,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     selectAndNotify(testProxy, null);
   }
 
-  private void selectAndNotify(@Nullable final AbstractTestProxy testProxy, @Nullable Runnable onDone) {
+  private void selectAndNotify(final @Nullable AbstractTestProxy testProxy, @Nullable Runnable onDone) {
     selectWithoutNotify(testProxy, onDone);
 
 
@@ -526,7 +535,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         //e.g. it is focused. Otherwise it is side effect of selecting proxy in
         //try by other component
         //if (myTreeView.isFocusOwner()) {
-        @Nullable final SMTestProxy selectedProxy = (SMTestProxy)getTreeView().getSelectedTest();
+        final @Nullable SMTestProxy selectedProxy = (SMTestProxy)getTreeView().getSelectedTest();
         listener.onSelected(selectedProxy, SMTestRunnerResultsForm.this, SMTestRunnerResultsForm.this);
         //}
       }
@@ -582,7 +591,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myEndTime;
   }
 
-  private void _addTestOrSuite(@NotNull final SMTestProxy newTestOrSuite) {
+  private void _addTestOrSuite(final @NotNull SMTestProxy newTestOrSuite) {
 
     final SMTestProxy parentSuite = newTestOrSuite.getParent();
 
@@ -642,7 +651,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
-  private void selectWithoutNotify(final AbstractTestProxy testProxy, @Nullable final Runnable onDone) {
+  private void selectWithoutNotify(final AbstractTestProxy testProxy, final @Nullable Runnable onDone) {
     if (testProxy == null) {
       return;
     }
@@ -653,16 +662,26 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.select(testProxy, onDone);
   }
 
+  @ApiStatus.Internal
+  public void redrawStatusLabel() {
+    if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
+      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount,
+                                     myTestsRootNode.getCustomizedDuration(myProperties), myEndTime);
+    }
+  }
+
   private void updateStatusLabel(final boolean testingFinished) {
+    myStatusLine.showProgressBar();
     if (myFailedTestCount > 0) {
-      myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.failedStatusValue());
+      myStatusLine.setStatus(ProgressBarUtil.FAILED_VALUE);
     }
 
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
-      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
+      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount,
+                                     myTestsRootNode.getCustomizedDuration(myProperties), myEndTime);
     }
     else {
       myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
@@ -777,7 +796,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
   }
 
-  private void updateOnTestIgnored(@NotNull final SMTestProxy test) {
+  private void updateOnTestIgnored(final @NotNull SMTestProxy test) {
     if (!test.isSuite()) {
       myIgnoredTestCount++;
     }

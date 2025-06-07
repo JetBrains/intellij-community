@@ -1,13 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.html.SummaryView;
+import com.intellij.util.ui.html.UtilsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -15,13 +18,17 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import javax.swing.text.html.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
+
+import static com.intellij.util.ui.html.UtilsKt.reapplyCss;
 
 @ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
@@ -32,6 +39,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
+  private final @NotNull JBHtmlEditorKit.DetailsSummaryController myDetailsSummaryController = new DetailsSummaryController();
   private final boolean myDisableLinkedCss;
   private boolean myUnderlineHoveredHyperlink = true;
 
@@ -72,7 +80,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   /**
    * Toggle whether hyperlinks are underlined when hovered.
-   *
+   * <p>
    * This is useful if another implementation needs to apply a different style
    * to hyperlinks when hovered (this can be done by adding a {@link HyperlinkListener}
    * to the {@link JEditorPane}).
@@ -145,6 +153,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     if (myUnderlineHoveredHyperlink) {
       pane.addHyperlinkListener(myHyperlinkListener);
     }
+    pane.addMouseListener(myDetailsSummaryController);
 
     java.util.List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
     java.util.List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
@@ -163,7 +172,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return myViewFactory;
   }
 
-  private static @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
+  private static @Unmodifiable @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 
@@ -194,11 +203,56 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
+  private static final class DetailsSummaryController extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      JEditorPane editor = (JEditorPane) e.getSource();
+
+      if (! editor.isEditable() && editor.isEnabled() &&
+          SwingUtilities.isLeftMouseButton(e)) {
+        Point pt = new Point(e.getX(), e.getY());
+        int pos = editor.viewToModel(pt);
+        if (pos >= 0) {
+          clickSummary(pos, editor);
+        }
+      }
+    }
+
+    private static void clickSummary(int pos, JEditorPane html) {
+      Document doc = html.getDocument();
+      if (doc instanceof HTMLDocument hdoc) {
+        Element e = hdoc.getCharacterElement(pos);
+        while (e != null) {
+          String name = e.getName();
+          if (name.equals("a")) break;
+          if (name.equals("summary")) {
+            AttributeSet attributes = e.getAttributes();
+            Object attribute = attributes.getAttribute(UtilsKt.getHTML_Tag_DETAILS());
+            if (attribute instanceof MutableAttributeSet a) {
+              a.addAttribute(SummaryView.EXPANDED, a.getAttribute(SummaryView.EXPANDED) != Boolean.TRUE);
+            }
+            var rootView = html.getUI().getRootView(html);
+            reapplyCss(rootView);
+
+            // Force view to be relayouted
+            rootView.setSize(1,1);
+
+            // Force the JEditorPane to be relayouted
+            html.revalidate();
+            html.doLayout();
+            return;
+          }
+          e = e.getParentElement();
+        }
+      }
+    }
+  }
+
   /**
    * @see HTMLEditorKitBuilder
    * @deprecated in favor of {@link ExtendableHTMLViewFactory}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class JBHtmlFactory extends HTMLFactory {
 
     private final ViewFactory myDelegate = ExtendableHTMLViewFactory.DEFAULT;
@@ -224,30 +278,82 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
     @Override
     public ParserCallback getReader(int pos) {
-      ParserCallback reader = super.getReader(pos);
+      Object desc = getProperty(StreamDescriptionProperty);
+      if (desc instanceof URL) {
+        setBase((URL)desc);
+      }
+      ParserCallback reader = new JBHtmlReader(pos);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     @Override
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
-      ParserCallback reader = super.getReader(pos, popDepth, pushDepth, insertTag);
+      Object desc = getProperty(StreamDescriptionProperty);
+      if (desc instanceof URL) {
+        setBase((URL)desc);
+      }
+      HTMLReader reader = new JBHtmlReader(pos, popDepth, pushDepth, insertTag);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     public void tryRunUnderWriteLock(Runnable runnable) {
       if (getCurrentWriter() == Thread.currentThread()) {
         runnable.run();
-      } else {
+      }
+      else {
         try {
           writeLock();
-        } catch (IllegalStateException e) {
+        }
+        catch (IllegalStateException e) {
           // ignore, wrong thread
           return;
         }
         try {
           runnable.run();
-        } finally {
+        }
+        finally {
           writeUnlock();
+        }
+      }
+    }
+
+    private final class JBHtmlReader extends HTMLReader {
+
+      private JBHtmlReader(int offset) {
+        super(offset);
+        registerAdditionalTags();
+      }
+
+      private JBHtmlReader(int offset, int popDepth, int pushDepth, HTML.Tag insertTag) {
+        super(offset, popDepth, pushDepth, insertTag);
+        registerAdditionalTags();
+      }
+
+      private void registerAdditionalTags() {
+        TagAction ba = new BlockAction();
+        for (HTML.Tag tag: UtilsKt.getHTML_Tag_CUSTOM_BLOCK_TAGS()) {
+          registerTag(tag, ba);
+        }
+      }
+
+      @Override
+      protected void addSpecialElement(HTML.Tag t, MutableAttributeSet a) {
+        int lastSize = parseBuffer.size();
+        super.addSpecialElement(t, a);
+        if (lastSize != parseBuffer.size()) {
+          if (t == HTML.Tag.BR) {
+            var elementSpec = parseBuffer.lastElement();
+            parseBuffer.set(parseBuffer.size() - 1, new ElementSpec(
+              elementSpec.getAttributes(), ElementSpec.ContentType, new char[]{'\n'}, 0, 1));
+          }
+          else if ("wbr".equals(t.toString())) {
+            var elementSpec = parseBuffer.lastElement();
+            // Swing HTML control does not accept elements with no text.
+            // Use zero-width space. It needs to be removed in `getSelectedText()`
+            // to avoid this char showing up while copy/pasting.
+            parseBuffer.set(parseBuffer.size() - 1, new ElementSpec(
+              elementSpec.getAttributes(), ElementSpec.ContentType, new char[]{'\u200B'}, 0, 1));
+          }
         }
       }
     }

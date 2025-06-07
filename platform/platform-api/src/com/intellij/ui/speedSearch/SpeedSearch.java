@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -40,14 +40,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public void backspace() {
-    if (myString.length() > 0) {
+    if (!myString.isEmpty()) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
+           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -109,7 +109,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && myString.length() > 0;
+    return myEnabled && !myString.isEmpty();
   }
 
   public void setEnabled(boolean enabled) {
@@ -130,28 +130,34 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     return myString;
   }
 
-  public void updatePattern(final String string) {
-    if (myString.equals(string)) return;
+  public void updatePattern(final String searchText) {
+    if (myString.equals(searchText)) return;
 
     myJustActivated = false;
 
     String prevString = myString;
-    myString = string;
+    myString = searchText;
     try {
-      String pattern = "*" + string;
-      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
-      String separators = SpeedSearchUtil.getDefaultHardSeparators();
-      NameUtil.MatcherBuilder builder = new NameUtil.MatcherBuilder(pattern).withCaseSensitivity(caseSensitivity)
-        .withSeparators(separators);
-      if (myMatchAllOccurrences) {
-        builder = builder.allOccurrences();
-      }
-      myMatcher = builder.build();
+      myMatcher = createNewMatcher(searchText);
     }
     catch (Exception e) {
       myMatcher = null;
     }
     fireStateChanged(prevString);
+  }
+
+  protected @NotNull Matcher createNewMatcher(String searchText) {
+    String pattern = "*" + searchText;
+    NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
+    String separators = SpeedSearchUtil.getDefaultHardSeparators();
+    NameUtil.MatcherBuilder builder =
+      new NameUtil.MatcherBuilder(pattern)
+        .withCaseSensitivity(caseSensitivity)
+        .withSeparators(separators);
+    if (myMatchAllOccurrences) {
+      builder = builder.allOccurrences();
+    }
+    return builder.build();
   }
 
   public @Nullable Matcher getMatcher() {
@@ -199,9 +205,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     return myJustActivated || isHoldingFilter();
   }
 
-  @Nullable
   @Override
-  public JComponent getTextField() {
+  public @Nullable JComponent getTextField() {
     return null;
   }
 

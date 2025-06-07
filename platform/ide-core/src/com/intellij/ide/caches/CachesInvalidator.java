@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.caches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,17 +17,13 @@ public abstract class CachesInvalidator {
    *         When to use: when invalidation will lead to the loss of a potentially valuable to the user information, e.g. Local History.
    *         Do not use:  when caches are easily re-buildable and doesn't contain user's data (to avoid unnecessary confusion).
    */
-  @Nullable
-  @NlsContexts.Checkbox
-  public String getDescription() { return null; }
+  public @Nullable @NlsContexts.Checkbox String getDescription() { return null; }
 
 
   /**
    * Additional comment and description for the given caches invaludate action
    */
-  @Nullable
-  @NlsContexts.DetailedDescription
-  public String getComment() { return null; }
+  public @Nullable @NlsContexts.DetailedDescription String getComment() { return null; }
 
   /**
    * The method should not consume significant time.
@@ -43,6 +39,5 @@ public abstract class CachesInvalidator {
    * The {@link #invalidateCaches()} method is only executed
    * if the check-box is checked
    */
-  @Nullable
-  public Boolean optionalCheckboxDefaultValue() { return null; }
+  public @Nullable Boolean optionalCheckboxDefaultValue() { return null; }
 }

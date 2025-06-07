@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PythonFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public boolean canFindUsagesFor(@NotNull final PsiElement psiElement) {
+  public boolean canFindUsagesFor(final @NotNull PsiElement psiElement) {
     if (PyMagicLiteralTools.couldBeMagicLiteral(psiElement)) {
       return true;
     }
@@ -41,8 +41,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     String literalString = tryFindMagicLiteralString(element, false);
     if (literalString != null) {
       return literalString;
@@ -71,8 +70,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getDescriptiveName(@NotNull PsiElement element) {
+  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     String literalString = tryFindMagicLiteralString(element, true);
     if (literalString != null) {
       return literalString;
@@ -93,8 +91,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 
@@ -110,9 +107,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
    * @param obtainValue display element value (will display element type otherwise)
    * @return text (if found) or null
    */
-  @Nullable
-  @NlsSafe
-  private static String tryFindMagicLiteralString(@NotNull final PsiElement element, final boolean obtainValue) {
+  private static @Nullable @NlsSafe String tryFindMagicLiteralString(final @NotNull PsiElement element, final boolean obtainValue) {
     if (element instanceof PyStringLiteralExpression) {
       final PyMagicLiteralExtensionPoint point = PyMagicLiteralTools.getPoint((PyStringLiteralExpression)element);
       if (point != null) {

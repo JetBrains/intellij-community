@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 
 interface GradleNewProjectWizardData : MavenizedNewProjectWizardData<ProjectData> {
 
@@ -18,7 +19,7 @@ interface GradleNewProjectWizardData : MavenizedNewProjectWizardData<ProjectData
 
   var sdkDownloadTask: SdkDownloadTask?
 
-  val gradleDslProperty: GraphProperty<GradleNewProjectWizardStep.GradleDsl>
+  val gradleDslProperty: GraphProperty<GradleDsl>
 
-  var gradleDsl: GradleNewProjectWizardStep.GradleDsl
+  var gradleDsl: GradleDsl
 }

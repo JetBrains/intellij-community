@@ -18,8 +18,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
@@ -35,7 +38,15 @@ import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class XDebuggerWatchesManager {
-  private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
+  /**
+   * Maps configuration name to a list of watches.
+   *
+   * @see XDebugSessionImpl#computeConfigurationName()
+   */
+  private final Map<String, List<XWatch>> watches = new ConcurrentHashMap<>();
+  /**
+   * Maps file URL to a set of inline watches.
+   */
   private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
@@ -53,16 +64,37 @@ public final class XDebuggerWatchesManager {
     myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
   }
 
-  public @NotNull List<XExpression> getWatches(String confName) {
-    return ContainerUtil.notNullize(watches.get(confName));
+  public @NotNull List<XWatch> getWatchEntries(String configurationName) {
+    return ContainerUtil.notNullize(watches.get(configurationName));
   }
 
+  public void setWatchEntries(@NotNull String configurationName, @NotNull List<XWatch> watchList) {
+    if (watchList.isEmpty()) {
+      watches.remove(configurationName);
+    }
+    else {
+      watches.put(configurationName, watchList);
+    }
+  }
+
+  /**
+   * @deprecated Prefer {@link XDebuggerWatchesManager#getWatchEntries(String)} instead
+   */
+  @Deprecated
+  public @NotNull List<XExpression> getWatches(String configurationName) {
+    return ContainerUtil.map(ContainerUtil.notNullize(watches.get(configurationName)), XWatch::getExpression);
+  }
+
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#setWatchEntries(String, List)} instead
+   */
+  @Deprecated
   public void setWatches(@NotNull String configurationName, @NotNull List<XExpression> expressions) {
     if (expressions.isEmpty()) {
       watches.remove(configurationName);
     }
     else {
-      watches.put(configurationName, expressions);
+      watches.put(configurationName, ContainerUtil.map(expressions, XWatchImpl::new));
     }
   }
 
@@ -97,7 +129,16 @@ public final class XDebuggerWatchesManager {
     for (ConfigurationState configurationState : state.getExpressions()) {
       List<WatchState> expressionStates = configurationState.getExpressionStates();
       if (!ContainerUtil.isEmpty(expressionStates)) {
-        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, XExpressionState::toXExpression));
+        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, watchState -> {
+          XExpression expression = watchState.toXExpression();
+          if (expression == null) return null;
+          if (!watchState.getCanBePaused()) {
+            return new XAlwaysEvaluatedWatch(expression);
+          }
+          XWatchImpl watch = new XWatchImpl(expression);
+          watch.setPaused(watchState.isPaused());
+          return watch;
+        }));
       }
     }
 
@@ -129,7 +170,7 @@ public final class XDebuggerWatchesManager {
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
                                 @NotNull Editor mainEditor,
-                                @NotNull XDebugSession session,
+                                @NotNull XDebugSessionProxy session,
                                 @Nullable XExpression expression) {
     InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(presentationPosition, session, mainEditor, expression);
     inplaceEditor.show();
@@ -142,16 +183,11 @@ public final class XDebuggerWatchesManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(@NotNull final DocumentEvent e) {
+    public void documentChanged(final @NotNull DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<InlineWatch> inlines = getDocumentInlines(document);
       if (!inlines.isEmpty()) {
-        myInlinesUpdateQueue.queue(new Update(document) {
-          @Override
-          public void run() {
-            updateInlines(document);
-          }
-        });
+        myInlinesUpdateQueue.queue(Update.create(document, () -> updateInlines(document)));
       }
     }
   }
@@ -189,14 +225,13 @@ public final class XDebuggerWatchesManager {
   }
 
   private Stream<XInlineWatchesView> getWatchesViews() {
-    return Arrays.stream(XDebuggerManager.getInstance(myProject).getDebugSessions())
-      .map(s -> ((XDebugSessionImpl)s).getSessionTab())
+    return XDebugManagerProxy.getInstance().getSessions(myProject).stream()
+      .map(XDebugSessionProxy::getSessionTab)
       .filter(t -> t != null && t.getWatchesView() instanceof XInlineWatchesView)
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }
 
-  @NotNull
-  public Collection<InlineWatch> getDocumentInlines(Document document) {
+  public @NotNull Collection<InlineWatch> getDocumentInlines(Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
       Set<InlineWatch> inlineWatches = this.inlineWatches.get(file.getUrl());

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -29,13 +28,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChi
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEntityData) : SpecificChildEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEntityData) : SpecificChildEntity,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithExtensionEntity::class.java,
-                                                                          AbstractChildEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentWithExtensionEntity::class.java, AbstractChildEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -63,8 +62,8 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
   }
 
 
-  internal class Builder(result: SpecificChildEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildEntity, SpecificChildEntityData>(
-    result), SpecificChildEntity.Builder {
+  internal class Builder(result: SpecificChildEntityData?) :
+    ModifiableWorkspaceEntityBase<SpecificChildEntity, SpecificChildEntityData>(result), SpecificChildEntity.Builder {
     internal constructor() : this(SpecificChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -145,8 +144,9 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
-                                                                           this) as? ParentWithExtensionEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENT_CONNECTION_ID, this
+          ) as? ParentWithExtensionEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentWithExtensionEntity.Builder)
         }
         else {
@@ -207,7 +207,8 @@ internal class SpecificChildEntityData : WorkspaceEntityData<SpecificChildEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

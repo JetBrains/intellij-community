@@ -15,7 +15,6 @@ import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
 import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.lang.ref.SoftReference

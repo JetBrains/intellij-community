@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManagerImpl;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
@@ -194,10 +195,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(myModel);
       ModuleExcludeIndex index = new ModuleExcludeIndexImpl(myModel);
       IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(myModel);
-      BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot);
+      BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot.toPath());
       BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetRegistry, myModel, index, dataPaths, ignoredFileIndex);
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
-      BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
+      BuildTargetsState targetsState = new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, myModel));
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject());
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, null);
       return new ProjectDescriptor(
@@ -295,6 +296,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
    * Invoked forced rebuild for all targets in the project. May lead to unpredictable results if some plugins add targets your test doesn't expect.
    * @deprecated use {@link #rebuildAllModules()} instead or directly add required target types to the scope via {@link CompileScopeTestBuilder#targetTypes}
    */
+  @Deprecated
   protected void rebuildAll() {
     doBuild(CompileScopeTestBuilder.rebuild().all()).assertSuccessful();
   }
@@ -308,6 +310,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
    *
    * @deprecated use {@link #buildAllModules()} instead or directly add required target types to the scope via {@link CompileScopeTestBuilder#targetTypes}
    */
+  @Deprecated
   protected BuildResult makeAll() {
     return doBuild(make().all());
   }

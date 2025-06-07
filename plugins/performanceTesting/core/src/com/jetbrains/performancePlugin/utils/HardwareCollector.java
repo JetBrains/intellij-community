@@ -23,6 +23,7 @@
  */
 package com.jetbrains.performancePlugin.utils;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.TroubleInfoCollector;
@@ -39,16 +40,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class HardwareCollector implements TroubleInfoCollector {
-  final List<String> info = new ArrayList<>();
-  final static Logger logger = Logger.getInstance(HardwareCollector.class);
+public final class HardwareCollector implements TroubleInfoCollector {
+  private static final Logger logger = Logger.getInstance(HardwareCollector.class);
+
+  private final List<String> info = new ArrayList<>();
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
     return collectHardwareInfo();
   }
 
-  public String collectHardwareInfo(){
+  public String collectHardwareInfo() {
+    if (!JnaLoader.isLoaded()) {
+      return "Failed to collect computer system info: JNA is not loaded)";
+    }
+
     try {
       SystemInfo si = new SystemInfo();
 
@@ -276,7 +282,7 @@ public class HardwareCollector implements TroubleInfoCollector {
       long total = fs.getTotalSpace();
       info.add(String.format(
         " %s (%s) [%s] %s of %s free (%.1f%%), %s of %s files free (%.1f%%) is %s "
-        + (fs.getLogicalVolume() != null && fs.getLogicalVolume().length() > 0 ? "[%s]" : "%s")
+        + (fs.getLogicalVolume() != null && !fs.getLogicalVolume().isEmpty() ? "[%s]" : "%s")
         + " and is mounted at %s",
         fs.getName(), fs.getDescription().isEmpty() ? "file system" : fs.getDescription(), fs.getType(),
         FormatUtil.formatBytes(usable), FormatUtil.formatBytes(fs.getTotalSpace()), 100d * usable / total,

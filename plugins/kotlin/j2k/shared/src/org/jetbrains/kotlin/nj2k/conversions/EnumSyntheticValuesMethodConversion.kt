@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.SyntheticElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature.EnumEntries
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseMethodSymbol
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
-class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class EnumSyntheticValuesMethodConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression && element !is JKCallExpression) return recurse(element)

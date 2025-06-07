@@ -4,5 +4,5 @@
 package one.two
 
 @kotlin.annotation.Repeatable public final annotation class KotlinRepeatableAnnotation public constructor(name: kotlin.String) : kotlin.Annotation {
-    public final val name: kotlin.String /* compiled code */
+    public final val name: kotlin.String /* compiled code */ /* hasBackingField: false */
 }

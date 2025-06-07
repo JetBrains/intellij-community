@@ -138,10 +138,12 @@ public final class TodoFilter implements Cloneable {
     }
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode() * 31 + myTodoPatterns.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof TodoFilter filter &&
            myName.equals(filter.myName) &&

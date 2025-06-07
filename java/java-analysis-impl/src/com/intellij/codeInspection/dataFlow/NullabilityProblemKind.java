@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -121,8 +121,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    * @return newly created problem or null if anchor is null
    */
   @Contract("null, _ -> null")
-  @Nullable
-  public NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
+  public @Nullable NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
     return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression, false);
   }
 
@@ -133,8 +132,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    * @return the supplied problem or null
    */
   @SuppressWarnings("unchecked")
-  @Nullable
-  public NullabilityProblem<T> asMyProblem(NullabilityProblem<?> problem) {
+  public @Nullable NullabilityProblem<T> asMyProblem(NullabilityProblem<?> problem) {
     return problem != null && problem.myKind == this ? (NullabilityProblem<T>)problem : null;
   }
 
@@ -156,9 +154,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return myName;
   }
 
-  @Nullable
-  public static NullabilityProblem<?> fromContext(@NotNull PsiExpression expression,
-                                                  Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> customNullabilityProblems) {
+  public static @Nullable NullabilityProblem<?> fromContext(@NotNull PsiExpression expression,
+                                                            Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> customNullabilityProblems) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) ||
         expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiClass) {
       return null;
@@ -260,10 +257,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return null;
   }
 
-  @Nullable
-  private static NullabilityProblem<?> getExpressionListProblem(@NotNull PsiExpressionList expressionList,
-                                                                @NotNull PsiExpression expression,
-                                                                @NotNull PsiExpression context) {
+  private static @Nullable NullabilityProblem<?> getExpressionListProblem(@NotNull PsiExpressionList expressionList,
+                                                                          @NotNull PsiExpression expression,
+                                                                          @NotNull PsiExpression context) {
     if (expressionList.getParent() instanceof PsiSwitchLabelStatementBase) {
       return fieldAccessNPE.problem(context, expression);
     }
@@ -281,10 +277,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return null;
   }
 
-  @Nullable
-  private static NullabilityProblem<? extends PsiElement> getParameterProblem(@NotNull PsiParameter parameter,
-                                                                              @NotNull PsiExpression expression,
-                                                                              @NotNull PsiExpression context) {
+  private static @Nullable NullabilityProblem<? extends PsiElement> getParameterProblem(@NotNull PsiParameter parameter,
+                                                                                        @NotNull PsiExpression expression,
+                                                                                        @NotNull PsiExpression context) {
     if (parameter.getType() instanceof PsiPrimitiveType) {
       return createUnboxingProblem(context, expression);
     }
@@ -307,10 +302,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return null;
   }
 
-  @Nullable
-  private static NullabilityProblem<?> getArrayInitializerProblem(@NotNull PsiArrayInitializerExpression initializer,
-                                                                  @NotNull PsiExpression expression,
-                                                                  @NotNull PsiExpression context) {
+  private static @Nullable NullabilityProblem<?> getArrayInitializerProblem(@NotNull PsiArrayInitializerExpression initializer,
+                                                                            @NotNull PsiExpression expression,
+                                                                            @NotNull PsiExpression context) {
     PsiType type = initializer.getType();
     if (type instanceof PsiArrayType) {
       PsiType componentType = ((PsiArrayType)type).getComponentType();
@@ -333,10 +327,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return null;
   }
 
-  @Nullable
-  private static NullabilityProblem<?> getSwitchBlockProblem(@NotNull PsiSwitchBlock switchBlock,
-                                                             @NotNull PsiExpression expression,
-                                                             @NotNull PsiExpression context) {
+  private static @Nullable NullabilityProblem<?> getSwitchBlockProblem(@NotNull PsiSwitchBlock switchBlock,
+                                                                       @NotNull PsiExpression expression,
+                                                                       @NotNull PsiExpression context) {
     // if switch contains null label, then we shouldn't check nullity of the expr
     PsiCodeBlock body = switchBlock.getBody();
     if (body != null) {
@@ -355,10 +348,9 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     return problem == null ? fieldAccessNPE.problem(context, expression) : problem;
   }
 
-  @Nullable
-  private static NullabilityProblem<?> getAssignmentProblem(@NotNull PsiAssignmentExpression assignment,
-                                                            @NotNull PsiExpression expression,
-                                                            @NotNull PsiExpression context) {
+  private static @Nullable NullabilityProblem<?> getAssignmentProblem(@NotNull PsiAssignmentExpression assignment,
+                                                                      @NotNull PsiExpression expression,
+                                                                      @NotNull PsiExpression context) {
     IElementType tokenType = assignment.getOperationTokenType();
     if (assignment.getRExpression() == context) {
       PsiExpression lho = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
@@ -403,8 +395,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    * @param expression expression to find the top expression for
    * @return the top expression
    */
-  @NotNull
-  static PsiExpression findTopExpression(@NotNull PsiExpression expression) {
+  static @NotNull PsiExpression findTopExpression(@NotNull PsiExpression expression) {
     PsiExpression context = expression;
     while (true) {
       PsiElement parent = context.getParent();
@@ -511,8 +502,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
   }
 
-  @NotNull
-  private static PsiExpression skipParenthesesAndObjectCastsUp(PsiExpression expression) {
+  private static @NotNull PsiExpression skipParenthesesAndObjectCastsUp(PsiExpression expression) {
     PsiExpression top = expression;
     while (true) {
       PsiElement parent = top.getParent();
@@ -549,16 +539,14 @@ public final class NullabilityProblemKind<T extends PsiElement> {
      * @return name of exception (or its superclass) which is thrown if violation occurs,
      * or null if no exception is thrown (e.g. when assigning null to variable annotated as notnull).
      */
-    @Nullable
-    public String thrownException() {
+    public @Nullable String thrownException() {
       return myKind.myException;
     }
 
     /**
      * @return a minimal nullable expression which causes the problem
      */
-    @Nullable
-    public PsiExpression getDereferencedExpression() {
+    public @Nullable PsiExpression getDereferencedExpression() {
       return myDereferencedExpression;
     }
 
@@ -576,8 +564,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
              (ExpressionUtils.isNullLiteral(expression) || CommonDataflow.getDfType(expression, ignoreAssertions) == DfTypes.NULL);
     }
 
-    @NotNull
-    public @InspectionMessage String getMessage(boolean ignoreAssertions) {
+    public @NotNull @InspectionMessage String getMessage(boolean ignoreAssertions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
@@ -586,8 +573,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return msg.get() + suffix;
     }
 
-    @NotNull
-    public NullabilityProblemKind<T> getKind() {
+    public @NotNull NullabilityProblemKind<T> getKind() {
       return myKind;
     }
 

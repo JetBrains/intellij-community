@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.ProjectKeys.CONTENT_ROOT
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.openapi.util.io.toCanonicalPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -23,65 +22,56 @@ class GradleContentRootIndex {
   private val contentRootWeightMap = HashMap<Path, Int>()
 
   fun addSourceRoots(sourceSet: ExternalSourceSet) {
-    val sources = getSources(sourceSet)
-    addSourceRoots(sources)
+    val sourceRoots = getSourceRoots(sourceSet)
+    addSourceRoots(sourceRoots)
   }
 
   fun addSourceRoots(sourceSetNode: DataNode<GradleSourceSetData>) {
-    val sources = getSources(sourceSetNode)
-    addSourceRoots(sources)
+    val sourceRoots = getSourceRoots(sourceSetNode)
+    val contentRoots = getContentRoots(sourceSetNode)
+    addSourceRoots(sourceRoots + contentRoots)
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  fun addSourceRoots(sources: Map<out IExternalSystemSourceType, Collection<Path>>) {
-    val contentRootPaths = HashSet<Path>()
-    for (sourceRootPaths in sources.values) {
-      for (sourceRootPath in sourceRootPaths) {
-        contentRootPaths.addAll(resolveParentPaths(sourceRootPath))
-      }
+  fun addSourceRoots(sourceRoots: Collection<Path>) {
+    val contentRoots = HashSet<Path>()
+    for (sourceRoot in sourceRoots) {
+      contentRoots.addAll(resolveParentPaths(sourceRoot))
     }
-    for (contentRootPath in contentRootPaths) {
-      val contentRootWeight = contentRootWeightMap.getOrDefault(contentRootPath, 0)
-      contentRootWeightMap[contentRootPath] = contentRootWeight + 1
+    for (contentRoot in contentRoots) {
+      val contentRootWeight = contentRootWeightMap.getOrDefault(contentRoot, 0)
+      contentRootWeightMap[contentRoot] = contentRootWeight + 1
     }
   }
 
   fun resolveContentRoots(externalProject: ExternalProject, sourceSet: ExternalSourceSet): Set<Path> {
-    val sources = getSources(sourceSet)
-    return resolveContentRoots(externalProject, sources)
+    val sourceRoots = getSourceRoots(sourceSet)
+    return resolveContentRoots(externalProject, sourceRoots)
   }
 
   fun resolveContentRoots(externalProject: ExternalProject, sourceSetNode: DataNode<GradleSourceSetData>): Set<String> {
-    val sources = getSources(sourceSetNode)
-    val contentRoots = resolveContentRoots(externalProject, sources)
-    return contentRoots.mapTo(HashSet()) { it.toCanonicalPath() }
+    val sourceRoots = getSourceRoots(sourceSetNode)
+    val contentRoots = getContentRoots(sourceSetNode)
+    return resolveContentRoots(externalProject, sourceRoots + contentRoots)
+      .mapTo(HashSet()) { it.toCanonicalPath() }
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  fun resolveContentRoots(
-    externalProject: ExternalProject,
-    sources: Map<out IExternalSystemSourceType, Collection<Path>>,
-  ): Set<Path> {
-
+  fun resolveContentRoots(externalProject: ExternalProject, sourceRoots: Collection<Path>): Set<Path> {
     val projectRootPath = externalProject.projectDir.toPath()
     val buildRootPath = externalProject.buildDir.toPath()
 
-    val contentRootPaths = NioPathPrefixTreeFactory.createSet()
-    for (sourceDirectorySet in sources.values) {
-      for (sourceRootPath in sourceDirectorySet) {
-        val contentRootPath = resolveContentRoot(projectRootPath, buildRootPath, sourceRootPath)
-        contentRootPaths.add(contentRootPath)
-      }
+    val contentRoots = PathPrefixTree.createSet()
+    for (sourceRootPath in sourceRoots) {
+      val contentRootPath = resolveContentRoot(projectRootPath, buildRootPath, sourceRootPath)
+      contentRoots.add(contentRootPath)
     }
-    return contentRootPaths.getRoots()
+    return contentRoots.getRoots()
   }
 
   private fun resolveContentRoot(projectRootPath: Path, buildRootPath: Path, sourceRootPath: Path): Path {
-    if (!sourceRootPath.startsWith(projectRootPath)) {
-      return sourceRootPath
-    }
     if (sourceRootPath.startsWith(buildRootPath)) {
       return sourceRootPath
     }
@@ -106,32 +96,24 @@ class GradleContentRootIndex {
     return result
   }
 
-  private fun getSources(
-    sourceSet: ExternalSourceSet,
-  ): Map<IExternalSystemSourceType, Collection<Path>> {
-    return sourceSet.sources.mapValues { it.value.srcDirs.map(File::toPath) }
+  private fun getSourceRoots(sourceSet: ExternalSourceSet): Collection<Path> {
+    return sourceSet.sources.values.flatMap { it.srcDirs.map(File::toPath) }
   }
 
-  private fun getSourceRoots(
-    sourceSetNode: DataNode<GradleSourceSetData>,
-  ): Map<IExternalSystemSourceType, Collection<ContentRootData.SourceRoot>> {
-    val sources = HashMap<IExternalSystemSourceType, HashSet<ContentRootData.SourceRoot>>()
-    for (contentRootNode in ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
+  private fun getSourceRoots(sourceSetNode: DataNode<GradleSourceSetData>): Collection<Path> {
+    val sourceRoots = HashSet<ContentRootData.SourceRoot>()
+    for (contentRootNode in ExternalSystemApiUtil.findAll(sourceSetNode, CONTENT_ROOT)) {
       for (sourceRootType in ExternalSystemSourceType.entries) {
-        sources.computeIfAbsent(sourceRootType) { HashSet() }
-          .addAll(contentRootNode.data.getPaths(sourceRootType))
+        sourceRoots.addAll(contentRootNode.data.getPaths(sourceRootType))
       }
     }
-    return sources
+    return sourceRoots.map { sourceRoot ->
+      Path.of(FileUtil.toSystemDependentName(sourceRoot.path))
+    }
   }
 
-  private fun getSources(
-    sourceSetNode: DataNode<GradleSourceSetData>,
-  ): Map<IExternalSystemSourceType, Collection<Path>> {
-    return getSourceRoots(sourceSetNode).mapValues { (_, sourceRoots) ->
-      sourceRoots.map { sourceRoot ->
-        Path.of(FileUtil.toSystemDependentName(sourceRoot.path))
-      }
-    }
+  private fun getContentRoots(sourceSetNode: DataNode<GradleSourceSetData>): Collection<Path> {
+    return ExternalSystemApiUtil.findAll(sourceSetNode, CONTENT_ROOT)
+      .map { Path.of(FileUtil.toSystemDependentName(it.data.rootPath)) }
   }
 }

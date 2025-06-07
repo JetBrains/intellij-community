@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.todo
 
 import com.intellij.codeInsight.highlighting.PsiHighlightedReference
@@ -11,7 +11,6 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
-import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService
@@ -170,11 +169,11 @@ internal class TodoSearcher : UsageSearcher {
     return SearchService.getInstance()
       .searchWord(parameters.project, target.wordToHighlight)
       .caseSensitive(false)
-      .inContexts(SearchContext.IN_COMMENTS)
+      .inContexts(SearchContext.inComments())
       .inScope(parameters.searchScope)
-      .buildQuery(LeafOccurrenceMapper {
+      .buildQuery {
         listOf(TextUsage(it.scope.containingFile, it.start.textRange))
-      })
+      }
   }
 }
 

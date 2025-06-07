@@ -1,0 +1,13 @@
+LineBreakpoint created at jvmSpecifiedNamesInlining.kt:19
+Run Java
+Connected to the target VM
+jvmSpecifiedNamesInlining.kt:19
+Compile bytecode for func1()
+Compile bytecode for func2()
+Compile bytecode for func3()
+Compile bytecode for func4()
+Compile bytecode for func5()
+Compile bytecode for func6()
+Disconnected from the target VM
+
+Process finished with exit code 0

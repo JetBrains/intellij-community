@@ -31,14 +31,13 @@ import org.jetbrains.annotations.NotNull;
  */
 final class DependencyVisitor extends PyRecursiveElementVisitor {
 
-  @NotNull
-  private final PyElement myElementToFind;
+  private final @NotNull PyElement myElementToFind;
   private boolean myDependencyFound;
 
   /**
    * @param elementToFind what to find
    */
-  DependencyVisitor(@NotNull final PyElement elementToFind) {
+  DependencyVisitor(final @NotNull PyElement elementToFind) {
     myElementToFind = elementToFind;
   }
 
@@ -56,7 +55,7 @@ final class DependencyVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyCallExpression(@NotNull final PyCallExpression node) {
+  public void visitPyCallExpression(final @NotNull PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     if (callee != null) {
       final PsiReference calleeReference = callee.getReference();

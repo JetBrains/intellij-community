@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.slicer;
 
@@ -123,6 +123,16 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/doubleLambdaResult.kt");
         }
 
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("testData/slicer/inflow/elvis.kt");
+        }
+
+        @TestMetadata("emptyFun.kt")
+        public void testEmptyFun() throws Exception {
+            runTest("testData/slicer/inflow/emptyFun.kt");
+        }
+
         @TestMetadata("enumConstants.kt")
         public void testEnumConstants() throws Exception {
             runTest("testData/slicer/inflow/enumConstants.kt");
@@ -201,6 +211,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
         @TestMetadata("ifExpression.kt")
         public void testIfExpression() throws Exception {
             runTest("testData/slicer/inflow/ifExpression.kt");
+        }
+
+        @TestMetadata("infiniteRecursion.kt")
+        public void testInfiniteRecursion() throws Exception {
+            runTest("testData/slicer/inflow/infiniteRecursion.kt");
         }
 
         @TestMetadata("inlineExtensionImplicitReceiver.kt")

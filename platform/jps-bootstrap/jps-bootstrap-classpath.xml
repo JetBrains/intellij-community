@@ -17,7 +17,7 @@
 
   <mkdir dir="${build.dir}" />
 
-  <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
+  <property name="maven.resolver.ant.tasks.version" value="1.5.1"/>
   <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
   <property name="maven.resolver.ant.tasks.file.path" value="org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}"/>
   <property name="maven.resolver.ant.tasks.cache.dir" value="${user.home}/.m2/repository/${maven.resolver.ant.tasks.file.path}"/>
@@ -76,7 +76,6 @@
     <resolver:remoterepos id="remoterepos.buildscript">
       <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
       <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
-      <resolver:remoterepo id="kotlin-ide-plugin-dependencies" url="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"/>
       <resolver:remoterepo id="teamcity-repository" url="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository"/>
     </resolver:remoterepos>
 
@@ -86,7 +85,7 @@
       <resolver:resolve failOnMissingAttachments="true">
         <resolver:remoterepos refid="remoterepos.buildscript"/>
         <resolver:dependencies pomRef="jps.bootstrap.pom">
-          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin" version="${kotlinc.version}" />
         </resolver:dependencies>
         <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
       </resolver:resolve>

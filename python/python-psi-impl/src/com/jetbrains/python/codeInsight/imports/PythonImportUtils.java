@@ -18,8 +18,7 @@ public final class PythonImportUtils {
 
   }
 
-  @Nullable
-  public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
+  public static @Nullable AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
     final String text = reference.getElement().getText();
     final String refText = reference.getRangeInElement().substring(text); // text of the part we're working with
 
@@ -38,8 +37,7 @@ public final class PythonImportUtils {
     return addCandidates(node, reference, refText);
   }
 
-  @Nullable
-  private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText) {
+  private static @Nullable AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText) {
     return PyImportCollectorFactory.getInstance().create(node, reference, refText).addCandidates();
   }
 

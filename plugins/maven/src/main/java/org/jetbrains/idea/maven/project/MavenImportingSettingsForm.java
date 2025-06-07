@@ -12,9 +12,9 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
@@ -42,6 +42,7 @@ public class MavenImportingSettingsForm {
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
   private JBLabel myImporterJdkWarning;
   private JCheckBox myAutoDetectCompilerCheckBox;
+  private JCheckBox runPluginsCompat;
 
   private final ComponentValidator myImporterJdkValidator;
   private volatile boolean myMuteJdkValidation = false;
@@ -53,10 +54,11 @@ public class MavenImportingSettingsForm {
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel<>(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
 
     myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<>(MavenImportingSettings.GeneratedSourcesFolder.class));
-    myGeneratedSourcesComboBox.setRenderer(SimpleListCellRenderer.create("", value -> value.getTitle()));
+    myGeneratedSourcesComboBox.setRenderer(BuilderKt.textListCellRenderer("", value -> value.getTitle()));
 
     LabelTextReplacingUtil.replaceText(myPanel);
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
+    runPluginsCompat.setVisible(Registry.is("maven.use.plugins.m2e.compat"));
     myJdkForImporterComboBox.setHighlightInternalJdk(false);
     ActionListener validatorListener = new ActionListener() {
       @Override
@@ -105,6 +107,7 @@ public class MavenImportingSettingsForm {
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
     data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
     data.setAutoDetectCompiler(myAutoDetectCompilerCheckBox.isSelected());
+    data.setRunPluginsCompatibilityOnSyncAndBuild(runPluginsCompat.isSelected());
 
     data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
     data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
@@ -125,6 +128,7 @@ public class MavenImportingSettingsForm {
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
     myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
     myAutoDetectCompilerCheckBox.setSelected(data.isAutoDetectCompiler());
+    runPluginsCompat.setSelected(data.isRunPluginsCompatibilityOnSyncAndBuild());
 
     myDependencyTypes.setText(data.getDependencyTypes());
 

@@ -19,10 +19,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Spacer extends JComponent{
+  @Override
   public Dimension getMinimumSize(){
     return new Dimension(0, 0);
   }
 
+  @Override
   public final Dimension getPreferredSize(){
     return getMinimumSize();
   }

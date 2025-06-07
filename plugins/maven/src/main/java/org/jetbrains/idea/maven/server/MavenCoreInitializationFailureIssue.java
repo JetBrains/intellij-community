@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.FileNavigatable;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenCoreInitializationFailureIssue implements BuildIssue {
-  private @NlsSafe final String myMessage;
+  private final @NlsSafe String myMessage;
   private final Set<String> myMultimoduleDirectories;
   private final String myMavenVersion;
   private final MavenId myUnresolvedExtensionId;
@@ -36,15 +36,13 @@ public class MavenCoreInitializationFailureIssue implements BuildIssue {
     myUnresolvedExtensionId = unresolvedExtensionId;
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return SyncBundle.message("maven.core.plexus.init.issue.title");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     StringBuilder desc = new StringBuilder(SyncBundle.message("maven.core.plexus.init.issue.description"));
     if (myMavenVersion == null || VersionComparatorUtil.compare("3.8.5", myMavenVersion) <= 0) {
       desc.append("\n").append(SyncBundle.message("maven.core.plexus.init.issue.fix.downgrade", OpenMavenSettingsQuickFix.ID));
@@ -57,18 +55,16 @@ public class MavenCoreInitializationFailureIssue implements BuildIssue {
     return desc.toString(); //NON-NLS
   }
 
-  @NotNull
   @Override
-  public List<BuildIssueQuickFix> getQuickFixes() {
+  public @NotNull List<BuildIssueQuickFix> getQuickFixes() {
     return List.of(
       new RestartMavenEmbeddersQuickFix(),
       new OpenMavenSettingsQuickFix()
     );
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull Project project) {
+  public @Nullable Navigatable getNavigatable(@NotNull Project project) {
     for (String directory : myMultimoduleDirectories) {
       Path extensions = Path.of(directory).resolve(".mvn").resolve("extensions.xml");
       if (!extensions.toFile().isFile()) continue;

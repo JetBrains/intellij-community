@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -156,6 +156,24 @@ public class Java9Test extends IncrementalTestCase {
 
     assertEquals(1, classpath.size());
     assertTrue(classpath.contains(new File(libDir, "module_lib_3.jar")));
+  }
+
+  public void testPartialModuleCompilation() {
+    setupInitialProject();
+    final Map<String, JpsModule> modules = setupModules();
+
+    assertEquals(1, modules.size());
+
+    final JpsModule module = modules.values().iterator().next();
+    final File libDir = new File(getAbsolutePath("lib"));
+    for (File jarFile : libDir.listFiles((dir, name) -> name.endsWith(".jar"))) {
+      JpsLibrary lib = addLibrary(jarFile.getName(), jarFile);
+      JpsModuleRootModificationUtil.addDependency(module, lib, JpsJavaDependencyScope.COMPILE, false);
+    }
+
+    doBuild(CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
+    modify(0);
+    doBuild(CompileScopeTestBuilder.make().allModules()).assertSuccessful();
   }
 
 

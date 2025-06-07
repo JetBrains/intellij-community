@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.testng` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "testng_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "testng",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:test_n_g"],
+  runtime_deps = [
+    ":testng_resources",
+    "@lib//:test_n_g",
+  ]
+)
+### auto-generated section `build intellij.libraries.testng` end

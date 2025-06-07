@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.psi
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.LightModifierList
-import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -138,11 +137,64 @@ constructor(
     override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
         analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return
-            functionSymbol.annotations.forEach { annoApp ->
-                annoApp.psi?.toLightAnnotation()?.let { annotations.add(it) }
+            for (annoApp in functionSymbol.annotations) {
+                annotations.add(
+                    UastFakeDeserializedSymbolAnnotation(original, annoApp.classId, context)
+                )
             }
         }
     }
+
+    private val typeParameterListPart = UastLazyPart<PsiTypeParameterList>()
+
+    private inner class UastFakeDeserializedSymbolLightParameter(
+        name: @NlsSafe String,
+        owner: PsiTypeParameterListOwner,
+        index: Int
+    ) : LightTypeParameterBuilder(name, owner, index) {
+        private val myExtendsListPart = UastLazyPart<LightReferenceListBuilder>()
+
+        @OptIn(KaExperimentalApi::class)
+        override fun getExtendsList(): LightReferenceListBuilder {
+            val context = this@UastFakeDeserializedSymbolLightMethod.context
+            return myExtendsListPart.getOrBuild {
+                val extendsList = super.getExtendsList()
+                analyzeForUast(context) {
+                    val functionSymbol = original.restoreSymbol() ?: return extendsList
+                    val typeParamSymbol = functionSymbol.typeParameters[index]
+                    for (bound in typeParamSymbol.upperBounds) {
+                        val psiType = bound.asPsiType(context, allowErrorTypes = true)
+                        if (psiType is PsiClassType) extendsList.addReference(psiType)
+                    }
+                }
+                return extendsList
+            }
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    override fun getTypeParameterList(): PsiTypeParameterList =
+        typeParameterListPart.getOrBuild {
+            object : LightTypeParameterListBuilder(context.manager, context.language) {
+                override fun getParent(): PsiElement = this@UastFakeDeserializedSymbolLightMethod
+                override fun getContainingFile(): PsiFile = parent.containingFile
+
+                init {
+                    val typeParameterList = this
+                    val typeParameterOwner = this@UastFakeDeserializedSymbolLightMethod
+                    val context = this@UastFakeDeserializedSymbolLightMethod.context
+
+                    analyzeForUast(context) l@{
+                        val functionSymbol = original.restoreSymbol() ?: return@l
+                        for ((i, typeParamSymbol) in functionSymbol.typeParameters.withIndex()) {
+                            typeParameterList.addParameter(
+                                UastFakeDeserializedSymbolLightParameter(typeParamSymbol.name.identifier, typeParameterOwner, i)
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
     private val parameterListPart = UastLazyPart<PsiParameterList>()
 
@@ -160,14 +212,15 @@ constructor(
                     analyzeForUast(context) l@{
                         val functionSymbol = original.restoreSymbol() ?: return@l
                         val functionSymbolPtr = functionSymbol.createPointer()
-                        (functionSymbol.receiverParameter?.psi as? KtTypeReference)?.let { receiver ->
+                        functionSymbol.receiverParameter?.let { receiverParameter ->
+                            val receiverOrigin = receiverParameter.psi as? KtTypeReference ?: context
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
                                     "\$this\$$name",
                                     parameterList,
                                     isVarArgs = false,
                                     ktDefaultValue = null,
-                                    ktOrigin = receiver
+                                    ktOrigin = receiverOrigin
                                 ) {
                                     analyzeForUast(context) {
                                         functionSymbolPtr.restoreSymbol()

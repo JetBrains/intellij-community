@@ -16,6 +16,7 @@ import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
+import kotlin.io.path.invariantSeparatorsPathString
 
 private class IdGenerator {
   private val collisions = Object2IntOpenCustomHashMap(ByteArrays.HASH_STRATEGY)
@@ -26,7 +27,7 @@ private class IdGenerator {
   }
 }
 
-internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleInfo>) {
+internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleInfo>, private val projectHomePath: Path) {
   private val nodeInfoToId = LinkedHashMap<ModuleInfo, String>()
 
   private val dependencyLinks = LinkedHashMap<String, MutableList<String>>()
@@ -52,7 +53,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeGraph(writer: JsonGenerator) {
     writer.array {
       val entries = pluginIdToInfo.entries.toMutableList()
-      entries.sortBy { it.value.sourceModuleName }
+      entries.sortBy { it.value.sourceModule.name }
       for (entry in entries) {
         val item = entry.value
         if (item.packageName == null && !hasContentOrDependenciesInV2Format(item.descriptor)) {
@@ -82,7 +83,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
       return
     }
 
-    val nodeName = item.name ?: item.sourceModuleName
+    val nodeName = item.name ?: item.sourceModule.name
     val id = idGenerator.getId(nodeName)
     var compoundId: String? = null
     if (!item.content.isEmpty()) {
@@ -106,8 +107,8 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         writer.writeStringField("name", nodeName)
         writer.writeStringField("n", getShortName(nodeName))
         writer.writeStringField("package", item.packageName)
-        writer.writeStringField("sourceModule", item.sourceModuleName)
-        writer.writeStringField("descriptor", pathToShortString(item.descriptorFile).replace(File.separatorChar, '/'))
+        writer.writeStringField("sourceModule", item.sourceModule.name)
+        writer.writeStringField("descriptor", projectHomePath.relativize(item.descriptorFile).invariantSeparatorsPathString)
         item.pluginId?.let {
           writer.writeStringField("pluginId", it)
         }
@@ -131,7 +132,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: String) {
     for (ref in dependentInfo.dependencies) {
-      val dep = ref.moduleInfo
+      val dep = ref.moduleInfo ?: continue
       if (isNodeSkipped(dep)) {
         continue
       }

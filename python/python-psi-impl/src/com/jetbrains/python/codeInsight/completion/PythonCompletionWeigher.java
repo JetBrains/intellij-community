@@ -45,7 +45,7 @@ public final class PythonCompletionWeigher extends CompletionWeigher {
   public static final int NOT_IMPORTED_MODULE_WEIGHT = -1;
 
   @Override
-  public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
+  public Comparable weigh(final @NotNull LookupElement element, final @NotNull CompletionLocation location) {
     if (!PsiUtilCore.findLanguageFromElement(location.getCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
       return PyCompletionUtilsKt.FALLBACK_WEIGHT;
     }

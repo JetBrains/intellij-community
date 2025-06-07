@@ -19,9 +19,16 @@ import java.util.function.Supplier;
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 public final class SystemInfo {
+  /** Use {@link com.intellij.util.system.OS} instead */
+  @ApiStatus.Obsolete
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
+  /** Use {@link com.intellij.util.system.OS#version} instead */
+  @ApiStatus.Obsolete
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
+  /** Use {@link CpuArch} instead */
+  @ApiStatus.Obsolete
   public static final String OS_ARCH = System.getProperty("os.arch");
+
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
@@ -104,6 +111,7 @@ public final class SystemInfo {
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
   public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
+  public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
 
   /**
    * Build number is the only more or less stable approach to get comparable Windows versions.
@@ -182,31 +190,18 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
-    return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
-  }
-
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  /** @deprecated might be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is32Bit = CpuArch.CURRENT.width == 32;
 
-  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  /** @deprecated might be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacOSLeopard = isMac;
-
   //</editor-fold>
 }

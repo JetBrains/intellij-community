@@ -4,8 +4,8 @@ package com.intellij.usages.impl.rules;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -22,7 +22,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +87,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, DataProvider {
+  private static class ClassUsageGroup implements UsageGroup, UiDataProvider {
     private final SmartPsiElementPointer<PsiClass> myClassPointer;
     private final @NlsSafe String myText;
     private final String myQName;
@@ -101,8 +100,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @NotNull
-    private static @NlsSafe String createText(@NotNull PsiClass aClass) {
+    private static @NotNull @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
@@ -137,10 +135,12 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return psiClass != null && psiClass.isValid();
     }
 
+    @Override
     public int hashCode() {
       return myQName.hashCode();
     }
 
+    @Override
     public boolean equals(Object object) {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }
@@ -168,22 +168,14 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)this::getSlowData;
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getPsiClass();
-      }
-      else if (UsageView.USAGE_INFO_KEY.is(dataId)) {
+      });
+      sink.lazy(UsageView.USAGE_INFO_KEY, () -> {
         PsiClass psiClass = getPsiClass();
         return psiClass == null ? null : new UsageInfo(psiClass);
-      }
-      return null;
+      });
     }
   }
 }

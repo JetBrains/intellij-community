@@ -2,8 +2,6 @@
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.find.usages.api.PsiUsage
-import com.intellij.find.usages.api.ReadWriteUsage
-import com.intellij.find.usages.api.UsageAccess
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile

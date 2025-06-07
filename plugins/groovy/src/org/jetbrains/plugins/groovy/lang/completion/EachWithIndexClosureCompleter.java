@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -21,12 +21,11 @@ import java.util.List;
  * @author Max Medvedev
  */
 public final class EachWithIndexClosureCompleter extends ClosureCompleter {
-  @Nullable
   @Override
-  protected List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
-                                                         PsiMethod method,
-                                                         PsiSubstitutor substitutor,
-                                                         PsiElement place) {
+  protected @Nullable List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
+                                                                   PsiMethod method,
+                                                                   PsiSubstitutor substitutor,
+                                                                   PsiElement place) {
     final String name = method.getName();
     if (!"eachWithIndex".equals(name)) return null;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev;
@@ -24,14 +24,14 @@ public final class AbstractPyCodeCompletion  {
                                      lookingFor==LOOKING_FOR_INSTANCED_VARIABLE ||
                                      lookingFor==LOOKING_FOR_ASSIGN;
         String trimmed = argsReceived.trim();
-        if(trimmed.length() > 0) {
+        if(!trimmed.isEmpty()) {
             StringBuilder buffer = new StringBuilder("(");
 
             char c = trimmed.charAt(0);
             if (c == '(') {
                 trimmed = trimmed.substring(1);
             }
-            if (trimmed.length() > 0) {
+            if (!trimmed.isEmpty()) {
                 c = trimmed.charAt(trimmed.length() - 1);
                 if (c == ')') {
                     trimmed = trimmed.substring(0, trimmed.length() - 1);
@@ -52,7 +52,7 @@ public final class AbstractPyCodeCompletion  {
                 temp = trimmed;
             }
             temp = temp.trim();
-            if (temp.length() > 0) {
+            if (!temp.isEmpty()) {
                 //but only if it wasn't a self or cls followed by a valid identifier part.
                 if (!Character.isJavaIdentifierPart(temp.charAt(0))) {
                     trimmed = temp;

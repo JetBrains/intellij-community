@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -9,6 +9,7 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -39,7 +40,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
@@ -50,11 +51,10 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
-import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashTabAvailable
-import git4idea.stash.ui.setStashesAndShelvesTabEnabled
+import git4idea.stash.ui.GitStashSettingsListener
+import git4idea.stash.ui.GitStashUIHandler
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
@@ -100,6 +100,15 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
     list += cdSyncBranches(project)
   }
   return list.map(CheckboxDescriptor::asOptionDescriptor)
+}
+
+private fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
+  val applicationSettings = GitVcsApplicationSettings.getInstance()
+  if (enabled == applicationSettings.isCombinedStashesAndShelvesTabEnabled) return
+
+  applicationSettings.isCombinedStashesAndShelvesTabEnabled = enabled
+
+  ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).onCombineStashAndShelveSettingChanged()
 }
 
 internal class GitVcsPanel(private val project: Project) :
@@ -195,7 +204,6 @@ internal class GitVcsPanel(private val project: Project) :
     group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
-          .enabledIf(StagingAreaAvailablePredicate(project, disposable!!))
       }
       row {
         checkBox(cdWarnAboutCrlf(project))
@@ -262,17 +270,20 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         checkBox(cdSyncBranches(project))
           .gap(RightGap.SMALL)
-        contextHelp(DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get()))
+        contextHelp(DvcsBundle.message("sync.setting.description", GitDisplayName.NAME))
       }
     }
     branchUpdateInfoRow()
     row {
       checkBox(cdOverrideCredentialHelper)
     }
-    if (isStashTabAvailable()) {
+    val stashHandler = project.service<GitStashUIHandler>()
+    if (stashHandler.isStashTabAvailable()) {
       group(message("settings.stash")) {
-        row {
-          checkBox(cdCombineStashesAndShelves)
+        if (stashHandler.canSwitchStashesAndShelvesTab()) {
+          row {
+            checkBox(cdCombineStashesAndShelves)
+          }
         }
         buttonsGroup(message("settings.stash.show.diff.group")) {
           row {
@@ -377,18 +388,6 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   }
 
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
-}
-
-class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
-      override fun settingsChanged() {
-        listener(invoke())
-      }
-    })
-  }
-
-  override fun invoke(): Boolean = canEnableStagingArea()
 }
 
 class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {

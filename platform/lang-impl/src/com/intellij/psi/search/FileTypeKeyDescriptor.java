@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.SubstitutedFileType;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,10 +23,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Objects;
 
-final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
-  private final NotNullLazyValue<FileTypeNameEnumerator> myFileTypeNameEnumerator = NotNullLazyValue.lazy(() -> {
-    return (FileTypeNameEnumerator)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
-  });
+@ApiStatus.Internal
+abstract public class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
+  protected abstract @NotNull FileTypeNameEnumerator getEnumerator();
 
   @Override
   public int getHashCode(FileType value) {
@@ -57,11 +58,11 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
   }
 
   int getFileTypeId(@NotNull String fileTypeName) throws IOException {
-    return myFileTypeNameEnumerator.getValue().getFileTypeId(fileTypeName);
+    return getEnumerator().getFileTypeId(fileTypeName);
   }
 
   @Nullable String getFileTypeName(int fileTypeId) throws IOException {
-    return myFileTypeNameEnumerator.getValue().getFileTypeName(fileTypeId);
+    return getEnumerator().getFileTypeName(fileTypeId);
   }
 
   private static final class OutDatedFileType implements FileType {

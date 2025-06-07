@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.test.GitSingleRepoTest
-import git4idea.test.git
 import java.io.File
 
 class GitRmTest : GitSingleRepoTest() {

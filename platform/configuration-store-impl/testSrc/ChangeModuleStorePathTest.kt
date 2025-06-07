@@ -2,9 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
@@ -24,7 +23,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -99,7 +97,7 @@ class ChangeModuleStorePathTest {
     val oldName = module.name
     val newName = "foo"
 
-    writeAction {
+    edtWriteAction {
       projectRule.project.modifyModules { renameModule(module, newName) }
     }
     assertModuleFileRenamed(newName, oldFile)
@@ -120,7 +118,7 @@ class ChangeModuleStorePathTest {
 
     val oldName = module.name
     val newName = "foo.dot"
-    writeAction {
+    edtWriteAction {
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     }
     assertModuleFileRenamed(newName, oldFile)
@@ -162,7 +160,7 @@ class ChangeModuleStorePathTest {
       val storage = module.storage
       val oldFile = storage.file
       val parentVirtualDir = storage.getVirtualFile()!!.parent
-      writeAction {
+      edtWriteAction {
         updateDirectoryAction(parentVirtualDir)
       }
 
@@ -181,7 +179,7 @@ class ChangeModuleStorePathTest {
     val imlFile = module.storage.getVirtualFile()!!
     val oldFile = imlFile.toNioPath()
     val moduleName = module.name
-    writeAction { 
+    edtWriteAction {
       imlFile.move(null, tempDirManager.newVirtualDirectory("newParent"))
     }
     val newFile = imlFile.toNioPath()
@@ -196,7 +194,7 @@ class ChangeModuleStorePathTest {
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile()!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    writeAction {
+    edtWriteAction {
       PsiTestUtil.addSourceContentToRoots(module, src, false)
     }
 
@@ -205,7 +203,7 @@ class ChangeModuleStorePathTest {
     val rootManager = module.rootManager as ModuleRootManagerEx
     val stateModificationCount = rootManager.modificationCountForTests
 
-    writeAction {
+    edtWriteAction {
       src.rename(null, "bar.dot")
     }
 

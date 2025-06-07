@@ -87,8 +87,7 @@ public final class ShutDownTracker {
     }
   }
 
-  @Nullable
-  private Runnable getNextTask() {
+  private @Nullable Runnable getNextTask() {
     Runnable task = myCachesShutdownTasks.pollLast();
     if (task != null) return task;
     return myShutdownTasks.pollLast();

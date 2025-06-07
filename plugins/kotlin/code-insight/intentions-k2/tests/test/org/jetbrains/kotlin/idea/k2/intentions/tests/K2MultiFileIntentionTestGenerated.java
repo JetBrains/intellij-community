@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.intentions.tests;
 
@@ -103,6 +103,50 @@ public abstract class K2MultiFileIntentionTestGenerated extends AbstractK2MultiF
         @TestMetadata("addImports/addImports.test")
         public void testAddImports_AddImports() throws Exception {
             runTest("../../../idea/tests/testData/multiFileIntentions/convertMemberToExtension/addImports/addImports.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileIntentions/addJvmStatic")
+    public static class AddJvmStatic extends AbstractK2MultiFileIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("toCompanionObjectFun/addJvmStaticToCompanionObjectFun.test")
+        public void testToCompanionObjectFun_AddJvmStaticToCompanionObjectFun() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toCompanionObjectFun/addJvmStaticToCompanionObjectFun.test");
+        }
+
+        @TestMetadata("toCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test")
+        public void testToCompanionObjectProperty_AddJvmStaticToCompanionObjectProperty() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test");
+        }
+
+        @TestMetadata("toNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test")
+        public void testToNamedCompanionObjectFun_AddJvmStaticToNamedCompanionObjectFun() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test");
+        }
+
+        @TestMetadata("toNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test")
+        public void testToNamedCompanionObjectProperty_AddJvmStaticToNamedCompanionObjectProperty() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test");
+        }
+
+        @TestMetadata("toObjectFun/addJvmStaticToObjectFun.test")
+        public void testToObjectFun_AddJvmStaticToObjectFun() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toObjectFun/addJvmStaticToObjectFun.test");
+        }
+
+        @TestMetadata("toObjectProperty/addJvmStaticToObjectProperty.test")
+        public void testToObjectProperty_AddJvmStaticToObjectProperty() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/addJvmStatic/toObjectProperty/addJvmStaticToObjectProperty.test");
         }
     }
 }

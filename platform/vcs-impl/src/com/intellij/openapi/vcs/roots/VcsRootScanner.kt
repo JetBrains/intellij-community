@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -33,6 +33,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -41,8 +42,9 @@ import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<VcsRootScanner>()
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) {
+class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
 
   private val scanRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -172,7 +174,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     }
   }
 
-  private fun scheduleScan() {
+  fun scheduleScan() {
     if (VcsRootChecker.EXTENSION_POINT_NAME.extensionList.isEmpty()) {
       return
     }
@@ -193,7 +195,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return
       }
-      if (!project.isTrusted()) {
+      if (!TrustedProjects.isProjectTrusted(project)) {
         // vcs is disabled
         return
       }

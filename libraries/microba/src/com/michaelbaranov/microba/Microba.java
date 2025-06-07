@@ -18,7 +18,7 @@ import java.util.Map;
  * @author Michael Baranov
  * 
  */
-public class Microba {
+public final class Microba {
 
   private static final UIChangeListener changeListener = new UIChangeListener();
 

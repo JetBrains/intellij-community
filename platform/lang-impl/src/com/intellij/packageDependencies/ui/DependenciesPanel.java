@@ -65,8 +65,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class DependenciesPanel extends JPanel implements Disposable, UiDataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
@@ -178,9 +178,10 @@ public final class DependenciesPanel extends JPanel implements Disposable, UiDat
         }
         if (denyRules.length() + allowRules.length() > 0) {
           StatusBar.Info.set(CodeInsightBundle.message("status.bar.rule.violation.message",
-                                                        ((denyRules.length() == 0 || allowRules.length() == 0) ? 1 : 2),
-                                                        (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
-                                                        (allowRules.length() > 0 ? allowRules.toString() : " ")), myProject);
+                                                        ((denyRules.isEmpty() || allowRules.isEmpty()) ? 1 : 2),
+                                                       (!denyRules.isEmpty()
+                                                        ? denyRules.toString() + (!allowRules.isEmpty() ? "; " : "") : " ") +
+                                                       (!allowRules.isEmpty() ? allowRules.toString() : " ")), myProject);
         }
         else {
           StatusBar.Info.set(CodeInsightBundle.message("status.bar.no.rule.violation.message"), myProject);
@@ -831,7 +832,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, UiDat
       final @NonNls String delim = "&nbsp;-&gt;&nbsp;";
       final StringBuffer buf = new StringBuffer();
       processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
-        if (buf.length() > 0) buf.append("<br>");
+        if (!buf.isEmpty()) buf.append("<br>");
         buf.append(StringUtil.join(path, psiFile -> psiFile.getName(), delim));
         return true;
       });

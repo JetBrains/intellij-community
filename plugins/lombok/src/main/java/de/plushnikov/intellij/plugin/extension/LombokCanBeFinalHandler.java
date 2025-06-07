@@ -22,7 +22,9 @@ public final class LombokCanBeFinalHandler extends CanBeFinalHandler {
       }
 
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(member, PsiClass.class);
-      return null == psiClass || !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.SETTER, LombokClassNames.DATA, LombokClassNames.VALUE);
+      if (psiClass == null) return true;
+      return !PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.SETTER, LombokClassNames.DATA, LombokClassNames.VALUE);
+      // will return true for our elemnt
     }
     return true;
   }

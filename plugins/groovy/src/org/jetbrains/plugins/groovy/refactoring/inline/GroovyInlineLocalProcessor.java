@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,9 +56,8 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
     this.myLocal = local;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new BaseUsageViewDescriptor(myLocal);
   }
 
@@ -214,9 +213,8 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle.message("inline.command", myLocal.getName());
   }
 }

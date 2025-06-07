@@ -19,11 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyMethodOverridingInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -37,13 +36,13 @@ public final class PyMethodOverridingInspection extends PyInspection {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
 
-      if (PyUtil.isInitOrNewMethod(function) ||
+      if (PyUtil.isConstructorLikeMethod(function) ||
           PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
           ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensions(), e -> e.ignoreMethodParameters(function, myTypeEvalContext))) {
         return;
       }
 
-      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
+      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext).asIterable()) {
         if (psiElement instanceof PyFunction baseMethod) {
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final PyClass baseClass = baseMethod.getContainingClass();

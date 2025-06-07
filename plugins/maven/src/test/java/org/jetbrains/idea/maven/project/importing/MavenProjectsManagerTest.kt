@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -252,7 +252,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertSources("project", "src/main/java")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
-    writeAction {
+    edtWriteAction {
       val model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel()
       val contentRoot = model.getContentEntries()[0]
       for (eachSourceFolders in contentRoot.getSourceFolders()) {
@@ -295,7 +295,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    writeAction {
+    edtWriteAction {
       ModuleManager.getInstance(project).disposeModule(module)
     }
     assertNull(ModuleManager.getInstance(project).findModuleByName("m"))
@@ -356,7 +356,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    writeAction {
+    edtWriteAction {
       ModuleDeleteProvider.detachModules(project, arrayOf(module))
     }
     assertNull(ModuleManager.getInstance(project).findModuleByName("m"))
@@ -583,7 +583,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
       </project>
       """.trimIndent())
     refreshFiles(listOf(mavenParentPom, child1Pom))
-    writeAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
+    edtWriteAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
     importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(project).modules.size)
     configConfirmationForYesAnswer()

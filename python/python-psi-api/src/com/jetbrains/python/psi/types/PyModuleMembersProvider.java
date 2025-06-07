@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,8 +27,7 @@ public abstract class PyModuleMembersProvider {
    * @param context type evaluation context
    * @return provided members
    */
-  @NotNull
-  public Collection<PyCustomMember> getMembers(@NotNull PyFile module, @NotNull PointInImport point, @NotNull TypeEvalContext context) {
+  public @NotNull Collection<PyCustomMember> getMembers(@NotNull PyFile module, @NotNull PointInImport point, @NotNull TypeEvalContext context) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
       final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(vFile, module);
@@ -47,8 +46,7 @@ public abstract class PyModuleMembersProvider {
    * @param resolveContext context to be used in resolve
    * @return provided member
    */
-  @Nullable
-  public PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
+  public @Nullable PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
     for (PyCustomMember o : getMembers(module, PointInImport.NONE, resolveContext.getTypeEvalContext())) {
       if (o.getName().equals(name)) {
         return o.resolve(module, resolveContext);
@@ -65,8 +63,7 @@ public abstract class PyModuleMembersProvider {
    * @param context type evaluation context
    * @return provided members
    */
-  @NotNull
-  protected abstract Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module,
+  protected abstract @NotNull Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module,
                                                                   @NotNull String qName,
                                                                   @NotNull TypeEvalContext context);
 }

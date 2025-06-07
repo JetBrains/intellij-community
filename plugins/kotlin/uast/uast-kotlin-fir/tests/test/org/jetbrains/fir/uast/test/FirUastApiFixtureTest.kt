@@ -138,6 +138,30 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInvokedLambdaBody(myFixture)
     }
 
+    fun testInvokedLambdaViaFunctionCall() {
+        checkInvokedLambdaViaFunctionCall(myFixture)
+    }
+
+    fun testImplicitReceiver() {
+        checkImplicitReceiver(myFixture)
+    }
+
+    fun testImplicitReceiver_extensionFunction() {
+        checkImplicitReceiver_extensionFunction(myFixture)
+    }
+
+    fun testImplicitReceiver_insideInterface() {
+        checkImplicitReceiver_insideInterface(myFixture)
+    }
+
+    fun testImplicitReceiver_interfaceHierarchy() {
+        checkImplicitReceiver_interfaceHierarchy(myFixture)
+    }
+
+    fun testImplicitReceiver_interfaceHierarchy_smartcast() {
+        checkImplicitReceiver_interfaceHierarchy_smartcast(myFixture)
+    }
+
     fun testLambdaImplicitParameters() {
         checkLambdaImplicitParameters(myFixture)
     }
@@ -158,6 +182,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkReceiverTypeOfExtensionFunction(myFixture)
     }
 
+    fun testReceiverTypeOfExtensionFunction_superType() {
+        checkReceiverTypeOfExtensionFunction_superType(myFixture)
+    }
+
     fun testSourcePsiOfLazyPropertyAccessor() {
         checkSourcePsiOfLazyPropertyAccessor(myFixture)
     }
@@ -172,6 +200,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testNoArgConstructorSourcePsi() {
         checkNoArgConstructorSourcePsi(myFixture)
+    }
+
+    fun testDataClassCopy() {
+        checkDataClassCopy(myFixture)
     }
 
     fun testNullLiteral() {
@@ -196,5 +228,17 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testJavaConstantEvaluation() {
         checkJavaConstantEvaluation(myFixture)
+    }
+
+    fun testAnnotationOnMemberWithValueClassInSignature() {
+        checkAnnotationOnMemberWithValueClassInSignature(myFixture)
+    }
+
+    fun testAnnotationOnPropertyWithValueClassInSignature() {
+        checkAnnotationOnPropertyWithValueClassInSignature(myFixture)
+    }
+
+    fun testTypealiasAnnotation() {
+        checkTypealiasAnnotation(myFixture)
     }
 }

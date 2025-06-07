@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class BuildViewProblemsService(override val project: Project) : ProblemsProvider {
-
   override fun dispose() {
     buildIdToFileProblems.clear()
     workingDirToBuildId.clear()
@@ -31,15 +30,16 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
     val collector = project.service<ProblemsCollector>()
 
     buildProgressObservable.addListener(BuildProgressListener { buildId, event ->
-      if (event is FileMessageEvent &&
-          event.kind == MessageEvent.Kind.ERROR) {
-        val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(event.filePosition.file.toPath()) ?: return@BuildProgressListener
+      if (event is FileMessageEvent && event.kind == MessageEvent.Kind.ERROR) {
+        val virtualFile = event.filePosition.file?.let { VirtualFileManager.getInstance().findFileByNioPath(it.toPath()) }
+                          ?: return@BuildProgressListener
         val problem = FileBuildProblem(event, virtualFile, this)
 
-        val problems = buildIdToFileProblems.getOrPut(buildId) { HashSet() }
+        val problems = buildIdToFileProblems.computeIfAbsent(buildId) { HashSet() }
         if (problems.add(problem)) {
           collector.problemAppeared(problem)
-        } else {
+        }
+        else {
           collector.problemUpdated(problem)
         }
       }
@@ -58,9 +58,11 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
 
   class BuildProblemsProvider(override val project: Project) : ProblemsProvider
 
-  class FileBuildProblem(val event: FileMessageEvent,
-                         val virtualFile: VirtualFile,
-                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicateProblem {
+  class FileBuildProblem(
+    val event: FileMessageEvent,
+    val virtualFile: VirtualFile,
+    val problemsProvider: ProblemsProvider,
+  ) : FileProblem, HighlightingDuplicateProblem {
     override val description: String?
       get() = event.description
     override val file: VirtualFile

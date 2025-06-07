@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -28,9 +28,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -46,20 +44,21 @@ import static git4idea.util.GitUIUtil.code;
  * If branch is not fully merged to the current branch, shows a dialog with the list of unmerged commits and with a list of branches
  * current branch are merged to, and makes force delete, if wanted.
  */
-class GitDeleteBranchOperation extends GitBranchOperation {
+@ApiStatus.Internal
+public class GitDeleteBranchOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
 
-  static final String RESTORE = getRestore();
-  static final String VIEW_COMMITS = getViewCommits();
-  static final String DELETE_TRACKED_BRANCH = getDeleteTrackedBranch();
+  public static final String RESTORE = getRestore();
+  public static final String VIEW_COMMITS = getViewCommits();
+  public static final String DELETE_TRACKED_BRANCH = getDeleteTrackedBranch();
 
   private final @NotNull String myBranchName;
   private final @NotNull VcsNotifier myNotifier;
   private final @NotNull Map<GitRepository, GitRemoteBranch> myTrackedBranches;
 
   private final @NotNull Map<GitRepository, UnmergedBranchInfo> myUnmergedToBranches;
-  private final @NotNull Map<GitRepository, String> myDeletedBranchTips;
+  private final @Unmodifiable @NotNull Map<GitRepository, String> myDeletedBranchTips;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<? extends GitRepository> repositories, @NotNull String branchName) {

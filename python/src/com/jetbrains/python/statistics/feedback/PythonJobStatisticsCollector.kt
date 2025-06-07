@@ -6,15 +6,12 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventId2
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
 object PythonJobStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.job.statistics", 1)
+  private val GROUP = EventLogGroup("python.job.statistics", 2)
   private val USE_FOR = EventFields.StringList("use_for", listOf("data_analysis", "ml", "web_dev", "scripts"))
-  private val OTHER = EventFields.StringValidatedByCustomRule<TrueValidationRule>("other")
-  private val JOB_EVENT: EventId2<List<String>, String?> = GROUP.registerEvent("job.event", USE_FOR, OTHER)
+  private val OTHER = EventFields.StringValidatedByInlineRegexp("other", "[\\w\\s,.!?-]{1,25}")
+  private val JOB_EVENT: EventId2<List<String>, String?> = GROUP.registerEvent("job.survey.triggered", USE_FOR, OTHER)
 
   @JvmStatic
   fun logJobEvent(useFor: List<String>, other: String?) {
@@ -23,16 +20,5 @@ object PythonJobStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup {
     return GROUP
-  }
-}
-
-
-class TrueValidationRule() : CustomValidationRule() {
-  override fun getRuleId(): String {
-    return "python-user-job-other"
-  }
-
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return ValidationResultType.ACCEPTED
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -15,12 +15,16 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.*;
+import static com.intellij.util.BitUtil.isSet;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private final PsiJavaModuleReferenceElement myReference;
@@ -110,13 +114,34 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   @Override
+  public boolean doNotResolveByDefault() {
+    return isSet(getStub().getResolution(), DO_NOT_RESOLVE_BY_DEFAULT);
+  }
+
+  @Override
+  public boolean warnDeprecated() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED);
+  }
+
+  @Override
+  public boolean warnDeprecatedForRemoval() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED_FOR_REMOVAL);
+  }
+
+  @Override
+  public boolean warnIncubating() {
+    return isSet(getStub().getResolution(), WARN_INCUBATING);
+  }
+
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw cannotModifyException(this);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public PsiModifierList getModifierList() {
-    StubElement<PsiModifierList> childStub = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    StubElement<PsiModifierList> childStub = ObjectUtils.tryCast(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST), StubElement.class);
     return childStub != null ? childStub.getPsi() : null;
   }
 

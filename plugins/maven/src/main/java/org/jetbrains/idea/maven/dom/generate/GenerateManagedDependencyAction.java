@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.google.common.base.Predicates;
@@ -22,7 +8,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import java.util.HashSet;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
@@ -32,10 +17,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   public GenerateManagedDependencyAction() {
@@ -53,7 +35,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     }
 
     @Override
-    protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
+    protected MavenDomDependency doGenerate(final @NotNull MavenDomProjectModel mavenModel, final Editor editor) {
       Set<DependencyConflictId> existingDependencies = collectExistingDependencies(mavenModel);
       Map<DependencyConflictId, MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
 
@@ -97,7 +79,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     }
   }
 
-  private static Set<DependencyConflictId> collectExistingDependencies(@NotNull final MavenDomProjectModel model) {
+  private static Set<DependencyConflictId> collectExistingDependencies(final @NotNull MavenDomProjectModel model) {
     final Set<DependencyConflictId> existingDependencies = new HashSet<>();
     for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
       DependencyConflictId id = DependencyConflictId.create(dependency);
@@ -109,8 +91,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     return existingDependencies;
   }
 
-  @NotNull
-  public static Map<DependencyConflictId, MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
+  public static @NotNull Map<DependencyConflictId, MavenDomDependency> collectManagingDependencies(final @NotNull MavenDomProjectModel model) {
     final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<>();
 
     Processor<MavenDomDependency> collectProcessor = dependency -> {

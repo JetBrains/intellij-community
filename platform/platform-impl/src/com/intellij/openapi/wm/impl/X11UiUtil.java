@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
@@ -32,8 +31,8 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -86,6 +85,8 @@ public final class X11UiUtil {
     "wmii",
     "xmonad"
   );
+
+  private static String GSETTINGS_COMMAND = "gsettings";
 
   private static final ConcurrentHashMap<String, Boolean> unsupportedCommands = new ConcurrentHashMap<>();
 
@@ -287,7 +288,7 @@ public final class X11UiUtil {
       }
     }
 
-    private Long findProcessWindow(long window, long pid, int recursionLevel) {
+    private Long findProcessWindow(long window, long pid, int recursionLevel) throws InvocationTargetException, IllegalAccessException {
       if (recursionLevel > 100) {
         LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
         return null;
@@ -310,9 +311,11 @@ public final class X11UiUtil {
       return null;
     }
 
-    private static Boolean isViewableWin(long window) {
+    private static Boolean isViewableWin(long window) throws InvocationTargetException, IllegalAccessException {
+      assert X11 != null;
       XWindowAttributesWrapper wrapper = null;
       try {
+        X11.awtLock.invoke(null);
         wrapper = new XWindowAttributesWrapper(window);
         return wrapper.getMapState() == XWindowAttributesWrapper.MapState.IsViewable;
       }
@@ -321,6 +324,7 @@ public final class X11UiUtil {
         return false;
       }
       finally {
+        X11.awtUnlock.invoke(null);
         if (wrapper != null)
           wrapper.dispose();
       }
@@ -416,9 +420,8 @@ public final class X11UiUtil {
 
   @RequiresBackgroundThread
   public static @Nullable String getTheme() {
-    ThreadingAssertions.assertBackgroundThread();
     if (SystemInfo.isGNOME) {
-      String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
+      String result = exec("Cannot get gnome theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "gtk-theme");
       return trimQuotes(result);
     }
 
@@ -444,8 +447,7 @@ public final class X11UiUtil {
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public static @Nullable String getIconTheme() {
-    ThreadingAssertions.assertBackgroundThread();
-    String result = exec("Cannot get icon theme", "gsettings", "get", "org.gnome.desktop.interface", "icon-theme");
+    String result = exec("Cannot get icon theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "icon-theme");
     return trimQuotes(result);
   }
 
@@ -455,10 +457,9 @@ public final class X11UiUtil {
   @RequiresBackgroundThread
   @ApiStatus.Internal
   public static @Nullable String getWindowButtonsConfig() {
-    ThreadingAssertions.assertBackgroundThread();
     if (SystemInfo.isGNOME || SystemInfo.isKDE) {
       String execResult =
-        exec("Cannot get gnome WM buttons layout", "gsettings", "get", "org.gnome.desktop.wm.preferences", "button-layout");
+        exec("Cannot get gnome WM buttons layout", GSETTINGS_COMMAND, "get", "org.gnome.desktop.wm.preferences", "button-layout");
       return trimQuotes(execResult);
     }
 
@@ -617,10 +618,14 @@ public final class X11UiUtil {
       return FileUtil.loadTextAndClose(process.getInputStream()).trim();
     }
     catch (Exception e) {
-      LOG.info(errorMessage, e);
-
-      if (e.getMessage().contains("No such file or directory")) {
+      String exceptionMessage = e.getMessage();
+      if (exceptionMessage.contains("No such file or directory")) {
         unsupportedCommands.put(command[0], true);
+
+        LOG.info(errorMessage + ": " + exceptionMessage);
+        LOG.trace(e);
+      } else {
+        LOG.info(errorMessage, e);
       }
 
       return null;
@@ -645,7 +650,7 @@ public final class X11UiUtil {
     }
   }
 
-  final static class XWindowAttributesWrapper implements Disposable {
+  static final class XWindowAttributesWrapper implements Disposable {
     enum MapState {
       IsUnmapped,
       IsUnviewable,

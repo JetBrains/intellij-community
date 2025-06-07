@@ -83,4 +83,9 @@ public abstract class WindowManagerEx extends WindowManager {
 
   @ApiStatus.Internal
   public abstract @NotNull List<ProjectFrameHelper> getProjectFrameHelpers();
+
+  @ApiStatus.Internal
+  public @NotNull AutoCloseable withFrameReuseEnabled() {
+    return () -> {};
+  }
 }

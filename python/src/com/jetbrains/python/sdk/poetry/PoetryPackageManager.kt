@@ -1,87 +1,122 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.regex.Pattern
 
-class PoetryPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
-  @Volatile
-  private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
+@ApiStatus.Internal
+class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
-
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
-    poetryInstallPackage(sdk, specification.getVersionForPoetry(), options)
-
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
-    poetryInstallPackage(sdk, specification.getVersionForPoetry(), emptyList())
-
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> = poetryUninstallPackage(sdk, pkg.name)
-
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    val output = poetryReloadPackages(sdk).getOrElse { return Result.failure(it) }
-    return Result.success(parsePoetryShow(output))
-  }
-
-  override suspend fun reloadPackages(): Result<List<PythonPackage>> {
-    updateOutdatedPackages()
-    return super.reloadPackages()
-  }
-
-  internal fun getOutdatedPackages(): Map<String, PoetryOutdatedVersion> = outdatedPackages
-
-
-  /**
-   * Updates the list of outdated packages by running the Poetry command
-   * `poetry show --outdated`, parsing its output, and storing the results.
-   */
-  private suspend fun updateOutdatedPackages() {
-    val outputOutdatedPackages = runPoetryWithSdk(sdk, "show", "--outdated").getOrElse {
-      outdatedPackages = emptyMap()
-      return
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+    if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
+      return PyResult.localizedError("Poetry supports installing only  packages from repositories")
     }
 
-    outdatedPackages = parsePoetryShowOutdated(outputOutdatedPackages)
+    val packageSpecifications = installRequest.specifications
+    return addPackages(packageSpecifications, options)
   }
 
-  private fun PythonPackageSpecification.getVersionForPoetry(): String = if (versionSpecs == null) name else "$name@$versionSpecs"
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
+    return addPackages(specifications.map { it.copy(versionSpec = null) }, emptyList())
+  }
+
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+    if (pythonPackages.isEmpty()) return PyResult.success(Unit)
+
+    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages)
+
+    uninstallDeclaredPackages(declaredPackages).getOr { return it }
+    uninstallStandalonePackages(standalonePackages).getOr { return it }
+
+    return PyResult.success(Unit)
+  }
+
+  /**
+   * Categorizes packages into standalone packages and pyproject.toml declared packages.
+   */
+  private fun categorizePackages(packages: Array<out String>): Pair<List<NormalizedPythonPackageName>, List<NormalizedPythonPackageName>> {
+    val dependencyNames = dependencies.map { it.name }.toSet()
+    return packages
+      .map { NormalizedPythonPackageName.from(it) }
+      .partition { it.name !in dependencyNames }
+  }
+
+  /**
+   * Uninstalls packages using pip through Poetry.
+   */
+  private suspend fun uninstallStandalonePackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      poetryUninstallPackage(
+        sdk = sdk,
+        packages = packages.map { it.name }.toTypedArray()
+      ).mapSuccess { }
+    } else {
+      PyResult.success(Unit)
+    }
+  }
+
+  /**
+   * Removes packages declared in pyproject.toml using Poetry.
+   */
+  private suspend fun uninstallDeclaredPackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      poetryRemovePackage(
+        sdk = sdk,
+        packages = packages.map { it.name }.toTypedArray()
+      ).mapSuccess { }
+    } else {
+      PyResult.success(Unit)
+    }
+  }
+
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
+    val (installed, _) = poetryListPackages(sdk).getOr { return it }
+
+    val packages = installed.map {
+      PythonPackage(it.name, it.version, false)
+    }
+
+    return PyResult.success(packages)
+  }
+
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = poetryShowOutdated(sdk).mapSuccess {
+    it.values.toList()
+  }
+
+  private suspend fun addPackages(
+    packageSpecifications: List<PythonRepositoryPackageSpecification>,
+    options: List<String>,
+  ): PyResult<Unit> {
+    val specifications = packageSpecifications.map {
+      it.getPackageWithVersionInPoetryFormat()
+    }
+
+    return poetryInstallPackage(sdk, specifications, options).mapSuccess { }
+  }
+
+
+  private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
+    return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+  }
 }
 
 /**
  * Parses the output of `poetry show` into a list of packages.
  */
-private fun parsePoetryShow(input: String): List<PythonPackage> {
-  val result = mutableListOf<PythonPackage>()
-  input.split("\n").forEach { line ->
-    if (line.isNotBlank()) {
-      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() }
-      result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
-    }
-  }
-  return result
+
+@TestOnly
+fun parsePoetryShowOutdatedTest(input: String): Map<String, PythonOutdatedPackage> {
+  return parsePoetryShowOutdated(input)
 }
-
-/**
- * Parses the output of `poetry show --outdated` into a list of packages.
- */
-private fun parsePoetryShowOutdated(input: String): Map<String, PoetryOutdatedVersion> =
-  input
-    .lines()
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
-    .mapNotNull { line ->
-      line.split(Pattern.compile(" +"))
-        .takeIf { it.size > 3 }?.let { it[0] to PoetryOutdatedVersion(it[1], it[2]) }
-    }.toMap()
-
-@TestOnly
-fun parsePoetryShowTest(input: String): List<PythonPackage> = parsePoetryShow(input)
-
-@TestOnly
-fun parsePoetryShowOutdatedTest(input: String): Map<String, PoetryOutdatedVersion> = parsePoetryShowOutdated(input)

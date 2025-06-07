@@ -1,6 +1,8 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -76,7 +78,7 @@ public class GoToCommand extends AbstractCommand {
           context.error("Line is out of range", getLine());
           actionCallback.setRejected();
         }
-      });
+      }, ModalityState.nonModal());
     }
     return Promises.toPromise(actionCallback);
   }

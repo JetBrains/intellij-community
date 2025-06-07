@@ -11,12 +11,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.Interner
+import com.intellij.util.progress.lockMaybeCancellable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -26,17 +25,27 @@ import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleT
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.editor.fileNameExtensions
+import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
+import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
-import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
+import org.jetbrains.plugins.textmate.plist.XmlPlistReader
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
+import kotlin.io.path.name
+import kotlin.time.measureTimedValue
 
 class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService() {
   private var builtinBundlesDisabled = false
@@ -45,19 +54,14 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private var isInitialized = false
   private val registrationLock = ReentrantLock()
 
+  private val globalCachingSelectorWeigher: TextMateSelectorWeigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
   private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
-  private val syntaxTable = TextMateSyntaxTable()
-  private val snippetRegistry = SnippetsRegistryImpl()
-  private val preferenceRegistry = PreferencesRegistryImpl()
-  private val shellVariablesRegistry = ShellVariablesRegistryImpl()
-  private val interner = Interner.createWeakInterner<CharSequence>()
-
-  init {
-    val app = ApplicationManager.getApplication()
-    val checkCancelled = if (app == null || app.isUnitTestMode) null else Runnable { ProgressManager.checkCanceled() }
-    SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled)
-  }
+  private val syntaxTable = AtomicReference(TextMateSyntaxTableCore(emptyMap()))
+  private val snippetRegistry = AtomicReference<SnippetsRegistry>(SnippetsRegistryImpl(globalCachingSelectorWeigher, emptyMap()))
+  private val preferenceRegistry = AtomicReference<PreferencesRegistry>(PreferencesRegistryImpl(globalCachingSelectorWeigher))
+  private val shellVariablesRegistry = AtomicReference<ShellVariablesRegistry>(ShellVariablesRegistryImpl(globalCachingSelectorWeigher, emptyMap()))
+  private val interner: TextMateInterner = TextMateConcurrentMapInterner()
 
   override fun reloadEnabledBundles() {
     registerBundles(fireEvents = true)
@@ -67,6 +71,10 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private fun registerBundles(fireEvents: Boolean) {
     registrationLock.lock()
     try {
+      val syntaxTableBuilder = TextMateSyntaxTableBuilder(interner)
+      val preferencesBuilder = PreferencesRegistryBuilder(globalCachingSelectorWeigher)
+      val snippetsRegistryBuilder = SnippetsRegistryBuilder(globalCachingSelectorWeigher)
+      val shellVariablesRegistryBuilder = ShellVariablesRegistryBuilder(globalCachingSelectorWeigher)
       val oldExtensionsMapping = extensionMapping
       unregisterAllBundles()
 
@@ -87,7 +95,14 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           registerBundlesInParallel(
             scope = myScope,
             bundlesToLoad = bundlesToEnable,
-            registrar = { registerBundle(Path.of(it.path), newExtensionsMapping) },
+            registrar = {
+              registerBundle(directory = Path.of(it.path),
+                             extensionMapping = newExtensionsMapping,
+                             syntaxTableBuilder = syntaxTableBuilder,
+                             preferencesBuilder = preferencesBuilder,
+                             snippetsRegistryBuilder = snippetsRegistryBuilder,
+                             shellVariablesRegistryBuilder = shellVariablesRegistryBuilder)
+            },
           )
         }
       }
@@ -103,7 +118,14 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
         registerBundlesInParallel(
           scope = myScope,
           bundlesToLoad = bundlesToLoad,
-          registrar = { bundleToLoad -> registerBundle(Path.of(bundleToLoad.path), newExtensionsMapping) },
+          registrar = { bundleToLoad ->
+            registerBundle(directory = Path.of(bundleToLoad.path),
+                           extensionMapping = newExtensionsMapping,
+                           syntaxTableBuilder = syntaxTableBuilder,
+                           preferencesBuilder = preferencesBuilder,
+                           snippetsRegistryBuilder = snippetsRegistryBuilder,
+                           shellVariablesRegistryBuilder = shellVariablesRegistryBuilder)
+          },
           registrationFailed = { bundleToLoad ->
             val bundleName = bundleToLoad.name
             val errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName)
@@ -125,7 +147,10 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
       else {
         extensionMapping = java.util.Map.copyOf(newExtensionsMapping)
       }
-      syntaxTable.compact()
+      syntaxTable.set(syntaxTableBuilder.build())
+      preferenceRegistry.set(preferencesBuilder.build())
+      snippetRegistry.set(snippetsRegistryBuilder.build())
+      shellVariablesRegistry.set(shellVariablesRegistryBuilder.build())
     }
     finally {
       registrationLock.unlock()
@@ -134,11 +159,12 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   private fun unregisterAllBundles() {
     extensionMapping = java.util.Map.of()
-    preferenceRegistry.clear()
     customHighlightingColors.clear()
-    syntaxTable.clear()
-    snippetRegistry.clear()
-    shellVariablesRegistry.clear()
+    syntaxTable.set(TextMateSyntaxTableCore(emptyMap()))
+    preferenceRegistry.set(PreferencesRegistryImpl(globalCachingSelectorWeigher))
+    snippetRegistry.set(SnippetsRegistryImpl(globalCachingSelectorWeigher, emptyMap()))
+    shellVariablesRegistry.set(ShellVariablesRegistryImpl(globalCachingSelectorWeigher, emptyMap()))
+    interner.clear()
   }
 
   override fun getCustomHighlightingColors(): Map<CharSequence, TextMateTextAttributesAdapter> {
@@ -148,17 +174,17 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   override fun getShellVariableRegistry(): ShellVariablesRegistry {
     ensureInitialized()
-    return shellVariablesRegistry
+    return shellVariablesRegistry.get()
   }
 
   override fun getSnippetRegistry(): SnippetsRegistry {
     ensureInitialized()
-    return snippetRegistry
+    return snippetRegistry.get()
   }
 
   override fun getPreferenceRegistry(): PreferencesRegistry {
     ensureInitialized()
-    return preferenceRegistry
+    return preferenceRegistry.get()
   }
 
   override fun getLanguageDescriptorByFileName(fileName: CharSequence): TextMateLanguageDescriptor? {
@@ -169,7 +195,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     ensureInitialized()
     val scopeName = extensionMapping.get(TextMateFileNameMatcher.Name(fileName.toString().lowercase()))
     if (!scopeName.isNullOrEmpty()) {
-      return TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName))
+      return TextMateLanguageDescriptor(scopeName, syntaxTable.get().getSyntax(scopeName))
     }
 
     val extensionsIterator = fileNameExtensions(fileName).iterator()
@@ -189,7 +215,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
     ensureInitialized()
     val scopeName = extensionMapping.get(TextMateFileNameMatcher.Extension(StringUtil.toLowerCase(extension.toString())))
-    return if (scopeName.isNullOrBlank()) null else TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName))
+    return if (scopeName.isNullOrBlank()) null else TextMateLanguageDescriptor(scopeName, syntaxTable.get().getSyntax(scopeName))
   }
 
   override fun getFileNameMatcherToScopeNameMapping(): Map<TextMateFileNameMatcher, CharSequence> {
@@ -199,23 +225,13 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   override fun readBundle(directory: Path?): TextMateBundleReader? {
     if (directory != null) {
-      val bundleType = detectBundleType(directory)
+      val resourceReader = TextMateNioResourceReader(directory)
+      val bundleType = detectBundleType(resourceReader, directory.name)
+      val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = XmlPlistReader())
       return when (bundleType) {
-        BundleType.TEXTMATE -> readTextMateBundle(directory)
-        BundleType.SUBLIME -> readSublimeBundle(directory)
-        BundleType.VSCODE -> readVSCBundle { relativePath: String ->
-          try {
-            return@readVSCBundle Files.newInputStream(directory.resolve(relativePath))
-          }
-          catch (e: NoSuchFileException) {
-            LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
-            return@readVSCBundle null
-          }
-          catch (e: Throwable) {
-            LOG.warn("Cannot read referenced file `$relativePath` in bundle `$directory`", e)
-            return@readVSCBundle null
-          }
-        }
+        BundleType.TEXTMATE -> readTextMateBundle(directory.name, plistReader, resourceReader)
+        BundleType.SUBLIME -> readSublimeBundle(directory.name, plistReader, resourceReader)
+        BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader)
         BundleType.UNDEFINED -> null
       }
     }
@@ -224,11 +240,15 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   private fun ensureInitialized() {
     if (!isInitialized) {
-      registrationLock.lock()
+      registrationLock.lockMaybeCancellable()
       try {
         if (isInitialized) return
         registerBundles(fireEvents = false)
         isInitialized = true
+      }
+      catch (e: Throwable) {
+        LOG.debug("Initialization of textmate bundles was cancelled", e)
+        throw e
       }
       finally {
         registrationLock.unlock()
@@ -236,29 +256,46 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     }
   }
 
-  private fun registerBundle(directory: Path?, extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>): Boolean {
-    val reader = readBundle(directory)
-    if (reader != null) {
-      registerLanguageSupport(reader, extensionMapping)
-      registerPreferences(reader)
-      registerSnippets(reader)
-      return true
+  private fun registerBundle(
+    directory: Path?,
+    extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>,
+    syntaxTableBuilder: TextMateSyntaxTableBuilder,
+    preferencesBuilder: PreferencesRegistryBuilder,
+    snippetsRegistryBuilder: SnippetsRegistryBuilder,
+    shellVariablesRegistryBuilder: ShellVariablesRegistryBuilder
+  ): Boolean {
+    val (result, duration) = measureTimedValue {
+      val reader = readBundle(directory)
+      if (reader != null) {
+        registerLanguageSupport(reader, extensionMapping, syntaxTableBuilder)
+        registerPreferences(reader, preferencesBuilder, shellVariablesRegistryBuilder)
+        registerSnippets(reader, snippetsRegistryBuilder)
+        true
+      }
+      else {
+        false
+      }
     }
-    return false
+    if (result) {
+      LOG.debug("Bundle from `$directory` loaded in $duration")
+    }
+    return result
   }
 
-  private fun registerSnippets(reader: TextMateBundleReader) {
+  private fun registerSnippets(reader: TextMateBundleReader, snippetRegistryBuilder: SnippetsRegistryBuilder) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       // it's used in internal mode only (see org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate.isApplicable),
       // do not register to save some memory and loading time
       val snippetsIterator = reader.readSnippets().iterator()
       while (snippetsIterator.hasNext()) {
-        snippetRegistry.register(snippetsIterator.next())
+        snippetRegistryBuilder.register(snippetsIterator.next())
       }
     }
   }
 
-  private fun registerPreferences(reader: TextMateBundleReader) {
+  private fun registerPreferences(reader: TextMateBundleReader,
+                                  preferencesBuilder: PreferencesRegistryBuilder,
+                                  shellVariablesRegistryBuilder: ShellVariablesRegistryBuilder) {
     val preferencesIterator = reader.readPreferences().iterator()
     while (preferencesIterator.hasNext()) {
       val preferences = preferencesIterator.next()
@@ -268,7 +305,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateBracePair(interner.intern(it.left), interner.intern(it.right)) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left), right = interner.intern(it.right)) }
         }
       }
       val internedSmartTypingPairs = preferences.smartTypingPairs?.let { pairs ->
@@ -276,7 +313,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateAutoClosingPair(interner.intern(it.left), interner.intern(it.right), it.notIn) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left.toString()), right = interner.intern(it.right.toString())) }
         }
       }
       val internedSurroundingPairs = preferences.surroundingPairs?.let { pairs ->
@@ -284,18 +321,18 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateBracePair(interner.intern(it.left), interner.intern(it.right)) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left), right = interner.intern(it.right)) }
         }
       }
-      preferenceRegistry.addPreferences(Preferences(scopeName,
-                                                    internedHighlightingPairs,
-                                                    internedSmartTypingPairs,
-                                                    internedSurroundingPairs,
-                                                    preferences.autoCloseBefore,
-                                                    preferences.indentationRules,
-                                                    preferences.onEnterRules))
+      preferencesBuilder.add(Preferences(scopeName,
+                                         internedHighlightingPairs,
+                                         internedSmartTypingPairs,
+                                         internedSurroundingPairs,
+                                         preferences.autoCloseBefore,
+                                         preferences.indentationRules,
+                                         preferences.onEnterRules))
       for (variable in preferences.variables) {
-        shellVariablesRegistry.addVariable(variable)
+        shellVariablesRegistryBuilder.addVariable(variable)
       }
       val customHighlightingAttributes = preferences.customHighlightingAttributes
       if (customHighlightingAttributes != null) {
@@ -304,11 +341,15 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     }
   }
 
-  private fun registerLanguageSupport(reader: TextMateBundleReader, extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>) {
+  private fun registerLanguageSupport(
+    reader: TextMateBundleReader,
+    extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>,
+    syntaxTableBuilder: TextMateSyntaxTableBuilder,
+  ) {
     val grammarIterator = reader.readGrammars().iterator()
     while (grammarIterator.hasNext()) {
       val grammar = grammarIterator.next()
-      val rootScopeName = syntaxTable.loadSyntax(grammar.plist.value, interner) ?: continue
+      val rootScopeName = syntaxTableBuilder.addSyntax(grammar.plist.value) ?: continue
       for (fileNameMatcher in grammar.fileNameMatchers) {
         if (fileNameMatcher is TextMateFileNameMatcher.Name) {
           val newName = fileNameMatcher.fileName.lowercase()

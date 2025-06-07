@@ -47,7 +47,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - f:getCachingCommittedChangesProvider():com.intellij.openapi.vcs.CachingCommittedChangesProvider
 - getChangeProvider():com.intellij.openapi.vcs.changes.ChangeProvider
 - getCheckinEnvironment():com.intellij.openapi.vcs.checkin.CheckinEnvironment
-- getCheckoutProvider():com.intellij.openapi.vcs.CheckoutProvider
 - getCommitExecutors():java.util.List
 - getCommittedChangesProvider():com.intellij.openapi.vcs.CommittedChangesProvider
 - getCompareWithTheSameVersionActionName():java.lang.String
@@ -57,6 +56,7 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - getDiffProvider():com.intellij.openapi.vcs.diff.DiffProvider
 - a:getDisplayName():java.lang.String
 - getEditFileProvider():com.intellij.openapi.vcs.EditFileProvider
+- getForcedCommitMode():com.intellij.vcs.commit.CommitMode
 - getIntegrateEnvironment():com.intellij.openapi.vcs.update.UpdateEnvironment
 - f:getKeyInstanceMethod():com.intellij.openapi.vcs.VcsKey
 - getMergeProvider():com.intellij.openapi.vcs.merge.MergeProvider
@@ -87,7 +87,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - isUpdateActionDisabled():Z
 - isVcsBackgroundOperationsAllowed(com.intellij.openapi.vfs.VirtualFile):Z
 - isVersionedDirectory(com.intellij.openapi.vfs.VirtualFile):Z
-- isWithCustomLocalChanges():Z
 - isWithCustomMenu():Z
 - isWithCustomShelves():Z
 - loadRevisions(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsRevisionNumber):com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
@@ -268,35 +267,6 @@ f:com.intellij.openapi.vcs.Ignored
 - f:getMatchedPattern():java.lang.String
 - hashCode():I
 a:com.intellij.openapi.vcs.IgnoredCheckResult
-c:com.intellij.openapi.vcs.IssueNavigationConfiguration
-- com.intellij.openapi.util.SimpleModificationTracker
-- com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
-- s:findIssueLinkMatches(java.lang.CharSequence,com.intellij.openapi.vcs.IssueNavigationLink,java.util.List):V
-- findIssueLinks(java.lang.CharSequence):java.util.List
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.IssueNavigationConfiguration
-- getLinks():java.util.List
-- getState():com.intellij.openapi.vcs.IssueNavigationConfiguration
-- loadState(com.intellij.openapi.vcs.IssueNavigationConfiguration):V
-- s:processTextWithLinks(java.lang.String,java.util.List,java.util.function.Consumer,java.util.function.BiConsumer):V
-- setLinks(java.util.List):V
-c:com.intellij.openapi.vcs.IssueNavigationConfiguration$LinkMatch
-- com.intellij.openapi.vcs.LinkDescriptor
-- java.lang.Comparable
-- <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
-- compareTo(java.lang.Object):I
-- getRange():com.intellij.openapi.util.TextRange
-- getTargetUrl():java.lang.String
-c:com.intellij.openapi.vcs.IssueNavigationLink
-- <init>():V
-- <init>(java.lang.String,java.lang.String):V
-- equals(java.lang.Object):Z
-- getIssuePattern():java.util.regex.Pattern
-- getIssueRegexp():java.lang.String
-- getLinkRegexp():java.lang.String
-- hashCode():I
-- setIssueRegexp(java.lang.String):V
-- setLinkRegexp(java.lang.String):V
 f:com.intellij.openapi.vcs.LineHandlerHelper
 - <init>():V
 - s:splitText(java.lang.String):java.util.List
@@ -312,6 +282,7 @@ com.intellij.openapi.vcs.PluginVcsMappingListener
 - a:directoryMappingChanged():V
 com.intellij.openapi.vcs.ProcessEventListener
 - java.util.EventListener
+- processStarted():V
 - processTerminated(I):V
 - startFailed(java.lang.Throwable):V
 a:com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -557,7 +528,6 @@ com.intellij.openapi.vcs.VcsDataKeys
 - sf:FILE_PATH:com.intellij.openapi.actionSystem.DataKey
 - sf:HISTORY_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:HISTORY_SESSION:com.intellij.openapi.actionSystem.DataKey
-- sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:PRESET_COMMIT_MESSAGE:com.intellij.openapi.actionSystem.DataKey
 - sf:REMOTE_HISTORY_CHANGED_LISTENER:com.intellij.openapi.actionSystem.DataKey
 - sf:REMOTE_HISTORY_LOCATION:com.intellij.openapi.actionSystem.DataKey
@@ -605,16 +575,6 @@ c:com.intellij.openapi.vcs.VcsEnvCustomizer$VcsExecutableContext
 - getWslOptions():com.intellij.execution.wsl.WSLCommandLineOptions
 com.intellij.openapi.vcs.VcsExceptionsHotFixer
 - a:groupExceptions(com.intellij.openapi.vcs.ActionType,java.util.List):java.util.Map
-com.intellij.openapi.vcs.VcsFileListenerContextHelper
-- a:clearContext():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.VcsFileListenerContextHelper
-- a:ignoreAdded(java.util.Collection):V
-- a:ignoreAddedRecursive(java.util.Collection):V
-- a:ignoreDeleted(java.util.Collection):V
-- a:isAdditionContextEmpty():Z
-- a:isAdditionIgnored(com.intellij.openapi.vcs.FilePath):Z
-- a:isDeletionContextEmpty():Z
-- a:isDeletionIgnored(com.intellij.openapi.vcs.FilePath):Z
 com.intellij.openapi.vcs.VcsIgnoreChecker
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - a:isFilePatternIgnored(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vcs.IgnoredCheckResult
@@ -753,7 +713,9 @@ f:com.intellij.openapi.vcs.actions.VcsContextFactory$SERVICE
 - s:getInstance():com.intellij.openapi.vcs.actions.VcsContextFactory
 com.intellij.openapi.vcs.actions.VcsQuickListContentProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getNotInVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - getNotInVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
 a:com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase
@@ -761,7 +723,7 @@ a:com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase
 - <init>():V
 - ps:add(java.lang.String,com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
 - pa:collectVcsSpecificActions(com.intellij.openapi.actionSystem.ActionManager):java.util.List
-- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - pa:getVcsName():java.lang.String
 c:com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails
 - f:changes:java.util.List
@@ -789,6 +751,8 @@ com.intellij.openapi.vcs.annotate.AnnotationProvider
 - a:annotate(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.annotate.FileAnnotation
 - a:annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsFileRevision):com.intellij.openapi.vcs.annotate.FileAnnotation
 - getActionName():java.lang.String
+- getAnnotationWarnings(com.intellij.openapi.vcs.annotate.FileAnnotation):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- getCustomActionName():java.lang.String
 - isAnnotationValid(com.intellij.openapi.vcs.history.VcsFileRevision):Z
 e:com.intellij.openapi.vcs.annotate.AnnotationSource
 - java.lang.Enum
@@ -806,6 +770,28 @@ com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher
 - a:getRevisionAspect():com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 - a:mergeSourceAvailable(I):Z
 - a:switchTo(com.intellij.openapi.vcs.annotate.AnnotationSource):V
+f:com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:Companion:com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion
+- sf:error(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:error(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:getActions():java.util.List
+- f:getBackgroundColor():java.awt.Color
+- f:getMessage():java.lang.String
+- f:getShowAnnotation():Z
+- f:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- sf:warning(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:warning(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+a:com.intellij.openapi.vcs.annotate.AnnotationWarning$Action
+- <init>(java.lang.String):V
+- a:doAction(java.lang.Runnable):V
+- f:getText():java.lang.String
+f:com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion
+- f:error(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:error(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- bs:error$default(com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:warning(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:warning(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- bs:warning$default(com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.openapi.vcs.annotate.AnnotationWarning
 a:com.intellij.openapi.vcs.annotate.FileAnnotation
 - p:<init>(com.intellij.openapi.project.Project):V
 - f:close():V
@@ -1004,6 +990,7 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManager
 - a:getModifiedWithoutEditing():java.util.List
 - a:getRegisteredExecutors():java.util.List
+- a:getResolvedConflictPaths():java.util.List
 - a:getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
 - a:getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - a:getSwitchedBranch(com.intellij.openapi.vfs.VirtualFile):java.lang.String
@@ -1018,13 +1005,13 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:isFreezedWithNotification(java.lang.String):Z
 - a:isIgnoredFile(com.intellij.openapi.vcs.FilePath):Z
 - a:isIgnoredFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - a:isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
 - a:registerCommitExecutor(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:removeChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
 - a:reopenFiles(java.util.List):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- a:scheduleUpdate():V
 - a:setFilesToIgnore(com.intellij.openapi.vcs.changes.IgnoredFileBean[]):V
 com.intellij.openapi.vcs.changes.ChangeListManagerGate
 - a:addChangeList(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
@@ -1135,7 +1122,6 @@ com.intellij.openapi.vcs.changes.CommitSession
 - canExecute(java.util.Collection,java.lang.String):Z
 - a:execute(java.util.Collection,java.lang.String):V
 - executionCanceled():V
-- getAdditionalConfigurationUI():javax.swing.JComponent
 - getAdditionalConfigurationUI(java.util.Collection,java.lang.String):javax.swing.JComponent
 - getHelpId():java.lang.String
 - validateFields():com.intellij.openapi.ui.ValidationInfo
@@ -1186,7 +1172,8 @@ c:com.intellij.openapi.vcs.changes.ExternallyRenamedChange
 - setRenamedOrMovedTarget(com.intellij.openapi.vcs.FilePath):V
 com.intellij.openapi.vcs.changes.FilePathIconProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 f:com.intellij.openapi.vcs.changes.FilePathsHelper
 - s:convertPath(com.intellij.openapi.vcs.FilePath):java.lang.String
 - s:convertPath(java.lang.String):java.lang.String
@@ -1204,6 +1191,7 @@ f:com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 - s:ignoreFile(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:ignoreUnderDirectory(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:withMask(java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
+- s:withMask(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
 f:com.intellij.openapi.vcs.changes.IgnoredFileBean
 - com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 - equals(java.lang.Object):Z
@@ -1317,11 +1305,9 @@ f:com.intellij.openapi.vcs.changes.TextRevisionNumber
 com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - a:invalidateAnnotationsFor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.VcsKey):V
 - a:registerAnnotation(com.intellij.openapi.vcs.annotate.FileAnnotation):V
-- registerAnnotation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.annotate.FileAnnotation):V
 - a:reloadAnnotations():V
 - a:reloadAnnotationsForVcs(com.intellij.openapi.vcs.VcsKey):V
 - a:unregisterAnnotation(com.intellij.openapi.vcs.annotate.FileAnnotation):V
-- unregisterAnnotation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.annotate.FileAnnotation):V
 a:com.intellij.openapi.vcs.changes.VcsDirtyScope
 - <init>():V
 - a:belongsTo(com.intellij.openapi.vcs.FilePath):Z
@@ -1343,6 +1329,7 @@ a:com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 - a:filesDirty(java.util.Collection,java.util.Collection):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 - a:markEverythingDirty():V
+- a:rootDirty(com.intellij.openapi.vfs.VirtualFile):V
 - a:whatFilesDirty(java.util.Collection):java.util.Collection
 com.intellij.openapi.vcs.changes.VcsIgnoreManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsIgnoreManager
@@ -2184,26 +2171,6 @@ a:com.intellij.util.ui.VcsBackgroundTask
 f:com.intellij.util.ui.VcsSynchronousProgressWrapper
 - s:compute(com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.project.Project,java.lang.String):java.lang.Object
 - s:wrap(com.intellij.util.ThrowableRunnable,com.intellij.openapi.project.Project,java.lang.String):Z
-f:com.intellij.vcs.ShelveNamePatch
-- <init>(java.lang.String,I):V
-- f:component1():java.lang.String
-- f:component2():I
-- f:copy(java.lang.String,I):com.intellij.vcs.ShelveNamePatch
-- bs:copy$default(com.intellij.vcs.ShelveNamePatch,java.lang.String,I,I,java.lang.Object):com.intellij.vcs.ShelveNamePatch
-- equals(java.lang.Object):Z
-- f:getFileNumber():I
-- f:getPatchText():java.lang.String
-- hashCode():I
-com.intellij.vcs.ShelveNameProvider
-- sf:Companion:com.intellij.vcs.ShelveNameProvider$Companion
-- a:generateName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- s:generateShelveName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- s:hasDefaultName(java.lang.String):Z
-- s:showGotItTooltip(com.intellij.openapi.project.Project,java.awt.Component):V
-f:com.intellij.vcs.ShelveNameProvider$Companion
-- f:generateShelveName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- f:hasDefaultName(java.lang.String):Z
-- f:showGotItTooltip(com.intellij.openapi.project.Project,java.awt.Component):V
 com.intellij.vcs.VcsRepositoryInitializer
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
@@ -2266,6 +2233,32 @@ com.intellij.vcs.commit.CommitMessageUi
 - a:setText(java.lang.String):V
 - a:startLoading():V
 - a:stopLoading():V
+com.intellij.vcs.commit.CommitMode
+- disableDefaultCommitAction():Z
+- hideLocalChangesTab():Z
+- a:useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$ModalCommitMode
+- com.intellij.vcs.commit.CommitMode
+- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$ModalCommitMode
+- useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- com.intellij.vcs.commit.CommitMode
+- sf:COMMIT_TOOL_WINDOW_SETTINGS_KEY:java.lang.String
+- sf:Companion:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
+- <init>(Z):V
+- f:component1():Z
+- f:copy(Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- bs:copy$default(com.intellij.vcs.commit.CommitMode$NonModalCommitMode,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
+- equals(java.lang.Object):Z
+- hashCode():I
+- f:isToggleMode():Z
+- useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
+f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
+- com.intellij.vcs.commit.CommitMode
+- sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
+- disableDefaultCommitAction():Z
+- useCommitToolWindow():Z
 com.intellij.vcs.commit.CommitWorkflowHandler
 - a:execute(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:getAmendCommitHandler():com.intellij.vcs.commit.AmendCommitHandler

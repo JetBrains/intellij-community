@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiClass
@@ -10,7 +7,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -29,7 +27,7 @@ class KotlinClassViaConstructorUSimpleReferenceExpression(
         super<USimpleNameReferenceExpression>.accept(visitor)
     }
 
-    override fun resolve(): PsiElement? = resolved
+    override fun resolve(): PsiElement = resolved
 
     override fun asLogString(): String {
         val resolveStr = when (val resolved = resolve()) {

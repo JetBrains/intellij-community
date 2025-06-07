@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -339,11 +340,11 @@ public class SystemBuilder {
           else {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
-            if (PsiKeyword.THIS.equals(methodExpression.getText())) {
+            if (JavaKeywords.THIS.equals(methodExpression.getText())) {
               aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass);
             }
             else {
-              LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
+              LOG.assertTrue(JavaKeywords.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
               aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass, qualifierSubstitutor);
@@ -638,7 +639,7 @@ public class SystemBuilder {
           final PsiSearchHelper helper = PsiSearchHelper.getInstance(myManager.getProject());
           SearchScope scope = getScope(helper, method);
 
-          for (PsiReference ref : ReferencesSearch.search(method, scope, true)) {
+          for (PsiReference ref : ReferencesSearch.search(method, scope, true).asIterable()) {
             final PsiElement elt = ref.getElement();
 
             final PsiCallExpression call = PsiTreeUtil.getParentOfType(elt, PsiCallExpression.class);
@@ -950,7 +951,7 @@ public class SystemBuilder {
 
       if (!(element instanceof PsiExpression)) {
 
-        for (PsiReference ref : ReferencesSearch.search(element, getScope(helper, element), true)) {
+        for (PsiReference ref : ReferencesSearch.search(element, getScope(helper, element), true).asIterable()) {
           addUsage(system, ref.getElement());
         }
       }

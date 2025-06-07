@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -29,8 +28,7 @@ private val LOG = logger<SmartUpdate>()
 
 @State(name = "SmartUpdateOptions", storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.PROJECT)
-class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
-
+internal class SmartUpdate(val project: Project, private val coroutineScope: CoroutineScope) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
   class Options: BaseState() {
     var scheduled by property(false)
     var scheduledTime by property(LocalTime.of(8, 0).toSecondOfDay())
@@ -86,7 +84,7 @@ class SmartUpdate(val project: Project, private val coroutineScope: CoroutineSco
       SmartUpdateUsagesCollector.logScheduled()
       delay(duration.toMillis())
       LOG.info("Scheduled update started")
-      blockingContext { execute(project) }
+      execute(project)
     }
   }
 

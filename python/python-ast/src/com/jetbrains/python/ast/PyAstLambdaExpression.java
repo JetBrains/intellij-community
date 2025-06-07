@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface PyAstLambdaExpression extends PyAstExpression, PyAstCallable, AstScopeOwner {
   @Override
-  @NotNull
-  default PyAstParameterList getParameterList() {
+  default @NotNull PyAstParameterList getParameterList() {
     final PyAstElement child = childToPsi(PyElementTypes.PARAMETER_LIST_SET, 0);
     if (child == null) {
       throw new RuntimeException("parameter list must not be null; text=" + getText());
@@ -21,14 +20,12 @@ public interface PyAstLambdaExpression extends PyAstExpression, PyAstCallable, A
     return (PyAstParameterList)child;
   }
 
-  @Nullable
-  default PyAstExpression getBody() {
+  default @Nullable PyAstExpression getBody() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 
   @Override
-  @Nullable
-  default PyAstFunction asMethod() {
+  default @Nullable PyAstFunction asMethod() {
     return null; // we're never a method
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -39,9 +39,8 @@ public interface IndexableIteratorPresentation {
         return this.debugName;
       }
 
-      @Nullable
       @Override
-      public String getIndexingProgressText() {
+      public @Nullable String getIndexingProgressText() {
         return this.indexingProgressText;
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -112,8 +112,7 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     myCommitMessageArea.setCaretPosition(0);
   }
 
-  @NotNull
-  private @Nls String getChangelistCommentHtml() {
+  private @NotNull @Nls String getChangelistCommentHtml() {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, myChangeList.getComment().trim());
   }
 
@@ -132,13 +131,11 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     myDescriptionLabel.setVisible(description != null);
   }
 
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myChangesBrowser.getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public CommittedChangesBrowser getChangesBrowser() {
+  public @NotNull CommittedChangesBrowser getChangesBrowser() {
     return myChangesBrowser;
   }
 
@@ -150,8 +147,7 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
     sink.set(VcsDataKeys.CHANGE_LISTS, new ChangeList[]{myChangeList});
   }
 
-  @NotNull
-  public static CommittedChangeListImpl createChangeList(@NotNull Collection<Change> changes) {
+  public static @NotNull CommittedChangeListImpl createChangeList(@NotNull Collection<Change> changes) {
     return new CommittedChangeListImpl("", "", "", -1, new Date(0), changes);
   }
 
@@ -160,9 +156,8 @@ public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
       super(project);
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createPopupMenuActions() {
+    protected @NotNull List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
         ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)

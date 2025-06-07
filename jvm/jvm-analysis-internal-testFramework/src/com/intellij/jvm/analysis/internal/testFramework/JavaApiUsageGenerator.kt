@@ -1,11 +1,11 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
-import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.SINCE_VERSION
-import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
@@ -169,19 +169,19 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         previews.addAll(
           PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
             .filter { member ->
-              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE) ||
-              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
+              member.hasAnnotation(JavaPreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE) ||
+              member.hasAnnotation(JavaPreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
             }
             .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
-            .mapNotNull { LanguageLevelUtil.getSignature(it) }
+            .mapNotNull { JdkApiCompatibilityService.getInstance().getSignature(it) }
         )
         return true
       }
 
       private fun getLanguageLevel(e: PsiMember): LanguageLevel? {
-        val annotation = PreviewFeatureUtil.getPreviewFeatureAnnotation(e)
+        val annotation = JavaPreviewFeatureUtil.getPreviewFeatureAnnotation(e)
                          ?: return null
-        val feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
+        val feature = JavaPreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
         return feature?.minimumLevel
       }
     }
@@ -195,7 +195,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         override fun visitElement(element: PsiElement) {
           super.visitElement(element)
           if (element is PsiMember && element.isPublicApi()) {
-            val signature = LanguageLevelUtil.getSignature(element) ?: return
+            val signature = JdkApiCompatibilityService.getInstance().getSignature(element) ?: return
             val className = signature.substringBefore("#")
             if (JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) == null) {
               return // If the class is not in all scope, don't generate
@@ -257,11 +257,11 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     /**
      * The language level to check for.
      */
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_24
 
     /**
      * The @since tag value used should match [LANGUAGE_LEVEL].
      */
-    private const val SINCE_VERSION = "20"
+    private const val SINCE_VERSION = "24"
   }
 }

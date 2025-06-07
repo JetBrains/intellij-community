@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.ComponentPredicate

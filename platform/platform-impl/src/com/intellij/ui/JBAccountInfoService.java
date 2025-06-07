@@ -100,9 +100,19 @@ public interface JBAccountInfoService {
   }
 
   /**
-   * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
+   * See startLoginSession(@NotNull LoginMode, @Nullable String, Map<@NotNull String, @NotNull String>)
    */
-  @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode, @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
+  default @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode, @NotNull Map<@NotNull String, @NotNull String> clientMetadata) {
+    return startLoginSession(loginMode, null, clientMetadata);
+  }
+
+  /**
+   * Starts the auth flow based on the provided login mode, optional authProviderId, and client metadata
+   * by opening the browser and waiting for the user to proceed with logging in.
+   */
+  @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode,
+                                          @Nullable String authProviderId,
+                                          @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
 
   /**
    * Returns the list of licenses available in the current user's account matching the specified productCode.
@@ -120,6 +130,12 @@ public interface JBAccountInfoService {
    * may happen in case of remote dev when the controlling client handling the request is disconnected.
    */
   @NotNull CompletableFuture<@NotNull LicenseListResult> issueTrialLicense(@NotNull String productCode, @NotNull List<String> consentOptions);
+
+
+  /**
+   * Simulates the process of issuing a trial license for a specified product without performing any actual changes.
+   */
+  @NotNull CompletableFuture<@NotNull LicenseListResult> dryRunIssueTrialLicense(@NotNull String productCode);
 
   /**
    * Records the accepted version of the specified EUA document, and responds whether a newer version of the document is available.
@@ -142,7 +158,15 @@ public interface JBAccountInfoService {
   record JbaServiceConfiguration(
     @NotNull String accountUrl,
     @NotNull String signupUrl,
-    @Nullable String paymentMethodsUrl // TODO nullable during the transition period
+    @Nullable String paymentMethodsUrl, // TODO nullable during the transition period
+    @NotNull List<@NotNull JbaOAuthProvider> authProviders
+  ) { }
+
+  record JbaOAuthProvider(
+    @NotNull String id,
+    @NlsSafe @NotNull String name,
+    @NotNull String logoUrl,
+    @NotNull String logoDarkUrl
   ) { }
 
   enum LoginMode {
@@ -193,6 +217,7 @@ public interface JBAccountInfoService {
     @NotNull String jbaUserId,
     @NotNull LicenseKind licenseKind,
     @NotNull LicenseeType licenseeType,
+    @NotNull LicensePack licensePack,
     @NlsSafe @NotNull String licensedTo,
     @NotNull Instant expiresOn
   ) { }
@@ -201,6 +226,13 @@ public interface JBAccountInfoService {
     STANDARD,
     TRIAL,
     FREE,
+  }
+
+  enum LicensePack {
+    ALL_PRODUCTS_PACK,
+    DOTULTIMATE,
+    STUDENT,
+    NONE
   }
 
   enum LicenseeType {

@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.ide.ui.scrollPaneWithCorner
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -208,7 +209,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     val presentation = Presentation().also {
       it.icon = AllIcons.Actions.More
       it.isPopupGroup = true
-      it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      it.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     }
     val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {
       override fun getDataContext(): DataContext = DataManager.getInstance().getDataContext(contextComponent)

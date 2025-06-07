@@ -25,8 +25,7 @@ public class PythonRuntimeService {
     return false;
   }
 
-  @Nullable
-  public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
+  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
     return null;
   }
 
@@ -34,8 +33,7 @@ public class PythonRuntimeService {
     return null;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return LanguageLevel.getDefault();
   }
 

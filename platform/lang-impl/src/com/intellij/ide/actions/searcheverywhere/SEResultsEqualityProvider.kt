@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Equality provider can be used to compare items found by different (or sometimes same) instances of
@@ -60,6 +61,11 @@ interface SEResultsEqualityProvider {
    */
   fun compareItems(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType
 
+  @ApiStatus.Experimental
+  fun compareItemsCollection(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItems: Collection<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType {
+    return compareItems(newItem, (alreadyFoundItems as? List<SearchEverywhereFoundElementInfo>) ?: alreadyFoundItems.toList())
+  }
+
   companion object {
     @JvmStatic
     val providers: List<SEResultsEqualityProvider?>
@@ -68,13 +74,16 @@ interface SEResultsEqualityProvider {
     @JvmStatic
     fun composite(providers: Collection<SEResultsEqualityProvider>): SEResultsEqualityProvider {
       return object : SEResultsEqualityProvider {
-        override fun compareItems(newItem: SearchEverywhereFoundElementInfo,
-                                  alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType {
+        override fun compareItemsCollection(newItem: SearchEverywhereFoundElementInfo,
+                                            alreadyFoundItems: Collection<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType {
           return providers.asSequence()
-                   .map { provider: SEResultsEqualityProvider -> provider.compareItems(newItem, alreadyFoundItems) }
+                   .map { provider: SEResultsEqualityProvider -> provider.compareItemsCollection(newItem, alreadyFoundItems) }
                    .firstOrNull { action: SEEqualElementsActionType -> action != SEEqualElementsActionType.DoNothing }
                  ?: SEEqualElementsActionType.DoNothing
         }
+
+        override fun compareItems(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType =
+          compareItemsCollection(newItem, alreadyFoundItems)
       }
     }
 

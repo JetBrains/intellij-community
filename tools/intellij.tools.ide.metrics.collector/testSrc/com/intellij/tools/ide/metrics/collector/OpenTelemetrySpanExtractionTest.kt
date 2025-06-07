@@ -4,16 +4,27 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metri
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
+import com.intellij.util.io.URLUtil
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystems
 import java.nio.file.Paths
 import kotlin.io.path.div
 
 internal val openTelemetryReports by lazy {
-  Paths.get(OpenTelemetrySpanExtractionTest::class.java.classLoader.getResource("opentelemetry")!!.toURI())
+  val uri = OpenTelemetrySpanExtractionTest::class.java.classLoader.getResource("opentelemetry")!!.toURI()
+  if (uri.scheme == URLUtil.JAR_PROTOCOL) {
+    try {
+      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+    }
+    catch (_: FileSystemAlreadyExistsException) {
+    }
+  }
+  Paths.get(uri)
 }
 
 class OpenTelemetrySpanExtractionTest {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsCompareWithAction;
@@ -11,9 +11,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitTag;
 import git4idea.*;
+import git4idea.GitTag;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -34,7 +35,10 @@ public class GitCompareWithRefAction extends DvcsCompareWithAction<GitRepository
   @Override
   protected @NotNull JBPopup createPopup(@NotNull Project project, @NotNull GitRepository repository, @NotNull VirtualFile file) {
     Consumer<GitReference> selectionHandler = selected -> showDiff(repository, file, selected);
-    return new GitCompareWithBranchPopup(project, new GitCompareWithBranchPopupStep(project, repository, selectionHandler));
+    return new GitCompareWithBranchPopup(project,
+                                         new GitCompareWithBranchPopupStep(project,
+                                                                           GitRepositoriesHolder.Companion.getInstance(project)
+                                                                             .get(repository.getRpcId()), selectionHandler));
   }
 
   @Override

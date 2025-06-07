@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -32,7 +32,7 @@ object ReplaceInfixOrOperatorCallFixFactory : KotlinSingleIntentionActionFactory
         val arrayAccessExpression = findArrayAccessExpression(expression)
         if (arrayAccessExpression != null && diagnostic.factory != Errors.UNSAFE_IMPLICIT_INVOKE_CALL) {
             if (arrayAccessExpression.arrayExpression == null) return null
-            return ReplaceInfixOrOperatorCallFix(arrayAccessExpression, arrayAccessExpression.shouldHaveNotNullType())
+            return ReplaceInfixOrOperatorCallFix(arrayAccessExpression, arrayAccessExpression.shouldHaveNotNullType()).asIntention()
         }
 
         when (val parent = expression.parent) {
@@ -54,7 +54,7 @@ object ReplaceInfixOrOperatorCallFixFactory : KotlinSingleIntentionActionFactory
                             parent.resolveToCall(BodyResolveMode.FULL)?.candidateDescriptor?.name?.asString()
                         }
                         return binaryOperatorName?.let {
-                            ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType(), binaryOperatorName)
+                            ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType(), binaryOperatorName).asIntention()
                         }
                     }
                 }
@@ -63,7 +63,7 @@ object ReplaceInfixOrOperatorCallFixFactory : KotlinSingleIntentionActionFactory
                 if (parent.calleeExpression == null || parent.valueArgumentList == null) return null
                 val resolvedCall = parent.resolveToCall(BodyResolveMode.FULL) ?: return null
                 if (!resolvedCall.canBeReplacedWithInvokeCall() || resolvedCall.getImplicitReceiverValue() != null) return null
-                return ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType())
+                return ReplaceInfixOrOperatorCallFix(parent, parent.shouldHaveNotNullType()).asIntention()
             }
             else -> return null
         }

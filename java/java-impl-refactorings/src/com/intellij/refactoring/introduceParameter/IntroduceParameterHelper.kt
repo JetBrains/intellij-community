@@ -7,7 +7,6 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_DEFAULT
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiParameter
 import com.intellij.refactoring.rename.inplace.VirtualTemplateElement

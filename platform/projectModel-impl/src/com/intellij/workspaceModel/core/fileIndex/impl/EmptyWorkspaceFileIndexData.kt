@@ -10,19 +10,24 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import org.jetbrains.annotations.ApiStatus
 
-internal class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
+@ApiStatus.Internal
+class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
   companion object {
     val NOT_INITIALIZED: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("not initialized")
     val RESET: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("reset")
   }
   
-  override fun getFileInfo(file: VirtualFile,
-                           honorExclusion: Boolean,
-                           includeContentSets: Boolean,
-                           includeExternalSets: Boolean,
-                           includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo {
+  override fun getFileInfo(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean
+  ): WorkspaceFileInternalInfo {
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
   }
 
@@ -30,8 +35,9 @@ internal class EmptyWorkspaceFileIndexData private constructor(private val debug
   override fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {}
   override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {}
   override fun updateDirtyEntities() {}
-  override fun getPackageName(dir: VirtualFile): String? = null
+  override fun getPackageName(dirOrFile: VirtualFile): String? = null
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
+  override fun getFilesByPackageName(packageName: String): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun resetCustomContributors() {}
   override fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind> = emptySet()
 

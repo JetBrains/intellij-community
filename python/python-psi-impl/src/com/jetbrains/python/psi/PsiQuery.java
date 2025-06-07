@@ -40,11 +40,10 @@ import java.util.stream.Stream;
  */
 public final class PsiQuery<T extends PsiElement> {
 
-  @NotNull
-  private final List<T> myElements;
+  private final @NotNull List<T> myElements;
 
 
-  public PsiQuery(@NotNull final T elementToStart) {
+  public PsiQuery(final @NotNull T elementToStart) {
     this(Collections.singletonList(elementToStart));
   }
 
@@ -54,92 +53,77 @@ public final class PsiQuery<T extends PsiElement> {
     this(Arrays.asList(elementsToStart));
   }
 
-  public PsiQuery(@NotNull final List<? extends T> elementsToStart) {
+  public PsiQuery(final @NotNull List<? extends T> elementsToStart) {
     myElements = Collections.unmodifiableList(elementsToStart);
   }
 
   /**
    * Adds elements to query
    */
-  @NotNull
-  public PsiQuery<T> addElements(@NotNull final PsiQuery<? extends T> newElements) {
+  public @NotNull PsiQuery<T> addElements(final @NotNull PsiQuery<? extends T> newElements) {
     final List<T> newList = new ArrayList<>(myElements);
     newList.addAll(newElements.myElements);
     return new PsiQuery<>(newList);
   }
 
 
-  @NotNull
-  public static <T extends PsiElement> PsiQuery<T> create(@NotNull final T elementToStart) {
+  public static @NotNull <T extends PsiElement> PsiQuery<T> create(final @NotNull T elementToStart) {
     return new PsiQuery<>(elementToStart);
   }
 
-  @NotNull
-  public static <T extends PsiElement> PsiQuery<T> createFromQueries(@NotNull final List<? extends PsiQuery<? extends T>> queriesWithElements) {
+  public static @NotNull <T extends PsiElement> PsiQuery<T> createFromQueries(final @NotNull List<? extends PsiQuery<? extends T>> queriesWithElements) {
     final Set<T> result = new LinkedHashSet<>();
     queriesWithElements.forEach(o -> result.addAll(o.getElements()));
     return new PsiQuery<>(new ArrayList<>(result));
   }
 
-  @NotNull
-  public <R extends T> PsiQuery<R> filter(@NotNull final PsiFilter<R> filter) {
+  public @NotNull <R extends T> PsiQuery<R> filter(final @NotNull PsiFilter<R> filter) {
     return new PsiQuery<>(filter.filter(myElements));
   }
 
-  @NotNull
-  public <R extends T> PsiQuery<R> filter(@NotNull final Class<R> filterToType) {
+  public @NotNull <R extends T> PsiQuery<R> filter(final @NotNull Class<R> filterToType) {
     return filter(new PsiFilter<>(filterToType));
   }
 
-  @NotNull
-  public PsiQuery<T> filter(@NotNull final Predicate<? super T> filter) {
+  public @NotNull PsiQuery<T> filter(final @NotNull Predicate<? super T> filter) {
     return new PsiQuery<>(asStream().filter(filter).collect(Collectors.toList()));
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> map(@NotNull final Function<? super T, ? extends R> map) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> map(final @NotNull Function<? super T, ? extends R> map) {
     return new PsiQuery<>(asStream().map(map).collect(Collectors.toList()));
   }
 
-  @NotNull
-  public <R extends PsiElement, F_R extends T> PsiQuery<R> map(@NotNull final PsiFilter<F_R> preFilter,
-                                                               @NotNull final Function<? super F_R, ? extends R> map) {
+  public @NotNull <R extends PsiElement, F_R extends T> PsiQuery<R> map(final @NotNull PsiFilter<F_R> preFilter,
+                                                                        final @NotNull Function<? super F_R, ? extends R> map) {
     return filter(preFilter).map(map);
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> descendants(@NotNull final Class<R> type) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> descendants(final @NotNull Class<R> type) {
     return descendants(new PsiFilter<>(type));
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> ancestors(@NotNull final Class<R> type) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> ancestors(final @NotNull Class<R> type) {
     return ancestors(new PsiFilter<>(type));
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> siblings(@NotNull final Class<R> type) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> siblings(final @NotNull Class<R> type) {
     return siblings(new PsiFilter<>(type));
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> descendants(@NotNull final PsiFilter<R> filter) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> descendants(final @NotNull PsiFilter<R> filter) {
     return getQueryWithProducer(o -> PsiTreeUtil.findChildrenOfType(o, filter.myClass), filter);
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> ancestors(@NotNull final PsiFilter<R> filter) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> ancestors(final @NotNull PsiFilter<R> filter) {
     return getQueryWithProducer(o -> PsiElementExtKt.getAncestors(o, o.getContainingFile(), filter.myClass), filter);
   }
 
-  @NotNull
-  public <R extends PsiElement> PsiQuery<R> siblings(@NotNull final PsiFilter<R> filter) {
+  public @NotNull <R extends PsiElement> PsiQuery<R> siblings(final @NotNull PsiFilter<R> filter) {
     return getQueryWithProducer(o -> PsiTreeUtil.getChildrenOfTypeAsList(o.getParent(), filter.myClass), filter);
   }
 
-  @NotNull
-  private <R extends PsiElement> PsiQuery<R> getQueryWithProducer(@NotNull final Function<? super T, ? extends Collection<R>> elementsProducer,
-                                                                  @NotNull final PsiFilter<R> filter) {
+  private @NotNull <R extends PsiElement> PsiQuery<R> getQueryWithProducer(final @NotNull Function<? super T, ? extends Collection<R>> elementsProducer,
+                                                                           final @NotNull PsiFilter<R> filter) {
     final Set<R> result = new LinkedHashSet<>(); // Set to get rid of duplicates but preserve order
     asStream()
       .map(o -> ContainerUtil.filter(elementsProducer.apply(o), o2 -> !o2.equals(o)))
@@ -148,24 +132,20 @@ public final class PsiQuery<T extends PsiElement> {
   }
 
 
-  @NotNull
-  public Stream<T> asStream() {
+  public @NotNull Stream<T> asStream() {
     return myElements.stream();
   }
 
-  @NotNull
-  public List<T> getElements() {
+  public @NotNull List<T> getElements() {
     return asStream().collect(Collectors.toList());
   }
 
-  @Nullable
-  public T getFirstElement() {
+  public @Nullable T getFirstElement() {
     final List<T> elements = getElements();
     return (elements.isEmpty() ? null : elements.get(0));
   }
 
-  @Nullable
-  public T getLastElement() {
+  public @Nullable T getLastElement() {
     final List<T> elements = getElements();
     return (elements.isEmpty() ? null : elements.get(elements.size() - 1));
   }
@@ -176,26 +156,24 @@ public final class PsiQuery<T extends PsiElement> {
 
   public static class PsiFilter<T extends PsiElement> {
     public static final PsiFilter<PsiElement> ANY = new PsiFilter<>(PsiElement.class);
-    @NotNull
-    private final Class<? extends T> myClass;
-    @NotNull
-    private final Predicate<? super T> myPredicate;
+    private final @NotNull Class<? extends T> myClass;
+    private final @NotNull Predicate<? super T> myPredicate;
 
     /**
      * Include current element in result set, or not (false by default)
      */
 
-    public PsiFilter(@NotNull final Class<? extends T> aClass, @NotNull final Predicate<? super T> predicate) {
+    public PsiFilter(final @NotNull Class<? extends T> aClass, final @NotNull Predicate<? super T> predicate) {
       myClass = aClass;
       myPredicate = predicate;
     }
 
-    public PsiFilter(@NotNull final Class<? extends T> aClass) {
+    public PsiFilter(final @NotNull Class<? extends T> aClass) {
       this(aClass, Predicates.alwaysTrue());
     }
 
     @NotNull
-    List<T> filter(@NotNull final Collection<?> list) {
+    List<T> filter(final @NotNull Collection<?> list) {
       // IDEA-165420
       //noinspection Guava
       return FluentIterable.from(list).filter(myClass).toList().stream().filter(myPredicate).collect(Collectors.toList());
@@ -207,12 +185,11 @@ public final class PsiQuery<T extends PsiElement> {
    */
   public static class PsiNameFilter<T extends PsiNamedElement> extends PsiFilter<T> {
 
-    @NotNull
-    public static PsiNameFilter<PsiNamedElement> create(@NotNull final String name) {
+    public static @NotNull PsiNameFilter<PsiNamedElement> create(final @NotNull String name) {
       return new PsiNameFilter<>(PsiNamedElement.class, name);
     }
 
-    public PsiNameFilter(@NotNull final Class<? extends T> type, @NotNull final String name) {
+    public PsiNameFilter(final @NotNull Class<? extends T> type, final @NotNull String name) {
       super(type, o -> name.equals(o.getName()));
     }
   }

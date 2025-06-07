@@ -1,16 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.messages.showProcessExecutionErrorDialog
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.packaging.PyExecutionException
 import java.awt.*
 import javax.swing.BorderFactory
 import javax.swing.Box
@@ -65,6 +62,3 @@ internal fun show(panel: JPanel, stepContent: Component) {
   panel.add(stepContentName, stepContent)
   (panel.layout as CardLayout).show(panel, stepContentName)
 }
-
-fun showProcessExecutionErrorDialog(project: Project?, e: PyExecutionException) =
-  showProcessExecutionErrorDialog(project, e.localizedMessage.orEmpty(), e.command, e.stdout, e.stderr, e.exitCode)

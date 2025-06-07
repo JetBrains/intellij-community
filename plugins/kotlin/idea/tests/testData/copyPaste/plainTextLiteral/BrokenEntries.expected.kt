@@ -1,2 +1,2 @@
-val a = """asomething ${'$'}{dsadas
-somethingelse"""
+val a = """asomething ${dsadas
+    somethingelse"""

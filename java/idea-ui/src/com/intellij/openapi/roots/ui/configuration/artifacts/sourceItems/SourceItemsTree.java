@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.CommonActionsManager;
@@ -144,9 +144,8 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
       myArtifactsEditor = artifactsEditor;
     }
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       if (myRoot == null) {
         myRoot = new SourceItemsTreeRoot(myEditorContext, myArtifactsEditor);
       }

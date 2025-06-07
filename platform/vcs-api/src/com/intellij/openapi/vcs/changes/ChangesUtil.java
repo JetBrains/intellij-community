@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -74,14 +75,30 @@ public final class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
-  public static @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
+  public static @Unmodifiable @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (Change change : changes) {
+        AbstractVcs vcs = vcsManager.getVcsFor(getFilePath(change));
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
+    }
+
     return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
-  public static @NotNull Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files,
-                                                                       @NotNull Project project) {
+  public static @Unmodifiable @NotNull Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files,
+                                                                                     @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (FilePath file : files) {
+        AbstractVcs vcs = vcsManager.getVcsFor(file);
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
+    }
+
     return ContainerUtil.map2SetNotNull(files, file -> vcsManager.getVcsFor(file));
   }
 
@@ -98,11 +115,11 @@ public final class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
   }
 
-  public static @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
+  public static @Unmodifiable @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes).toList();
   }
 
-  public static @NotNull List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
+  public static @Unmodifiable @NotNull List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes)
       .map(FilePath::getIOFile)
       .unique()
@@ -299,7 +316,7 @@ public final class ChangesUtil {
     processItemsByVcs(files, filePath -> projectLevelVcsManager.getVcsFor(filePath), processor);
   }
 
-  public static @NotNull List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
+  public static @Unmodifiable @NotNull List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
     return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }
 

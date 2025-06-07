@@ -14,10 +14,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -105,8 +107,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     preselectButton();
     RadioUpDownListener.installOn(radioButtons.toArray(new JRadioButton[0]));
 
-    panel.setPreferredSize(panel.getMinimumSize());
-    return panel;
+    final var scrollPane = new JBScrollPane(panel);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    scrollPane.setPreferredSize(panel.getMinimumSize());
+    return scrollPane;
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
@@ -122,7 +127,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       int type = myOptions.SCOPE_TYPE;
       List<ModelScopeItemView> preselectedScopes = ContainerUtil.filter(myViewItems, x -> x.scopeId == type);
 
-      if (preselectedScopes.size() >= 1) {
+      if (!preselectedScopes.isEmpty()) {
         LOG.assertTrue(preselectedScopes.size() == 1, "preselectedScopes.size() == 1");
         preselectedScopes.get(0).button.setSelected(true);
         return;
@@ -165,6 +170,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @Deprecated
   public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
     return getScope(defaultScope);
+  }
+
+  protected @NotNull AnalysisUIOptions getOptions() {
+    return myOptions;
   }
 
   public boolean isProjectScopeSelected() {
@@ -225,10 +234,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return CodeInsightBundle.message("action.analyze.verb");
   }
 
-  public static @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
-                                                            @NotNull AnalysisScope scope,
-                                                            @Nullable Module module,
-                                                            @Nullable PsiElement context) {
+  public static @Unmodifiable @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
+                                                                          @NotNull AnalysisScope scope,
+                                                                          @Nullable Module module,
+                                                                          @Nullable PsiElement context) {
     return ContainerUtil.mapNotNull(
       ModelScopeItemPresenter.EP_NAME.getExtensionList(),
       presenter -> presenter.tryCreate(project, scope, module, context));

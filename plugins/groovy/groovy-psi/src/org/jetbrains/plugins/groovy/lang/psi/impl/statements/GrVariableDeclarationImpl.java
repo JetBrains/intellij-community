@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -66,8 +66,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   @Override
-  @NotNull
-  public GrModifierList getModifierList() {
+  public @NotNull GrModifierList getModifierList() {
     return getRequiredStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 
@@ -116,9 +115,8 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
     return findChildByType(GroovyTokenTypes.mLPAREN) != null;
   }
 
-  @Nullable
   @Override
-  public GrExpression getTupleInitializer() {
+  public @Nullable GrExpression getTupleInitializer() {
     return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
@@ -146,8 +144,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
+  public @Nullable GrTypeElement getTypeElementGroovy() {
     GrVariableDeclarationStub stub = getStub();
     if (stub != null) {
       return stub.getTypeElement();
@@ -235,9 +232,8 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
       super(GrVariableDeclarationImpl.this, range, true);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       GrVariable[] variables = getVariables();
       if (variables.length == 0) return null;
 
@@ -257,9 +253,8 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getVariables());
   }
 }

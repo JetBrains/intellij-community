@@ -18,8 +18,8 @@ interface Finder {
   val robotProvider: RobotProvider
   val searchContext: SearchContext
 
-  val isRemoteIdeMode: Boolean
-    get() = driver.isRemoteIdeMode
+  val isRemDevMode: Boolean
+    get() = driver.isRemDevMode
 
   /**
    * Creates UiComponent, the actual component will be requested lazily.

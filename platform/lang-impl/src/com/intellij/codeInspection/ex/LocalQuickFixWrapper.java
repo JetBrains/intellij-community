@@ -140,7 +140,10 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
-      applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
+      executeAndNotify(project, () -> {
+        BatchExecutionResult result = applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
+        return result.getMessage();
+      });
     }
     else {
       super.performFixesInBatch(project, descriptors, context, ignoredElements);

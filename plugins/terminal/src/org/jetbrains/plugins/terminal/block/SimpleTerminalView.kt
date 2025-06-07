@@ -69,7 +69,7 @@ internal class SimpleTerminalView(
 
   private fun createEditor(): EditorImpl {
     val document = DocumentImpl("", true)
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
     editor.useTerminalDefaultBackground(this)
     editor.settings.isLineMarkerAreaShown = false
     editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {

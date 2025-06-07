@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import org.jetbrains.annotations.Nls;
@@ -20,17 +20,15 @@ public final class StdInvertibleArrangementSettingsToken extends StdArrangementS
     myInvertedName = invertedName;
   }
 
-  @NotNull
-  public static StdInvertibleArrangementSettingsToken invertibleToken(@NonNls @NotNull String id,
-                                                                      @Nls @NotNull String displayName,
-                                                                      @Nls @NotNull String invertedDisplayName,
-                                                                      @NotNull StdArrangementTokenType tokenType) {
+  public static @NotNull StdInvertibleArrangementSettingsToken invertibleToken(@NonNls @NotNull String id,
+                                                                               @Nls @NotNull String displayName,
+                                                                               @Nls @NotNull String invertedDisplayName,
+                                                                               @NotNull StdArrangementTokenType tokenType) {
     return new StdInvertibleArrangementSettingsToken(id, displayName, invertedDisplayName, tokenType);
   }
 
-  @NotNull
   @Override
-  public String getInvertedRepresentationValue() {
+  public @NotNull String getInvertedRepresentationValue() {
     return myInvertedName;
   }
 }

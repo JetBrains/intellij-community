@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -34,11 +34,13 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -84,11 +86,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
 
-  @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
-  @NotNull private final Project myProject;
-  @NotNull private final ExternalSystemRunConfiguration myConfiguration;
-  @NotNull private final ExecutionEnvironment myEnv;
-  @Nullable private RunContentDescriptor myContentDescriptor;
+  private final @NotNull ExternalSystemTaskExecutionSettings mySettings;
+  private final @NotNull Project myProject;
+  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
+  private final @NotNull ExecutionEnvironment myEnv;
+  private @Nullable RunContentDescriptor myContentDescriptor;
 
   private final int myDebugPort;
   private ServerSocket myForkSocket = null;
@@ -122,8 +124,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myDebugPort;
   }
 
-  @Nullable
-  public ServerSocket getForkSocket() {
+  public @Nullable ServerSocket getForkSocket() {
     if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
         boolean isRemoteRun = ContainerUtil.exists(
@@ -175,18 +176,17 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myConfiguration.isDebugServerProcess();
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
-    if (!confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
       String externalSystemName = externalSystemId.getReadableName();
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }
 
-    String jvmParametersSetup = getJvmParametersSetup();
+    String jvmParametersSetup = getJvmAgentsSetup();
 
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -233,16 +233,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runnerSettings = myEnv.getRunnerSettings();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> {
-        var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
-        if (progressIndicator == null) {
-          progressIndicator = new EmptyProgressIndicator();
-        }
-        executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView,
-                    buildDescriptor, customActions, restartActions, contextActions);
+    BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
+      var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
+      if (progressIndicator == null) {
+        progressIndicator = new EmptyProgressIndicator();
       }
-    );
+      executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView, buildDescriptor,
+                  customActions, restartActions, contextActions);
+    });
     ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (executionConsole instanceof BuildView) {
@@ -415,28 +413,25 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
   }
 
-  @Nullable
-  private String getJvmParametersSetup() throws ExecutionException {
+  private @Nullable String getJvmAgentsSetup() throws ExecutionException {
     var extensionsJP = new SimpleJavaParameters();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
 
     String jvmParametersSetup = "";
-    if (myDebugPort <= 0) {
-      final ParametersList allVMParameters = new ParametersList();
-      final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
-      if (data != null) {
-        for (String parameter : data.getList()) {
-          if (parameter.startsWith("-agentlib:")) continue;
-          if (parameter.startsWith("-agentpath:")) continue;
-          if (parameter.startsWith("-javaagent:")) continue;
-          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
-        }
-        allVMParameters.addAll(data.getParameters());
+    final ParametersList allVMParameters = new ParametersList();
+    final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+    if (data != null) {
+      for (String parameter : data.getList()) {
+        if (parameter.startsWith("-agentlib:")) continue;
+        if (parameter.startsWith("-agentpath:")) continue;
+        if (parameter.startsWith("-javaagent:")) continue;
+        throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
       }
-      allVMParameters.addAll(extensionsJP.getVMParametersList().getParameters());
-      jvmParametersSetup = allVMParameters.getParametersString();
+      allVMParameters.addAll(data.getParameters());
     }
+    allVMParameters.addAll(extensionsJP.getVMParametersList().getParameters());
+    jvmParametersSetup = allVMParameters.getParametersString();
     return nullize(jvmParametersSetup);
   }
 

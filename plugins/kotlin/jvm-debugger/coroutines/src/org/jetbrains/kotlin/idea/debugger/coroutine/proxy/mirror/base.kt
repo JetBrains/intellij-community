@@ -17,7 +17,7 @@ abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: Defa
         value?.referenceType()?.isSubTypeOrSame(name) ?: false
 
     override fun mirror(value: T?, context: DefaultExecutionContext): F? {
-        value ?: return null
+        if (value == null) return null
         return if (!isCompatible(value)) {
             log.trace("Value ${value.referenceType()} is not compatible with $name.")
             null

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.tree.IElementType
@@ -20,18 +20,26 @@ object NegatedBinaryExpressionSimplificationUtils {
     fun KtPrefixExpression.canBeSimplifiedWithoutChangingSemantics(): Boolean {
         if (!canBeSimplified()) return false
         val expression = KtPsiUtil.deparenthesize(baseExpression) as? KtBinaryExpression ?: return true
-        val operation = expression.operationReference.getReferencedNameElementType()
-        if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
 
         @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(expression) {
-                    fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
-                    return !expression.left?.expressionType.isFloatingPoint() && !expression.right?.expressionType.isFloatingPoint()
+                    return expression.canBeInverted()
                 }
             }
+        }
+    }
+
+    fun KtBinaryExpression.canBeInverted(): Boolean {
+        val operation = this.operationReference.getReferencedNameElementType()
+        if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
+
+        analyze(this) {
+            fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
+
+            return !left?.expressionType.isFloatingPoint() && !right?.expressionType.isFloatingPoint()
         }
     }
 

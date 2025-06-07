@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,13 +31,13 @@ public class MavenImportingSettings implements Cloneable {
   public static final String DEFAULT_DEPENDENCY_TYPES =
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
-  @NotNull @NlsSafe private String dedicatedModuleDir = "";
+  private @NotNull @NlsSafe String dedicatedModuleDir = "";
   private boolean lookForNested = false;
 
   private boolean importAutomatically = false;
   private boolean excludeTargetFolder = true;
   private boolean useMavenOutput = true;
-  @NlsSafe private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
+  private @NlsSafe String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
@@ -63,9 +49,10 @@ public class MavenImportingSettings implements Cloneable {
   private String dependencyTypes = DEFAULT_DEPENDENCY_TYPES;
   private Set<String> myDependencyTypesAsSet;
 
-  @NotNull @NlsSafe private String vmOptionsForImporter = "";
+  private @NotNull @NlsSafe String vmOptionsForImporter = "";
 
-  @NotNull @NlsSafe private String jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+  private @NotNull @NlsSafe String jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+  private boolean runPluginsCompatibilityOnSyncAndBuild;
 
   public enum GeneratedSourcesFolder {
     IGNORE("maven.settings.generated.folder.ignore"),
@@ -79,17 +66,15 @@ public class MavenImportingSettings implements Cloneable {
       myMessageKey = messageKey;
     }
 
-    @NlsContexts.ListItem
-    public String getTitle() {
+    public @NlsContexts.ListItem String getTitle() {
       return MavenConfigurableBundle.message(myMessageKey);
     }
   }
 
+  // remains for settings backward compatibility until Workspace import is a default option
   @Deprecated
-  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
-  @NotNull
-  @NlsSafe
-  public String getDedicatedModuleDir() {
+  @ApiStatus.Internal
+  public @NotNull @NlsSafe String getDedicatedModuleDir() {
     return dedicatedModuleDir;
   }
 
@@ -126,8 +111,7 @@ public class MavenImportingSettings implements Cloneable {
     this.importAutomatically = importAutomatically;
   }
 
-  @NotNull
-  public String getDependencyTypes() {
+  public @NotNull String getDependencyTypes() {
     return dependencyTypes;
   }
 
@@ -136,8 +120,7 @@ public class MavenImportingSettings implements Cloneable {
     myDependencyTypesAsSet = null;
   }
 
-  @NotNull
-  public Set<String> getDependencyTypesAsSet() {
+  public @NotNull Set<String> getDependencyTypesAsSet() {
     if (myDependencyTypesAsSet == null) {
       Set<String> res = new LinkedHashSet<>();
 
@@ -148,21 +131,6 @@ public class MavenImportingSettings implements Cloneable {
       myDependencyTypesAsSet = res;
     }
     return myDependencyTypesAsSet;
-  }
-
- /**
-   * @deprecated source folders are always kept
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isKeepSourceFolders() {
-    return true;
-  }
-
-  /**
-   * @deprecated source folders are always kept
-   */
-  @Deprecated(forRemoval = true)
-  public void setKeepSourceFolders(boolean keepSourceFolders) {
   }
 
   public boolean isExcludeTargetFolder() {
@@ -181,8 +149,7 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
-  @NlsSafe
-  public String getUpdateFoldersOnImportPhase() {
+  public @NlsSafe String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }
 
@@ -223,8 +190,7 @@ public class MavenImportingSettings implements Cloneable {
   }
 
   @Property
-  @NotNull
-  public GeneratedSourcesFolder getGeneratedSourcesFolder() {
+  public @NotNull GeneratedSourcesFolder getGeneratedSourcesFolder() {
     return generatedSourcesFolder;
   }
 
@@ -234,8 +200,7 @@ public class MavenImportingSettings implements Cloneable {
     this.generatedSourcesFolder = generatedSourcesFolder;
   }
 
-  @NotNull
-  public String getVmOptionsForImporter() {
+  public @NotNull String getVmOptionsForImporter() {
     return vmOptionsForImporter;
   }
 
@@ -243,8 +208,7 @@ public class MavenImportingSettings implements Cloneable {
     this.vmOptionsForImporter = StringUtil.notNullize(vmOptionsForImporter);
   }
 
-  @NotNull
-  public String getJdkForImporter() {
+  public @NotNull String getJdkForImporter() {
     return jdkForImporter;
   }
 
@@ -252,6 +216,13 @@ public class MavenImportingSettings implements Cloneable {
     this.jdkForImporter = jdkForImporter;
   }
 
+  public void setRunPluginsCompatibilityOnSyncAndBuild(boolean runPluginsCompatibilityOnSyncAndBuild) {
+    this.runPluginsCompatibilityOnSyncAndBuild = runPluginsCompatibilityOnSyncAndBuild;
+  }
+
+  public boolean isRunPluginsCompatibilityOnSyncAndBuild() {
+    return runPluginsCompatibilityOnSyncAndBuild;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -271,6 +242,7 @@ public class MavenImportingSettings implements Cloneable {
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!jdkForImporter.equals(that.jdkForImporter)) return false;
     if (!vmOptionsForImporter.equals(that.vmOptionsForImporter)) return false;
+    if (runPluginsCompatibilityOnSyncAndBuild != that.runPluginsCompatibilityOnSyncAndBuild) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
         : that.updateFoldersOnImportPhase != null) {
@@ -295,6 +267,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
     if (autoDetectCompiler) result++;
+    result <<= 1;
+    if (runPluginsCompatibilityOnSyncAndBuild) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);

@@ -33,7 +33,6 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getMajorReleaseBuildDate() = delegate.majorReleaseBuildDate
   override fun getApplicationSvgIconUrl(): String = delegate.applicationSvgIconUrl
   override fun getSmallApplicationSvgIconUrl(): String = delegate.smallApplicationSvgIconUrl
-  override fun getWelcomeScreenLogoUrl(): String? = delegate.welcomeScreenLogoUrl
   override fun getCopyrightStart(): String? = delegate.copyrightStart
   override fun isMajorEAP(): Boolean = delegate.isMajorEAP()
   override fun isPreview(): Boolean = delegate.isPreview()
@@ -46,7 +45,6 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getPluginManagerUrl(): String = delegate.pluginManagerUrl
   override fun usesJetBrainsPluginRepository(): Boolean = delegate.usesJetBrainsPluginRepository()
   override fun getPluginsListUrl(): String = delegate.pluginsListUrl
-  override fun getChannelListUrl(): String? = delegate.channelListUrl
   override fun getPluginDownloadUrl(): String = delegate.pluginDownloadUrl
   override fun getBuiltinPluginsUrl(): String? = delegate.builtinPluginsUrl
   override fun getWebHelpUrl(): String? = delegate.webHelpUrl

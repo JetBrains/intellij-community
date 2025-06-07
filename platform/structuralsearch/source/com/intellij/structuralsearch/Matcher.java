@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -406,8 +406,7 @@ public class Matcher {
   /**
    * Tests if given element is matched by given pattern starting from target variable.
    */
-  @NotNull
-  public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
+  public @NotNull List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
     final MatchContext matchContext = getMatchContext();
     matchContext.clear();
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -476,9 +475,8 @@ public class Matcher {
       this.file = file;
     }
 
-    @NotNull
     @Override
-    protected List<PsiElement> getPsiElementsToProcess() {
+    protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       final PsiElement file = this.file;
       this.file = null;
       return new SmartList<>(file);
@@ -492,9 +490,8 @@ public class Matcher {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    protected List<PsiElement> getPsiElementsToProcess() {
+    protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       assert project != null;
       return ReadAction.compute(
         () -> {
@@ -548,7 +545,6 @@ public class Matcher {
       }
     }
 
-    @NotNull
-    protected abstract List<PsiElement> getPsiElementsToProcess();
+    protected abstract @NotNull List<PsiElement> getPsiElementsToProcess();
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.testFramework.LightVirtualFile
 
-class NotificationBasedEmbeddedClientErrorReporter(private val project: Project?) : EmbeddedClientErrorReporter {
+internal class NotificationBasedEmbeddedClientErrorReporter(private val project: Project?) : EmbeddedClientErrorReporter {
   override fun startupFailed(exitCode: Int, output: List<String>) {
     val outputString = output.joinToString("")
     thisLogger().warn("Embedded client failed to start with exit code $exitCode:\n$outputString")

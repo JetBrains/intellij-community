@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import org.cef.handler.CefRenderHandler;
@@ -18,8 +17,11 @@ import java.awt.*;
  * @author tav
  */
 public interface JBCefOSRHandlerFactory {
+  JBCefOSRHandlerFactory DEFAULT = new JBCefOSRHandlerFactory() {
+  };
+
   static JBCefOSRHandlerFactory getInstance() {
-    return ApplicationManager.getApplication().getService(JBCefOSRHandlerFactory.class);
+    return DEFAULT;
   }
 
   /**

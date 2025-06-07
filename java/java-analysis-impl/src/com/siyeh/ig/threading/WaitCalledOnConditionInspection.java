@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public final class WaitCalledOnConditionInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.called.on.condition.problem.descriptor");
   }

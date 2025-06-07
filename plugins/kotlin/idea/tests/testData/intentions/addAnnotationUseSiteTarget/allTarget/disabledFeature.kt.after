@@ -1,0 +1,10 @@
+// NO_OPTION: Add use-site target 'all'
+// CHOSEN_OPTION: Add use-site target 'property'
+// COMPILER_ARGUMENTS: -XXLanguage:-AnnotationAllUseSiteTarget
+
+annotation class A
+
+class Property {
+    @property:A
+    val foo: String = ""
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -10,6 +10,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
+@ApiStatus.Internal
+public abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
   protected static final int BASE_INDEX_VERSION = 10;
 
@@ -31,19 +33,16 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public DataIndexer<K, V, FileContent> getIndexer() {
+  public @NotNull DataIndexer<K, V, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<K, V> map(@NotNull FileContent inputData) {
+      public @NotNull Map<K, V> map(@NotNull FileContent inputData) {
         IdeaPlugin plugin = obtainIdeaPlugin(inputData);
         if (plugin == null) return Collections.emptyMap();
 
@@ -61,8 +60,7 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
     return handler.getCollectionChildren(collectionChildDescription, false);
   }
 
-  @Nullable
-  private static IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
+  private static @Nullable IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
     if (!looksLikeIdeaPluginXml(content)) return null;
 
     PsiFile file = content.getPsiFile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -55,7 +55,7 @@ import org.jetbrains.uast.UExpression;
 import javax.swing.*;
 import java.util.*;
 
-public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
+public final class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeFormBatchFix.class);
   private static final List<DefaultPrefixSuggestion> PREFIX_SUGGESTIONS = Arrays.asList(
     new DefaultPrefixSuggestion(LinkLabel.class, "text", "link"),

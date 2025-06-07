@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -36,9 +36,8 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  public @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
       return new FileUsageGroup(myProject, virtualFile);
@@ -61,7 +60,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     return true;
   }
 
-  public static class FileUsageGroup implements UsageGroup, DataProvider, NamedPresentably {
+  public static class FileUsageGroup implements UsageGroup, UiDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private @NlsSafe String myPresentableName;
@@ -86,6 +85,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof FileUsageGroup fileUsageGroup)) return false;
@@ -93,6 +93,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return myFile.equals(fileUsageGroup.myFile);
     }
 
+    @Override
     public int hashCode() {
       return myFile.hashCode();
     }
@@ -103,8 +104,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myPresentableName;
     }
 
@@ -143,34 +143,21 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return 0;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile;
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, myFile);
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getPsiFile();
-      }
-      return null;
+      });
     }
 
     @ApiStatus.Internal
-    @Nullable
-    public PsiFile getPsiFile() {
+    public @Nullable PsiFile getPsiFile() {
       return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }
 
     @Override
-    @NotNull
-    public String getPresentableName() {
+    public @NotNull String getPresentableName() {
       return myPresentableName;
     }
   }

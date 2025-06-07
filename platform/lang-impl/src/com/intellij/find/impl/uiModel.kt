@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.TextChunk
@@ -18,7 +19,7 @@ import java.awt.Color
 
 
 @ApiStatus.Internal
-class FindPopupItem(
+class FindPopupItem (
   val usage: UsageInfoAdapter,
   val presentation: UsagePresentation?,
 ) {
@@ -57,6 +58,8 @@ class SearchEverywhereItem(
   }
 
   override fun hashCode(): Int = presentableText.hashCode()
+
+  override fun toString(): String = "Text: `$presentableText', Usage: $usage"
 }
 
 @ApiStatus.Internal
@@ -69,19 +72,6 @@ class UsagePresentation(
 internal fun usagePresentation(
   project: Project,
   scope: GlobalSearchScope,
-  usage: UsageInfoAdapter,
-): UsagePresentation? {
-  return if (usage is UsageInfo2UsageAdapter) {
-    usagePresentation(project, scope, usage)
-  }
-  else {
-    null
-  }
-}
-
-internal fun usagePresentation(
-  project: Project,
-  scope: GlobalSearchScope,
   usage: UsageInfo2UsageAdapter,
 ): UsagePresentation {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
@@ -89,12 +79,19 @@ internal fun usagePresentation(
   return UsagePresentation(
     text = text,
     backgroundColor = VfsPresentationUtil.getFileBackgroundColor(project, usage.file),
-    fileString = getFilePath(project, scope, usage),
+    fileString = usage.file?.let { getPresentableFilePath(project, scope, it) } ?: "",
   )
 }
 
-private fun getFilePath(project: Project, scope: GlobalSearchScope, usage: UsageInfo2UsageAdapter): @NlsSafe String {
-  val file = usage.file ?: return ""
+internal class UsageInfo2UsageAdapterPresentationProvider : UsagePresentationProvider {
+  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
+    if (usageInfo !is UsageInfo2UsageAdapter) return null
+    return usagePresentation(project, scope, usageInfo)
+  }
+}
+
+@ApiStatus.Internal
+fun getPresentableFilePath(project: Project, scope: GlobalSearchScope, file: VirtualFile): @NlsSafe String {
   return if (ScratchUtil.isScratch(file)) {
     ScratchUtil.getRelativePath(project, file)
   }

@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -32,7 +31,7 @@ internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndepend
         val function = (element.parent as? KtNamedFunction) ?: return
 
         val superMethods = checkSuperMethods(function, emptyList(), RefactoringBundle.message("to.refactor"))
-        val superFunction = superMethods.firstOrNull() as? KtNamedFunction ?: return
+        val superFunction = superMethods.lastOrNull() as? KtNamedFunction ?: return
 
         val project = element.project
 

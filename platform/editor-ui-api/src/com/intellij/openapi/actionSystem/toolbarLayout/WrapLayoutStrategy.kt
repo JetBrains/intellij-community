@@ -78,7 +78,7 @@ internal class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): Too
         // Lay components out
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
 
-        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * minimumButtonSize.height / 3).toDouble()).toInt()
+        val maxRowHeight = max(heightToFit, (componentsCount * minimumButtonSize.height / 3))
         for (i in 0 until componentsCount) {
           if (yOffset + maxHeight > maxRowHeight) { // place component at new row
             yOffset = 0
@@ -100,7 +100,7 @@ internal class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): Too
         for (i in 0 until componentsCount) {
           dims[i] = getChildPreferredSize(component, i)
           val height = dims[i]!!.height
-          rowHeight = max(rowHeight.toDouble(), height.toDouble()).toInt()
+          rowHeight = max(rowHeight, height)
         }
 
         // Lay components out
@@ -129,14 +129,14 @@ internal class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): Too
         for (i in 0 until componentsCount) {
           dims[i] = getChildPreferredSize(component, i)
           val width = dims[i]!!.width
-          rowWidth = max(rowWidth.toDouble(), width.toDouble()).toInt()
+          rowWidth = max(rowWidth, width)
         }
 
         // Lay components out
         var xOffset = 0
         var yOffset = 0
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        val maxRowHeight = max(heightToFit.toDouble(), (componentsCount * minimumButtonSize.height / 3).toDouble()).toInt()
+        val maxRowHeight = max(heightToFit, (componentsCount * minimumButtonSize.height / 3))
         for (i in 0 until componentsCount) {
           val d = dims[i]
           if (yOffset + d!!.height > maxRowHeight) { // place component at new row
@@ -158,7 +158,7 @@ internal class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): Too
   private fun getMaxRowWidth(parent: Container, widthToFit: Int, maxWidth: Int): Int {
     val componentCount: Int = parent.componentCount
     // Calculate max size of a row. It's not possible to make more than 3 row toolbar
-    var maxRowWidth = max(widthToFit.toDouble(), (componentCount * maxWidth / 3).toDouble()).toInt()
+    var maxRowWidth = max(widthToFit, (componentCount * maxWidth / 3))
     for (i in 0 until componentCount) {
       val component: Component = parent.getComponent(i)
       if (component is JComponent && component.getClientProperty(RIGHT_ALIGN_KEY) == true) {

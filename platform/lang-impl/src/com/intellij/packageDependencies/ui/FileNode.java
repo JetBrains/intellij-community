@@ -59,6 +59,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
     return myMarked;
   }
 
+  @Override
   public String toString() {
     return myVFile.getName();
   }
@@ -94,6 +95,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
     return myColor == NOT_CHANGED ? null : myColor;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -106,6 +108,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myVFile.hashCode();
   }

@@ -17,5 +17,3 @@ class X {
         foo(<selection><caret></selection>p, )
     }
 }
-
-/* IGNORE_K2 */

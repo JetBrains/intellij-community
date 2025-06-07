@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // IS_APPLICABLE: false
+// PROBLEM none
 
 fun foo(a: Iterable<Int>) {
     val x: Int = 5

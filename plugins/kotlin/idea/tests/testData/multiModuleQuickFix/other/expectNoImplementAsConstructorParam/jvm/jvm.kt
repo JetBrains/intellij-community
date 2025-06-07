@@ -1,0 +1,1 @@
+actual class End actual constructor(i: Int) : IFoo

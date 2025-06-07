@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,17 +9,21 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class RemovedMappingTracker {
+@ApiStatus.Internal
+public final class RemovedMappingTracker {
   private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
 
-  static final class RemovedMapping {
+  @ApiStatus.Internal
+  public static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
     private final boolean myApproved;
@@ -30,17 +34,18 @@ final class RemovedMappingTracker {
       myApproved = approved;
     }
 
-    @NotNull
-    FileNameMatcher getFileNameMatcher() {
+    @VisibleForTesting
+    public @NotNull FileNameMatcher getFileNameMatcher() {
       return myFileNameMatcher;
     }
 
-    @NotNull
-    String getFileTypeName() {
+    @VisibleForTesting
+    public @NotNull String getFileTypeName() {
       return myFileTypeName;
     }
 
-    boolean isApproved() {
+    @VisibleForTesting
+    public boolean isApproved() {
       return myApproved;
     }
 
@@ -76,12 +81,13 @@ final class RemovedMappingTracker {
   private static final @NonNls String ATTRIBUTE_APPROVED = "approved";
   private static final @NonNls String ATTRIBUTE_TYPE = "type";
 
-  void clear() {
+  @VisibleForTesting
+  public void clear() {
     myRemovedMappings.clear();
   }
 
-  @NotNull
-  RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
+  @VisibleForTesting
+  public @NotNull RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
     RemovedMapping mapping = new RemovedMapping(matcher, fileTypeName, approved);
     List<RemovedMapping> mappings = (List<RemovedMapping>)myRemovedMappings.getModifiable(matcher);
     boolean found = false;
@@ -166,21 +172,21 @@ final class RemovedMappingTracker {
     return mapping != null && mapping.isApproved();
    }
 
-  @NotNull
-  List<RemovedMapping> getRemovedMappings() {
+  @VisibleForTesting
+  public @NotNull List<RemovedMapping> getRemovedMappings() {
     return new ArrayList<>(myRemovedMappings.values());
   }
 
-  @NotNull
-  List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
+  @VisibleForTesting
+  public @NotNull List<FileNameMatcher> getMappingsForFileType(@NotNull String fileTypeName) {
     return myRemovedMappings.values().stream()
       .filter(mapping -> mapping.myFileTypeName.equals(fileTypeName))
       .map(mapping -> mapping.myFileNameMatcher)
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  List<RemovedMapping> removeIf(@NotNull Predicate<? super RemovedMapping> predicate) {
+  @VisibleForTesting
+  public @NotNull List<RemovedMapping> removeIf(@NotNull Predicate<? super RemovedMapping> predicate) {
     List<RemovedMapping> result = new ArrayList<>();
     for (Iterator<Map.Entry<FileNameMatcher, Collection<RemovedMapping>>> iterator = myRemovedMappings.entrySet().iterator();
          iterator.hasNext(); ) {

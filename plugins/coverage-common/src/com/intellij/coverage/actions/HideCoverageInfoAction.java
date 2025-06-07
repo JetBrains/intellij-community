@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -21,7 +21,7 @@ import java.util.Objects;
 public class HideCoverageInfoAction extends IconWithTextAction {
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT));
     doAction(project);
   }
@@ -33,9 +33,8 @@ public class HideCoverageInfoAction extends IconWithTextAction {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new LinkLabel<>(CoverageBundle.message("coverage.hide.coverage.link.name"), null) {
       @Override
       public void doClick() {

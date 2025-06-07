@@ -1,0 +1,12 @@
+### auto-generated section `build fleet.util.multiplatform` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "multiplatform",
+  module_name = "fleet.util.multiplatform",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  exported_compiler_plugins = ["@lib//:expects-plugin"],
+  deps = ["@lib//:kotlin-stdlib"]
+)
+### auto-generated section `build fleet.util.multiplatform` end

@@ -113,7 +113,7 @@ class NDArrayStrProvider(StrPresentationProvider):
         return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
     def _to_str_no_trim(self, val):
-        return str(val).replace('\n', ',').strip()
+        return str(val.tolist()).replace('\n', ',').strip()
 
     def get_str(self, val, do_trim=True):
         if do_trim:

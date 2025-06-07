@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -178,7 +178,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.syncRefresh()
 
     val allVfsListeners = AllVfsListeners(testRootDisposable)
-    TimedZipHandler.closeOpenZipReferences()
+    JarFileSystemImpl.cleanupForNextTest()
     assertTrue { Files.deleteIfExists(jar) }
     vDir.syncRefresh()
     allVfsListeners.assertEvents(2)
@@ -192,7 +192,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.syncRefresh()
 
     val allVfsListeners = AllVfsListeners(testRootDisposable)
-    TimedZipHandler.closeOpenZipReferences()
+    JarFileSystemImpl.cleanupForNextTest()
     jar.moveTo(childDir2.resolve(jar.fileName), true)
     vDir.syncRefresh()
     allVfsListeners.assertEvents(3)

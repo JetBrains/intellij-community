@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}
+ * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationModCommandAction#createAddNotNullFix(PsiModifierListOwner)}
  */
 @Deprecated(forRemoval = true)
 public class AddNotNullAnnotationFix extends AddNullableNotNullAnnotationFix {

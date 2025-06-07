@@ -36,8 +36,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
-  final private @NotNull JComponent myComponent;
-  final private @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
 
   protected volatile @Nullable JBHiDPIScaledImage myImage;
 
@@ -312,5 +312,16 @@ class JBCefOsrHandler implements CefRenderHandler {
 
     drawVolatileImage(image);
     return image;
+  }
+
+  Color getColorAt(int x, int y) {
+    JBHiDPIScaledImage image = myImage;
+    if (image == null) return null;
+    BufferedImage bi = (BufferedImage)image.getDelegate();
+    if (bi == null) {
+      return null;
+    }
+    if (x >= bi.getWidth() || y >= bi.getHeight() || x < 0 || y < 0) return null;
+    return new Color(bi.getRGB(x, y), true);
   }
 }

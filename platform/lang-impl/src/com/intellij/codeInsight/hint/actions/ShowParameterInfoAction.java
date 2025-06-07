@@ -32,9 +32,9 @@ public final class ShowParameterInfoAction extends BaseCodeInsightAction impleme
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    final Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()).length != 0;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    final Language language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
+    return ShowParameterInfoHandler.getHandlers(project, language, psiFile.getViewProvider().getBaseLanguage()).length != 0;
   }
 
   @Override

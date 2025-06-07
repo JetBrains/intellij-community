@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -7,12 +7,16 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectWizard.projectTypeStep.*;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
+import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
+import com.intellij.ide.util.newProjectWizard.WizardDelegate;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.*;
-import com.intellij.ide.wizard.LanguageNewProjectWizard;
-import com.intellij.ide.wizard.language.*;
+import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard;
+import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard;
+import com.intellij.ide.wizard.language.LegacyLanguageGeneratorNewProjectWizard;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +39,9 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
@@ -52,12 +58,13 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -91,8 +98,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private JBLabel myFrameworksLabel;
   private JPanel mySettingsPanel;
   private JPanel myProjectTypePanel;
-  @Nullable
-  private ModuleWizardStep mySettingsStep;
+  private @Nullable ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
 
   private final ProjectTypeList myProjectTypeList;
@@ -157,9 +163,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     Project project = context.getProject();
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
     FrameworkSupportModelBase model = new FrameworkSupportModelBase(project, null, container) {
-      @NotNull
       @Override
-      public String getBaseDirectoryForLibrariesPath() {
+      public @NotNull String getBaseDirectoryForLibrariesPath() {
         var builder = getSelectedBuilder();
         var contentEntryPath = ObjectUtils.doIfNotNull(builder, it -> it.getContentEntryPath());
         return StringUtil.notNullize(contentEntryPath);
@@ -273,7 +278,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return FRAMEWORKS_CARD.equals(myCurrentCard) && Objects.equals(getSelectedBuilder(), myContext.getProjectBuilder());
   }
 
-  private @NotNull List<TemplateGroupItem> fillGroupTemplateMap(@NotNull WizardContext context) {
+  private @Unmodifiable @NotNull List<TemplateGroupItem> fillGroupTemplateMap(@NotNull WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     Map<String, TemplatesGroup> groupMap = new HashMap<>();
     for (ModuleBuilder builder : builders) {
@@ -565,19 +570,16 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     showCard(FRAMEWORKS_CARD);
   }
 
-  @Nullable
-  public ModuleWizardStep getCustomStep() {
+  public @Nullable ModuleWizardStep getCustomStep() {
     return myCustomSteps.get(myCurrentCard);
   }
 
 
-  @Nullable
-  private ProjectTemplate getSelectedTemplate() {
+  private @Nullable ProjectTemplate getSelectedTemplate() {
     return TEMPLATES_CARD.equals(myCurrentCard) ? myTemplatesList.getSelectedTemplate() : null;
   }
 
-  @Nullable
-  private ModuleBuilder getSelectedBuilder() {
+  private @Nullable ModuleBuilder getSelectedBuilder() {
     ProjectTemplate template = getSelectedTemplate();
     if (template != null) {
       return myBuilders.get(template);
@@ -723,7 +725,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @TestOnly
   public static void resetGroupForTests() {
-    ProjectTypeList.resetStoredSelectionForTests();
+    ProjectTypeListKt.resetStoredSelectionForTests();
   }
 
   @Override

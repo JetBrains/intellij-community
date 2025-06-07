@@ -21,6 +21,7 @@ public abstract class InitialPatternCondition<T> {
     return myAcceptedClass.isInstance(o);
   }
 
+  @Override
   public final @NonNls String toString() {
     StringBuilder builder = new StringBuilder();
     append(builder, "");

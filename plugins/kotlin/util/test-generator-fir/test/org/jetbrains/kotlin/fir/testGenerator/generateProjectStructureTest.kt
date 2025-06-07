@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.testGenerator.model.testGroup
 fun MutableTWorkspace.generateProjectStructureTest() {
     testGroup("base/fir/project-structure", category = GroupCategory.PROJECT_STRUCTURE) {
         testClass<AbstractKaModuleStructureTest> {
-            model("kaModuleStructure", pattern = DIRECTORY, isRecursive = false)
+            model("kaModuleStructure", pattern = DIRECTORY, isRecursive = true)
         }
 
         testClass<AbstractKMPProjectStructureTest> {

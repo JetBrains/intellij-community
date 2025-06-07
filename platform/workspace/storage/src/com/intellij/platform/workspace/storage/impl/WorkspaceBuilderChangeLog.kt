@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +24,7 @@ internal class WorkspaceBuilderChangeLog {
   }
 
   internal fun join(other: WorkspaceBuilderChangeLog) {
-    other.changeLog.forEach { (id, entry) ->
+    for ((id, entry) in other.changeLog) {
       when (entry) {
         is ChangeEntry.AddEntity -> {
           this.addAddEventImpl(id, entry.entityData, true)
@@ -468,7 +468,7 @@ internal class WorkspaceBuilderChangeLog {
   }
 
   companion object {
-    val LOG = logger<WorkspaceBuilderChangeLog>()
+    private val LOG = logger<WorkspaceBuilderChangeLog>()
 
     private val addReplaceEventForNewParentMs = MillisecondsMeasurer()
     private val addReplaceEventForNewChildMs = MillisecondsMeasurer()

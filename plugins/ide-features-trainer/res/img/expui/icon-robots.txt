@@ -1,2 +1,0 @@
-merge
-skip: /**/*20x20.svg

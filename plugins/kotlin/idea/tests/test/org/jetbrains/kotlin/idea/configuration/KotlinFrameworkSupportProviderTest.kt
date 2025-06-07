@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.config.VersionView
 import org.jetbrains.kotlin.config.apiVersionView
 import org.jetbrains.kotlin.config.languageVersionView
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.framework.JavaFrameworkSupportProvider
+import org.jetbrains.kotlin.idea.jvm.shared.framework.JavaFrameworkSupportProvider
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

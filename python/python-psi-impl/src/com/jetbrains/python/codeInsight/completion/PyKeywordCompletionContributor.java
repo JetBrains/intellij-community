@@ -176,7 +176,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
   }
 
   private static class LanguageLevelAtLeastFilter implements ElementFilter {
-    @NotNull private final LanguageLevel myLevel;
+    private final @NotNull LanguageLevel myLevel;
 
     LanguageLevelAtLeastFilter(@NotNull LanguageLevel level) {
       myLevel = level;
@@ -410,9 +410,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters,
-          @NotNull final ProcessingContext context,
-          @NotNull final CompletionResultSet result
+          final @NotNull CompletionParameters parameters,
+          final @NotNull ProcessingContext context,
+          final @NotNull CompletionResultSet result
         ) {
           putKeywords(result, TailTypes.noneType(), PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
           putKeywords(result, TailTypes.caseColonType(), PyNames.TRY);
@@ -426,9 +426,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters,
-          @NotNull final ProcessingContext context,
-          @NotNull final CompletionResultSet result
+          final @NotNull CompletionParameters parameters,
+          final @NotNull ProcessingContext context,
+          final @NotNull CompletionResultSet result
         ) {
           putKeywords(result, TailTypes.noneType(), PyNames.MATCH);
         }
@@ -453,9 +453,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters,
-          @NotNull final ProcessingContext context,
-          @NotNull final CompletionResultSet result
+          final @NotNull CompletionParameters parameters,
+          final @NotNull ProcessingContext context,
+          final @NotNull CompletionResultSet result
         ) {
           putKeywords(result, TailTypes.spaceType(), PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailTypes.noneType(), PyNames.PASS);
@@ -574,9 +574,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters,
-          @NotNull final ProcessingContext context,
-          @NotNull final CompletionResultSet result
+          final @NotNull CompletionParameters parameters,
+          final @NotNull ProcessingContext context,
+          final @NotNull CompletionResultSet result
         ) {
           putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailTypes.caseColonType(), result);
         }
@@ -594,9 +594,9 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
       new CompletionProvider<>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters,
-          @NotNull final ProcessingContext context,
-          @NotNull final CompletionResultSet result
+          final @NotNull CompletionParameters parameters,
+          final @NotNull ProcessingContext context,
+          final @NotNull CompletionResultSet result
         ) {
           putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailTypes.noneType(), result);
         }
@@ -843,8 +843,8 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     }
 
     @Override
-    protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context,
-                                  @NotNull final CompletionResultSet result) {
+    protected void addCompletions(final @NotNull CompletionParameters parameters, final @NotNull ProcessingContext context,
+                                  final @NotNull CompletionResultSet result) {
       for (String s : myKeywords) {
         final PythonLookupElement element = new PythonLookupElement(s, true, null);
         if (myInsertHandler != null) {

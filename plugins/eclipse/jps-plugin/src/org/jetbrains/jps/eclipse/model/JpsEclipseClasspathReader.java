@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -218,8 +218,7 @@ final class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<Jps
     }
   }
 
-  @Nullable
-  private String expandLinkedResourcesPath(final String path, ExpandMacroToPathMap expander) {
+  private @Nullable String expandLinkedResourcesPath(final String path, ExpandMacroToPathMap expander) {
     final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(myRootPath, path);
     if (linkedResource != null) {
       if (linkedResource.containsPathVariable()) {

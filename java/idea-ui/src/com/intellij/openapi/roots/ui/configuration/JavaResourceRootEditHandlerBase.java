@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -25,32 +25,27 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     super(rootType);
   }
 
-  @Nullable
   @Override
-  public Icon getFolderUnderRootIcon() {
+  public @Nullable Icon getFolderUnderRootIcon() {
     return null;
   }
 
-  @Nullable
   @Override
-  public CustomShortcutSet getMarkRootShortcutSet() {
+  public @Nullable CustomShortcutSet getMarkRootShortcutSet() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Icon getRootIcon(@NotNull JavaResourceRootProperties properties) {
+  public @NotNull Icon getRootIcon(@NotNull JavaResourceRootProperties properties) {
     return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
   }
 
-  @NotNull
-  protected Icon getGeneratedRootIcon() {
+  protected @NotNull Icon getGeneratedRootIcon() {
     return getRootIcon();
   }
 
-  @Nullable
   @Override
-  public String getPropertiesString(@NotNull JavaResourceRootProperties properties) {
+  public @Nullable String getPropertiesString(@NotNull JavaResourceRootProperties properties) {
     StringBuilder buffer = new StringBuilder();
     if (properties.isForGeneratedSources()) {
       buffer.append(" [generated]");
@@ -59,14 +54,13 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     if (!relativeOutputPath.isEmpty()) {
       buffer.append(" (").append(relativeOutputPath).append(")");
     }
-    return buffer.length() > 0 ? buffer.toString() : null;
+    return !buffer.isEmpty() ? buffer.toString() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createPropertiesEditor(@NotNull final SourceFolder folder,
-                                           @NotNull final JComponent parentComponent,
-                                           @NotNull final ContentRootPanel.ActionCallback callback) {
+  public @Nullable JComponent createPropertiesEditor(final @NotNull SourceFolder folder,
+                                                     final @NotNull JComponent parentComponent,
+                                                     final @NotNull ContentRootPanel.ActionCallback callback) {
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.General.Inline_edit,
                                                                       AllIcons.General.Inline_edit_hovered,
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"),
@@ -90,7 +84,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     private final JTextField myRelativeOutputPathField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;
-    @NotNull private final JavaResourceRootProperties myProperties;
+    private final @NotNull JavaResourceRootProperties myProperties;
 
     private ResourceRootPropertiesDialog(@NotNull JComponent parentComponent, @NotNull JavaResourceRootProperties properties) {
       super(parentComponent, true);
@@ -108,9 +102,8 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       init();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myRelativeOutputPathField;
     }
 
@@ -121,14 +114,12 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       super.doOKAction();
     }
 
-    @NotNull
-    private static String normalizePath(String path) {
+    private static @NotNull String normalizePath(String path) {
       return StringUtil.trimEnd(StringUtil.trimStart(FileUtil.toSystemIndependentName(path.trim()), "/"), "/");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myMainPanel;
     }
   }

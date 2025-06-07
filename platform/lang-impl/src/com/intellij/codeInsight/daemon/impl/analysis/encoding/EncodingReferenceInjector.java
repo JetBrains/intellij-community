@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -9,6 +10,8 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 @ApiStatus.Internal
 public final class EncodingReferenceInjector extends ReferenceInjector {
@@ -25,5 +28,10 @@ public final class EncodingReferenceInjector extends ReferenceInjector {
   @Override
   public @NotNull String getDisplayName() {
     return CodeInsightBundle.message("label.encoding.name");
+  }
+
+  @Override
+  public @NotNull Icon getIcon() {
+    return AllIcons.FileTypes.BinaryData;
   }
 }

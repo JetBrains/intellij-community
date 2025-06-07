@@ -17,9 +17,11 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-abstract class AbstractLookup extends LookupElement {
+@ApiStatus.Internal
+public abstract class AbstractLookup extends LookupElement {
     protected final String myName;
     protected final String myPresentation;
 
@@ -39,12 +41,12 @@ abstract class AbstractLookup extends LookupElement {
         return myName;
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
         return myPresentation;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -54,6 +56,7 @@ abstract class AbstractLookup extends LookupElement {
         return myName.equals(that.myName);
     }
 
+    @Override
     public int hashCode() {
         return myName.hashCode();
     }

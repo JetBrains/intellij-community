@@ -96,7 +96,7 @@ _replace_version_placeholder(version)
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    README = open(os.path.join(here, 'README.rst')).read()
+    README = open(os.path.join(here, 'README.md')).read()
 except IOError:
     README = ''
 
@@ -105,6 +105,7 @@ args = dict(
     version=version,
     description='PyCharm Debugger (used in PyCharm and PyDev)',
     long_description=README,
+    long_description_content_type='text/markdown',
     author='JetBrains, Fabio Zadrozny and others',
     url='https://github.com/JetBrains/intellij-community',
     license='Apache 2.0',

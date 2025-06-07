@@ -9,3 +9,4 @@ fun foo(k: KotlinClass, p: Any) {
         k.something = p
     }
 }
+

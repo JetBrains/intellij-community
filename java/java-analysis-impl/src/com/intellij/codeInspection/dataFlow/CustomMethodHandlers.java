@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -108,11 +108,10 @@ public final class CustomMethodHandlers {
                            PsiMethod method);
 
     @Override
-    @Nullable
-    default DfaValue getMethodResultValue(DfaCallArguments callArguments,
-                                  DfaMemoryState memState,
-                                  DfaValueFactory factory,
-                                  PsiMethod method) {
+    default @Nullable DfaValue getMethodResultValue(DfaCallArguments callArguments,
+                                                    DfaMemoryState memState,
+                                                    DfaValueFactory factory,
+                                                    PsiMethod method) {
       DfType dfType = getMethodResult(callArguments, memState, factory, method);
       return dfType == DfType.TOP ? null : factory.fromDfType(dfType);
     }

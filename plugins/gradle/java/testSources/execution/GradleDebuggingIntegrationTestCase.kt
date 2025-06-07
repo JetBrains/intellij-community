@@ -2,23 +2,21 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -65,7 +63,7 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
   }
 
   fun createArgsFile(relativeModulePath: String = ".", name: String = "args.txt"): File {
-    return File(projectPath + File.separatorChar + relativeModulePath + File.separatorChar + name)
+    return Path.of(projectPath).resolve(relativeModulePath).resolve(name).normalize().toFile()
   }
 
   fun TestGradleBuildScriptBuilder.withPrintArgsTask(
@@ -74,7 +72,10 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     dependsOn: String? = null,
   ) {
     withJavaPlugin()
-    withTask(name, "JavaExec", dependsOn) {
+    withTask(name, "JavaExec") {
+      if (dependsOn != null) {
+        call("dependsOn", dependsOn)
+      }
       assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
       if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.0")) {
         assign("mainClass", "pack.AClass")
@@ -140,31 +141,24 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     runConfiguration.settings.taskNames = taskNames.toList()
     runConfiguration.settings.scriptParameters = scriptParameters
 
-    val output = StringBuilder()
-    executeRunConfiguration(runConfiguration) { text, outType ->
-      val stream = if (ProcessOutputType.isStderr(outType)) System.err else System.out
-      stream.print(text)
-      output.append(text)
+    val tracker = ExternalSystemExecutionTracer()
+    tracker.traceExecution {
+      executeRunConfiguration(runConfiguration)
     }
-    return output.toString()
+    return tracker.output.joinToString("")
   }
 
-  private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration, textConsumer: (String, Key<*>) -> Unit) {
+  private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration) {
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val runner = ExternalSystemTaskDebugRunner()
     val latch = CountDownLatch(1)
-    val esHandler: AtomicReference<ExternalSystemProcessHandler> = AtomicReference()
+    val esHandler = AtomicReference<ExternalSystemProcessHandler>()
+    val callback = ProgramRunner.Callback {
+      esHandler.set(it.processHandler as ExternalSystemProcessHandler)
+      latch.countDown()
+    }
     val env = ExecutionEnvironmentBuilder.create(executor, runConfiguration)
-      .build(ProgramRunner.Callback {
-        val processHandler = it.processHandler as ExternalSystemProcessHandler
-        processHandler.addProcessListener(object : ProcessAdapter() {
-          override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-            textConsumer(event.text, outputType)
-          }
-        })
-        esHandler.set(processHandler)
-        latch.countDown()
-      })
+      .build(callback)
 
     runInEdt {
       runner.execute(env)

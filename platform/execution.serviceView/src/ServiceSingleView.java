@@ -8,6 +8,7 @@ import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.platform.execution.serviceView.ServiceViewModel.ServiceViewModelListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -75,7 +76,7 @@ final class ServiceSingleView extends ServiceView {
 
   @NotNull
   @Override
-  List<ServiceViewItem> getSelectedItems() {
+  @Unmodifiable List<ServiceViewItem> getSelectedItems() {
     ServiceViewItem item = myRef.get();
     return ContainerUtil.createMaybeSingletonList(item);
   }

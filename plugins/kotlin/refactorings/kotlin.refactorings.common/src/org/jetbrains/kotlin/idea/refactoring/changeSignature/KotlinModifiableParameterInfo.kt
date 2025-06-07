@@ -12,4 +12,5 @@ interface KotlinModifiableParameterInfo : ParameterInfo {
     var defaultValueAsDefaultParameter: Boolean
     val defaultValue: KtExpression?
     val originalIndex: Int
+    var isContextParameter: Boolean
 }

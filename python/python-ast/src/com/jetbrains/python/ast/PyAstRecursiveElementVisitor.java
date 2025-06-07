@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyAstRecursiveElementVisitor extends PyAstElementVisitor implements PsiRecursiveVisitor {
   @Override
-  public void visitElement(@NotNull final PsiElement element) {
+  public void visitElement(final @NotNull PsiElement element) {
     element.acceptChildren(this);
   }
 }

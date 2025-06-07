@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.WriteAction;
@@ -18,8 +19,7 @@ import org.jetbrains.concurrency.Promises;
 /**
  * Command simulates invocation of 'Invalidate caches' action
  */
-public class CleanCaches extends AbstractCommand {
-
+public final class CleanCaches extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "cleanCaches";
 
   public CleanCaches(@NotNull String text, int line) {

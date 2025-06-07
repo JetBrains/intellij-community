@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
@@ -9,10 +9,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -40,6 +38,12 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.ui.JBUI
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 
 private typealias MainToolbarActions = List<Pair<ActionGroup, HorizontalLayout.Group>>
@@ -49,9 +53,9 @@ private typealias MainToolbarActions = List<Pair<ActionGroup, HorizontalLayout.G
  */
 // hours spent untangling this: ~60
 internal class ProjectFrameCustomHeaderHelper(
-  application: Application,
-  private val cs: CoroutineScope,
-  private val frame: JFrame,
+  app: Application,
+  private val coroutineScope: CoroutineScope,
+  frame: JFrame,
   private val frameDecorator: IdeFrameDecorator?,
   private val rootPane: IdeRootPane,
   private val isLightEdit: Boolean,
@@ -62,27 +66,31 @@ internal class ProjectFrameCustomHeaderHelper(
   private val isInFullScreen: Boolean
     get() = frameDecorator?.isInFullScreen == true
 
-  private var toolbar: JComponent? = null
+  private val toolbarCreator = ToolbarCreator(coroutineScope, frame, rootPane, ::isInFullScreen)
+
+  private val toolbarVisibilityUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    frameHeaderHelper = installCustomHeader(cs, frame, rootPane, mainMenuActionGroup, isLightEdit, ::isInFullScreen)
-    frameHeaderHelper.init(frame, rootPane, cs)
+    frameHeaderHelper = installCustomHeader(coroutineScope, frame, rootPane, mainMenuActionGroup, isLightEdit, ::isInFullScreen)
+    frameHeaderHelper.init(frame, rootPane, coroutineScope)
 
     scheduleUpdateMainMenuVisibility()
 
     val toolbarHolder = frameHeaderHelper.toolbarHolder
+    var toolbarInitJob: Job? = null
     if (toolbarHolder == null) {
-      cs.launch(rootTask() + ModalityState.any().asContextElement()) {
-        withContext(Dispatchers.EDT) {
-          setupToolbar()
-          toolbar!!.isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() }
+      toolbarInitJob = coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.UI) {
+          toolbarCreator.getOrCreateToolbar().isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) {
+            computeMainActionGroups()
+          }
         }
 
         if (!isLightEdit && ExperimentalUI.isNewUI()) {
           // init of toolbar in window header is important to make as fast as possible
           // https://youtrack.jetbrains.com/issue/IDEA-323474
           span("toolbar init") {
-            (toolbar as MainToolbar).init()
+            (toolbarCreator.getToolbarIfCreated() as MainToolbar).init()
           }
         }
       }
@@ -94,7 +102,7 @@ internal class ProjectFrameCustomHeaderHelper(
 
     ComponentUtil.decorateWindowHeader(rootPane)
 
-    application.messageBus.connect(cs).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+    app.messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener {
       ComponentUtil.decorateWindowHeader(rootPane)
       updateToolbarVisibility()
       updateScreenState(it, isInFullScreen)
@@ -106,6 +114,38 @@ internal class ProjectFrameCustomHeaderHelper(
         updateScreenState(UISettings.getInstance(), fullScreenProperty)
       }
       updateScreenState(UISettings.getInstance(), frameDecorator.isInFullScreen)
+    }
+
+    coroutineScope.launch(CoroutineName("MainToolbar visibility updates") + ModalityState.any().asContextElement()) {
+      toolbarInitJob?.join() // to avoid races with init
+      toolbarVisibilityUpdateRequests.collectLatest {
+        val isToolbarVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() }
+        // This is more complicated than it seems.
+        // There's one seemingly simple optimization: if we need to make the toolbar invisible, don't create it just for that.
+        // But because toolbar creation is asynchronous, it can be in the process of creation already,
+        // and when it's finally created, it appears out of nowhere, being initially visible by default.
+        // The most typical case is this:
+        // 1. This collector is executed with isToolbarVisible = true.
+        // 2. Toolbar creation is initiated to make it visible.
+        // 3. The collector is immediately canceled, and a new one is started with isToolbarVisible = false.
+        // 4. The toolbar doesn't exist yet, so there's nothing to make invisible,
+        // so if we're using a simple if-null-return solution, then the toolbar will become visible once it's created (IJPL-188106).
+        // There are various hacky ways of dealing with it,
+        // but to have the most robust solution, we need to keep visibility changes to one place
+        // (excluding the initialization above, which is why we join the init job first).
+        // Then it becomes relatively easy:
+        // - if we need to make the toolbar visible, ensure it's created first (obviously!),
+        // - otherwise, await its creation, but only if it was initiated already.
+        withContext(Dispatchers.UI) {
+          var toolbar = if (isToolbarVisible) {
+            toolbarCreator.getOrCreateToolbar()
+          }
+          else {
+            toolbarCreator.getToolbarIfCreatedOrCreating()
+          }
+          toolbar?.isVisible = isToolbarVisible
+        }
+      }
     }
   }
 
@@ -121,9 +161,7 @@ internal class ProjectFrameCustomHeaderHelper(
       return
     }
 
-    cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      toolbar?.let { it.isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() } }
-    }
+    updateToolbarVisibility()
   }
 
   private fun scheduleUpdateMainMenuVisibility() {
@@ -132,7 +170,7 @@ internal class ProjectFrameCustomHeaderHelper(
       return
     }
 
-    cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       // don't show the Swing menu when a global (system) menu is presented
       val visible = if (SystemInfo.isMacSystemMenu || isInFullScreen) {
         true
@@ -161,7 +199,9 @@ internal class ProjectFrameCustomHeaderHelper(
       }
     }
     else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      toolbar?.isVisible = isToolbarVisible(uiSettings, isFullScreen) { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) }
+      toolbarCreator.getToolbarIfCreated()?.isVisible = isToolbarVisible(uiSettings, isFullScreen) {
+        blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
+      }
     }
 
     scheduleUpdateMainMenuVisibility()
@@ -171,29 +211,7 @@ internal class ProjectFrameCustomHeaderHelper(
     if (ExperimentalUI.isNewUI() && SystemInfoRt.isMac) {
       return
     }
-
-    cs.launch(ModalityState.any().asContextElement()) {
-      val isToolbarVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() }
-      withContext(Dispatchers.EDT) {
-        if (toolbar == null) {
-          if (!isToolbarVisible) {
-            return@withContext
-          }
-          setupToolbar()
-        }
-        toolbar!!.isVisible = isToolbarVisible
-      }
-    }
-  }
-
-  private suspend fun setupToolbar() {
-    val newToolbar = createToolbar(cs.childScope(), frame, ::isInFullScreen)
-    // createToolbar method can suspend current computation and toolbar can be initialized in another coroutine
-    // So we have to check if toolbar is null AFTER the createToolbar call. (see IJPL-43557)
-    if (toolbar == null) {
-      toolbar = newToolbar
-      rootPane.installToolbar(newToolbar)
-    }
+    check(toolbarVisibilityUpdateRequests.tryEmit(Unit))
   }
 
   fun setProject(project: Project) {
@@ -205,7 +223,7 @@ internal class ProjectFrameCustomHeaderHelper(
       val customFrameTitlePane = frameHeaderHelper.customFrameTitlePane
       frameHeaderHelper.ideMenu.updateMenuActions(forceRebuild = false)
       // The menu bar is decorated, we update it indirectly.
-      cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         customFrameTitlePane.updateMenuActions(forceRebuild = false)
         customFrameTitlePane.getComponent().repaint()
       }
@@ -214,7 +232,7 @@ internal class ProjectFrameCustomHeaderHelper(
       val jMenuBar = rootPane.jMenuBar
       if (jMenuBar != null) {
         // no decorated menu bar, but there is a regular one, update it directly
-        cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           (jMenuBar as ActionAwareIdeMenuBar).updateMenuActions(forceRebuild = false)
           jMenuBar.repaint()
         }
@@ -247,6 +265,58 @@ internal class ProjectFrameCustomHeaderHelper(
     isLightEdit || CustomWindowHeaderUtil.isCompactHeader(mainToolbarActionSupplier)
 }
 
+/**
+ * A helper class to ensure that a toolbar is created only once or never.
+ *
+ * Provides helper methods to get the toolbar if:
+ * - it was already completely created ([getToolbarIfCreated]),
+ * - it was already created or its creation was already initiated elsewhere ([getToolbarIfCreatedOrCreating]),
+ * - it doesn't matter if it was created or not, but it's definitely needed now ([getOrCreateToolbar]).
+ */
+private class ToolbarCreator(
+  private val cs: CoroutineScope,
+  private val frame: JFrame,
+  private val rootPane: IdeRootPane,
+  private val isFullScreen: () -> Boolean
+) {
+  private val lock = Mutex()
+  private var toolbarCreationJob: Deferred<JComponent>? = null
+  private val toolbar = AtomicReference<JComponent?>()
+
+  fun getToolbarIfCreated(): JComponent? {
+    return toolbar.get()
+  }
+
+  suspend fun getToolbarIfCreatedOrCreating(): JComponent? {
+    val job = lock.withLock {
+      toolbarCreationJob
+    }
+    return job?.await()
+  }
+
+  suspend fun getOrCreateToolbar(): JComponent {
+    val job = lock.withLock {
+      toolbarCreationJob ?: startNewJob()
+    }
+    return job.await()
+  }
+
+  private fun startNewJob(): Deferred<JComponent> {
+    val newJob = cs.async(
+      Dispatchers.ui(UiDispatcherKind.RELAX) +
+      ModalityState.any().asContextElement() +
+      CoroutineName("Lazy MainToolbar computation")
+    ) {
+      val newToolbar = createToolbar(cs.childScope("MainToolbar"), frame, isFullScreen)
+      toolbar.set(newToolbar)
+      rootPane.installToolbar(newToolbar)
+      newToolbar
+    }
+    toolbarCreationJob = newJob
+    return newJob
+  }
+}
+
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame, isFullScreen: () -> Boolean): JComponent {
   if (ExperimentalUI.isNewUI()) {
     val toolbar = withContext(Dispatchers.EDT) {
@@ -254,7 +324,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame,
         coroutineScope = coroutineScope,
         frame = frame,
         isOpaque = true,
-        background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+        background = InternalUICustomization.getInstance()?.getMainToolbarBackground(true) ?: JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
         isFullScreen
       )
       toolbar.border = JBUI.Borders.emptyLeft(5)

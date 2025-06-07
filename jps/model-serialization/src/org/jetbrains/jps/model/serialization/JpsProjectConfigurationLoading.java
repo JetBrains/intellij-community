@@ -4,15 +4,17 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.impl.TimingLog;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationSerializer;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -47,9 +49,9 @@ public final class JpsProjectConfigurationLoading {
                                           ? Path.of(externalProjectConfigDir) : null;
   }
 
-  public static @NotNull String getDirectoryBaseProjectName(@NotNull Path dir) {
-    String name = JpsPathUtil.readProjectName(dir);
-    return name != null ? name : JpsPathUtil.getDefaultProjectName(dir);
+  public static @NotNull String getDirectoryBaseProjectName(@NotNull Path basePath, @NotNull Path storeDir) {
+    String name = JpsPathUtil.readProjectName(storeDir);
+    return name != null ? name : NioFiles.getFileName(basePath);
   }
 
   public static void loadRunConfigurationsFromDirectory(@NotNull JpsProject project,
@@ -91,7 +93,7 @@ public final class JpsProjectConfigurationLoading {
     return false;
   }
 
-  static @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
+  static @Unmodifiable @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
     try {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> it.getFileName().toString().endsWith(".xml") && Files.isRegularFile(it))) {
         return ContainerUtil.collect(stream.iterator());

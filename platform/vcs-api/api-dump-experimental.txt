@@ -13,8 +13,16 @@
 *f:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
 - sf:EXTENSION:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.lang.LanguageExtension
-*:com.intellij.openapi.vcs.LinkDescriptor
-- a:getRange():com.intellij.openapi.util.TextRange
+*:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider
+- *sf:Companion:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
+- s:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- a:isAdditionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- s:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- a:isDeletionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+*f:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- f:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
 *:com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 - com.intellij.openapi.vcs.changes.CommitExecutor
 - a:getText(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
@@ -22,11 +30,17 @@
 - a:addDirtyPathFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,Z):V
 - a:belongsTo(com.intellij.openapi.vcs.FilePath):Z
 - a:markEverythingDirty():V
+- markRootDirty(com.intellij.openapi.vfs.VirtualFile):V
 - a:pack():com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 *:com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
 - a:areConsequentCommits(java.util.List):Z
 - a:collectChangesAfterCommit(com.intellij.openapi.vcs.changes.CommitContext):java.util.List
 - a:isFailureUpToDate(java.util.List):Z
+*:com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension
+- *sf:Companion:com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension$Companion
+- a:getOptions(com.intellij.openapi.project.Project):java.util.Collection
+*f:com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.vcs.commit.AmendCommitHandler
 - a:addAmendCommitModeListener(com.intellij.vcs.commit.AmendCommitModeListener,com.intellij.openapi.Disposable):V
 - a:isAmendCommitMode():Z

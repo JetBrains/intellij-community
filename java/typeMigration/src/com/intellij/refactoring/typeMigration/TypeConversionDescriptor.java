@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -31,17 +31,17 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   private PsiExpression myExpression;
   private PsiType myConversionType;
 
-  public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString) {
+  public TypeConversionDescriptor(final @NonNls String stringToReplace, final @NonNls String replaceByString) {
     this(stringToReplace, replaceByString, (PsiExpression)null);
   }
 
-  public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString, final PsiExpression expression) {
+  public TypeConversionDescriptor(final @NonNls String stringToReplace, final @NonNls String replaceByString, final PsiExpression expression) {
     myStringToReplace = stringToReplace;
     myReplaceByString = replaceByString;
     myExpression = expression;
   }
 
-  public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString, PsiType conversionType) {
+  public TypeConversionDescriptor(final @NonNls String stringToReplace, final @NonNls String replaceByString, PsiType conversionType) {
     this(stringToReplace, replaceByString);
     myConversionType = conversionType;
   }
@@ -75,9 +75,8 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     myExpression = expression;
   }
 
-  @Nullable
   @Override
-  public PsiType conversionType() {
+  public @Nullable PsiType conversionType() {
     return myConversionType;
   }
 
@@ -88,15 +87,13 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     return replaceExpression(expression, getStringToReplace(), getReplaceByString());
   }
 
-  @NotNull
-  protected PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
+  protected @NotNull PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
     return expression;
   }
 
-  @NotNull
-  public static PsiExpression replaceExpression(@NotNull PsiExpression expression,
-                                                String stringToReplace,
-                                                String replaceByString) {
+  public static @NotNull PsiExpression replaceExpression(@NotNull PsiExpression expression,
+                                                         String stringToReplace,
+                                                         String replaceByString) {
     Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
     final MatchOptions matchOptions = options.getMatchOptions();
@@ -113,11 +110,11 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
       buf.append(myReplaceByString);
     }
     if (myStringToReplace != null) {
-      if (buf.length() > 0) buf.append(" ");
+      if (!buf.isEmpty()) buf.append(" ");
       buf.append(myStringToReplace);
     }
     if (myExpression != null) {
-      if (buf.length() > 0) buf.append(" ");
+      if (!buf.isEmpty()) buf.append(" ");
       buf.append(myExpression.getText());
     }
     return buf.toString();

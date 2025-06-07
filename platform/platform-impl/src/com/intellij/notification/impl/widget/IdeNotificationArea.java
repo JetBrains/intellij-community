@@ -3,8 +3,10 @@ package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.ActionCenter;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.ApplicationNotificationsModel;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,7 +70,8 @@ public final class IdeNotificationArea implements CustomStatusBarWidget, IconLik
       }.installOn(myComponent.get(), true);
 
       Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
+      app.getMessageBus().connect(this).subscribe(ApplicationNotificationsModel.STATE_CHANGED,
+                                                  () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }
@@ -82,7 +85,7 @@ public final class IdeNotificationArea implements CustomStatusBarWidget, IconLik
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
+    List<Notification> notifications = ApplicationNotificationsModel.getStateNotifications(project);
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();

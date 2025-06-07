@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -52,6 +53,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
 
   public void testSuperMethod() {
     doTestInplaceRename("xxx");
+  }
+
+  public void testUnresolvedMethod() {
+    doTestInplaceRename("second");
   }
   
   public void testSuperMethodAnonymousInheritor() {
@@ -96,6 +101,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   
   public void testRecordImplementsInterface() {
     doTestInplaceRename("newValue");
+  }
+
+  public void testRecordAccessorOverride() {
+    doTestInplaceRename("x");
   }
 
   public void testMethodChain() {
@@ -172,7 +181,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
       doTestInplaceRename("bar");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>", e.getMessage());
+      assertEquals("Method <b><code>bar()</code></b> is already defined in class <b><code>Foo</code></b>", e.getMessage());
       checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
       return;
     }
@@ -202,7 +211,11 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   private void doTestInplaceRename(final String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    if (element == null) {
+      final PsiReference reference = TargetElementUtil.findReference(getEditor());
+      if (reference != null) element = reference.getElement();
+    }
     assertNotNull(element);
 
     CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);

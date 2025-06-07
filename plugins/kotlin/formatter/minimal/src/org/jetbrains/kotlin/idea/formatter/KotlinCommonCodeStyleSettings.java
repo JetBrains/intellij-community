@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter;
 
@@ -178,7 +178,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
 
     // SoftMargins.serializeInfo
     private void serializeInto(@NotNull List<Integer> softMargins, @NotNull Element element) {
-        if (softMargins.size() > 0) {
+        if (!softMargins.isEmpty()) {
             XmlSerializer.serializeInto(this, element);
         }
     }

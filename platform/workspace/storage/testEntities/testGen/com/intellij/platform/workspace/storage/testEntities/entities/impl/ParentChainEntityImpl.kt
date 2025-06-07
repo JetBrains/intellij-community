@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -31,8 +30,9 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentChain
 internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java,
-                                                                        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentChainEntity::class.java, CompositeAbstractEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       ROOT_CONNECTION_ID,
@@ -54,8 +54,8 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
   }
 
 
-  internal class Builder(result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity, ParentChainEntityData>(
-    result), ParentChainEntity.Builder {
+  internal class Builder(result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity, ParentChainEntityData>(result),
+                                                           ParentChainEntity.Builder {
     internal constructor() : this(ParentChainEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -114,8 +114,9 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOT_CONNECTION_ID,
-                                                                             this) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            ROOT_CONNECTION_ID, this
+          ) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
           ?: (this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
         }
         else {
@@ -174,7 +175,8 @@ internal class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

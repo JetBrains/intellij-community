@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.function.Predicate;
  */
 public abstract class ModuleInsight {
   private static final Logger LOG = Logger.getInstance(ModuleInsight.class);
-  @NotNull protected final ProgressIndicatorWrapper myProgress;
+  protected final @NotNull ProgressIndicatorWrapper myProgress;
 
   private final Set<File> myEntryPointRoots = new HashSet<>();
   private final List<DetectedSourceRoot> mySourceRoots = new ArrayList<>();
@@ -47,7 +48,7 @@ public abstract class ModuleInsight {
   private final Set<String> myExistingModuleNames;
   private final Set<String> myExistingProjectLibraryNames;
 
-  public ModuleInsight(@Nullable final ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
+  public ModuleInsight(final @Nullable ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
     myExistingModuleNames = existingModuleNames;
     myExistingProjectLibraryNames = existingProjectLibraryNames;
     myProgress = new ProgressIndicatorWrapper(progress);
@@ -71,13 +72,11 @@ public abstract class ModuleInsight {
     myInterner.clear();
   }
 
-  @Nullable
-  public List<LibraryDescriptor> getSuggestedLibraries() {
+  public @Nullable List<LibraryDescriptor> getSuggestedLibraries() {
     return myLibraries;
   }
 
-  @Nullable
-  public List<ModuleDescriptor> getSuggestedModules() {
+  public @Nullable List<ModuleDescriptor> getSuggestedModules() {
     return myModules;
   }
 
@@ -203,8 +202,7 @@ public abstract class ModuleInsight {
     return Collections.unmodifiableSet(myExistingProjectLibraryNames);
   }
 
-  @NotNull
-  protected List<DetectedSourceRoot> getSourceRootsToScan() {
+  protected @NotNull @Unmodifiable List<DetectedSourceRoot> getSourceRootsToScan() {
     return Collections.unmodifiableList(mySourceRoots);
   }
 
@@ -327,8 +325,7 @@ public abstract class ModuleInsight {
     return newLibrary;
   }
 
-  @Nullable
-  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<? extends File> contentsToExtract) {
+  public @Nullable ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<? extends File> contentsToExtract) {
     ModuleDescriptor newModule = null;
     for (File root : contentsToExtract) {
       final Collection<DetectedSourceRoot> sources = descriptor.removeContentRoot(root);
@@ -459,7 +456,7 @@ public abstract class ModuleInsight {
   protected abstract boolean isSourceFile(final File file);
 
   private void scanSourceFile(File file, final Set<? super String> usedPackages) {
-    @NlsSafe final String name = file.getName();
+    final @NlsSafe String name = file.getName();
     myProgress.setText2(name);
     try {
       String chars = FileUtil.loadFile(file, (String)null);
@@ -484,7 +481,7 @@ public abstract class ModuleInsight {
           scanRootForLibraries(file);
         }
         else {
-          @NlsSafe final String fileName = file.getName();
+          final @NlsSafe String fileName = file.getName();
           if (isLibraryFile(fileName)) {
             if (!myJarToPackagesMap.containsKey(file)) {
               final HashSet<String> libraryPackages = new HashSet<>();

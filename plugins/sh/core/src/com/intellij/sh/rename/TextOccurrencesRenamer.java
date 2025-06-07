@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +16,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-class TextOccurrencesRenamer {
+@ApiStatus.Internal
+public final class TextOccurrencesRenamer {
   private final Editor myEditor;
   private final String myOldName;
   private final List<TextRange> myOccurrences;
@@ -32,13 +34,11 @@ class TextOccurrencesRenamer {
     myInitialModificationStamp = myEditor.getDocument().getModificationStamp();
   }
 
-  @NotNull
-  public String getOldName() {
+  public @NotNull String getOldName() {
     return myOldName;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -62,8 +62,7 @@ class TextOccurrencesRenamer {
     });
   }
 
-  @NotNull
-  private String getNewDocumentText(@NotNull CharSequence documentText, @NotNull String newName) {
+  private @NotNull String getNewDocumentText(@NotNull CharSequence documentText, @NotNull String newName) {
     TextRange prevOccurrence = null;
     StringBuilder result = new StringBuilder(documentText.length() + (newName.length() - myOldName.length()) * myOccurrences.size());
     for (TextRange occurrence : myOccurrences) {

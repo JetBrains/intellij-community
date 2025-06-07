@@ -31,8 +31,18 @@ public final class IndexInfrastructure {
     return getIndexRootDir(indexName).resolve(indexName.getName());
   }
 
+  public static @NotNull Path getStorageFile(@NotNull ID<?, ?> indexName,
+                                             int shardNo) throws IOException {
+    return getIndexRootDir(indexName).resolve(indexName.getName() + "." + shardNo);
+  }
+
   public static @NotNull Path getInputIndexStorageFile(@NotNull ID<?, ?> indexName) throws IOException {
     return getIndexRootDir(indexName).resolve(indexName + "_inputs");
+  }
+
+  public static @NotNull Path getInputIndexStorageFile(@NotNull ID<?, ?> indexName,
+                                                       int shardNo) throws IOException {
+    return getIndexRootDir(indexName).resolve(indexName + "_inputs." + shardNo);
   }
 
   public static @NotNull Path getIndexRootDir(@NotNull ID<?, ?> indexName) throws IOException {
@@ -57,7 +67,8 @@ public final class IndexInfrastructure {
     return getIndexDirectory(indexId.getName(), relativePath, indexId instanceof StubIndexKey, forVersion);
   }
 
-  private static @NotNull Path getIndexDirectory(String indexName, String relativePath, boolean stubKey, boolean forVersion) throws IOException {
+  private static @NotNull Path getIndexDirectory(String indexName, String relativePath, boolean stubKey, boolean forVersion)
+    throws IOException {
     indexName = Strings.toLowerCase(indexName);
     Path indexDir;
     if (stubKey) {

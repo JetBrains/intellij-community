@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -253,7 +253,6 @@ open class JBTabsImpl internal constructor(
 
   @JvmField
   internal val separatorWidth: Int = JBUI.scale(1)
-  private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
 
   final override val tabsPosition: JBTabsPosition
@@ -288,7 +287,7 @@ open class JBTabsImpl internal constructor(
       totalFrames = 2,
       cycleDuration = 500,
       isRepeatable = true,
-      coroutineScope = coroutineScope,
+      disposable = parentDisposable,
     ) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         repaintAttractions()
@@ -791,7 +790,7 @@ open class JBTabsImpl internal constructor(
           withContext(Dispatchers.EDT + anyModality) {
             writeIntentReadAction {
               val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
-              if (!ModalityState.current().dominates(modalityState)) {
+              if (ModalityState.current().accepts(modalityState)) {
                 updateTabActions(validateNow = false)
               }
             }
@@ -3118,7 +3117,6 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
-    DataSink.uiDataSnapshot(sink, dataProvider)
     sink[QuickActionProvider.KEY] = this@JBTabsImpl
     sink[MorePopupAware.KEY] = this@JBTabsImpl
     sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = this@JBTabsImpl
@@ -3130,15 +3128,6 @@ open class JBTabsImpl internal constructor(
 
   val navigationActions: ActionGroup
     get() = myNavigationActions
-
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun getDataProvider(): DataProvider? = dataProvider
-
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun setDataProvider(dataProvider: DataProvider): JBTabsImpl {
-    this.dataProvider = dataProvider
-    return this
-  }
 
   private class DefaultDecorator : UiDecorator {
     override fun getDecoration(): UiDecoration {

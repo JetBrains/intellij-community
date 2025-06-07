@@ -62,10 +62,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
-  @NotNull
-  private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
+  private @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
     var res = new AsyncPromise<List<SmartStepTarget>>();
-    session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
+    DebuggerContextImpl context = session.getContextManager().getContext();
+    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Promises.compute(res, () ->
@@ -85,24 +85,21 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return res;
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
     return findSmartStepTargetsAsync(position, session, true);
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
       return findSmartStepTargetsAsync(position, session, false);
     }
     return Promises.rejectedPromise();
   }
 
-  @NotNull
   @Override
-  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
     throw new IllegalStateException("Should not be used");
   }
 
@@ -167,8 +164,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       private int myNextLambdaExpressionOrdinal = 0;
       private boolean myInsideLambda = false;
 
-      @Nullable
-      private String getCurrentParamName() {
+      private @Nullable String getCurrentParamName() {
         return myParamNameStack.peekFirst();
       }
 
@@ -601,6 +597,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
+    return immediateMethodCalls(targets)
+      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
   }
 }

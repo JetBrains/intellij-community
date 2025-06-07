@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.ui.components.JBBox;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -24,7 +26,7 @@ public class HorizontalBox extends JPanel {
 
   public HorizontalBox() {
     setLayout(new BorderLayout());
-    myBox = new Box(BoxLayout.X_AXIS) {
+    myBox = new JBBox(BoxLayout.X_AXIS) {
       @Override
       public Component add(Component comp) {
         ((JComponent) comp).setAlignmentY(0f);

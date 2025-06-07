@@ -21,11 +21,11 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -45,8 +45,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.create.variable", myReference.getReferencedName());
     }
 
@@ -56,8 +55,8 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+        editor = editor == null ? null : InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
         XmlTag tag = PsiTreeUtil.getContextOfType(myReference, XmlTag.class, true);
         if (tag == null) return;
@@ -89,8 +88,7 @@ public class CreateVariableFix extends AbstractFix {
         return XsltCodeInsightUtil.findVariableInsertionPoint(currentUsageTag, getUsageBlock(), myReference.getReferencedName());
     }
 
-    @Nullable
-    public PsiElement getUsageBlock() {
+    public @Nullable PsiElement getUsageBlock() {
         return XsltCodeInsightUtil.getUsageBlock(myReference);
     }
 

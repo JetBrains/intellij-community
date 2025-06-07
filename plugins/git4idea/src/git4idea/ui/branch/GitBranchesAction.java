@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.branch.popup.GitBranchesTreePopup;
+import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ public class GitBranchesAction extends DumbAwareAction {
     if (project == null) return;
     GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
     if (repository == null) return;
-    GitBranchesTreePopup.show(project, repository);
+    GitBranchesTreePopupOnBackend.create(project, repository).showCenteredInCurrentWindow(project);
   }
 
   @Override

@@ -4,6 +4,8 @@
 // ERROR: Unresolved reference: unresolved
 // AFTER-WARNING: Variable 'field' is never used
 // AFTER-WARNING: Variable 'fieldFqn' is never used
+// K2_ERROR: Unresolved reference 'unresolved'.
+// K2_AFTER_ERROR: Unresolved reference 'unresolved'.
 
 import java.util.regex.Pattern
 

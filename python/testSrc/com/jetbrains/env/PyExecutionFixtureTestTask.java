@@ -31,7 +31,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.extensions.ModuleExtKt;
-import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -85,8 +84,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
-  public static final int LONG_TIMEOUT = 120000;
-  protected int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
 
   @Nullable
@@ -119,15 +116,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return myFixture.getProject();
   }
 
-  @Override
-  public void useNormalTimeout() {
-    myTimeout = NORMAL_TIMEOUT;
-  }
-
-  @Override
-  public void useLongTimeout() {
-    myTimeout = LONG_TIMEOUT;
-  }
 
   /**
    * Returns virt file by path. May be relative or not.
@@ -236,11 +224,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   protected boolean waitFor(ProcessHandler p) {
-    return p.waitFor(myTimeout);
+    return p.waitFor(NORMAL_TIMEOUT);
   }
 
   protected boolean waitFor(@NotNull Semaphore s) throws InterruptedException {
-    return waitFor(s, myTimeout);
+    return waitFor(s, NORMAL_TIMEOUT);
   }
 
   protected static boolean waitFor(@NotNull Semaphore s, long timeout) throws InterruptedException {
@@ -330,9 +318,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     // So we need to either fix gradle (PythonEnvsPlugin.groovy on github) or use helper instead of "conda list" to get all packages
     // We do the latter.
     final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-    if (packageManager instanceof PyCondaPackageManagerImpl) {
-      ((PyCondaPackageManagerImpl)packageManager).useConda = false;
-    }
     return sdk;
   }
 

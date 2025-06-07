@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -42,21 +42,29 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
@@ -639,20 +647,23 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> {
-      int offset = startOffset;
-      while (true) {
-        offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
-        FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-        if (foldRegion == null ||
-            stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
-            foldRegion.getStartOffset() >= offset) {
-          break;
-        }
-        offset = foldRegion.getStartOffset();
+    return ReadAction.compute(() -> getNotFoldedLineStartOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+  }
+
+  @ApiStatus.Internal
+  public static int getNotFoldedLineStartOffset(@NotNull Document document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = DocumentUtil.getLineStartOffset(offset, document);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset - 1);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getStartOffset() >= offset) {
+        break;
       }
-      return offset;
-    });
+      offset = foldRegion.getStartOffset();
+    }
+    return offset;
   }
 
   /**
@@ -663,20 +674,23 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> {
-      int offset = startOffset;
-      while (true) {
-        offset = getLineEndOffset(offset, editor.getDocument());
-        FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
-        if (foldRegion == null ||
-            stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
-            foldRegion.getEndOffset() <= offset) {
-          break;
-        }
-        offset = foldRegion.getEndOffset();
+    return ReadAction.compute(() -> getNotFoldedLineEndOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+  }
+
+  @ApiStatus.Internal
+  public static int getNotFoldedLineEndOffset(@NotNull Document document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = getLineEndOffset(offset, document);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getEndOffset() <= offset) {
+        break;
       }
-      return offset;
-    });
+      offset = foldRegion.getEndOffset();
+    }
+    return offset;
   }
 
   private static int getLineEndOffset(int offset, Document document) {
@@ -972,7 +986,6 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ThreadingAssertions.assertEventDispatchThread();
     ReadAction.run(() -> {
       if (editor.isDisposed()) {
         Disposer.dispose(disposable);
@@ -980,7 +993,7 @@ public final class EditorUtil {
       }
       // for injected editors disposal will happen only when host editor is disposed,
       // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       if (hostEditor instanceof EditorImpl) {
         Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
       }
@@ -1069,7 +1082,12 @@ public final class EditorUtil {
   }
 
   public static int getInlaysHeight(@NotNull Editor editor, int visualLine, boolean above) {
-    return getTotalInlaysHeight(editor.getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+    return getInlaysHeight(editor.getInlayModel(), visualLine, above);
+  }
+
+  @ApiStatus.Internal
+  public static int getInlaysHeight(@NotNull InlayModel inlayModel, int visualLine, boolean above) {
+    return getTotalInlaysHeight(inlayModel.getBlockElementsForVisualLine(visualLine, above));
   }
 
   /**
@@ -1313,11 +1331,80 @@ public final class EditorUtil {
            && !DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 
-  public static boolean isBlockLikeCaret(@NotNull final Caret caret) {
+  public static boolean isBlockLikeCaret(final @NotNull Caret caret) {
     return switch (caret.getVisualAttributes().getShape()) {
       case DEFAULT -> caret.getEditor().isInsertMode() == caret.getEditor().getSettings().isBlockCursor();
       case BLOCK, BOX, UNDERSCORE -> true;
       case BAR -> caret.getVisualAttributes().getThickness() > 0.5f;
     };
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public static void runWhenViewportReady(@NotNull EditorEx editor, @NotNull Runnable scrollLambda) {
+    runWhenViewportReady(editor, scrollLambda, () -> {
+      Disposable disposable = Disposer.newDisposable();
+      disposeWithEditor(editor, disposable);
+      return disposable;
+    });
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public static void runWhenViewportReady(
+    @NotNull EditorEx editor,
+    @NotNull CoroutineScope awaitingScope,
+    @NotNull Runnable scrollLambda
+  ) {
+    runWhenViewportReady(editor, scrollLambda, () -> CoroutineScopeKt.asDisposable(awaitingScope));
+  }
+
+  private static void runWhenViewportReady(
+    @NotNull EditorEx editor,
+    @NotNull Runnable scrollLambda,
+    @NotNull Supplier<Disposable> lazyDisposable
+  ) {
+    ThreadingAssertions.assertEventDispatchThread();
+    JViewport viewport = editor.getScrollPane().getViewport();
+    if (isReady(viewport)) {
+      scrollLambda.run();
+    } else {
+      Disposable disposable = lazyDisposable.get();
+      ViewportReadyAwaiter awaiter = new ViewportReadyAwaiter(editor.getComponent(), viewport, scrollLambda);
+      Disposer.register(disposable, awaiter);
+    }
+  }
+
+  private static boolean isReady(@NotNull JViewport viewport) {
+    if (!viewport.isShowing()) {
+      return false;
+    }
+    Dimension extentSize = viewport.getExtentSize();
+    return extentSize.getWidth() != 0 && extentSize.getHeight() != 0;
+  }
+
+  private record ViewportReadyAwaiter(
+    JComponent editorComponent,
+    JViewport viewport,
+    Runnable onReady
+  ) implements ChangeListener, Disposable  {
+
+    ViewportReadyAwaiter {
+      viewport.addChangeListener(this);
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      if (isReady(viewport)) {
+        Disposer.dispose(this);
+        editorComponent.validate(); // ensure scrollbar is ready. Otherwise, incorrect scrolling may occur
+        onReady.run();
+      }
+    }
+
+    @Override
+    public void dispose() {
+      viewport.removeChangeListener(this);
+    }
   }
 }

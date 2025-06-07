@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.configurations.RunProfile;
@@ -33,8 +33,7 @@ public final class OpenGradleTestResultActionProvider implements ToggleModelActi
   }
 
   private static class MyToggleModelAction extends ToggleModelAction {
-    @Nullable
-    private ProjectSystemId mySystemId;
+    private @Nullable ProjectSystemId mySystemId;
 
     MyToggleModelAction(TestConsoleProperties properties) {
       super(GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.text"),
@@ -69,8 +68,7 @@ public final class OpenGradleTestResultActionProvider implements ToggleModelActi
       return GradleConstants.SYSTEM_ID.equals(mySystemId);
     }
 
-    @Nullable
-    private String getReportFilePath() {
+    private @Nullable String getReportFilePath() {
       final AbstractProperty.AbstractPropertyContainer properties = getProperties();
       if (properties instanceof GradleConsoleProperties gradleConsoleProperties) {
         final File testReport = gradleConsoleProperties.getGradleTestReport();

@@ -3,12 +3,12 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <error descr="Could not determine target platform version, please check project setup"><applicationListeners>
+  <error descr="Could not determine a target platform version, please check project setup"><applicationListeners>
 
   </applicationListeners></error>
 
 
-  <error descr="Could not determine target platform version, please check project setup"><projectListeners>
+  <error descr="Could not determine a target platform version, please check project setup"><projectListeners>
     
   </projectListeners></error>
 </idea-plugin>

@@ -12,15 +12,13 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.lang.ref.SoftReference;
+import java.util.*;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
@@ -46,6 +44,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
         public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
           clearCache();
         }
+
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           clearCache();
@@ -71,22 +70,70 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
     synchronized (CACHE_LOCK) {
-      FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
-      SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
-      CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
-      if (provider == null || provider.isExpired()) {
+      String key = getFileKey(virtualFile);
+      FileData fileData = getFileData(key);
+      CodeStyleCachedValueProvider provider = null;
+      boolean needsFreshFileData = false;
+      if (fileData == null) {
+        needsFreshFileData = true;
+      }
+      else {
+        SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+        provider = providerRef != null ? providerRef.get() : null;
+        if (provider == null || provider.isExpired()) {
+          needsFreshFileData = true;
+        }
+        else {
+          Supplier<VirtualFile> supplier = provider.getFileSupplier();
+          // IJPL-165316 Check whether it is a different VirtualFile at the same URL
+          if (supplier instanceof VirtualFileGetter
+              && !((VirtualFileGetter)supplier).virtualFile.equals(virtualFile)) {
+            needsFreshFileData = true;
+          }
+          // Do not recompute for LightVirtualFiles.
+          // Since we create copies to avoid leaks via PSI, the equality check always fails,
+          // but recomputing on every access might affect performance significantly.
+          // We assume that the computed settings do not depend on `virtualFile` itself.
+        }
+      }
+      if (needsFreshFileData) {
+        fileData = createFileData(key, fileData);
         Supplier<VirtualFile> fileSupplier;
         if (virtualFile instanceof LightVirtualFile) {
           LightVirtualFile copy = getCopy((LightVirtualFile)virtualFile);
-          fileSupplier = () -> getCopy(copy); // create new copy each time it requested to make sure the attached PSI is collected
+          // create a new copy each time
+          // it requested to make sure the attached PSI is collected
+          fileSupplier = new LightVirtualFileCopyGetter(copy);
         }
         else {
-          fileSupplier = () -> virtualFile;
+          fileSupplier = new VirtualFileGetter(virtualFile);
         }
         provider = new CodeStyleCachedValueProvider(fileSupplier, myProject, fileData);
         fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;
+    }
+  }
+
+  private static class VirtualFileGetter implements Supplier<VirtualFile> {
+    private final VirtualFile virtualFile;
+
+    private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
+
+    @Override
+    public VirtualFile get() {
+      return virtualFile;
+    }
+  }
+
+  private static class LightVirtualFileCopyGetter implements Supplier<VirtualFile> {
+    private final LightVirtualFile virtualFile;
+
+    private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
+
+    @Override
+    public VirtualFile get() {
+      return getCopy(virtualFile);
     }
   }
 
@@ -117,24 +164,48 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   @Override
   public @NotNull UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
-    return getOrCreateFileData(getFileKey(virtualFile));
+    synchronized (CACHE_LOCK) {
+      String key = getFileKey(virtualFile);
+      FileData stored = getFileData(key);
+      return stored != null ? stored : createFileData(key, stored);
+    }
   }
 
-  private synchronized @NotNull FileData getOrCreateFileData(@NotNull String path) {
-    if (myFileDataCache.containsKey(path)) {
-      final FileData fileData = myFileDataCache.get(path);
+  private @Nullable FileData getFileData(@NotNull String path) {
+    final FileData fileData = myFileDataCache.get(path);
+    if (fileData != null) {
+      myRemoveQueue.remove(fileData);
       fileData.update();
-      return fileData;
+      myRemoveQueue.add(fileData);
+    }
+    return fileData;
+  }
+
+  /**
+   * Create a new FileData object and associate it with {@code path}.
+   *
+   * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
+   */
+  private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
+    if (existingData != null) {
+      myFileDataCache.remove(path);
+      myRemoveQueue.remove(existingData);
     }
     FileData newData = new FileData();
-    if (myFileDataCache.size() >= MAX_CACHE_SIZE) {
+    if (existingData == null && myFileDataCache.size() >= MAX_CACHE_SIZE) {
       FileData fileData = myRemoveQueue.poll();
       if (fileData != null) {
         myFileDataCache.values().remove(fileData);
       }
     }
-    myFileDataCache.put(path, newData);
-    myRemoveQueue.add(newData);
+    // This service gets instantiated alongside JavaFileCodeStyleFacade in decompiler.
+    // If this project is default, then it should not be used as a storage of any (temporary) data, as it has lifecycle bigger than any data.
+    // In particular, default projects are disposed as application services, and during dispose of the default project any leftover data would
+    // cause a leak.
+    if (!myProject.isDefault()) {
+      myFileDataCache.put(path, newData);
+      myRemoveQueue.add(newData);
+    }
     return newData;
   }
 

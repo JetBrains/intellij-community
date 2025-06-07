@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -70,7 +70,7 @@ public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTo
                                                 @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(@NotNull final RefMethod refMethod) {
+      public void visitMethod(final @NotNull RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) == null) return;
         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
@@ -84,20 +84,17 @@ public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTo
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "SameReturnValue";
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalSameReturnValueInspection(this);
   }
 
@@ -115,20 +112,17 @@ public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTo
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       return myGlobal.getGroupDisplayName();
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return myGlobal.getShortName();
     }
 
-    @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       @SuppressWarnings("unchecked") Class<? extends UMethod>[] hint = new Class[]{UMethod.class};
 
       return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {

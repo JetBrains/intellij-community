@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
@@ -79,8 +79,8 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
       }
       assertEquals(
         "All traces up to MAX_DEPTH must be different",
-        new HashSet<>(tracesStack).size(),
-        MAX_LOOKUP_DEPTH
+        MAX_LOOKUP_DEPTH,
+        new HashSet<>(tracesStack).size()
       );
     }
     finally {//unwind stack back to not affect other tests:

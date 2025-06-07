@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.upDownMover;
 
@@ -84,8 +84,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
         }
     }
 
-    @NotNull
-    private static List<PsiElement> getDeclarationAnchors(@NotNull KtDeclaration declaration) {
+    private static @NotNull List<PsiElement> getDeclarationAnchors(@NotNull KtDeclaration declaration) {
         final List<PsiElement> memberSuspects = new ArrayList<>();
 
         KtModifierList modifierList = declaration.getModifierList();
@@ -146,8 +145,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
 
     private static final Class[] CLASSBODYLIKE_DECLARATION_CONTAINER_CLASSES = {KtClassBody.class, KtFile.class};
 
-    @Nullable
-    private static KtDeclaration getMovableDeclaration(@Nullable PsiElement element) {
+    private static @Nullable KtDeclaration getMovableDeclaration(@Nullable PsiElement element) {
         if (element == null) return null;
 
         if (getParentFileAnnotationEntry(element) != null) return null;
@@ -227,8 +225,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
         return null;
     }
 
-    @Nullable
-    private static LineRange getTargetRange(
+    private static @Nullable LineRange getTargetRange(
             @NotNull Editor editor,
             @NotNull PsiElement sibling,
             boolean down,
@@ -289,8 +286,7 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
         return sibling.getNode().getElementType() == (down ? KtTokens.RBRACE : KtTokens.LBRACE);
     }
 
-    @Nullable
-    private static KtClassBody getClassBody(PsiElement element) {
+    private static @Nullable KtClassBody getClassBody(PsiElement element) {
         if (element instanceof KtClassOrObject) {
             return ((KtClassOrObject) element).getBody();
         } else {

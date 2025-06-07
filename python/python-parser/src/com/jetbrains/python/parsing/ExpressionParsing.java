@@ -50,6 +50,10 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
+    else if (firstToken == PyTokenTypes.ELLIPSIS_LITERAL) {
+      buildTokenElement(PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION, myBuilder);
+      return true;
+    }
     else if (firstToken == PyTokenTypes.TRUE_KEYWORD ||
              firstToken == PyTokenTypes.FALSE_KEYWORD ||
              firstToken == PyTokenTypes.DEBUG_KEYWORD) {
@@ -109,7 +113,7 @@ public class ExpressionParsing extends Parsing {
     if (atToken(PyTokenTypes.FSTRING_START)) {
       final String prefixThenQuotes = builder.getTokenText();
       assert prefixThenQuotes != null;
-      final String openingQuotes = prefixThenQuotes.replaceFirst("^[UuBbCcRrFf]*", "");
+      final String openingQuotes = prefixThenQuotes.replaceFirst("^[UuBbCcRrFfTt]*", "");
       final SyntaxTreeBuilder.Marker marker = builder.mark();
       nextToken();
       while (true) {
@@ -580,10 +584,8 @@ public class ExpressionParsing extends Parsing {
     if (atToken(PyTokenTypes.DOT)) {
       final SyntaxTreeBuilder.Marker maybeEllipsis = myBuilder.mark();
       myBuilder.advanceLexer();
-      //duplication is intended as matchToken advances the lexer
-      //noinspection DuplicateBooleanBranch
       if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
-        maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
+        maybeEllipsis.done(PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION);
         return true;
       }
       maybeEllipsis.rollbackTo();
@@ -601,7 +603,7 @@ public class ExpressionParsing extends Parsing {
       sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
       nextToken();
-      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
       return;
     }
     else {
@@ -653,7 +655,7 @@ public class ExpressionParsing extends Parsing {
       if (sliceOrTupleStart != null) {
         sliceOrTupleStart.drop();
       }
-      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
     }
     return inSlice;
   }

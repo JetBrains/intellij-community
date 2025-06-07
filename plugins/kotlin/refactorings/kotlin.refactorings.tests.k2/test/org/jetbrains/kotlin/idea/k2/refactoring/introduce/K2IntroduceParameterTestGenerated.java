@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
@@ -537,6 +537,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/throw.kt");
             }
 
+            @TestMetadata("unusedContextParameter.kt")
+            public void testUnusedContextParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedContextParameter.kt");
+            }
+
             @TestMetadata("unusedDispatchReceiver.kt")
             public void testUnusedDispatchReceiver() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedDispatchReceiver.kt");
@@ -545,6 +550,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             @TestMetadata("unusedExtensionReceiver.kt")
             public void testUnusedExtensionReceiver() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/unusedExtensionReceiver.kt");
+            }
+
+            @TestMetadata("usedContextParameter.kt")
+            public void testUsedContextParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/usedContextParameter.kt");
             }
 
             @TestMetadata("valueAtCallSite.kt")
@@ -819,6 +829,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             @TestMetadata("lambdaParamWithDefaultValue.kt")
             public void testLambdaParamWithDefaultValue() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/lambdaParamWithDefaultValue.kt");
+            }
+
+            @TestMetadata("noTypeParameters.kt")
+            public void testNoTypeParameters() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/noTypeParameters.kt");
             }
 
             @TestMetadata("suspendCalls.kt")

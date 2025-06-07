@@ -27,8 +27,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     return true;
   }
 
-  @NotNull
-  public abstract Promise<VALUE> load(@NotNull HOST host);
+  public abstract @NotNull Promise<VALUE> load(@NotNull HOST host);
 
   public final void reset(HOST host) {
     fieldUpdater.setVolatile(host, null);
@@ -48,24 +47,20 @@ public abstract class PromiseManager<HOST, VALUE> {
     return result != null && result.isSucceeded();
   }
 
-  @Nullable
-  public final Promise.State getState(HOST host) {
+  public final @Nullable Promise.State getState(HOST host) {
     Promise<VALUE> result = fieldUpdater.getVolatile(host);
     return result == null ? null : result.getState();
   }
 
-  @NotNull
-  public final Promise<VALUE> get(HOST host) {
+  public final @NotNull Promise<VALUE> get(HOST host) {
     return get(host, true);
   }
 
-  @NotNull
-  public final Promise<VALUE> get(HOST host, boolean checkFreshness) {
+  public final @NotNull Promise<VALUE> get(HOST host, boolean checkFreshness) {
     return getOrCreateAsyncResult(host, checkFreshness, true);
   }
 
-  @NotNull
-  private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
+  private @NotNull Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     Promise<VALUE> promise = fieldUpdater.getVolatile(host);
     if (promise == null) {
       promise = new AsyncPromise<>();
@@ -108,8 +103,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     return getPromise(host, load, promise);
   }
 
-  @NotNull
-  private Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
+  private @NotNull Promise<VALUE> getPromise(HOST host, boolean load, Promise<VALUE> promise) {
     if (!load || promise.getState() != Promise.State.PENDING) {
       return promise;
     }

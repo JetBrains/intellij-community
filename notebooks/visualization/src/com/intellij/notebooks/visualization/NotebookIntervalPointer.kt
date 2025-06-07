@@ -42,6 +42,7 @@ interface NotebookIntervalPointerFactory {
    */
   interface ChangeListener : EventListener {
     fun onUpdated(event: NotebookIntervalPointersEvent)
+    fun bulkUpdateFinished() {}
 
     companion object {
       val TOPIC: Topic<ChangeListener> =
@@ -89,6 +90,3 @@ interface NotebookIntervalPointerFactory {
   /** swap two pointers */
   data class Swap(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
-
-val Document.notebookIntervalPointerFactory
-  get() = NotebookIntervalPointerFactory.Companion.key.get(this)

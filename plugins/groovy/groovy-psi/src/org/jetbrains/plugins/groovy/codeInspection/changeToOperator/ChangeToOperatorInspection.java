@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -32,9 +32,8 @@ public final class ChangeToOperatorInspection extends BaseInspection {
   public boolean shouldChangeCompareToEqualityToEquals = true;
   public boolean withoutAdditionalParentheses = false;
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCall) {
@@ -64,8 +63,7 @@ public final class ChangeToOperatorInspection extends BaseInspection {
     };
   }
 
-  @Nullable
-  public String getMethodName(@NotNull GrMethodCall methodCall) {
+  public @Nullable String getMethodName(@NotNull GrMethodCall methodCall) {
     PsiMethod method = methodCall.resolveMethod();
     if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) return null;
     return method.getName();
@@ -86,10 +84,8 @@ public final class ChangeToOperatorInspection extends BaseInspection {
       myOptions = options;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return GroovyBundle.message("replace.with.operator.fix", methodName);
     }
 

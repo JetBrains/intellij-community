@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -29,8 +29,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  default Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+  default @NotNull Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     throw new AbstractMethodError(getClass().getName() + " must implement getItemIcon method");
   }
 
@@ -39,8 +38,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    *                   and use it for presentation
    * @return an icon to be shown in popup menu for your item, described by info
    */
-  @NotNull
-  default Icon getItemIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+  default @NotNull Icon getItemIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return getProcessIcon(project, info, dataHolder);
   }
 
@@ -48,9 +46,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  @Nls
-  default String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+  default @NotNull @Nls String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     throw new AbstractMethodError(getClass().getName() + " must implement getItemDisplayText method");
   }
 
@@ -59,9 +55,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    *                   and use it for presentation
    * @return a text to be shown on your item, described by info
    */
-  @NotNull
-  @Nls
-  default String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+  default @NotNull @Nls String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return getProcessDisplayText(project, info, dataHolder);
   }
 
@@ -70,9 +64,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    *                   and use it for presentation
    * @return a description of process to be shown in tooltip of your item, described by info
    */
-  @Nullable
-  @Nls
-  default String getItemDescription(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+  default @Nullable @Nls String getItemDescription(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return null;
   }
 }

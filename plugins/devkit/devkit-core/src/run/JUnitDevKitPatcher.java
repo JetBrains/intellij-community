@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
@@ -22,6 +22,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,6 +32,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -43,9 +47,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-final class JUnitDevKitPatcher extends JUnitPatcher {
+@ApiStatus.Internal
+public final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
   private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID_9");
@@ -72,16 +78,23 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         }
       }
       String basePath = project.getBasePath();
+      if (module != null && DevKitApplicationPatcherKt.hasIjentDefaultFsProviderInClassPath(module)) {
+        DevKitApplicationPatcherKt.enableIjentDefaultFsProvider(project, project.getBasePath(), vm);
+      }
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
         assert basePath != null;
-        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, Path.of(basePath, "system/test").toAbsolutePath().toString());
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "system/test").toAbsolutePath()));
       }
       if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
         assert basePath != null;
-        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, Path.of(basePath, "config/test").toAbsolutePath().toString());
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "config/test").toAbsolutePath()));
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
+
+      if (!Boolean.parseBoolean(vm.getPropertyValue("intellij.devkit.junit.skip.settings.from.intellij.yaml"))) {
+        JUnitDevKitUnitTestingSettings.getInstance(project).apply(module, javaParameters);
+      }
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);
@@ -133,7 +146,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
-  static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
+  public static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
     var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       var scope = ProjectScope.getContentScope(project);
@@ -145,8 +158,12 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
       else if (!files.isEmpty()) {
         var file = files.iterator().next();
+        String projectFilePath =
+          Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
+        EelApi eelApi = EelProviderUtil.toEelApiBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
+        OS targetOs = EelProviderUtil.systemOs(eelApi);
         try (var stream = file.getInputStream()) {
-          JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+          JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);
         }
         catch (ProcessCanceledException e) {
           throw e; //unreachable

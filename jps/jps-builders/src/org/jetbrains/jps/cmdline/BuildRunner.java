@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +52,11 @@ public final class BuildRunner {
   }
 
   public void setFilePaths(@Nullable List<String> filePaths) {
-    myFilePaths = filePaths != null? filePaths : Collections.emptyList();
+    myFilePaths = filePaths == null ? Collections.emptyList() : filePaths;
   }
 
   public void setBuilderParams(@Nullable Map<String, String> builderParams) {
-    myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
+    myBuilderParams = builderParams == null ? Collections.emptyMap() : builderParams;
   }
 
   public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
@@ -74,7 +73,7 @@ public final class BuildRunner {
 
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
-    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot.toFile());
+    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
@@ -86,7 +85,8 @@ public final class BuildRunner {
     BuildDataManager dataManager = null;
     StorageManager storageManager = null;
     try {
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, storageManager = createStorageManager(dataStorageRoot));
+      storageManager = createStorageManager(dataStorageRoot);
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, storageManager);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(
@@ -108,7 +108,7 @@ public final class BuildRunner {
       myForceCleanCaches = true;
       FileUtilRt.deleteRecursively(dataStorageRoot);
 
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, createStorageManager(dataStorageRoot));
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, createStorageManager(dataStorageRoot));
       // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(
         getRootCompilerName(), BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage()))
@@ -143,7 +143,8 @@ public final class BuildRunner {
                        @NotNull CanceledStatus cs,
                        @NotNull MessageHandler msgHandler,
                        @NotNull BuildType buildType,
-                       @NotNull List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+                       @NotNull List<TargetTypeBuildScope> scopes,
+                       boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
@@ -257,13 +258,15 @@ public final class BuildRunner {
     return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 
-  private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
-                                                 Set<? super BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
+  private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes,
+                                                 Set<BuildTarget<?>> targets,
+                                                 Set<? super BuildTargetType<?>> targetTypesToForceBuild,
+                                                 ProjectDescriptor descriptor) {
     //todo get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override
       public Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file) {
-        return Collections.emptyList();
+        return List.of();
       }
     };
 
@@ -286,10 +289,15 @@ public final class BuildRunner {
   }
 
   public static boolean isParallelBuildEnabled() {
-    return SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false);
+    return Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION));
   }
 
   public static boolean isParallelBuildAutomakeEnabled() {
-    return isParallelBuildEnabled() && SystemProperties.getBooleanProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, true);
+    if (!isParallelBuildEnabled()) {
+      return false;
+    }
+
+    String value = System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION);
+    return value == null || Boolean.parseBoolean(value);
   }
 }

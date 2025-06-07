@@ -1,0 +1,66 @@
+com.intellij.xdebugger.attach.XAttachDebugger
+- a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
+- a:getDebuggerDisplayName():java.lang.String
+- getDebuggerSelectedTitle():java.lang.String
+com.intellij.xdebugger.attach.XAttachDebuggerProvider
+- sf:DEFAULT_PRESENTATION_GROUP:com.intellij.xdebugger.attach.XAttachProcessPresentationGroup
+- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
+- a:getAvailableDebuggers(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo,com.intellij.openapi.util.UserDataHolder):java.util.List
+- getPresentationGroup():com.intellij.xdebugger.attach.XAttachPresentationGroup
+- a:isAttachHostApplicable(com.intellij.xdebugger.attach.XAttachHost):Z
+com.intellij.xdebugger.attach.XAttachHost
+- a:getProcessList():java.util.List
+- getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.xdebugger.attach.XAttachHostPresentationGroup
+- com.intellij.xdebugger.attach.XAttachPresentationGroup
+com.intellij.xdebugger.attach.XAttachHostProvider
+- sf:Companion:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
+- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
+- a:getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
+- getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- a:getPresentationGroup():com.intellij.xdebugger.attach.XAttachPresentationGroup
+com.intellij.xdebugger.attach.XAttachPresentationGroup
+- java.util.Comparator
+- a:getGroupName():java.lang.String
+- getItemDescription(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
+- getItemDisplayText(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
+- getItemIcon(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):javax.swing.Icon
+- a:getOrder():I
+- getProcessDisplayText(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):java.lang.String
+- getProcessIcon(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.openapi.util.UserDataHolder):javax.swing.Icon
+com.intellij.xdebugger.attach.XAttachProcessPresentationGroup
+- com.intellij.xdebugger.attach.XAttachPresentationGroup
+- compare(com.intellij.execution.process.ProcessInfo,com.intellij.execution.process.ProcessInfo):I
+com.intellij.xdebugger.attach.XLocalAttachDebugger
+- com.intellij.xdebugger.attach.XAttachDebugger
+- a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessInfo):V
+- attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
+- a:getDebuggerDisplayName():java.lang.String
+com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
+- a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
+- a:getBackgroundColor():java.awt.Color
+com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
+- com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
+- a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
+com.intellij.xdebugger.impl.frame.XWatchesView
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
+- a:removeAllWatches():V
+- a:removeWatches(java.util.List):V
+com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
+- a:getHighlightRange():com.intellij.openapi.util.TextRange
+com.intellij.xdebugger.impl.ui.XValueTextProvider
+- a:getValueText():java.lang.String
+com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- a:getHost():com.intellij.xdebugger.attach.XAttachHost
+- a:getIcon():javax.swing.Icon
+- a:getId():java.lang.String
+- a:getPresentation():java.lang.String
+com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
+- com.intellij.xdebugger.Obsolescent
+- javax.swing.tree.TreeNode
+- a:getExpression():com.intellij.xdebugger.XExpression
+- a:setObsolete():V
+com.intellij.xdebugger.memory.utils.InstancesProvider
+- a:getInstances(I):java.util.List

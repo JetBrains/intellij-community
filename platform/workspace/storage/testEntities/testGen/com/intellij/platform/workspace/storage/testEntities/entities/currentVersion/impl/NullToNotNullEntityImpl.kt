@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -21,8 +20,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEntityData) : NullToNotNullEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEntityData) : NullToNotNullEntity,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -60,8 +59,8 @@ internal class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEnti
   }
 
 
-  internal class Builder(result: NullToNotNullEntityData?) : ModifiableWorkspaceEntityBase<NullToNotNullEntity, NullToNotNullEntityData>(
-    result), NullToNotNullEntity.Builder {
+  internal class Builder(result: NullToNotNullEntityData?) :
+    ModifiableWorkspaceEntityBase<NullToNotNullEntity, NullToNotNullEntityData>(result), NullToNotNullEntity.Builder {
     internal constructor() : this(NullToNotNullEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -178,7 +177,8 @@ internal class NullToNotNullEntityData : WorkspaceEntityData<NullToNotNullEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.NullToNotNullEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

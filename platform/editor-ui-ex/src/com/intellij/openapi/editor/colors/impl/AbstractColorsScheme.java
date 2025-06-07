@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.BundleBase;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
@@ -27,8 +28,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -83,7 +84,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
-  private final ValueElementReader myValueReader = new TextAttributesReader();
+
+  private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", false);
+  private final TextAttributesReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();
   protected EditorColorsScheme parentScheme;
@@ -338,6 +341,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return this;
   }
 
+  @Override
   public @NonNls String toString() {
     return getName();
   }
@@ -439,7 +443,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = e.getAttributeValue(NAME_ATTR);
       Element valueElement = e.getChild(VALUE_ELEMENT);
-      TextAttributes attr = valueElement != null ? myValueReader.read(TextAttributes.class, valueElement) :
+      TextAttributes attr = valueElement != null ? myValueReader.readAttributes(valueElement, myMarkColorIds ? keyName : null) :
                             e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null ? INHERITED_ATTRS_MARKER :
                             null;
       if (attr != null) {
@@ -452,6 +456,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);
+      if (valueColor != null && keyName != null && myMarkColorIds) {
+        valueColor = new ColorKeyColor(valueColor, keyName);
+      }
       if (valueColor == null && colorElement.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
         valueColor = INHERITED_COLOR_MARKER;
       }
@@ -744,10 +751,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     String rgb = "";
     if (color != NULL_COLOR_MARKER) {
-      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      rgb = String.format("%06X", 0xFFFFFF & color.getRGB());
       int alpha = 0xFF & color.getAlpha();
       if (alpha != 0xFF) {
-        rgb += Integer.toString(alpha, 16);
+        rgb += String.format("%02X", alpha);
       }
     }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
@@ -1029,7 +1036,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     parentScheme = newParent;
   }
 
-  void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
+  @ApiStatus.Internal
+  public void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
     if (parentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)parentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
@@ -1050,12 +1058,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
+  @ApiStatus.Internal
+  public void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
     sourceScheme.colorMap.forEach((key, color) -> colorMap.putIfAbsent(key, color));
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
   }
 
-  private String debugSchemeName(){
+  private String debugSchemeName() {
     try {
       if (schemeName != null) {
         return schemeName;

@@ -1,12 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -17,9 +14,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +42,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
+  public static final ExtensionPointName<JpsPluginBean> EP_NAME = new ExtensionPointName<>("com.intellij.jps.plugin");
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
   private final boolean myFullyLoaded;
@@ -54,16 +53,16 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     Application application = ApplicationManager.getApplication();
     myFullyLoaded = application != null;
     if (!myFullyLoaded) {
-      //this may happen e.g. in tests if some test is executed before Application is initialized; in that case the created instance won't be cached
-      //and will be reinitialized next time
+      // this may happen, e.g., in tests if some test is executed before Application is initialized;
+      // in that case the created instance won't be cached and will be reinitialized next time
       return;
     }
 
     ExtensionsArea rootArea = application.getExtensionArea();
     //todo get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
-    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
+    if (rootArea.hasExtensionPoint(EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
-      JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+      EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @NotNull PluginDescriptor pluginDescriptor) {
           if (initial.get()) {
@@ -270,7 +269,10 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
       if (filter == null || filter.test(plugin)) {
-        ContainerUtil.addIfNotNull(loaders, plugin.getPluginClassLoader());
+        ClassLoader element = plugin.getPluginClassLoader();
+        if (element != null) {
+          loaders.add(element);
+        }
       }
     }
     if (loaders.isEmpty()) {
@@ -281,7 +283,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   private static @NotNull <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
     if (loaders.isEmpty()) {
-      return Collections.emptyList();
+      return List.of();
     }
 
     @NonNls String resourceName = "META-INF/services/" + extensionClass.getName();
@@ -304,7 +306,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     List<T> extensions = new ArrayList<>();
     for (Class<T> aClass : classes) {
       try {
-        extensions.add(extensionClass.cast(aClass.newInstance()));
+        extensions.add(extensionClass.cast(aClass.getDeclaredConstructor().newInstance()));
       }
       catch (Exception e) {
         throw new ServiceConfigurationError("Class " + aClass.getName() + " cannot be instantiated", e);

@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -19,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static de.plushnikov.intellij.plugin.LombokClassNames.VALUE;
 
 /**
  * @author twillouer
@@ -65,7 +68,7 @@ public final class ValueProcessor extends AbstractClassProcessor {
     Collection<String> result = new ArrayList<>();
 
     final String staticConstructorName = getStaticConstructorNameValue(psiAnnotation);
-    if(StringUtil.isNotEmpty(staticConstructorName)) {
+    if (StringUtil.isNotEmpty(staticConstructorName)) {
       result.add(staticConstructorName);
     }
     result.addAll(getNoArgsConstructorProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
@@ -94,7 +97,8 @@ public final class ValueProcessor extends AbstractClassProcessor {
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
-      builder.addErrorMessage("inspection.message.value.only.supported.on.class.type");
+      builder.addErrorMessage("inspection.message.value.only.supported.on.class.type")
+        .withLocalQuickFixes(() -> PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, VALUE));
       builder.markFailed();
     }
   }
@@ -117,8 +121,7 @@ public final class ValueProcessor extends AbstractClassProcessor {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.BUILDER)) {
-      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-      filterToleratedElements(definedConstructors);
+      PsiClassUtil.collectClassConstructorIntern(psiClass);
 
       final String staticName = getStaticConstructorNameValue(psiAnnotation);
       final Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getAllFields(psiClass);
@@ -136,9 +139,8 @@ public final class ValueProcessor extends AbstractClassProcessor {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addClassAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);
     addFieldsAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);

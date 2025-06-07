@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
@@ -70,8 +70,7 @@ public interface WordOptimizer {
    * @param className  the name of the class to search for subclasses of
    * @param includeSelf  include the class itself in the search
    */
-  @NotNull
-  default List<String> getDescendantsOf(@NotNull String className, boolean includeSelf, @NotNull Project project) {
+  default @NotNull List<String> getDescendantsOf(@NotNull String className, boolean includeSelf, @NotNull Project project) {
     return Collections.emptyList();
   }
 }

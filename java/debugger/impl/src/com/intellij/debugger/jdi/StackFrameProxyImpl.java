@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -222,9 +222,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
 //    return false;
 //  }
 
-  @NotNull
   @Override
-  public VirtualMachineProxyImpl getVirtualMachine() {
+  public @NotNull VirtualMachineProxyImpl getVirtualMachine() {
     return (VirtualMachineProxyImpl)myTimer;
   }
 
@@ -262,12 +261,12 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
       });
   }
 
-  @NotNull
   @Override
-  public ThreadReferenceProxyImpl threadProxy() {
+  public @NotNull ThreadReferenceProxyImpl threadProxy() {
     return myThreadProxy;
   }
 
+  @Override
   public @NonNls String toString() {
     try {
       return "StackFrameProxyImpl: " + getStackFrame().toString();
@@ -277,9 +276,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     }
   }
 
-  @Nullable
   @Override
-  public ObjectReference thisObject() throws EvaluateException {
+  public @Nullable ObjectReference thisObject() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     try {
@@ -318,8 +316,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     return myThisReference;
   }
 
-  @NotNull
-  public List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
+  public @NotNull List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     RuntimeException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -350,8 +347,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     return variable != null ? new LocalVariableProxyImpl(this, variable) : null;
   }
 
-  @Nullable
-  public Value visibleValueByName(@NotNull String name) throws EvaluateException {
+  public @Nullable Value visibleValueByName(@NotNull String name) throws EvaluateException {
     LocalVariable variable = visibleVariableByNameInt(name);
     return variable != null ? getValue(new LocalVariableProxyImpl(this, variable)) : null;
   }
@@ -439,8 +435,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     return getStackFrame().getValue(variable);
   }
 
-  @NotNull
-  public List<Value> getArgumentValues() throws EvaluateException {
+  public @NotNull List<Value> getArgumentValues() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -513,11 +508,13 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     throw new EvaluateException(error.getMessage(), error);
   }
 
+  @Override
   public int hashCode() {
     return 31 * myThreadProxy.hashCode() + myFrameFromBottomIndex;
   }
 
 
+  @Override
   public boolean equals(final Object obj) {
     if (!(obj instanceof StackFrameProxyImpl frameProxy)) {
       return false;

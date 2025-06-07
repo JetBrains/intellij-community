@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
@@ -42,6 +43,15 @@ class GradleProjectExtensionContributor : AbstractGradleExtensionContributor() {
     val name = processor.getName(state)
     val allExtensions = extensionsData.extensions
     val extensions = if (name == null) allExtensions.values else listOf(allExtensions[name] ?: return)
+
+    /**
+     *     val module = ModuleUtilCore.findModuleForPsiElement(place)
+     *     val versionCatalogNames = if (module != null) {
+     *       getVersionCatalogFiles(module).keys
+     *     } else {
+     *       emptySet()
+     *     }
+     */
 
     processExtensions(extensions, containingFile, place, processor, aClass, state)
   }

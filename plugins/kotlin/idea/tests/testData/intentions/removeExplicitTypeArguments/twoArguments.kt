@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 // WITH_STDLIB
 // AFTER-WARNING: Parameter 'p1' is never used
 // AFTER-WARNING: Parameter 'p2' is never used

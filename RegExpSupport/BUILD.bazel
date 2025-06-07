@@ -1,30 +1,66 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.regexp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "regexp_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "regexp",
   module_name = "intellij.regexp",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/analysis-impl",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/lang-impl",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@community//platform/util/jdom:util-jdom",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":regexp_resources"]
 )
-### auto-generated section `build` end
+
+jvm_library(
+  name = "regexp_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":regexp"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:junit4",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":regexp_resources"]
+)
+
+jvm_test(
+  name = "regexp_test",
+  runtime_deps = [":regexp_test_lib"]
+)
+### auto-generated section `build intellij.regexp` end

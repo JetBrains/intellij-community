@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -15,32 +15,32 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object TypeMismatchFactories {
 
-    val argumentTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatchFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.ArgumentTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val returnTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatchFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.ReturnTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val assignmentTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatch: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.AssignmentTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val initializerTypeMismatch = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
+    val initializerTypeMismatch: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.InitializerTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         (diagnostic.psi as? KtProperty)?.initializer?.let { getFixesForTypeMismatch(it, diagnostic.expectedType, diagnostic.actualType) }
             ?: emptyList()
     }
 
-    val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
+    val smartcastImpossibleFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.SmartcastImpossible> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SmartcastImpossible ->
         val psi = diagnostic.psi
         val actualType = psi.expressionType
-            ?: return@IntentionBased emptyList()
+            ?: return@ModCommandBased emptyList()
 
         getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = actualType)
     }
 
-    val conditionTypeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ConditionTypeMismatch ->
+    val conditionTypeMismatchFactory: KotlinQuickFixFactory<KaFirDiagnostic.ConditionTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ConditionTypeMismatch ->
         getFixesForTypeMismatch(diagnostic.psi, expectedType = builtinTypes.boolean, actualType = diagnostic.actualType)
     }
 
@@ -48,7 +48,7 @@ object TypeMismatchFactories {
         psi: PsiElement,
         expectedType: KaType,
         actualType: KaType
-    ): List<IntentionAction> {
+    ): List<ModCommandAction> {
         // TODO: Add more fixes than just AddExclExclCallFix when available.
         if (!expectedType.canBeNull && actualType.canBeNull) {
             // We don't want to offer AddExclExclCallFix if we know the expression is definitely null, e.g.:
@@ -64,7 +64,7 @@ object TypeMismatchFactories {
                 return buildList {
                     psi.asAddExclExclCallFix()?.let(::add)
                     if (expectedType.isBooleanType && psi is KtExpression) {
-                        add(AddEqEqTrueFix(psi).asIntention())
+                        add(AddEqEqTrueFix(psi))
                     }
                 }
             }

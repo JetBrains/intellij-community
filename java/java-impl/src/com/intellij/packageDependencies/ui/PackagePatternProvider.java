@@ -77,8 +77,7 @@ public final class PackagePatternProvider extends PatternDialectProvider {
       if (element instanceof PsiClassOwner javaFile) {
         final VirtualFile virtualFile = javaFile.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
-        final String packageName =
-          PackageIndex.getInstance(element.getProject()).getPackageNameByDirectory(virtualFile.getParent());
+        final String packageName = PackageIndex.getInstance(element.getProject()).getPackageName(virtualFile);
         final String name = virtualFile.getNameWithoutExtension();
         if (!PsiNameHelper.getInstance(element.getProject()).isIdentifier(name)) return null;
         qName = StringUtil.getQualifiedName(packageName, name);

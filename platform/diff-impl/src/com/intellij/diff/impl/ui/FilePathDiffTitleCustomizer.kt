@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.diff.impl.DiffEditorTitleDetails.DetailsLabelProvider
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FilePathSplittingPolicy
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -16,32 +20,40 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class FilePathDiffTitleCustomizer(
-  private val displayedPath: String,
-  private val fullPath: @NlsSafe String = displayedPath,
-  private val revisionLabel: RevisionLabel? = null,
+  private val path: DetailsLabelProvider,
+  private val revisionLabel: DetailsLabelProvider?,
 ) : DiffEditorTitleCustomizer {
-  override fun getLabel(): JComponent {
-    val revisionWithPath = JPanel(GridBagLayout())
+  override fun getLabel(): JComponent =
+    Panel(revisionLabel = revisionLabel?.createComponent(), pathLabel = path.createComponent())
 
-    revisionLabel?.createComponent()?.let {
-      revisionWithPath.add(it, GridBagConstraints().apply {
+  private class Panel(
+    private val revisionLabel: JComponent?,
+    private val pathLabel: JComponent,
+  ) : JPanel(GridBagLayout()), Disposable {
+    init {
+      if (revisionLabel != null) {
+        add(revisionLabel, GridBagConstraints().apply {
+          fill = GridBagConstraints.BOTH
+          weightx = 0.0
+          gridx = 0
+          ipadx = scale(8)
+        })
+      }
+      add(pathLabel, GridBagConstraints().apply {
         fill = GridBagConstraints.BOTH
-        weightx = 0.0
-        gridx = 0
-        ipadx = scale(8)
+        weightx = 1.0;
+        gridx = 1
       })
     }
-    val pathLabel = DiffFilePathLabelWrapper(displayedPath, fullPath)
-    revisionWithPath.add(pathLabel, GridBagConstraints().apply {
-      fill = GridBagConstraints.BOTH
-      weightx = 1.0;
-      gridx = 1
-    })
-    return revisionWithPath
-  }
 
-  data class RevisionLabel(private val revision: @NlsSafe String, private val copiable: Boolean) {
-    fun createComponent() = JBLabel(revision).setCopyable(copiable)
+    override fun dispose() {
+      if (revisionLabel is Disposable) {
+        Disposer.dispose(revisionLabel)
+      }
+      if (pathLabel is Disposable) {
+        Disposer.dispose(pathLabel)
+      }
+    }
   }
 }
 
@@ -75,13 +87,13 @@ private class DiffFilePathLabel(path: String, fullPath: @NlsSafe String) : JBLab
   init {
     isAllowAutoWrapping = true
     setCopyable(true)
-    toolTipText = fullPath
+    toolTipText = XmlStringUtil.escapeString(fullPath)
     foreground = UIUtil.getContextHelpForeground()
   }
 
   override fun setSize(d: Dimension) {
     super.setSize(d)
-    text = SplitBySeparatorKeepFileNamePolicy.getOptimalTextForComponent(file, this, d.width)
+    text = XmlStringUtil.escapeString(SplitBySeparatorKeepFileNamePolicy.getOptimalTextForComponent (file, this, d.width))
   }
 
   // Fully managed by the parent.

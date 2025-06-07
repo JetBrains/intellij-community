@@ -41,8 +41,7 @@ public class ConvertToEntityFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.convert.to.entity", myToken.getText(), myValue);
     }
 
@@ -63,7 +62,7 @@ public class ConvertToEntityFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(myToken.getContainingFile(), XmlAttribute.class, true);
         assert attribute != null;
 

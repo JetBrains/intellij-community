@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static String getPackageName(@NotNull VirtualFile directory, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getPackageName(directory);
+    return WorkspaceFileIndexEx.getInstance(project).getPackageName(directory);
   }
 
   /**
@@ -56,7 +56,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return WorkspaceFileIndexEx.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   /**
@@ -65,7 +65,7 @@ public final class PlatformPackageUtil {
    */
   @ApiStatus.Internal
   public static Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope, @NotNull Project project) {
-    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
+    return WorkspaceFileIndexEx.getInstance(project).getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
   }
 
 
@@ -90,7 +90,7 @@ public final class PlatformPackageUtil {
   private static @Nullable PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles,
                                                                    GlobalSearchScope scope,
                                                                    PsiManager manager) {
-    for (VirtualFile vFile : vFiles) {
+    for (VirtualFile vFile : vFiles.asIterable()) {
       if (!scope.contains(vFile)) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
@@ -114,7 +114,7 @@ public final class PlatformPackageUtil {
         int beginIndex = rootPackage.length() + 1;
         packageName = beginIndex < packageName.length() ? packageName.substring(beginIndex) : "";
         String postfixToShow = packageName.replace('.', File.separatorChar);
-        if (packageName.length() > 0) {
+        if (!packageName.isEmpty()) {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         psiDirectory =
@@ -145,7 +145,7 @@ public final class PlatformPackageUtil {
 
     String restOfName = packageName;
     boolean askedToCreate = false;
-    while (restOfName.length() > 0) {
+    while (!restOfName.isEmpty()) {
       final String name = getLeftPart(restOfName);
       PsiDirectory foundExistingDirectory = psiDirectory != null ? psiDirectory.findSubdirectory(name) : null;
       if (foundExistingDirectory == null) {

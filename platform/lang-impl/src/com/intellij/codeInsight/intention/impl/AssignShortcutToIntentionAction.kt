@@ -18,7 +18,7 @@ abstract class AbstractEditIntentionShortcutAction(protected val intention: Inte
   override fun getFamilyName(): String = CodeInsightBundle.message(textKey)
 
   override fun getText(): String = familyName
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
   override fun startInWriteAction(): Boolean = false
 }
 
@@ -27,7 +27,7 @@ abstract class AbstractEditIntentionShortcutAction(protected val intention: Inte
 class AssignShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "assign.intention.shortcut") {
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     IntentionShortcutManager.getInstance().promptForIntentionShortcut(intention, project)
   }
 }
@@ -36,7 +36,7 @@ class AssignShortcutToIntentionAction(intention: IntentionAction)
 internal class EditShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "edit.intention.shortcut") {
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     IntentionShortcutManager.getInstance().apply {
       removeFirstIntentionShortcut(intention)
       promptForIntentionShortcut(intention, project)
@@ -48,7 +48,7 @@ internal class EditShortcutToIntentionAction(intention: IntentionAction)
 internal class RemoveIntentionActionShortcut(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "remove.intention.shortcut") {
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     IntentionShortcutManager.getInstance().removeFirstIntentionShortcut(intention)
   }
 }

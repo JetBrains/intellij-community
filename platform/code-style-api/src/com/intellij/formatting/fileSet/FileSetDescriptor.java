@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.fileSet;
 
 import com.intellij.psi.PsiFile;
@@ -16,8 +16,7 @@ public interface FileSetDescriptor {
    */
   boolean matches(@NotNull PsiFile psiFile);
 
-  @Nullable
-  default String getName() {
+  default @Nullable String getName() {
     return null;
   }
 
@@ -29,8 +28,7 @@ public interface FileSetDescriptor {
 
   void setPattern(@Nullable String pattern);
 
-  @NotNull
-  default State getState() {
+  default @NotNull State getState() {
     return new FileSetDescriptor.State(getType(), getName(), getPattern());
   }
 
@@ -39,13 +37,9 @@ public interface FileSetDescriptor {
     @Attribute("type")
     public String type;
 
-    @Attribute("name")
-    @Nullable
-    public String name;
+    @Attribute("name") public @Nullable String name;
 
-    @Attribute("pattern")
-    @Nullable
-    public String pattern;
+    @Attribute("pattern") public @Nullable String pattern;
 
     public State() {
     }

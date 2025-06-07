@@ -1,42 +1,49 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.gson.JsonParseException;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
-import com.intellij.util.io.HttpRequests;
+import com.intellij.util.net.PlatformHttpClient;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @see Region
  * @see RegionSettings
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 public final class RegionUrlMapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.RegionUrlMapper");
 
-  private static final int CACHE_DATA_EXPIRATION_MIN = 2;
+  private static final int CACHE_DATA_EXPIRATION_MIN = SystemProperties.getIntProperty("ide.region.url.mapping.expiration.timeout", 2);
   private static final String CONFIG_URL_DEFAULT = "https://www.jetbrains.com/config/JetBrainsResourceMapping.json";
   private static final Map<Region, String> CONFIG_URL_TABLE = Map.of(
     // augment the table with other regions if needed
     Region.CHINA, "https://www.jetbrains.com.cn/config/JetBrainsResourceMapping.json"
   );
-  
+
   private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
+  private static final boolean FORCE_REGION_MAPPINGS_LOAD = Boolean.getBoolean("force.region.mappings.load");
+
   static {
     for (Region reg : Region.values()) {
       String propName = "jb.mapper.configuration.url";
@@ -50,79 +57,166 @@ public final class RegionUrlMapper {
     }
   }
 
-  private static final LoadingCache<Region, List<Pair<String, String>>> ourCache = Caffeine.newBuilder().expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES).build(RegionUrlMapper::loadMappings);
+  private static final AsyncLoadingCache<@NotNull Region, @NotNull RegionMapping> ourCache = Caffeine.newBuilder()
+    .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
+    .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
-  private RegionUrlMapper() {
-  }
+  private RegionUrlMapper() { }
 
   /**
-   * Maps the specified resource URL to a corresponding region-specific URL for the region that is configured for the IDE
-   * see {@link #mapUrl(String, Region)}
-   *
-   * IMPORTANT: the method is potentially long-executing; involves network calls
-   *
-   * @param url the original resource URL
-   * @return the possibly adjusted URL that is specific to the currently specified IDE region.
+   * @see #tryMapUrlBlocking(String, Region)
+   * @see #tryMapUrl(String) when calling from a suspending context, consider using the async version
+   * @see RegionSettings
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @Contract("null -> null")
-  @Nullable
-  public static String mapUrl(@Nullable String url) {
-    return mapUrl(url, RegionSettings.getRegion());
+  public static @NotNull String tryMapUrlBlocking(@NotNull String url) {
+    return tryMapUrlBlocking(url, RegionSettings.getRegion());
   }
 
   /**
-   * Maps the specified resource URL to a corresponding region-specific URL
-   * IMPORTANT: the method is potentially long-executing; involves network calls
+   * Maps the specified resource URL to a corresponding region-specific URL.
+   * <p>
+   * <b>IMPORTANT</b>: the method is potentially long-executing; involves network calls.
+   * Also note that in case the network call fails, this method returns the original URL silently (hence, "try" in its name).
    *
    * @param url the original resource URL
    * @param region the region for which the original url might be adjusted
-   * @return the adjusted url, in case the mapping is configured or the original url, if no adjustments are required
+   * @return the adjusted url in case the mapping is configured, or the original url if no adjustments are required
+   * @see #tryMapUrl(String, Region) when calling from a suspending context, consider using the async version
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @Contract("null, _ -> null")
-  @Nullable
-  public static String mapUrl(@Nullable String url, @NotNull Region region) {
-    if (url != null) {
-      for (Pair<String, String> pair : ourCache.get(region)) {
-        String pattern = pair.getFirst();
-        int entry = Strings.indexOfIgnoreCase(url, pattern, 0);
-        if (entry >= 0) {
-          String replacement = pair.getSecond();
-          return url.substring(0, entry) + replacement + url.substring(entry + pattern.length());
-        }
-      }
+  public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
+    try {
+      return tryMapUrl(url, region).join();
     }
-    return url;
+    catch (Throwable e) {
+      // tryMapUrl() should have already swallowed any failures, so this shouldn't ever happen
+      LOG.warn("Unexpected exception when mapping region-specific url", e);
+      return url;
+    }
   }
 
-  private static List<Pair<String, String>> loadMappings(Region reg) {
-    String configUrl = getConfigUrl(reg);
-    try {
-      List<Pair<String, String>> result = new SmartList<>();
-      String json = HttpRequests.request(configUrl).readString();
+  /**
+   * @see #tryMapUrl(String, Region)
+   * @see RegionSettings
+   */
+  public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url) {
+    return tryMapUrl(url, RegionSettings.getRegion());
+  }
+
+  /**
+   * Maps the specified resource URL to a corresponding region-specific URL.
+   * <p>
+   * <b>IMPORTANT</b>: The operation may involve network calls, and if that fails,
+   * the returned future resolves to the original URL silently (hence, "try" in its name).
+   *
+   * @param url the original resource URL
+   * @param region the region for which the original url might be adjusted
+   * @return a CompletableFuture that resolves to the adjusted url in case the mapping is configured, or the original url otherwise
+   */
+  public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url, @NotNull Region region) {
+    return ourCache.get(region)
+      .exceptionally(t -> {
+        while (t instanceof CompletionException) {
+          t = t.getCause();
+        }
+        if (t instanceof CancellationException || t instanceof ControlFlowException) {
+          LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
+        }
+        else if (FORCE_REGION_MAPPINGS_LOAD) {
+          LOG.error("Failed to load URL mappings for " + region + ", URL=" + getConfigUrl(region), t);
+          return RegionMapping.FAILED;
+        }
+        else if (t instanceof IOException) {
+          // legitimate failure when using the IDE offline; just log it without the stack trace
+          LOG.info("Failed to fetch regional URL mappings (using non-regional URL as fallback): " + t);
+        }
+        else if (t instanceof JsonParseException) {
+          LOG.warn("Failed to parse regional URL mappings (using non-regional URL as fallback): " + t);
+        }
+        else {
+          // never suppress errors indicating programmatic bugs or an IDE misconfiguration
+          LOG.error("Failed to load regional URL mappings (using non-regional URL as fallback)", t);
+        }
+        return RegionMapping.EMPTY;
+      })
+      .thenApply(mapping -> mapping.apply(url));
+  }
+
+  private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
+    var configUrl = getConfigUrl(reg);
+    var client = PlatformHttpClient.client();
+    var request = PlatformHttpClient.request(new URI(configUrl));
+    var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
+    return RegionMapping.fromJson(response.body());
+  }
+
+  private static @NotNull String getConfigUrl(@NotNull Region reg) {
+    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
+    return overridden != null ? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
+  }
+
+  /*
+   * Mapper for a given region.
+   * Represents the contents of the JSON configuration loaded for a particular region
+   * and provides the methods for applying the mapping rules found in that configuration.
+   */
+  private static final class RegionMapping {
+    private static final RegionMapping EMPTY = new RegionMapping(List.of());
+    private static final RegionMapping FAILED = new RegionMapping(List.of(
+      new RegionMapping.PatternReplacement("https:", "mapping-failed:"),
+      new RegionMapping.PatternReplacement("http:", "mapping-failed:"),
+      new RegionMapping.PatternReplacement("ftp:", "mapping-failed:")
+    ));
+
+    private final List<PatternReplacement> myPatternReplacements;
+
+    private RegionMapping(List<PatternReplacement> patternReplacements) {
+      myPatternReplacements = patternReplacements;
+    }
+
+    public @NotNull String apply(@NotNull String url) {
+      for (var pair : myPatternReplacements) {
+        var entry = Strings.indexOfIgnoreCase(url, pair.pattern, 0);
+        if (entry >= 0) {
+          return url.substring(0, entry) + pair.replacement + url.substring(entry + pair.pattern.length());
+        }
+      }
+      return url;
+    }
+
+    public static @NotNull RegionMapping fromJson(@NotNull String json) throws JsonParseException {
+      List<PatternReplacement> result = new SmartList<>();
       for (Map<String, Object> mapping : JsonUtil.<Map<String, Object>>nextList(new JsonReaderEx(json))) {
         if (mapping.size() == 1) {
           Map.Entry<String, Object> entry = mapping.entrySet().iterator().next();
           String pattern = entry.getKey();
           if (!Strings.isEmpty(pattern) && entry.getValue() instanceof String replacement) {
-            result.add(Pair.create(pattern, replacement));
+            result.add(new PatternReplacement(pattern, replacement));
           }
         }
       }
-      return result;
+      return new RegionMapping(result);
     }
-    catch (Throwable e) {
-      LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this || obj instanceof RegionMapping that && Objects.equals(myPatternReplacements, that.myPatternReplacements);
     }
-    return Collections.emptyList();
-  }
 
-  private static @NotNull String getConfigUrl(Region reg) {
-    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
-    return overridden != null? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
-  }
+    @Override
+    public int hashCode() {
+      return Objects.hash(myPatternReplacements);
+    }
 
+    @Override
+    public String toString() { return "RegionMapping[mappings=" + myPatternReplacements + ']'; }
+
+    private record PatternReplacement(@NotNull String pattern, @NotNull String replacement) {
+      @Override
+      public String toString() { return pattern + " -> " + replacement; }
+    }
+  }
 }

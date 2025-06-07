@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,7 +81,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
         HandleType handleType = info.getSelectedHandleType();
         List<String> changelists = handleType.getChangelists();
         String defaultChangelist = handleType.getDefaultChangelist();
-        myChangelist.setModel(new CollectionComboBoxModel<>(changelists, defaultChangelist));
+        myChangelist.setModel(new CollectionComboBoxModel<>(new ArrayList<>(changelists), defaultChangelist));
 
         myChangelist.setRenderer(new ColoredListCellRenderer<>() {
           @Override
@@ -155,7 +156,9 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
       super.doOKAction();
     }
     else {
-      String list = StringUtil.join(files, info -> info.getFile().getPresentableUrl(), "<br>");
+      int cutOff = 50;
+      String list = StringUtil.join(ContainerUtil.getFirstItems(files, cutOff), info -> info.getFile().getPresentableUrl(), "<br>");
+      if (files.size() > cutOff) list += IdeBundle.message("handle.ro.file.status.failed.many.files", files.size());
       String message = IdeBundle.message("handle.ro.file.status.failed", list);
       Messages.showErrorDialog(getRootPane(), message, IdeBundle.message("dialog.title.clear.read.only.file.status"));
       myFiles = files;

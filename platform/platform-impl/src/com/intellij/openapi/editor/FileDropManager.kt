@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.CoroutineScope
@@ -111,18 +110,16 @@ class FileDropManager(
     }
 
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        for (vFile in vFiles) {
-          if (editorWindow != null && !editorWindow.isDisposed) {
-            val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
-            val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
-            if (pair.allEditors.isNotEmpty()) {
-              continue
-            }
+      for (vFile in vFiles) {
+        if (editorWindow != null && !editorWindow.isDisposed) {
+          val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
+          val pair = fileEditorManager.openFile(vFile, editorWindow, FileEditorOpenOptions(requestFocus = true))
+          if (pair.allEditors.isNotEmpty()) {
+            continue
           }
-
-          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true)
         }
+
+        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true)
       }
     }
   }
@@ -135,11 +132,9 @@ private class CustomFileDropHandlerBridge : FileDropHandler {
     if (extensions.isEmpty()) return false
 
     return withContext(Dispatchers.EDT) {
-      blockingContext {
-        extensions.any {
-          it.canHandle(e.transferable, e.editor)
-          && it.handleDrop(e.transferable, e.editor, e.project)
-        }
+      extensions.any {
+        it.canHandle(e.transferable, e.editor)
+        && it.handleDrop(e.transferable, e.editor, e.project)
       }
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl.ui;
 
@@ -36,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class FacetEditorContextBase extends UserDataHolderBase implements FacetEditorContext {
   private final FacetsProvider myFacetsProvider;
-  @Nullable private final FacetEditorContext myParentContext;
+  private final @Nullable FacetEditorContext myParentContext;
   private final ModulesProvider myModulesProvider;
   private final Facet myFacet;
   private final UserDataHolder mySharedModuleData;
@@ -60,8 +46,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   @Override
-  @NotNull
-  public String getFacetName() {
+  public @NotNull String getFacetName() {
     return myFacet.getName();
   }
 
@@ -71,8 +56,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   @Override
-  @Nullable
-  public Library findLibrary(@NotNull String name) {
+  public @Nullable Library findLibrary(@NotNull String name) {
     for (Library library : getLibraries()) {
       if (name.equals(library.getName())) {
         return library;
@@ -90,12 +74,10 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return mySharedModuleData;
   }
 
-  @NotNull
-  public abstract ArtifactsStructureConfigurableContext getArtifactsStructureContext();
+  public abstract @NotNull ArtifactsStructureConfigurableContext getArtifactsStructureContext();
 
   @Override
-  @Nullable
-  public <T> T getUserData(@NotNull final Key<T> key) {
+  public @Nullable <T> T getUserData(final @NotNull Key<T> key) {
     T t = super.getUserData(key);
     if (t == null && myParentContext != null) {
       t = myParentContext.getUserData(key);
@@ -104,34 +86,29 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   }
 
   @Override
-  @NotNull
-  public FacetsProvider getFacetsProvider() {
+  public @NotNull FacetsProvider getFacetsProvider() {
     return myFacetsProvider;
   }
 
   @Override
-  @NotNull
-  public ModulesProvider getModulesProvider() {
+  public @NotNull ModulesProvider getModulesProvider() {
     return myModulesProvider;
   }
 
   @Override
-  @NotNull
-  public ModuleRootModel getRootModel() {
+  public @NotNull ModuleRootModel getRootModel() {
     return getModifiableRootModel();
   }
 
   public abstract LibrariesContainer getContainer();
 
   @Override
-  @NotNull
-  public Facet getFacet() {
+  public @NotNull Facet getFacet() {
     return myFacet;
   }
 
   @Override
-  @Nullable
-  public Facet getParentFacet() {
+  public @Nullable Facet getParentFacet() {
     return myFacet.getUnderlyingFacet();
   }
 }

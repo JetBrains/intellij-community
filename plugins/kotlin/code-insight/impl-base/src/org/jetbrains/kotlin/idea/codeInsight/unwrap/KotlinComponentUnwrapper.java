@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.unwrap;
 
@@ -14,11 +14,9 @@ public abstract class KotlinComponentUnwrapper extends KotlinUnwrapRemoveBase {
         super(key);
     }
 
-    @Nullable
-    protected abstract KtExpression getExpressionToUnwrap(@NotNull KtElement target);
+    protected abstract @Nullable KtExpression getExpressionToUnwrap(@NotNull KtElement target);
 
-    @NotNull
-    protected KtElement getEnclosingElement(@NotNull KtElement element) {
+    protected @NotNull KtElement getEnclosingElement(@NotNull KtElement element) {
         return element;
     }
 

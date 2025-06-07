@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration
 import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration
-import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Settings
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
@@ -14,7 +13,6 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import kotlin.time.Duration.Companion.seconds
 
 class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHelperExtension {
 
@@ -27,17 +25,14 @@ class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHel
     if (!Registry.`is`("gradle.daemon.opentelemetry.agent.enabled", false)) {
       return
     }
-    val traceEndpoint = OtlpConfiguration.getTraceEndpoint() ?: return
+    val traceEndpoint = OtlpConfiguration.getTraceEndpointURI() ?: return
     val agentLocation = TelemetryAgentResolver.getAgentLocation() ?: return
     val configuration = AgentConfiguration.forService(
       serviceName = GradleConstants.GRADLE_NAME,
       context = TelemetryContext.current(),
       traceEndpoint = traceEndpoint,
       agentLocation = agentLocation,
-      settings = Settings.default(
-        debug = true,
-        metricExportInterval = 5.seconds
-      )
+      settings = AgentConfiguration.Settings.withoutMetrics()
     )
     val jvmArgs = TelemetryAgentProvider.getJvmArgs(configuration)
     operation.addJvmArguments(jvmArgs)

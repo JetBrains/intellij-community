@@ -4,13 +4,14 @@ package com.intellij.ide.impl
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.ide.trustedProjects.TrustedProjectsStateStorage
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
-import com.intellij.util.containers.prefix.map.PrefixTreeMap
+import com.intellij.openapi.util.io.PathPrefixTree
+import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.toPrefixTreeMap
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 @State(name = "Trusted.Paths",
        category = SettingsCategory.TOOLS,
        exportable = true,
@@ -40,12 +41,12 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
      */
     @delegate:Transient
     override val trustedState: PrefixTreeMap<Path, Boolean> by lazy {
-      NioPathPrefixTreeFactory.createMap(
-        trustedPaths.entries.map { Path.of(it.key) to it.value }
-      )
+      trustedPaths.entries.map { Path.of(it.key) to it.value }
+        .toPrefixTreeMap(PathPrefixTree)
     }
   }
 
+  @Deprecated("Use TrustedProjects.setProjectTrusted(Path, Boolean) instead")
   fun setProjectPathTrusted(path: Path, value: Boolean) {
     updateState {
       State(it.trustedPaths + (path.toString() to value))

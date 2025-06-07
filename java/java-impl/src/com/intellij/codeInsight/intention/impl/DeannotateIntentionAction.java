@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +70,7 @@ public class DeannotateIntentionAction implements ModCommandAction {
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     PsiModifierListOwner listOwner = AddAnnotationPsiFix.getContainer(context.file(), context.offset(), true);
     if (listOwner == null) return ModCommand.nop();
-    var annotationsManager =
-      ObjectUtils.tryCast(ExternalAnnotationsManager.getInstance(context.project()), ModCommandAwareExternalAnnotationsManager.class);
+    var annotationsManager = ModCommandAwareExternalAnnotationsManager.getInstance(context.project());
     if (annotationsManager == null) return ModCommand.nop();
     if (myAnnotationName != null) {
       return annotationsManager.deannotateModCommand(List.of(listOwner), List.of(myAnnotationName));

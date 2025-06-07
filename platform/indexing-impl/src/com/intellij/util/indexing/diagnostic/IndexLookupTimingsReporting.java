@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -123,13 +123,12 @@ public final class IndexLookupTimingsReporting {
     "IndexLookupTimingsReporting.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true
   );
 
-
   /**
    * How many recursive lookups to allow before suspect it is not a recursive lookup, but
    * just buggy code (missed {@linkplain IndexOperationFusCollector.LookupTraceBase#close()} call) and throw exception
    */
   @VisibleForTesting
-  static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexLookup.MAX_LOOKUP_DEPTH", 16);
+  public static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexLookup.MAX_LOOKUP_DEPTH", 16);
   /**
    * If true -> throw exception if tracing methods are (likely) called in incorrect order (e.g. .finish() before start(),
    * or .finish() without .start() beforehand).
@@ -137,7 +136,7 @@ public final class IndexLookupTimingsReporting {
    * <p>
    */
   @VisibleForTesting
-  static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexLookup.THROW_ON_INCORRECT_USAGE", false);
+  public static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexLookup.THROW_ON_INCORRECT_USAGE", false);
 
 
   /* ================== EVENTS GROUPS: ====================================================== */
@@ -145,17 +144,18 @@ public final class IndexLookupTimingsReporting {
   /**
    * Individual lookups
    */
-  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 1);
+  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 3);
 
   /**
    * Averages/percentiles over lookups in a time window
    */
-  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 2);
+  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 3);
 
   /* ================== EVENTS FIELDS: ====================================================== */
 
   private static final StringEventField FIELD_INDEX_ID = EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator.class);
   private static final BooleanEventField FIELD_LOOKUP_FAILED = EventFields.Boolean("lookup_failed");
+  private static final BooleanEventField FIELD_LOOKUP_CANCELLED = EventFields.Boolean("lookup_cancelled");
   /**
    * Total lookup time, as it is seen by 'client' (i.e. including up-to-date/validation, and stubs deserializing, etc...)
    */
@@ -214,6 +214,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MS,          //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
       FIELD_UP_TO_DATE_CHECK_DURATION_MS,
@@ -229,6 +230,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION)
       FIELD_LOOKUP_DURATION_MS,
@@ -245,6 +247,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MS,       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
       FIELD_UP_TO_DATE_CHECK_DURATION_MS,
@@ -284,6 +287,7 @@ public final class IndexLookupTimingsReporting {
 
       protected long lookupStartedAtMs;
       protected boolean lookupFailed;
+      protected boolean lookupCancelled;
       protected int totalKeysIndexed;
       protected int lookupResultSize;
 
@@ -319,6 +323,7 @@ public final class IndexLookupTimingsReporting {
                                            final @Nullable T parentTrace) {
         this.indexId = indexId;
         this.lookupFailed = false;
+        this.lookupCancelled = false;
         this.totalKeysIndexed = -1;
         this.lookupResultSize = -1;
 
@@ -354,6 +359,7 @@ public final class IndexLookupTimingsReporting {
           }
 
           if (COLLECT_AGGREGATED_STATS) {
+            //TODO RC: lookups with N>1 keys should be counted as N lookups during the aggregation?
             collectAggregatedData(lookupFinishedAtMs);
           }
         }
@@ -398,6 +404,13 @@ public final class IndexLookupTimingsReporting {
         return typeSafeThis();
       }
 
+      public T lookupCancelled() {
+        if (traceWasStarted()) {
+          this.lookupCancelled = true;
+        }
+        return typeSafeThis();
+      }
+
       public T totalKeysIndexed(final int totalKeysIndexed) {
         if (traceWasStarted()) {
           this.totalKeysIndexed = totalKeysIndexed;
@@ -412,6 +425,7 @@ public final class IndexLookupTimingsReporting {
         return typeSafeThis();
       }
 
+      @Override
       public String toString() {
         return getClass().getSimpleName() +
                "{indexId=" + indexId +
@@ -520,6 +534,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupDurationMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
@@ -535,6 +550,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
             .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
@@ -612,6 +628,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_LOOKUP_KEYS_OP.with(lookupOperation),
@@ -633,6 +650,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           if (indexValidationFinishedAtMs > 0) {
             OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
@@ -730,6 +748,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed),
@@ -746,6 +765,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           if (indexValidationFinishedAtMs > 0) {
             OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
@@ -784,6 +804,7 @@ public final class IndexLookupTimingsReporting {
 
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
+    private static final IntEventField FIELD_LOOKUPS_CANCELLED = EventFields.Int("lookups_cancelled");
     private static final DoubleEventField FIELD_LOOKUP_DURATION_MEAN = EventFields.Double("lookup_duration_mean_ms");
     private static final IntEventField FIELD_LOOKUP_DURATION_90P = EventFields.Int("lookup_duration_90ile_ms");
     private static final IntEventField FIELD_LOOKUP_DURATION_95P = EventFields.Int("lookup_duration_95ile_ms");
@@ -797,6 +818,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -811,6 +833,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -825,6 +848,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -931,6 +955,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
@@ -950,6 +975,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
@@ -969,6 +995,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 

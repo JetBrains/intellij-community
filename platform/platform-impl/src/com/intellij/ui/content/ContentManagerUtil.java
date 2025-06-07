@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.Nullable;
 
 public final class ContentManagerUtil {

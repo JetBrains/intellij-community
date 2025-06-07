@@ -12,14 +12,13 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
@@ -64,7 +63,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     try {
       createProjectLevelLibraries(projectLibraryTable, projectLibs)
       if (commitModels) {
-        writeAction {
+        edtWriteAction {
           projectLibraryTable.commit()
         }
       }
@@ -80,7 +79,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     try {
       result.addAll(createModules(projectLibs, descriptorToModuleMap))
       if (commitModels) {
-        writeAction {
+        edtWriteAction {
           moduleModel.commit()
         }
       }
@@ -149,7 +148,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
     setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs)
     descriptor.updateModuleConfiguration(module, modifiableModel)
-    writeAction {
+    edtWriteAction {
       modifiableModel.commit()
     }
     return module
@@ -159,46 +158,44 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                              descriptor: ModuleDescriptor,
                              rootModel: ModifiableRootModel,
                              projectLibs: Map<LibraryDescriptor, Library>) {
-    blockingContext {
-      val compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension::class.java)
-      compilerModuleExtension.isExcludeOutput = true
-      rootModel.inheritSdk()
+    val compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension::class.java)
+    compilerModuleExtension.isExcludeOutput = true
+    rootModel.inheritSdk()
 
-      val contentRoots = descriptor.contentRoots
-      for (contentRoot in contentRoots) {
-        val lfs = LocalFileSystem.getInstance()
-        val moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.path))
-        if (moduleContentRoot != null) {
-          val contentEntry = rootModel.addContentEntry(moduleContentRoot)
-          val sourceRoots = descriptor.getSourceRoots(contentRoot)
-          for (srcRoot in sourceRoots) {
-            val srcPath = FileUtil.toSystemIndependentName(srcRoot.directory.path)
-            val sourceRoot = lfs.refreshAndFindFileByPath(srcPath)
-            if (sourceRoot != null) {
-              contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.directory),
-                                           ProjectFromSourcesBuilderImpl.getPackagePrefix(srcRoot))
-            }
+    val contentRoots = descriptor.contentRoots
+    for (contentRoot in contentRoots) {
+      val lfs = LocalFileSystem.getInstance()
+      val moduleContentRoot = lfs.refreshAndFindFileByPath(FileUtil.toSystemIndependentName(contentRoot.path))
+      if (moduleContentRoot != null) {
+        val contentEntry = rootModel.addContentEntry(moduleContentRoot)
+        val sourceRoots = descriptor.getSourceRoots(contentRoot)
+        for (srcRoot in sourceRoots) {
+          val srcPath = FileUtil.toSystemIndependentName(srcRoot.directory.path)
+          val sourceRoot = lfs.refreshAndFindFileByPath(srcPath)
+          if (sourceRoot != null) {
+            contentEntry.addSourceFolder(sourceRoot, shouldBeTestRoot(srcRoot.directory),
+                                         ProjectFromSourcesBuilderImpl.getPackagePrefix(srcRoot))
           }
         }
       }
-      compilerModuleExtension.inheritCompilerOutputPath(true)
-      val moduleLibraryTable = rootModel.moduleLibraryTable
-      for (libDescriptor in ModuleInsight.getLibraryDependencies(descriptor, projectDescriptor.libraries)) {
-        val projectLib = projectLibs[libDescriptor]
-        if (projectLib != null) {
-          rootModel.addLibraryEntry(projectLib)
-        }
-        else {
-          // add as module library
-          val jars = libDescriptor.jars
-          for (file in jars) {
-            val library = moduleLibraryTable.createLibrary()
-            val modifiableModel = library.modifiableModel
-            modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
-            WriteAction.runAndWait(ThrowableRunnable {
-              modifiableModel.commit()
-            })
-          }
+    }
+    compilerModuleExtension.inheritCompilerOutputPath(true)
+    val moduleLibraryTable = rootModel.moduleLibraryTable
+    for (libDescriptor in ModuleInsight.getLibraryDependencies(descriptor, projectDescriptor.libraries)) {
+      val projectLib = projectLibs[libDescriptor]
+      if (projectLib != null) {
+        rootModel.addLibraryEntry(projectLib)
+      }
+      else {
+        // add as module library
+        val jars = libDescriptor.jars
+        for (file in jars) {
+          val library = moduleLibraryTable.createLibrary()
+          val modifiableModel = library.modifiableModel
+          modifiableModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
+          WriteAction.runAndWait(ThrowableRunnable {
+            modifiableModel.commit()
+          })
         }
       }
     }
@@ -225,7 +222,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
               rootModel.addModuleOrderEntry(dependentModule)
             }
           }
-          writeAction {
+          edtWriteAction {
             rootModel.commit()
           }
         }
@@ -237,7 +234,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                                IdeCoreBundle.message("title.add.module"))
     }
 
-    writeAction {
+    edtWriteAction {
       for (updater in myUpdaters) {
         updater.updateProject(project, modelsProvider, updatedModulesProvider)
       }
@@ -254,7 +251,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
         for (file in files) {
           libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
         }
-        writeAction {
+        edtWriteAction {
           libraryModel.commit()
         }
         projectLibs[lib] = projectLib

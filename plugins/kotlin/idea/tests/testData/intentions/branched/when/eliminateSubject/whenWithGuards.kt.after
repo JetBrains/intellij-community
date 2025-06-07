@@ -1,0 +1,26 @@
+// PRIORITY: LOW
+// COMPILER_ARGUMENTS: -Xwhen-guards
+fun test(foo: Any, expr: Boolean, expr2: Boolean) {
+    when {
+        foo is Foo && expr -> {
+            // do something
+        }
+        foo is Bar && !expr -> {
+            // do something 2
+        }
+        foo is Foo && (expr2 || expr) -> {
+            // do something 3
+        }
+        expr -> {
+            // do something else
+        }
+        else -> {
+            // last stmt
+        }
+    }
+}
+
+class Foo
+class Bar
+
+// IGNORE_K1

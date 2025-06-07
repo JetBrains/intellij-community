@@ -1,17 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.plugin.freeze
 
-import com.intellij.diagnostic.FreezeNotifier
-import com.intellij.diagnostic.IdeErrorsDialog
-import com.intellij.diagnostic.MessagePool
-import com.intellij.diagnostic.ThreadDump
+import com.intellij.diagnostic.*
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -25,7 +22,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 internal class PluginFreezeNotifier: FreezeNotifier {
-  override fun notifyFreeze(event: IdeaLoggingEvent, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
+  override fun notifyFreeze(event: LogMessage, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
     val freezeWatcher = PluginFreezeWatcher.getInstance()
 
     val freezeReason = freezeWatcher.getFreezeReason()
@@ -34,7 +31,7 @@ internal class PluginFreezeNotifier: FreezeNotifier {
     for (dump in currentDumps) {
       val reason = freezeWatcher.dumpedThreads(event, dump, durationMs)
       if (reason != null) {
-        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs)
+        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs, reason.reportToUser)
 
         reportFreeze()
         break
@@ -58,6 +55,7 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
     val freezeReason = PluginFreezeWatcher.getInstance().getFreezeReason() ?: return null
     val frozenPlugin = freezeReason.pluginId
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
+    val ijProject = IntelliJProjectUtil.isIntelliJPlatformProject(project) || IntelliJProjectUtil.isIntelliJPluginProject(project)
 
     return Function {
       EditorNotificationPanel(EditorNotificationPanel.Status.Warning).apply {
@@ -69,8 +67,9 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
         }
 
         createActionLabel(PluginFreezeBundle.message("action.report.text")) {
-          reportFreeze(project, pluginDescriptor, freezeReason)
+          reportFreeze(project, pluginDescriptor, freezeReason, ijProject)
         }
+
         createActionLabel(PluginFreezeBundle.message("action.ignore.plugin.text")) {
           PluginsFreezesService.getInstance().mutePlugin(frozenPlugin)
 
@@ -90,13 +89,13 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
     }
   }
 
-  private fun reportFreeze(project: Project, pluginDescriptor: PluginDescriptor, freezeReason: FreezeReason) {
+  private fun reportFreeze(project: Project, pluginDescriptor: PluginDescriptor, freezeReason: FreezeReason, ijProject: Boolean) {
     if (reported.add(freezeReason)) {
       // must be added only once
       MessagePool.getInstance().addIdeFatalMessage(freezeReason.event)
     }
 
-    val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, null) {
+    val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, ijProject, freezeReason.event) {
       override fun updateOnSubmit() {
         super.updateOnSubmit()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
@@ -20,7 +20,6 @@ import com.intellij.util.Query
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import com.intellij.usages.Usage as UVUsage
 
 @ApiStatus.Internal
@@ -128,9 +127,9 @@ private class DefaultUsageSearchParameters(
   override val target: SearchTarget get() = requireNotNull(pointer.dereference())
 }
 
-private val textSearchContexts: Set<SearchContext> = EnumSet.of(
-  SearchContext.IN_COMMENTS, SearchContext.IN_STRINGS,
-  SearchContext.IN_PLAIN_TEXT
+private val textSearchContexts: Set<SearchContext> = setOf(
+  SearchContext.inComments(), SearchContext.inStrings(),
+  SearchContext.inPlainText()
 )
 
 internal fun SearchTarget.hasTextSearchStrings(): Boolean = textSearchRequests.isNotEmpty()

@@ -8,8 +8,8 @@ internal class ErrorLog {
 
   private val errors = AtomicReference(persistentListOf<LoggedError>())
 
-  fun recordLoggedError(message: String?, details: Array<out String>, t: Throwable?) {
-    val logged = LoggedError(message, details, t)
+  fun recordLoggedError(message: String?, t: Throwable?) {
+    val logged = LoggedError(message, t)
     errors.updateAndGet {
       it.add(logged)
     }

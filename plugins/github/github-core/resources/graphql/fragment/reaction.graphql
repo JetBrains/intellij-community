@@ -1,0 +1,6 @@
+fragment reaction on Reaction {
+  content
+  user {
+    ...user
+  }
+}

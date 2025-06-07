@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +22,7 @@ import java.util.List;
 public class GroovyDslScript {
   private static final Logger LOG = Logger.getInstance(GroovyDslScript.class);
   private final Project project;
-  @Nullable private final VirtualFile file;
+  private final @Nullable VirtualFile file;
   private final GroovyDslExecutor executor;
   private final String myPath;
   private final FactorTree myFactorTree;
@@ -114,13 +114,11 @@ public class GroovyDslScript {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "GroovyDslScript: " + myPath;
   }
 
-  @NotNull
-  public MultiMap getStaticInfo() {
+  public @NotNull MultiMap getStaticInfo() {
     return executor.getStaticInfo();
   }
 }

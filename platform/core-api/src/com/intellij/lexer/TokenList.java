@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -133,68 +132,5 @@ public interface TokenList {
    * but states and positions might differ. The returned lexer may be used to avoid tokenizing the same text again in APIs where lexer is expected,
    * but it will only accept the very same text from the very beginning; it can't be used on any other strings.
    */
-  default @NotNull Lexer asLexer() {
-    return new WrappingLexer(this);
-  }
-
-  /**
-   * A simple lexer over {@link TokenList}.
-   */
-  class WrappingLexer extends LexerBase {
-    private final TokenList myTokens;
-    private int myIndex;
-
-    WrappingLexer(TokenList tokens) {
-      this.myTokens = tokens;
-    }
-
-    public TokenList getTokens() {
-      return myTokens;
-    }
-
-    @Override
-    public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-      assert Comparing.equal(buffer, myTokens.getTokenizedText());
-      assert startOffset == 0;
-      assert endOffset == buffer.length();
-      assert initialState == 0;
-      myIndex = 0;
-    }
-
-    @Override
-    public int getState() {
-      return myIndex;
-    }
-
-    @Override
-    public @Nullable IElementType getTokenType() {
-      return myTokens.getTokenType(myIndex);
-    }
-
-    @Override
-    public int getTokenStart() {
-      return myTokens.getTokenStart(myIndex);
-    }
-
-    @Override
-    public int getTokenEnd() {
-      return myTokens.getTokenEnd(myIndex);
-    }
-
-    @Override
-    public void advance() {
-      myIndex++;
-    }
-
-    @Override
-    public @NotNull CharSequence getBufferSequence() {
-      return myTokens.getTokenizedText();
-    }
-
-    @Override
-    public int getBufferEnd() {
-      return myTokens.getTokenizedText().length();
-    }
-  }
-
+  @NotNull Lexer asLexer();
 }

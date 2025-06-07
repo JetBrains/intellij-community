@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 
@@ -24,8 +25,10 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
     mySourceReferenceList = sourceReferenceList;
     if (member instanceof PsiMethod method) {
       displayName = PsiFormatUtil.formatMethod(method,
-                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
-                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER
+                                               PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE |
+                                                                     PsiFormatUtilBase.TYPE_AFTER |
+                                                                     PsiFormatUtilBase.SHOW_PARAMETERS,
+                                               PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER
       );
       PsiMethod[] superMethods = method.findSuperMethods();
       if (superMethods.length > 0) {
@@ -38,9 +41,9 @@ public class MemberInfo extends MemberInfoBase<PsiMember> {
     }
     else if (member instanceof PsiField field) {
       displayName = PsiFormatUtil.formatVariable(
-              field,
-              PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
-              PsiSubstitutor.EMPTY);
+        field,
+        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
+        PsiSubstitutor.EMPTY);
       isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       overrides = null;
     }

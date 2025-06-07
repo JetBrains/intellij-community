@@ -6,18 +6,18 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.fileTypes.FileTypeFactory
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -56,7 +56,8 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
         coroutineContext.ensureActive()
 
         withContext(Dispatchers.EDT) {
-          notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+          getPluginSuggestionNotificationGroup()
+            .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
             .setDisplayId("advertiser.no.plugins")
             .notify(project)
         }
@@ -70,7 +71,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           || includeIgnored) {
         @Suppress("DEPRECATION")
         extensionService.extensions.set(PluginFeatureMap(
-          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
+          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = "com.intellij.fileTypeFactory"),
           lastUpdateTime = if (oldExtensions != null) System.currentTimeMillis() else 0L,
         ))
         coroutineContext.ensureActive()
@@ -86,6 +87,12 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           lastUpdateTime = if (oldDependencies != null) System.currentTimeMillis() else 0L,
         ))
       }
+
+      // update information about file handlers when forced
+      if (includeIgnored && PluginAdvertiserExtensionsStateService.getInstance().updateCompatibleFileHandlers()) {
+        EditorNotifications.getInstance(project).updateAllNotifications()
+      }
+
       coroutineContext.ensureActive()
 
       if (unknownFeatures.isNotEmpty()) {
@@ -103,7 +110,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {
-        LOG.info(e)
+        thisLogger().info(e)
       }
     }
   }
@@ -117,14 +124,14 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
   }
 }
 
-internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginNode>>): List<IdeaPluginDescriptor> {
+internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginUiModel>>): List<PluginUiModel> {
   return runBlockingMaybeCancellable {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || application.isHeadlessEnvironment) {
       return@runBlockingMaybeCancellable emptyList()
     }
 
-    val customPlugins = ArrayList<PluginNode>()
+    val customPlugins = ArrayList<PluginUiModel>()
     for (value in customRepositories.values) {
       customPlugins.addAll(value)
     }
@@ -160,7 +167,7 @@ private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, f
     }
 }
 
-private fun notifyUnbundledPlugins(project: Project) {
+private fun notifyUnbundledPlugins(@Suppress("unused") project: Project) {
   // stub for future plugins
 }
 

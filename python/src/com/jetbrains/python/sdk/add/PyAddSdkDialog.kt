@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
@@ -17,31 +17,19 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
+import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.sdk.PreferredSdkComparator
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.show
 import com.jetbrains.python.sdk.add.v1.CreateSdkInterrupted
-import com.jetbrains.python.sdk.add.v1.PyAddExistingCondaEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddExistingVirtualEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.add.v1.PyAddSystemWideInterpreterPanel
 import com.jetbrains.python.sdk.add.v1.doCreateSouthPanel
-import com.jetbrains.python.sdk.add.v1.showProcessExecutionErrorDialog
+import com.jetbrains.python.sdk.add.v1.show
 import com.jetbrains.python.sdk.add.v1.swipe
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.detectVirtualEnvs
-import com.jetbrains.python.sdk.isAssociatedWithModule
-import com.jetbrains.python.sdk.sdkSeemsValid
+import com.jetbrains.python.showErrorDialog
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import java.io.IOException
@@ -58,14 +46,14 @@ import javax.swing.JPanel
  *
  */
 class PyAddSdkDialog private constructor(
-  private val project: Project?,
+  private val project: Project,
   private val module: Module?,
   private val existingSdks: List<Sdk>,
 ) : DialogWrapper(project) {
   /**
    * This is the main panel that supplies sliding effect for the wizard states.
    */
-  private val mainPanel: JPanel = JPanel(JBCardLayout())
+  private val mainPanel: JPanel = DialogPanel(null, JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
   private val context = UserDataHolderBase()
@@ -76,31 +64,15 @@ class PyAddSdkDialog private constructor(
   }
 
   override fun createCenterPanel(): JComponent {
-    val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
-      .sortedWith(PreferredSdkComparator())
-    val panels = createPanels(sdks).toMutableList()
-    val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
+    val panels = PyAddSdkProvider.EP_NAME.extensionList
       .mapNotNull {
-        it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context = context)
+        safeCreateView(it, project = project, module = module, existingSdks = existingSdks, context = context)
           .registerIfDisposable()
       }
-    panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
   }
 
-  private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
-    val venvPanel = createVirtualEnvPanel(project, module, sdks)
-    val condaPanel = createAnacondaPanel(project, module)
-    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context)
-    return if (PyCondaSdkCustomizer.Companion.instance.preferCondaEnvironments) {
-      listOf(condaPanel, venvPanel, systemWidePanel)
-    }
-    else {
-      listOf(venvPanel, condaPanel, systemWidePanel)
-    }
-  }
 
   private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
 
@@ -162,16 +134,18 @@ class PyAddSdkDialog private constructor(
 
   private fun createCardSplitter(panels: List<PyAddSdkView>): Splitter {
     this.panels = panels
-    return Splitter(false, 0.25f).apply {
+    return Splitter(false, 0.1f).apply {
+      dividerPositionStrategy = Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE
+
       val cardLayout = CardLayout()
       val cardPanel = JPanel(cardLayout).apply {
-        preferredSize = JBUI.size(640, 480)
+        preferredSize = JBUI.size(800, 300)
         for (panel in panels) {
           add(panel.component, panel.panelName)
 
           panel.addStateListener(object : PyAddSdkStateListener {
             override fun onComponentChanged() {
-              com.jetbrains.python.sdk.add.v1.show(mainPanel, panel.component)
+              show(mainPanel, panel.component)
 
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
@@ -196,6 +170,8 @@ class PyAddSdkDialog private constructor(
           // Only last even must be processed. Other events may leave UI in inconsistent state
           if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
+          isOKActionEnabled = false
+
           cardLayout.show(cardPanel, selectedValue.panelName)
 
           southPanel?.let {
@@ -222,40 +198,7 @@ class PyAddSdkDialog private constructor(
     }
   }
 
-  private fun createVirtualEnvPanel(
-    project: Project?,
-    module: Module?,
-    existingSdks: List<Sdk>,
-  ): PyAddSdkPanel {
-    val newVirtualEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, module, existingSdks, null, context)
-      else -> null
-    }
-    val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, module, existingSdks, null, context)
-    val panels = listOf(newVirtualEnvPanel,
-                        existingVirtualEnvPanel)
-      .filterNotNull()
-    val defaultPanel = when {
-      detectVirtualEnvs(module, existingSdks, context).any { it.isAssociatedWithModule(module) } -> existingVirtualEnvPanel
-      newVirtualEnvPanel != null -> newVirtualEnvPanel
-      else -> existingVirtualEnvPanel
-    }
-    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.virtualenv.environment"),
-                              PythonIcons.Python.Virtualenv, panels, defaultPanel)
-  }
 
-  private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
-    val newCondaEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null)
-      else -> null
-    }
-    val panels = listOf(newCondaEnvPanel,
-                        PyAddExistingCondaEnvPanel(project, existingSdks, null))
-      .filterNotNull()
-    val defaultPanel = if (PyCondaSdkCustomizer.Companion.instance.preferExistingEnvironments) panels[1] else panels[0]
-    return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),
-                              PythonIcons.Python.Anaconda, panels, defaultPanel)
-  }
 
   /**
    * Navigates to the next step of the current wizard view.
@@ -313,7 +256,7 @@ class PyAddSdkDialog private constructor(
     catch (e: Exception) {
       val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
       if (cause != null) {
-        showProcessExecutionErrorDialog(project, cause)
+        showErrorDialog(project, cause.pyError)
         return
       }
       throw e
@@ -338,12 +281,29 @@ class PyAddSdkDialog private constructor(
       actionButton?.isEnabled = isEnabled
     }
   }
+    /**
+     * Fixes the problem when `PyAddDockerSdkProvider.createView` for Docker
+     * and Docker Compose types throws [NoClassDefFoundError] exception when
+     * `org.jetbrains.plugins.remote-run` plugin is disabled.
+     */
+    private fun safeCreateView(
+      provider: PyAddSdkProvider,
+      project: Project,
+      module: Module?,
+      existingSdks: List<Sdk>,
+      context: UserDataHolder,
+    ): PyAddSdkView? {
+      try {
+        return provider.createView(project, module, null, existingSdks, context, this)
+      }
+      catch (e: NoClassDefFoundError) {
+        LOG.info(e)
+        return null
+      }
+    }
 
   companion object {
     private val LOG: Logger = Logger.getInstance(PyAddSdkDialog::class.java)
-
-    private fun allowCreatingNewEnvironments(project: Project?) =
-      project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
 
     private const val SPLITTER_COMPONENT_CARD_PANE = "Splitter"
 
@@ -352,7 +312,7 @@ class PyAddSdkDialog private constructor(
     private const val WIZARD_CARD_PANE = "Wizard"
 
     @JvmStatic
-    fun show(project: Project?, module: Module?, existingSdks: List<Sdk>, sdkAddedCallback: Consumer<Sdk?>) {
+    fun show(project: Project, module: Module?, existingSdks: List<Sdk>, sdkAddedCallback: Consumer<Sdk?>) {
       val dialog = PyAddSdkDialog(project = project, module = module, existingSdks = existingSdks)
       dialog.init()
 
@@ -360,24 +320,5 @@ class PyAddSdkDialog private constructor(
       sdkAddedCallback.accept(sdk)
     }
 
-    /**
-     * Fixes the problem when `PyAddDockerSdkProvider.createView` for Docker
-     * and Docker Compose types throws [NoClassDefFoundError] exception when
-     * `org.jetbrains.plugins.remote-run` plugin is disabled.
-     */
-    private fun PyAddSdkProvider.safeCreateView(
-      project: Project?,
-      module: Module?,
-      existingSdks: List<Sdk>,
-      context: UserDataHolder,
-    ): PyAddSdkView? {
-      try {
-        return createView(project, module, null, existingSdks, context)
-      }
-      catch (e: NoClassDefFoundError) {
-        LOG.info(e)
-        return null
-      }
-    }
   }
 }

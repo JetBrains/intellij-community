@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -23,10 +23,11 @@ import java.util.List;
 /**
  * Simplified stub-based version of {@link XmlElementImpl}
  *
- * @apiNote if you introduce a new inheritor please check that this implementation is aligned with XmlElementImpl
+ * @apiNote if you introduce a new inheritor, please check that this implementation is aligned with XmlElementImpl
  */
 @ApiStatus.Experimental
-abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPsiElementBase<T> implements XmlElement {
+@ApiStatus.Internal
+public abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPsiElementBase<T> implements XmlElement {
 
   XmlStubBasedElement(@NotNull T stub,
                       @NotNull IStubElementType nodeType) {

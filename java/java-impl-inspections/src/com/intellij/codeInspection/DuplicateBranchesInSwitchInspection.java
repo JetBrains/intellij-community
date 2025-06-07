@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +31,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -43,9 +41,8 @@ import java.util.stream.Stream;
 public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(DuplicateBranchesInSwitchInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new DuplicateBranchesVisitor(holder);
   }
 
@@ -167,8 +164,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  @NotNull
-  private static Collection<List<Rule>> collectProbablySimilarRules(@NotNull PsiSwitchBlock switchBlock) {
+  private static @NotNull Collection<List<Rule>> collectProbablySimilarRules(@NotNull PsiSwitchBlock switchBlock) {
     PsiCodeBlock switchBody = switchBlock.getBody();
     if (switchBody == null) {
       return Collections.emptyList();
@@ -192,8 +188,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     return new ArrayList<>(rulesByHash.values());
   }
 
-  @NotNull
-  private static PsiElement collectCommentsUntilNewLine(List<String> commentTexts, PsiElement element) {
+  private static @NotNull PsiElement collectCommentsUntilNewLine(List<String> commentTexts, PsiElement element) {
     List<String> mightBeCommentTexts = new ArrayList<>();
     for (PsiElement currentSibling = element.getNextSibling(); currentSibling != null; currentSibling = currentSibling.getNextSibling()) {
       if (currentSibling instanceof PsiWhiteSpace whiteSpace) {
@@ -214,8 +209,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     return element;
   }
 
-  @NotNull
-  static Collection<List<Branch>> collectProbablySimilarBranches(@NotNull PsiSwitchBlock switchBlock) {
+  static @NotNull Collection<List<Branch>> collectProbablySimilarBranches(@NotNull PsiSwitchBlock switchBlock) {
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return Collections.emptyList();
 
@@ -247,12 +241,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     return List.copyOf(branchesByHash.values());
   }
 
-  @Nullable
-  private static Branch addBranchToMap(@NotNull Int2ObjectMap<List<Branch>> branchesByHash,
-                                       @Nullable List<PsiStatement> statementList,
-                                       boolean hasImplicitBreak,
-                                       @NotNull Comments comments,
-                                       @Nullable Branch previousBranch) {
+  private static @Nullable Branch addBranchToMap(@NotNull Int2ObjectMap<List<Branch>> branchesByHash,
+                                                 @Nullable List<PsiStatement> statementList,
+                                                 boolean hasImplicitBreak,
+                                                 @NotNull Comments comments,
+                                                 @Nullable Branch previousBranch) {
     if (statementList == null || statementList.isEmpty()) {
       return previousBranch;
     }
@@ -305,7 +298,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
   }
 
   @Contract("_,null -> false")
-  private static boolean isRedundantComment(@NotNull Set<String> existingComments, @Nullable PsiElement element) {
+  private static boolean isRedundantComment(@NotNull @Unmodifiable Set<String> existingComments, @Nullable PsiElement element) {
     if (element instanceof PsiComment comment) {
       String text = TryWithIdenticalCatchesInspection.getCommentText(comment);
       return text.isEmpty() || existingComments.contains(text);
@@ -314,23 +307,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
   }
 
   private static class MergeBranchesFix extends PsiUpdateModCommandQuickFix {
-    @NotNull private final String mySwitchLabelText;
+    private final @NotNull String mySwitchLabelText;
 
     MergeBranchesFix(@NotNull String switchLabelText) {
       mySwitchLabelText = switchLabelText;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
@@ -346,10 +335,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
   }
 
   private static class MergeWithDefaultBranchFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.with.default.fix.name");
     }
 
@@ -381,17 +368,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
   private static class DeleteRedundantBranchFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
@@ -431,7 +414,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private Branch myBranchToMergeWith;
     private List<PsiElement> myBranchPrefixToMove;
     private PsiSwitchLabelStatement myLabelToMergeWith;
-    private Set<String> myCommentsToMergeWith;
+    private @Unmodifiable Set<String> myCommentsToMergeWith;
     private PsiElement myNextFromLabelToMergeWith;
 
     private boolean prepare(PsiElement startElement, Predicate<? super Branch> shouldMergeWith) {
@@ -464,7 +447,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = ContainerUtil.immutableSet(myBranchToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myBranchToMergeWith.myCommentTexts)));
       return true;
     }
 
@@ -608,8 +591,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  private static abstract class BranchBase<T extends PsiSwitchLabelStatementBase> {
-    @NotNull protected final T myFirstLabel;
+  private abstract static class BranchBase<T extends PsiSwitchLabelStatementBase> {
+    protected final @NotNull T myFirstLabel;
     protected final PsiStatement @NotNull [] myStatements;
     protected final String @NotNull [] myCommentTexts;
     private final boolean myIsDefault;
@@ -715,22 +698,18 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return hashStatements(myStatements);
     }
 
-    @Nullable
-    abstract LocalQuickFix mergeCasesFix(BranchBase<?> otherBranch);
+    abstract @Nullable LocalQuickFix mergeCasesFix(BranchBase<?> otherBranch);
 
-    @Nullable
-    abstract LocalQuickFix deleteCaseFix();
+    abstract @Nullable LocalQuickFix deleteCaseFix();
 
-    @Nullable
-    abstract LocalQuickFix mergeWithDefaultFix(BranchBase<?> defaultBranch);
+    abstract @Nullable LocalQuickFix mergeWithDefaultFix(BranchBase<?> defaultBranch);
 
     @Nullable
     Match match(BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
     }
 
-    @NotNull
-    private DuplicatesFinder getFinder() {
+    private @NotNull DuplicatesFinder getFinder() {
       if (myFinder == null) {
         myFinder = createFinder(myStatements);
       }
@@ -750,17 +729,16 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return StringUtil.notNullize(getSwitchLabelText());
     }
 
-    @Nullable
-    static String getSwitchLabelText(@Nullable PsiSwitchLabelStatementBase switchLabel) {
+    static @Nullable String getSwitchLabelText(@Nullable PsiSwitchLabelStatementBase switchLabel) {
       if (switchLabel != null) {
         if (switchLabel.isDefaultCase()) {
-          return PsiKeyword.DEFAULT;
+          return JavaKeywords.DEFAULT;
         }
         PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
         if (labelElementList != null) {
           PsiCaseLabelElement[] expressions = labelElementList.getElements();
           if (expressions.length != 0) {
-            return PsiKeyword.CASE + ' ' + expressions[0].getText();
+            return JavaKeywords.CASE + ' ' + expressions[0].getText();
           }
         }
       }
@@ -842,8 +820,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       .flatMap(t -> t != null ? Arrays.stream(t.getElements()) : Stream.empty()).anyMatch(e -> e instanceof PsiPattern);
   }
 
-  @NotNull
-  private static DuplicatesFinder createFinder(PsiElement @NotNull [] elements) {
+  private static @NotNull DuplicatesFinder createFinder(PsiElement @NotNull [] elements) {
     Project project = elements[0].getProject();
     InputVariables noVariables =
       new InputVariables(Collections.emptyList(), project, new LocalSearchScope(elements), false, Collections.emptySet());
@@ -1125,23 +1102,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
   }
 
   private static class MergeRulesFix extends PsiUpdateModCommandQuickFix {
-    @NotNull private final String mySwitchLabelText;
+    private final @NotNull String mySwitchLabelText;
 
     MergeRulesFix(@NotNull String switchLabelText) {
       mySwitchLabelText = switchLabelText;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
@@ -1158,17 +1131,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
   private static class DeleteRedundantRuleFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
@@ -1216,7 +1185,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = ContainerUtil.immutableSet(myRuleToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myRuleToMergeWith.myCommentTexts)));
       return true;
     }
 

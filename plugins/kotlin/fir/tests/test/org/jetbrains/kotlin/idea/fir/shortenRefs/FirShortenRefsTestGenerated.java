@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.shortenRefs;
 
@@ -72,6 +72,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("classInSameFile.kt")
             public void testClassInSameFile() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/classInSameFile.kt");
+            }
+
+            @TestMetadata("dblShorterned.kt")
+            public void testDblShorterned() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/dblShorterned.kt");
             }
 
             @TestMetadata("explicitlyImportedFunctionFromLocalObject.kt")
@@ -387,6 +392,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("ParameterTypeImportAlias.kt")
             public void testParameterTypeImportAlias() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeImportAlias.kt");
+            }
+
+            @TestMetadata("ParameterTypeImportAliasWithGenerics.kt")
+            public void testParameterTypeImportAliasWithGenerics() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeImportAliasWithGenerics.kt");
             }
 
             @TestMetadata("ParameterTypeImportedNestedClass.kt")

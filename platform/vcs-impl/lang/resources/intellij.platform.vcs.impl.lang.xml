@@ -1,0 +1,31 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.conversion.ConversionService"
+                        serviceImplementation="com.intellij.conversion.ConversionServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.VcsFacade"
+                        serviceImplementation="com.intellij.codeInsight.actions.VcsFacadeImpl" overrides="true"/>
+
+    <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.hints.VcsCodeVisionProvider"/>
+
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.RearrangeCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeAnalysisCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory" id="codeCleanup"/>
+
+    <projectService serviceInterface="com.intellij.ide.todo.TodoViewChangesSupport"
+                    serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
+                    overrides="true"/>
+
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory" id="todo"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+</idea-plugin>

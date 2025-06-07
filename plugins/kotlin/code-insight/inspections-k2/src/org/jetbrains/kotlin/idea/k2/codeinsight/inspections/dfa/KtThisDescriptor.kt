@@ -5,13 +5,14 @@ import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -19,8 +20,10 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 
-class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null) : KtBaseDescriptor {
-    private val dfType = TypeConstraints.exactClass(this@KtThisDescriptor.classDef).instanceOf().asDfType()
+class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: KtClassDef?, val contextName: String? = null)
+    : KtBaseDescriptor {
+    internal constructor(classDef: KtClassDef, contextName: String? = null) : 
+            this(TypeConstraints.exactClass(classDef).instanceOf().asDfType(), classDef, contextName)
 
     override fun isStable(): Boolean = true
 
@@ -28,7 +31,7 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = dfType
 
-    override fun equals(other: Any?): Boolean = other is KtThisDescriptor && other.dfType == dfType
+    override fun equals(other: Any?): Boolean = other === this || other is KtThisDescriptor && other.dfType == dfType
 
     override fun hashCode(): Int = dfType.hashCode()
 
@@ -40,7 +43,12 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
         return "$receiver.this"
     }
 
-    override fun isInlineClassReference(): Boolean = classDef.inline
+    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
+        if (qualifier != null) return factory.unknown
+        return factory.varFactory.createVariableValue(this)
+    }
+
+    override fun isInlineClassReference(): Boolean = classDef?.inline ?: false
 
     companion object {
         context(KaSession)
@@ -54,12 +62,9 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
                 if (function != null) {
                     return KtLambdaThisVariableDescriptor(function, declType.toDfType()) to declType
                 } else {
-                    if (declType is KaClassType) {
-                        val classDef = declType.expandedSymbol?.classDef()
-                        if (classDef != null) {
-                            return KtThisDescriptor(classDef, symbol.owningCallableSymbol.name?.asString()) to declType
-                        }
-                    }
+                    val dfType = declType.toDfType()
+                    val classDef = declType.expandedSymbol?.classDef()
+                    return KtThisDescriptor(dfType, classDef, symbol.owningCallableSymbol.name?.asString()) to declType
                 }
             }
             else if (symbol is KaClassSymbol && exprType != null) {

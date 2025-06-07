@@ -6,12 +6,17 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 /**
- * Extension point to fine-tune Gradle Tooling API calls.
+ * This is the low-level Gradle execution extension that connects and interacts with the Gradle daemon using the Gradle tooling API.
  *
- * E.g. a client may add GradleEventListeners to collect specific information or statistics.
+ * Consider using the high-level Gradle execution extensions instead:
+ * * [org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension]
+ * * [org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension]
+ *
+ * @see <a href="https://docs.gradle.org/current/userguide/tooling_api.html">Gradle tooling API</a>
  */
 @ApiStatus.Internal
 interface GradleExecutionHelperExtension {
@@ -21,17 +26,30 @@ interface GradleExecutionHelperExtension {
   }
 
   /**
+   * Prepare a Gradle [settings] before any Gradle execution.
+   *
+   * **Note: This function will be called for any Gradle execution.
+   * I.e., for Gradle sync and Gradle task executions.**
+   *
+   * **Note: This function may be called more than once with different [settings]s for a single Gradle project sync.**
+   */
+  fun configureSettings(settings: GradleExecutionSettings, context: GradleExecutionContext): Unit = Unit
+
+  /**
    * Prepare a Gradle [operation] before any Gradle execution.
    *
    * **Note: This function will be called for any Gradle execution.
-   * I.e. For Gradle sync and Gradle task executions.**
+   * I.e., for Gradle sync and Gradle task executions.**
    *
    * **Note: This function may be called more than once with different [operation]s for a single Gradle project sync.**
    */
+  fun configureOperation(operation: LongRunningOperation, context: GradleExecutionContext): Unit = Unit
+
+  @Deprecated("Use [configureSettings] or [configureOperation] instead")
   fun prepareForExecution(
     id: ExternalSystemTaskId,
     operation: LongRunningOperation,
     settings: GradleExecutionSettings,
     buildEnvironment: BuildEnvironment?,
-  ) = Unit
+  ): Unit = Unit
 }

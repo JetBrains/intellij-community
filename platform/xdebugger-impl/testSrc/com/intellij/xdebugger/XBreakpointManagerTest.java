@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -11,6 +11,13 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.DisableOnDebug;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,8 +25,13 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(JUnit4.class)
 public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
+  @Rule
+  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
+
+  @Test
   public void testAddRemove() {
     Set<XBreakpoint<MyBreakpointProperties>> defaultBreakpoints = myBreakpointManager.getDefaultBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE);
     assertOneElement(defaultBreakpoints);
@@ -45,6 +57,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertSameElements(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE), defaultBreakpoint);
   }
 
+  @Test
   public void testSerialize() {
     XLineBreakpoint<MyBreakpointProperties> breakpoint =
       addLineBreakpoint(myBreakpointManager, "myurl", 239, new MyBreakpointProperties("z1"));
@@ -76,6 +89,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertFalse(breakpoints.get(2).isLogMessage());
   }
 
+  @Test
   public void testDoNotSaveUnmodifiedDefaultBreakpoint() {
     reload();
 
@@ -84,6 +98,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertThat(element).isNull();
   }
 
+  @Test
   public void testSaveChangedDefaultBreakpoint() {
     reload();
     final XBreakpoint<MyBreakpointProperties> breakpoint = getSingleBreakpoint();
@@ -94,6 +109,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertFalse(getSingleBreakpoint().isEnabled());
   }
 
+  @Test
   public void testSaveDefaultBreakpointWithModifiedProperties() {
     reload();
     getSingleBreakpoint().getProperties().myOption = "changed";
@@ -103,6 +119,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals("changed", getSingleBreakpoint().getProperties().myOption);
   }
 
+  @Test
   public void testListener() {
     final StringBuilder out = new StringBuilder();
     XBreakpointListener<XLineBreakpoint<MyBreakpointProperties>> listener = new XBreakpointListener<>() {
@@ -134,6 +151,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals("", out.toString());
   }
 
+  @Test
   public void testRemoveFile() {
     VirtualFile file = getTempDir().createVirtualFile("breakpoint.txt");
     addLineBreakpoint(myBreakpointManager, file.getUrl(), 0, null);
@@ -142,6 +160,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEmpty(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
   }
 
+  @Test
   public void testConditionConvert() throws IOException, JDOMException {
     String condition = "old-style condition";
     String logExpression = "old-style expression";

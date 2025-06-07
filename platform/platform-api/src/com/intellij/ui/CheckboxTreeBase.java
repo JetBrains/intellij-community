@@ -232,15 +232,26 @@ public class CheckboxTreeBase extends Tree {
     final boolean uncheckChildrenWithUncheckedParent;
     final boolean checkParentWithCheckedChild;
     final boolean uncheckParentWithUncheckedChild;
+    final boolean checkByRowClick;
 
     public CheckPolicy(final boolean checkChildrenWithCheckedParent,
                        final boolean uncheckChildrenWithUncheckedParent,
                        final boolean checkParentWithCheckedChild,
                        final boolean uncheckParentWithUncheckedChild) {
+      this(checkChildrenWithCheckedParent, uncheckChildrenWithUncheckedParent, checkParentWithCheckedChild, uncheckParentWithUncheckedChild,
+           false);
+    }
+
+    public CheckPolicy(final boolean checkChildrenWithCheckedParent,
+                       final boolean uncheckChildrenWithUncheckedParent,
+                       final boolean checkParentWithCheckedChild,
+                       final boolean uncheckParentWithUncheckedChild,
+                       final boolean checkByRowClick) {
       this.checkChildrenWithCheckedParent = checkChildrenWithCheckedParent;
       this.uncheckChildrenWithUncheckedParent = uncheckChildrenWithUncheckedParent;
       this.checkParentWithCheckedChild = checkParentWithCheckedChild;
       this.uncheckParentWithUncheckedChild = uncheckParentWithUncheckedChild;
+      this.checkByRowClick = checkByRowClick;
     }
   }
 }

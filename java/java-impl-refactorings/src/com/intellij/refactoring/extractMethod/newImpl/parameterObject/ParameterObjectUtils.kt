@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
 import com.intellij.pom.java.JavaFeature
@@ -29,16 +29,27 @@ object ParameterObjectUtils {
   }
 
   private fun findAffectedReferences(variable: PsiVariable, scope: List<PsiElement>): List<PsiReferenceExpression>? {
-    val startingOffset = scope.last().textRange.endOffset
+    val parent = scope.first().parent
+    val beforeScope = scope.first().textRange.startOffset
+    val afterScope = scope.last().textRange.endOffset
     val references = ReferencesSearch.search(variable)
+      .asIterable()
       .mapNotNull { it.element as? PsiReferenceExpression }
-      .filter { reference -> reference.textRange.startOffset >= startingOffset }
+      .filter { reference -> reference.textRange.startOffset >= afterScope || reference.textRange.endOffset <= beforeScope }
       .sortedBy { reference -> reference.textRange.startOffset }
+    val loop = PsiTreeUtil.getParentOfType(parent, PsiLoopStatement::class.java, true,
+                                           PsiMember::class.java, PsiLambdaExpression::class.java)
+    if (loop != null) {
+      val suspiciousLoop = variable.textOffset < loop.textOffset
+      if (suspiciousLoop) return null
+    }
     val firstAssignment = references.find { reference -> PsiUtil.isAccessedForWriting(reference) } ?: return references
     val assignmentExpression = PsiTreeUtil.getParentOfType(firstAssignment, PsiAssignmentExpression::class.java)
     if (assignmentExpression == null) return null
     if (assignmentExpression.parent.parent != PsiTreeUtil.findCommonParent(assignmentExpression, scope.last())) return null
-    return references.filter { reference -> reference.textRange.endOffset <= assignmentExpression.textRange.endOffset } - firstAssignment
+    return references.filter { ref -> ref != firstAssignment
+                                      && ref.textRange.endOffset <= assignmentExpression.textRange.endOffset
+                                      && ref.textRange.startOffset >= afterScope }
   }
 
 }

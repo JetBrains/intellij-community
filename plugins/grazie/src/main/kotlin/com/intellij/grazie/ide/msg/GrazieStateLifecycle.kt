@@ -3,14 +3,12 @@ package com.intellij.grazie.ide.msg
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
-private val topic = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
+internal val CONFIG_STATE_TOPIC: Topic<GrazieStateLifecycle> = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
 
 interface GrazieStateLifecycle {
   /** Update Grazie state */
@@ -20,18 +18,17 @@ interface GrazieStateLifecycle {
 @Service
 class GrazieInitializerManager {
   val publisher: GrazieStateLifecycle
-    get() = ApplicationManager.getApplication().messageBus.syncPublisher(topic)
+    get() = ApplicationManager.getApplication().messageBus.syncPublisher(CONFIG_STATE_TOPIC)
 
   init {
     val application = ApplicationManager.getApplication()
     val connection = application.messageBus.connect()
-    connection.subscribe(topic, LangTool)
-    connection.subscribe(topic, application.service<GrazieSpellcheckerLifecycle>())
+    connection.subscribe(CONFIG_STATE_TOPIC, LangTool)
   }
 
   fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(topic, subscriber)
+    connection.subscribe(CONFIG_STATE_TOPIC, subscriber)
     return connection
   }
 }

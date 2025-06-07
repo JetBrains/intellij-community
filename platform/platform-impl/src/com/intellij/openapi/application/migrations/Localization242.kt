@@ -4,9 +4,7 @@
 package com.intellij.openapi.application.migrations
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.loadDescriptorsFromCustomPluginDir
+import com.intellij.ide.plugins.*
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.Logger
@@ -23,8 +21,17 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
     return
   }
 
-  @Suppress("SSBasedInspection")
-  val loadedDescriptors = runBlocking { loadDescriptorsFromCustomPluginDir(oldPluginsDir, true) }.enabledPluginsById.values
+  @Suppress("RAW_RUN_BLOCKING")
+  val loadedDescriptors = runBlocking {
+    val pluginList = loadDescriptorsFromCustomPluginDir(oldPluginsDir, true)
+    val loadingResult = PluginLoadingResult()
+    loadingResult.initAndAddAll(
+      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
+      initContext = ProductPluginInitContext()
+    )
+    loadingResult
+  }.enabledPluginsById.values
+
   val localizationPlugins = loadedDescriptors.filter { descriptor -> isLocalizationPlugin(descriptor) }
   if (localizationPlugins.isEmpty()) {
     log.info("[i18n] Localization migration won't be performed because no localization plugins were found")
@@ -57,14 +64,14 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
  */
 private fun isLocalizationPlugin(descriptor: IdeaPluginDescriptor): Boolean {
   if (descriptor !is IdeaPluginDescriptorImpl) return false
-  val extensionPoints = descriptor.epNameToExtensions
+  val extensionPoints = descriptor.extensions
   val epName = "com.intellij.languageBundle"
   return extensionPoints.containsKey(epName)
 }
 
 private fun getLanguageTagFromDescriptor(descriptor: IdeaPluginDescriptor): String? {
   return if (isLocalizationPlugin(descriptor)) {
-    val extensionPoints = (descriptor as IdeaPluginDescriptorImpl).epNameToExtensions
+    val extensionPoints = (descriptor as IdeaPluginDescriptorImpl).extensions
     val epName = "com.intellij.languageBundle"
     extensionPoints[epName]?.firstOrNull()?.element?.attributes?.get("locale")
   }

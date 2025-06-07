@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
+import com.intellij.xdebugger.impl.actions.handlers.XAddToInlineWatchesFromEditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 
 final class AddInlineWatchAction extends XDebuggerActionBase {
+  private static final XAddToInlineWatchesFromEditorActionHandler ourHandler = new XAddToInlineWatchesFromEditorActionHandler();
 
   AddInlineWatchAction() {
     super(true);
   }
 
-  @NotNull
   @Override
-  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getAddToInlineWatchesActionHandler();
+  protected @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+    return ourHandler;
   }
 }

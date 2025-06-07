@@ -3,6 +3,7 @@
 // ACTION: Create member function 'Some.get'
 // ERROR: Unresolved reference: some[12]
 // ERROR: No get method providing array access
+// K2_AFTER_ERROR: No 'get' operator method providing array access.
 
 package Teting
 

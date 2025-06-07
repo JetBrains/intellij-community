@@ -28,11 +28,16 @@ internal class InstallPluginService : RestService() {
   var isAvailable = true
 
   private val trustedPredefinedHosts = setOf(
+    "blog.jetbrains.com",
     "jetbrains.com",
+    "lp.jetbrains.com",
+    "lp.jetbrains.com.cn",
     "marketplace.jetbrains.com",
     "plugins.jetbrains.com",
-    "package-search.services.jetbrains.com",
-    "package-search.jetbrains.com"
+    "www.jetbrains.com",
+    "www.jetbrains.com.cn",
+    "vision.jetbrains.dev",
+    "internal.vision.jetbrains.dev"
   )
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {

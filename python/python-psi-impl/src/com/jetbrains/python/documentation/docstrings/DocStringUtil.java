@@ -22,8 +22,7 @@ public final class DocStringUtil {
    * @deprecated Use {@link DocStringUtilCore#getDocStringValue(PyAstDocStringOwner)}
    */
   @Deprecated
-  @Nullable
-  public static String getDocStringValue(@NotNull PyDocStringOwner owner) {
+  public static @Nullable String getDocStringValue(@NotNull PyDocStringOwner owner) {
     return DocStringUtilCore.getDocStringValue(owner);
   }
 
@@ -35,8 +34,7 @@ public final class DocStringUtil {
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
    * @see #parse(String, PsiElement)
    */
-  @NotNull
-  public static StructuredDocString parse(@NotNull String text) {
+  public static @NotNull StructuredDocString parse(@NotNull String text) {
     return parse(text, null);
   }
 
@@ -49,8 +47,7 @@ public final class DocStringUtil {
    * @see DocStringFormat#ALL_NAMES_BUT_PLAIN
    * @see DocStringParser#guessDocStringFormat(String, PsiElement)
    */
-  @NotNull
-  public static StructuredDocString parse(@NotNull String text, @Nullable PsiElement anchor) {
+  public static @NotNull StructuredDocString parse(@NotNull String text, @Nullable PsiElement anchor) {
     final DocStringFormat format = DocStringParser.guessDocStringFormat(text, anchor);
     return parseDocStringContent(format, text);
   }
@@ -62,18 +59,15 @@ public final class DocStringUtil {
    * @param stringLiteral supposedly result of {@link PyDocStringOwner#getDocStringExpression()}
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
    */
-  @NotNull
-  public static StructuredDocString parseDocString(@NotNull PyStringLiteralExpression stringLiteral) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull PyStringLiteralExpression stringLiteral) {
     return parseDocString(DocStringParser.guessDocStringFormat(stringLiteral.getStringValue(), stringLiteral), stringLiteral);
   }
 
-  @NotNull
-  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull PyStringLiteralExpression stringLiteral) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull PyStringLiteralExpression stringLiteral) {
     return parseDocString(format, stringLiteral.getStringNodes().get(0));
   }
 
-  @NotNull
-  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull ASTNode node) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull ASTNode node) {
     //Preconditions.checkArgument(node.getElementType() == PyTokenTypes.DOCSTRING);
     return DocStringParser.parseDocString(format, node.getText());
   }
@@ -82,8 +76,7 @@ public final class DocStringUtil {
    * @param stringContent docstring text without string prefix and quotes, but not escaped, otherwise ranges of {@link Substring} returned
    *                      from {@link StructuredDocString} may be invalid
    */
-  @NotNull
-  public static StructuredDocString parseDocStringContent(@NotNull DocStringFormat format, @NotNull String stringContent) {
+  public static @NotNull StructuredDocString parseDocStringContent(@NotNull DocStringFormat format, @NotNull String stringContent) {
     return DocStringParser.parseDocString(format, new Substring(stringContent));
   }
 
@@ -93,13 +86,11 @@ public final class DocStringUtil {
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.
    * @return the defining expression, or null.
    */
-  @Nullable
-  public static PyStringLiteralExpression findDocStringExpression(@Nullable PyElement parent) {
+  public static @Nullable PyStringLiteralExpression findDocStringExpression(@Nullable PyElement parent) {
     return (PyStringLiteralExpression)DocStringUtilCore.findDocStringExpression(parent);
   }
 
-  @Nullable
-  public static StructuredDocString getStructuredDocString(@NotNull PyDocStringOwner owner) {
+  public static @Nullable StructuredDocString getStructuredDocString(@NotNull PyDocStringOwner owner) {
     final String value = owner.getDocStringValue();
     return value == null ? null : parse(value, owner);
   }
@@ -108,8 +99,7 @@ public final class DocStringUtil {
    * Returns containing docstring expression of class definition, function definition or module.
    * Useful to test whether particular PSI element is or belongs to such docstring.
    */
-  @Nullable
-  public static PyStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
+  public static @Nullable PyStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
     return (PyStringLiteralExpression)DocStringUtilCore.getParentDefinitionDocString(element);
   }
 
@@ -123,8 +113,7 @@ public final class DocStringUtil {
     return false;
   }
 
-  @Nullable
-  public static String getAttributeDocComment(@NotNull PyTargetExpression attr) {
+  public static @Nullable String getAttributeDocComment(@NotNull PyTargetExpression attr) {
     if (attr.getParent() instanceof PyAssignmentStatement assignment) {
       final PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSibling(assignment);
       if (prevSibling instanceof PsiComment && prevSibling.getText().startsWith("#:")) {

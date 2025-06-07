@@ -48,9 +48,22 @@ public final class GitRebaseUtils {
   }
 
   public static void continueRebase(@NotNull Project project) {
+    continueRebase(project, true);
+  }
+
+  static void continueRebaseWithoutFreezing(@NotNull Project project) {
+    continueRebase(project, false);
+  }
+
+  private static void continueRebase(@NotNull Project project, boolean freeze) {
     GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
     if (spec != null) {
-      new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
+      GitRebaseProcess rebaseProcess = new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE);
+      if (freeze) {
+        rebaseProcess.rebase();
+      } else {
+        rebaseProcess.doRebase();
+      }
     }
     else {
       notifyContinueFailed(project, "continue");
@@ -251,7 +264,9 @@ public final class GitRebaseUtils {
     return GitUtil.getRepositoriesInStates(project, Repository.State.REBASING);
   }
 
-  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @Nullable String upstream, @Nullable String branch)
+  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository,
+                                               @NotNull GitRebaseParams.RebaseUpstream upstream,
+                                               @Nullable String branch)
     throws VcsException {
 
     String rebasingBranch = branch;
@@ -284,11 +299,17 @@ public final class GitRebaseUtils {
     }
   }
 
-  public static @NotNull String getCommitsRangeToRebase(@Nullable String baseBranch, @NotNull String rebasingBranch) {
-    if (baseBranch == null) {
+  public static @NotNull String getCommitsRangeToRebase(@NotNull GitRebaseParams.RebaseUpstream baseBranch,
+                                                        @NotNull String rebasingBranch) {
+    if (baseBranch instanceof GitRebaseParams.RebaseUpstream.Root) {
       return rebasingBranch;
     }
-    return baseBranch + ".." + rebasingBranch;
+    else if (baseBranch instanceof GitRebaseParams.RebaseUpstream.Reference baseRef) {
+      return baseRef.getRef() + ".." + rebasingBranch;
+    }
+    else {
+      throw new IllegalArgumentException("Unsupported rebase upstream: " + baseBranch);
+    }
   }
 
   private static @NotNull Hash readHashFromFile(

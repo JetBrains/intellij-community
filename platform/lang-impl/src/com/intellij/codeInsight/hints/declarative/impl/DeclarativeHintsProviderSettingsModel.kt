@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
@@ -73,7 +74,7 @@ class DeclarativeHintsProviderSettingsModel(
     get() {
       val previewTextWithInlayPlaceholders = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
       if (previewTextWithInlayPlaceholders == null) return null
-      return InlayDumpUtil.removeHints(previewTextWithInlayPlaceholders)
+      return InlayDumpUtil.removeInlays(previewTextWithInlayPlaceholders)
     }
 
   override fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?): PsiFile {
@@ -84,8 +85,8 @@ class DeclarativeHintsProviderSettingsModel(
       DeclarativeHintsPreviewProvider.getOptionPreview(language, id, caseId, providerDescription.instance)
     }
     if (previewTextWithInlayPlaceholders != null) {
-      val inlayEntries: List<Pair<Int, String>> = InlayDumpUtil.extractEntries(previewTextWithInlayPlaceholders)
-      file.putUserData(PREVIEW_ENTRIES, PreviewEntries(caseId, inlayEntries))
+      val extractedHints = DeclarativeHintsDumpUtil.extractHints(previewTextWithInlayPlaceholders)
+      file.putUserData(PREVIEW_ENTRIES, PreviewEntries(caseId, extractedHints))
     }
     return file
   }
@@ -94,7 +95,7 @@ class DeclarativeHintsProviderSettingsModel(
     if (case == null) return previewText
     val preview = DeclarativeHintsPreviewProvider.getOptionPreview(language, id, case.id, providerDescription.instance)
     if (preview == null) return null
-    return InlayDumpUtil.removeHints(preview)
+    return InlayDumpUtil.removeInlays(preview)
   }
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language
@@ -121,8 +122,8 @@ class DeclarativeHintsProviderSettingsModel(
         return object: OwnBypassCollector {
           override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
             if (previewEntries == null) return
-            for ((offset, content) in previewEntries.offsetToContent) {
-              sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
+            for ((position, content, hintFormat) in previewEntries.hintInfos) {
+              sink.addPresentation(position, hintFormat = hintFormat) {
                 text(content)
               }
             }
@@ -200,7 +201,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
 
-  private class PreviewEntries(val caseId: String?, val offsetToContent: List<Pair<Int, String>>)
+  private class PreviewEntries(val caseId: String?, val hintInfos: List<DeclarativeHintsDumpUtil.ExtractedHintInfo>)
 
   private class DefaultSettingsProvider : InlayHintsCustomSettingsProvider<Unit> {
     private val component by lazy { JPanel() }

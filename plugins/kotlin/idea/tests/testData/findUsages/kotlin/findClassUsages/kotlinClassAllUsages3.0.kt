@@ -6,4 +6,4 @@ package server
 
 data class <caret>Data
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS

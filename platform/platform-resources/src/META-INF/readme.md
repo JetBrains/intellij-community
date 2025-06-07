@@ -8,7 +8,7 @@ A set of product modules for regular IDE. For example, for WebStorm, but not for
 
 This set includes [essential-modules](#essential-modulesxml) and [vcs-modules](#vcs-modulesxml-) sets.
 
-## [vcs-modules.xml](common-ide-modules.xml) 
+## [vcs-modules.xml](vcs-modules.xml) 
 
 A set of product modules for regular IDE with VCS support.
 This is a separate set because, for instance, `intellij.platform.smRunner.vcs` should not be included in Rider,

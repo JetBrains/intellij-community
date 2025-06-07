@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.gradle.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.gradle.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//jps/model-impl",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "@lib//:gradle",
+    "@lib//:gradle-jps-ant",
+    "@lib//:gson",
+    "//plugins/groovy/jps-plugin:jps",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "@lib//:hash4j",
+  ],
+  runtime_deps = [":jps_resources"]
+)
+
+jvm_library(
+  name = "jps_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [":jps"],
+  deps = [
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//jps/model-impl",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "@lib//:gradle",
+    "@lib//:gradle-jps-ant",
+    "@lib//:gson",
+    "//plugins/groovy/jps-plugin:jps",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//jps/jps-builders:build-tests_test_lib",
+    "@lib//:hash4j",
+  ],
+  runtime_deps = [":jps_resources"]
+)
+
+jvm_test(
+  name = "jps_test",
+  runtime_deps = [":jps_test_lib"]
+)
+### auto-generated section `build intellij.gradle.jps` end

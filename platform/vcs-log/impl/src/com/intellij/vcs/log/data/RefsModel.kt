@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.VcsRef
@@ -21,7 +22,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
-  private fun updateCacheForHead(head: Int, root: VirtualFile) {
+  private fun updateCacheForHead(head: VcsLogCommitStorageIndex, root: VirtualFile) {
     rootForHead.put(head, root)
 
     val bestRef = refsToCommit(root, head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
@@ -33,11 +34,11 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
     }
   }
 
-  fun bestRefToHead(headIndex: Int): VcsRef? = bestRefForHead[headIndex]
+  fun bestRefToHead(headIndex: VcsLogCommitStorageIndex): VcsRef? = bestRefForHead[headIndex]
 
-  fun rootAtHead(headIndex: Int): VirtualFile? = rootForHead[headIndex]
+  fun rootAtHead(headIndex: VcsLogCommitStorageIndex): VirtualFile? = rootForHead[headIndex]
 
-  fun refsToCommit(index: Int): List<VcsRef> {
+  fun refsToCommit(index: VcsLogCommitStorageIndex): List<VcsRef> {
     if (allRefsByRoot.size <= 10) {
       val refs = allRefsByRoot.values.firstOrNull { it.contains(index) }
       return refs?.refsToCommit(index) ?: emptyList()
@@ -46,7 +47,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
     return refsToCommit(id.root, index)
   }
 
-  fun refsToCommit(root: VirtualFile, index: Int): List<VcsRef> {
+  fun refsToCommit(root: VirtualFile, index: VcsLogCommitStorageIndex): List<VcsRef> {
     return allRefsByRoot[root]?.refsToCommit(index) ?: emptyList()
   }
 
@@ -70,7 +71,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
 
     @ApiStatus.Internal
     @JvmStatic
-    fun create(refs: Map<VirtualFile, CompressedRefs>, heads: Set<Int>, storage: VcsLogStorage,
+    fun create(refs: Map<VirtualFile, CompressedRefs>, heads: Set<VcsLogCommitStorageIndex>, storage: VcsLogStorage,
                providers: Map<VirtualFile, VcsLogProvider>): RefsModel {
       val refsModel = RefsModel(refs, storage, providers)
 

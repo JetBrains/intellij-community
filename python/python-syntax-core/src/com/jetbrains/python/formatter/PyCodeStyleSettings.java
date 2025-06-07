@@ -1,26 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
-import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.util.ui.PresentableEnum;
 import com.jetbrains.python.PySyntaxCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
 
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public enum DictAlignment {
-    NONE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.do.not.align")),
-    ON_VALUE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.value")),
-    ON_COLON(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.colon"));
+  public enum DictAlignment implements PresentableEnum {
+    NONE("formatter.panel.dict.alignment.do.not.align"),
+    ON_VALUE("formatter.panel.dict.alignment.align.on.value"),
+    ON_COLON("formatter.panel.dict.alignment.align.on.colon");
 
-    String description;
+    private final String key;
 
-    DictAlignment(String description) {
-      this.description = description;
+    DictAlignment(String key) {
+      this.key = key;
     }
 
     public int asInt() {
@@ -28,8 +30,13 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     }
 
     @Override
+    public String getPresentableText() {
+      return PySyntaxCoreBundle.message(key);
+    }
+
+    @Override
     public String toString() {
-      return description;
+      return getPresentableText();
     }
   }
 
@@ -61,15 +68,27 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
 
   public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
-  @MagicConstant(intValues = {
-    CommonCodeStyleSettings.DO_NOT_WRAP,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED,
-    CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-  })
-  public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int DICT_WRAPPING = WRAP_AS_NEEDED;
   public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int LIST_WRAPPING = WRAP_AS_NEEDED;
+  public boolean LIST_NEW_LINE_AFTER_LEFT_BRACKET = false;
+  public boolean LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = false;
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int SET_WRAPPING = WRAP_AS_NEEDED;
+  public boolean SET_NEW_LINE_AFTER_LEFT_BRACE = false;
+  public boolean SET_NEW_LINE_BEFORE_RIGHT_BRACE = false;
+
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int TUPLE_WRAPPING = WRAP_AS_NEEDED;
+  public boolean TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
+  public boolean TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
 
   public int BLANK_LINES_AFTER_LOCAL_IMPORTS = 0;
   /**
@@ -93,13 +112,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   /**
    * Affects wrapping of multiple imported names in a single "from" import.
    */
-  @MagicConstant(intValues = {
-    CommonCodeStyleSettings.DO_NOT_WRAP,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED,
-    CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-  })
-  public int FROM_IMPORT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+  @CommonCodeStyleSettings.WrapConstant
+  public int FROM_IMPORT_WRAPPING = WRAP_AS_NEEDED;
   public boolean FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
   public boolean FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
   
@@ -117,6 +131,13 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * inside even if there is so called hanging indent (nothing follows the opening bracket on its line).
    */
   public boolean HANG_CLOSING_BRACKETS = false;
+
+  public boolean FORMAT_INJECTED_FRAGMENTS = true;
+  public boolean ADD_INDENT_INSIDE_INJECTIONS = false;
+
+  public boolean USE_TRAILING_COMMA_IN_COLLECTIONS = false;
+  public boolean USE_TRAILING_COMMA_IN_PARAMETER_LIST = false;
+  public boolean USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = false;
 
   public PyCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("Python", container);

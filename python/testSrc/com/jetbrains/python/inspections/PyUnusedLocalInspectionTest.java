@@ -126,6 +126,24 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     inspection.ignoreTupleUnpacking = false;
     doTest(inspection);
   }
+  
+  // PY-79910
+  public void testTryExceptInsideIfInsideFunction() {
+    doTestByText("""
+def test():
+    num = 7
+    if num < 10:
+        try:
+            next_num = input() # used
+        except ValueError:
+            next_num = None
+    else:
+        next_num = 0
+
+    return next_num
+        """
+    );
+  }
 
   // PY-16419, PY-26417
   public void testPotentiallySuppressedExceptions() {
@@ -149,7 +167,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
         def f12():
             with C():
-                <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = 2
+                x = 2
                 return g2()
             print(x) #pass
 
@@ -216,6 +234,16 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-50943
   public void testIncompleteFunctionWithoutName() {
+    doTest();
+  }
+
+  // PY-78662
+  public void testUnusedTypeAliasReferredToInOtherTypeAlias() {
+    doTest();
+  }
+
+  // PY-78663
+  public void testUnusedTypeParameterInTypeAlias() {
     doTest();
   }
 

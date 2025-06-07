@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.project.Project;
@@ -20,23 +20,17 @@ public abstract class PyPsiFacade {
     return project.getService(PyPsiFacade.class);
   }
 
-  @NotNull
-  public abstract List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context);
+  public abstract @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context);
 
-  @NotNull
-  public abstract PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
+  public abstract @NotNull PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
 
-  @NotNull
-  public abstract PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);
+  public abstract @NotNull PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);
 
-  @Nullable
-  public abstract PyType createUnionType(@NotNull Collection<PyType> members);
+  public abstract @Nullable PyType createUnionType(@NotNull Collection<PyType> members);
 
-  @Nullable
-  public abstract PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
+  public abstract @Nullable PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor);
 
-  @Nullable
-  public abstract PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
+  public abstract @Nullable PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
 
   /**
    * Retrieve a top-level class by its qualified name. The name provided is supposed to be <em>fully qualified absolute name</em>
@@ -50,12 +44,9 @@ public abstract class PyPsiFacade {
    * @param qName  qualified name of the required class
    * @param anchor arbitrary element located in the same module/SDK as the required class
    */
-  @Nullable
-  public abstract PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
+  public abstract @Nullable PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
 
-  @Nullable
-  public abstract String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);
+  public abstract @Nullable String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);
 
-  @NotNull
-  public abstract LanguageLevel getLanguageLevel(@NotNull PsiElement element);
+  public abstract @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element);
 }

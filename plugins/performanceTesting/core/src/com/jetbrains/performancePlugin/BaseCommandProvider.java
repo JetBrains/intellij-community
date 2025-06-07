@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
 import com.jetbrains.performancePlugin.commands.*;
@@ -16,6 +17,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(StopProfileCommand.PREFIX, StopProfileCommand::new),
       Map.entry(InspectionCommand.PREFIX, InspectionCommand::new),
       Map.entry(InspectionCommandEx.PREFIX, InspectionCommandEx::new),
+      Map.entry(ConfigureNamedScopeCommand.PREFIX, ConfigureNamedScopeCommand::new),
       Map.entry(ReformatCommand.PREFIX, ReformatCommand::new),
       Map.entry(GoToCommand.PREFIX, GoToCommand::new),
       Map.entry(ScrollEditorCommand.PREFIX, ScrollEditorCommand::new),
@@ -40,13 +42,14 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
       Map.entry(CompareIndicesKt.PREFIX, CompareIndices::new),
       Map.entry(StoreIndices.PREFIX, StoreIndices::new),
-      Map.entry(OpenProjectView.PREFIX, OpenProjectView::new),
+      Map.entry(OpenProjectViewCommand.PREFIX, OpenProjectViewCommand::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
       Map.entry(CloseProjectCommand.PREFIX, CloseProjectCommand::new),
+      Map.entry(CloseOtherProjectsCommand.PREFIX, CloseOtherProjectsCommand::new),
       Map.entry(CodeAnalysisCommand.PREFIX, CodeAnalysisCommand::new),
       Map.entry(DumpProjectFiles.PREFIX, DumpProjectFiles::new),
       Map.entry(CompareProjectFiles.PREFIX, CompareProjectFiles::new),
@@ -91,7 +94,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ConditionalMemoryDumpCommand.PREFIX, ConditionalMemoryDumpCommand::new),
       Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new),
       Map.entry(InstallCustomJBR.PREFIX, InstallCustomJBR::new),
-      Map.entry(ShowRecentFilesCommand.PREFIX, ShowRecentFilesCommand::new),
       Map.entry(ShowEvaluateExpressionCommand.PREFIX, ShowEvaluateExpressionCommand::new),
       Map.entry(EvaluateExpressionCompletionCommand.PREFIX, EvaluateExpressionCompletionCommand::new),
       Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),
@@ -121,10 +123,18 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ExpandProjectViewCommand.PREFIX, ExpandProjectViewCommand::new),
       Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new),
       Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new),
-      Map.entry(GCCommand.PREFIX, GCCommand::new),
+      Map.entry(SystemGCCommand.PREFIX, SystemGCCommand::new),
+      Map.entry(JBRFullGCCommand.PREFIX, JBRFullGCCommand::new),
       Map.entry(SetupInlineCompletionListenerCommand.PREFIX, SetupInlineCompletionListenerCommand::new),
       Map.entry(CallInlineCompletionCommand.PREFIX, CallInlineCompletionCommand::new),
-      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new)
+      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new),
+      Map.entry(MeasureVfsMassUpdateCommand.PREFIX, MeasureVfsMassUpdateCommand::new),
+      Map.entry(FindInFilesCommand.PREFIX, FindInFilesCommand::new),
+      Map.entry(WaitForVfsRefreshSelectedEditorCommand.PREFIX, WaitForVfsRefreshSelectedEditorCommand::new),
+      Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new),
+      Map.entry(OpenProblemViewPanelCommand.PREFIX, OpenProblemViewPanelCommand::new),
+      Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new),
+      Map.entry(DetectProjectLeaksCommand.PREFIX, DetectProjectLeaksCommand::new)
     );
   }
 }

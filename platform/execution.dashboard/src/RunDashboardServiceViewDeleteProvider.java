@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.execution.services.ServiceViewContributorDeleteProvider;
+import com.intellij.execution.services.ServiceViewDefaultDeleteProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -27,14 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class RunDashboardServiceViewDeleteProvider implements ServiceViewContributorDeleteProvider {
-  private DeleteProvider myDelegate;
-
-  @Override
-  public void setFallbackProvider(DeleteProvider provider) {
-    myDelegate = provider;
-  }
-
+final class RunDashboardServiceViewDeleteProvider implements DeleteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
@@ -44,8 +37,9 @@ final class RunDashboardServiceViewDeleteProvider implements ServiceViewContribu
   public void deleteElement(@NotNull DataContext dataContext) {
     List<ConfigurationType> targetTypes = getTargetTypes(dataContext);
     if (targetTypes.isEmpty()) {
-      if (myDelegate != null) {
-        myDelegate.deleteElement(dataContext);
+      ServiceViewDefaultDeleteProvider defaultDeleteProvider = ServiceViewDefaultDeleteProvider.getInstance();
+      if (defaultDeleteProvider.canDeleteElement(dataContext)) {
+        defaultDeleteProvider.deleteElement(dataContext);
       }
       return;
     }
@@ -79,7 +73,7 @@ final class RunDashboardServiceViewDeleteProvider implements ServiceViewContribu
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     List<ConfigurationType> targetTypes = getTargetTypes(dataContext);
-    return !targetTypes.isEmpty() || (myDelegate != null && myDelegate.canDeleteElement(dataContext));
+    return !targetTypes.isEmpty() || (ServiceViewDefaultDeleteProvider.getInstance().canDeleteElement(dataContext));
   }
 
   private static List<ConfigurationType> getTargetTypes(DataContext dataContext) {

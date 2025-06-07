@@ -1,5 +1,5 @@
 // "Import class 'Arrays'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 val java = 3
 

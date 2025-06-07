@@ -29,8 +29,7 @@ public class XPath2VariableImpl extends XPathElementImpl implements XPathVariabl
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPathExpression value = getValue();
     return value != null ? value.getType() : XPathType.UNKNOWN;
   }

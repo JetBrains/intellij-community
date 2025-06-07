@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.CommonBundle
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,6 +94,7 @@ class MarkdownPreviewFileEditor(
 
     StartupUiUtil.addAwtListener(AWTEvent.MOUSE_EVENT_MASK, this) { event ->
       if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED && event.button == MouseEvent.BUTTON3
+          && UIUtil.isDescendingFrom(event.component, htmlPanelWrapper)
           && event.component.isShowing() && htmlPanelWrapper.isShowing()
           && component.containsScreenLocation(event.locationOnScreen)
       ) {
@@ -136,8 +138,10 @@ class MarkdownPreviewFileEditor(
     }
   }
 
-  fun scrollToSrcOffset(offset: Int) {
-    panel?.scrollToMarkdownSrcOffset(offset, true)
+  fun scrollToLine(editor: Editor, line: Int) {
+    coroutineScope.launch(Dispatchers.EDT) {
+      panel?.scrollTo(editor, line)
+    }
   }
 
   override fun getComponent(): JComponent {
@@ -212,7 +216,8 @@ class MarkdownPreviewFileEditor(
     val editor = mainEditor.firstOrNull() ?: return
     writeIntentReadAction {
       val offset = editor.caretModel.offset
-      panel.setHtml(lastRenderedHtml, offset, file)
+      val line = editor.document.getLineNumber(offset)
+      panel.setHtml(lastRenderedHtml, offset, line, file)
     }
   }
 

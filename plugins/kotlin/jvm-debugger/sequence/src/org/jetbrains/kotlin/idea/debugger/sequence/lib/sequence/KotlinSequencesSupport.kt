@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.lib.sequence
 
-import com.intellij.debugger.streams.lib.IntermediateOperation
-import com.intellij.debugger.streams.lib.impl.*
-import com.intellij.debugger.streams.resolve.AppendResolver
-import com.intellij.debugger.streams.resolve.PairMapResolver
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
-import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
+import com.intellij.debugger.streams.core.lib.IntermediateOperation
+import com.intellij.debugger.streams.core.lib.impl.*
+import com.intellij.debugger.streams.core.resolve.AppendResolver
+import com.intellij.debugger.streams.core.resolve.ChunkedResolver
+import com.intellij.debugger.streams.core.resolve.PairMapResolver
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
+import com.intellij.debugger.streams.core.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.debugger.sequence.resolve.ChunkedResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.FilteredMapResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.WindowedResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence.FilterIsInstanceHandler

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.groupSimilar;
 
 import com.intellij.JavaTestUtil;
@@ -180,7 +180,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
                    b : 1
                    """, bag.toString());
     bag.add("a");
-    assertEquals(bag.getCardinality(), 3);
+    assertEquals(3, bag.getCardinality());
     Bag toAdd = new Bag("a", "c");
     bag.addAll(toAdd);
     assertEquals("""
@@ -188,7 +188,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
                    a : 3
                    b : 1
                    """, bag.toString());
-    assertEquals(bag.getCardinality(), 5);
+    assertEquals(5, bag.getCardinality());
   }
 
   public void testDistance() {

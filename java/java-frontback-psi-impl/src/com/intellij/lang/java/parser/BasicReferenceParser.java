@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
@@ -18,6 +18,11 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
@@ -47,14 +52,12 @@ public class BasicReferenceParser {
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
+  public @Nullable PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags);
     return typeInfo != null ? typeInfo.marker : null;
   }
 
-  @Nullable
-  public TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
+  public @Nullable TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
 
     if (typeInfo != null) {
@@ -80,8 +83,7 @@ public class BasicReferenceParser {
     return typeInfo;
   }
 
-  @Nullable
-  private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
+  private @Nullable TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     TypeInfo typeInfo = new TypeInfo();
@@ -94,7 +96,7 @@ public class BasicReferenceParser {
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
-        PsiKeyword.VAR.equals(builder.getTokenText()) &&
+        JavaKeywords.VAR.equals(builder.getTokenText()) &&
         JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }
@@ -189,12 +191,11 @@ public class BasicReferenceParser {
     }
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
-                                                  boolean eatLastDot,
-                                                  boolean parameterList,
-                                                  boolean isNew,
-                                                  boolean diamonds) {
+  public @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
+                                                            boolean eatLastDot,
+                                                            boolean parameterList,
+                                                            boolean isNew,
+                                                            boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -204,10 +205,9 @@ public class BasicReferenceParser {
     return !typeInfo.hasErrors;
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
-                                                   boolean isStaticImport, boolean isNew, boolean diamonds,
-                                                   TypeInfo typeInfo) {
+  private @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
+                                                             boolean isStaticImport, boolean isNew, boolean diamonds,
+                                                             TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -315,8 +315,7 @@ public class BasicReferenceParser {
     return isOk;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
+  public @NotNull PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
@@ -353,8 +352,7 @@ public class BasicReferenceParser {
     return list;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
     PsiBuilder.Marker param = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);

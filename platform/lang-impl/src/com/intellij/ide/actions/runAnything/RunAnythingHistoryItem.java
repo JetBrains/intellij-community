@@ -10,6 +10,7 @@ final class RunAnythingHistoryItem {
     this.fqn = fqn;
   }
 
+  @Override
   public String toString() {
     return pattern + "\t" + type + "\t" + fqn;
   }

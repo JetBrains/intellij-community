@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -15,28 +16,30 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 public final class EditorHyperlinkSupport {
+  private static final Logger LOG = Logger.getInstance(EditorHyperlinkSupport.class);
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("EDITOR_HYPERLINK_SUPPORT_HYPERLINK");
   private static final Key<Unit> HIGHLIGHTING = Key.create("EDITOR_HYPERLINK_SUPPORT_HIGHLIGHTING");
@@ -48,13 +51,19 @@ public final class EditorHyperlinkSupport {
   private final @NotNull Project myProject;
   private final AsyncFilterRunner myFilterRunner;
 
+  private final CopyOnWriteArrayList<EditorHyperlinkListener> myHyperlinkListeners = new CopyOnWriteArrayList<>();
+
   /**
    * If your editor has a project inside, better use {@link #get(Editor)}
    */
   public EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project) {
+    this(editor, project, false);
+  }
+
+  private EditorHyperlinkSupport(@NotNull Editor editor, @NotNull Project project, boolean trackChangesManually) {
     myEditor = (EditorEx)editor;
     myProject = project;
-    myFilterRunner = new AsyncFilterRunner(this, myEditor);
+    myFilterRunner = new AsyncFilterRunner(this, myEditor, trackChangesManually);
 
     editor.addEditorMouseListener(new EditorMouseListener() {
       private MouseEvent myInitialMouseEvent;
@@ -97,12 +106,27 @@ public final class EditorHyperlinkSupport {
     );
   }
 
+  @ApiStatus.Internal
+  public void addEditorHyperlinkListener(@NotNull EditorHyperlinkListener listener) {
+    myHyperlinkListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  public void removeEditorHyperlinkListener(@NotNull EditorHyperlinkListener listener) {
+    myHyperlinkListeners.remove(listener);
+  }
+
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor) {
+    return get(editor, false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor, boolean trackDocumentChangesManually) {
     EditorHyperlinkSupport instance = editor.getUserData(EDITOR_HYPERLINK_SUPPORT_KEY);
     if (instance == null) {
       Project project = editor.getProject();
       assert project != null;
-      instance = new EditorHyperlinkSupport(editor, project);
+      instance = new EditorHyperlinkSupport(editor, project, trackDocumentChangesManually);
       editor.putUserData(EDITOR_HYPERLINK_SUPPORT_KEY, instance);
     }
     return instance;
@@ -136,10 +160,20 @@ public final class EditorHyperlinkSupport {
   /**
    * Retrieves the inlays within the specified range in the editor (both offsets are inclusive).
    */
-  List<Inlay<?>> getInlays(int startOffset, int endOffset) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public List<Inlay<?>> getInlays(int startOffset, int endOffset) {
     return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public List<Inlay<?>> collectAllInlays() {
+    return getInlays(0, myEditor.getDocument().getTextLength());
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
@@ -180,10 +214,25 @@ public final class EditorHyperlinkSupport {
             hyperlinkInfo.navigate(myProject);
           }
           linkFollowed(myEditor, getHyperlinks(0, myEditor.getDocument().getTextLength(),myEditor), range);
+          fireListeners(hyperlinkInfo);
         };
       }
     }
     return null;
+  }
+
+  private void fireListeners(@NotNull HyperlinkInfo info) {
+    for (EditorHyperlinkListener listener : myHyperlinkListeners) {
+      try {
+        listener.hyperlinkActivated(info);
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("The listener " + listener + " threw an exception", e);
+      }
+    }
   }
 
   public static @Nullable HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
@@ -227,7 +276,9 @@ public final class EditorHyperlinkSupport {
   /**
    * Retrieves hyperlinks / highlightings within the specified range in the editor (both offsets are inclusive).
    */
-  static @NotNull List<RangeHighlighter> getRangeHighlighters(int startOffset, int endOffset,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull List<RangeHighlighter> getRangeHighlighters(int startOffset, int endOffset,
                                                               boolean hyperlinks,
                                                               boolean highlightings,
                                                               @NotNull Editor editor) {
@@ -300,9 +351,7 @@ public final class EditorHyperlinkSupport {
     HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
     highlighter.putUserData(HYPERLINK, attributes);
     if (fireChanged) {
-      MarkupEditorFilter filter = highlighter.getEditorFilter();
-      highlighter.setEditorFilter(__ -> true);
-      highlighter.setEditorFilter(filter); // to fireChanged
+      ((RangeHighlighterEx)highlighter).fireChanged(false, false, false);
     }
   }
 
@@ -340,20 +389,30 @@ public final class EditorHyperlinkSupport {
     myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, startLine), endLine, ETERNAL_TOKEN);
   }
 
+  @ApiStatus.Internal
+  public void highlightHyperlinks(@NotNull Filter.Result result) {
+    highlightHyperlinks(result, item -> TextRange.create(item.getHighlightStartOffset(), item.getHighlightEndOffset()));
+  }
 
-  void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
+  @ApiStatus.Internal
+  public void highlightHyperlinks(@NotNull Filter.Result result,
+                                  @NotNull Function<Filter.ResultItem, @Nullable TextRange> highlightingRangeAccessor) {
     int length = myEditor.getDocument().getTextLength();
-    List<InlayProvider> inlayProviders = new SmartList<>();
+    List<Pair<InlayProvider, Integer>> inlayProviderPairs = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
-      int start = resultItem.getHighlightStartOffset() + offsetDelta;
-      int end = resultItem.getHighlightEndOffset() + offsetDelta;
+      TextRange textRange = highlightingRangeAccessor.apply(resultItem);
+      if (textRange == null) {
+        continue;
+      }
+      int start = textRange.getStartOffset();
+      int end = textRange.getEndOffset();
       if (start < 0 || end < start || end > length) {
         continue;
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
       if (resultItem instanceof InlayProvider inlayProvider) {
-        inlayProviders.add(inlayProvider);
+        inlayProviderPairs.add(Pair.create(inlayProvider, end));
       }
       else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
@@ -364,10 +423,10 @@ public final class EditorHyperlinkSupport {
       }
     }
     // add inlays in a batch if needed
-    if (!inlayProviders.isEmpty()) {
-      myEditor.getInlayModel().execute(inlayProviders.size() > 100, () -> {
-        for (InlayProvider inlayProvider : inlayProviders) {
-          addInlay(((Filter.ResultItem)inlayProvider).getHighlightEndOffset() + offsetDelta, inlayProvider);
+    if (!inlayProviderPairs.isEmpty()) {
+      myEditor.getInlayModel().execute(inlayProviderPairs.size() > 100, () -> {
+        for (Pair<InlayProvider, Integer> inlayProviderPair : inlayProviderPairs) {
+          addInlay(inlayProviderPair.second, inlayProviderPair.first);
         }
       });
     }

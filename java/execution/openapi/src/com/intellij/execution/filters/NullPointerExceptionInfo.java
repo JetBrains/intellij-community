@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -210,8 +211,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     return null;
   }
 
-  @Nullable
-  public static ExceptionLineRefiner.RefinerMatchResult matchCompilerGeneratedNullCheck(PsiElement e) {
+  public static @Nullable ExceptionLineRefiner.RefinerMatchResult matchCompilerGeneratedNullCheck(PsiElement e) {
     PsiExpression dereferenced = null;
     boolean forward = true;
     if (PsiTreeUtil.nextVisibleLeaf(e) instanceof PsiJavaToken token &&
@@ -225,7 +225,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     }
     else if (e instanceof PsiJavaToken && e.textMatches("(") &&
              PsiTreeUtil.prevVisibleLeaf(e) instanceof PsiKeyword startSwitch &&
-             startSwitch.textMatches(PsiKeyword.SWITCH)) {
+             startSwitch.textMatches(JavaKeywords.SWITCH)) {
       PsiSwitchBlock switchBlock = tryCast(startSwitch.getParent(), PsiSwitchBlock.class);
       if (switchBlock != null) {
         PsiExpression selector = switchBlock.getExpression();
@@ -241,7 +241,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
              PsiTreeUtil.nextVisibleLeaf(e) instanceof PsiJavaToken dot &&
              dot.getTokenType().equals(JavaTokenType.DOT) &&
              PsiTreeUtil.nextVisibleLeaf(dot) instanceof PsiKeyword newKeyWord &&
-             newKeyWord.textMatches(PsiKeyword.NEW)) {
+             newKeyWord.textMatches(JavaKeywords.NEW)) {
       // qualified new
       PsiNewExpression newExpression = tryCast(newKeyWord.getParent(), PsiNewExpression.class);
       if (newExpression != null) {

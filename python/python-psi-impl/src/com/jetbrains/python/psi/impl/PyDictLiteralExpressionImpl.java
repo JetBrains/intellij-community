@@ -7,6 +7,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDictLiteralExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.types.PyCollectionTypeUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class PyDictLiteralExpressionImpl extends PySequenceExpressionImpl implem
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyBuiltinCache.getInstance(this).createLiteralCollectionType(this, "dict", context);
+    return PyCollectionTypeUtil.getDictLiteralType(this, context);
   }
 
   @Override

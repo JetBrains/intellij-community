@@ -110,8 +110,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     createPatch(project, commitMessage, allChanges, mySilentClipboard, patchBuilder);
   }
 
-  @Nullable
-  private static String extractCommitMessage(@NotNull AnActionEvent e) {
+  private static @Nullable String extractCommitMessage(@NotNull AnActionEvent e) {
     String message = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
     if (message != null) return message;
 
@@ -143,7 +142,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     createPatch(project, commitMessage, changes, silentClipboard, patchBuilder);
   }
 
-  private static void createPatch(@NotNull Project project,
+  public static void createPatch(@NotNull Project project,
                                   @Nullable String commitMessage,
                                   @NotNull List<? extends Change> changes,
                                   boolean silentClipboard,

@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -90,7 +90,7 @@ public abstract class GitHandler {
                        @NotNull List<String> configParameters) {
     this(project,
          directory,
-         GitExecutableManager.getInstance().getExecutable(project),
+         GitExecutableManager.getInstance().getExecutable(project, directory.toPath()),
          command,
          configParameters);
   }
@@ -252,7 +252,7 @@ public abstract class GitHandler {
   }
 
   public void addAbsoluteFile(@NotNull File file) {
-    myCommandLine.addParameter(myExecutable.convertFilePath(file));
+    myCommandLine.addParameter(myExecutable.convertFilePath(file.toPath()));
   }
 
   /**
@@ -426,10 +426,10 @@ public abstract class GitHandler {
     if (myStartTime > 0) {
       long time = System.currentTimeMillis() - myStartTime;
       if (!TIME_LOG.isDebugEnabled() && time > LONG_TIME) {
-        LOG.info(String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString()));
+        LOG.info(formatDurationMessage(time));
       }
       else {
-        TIME_LOG.debug(String.format("git %s took %s ms", myCommand, time));
+        TIME_LOG.debug(formatDurationMessage(time));
       }
     }
     else {
@@ -437,8 +437,12 @@ public abstract class GitHandler {
     }
   }
 
+  private @NotNull String formatDurationMessage(long time) {
+    return String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString());
+  }
+
   private void start() {
-    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
 

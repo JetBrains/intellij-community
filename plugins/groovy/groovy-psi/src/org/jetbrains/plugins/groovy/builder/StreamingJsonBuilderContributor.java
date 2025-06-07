@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -21,17 +21,14 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
 
 public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
 
-  @NonNls
-  static final String ORIGIN_INFO = "via StreamingJsonBuilder";
+  static final @NonNls String ORIGIN_INFO = "via StreamingJsonBuilder";
 
-  @Nullable
   @Override
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return "groovy.json.StreamingJsonBuilder";
   }
 
-  @NotNull
-  protected String getDelegateClassName() {
+  protected @NotNull String getDelegateClassName() {
     return "groovy.json.StreamingJsonBuilder.StreamingJsonDelegate";
   }
 
@@ -76,11 +73,10 @@ public class StreamingJsonBuilderContributor extends BuilderMethodsContributor {
     return processor.process(method);
   }
 
-  @NotNull
-  private static GrLightMethodBuilder createMethod(@NotNull String name,
-                                                   @NotNull PsiElement place,
-                                                   @NotNull PsiType returnType,
-                                                   @NotNull PsiClass clazz) {
+  private static @NotNull GrLightMethodBuilder createMethod(@NotNull String name,
+                                                            @NotNull PsiElement place,
+                                                            @NotNull PsiType returnType,
+                                                            @NotNull PsiClass clazz) {
     GrLightMethodBuilder method = new GrLightMethodBuilder(place.getManager(), name);
     method.setModifiers(GrModifierFlags.PUBLIC_MASK);
     method.setReturnType(returnType);

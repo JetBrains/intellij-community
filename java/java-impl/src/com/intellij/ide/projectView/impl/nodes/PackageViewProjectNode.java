@@ -14,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -41,7 +42,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  public @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     if (getSettings().isShowModules()) {
       return modulesAndGroups(moduleDescriptions(myProject));
     }

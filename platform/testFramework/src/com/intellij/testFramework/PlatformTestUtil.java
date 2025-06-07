@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.ThreadContext;
+import com.intellij.diagnostic.CoroutineDumperKt;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -13,9 +14,9 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -73,7 +74,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
@@ -101,13 +101,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -297,12 +297,18 @@ public final class PlatformTestUtil {
     assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
   }
 
-  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeoutMillis) {
     long took = getMillisSince(startTimeMillis);
-    if (took > timeout) {
-      assert false : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms\nThread dump: %s",
-                                   timeout, took, ThreadDumper.dumpThreadsToString());
+    if (took <= timeoutMillis) {
+      return;
     }
+
+    throw new AssertionError(
+      "The waiting takes too long. " +
+      "Expected to take no more than: " + timeoutMillis + " ms but took: " + took + " ms\n" +
+      "Thread dump: " + ThreadDumper.dumpThreadsToString() + "\n" +
+      "Coroutine dump: " + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
+    );
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -358,15 +364,15 @@ public final class PlatformTestUtil {
     return waitForPromise(promise, MAX_WAIT_TIME, false);
   }
 
-  public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise, long timeout) {
-    return waitForPromise(promise, timeout, false);
+  public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis) {
+    return waitForPromise(promise, timeoutMillis, false);
   }
 
   public static <T> @Nullable T assertPromiseSucceeds(@NotNull Promise<T> promise) {
     return waitForPromise(promise, MAX_WAIT_TIME, true);
   }
 
-  private static @Nullable <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
+  private static @Nullable <T> T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
     while (true) {
@@ -385,7 +391,7 @@ public final class PlatformTestUtil {
           return null;
         }
       }
-      assertMaxWaitTimeSince(start, timeout);
+      assertMaxWaitTimeSince(start, timeoutMillis);
     }
   }
 
@@ -600,39 +606,42 @@ public final class PlatformTestUtil {
     return print(tree, false);
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void invokeNamedAction(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
     @SuppressWarnings("deprecation") DataContext context = DataManager.getInstance().getDataContext();
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabled());
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    ActionUtil.performAction(action, event);
   }
 
-  public static void assertTiming(@NotNull String message, long expectedMs, long actual) {
+  public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    long expectedOnMyMachine = Math.max(1, expectedMs * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
+    long expectedOnMyMachine = Math.max(1, expectedMillis * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
-    if (actual > expectedOnMyMachine) {
-      int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+    if (actualMillis > expectedOnMyMachine) {
+      int percentage = (int)(100.0 * (actualMillis - expectedOnMyMachine) / expectedOnMyMachine);
       logMessage += ". Operation took " + percentage + "% longer than expected";
     }
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
-                  " Actual: " + actual + "." +
-                  " Expected on Standard machine: " + expectedMs + ";" +
+                  " Actual: " + actualMillis + "." +
+                  " Expected on Standard machine: " + expectedMillis + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
                   ", I/O=" + Timings.IO_TIMING + ".";
     double acceptableChangeFactor = 1.1;
-    if (actual < expectedOnMyMachine) {
+    if (actualMillis < expectedOnMyMachine) {
       System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
     }
-    else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
+    else if (actualMillis < expectedOnMyMachine * acceptableChangeFactor) {
       TeamCityLogger.warning(logMessage, null);
     }
     else {
@@ -688,7 +697,7 @@ public final class PlatformTestUtil {
   public static @NotNull URL getRtJarURL() {
     String home = SystemProperties.getJavaHome();
     try {
-      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+      return CurrentJavaVersion.currentJavaVersion().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
     }
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
@@ -718,18 +727,18 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static void assertTiming(@NotNull String message, long expected, @NotNull Runnable actionToMeasure) {
-    assertTiming(message, expected, 4, actionToMeasure);
+  public static void assertTiming(@NotNull String message, long expectedMillis, @NotNull Runnable actionToMeasure) {
+    assertTiming(message, expectedMillis, 4, actionToMeasure);
   }
 
   @SuppressWarnings("CallToSystemGC")
-  public static void assertTiming(@NotNull String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
+  public static void assertTiming(@NotNull String message, long expectedMillis, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
       waitForAllBackgroundActivityToCalmDown();
       long duration = TimeoutUtil.measureExecutionTime(actionToMeasure::run);
       try {
-        assertTiming(message, expected, duration);
+        assertTiming(message, expectedMillis, duration);
         break;
       }
       catch (AssertionFailedError e) {
@@ -1165,7 +1174,7 @@ public final class PlatformTestUtil {
           descriptorProcessor.accept(descriptor);
         }
         assertNotNull(processHandler);
-        processHandler.addProcessListener(new ProcessAdapter() {
+        processHandler.addProcessListener(new ProcessListener() {
           @Override
           public void startNotified(@NotNull ProcessEvent event) {
             LOG.debug("Process notified: ", processHandler);

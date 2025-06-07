@@ -106,8 +106,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
     return dimensionService.getLocation(getPrivateDimensionKey());
   }
 
-  @NotNull
-  protected abstract String getPrivateDimensionServiceKey();
+  protected abstract @NotNull String getPrivateDimensionServiceKey();
 
   protected final String getPrivateDimensionKey() {
     return getPrivateDimensionServiceKey() + "." + myMode.toString();

@@ -15,9 +15,8 @@ import org.jetbrains.annotations.Nullable;
  */
 final class CommentLanguageInjector implements LanguageInjectionContributor {
 
-  @Nullable
   @Override
-  public Injection getInjection(@NotNull PsiElement context) {
+  public @Nullable Injection getInjection(@NotNull PsiElement context) {
     if (!(context instanceof PsiLanguageInjectionHost host) || context instanceof PsiComment) return null;
     if (!host.isValidHost()) return null;
 

@@ -288,6 +288,12 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     });
   }
 
+  public void testUnusedGuardStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.getMinimumLevel(), () -> {
+      doTest();
+    });
+  }
+
   public void testBrokenClassToImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
       doTest();

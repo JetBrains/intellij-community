@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -35,6 +35,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -51,7 +52,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
   private final @NlsSafe String myCurrentBranchName;
   private final DvcsCompareSettings myVcsSettings;
 
-  @Nullable private CommitCompareInfo myCompareInfo;
+  private @Nullable CommitCompareInfo myCompareInfo;
 
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
@@ -99,8 +100,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
     refreshView(false);
   }
 
-  @NotNull
-  public ChangesBrowserBase getChangesBrowser() {
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 
@@ -159,8 +159,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
     myLabel.setEnabled(true);
   }
 
-  @NotNull
-  public JComponent getPreferredFocusComponent() {
+  public @NotNull JComponent getPreferredFocusComponent() {
     return myChangesBrowser.getPreferredFocusedComponent();
   }
 
@@ -175,18 +174,16 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
       setChangesToDisplay(changes);
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createToolbarActions() {
+    protected @NotNull @Unmodifiable List<AnAction> createToolbarActions() {
       return ContainerUtil.append(
         super.createToolbarActions(),
         ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createPopupMenuActions() {
+    protected @NotNull @Unmodifiable List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
         ActionManager.getInstance().getAction("Vcs.GetVersion")

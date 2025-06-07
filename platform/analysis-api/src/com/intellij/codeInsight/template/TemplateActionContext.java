@@ -14,19 +14,19 @@ import org.jetbrains.annotations.Nullable;
  * Describes context in which live template supposed to be used.
  */
 public final class TemplateActionContext {
-  private final @NotNull PsiFile myFile;
+  private final @NotNull PsiFile myPsiFile;
   private final @Nullable Editor myEditor;
 
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myIsSurrounding;
 
-  private TemplateActionContext(@NotNull PsiFile file,
+  private TemplateActionContext(@NotNull PsiFile psiFile,
                                 @Nullable Editor editor,
                                 int startOffset,
                                 int endOffset,
                                 boolean isSurrounding) {
-    myFile = file;
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myIsSurrounding = isSurrounding;
@@ -34,7 +34,7 @@ public final class TemplateActionContext {
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**
@@ -55,8 +55,8 @@ public final class TemplateActionContext {
   /**
    * @return a copy of current context with specific {@code file}
    */
-  public @NotNull TemplateActionContext withFile(@NotNull PsiFile file) {
-    return new TemplateActionContext(file, myEditor, myStartOffset, myEndOffset, myIsSurrounding);
+  public @NotNull TemplateActionContext withFile(@NotNull PsiFile psiFile) {
+    return new TemplateActionContext(psiFile, myEditor, myStartOffset, myEndOffset, myIsSurrounding);
   }
 
   /**

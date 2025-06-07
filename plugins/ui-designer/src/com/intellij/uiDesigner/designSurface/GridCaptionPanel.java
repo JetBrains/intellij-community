@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -323,10 +323,10 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & MouseEvent.CTRL_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
           mySelectionModel.addSelectionInterval(cell, cell);
         }
-        else if ((e.getModifiers() & MouseEvent.SHIFT_MASK) != 0) {
+        else if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.addSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), cell);
         }
       }
@@ -346,7 +346,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & (MouseEvent.CTRL_MASK | MouseEvent.SHIFT_MASK)) == 0) {
+        if ((e.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK)) == 0) {
           mySelectionModel.setSelectionInterval(cell, cell);
         }
       }
@@ -608,7 +608,7 @@ public final class GridCaptionPanel extends JPanel implements ComponentSelection
       int leadIndex = mySelectionModel.getLeadSelectionIndex();
       int newLeadIndex = leadIndex + delta;
       if (newLeadIndex >= 0 && newLeadIndex < getCellCount()) {
-        if ((e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.setSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), newLeadIndex);
         }
         else {

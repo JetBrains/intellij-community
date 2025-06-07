@@ -39,7 +39,7 @@ public class DTree {
   };
 
   private boolean myExpanded = true;
-  @Nullable private final DTree myParent;
+  private final @Nullable DTree myParent;
   private HashMap<String, DTree> myChildren;
   private final String myName;
   private final boolean isContainer;
@@ -58,8 +58,7 @@ public class DTree {
     isContainer = container;
   }
 
-  @NotNull
-  public Collection<DTree> getChildren() {
+  public @NotNull Collection<DTree> getChildren() {
     init();
     if (myChildrenList == null) {
       myChildrenList = new SortedList<>(COMPARATOR);
@@ -118,8 +117,7 @@ public class DTree {
     return myName;
   }
 
-  @Nullable
-  public DTree getParent() {
+  public @Nullable DTree getParent() {
     return myParent;
   }
 
@@ -299,8 +297,7 @@ public class DTree {
     this.myType = type;
   }
 
-  @NlsSafe
-  public String getPath() {
+  public @NlsSafe String getPath() {
     if (myPath == null) {
       final DTree parent = getParent();
       if (parent != null) {

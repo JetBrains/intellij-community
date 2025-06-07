@@ -3,7 +3,6 @@ package com.intellij.htmltools.xml.util;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -25,13 +24,13 @@ public final class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final int offset = editor.getCaretModel().getOffset();
-    if (isAvailable(getTag(file, offset))) {
+    if (isAvailable(getTag(psiFile, offset))) {
       return true;
     }
 
-    if (offset > 0 && isAvailable(getTag(file, offset - 1))) {
+    if (offset > 0 && isAvailable(getTag(psiFile, offset - 1))) {
       myUseElementToTheLeft = true;
       return true;
     }
@@ -58,9 +57,9 @@ public final class HtmlUpdateImageSizeIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
-    final XmlTag tag = getTag(file, myUseElementToTheLeft ? offset - 1 : offset);
+    final XmlTag tag = getTag(psiFile, myUseElementToTheLeft ? offset - 1 : offset);
     if (tag == null) {
       return;
     }

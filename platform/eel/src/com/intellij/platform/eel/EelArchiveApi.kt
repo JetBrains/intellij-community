@@ -4,5 +4,5 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.path.EelPath
 
 interface EelArchiveApi {
-  suspend fun extract(archive: EelPath.Absolute, target: EelPath.Absolute)
+  suspend fun extract(archive: EelPath, target: EelPath)
 }

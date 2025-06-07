@@ -42,12 +42,16 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   private final DocumentListener myListener = new DocumentListener() {
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
-      setModified();
+      setControlModified();
       if (myCommitOnEveryChange) {
         commit();
       }
     }
   };
+  
+  private void setControlModified() {
+    setModified();
+  }
 
   protected EditorTextFieldControl(DomWrapper<String> domWrapper, boolean commitOnEveryChange) {
     super(domWrapper);

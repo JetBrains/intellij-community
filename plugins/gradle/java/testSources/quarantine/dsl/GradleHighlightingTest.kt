@@ -10,10 +10,12 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
@@ -264,10 +266,21 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
     }
   }
 
+  /** @see org.jetbrains.plugins.gradle.service.resolve.transformation.GradleActionToClosureMemberContributor */
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test deprecation of generated method with Closure instead of Action` (gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "8.12") { "`tasks.create` is deprecated since 8.12" }
+    testEmptyProject(gradleVersion) {
+      codeInsightFixture.enableInspections(GrDeprecatedAPIUsageInspection::class.java)
+      testHighlighting("tasks.<warning descr=\"'create' is deprecated\">create</warning>(\"foo\", Copy) {}")
+    }
+  }
+
   companion object {
 
     private val MY_CONFIGURATION_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-myConfiguration") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-myConfiguration")
       }
       withBuildFile(gradleVersion) {
@@ -280,8 +293,8 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
     }
 
-    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") {
-      withSettingsFile {
+    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-buildSrc")
       }
       withDirectory("buildSrc/src/main/groovy")
@@ -289,8 +302,8 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       withFile("buildSrc/settings.gradle", "")
     }
 
-    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {
-      withSettingsFile {
+    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-buildSrc2")
       }
       withFile("buildSrc/src/main/groovy/GrTask.groovy", """

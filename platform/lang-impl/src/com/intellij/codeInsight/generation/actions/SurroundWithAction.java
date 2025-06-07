@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -14,12 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class SurroundWithAction extends BaseCodeInsightAction {
-  public SurroundWithAction() {
+final class SurroundWithAction extends BaseCodeInsightAction {
+  SurroundWithAction() {
     setEnabledInModalContext(true);
   }
 
@@ -29,21 +26,21 @@ public final class SurroundWithAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
-    final Language language = file.getLanguage();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    final Language language = psiFile.getLanguage();
     if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {
       return true;
     }
-    final PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(file);
-    if (baseFile != null && baseFile != file && !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty()) {
+    final PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
+    if (baseFile != null && baseFile != psiFile && !LanguageSurrounders.INSTANCE.allForLanguage(baseFile.getLanguage()).isEmpty()) {
       return true;
     }
 
-    if (file instanceof PsiBinaryFile) {
+    if (psiFile instanceof PsiBinaryFile) {
       return true;
     }
 
-    if (!TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.surrounding(file, editor)).isEmpty()) {
+    if (!TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.surrounding(psiFile, editor)).isEmpty()) {
       return true;
     }
 

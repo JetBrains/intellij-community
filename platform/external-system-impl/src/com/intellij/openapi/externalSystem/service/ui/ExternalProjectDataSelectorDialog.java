@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -53,8 +53,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -65,8 +65,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final com.intellij.openapi.util.Key<DataNode<?>> MODIFIED_NODE_KEY = com.intellij.openapi.util.Key.create("modifiedData");
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private JBLoadingPanel loadingPanel;
   private JPanel mainPanel;
   private JPanel contentPanel;
@@ -78,8 +77,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private final Set<Key<?>> myIgnorableKeys;
   private final Set<Key<?>> myPublicKeys;
   private final Set<Key<? extends Identifiable>> myDependencyAwareDataKeys;
-  @Nullable
-  private final Object myPreselectedNodeObject;
+  private final @Nullable Object myPreselectedNodeObject;
   private CheckboxTree myTree;
   private final MultiMap<DataNode<Identifiable>, DataNode<Identifiable>> dependentNodeMap = MultiMap.createIdentity();
 
@@ -134,9 +132,8 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     mySelectionStatusLbl.setText(selectionState.getValue().message);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).
@@ -392,7 +389,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : ContainerUtil.emptyList();
+    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : new ArrayList<>();
     nodes.sort((o1, o2) -> {
       if (o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
@@ -405,8 +402,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return Couple.of(root, preselectedNode[0]);
   }
 
-  @NotNull
-  private static Set<Key<?>> getPublicKeys() {
+  private static @NotNull Set<Key<?>> getPublicKeys() {
     Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getPublicDataKeys());
@@ -414,8 +410,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  private static Set<Key<?>> getIgnorableKeys() {
+  private static @NotNull Set<Key<?>> getIgnorableKeys() {
     Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getIgnorableDataKeys());
@@ -423,8 +418,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  private static Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
+  private static @NotNull Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
     Set<Key<? extends Identifiable>> result = new HashSet<>();
     result.add(ProjectKeys.MODULE);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
@@ -437,11 +431,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     private static final int MAX_DEPENDENCIES_TO_DESCRIBE = 5;
 
     private final DataNode myDataNode;
-    @Nullable
-    private final Icon icon;
+    private final @Nullable Icon icon;
     private @Nls String text;
-    @Nullable
-    private @Nls String comment;
+    private @Nullable @Nls String comment;
 
     private DataNodeCheckedTreeNode(DataNode node) {
       super(node);
@@ -606,8 +598,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private static DataNode getModifiableDataNode(@NotNull DataNode node) {
+  private static @NotNull DataNode getModifiableDataNode(@NotNull DataNode node) {
     DataNode modifiedDataNode = (DataNode)node.getUserData(MODIFIED_NODE_KEY);
     if (modifiedDataNode == null) {
       modifiedDataNode = node.nodeCopy();

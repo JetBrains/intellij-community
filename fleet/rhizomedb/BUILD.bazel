@@ -1,27 +1,30 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+### auto-generated section `build fleet.rhizomedb` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
-  x_optin = ["kotlin.ExperimentalStdlibApi"]
-)
-
-kt_jvm_library(
-  name = "fleet-rhizomedb",
-  module_name = "fleet.rhizomedb",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = ":custom",
-  deps = [
-    "@community//fleet/util/core:fleet-util-core",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlin-reflect",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:annotations",
+  allow_kotlin_package = True,
+  opt_in = [
+    "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
   ]
 )
-### auto-generated section `build` end
+
+jvm_library(
+  name = "rhizomedb",
+  module_name = "fleet.rhizomedb",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//fleet/util/core",
+    "//fleet/multiplatform.shims",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+  ]
+)
+### auto-generated section `build fleet.rhizomedb` end

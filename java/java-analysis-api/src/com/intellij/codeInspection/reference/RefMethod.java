@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
@@ -33,6 +34,7 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
    *
    * @return the collection of overriding methods.
    */
+  @Unmodifiable
   @NotNull Collection<RefMethod> getDerivedMethods();
 
   /**
@@ -165,9 +167,8 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  default Collection<? extends RefOverridable> getDerivedReferences() {
+  default @NotNull @Unmodifiable Collection<? extends RefOverridable> getDerivedReferences() {
     return getDerivedMethods();
   }
 

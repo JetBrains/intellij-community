@@ -10,8 +10,8 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
-  @NotNull private final CommitId myId;
-  @NotNull private final Object myParents;
+  private final @NotNull CommitId myId;
+  private final @NotNull Object myParents;
 
   // use createCommit
   private GraphCommitImpl(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
@@ -29,9 +29,8 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     }
   }
 
-  @NotNull
   @Override
-  public CommitId getId() {
+  public @NotNull CommitId getId() {
     return myId;
   }
 
@@ -55,8 +54,7 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     return myParents instanceof Object[] ? ((Object[])myParents).length : 1;
   }
 
-  @NotNull
-  public static <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
+  public static @NotNull <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
     if (id instanceof Integer) {
       //noinspection unchecked
       return (GraphCommit<CommitId>)createIntCommit((Integer)id, (List<Integer>)parents, timestamp);
@@ -64,8 +62,7 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
     return new GraphCommitImpl<>(id, parents, timestamp);
   }
 
-  @NotNull
-  public static GraphCommit<Integer> createIntCommit(int id, @NotNull List<Integer> parents, long timestamp) {
+  public static @NotNull GraphCommit<Integer> createIntCommit(int id, @NotNull List<Integer> parents, long timestamp) {
     if (parents.size() == 1) {
       return new IntGraphCommit.SingleParent(timestamp, id, parents.get(0));
     }

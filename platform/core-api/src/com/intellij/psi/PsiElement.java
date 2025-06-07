@@ -14,10 +14,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -451,7 +448,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   @Experimental
   @OverrideOnly
-  default @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+  default @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
     return Collections.emptyList();
   }
 
@@ -474,7 +471,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   @Experimental
   @OverrideOnly
-  default @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+  default @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     return Collections.emptyList();
   }
 

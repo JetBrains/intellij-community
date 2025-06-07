@@ -4,7 +4,7 @@ import static p.Boo.*;
 
 class FooImpl implements Foo, Boo {
     public void baz() {
-        <error descr="Static method may only be called on its containing interface">foo();</error>
+        <error descr="Static method may only be called on its containing interface">foo</error>();
         bar();
         boo();
     }

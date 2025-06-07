@@ -96,7 +96,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
                     else return null;
                   }
                 }
-                else if (method == null && call.getMethodExpression().multiResolve(false).length > 0) {
+                else if (method == null && call.multiResolve(false).length > 0) {
                   return null;
                 }
               }
@@ -221,7 +221,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
     if (existingImport == null && resolved instanceof PsiClass) {
       ((PsiImportHolder) file).importClass((PsiClass) resolved);
     }
-    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
+    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnStaticDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
       PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
     }
 

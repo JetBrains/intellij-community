@@ -49,8 +49,13 @@ public final class IntentionPreviewUtils {
   @ApiStatus.Internal
   public static @NotNull PsiFile obtainCopyForPreview(@NotNull PsiFile file, @NotNull PsiFile originalFile) {
     PsiFile copy = (PsiFile)file.copy();
-    copy.putUserData(PREVIEW_MARKER, originalFile);
+    markAsPreviewCopy(copy, originalFile);
     return copy;
+  }
+
+  @ApiStatus.Internal
+  public static void markAsPreviewCopy(PsiFile copy, @NotNull PsiFile originalFile) {
+    copy.putUserData(PREVIEW_MARKER, originalFile);
   }
 
   /**

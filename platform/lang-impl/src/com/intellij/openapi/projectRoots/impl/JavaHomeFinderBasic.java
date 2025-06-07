@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -18,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,6 +56,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
     myFinders.add(this::findJavaInstalledByMise);
+    myFinders.add(this::findJavaInstalledByJabba);
 
     myFinders.add(
       () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
@@ -97,6 +100,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(finder);
   }
 
+  /// Detects the paths of JDKs on the machine.
   public final @NotNull Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
@@ -115,6 +119,18 @@ public class JavaHomeFinderBasic {
     return result;
   }
 
+  /// Detects the paths of JDKs on the machine with information about the Java version and architecture.
+  public final @NotNull Set<JavaHomeFinder.JdkEntry> findExistingJdkEntries() {
+    final var paths = findExistingJdks();
+    final var detector = JdkVersionDetector.getInstance();
+
+    return paths.stream().map(path -> {
+      final var version = detector.detectJdkVersionInfo(path);
+      return new JavaHomeFinder.JdkEntry(path, version);
+    }).collect(Collectors.toSet());
+
+  }
+
   public @NotNull Set<String> findInJavaHome() {
     String javaHome = mySystemInfo.getEnvironmentVariable("JAVA_HOME");
     return javaHome != null ? scanAll(mySystemInfo.getPath(javaHome), false) : Collections.emptySet();
@@ -129,20 +145,30 @@ public class JavaHomeFinderBasic {
 
       Set<Path> dirsToCheck = new HashSet<>();
       for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
-        Path dir = mySystemInfo.getPath(p);
-        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
-          continue;
-        }
+        if (p.isEmpty()) continue;
+        try {
+          Path dir = mySystemInfo.getPath(p);
+          if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
+            continue;
+          }
 
-        Path parentFile = dir.getParent();
-        if (parentFile == null) {
-          continue;
-        }
+          Path parentFile = dir.getParent();
+          if (parentFile == null) {
+            continue;
+          }
 
-        dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+          dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+        }
+        catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
+          log.warn("Failed to get Java home path for " + p, e);
+        }
       }
 
       return scanAll(dirsToCheck, false);
+    }
+    catch (CancellationException e) {
+      throw e;
     }
     catch (Exception e) {
       log.warn("Failed to scan PATH for JDKs. " + e.getMessage(), e);
@@ -209,8 +235,9 @@ public class JavaHomeFinderBasic {
     try (Stream<Path> files = Files.list(folder)) {
       files.forEach(candidate -> {
         for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-          try { scanFolder(adjusted, false, result); }
-          catch (IllegalStateException ignored) {}
+          final int found = result.size();
+          scanFolder(adjusted, false, result);
+          if (result.size() > found) { break; } // Avoid duplicates
         }
       });
     }
@@ -274,23 +301,27 @@ public class JavaHomeFinderBasic {
     Path installsDir = findMiseInstallsDir();
     if (installsDir == null) return Collections.emptySet();
     Path jdks = installsDir.resolve("java");
-    return scanAll(jdks, true).stream()
-      .filter(path -> !Files.isSymbolicLink(Path.of(path)))
-      .collect(Collectors.toSet());
+    return scanAll(jdks, true);
   }
 
-  @Nullable
-  private Path findMiseInstallsDir() {
+  private @Nullable Path findMiseInstallsDir() {
     // try to use environment variable for custom data directory
     // https://mise.jdx.dev/configuration.html#mise-data-dir
     Path miseDataDir = getPathInEnvironmentVariable("MISE_DATA_DIR", "installs");
     if (miseDataDir != null) return miseDataDir;
 
-    Path xdgDataDir = getPathInEnvironmentVariable("XDG_DATA_DIR", "mise/installs");
-    if (xdgDataDir != null) return xdgDataDir;
+    Path xdgDataHome = getPathInEnvironmentVariable("XDG_DATA_HOME", "mise/installs");
+    if (xdgDataHome != null) return xdgDataHome;
 
-    // finally, try the usual location in Unix or macOS
-    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+    // finally, try the usual system-specific directories
+    if (this instanceof JavaHomeFinderWindows) {
+      // Windows
+      Path localAppData = getPathInEnvironmentVariable("LOCALAPPDATA", "mise/installs");
+      if (localAppData != null) return localAppData;
+      localAppData = getPathInUserHome("AppData/Local/mise/installs");
+      if (localAppData != null && safeIsDirectory(localAppData)) return localAppData;
+    } else if (!(this instanceof JavaHomeFinderWsl)) {
+      // Unix and macOS
       Path installsDir = getPathInUserHome(".local/share/mise/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
@@ -410,6 +441,14 @@ public class JavaHomeFinderBasic {
     return null;
   }
 
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/shyiko/jabba">jabba</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByJabba() {
+    Path installsDir = getPathInUserHome(".jabba/jdk");
+    if (installsDir == null) return Collections.emptySet();
+    return safeIsDirectory(installsDir) ? scanAll(installsDir, true) : Collections.emptySet();
+  }
 
   private boolean safeIsDirectory(@NotNull Path dir) {
     try {

@@ -18,9 +18,7 @@ package git4idea.repo
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.overwrite
-import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.log.impl.HashImpl
@@ -246,6 +244,7 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
   fun `test fresh repository`() {
     assertTrue(repo.isFresh)
     assertNull(repo.currentRevision)
+    assertEquals("master", repo.currentBranch?.name)
   }
 
   fun `test cherry-pick state without CHERRY_PICK_HEAD`() {

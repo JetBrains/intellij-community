@@ -1,23 +1,23 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.idea.maven</id>
   <name>Maven</name>
-  <category>Build Tools</category>
-  <description>
-    <![CDATA[
-      Provides <a href="https://maven.apache.org/">Maven</a> support.
-      The following features are available:
-        <ul>
-        <li>Maven Projects tool window.</li>
-        <li>Dedicated module type.</li>
-        <li>Maven repositories support.</li>
-        <li>Full editing support for pom.xml file.</li>
-        <li>Possibility to import Maven projects.</li>
-        <li>Running and debugging Maven goals.</li>
-        <li>Compiling.</li>
-        </ul>
-      ]]>
-  </description>
   <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+
+  <description><![CDATA[
+    Provides <a href="https://maven.apache.org/">Maven</a> support.
+    The following features are available:
+    <ul>
+      <li>Maven Projects tool window.</li>
+      <li>Dedicated module type.</li>
+      <li>Maven repositories support.</li>
+      <li>Full editing support for the pom.xml file.</li>
+      <li>Possibility to import Maven projects.</li>
+      <li>Running and debugging Maven goals.</li>
+      <li>Compiling.</li>
+    </ul>
+  ]]></description>
+
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
@@ -61,19 +61,26 @@
     <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator" dynamic="true"/>
   </extensionPoints>
 
-  <depends>com.intellij.properties</depends>
-  <depends>com.intellij.modules.java</depends>
-  <depends>org.jetbrains.idea.reposearch</depends>
-  <depends>org.jetbrains.idea.maven.model</depends>
-  <depends>org.jetbrains.idea.maven.server.api</depends>
+  <dependencies>
+    <module name="intellij.properties.backend"/>
+    <plugin id="com.intellij.java"/>
+    <plugin id="org.jetbrains.idea.reposearch"/>
+  </dependencies>
+
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+
+  <content>
+    <module name="intellij.maven.profiler"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
 
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
+    <projectPathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenProjectPathMacroContributor"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.idea.maven.utils.MavenBuildProcessParameterProvider"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
               fileNames="maven.config"/>
@@ -85,7 +92,7 @@
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
     <externalSystemDependencyAnalyzer implementation="org.jetbrains.idea.maven.project.MavenDependencyAnalyzerExtension"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizard$Builder"/>
-    <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
+    <!--<frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>-->
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
     <trustedProjectsLocator implementation="org.jetbrains.idea.maven.wizards.MavenTrustedProjectsLocator"/>
@@ -105,7 +112,6 @@
     <projectService
       serviceInterface="org.jetbrains.idea.maven.server.MavenServerResultTransformer"
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
@@ -147,7 +153,6 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <externalIconProvider key="MAVEN" implementationClass="org.jetbrains.idea.maven.ui.MavenIconProvider"/>
     <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
-    <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
@@ -204,6 +209,10 @@
                      key="inspection.missed.parent.version"
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection"/>
+    <localInspection language="XML" shortName="MavenParentMissedGroupIdArtifactIdInspection" bundle="messages.MavenDomBundle"
+                     key="inspection.missed.parent.groupIdArtifactId"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtifactIdInspection"/>
     <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle"
                      key="inspection.duplicate.plugin.declaration"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
@@ -319,6 +328,12 @@
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
 
+    <registryKey key="maven.use.scripts" defaultValue="true"
+                 description="Run maven goals via mvn.sh/mvn.bat"/>
+
+    <registryKey key="maven.use.scripts.debug.agent" defaultValue="true"
+                 description="Use instrumentation agent when debugging with maven"/>
+
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 
@@ -336,6 +351,9 @@
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
+
+    <registryKey key="maven.use.plugins.m2e.compat" defaultValue="false"
+                 description="Shows checkbox to run m2e compatibility"/>
 
     <registryKey key="maven.import.keep.existing.module.names" defaultValue="true"
                  description="Keep existing module names after maven project reimport"/>
@@ -393,11 +411,14 @@
     <registryKey key="maven.shade.plugin.remap.uber.jar" defaultValue="false"
                  description="During sync, remap classes in uber jars for Maven projects that use Maven Shade plugin"/>
 
-    <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
+    <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="true"
                  description="Refresh resolved artifacts after Maven sync"/>
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
+
+    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="true"
+                 description="Create source roots corresponding to compileSourceRoots and multireleaseOutput during Maven sync"/>
 
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
@@ -405,9 +426,13 @@
     <registryKey key="maven.build.additional.jars" defaultValue="true"
                  description="Build additional jars with classifier"/>
 
+    <registryKey key="maven.server.opentelemetry.agent.enabled" defaultValue="false"
+                 description="Enable performance trace collection from the Maven server side collected by OTLP java agent"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
+      <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
@@ -430,6 +455,8 @@
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
 
     <referencesSearch implementation="org.jetbrains.idea.maven.search.MavenModuleReferenceSearcher"/>
+
+    <lang.jvm.multiReleaseSupport implementation="org.jetbrains.idea.maven.utils.MavenMultiReleaseSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -581,6 +608,7 @@
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompileSourceRootsConfigurator"/>
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPluginConfigurator"/>
@@ -611,12 +639,11 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
 
-    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator"/>
+    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
-
 
   <actions>
     <action id="Maven.SyncIncrementally" class="org.jetbrains.idea.maven.project.actions.IncrementalSyncAction"
@@ -703,8 +730,8 @@
     </action>
 
     <group id="Maven.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
-      <reference id="ExternalSystem.ShowCommonSettings"/>
-      <reference id="Maven.ShowSettings"/>
+      <reference ref="ExternalSystem.ShowCommonSettings"/>
+      <reference ref="Maven.ShowSettings"/>
     </group>
 
     <action id="Maven.ToggleOffline"
@@ -729,7 +756,7 @@
             use-shortcut-of="CollapseAll"/>
 
     <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction"
-            icon="AllIcons.Actions.Run_anything">
+            icon="AllIcons.Actions.RunAnything">
     </action>
 
     <action id="Maven.GroupProjects"
@@ -795,71 +822,71 @@
     </group>
 
     <group id="Maven.DownloadAllGroup">
-      <reference id="Maven.DownloadAllSources"/>
-      <reference id="Maven.DownloadAllDocs"/>
-      <reference id="Maven.DownloadAllSourcesAndDocs"/>
+      <reference ref="Maven.DownloadAllSources"/>
+      <reference ref="Maven.DownloadAllDocs"/>
+      <reference ref="Maven.DownloadAllSourcesAndDocs"/>
     </group>
 
     <group id="Maven.SyncAllGroup">
-      <reference id="Maven.SyncIncrementally"/>
-      <reference id="Maven.Reimport"/>
+      <reference ref="Maven.SyncIncrementally"/>
+      <reference ref="Maven.Reimport"/>
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
       <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
              icon="AllIcons.Actions.Refresh">
-        <reference id="Maven.SyncAllGroup"/>
+        <reference ref="Maven.SyncAllGroup"/>
       </group>
-      <reference id="Maven.UpdateFolders"/>
+      <reference ref="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
-        <reference id="Maven.DownloadAllGroup"/>
+        <reference ref="Maven.DownloadAllGroup"/>
       </group>
       <separator/>
-      <reference id="Maven.AddManagedFiles"/>
+      <reference ref="Maven.AddManagedFiles"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
-      <reference id="Maven.ExecuteGoal"/>
-      <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>
-      <reference id="Maven.CollapseAll"/>
+      <reference ref="Maven.RunBuild"/>
+      <reference ref="Maven.ExecuteGoal"/>
+      <reference ref="Maven.ToggleOffline"/>
+      <reference ref="Maven.ToggleSkipTests"/>
+      <reference ref="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.ShowSettingsGroup"/>
+      <reference ref="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">
-      <reference id="Maven.DownloadSelectedSources"/>
-      <reference id="Maven.DownloadSelectedDocs"/>
-      <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+      <reference ref="Maven.DownloadSelectedSources"/>
+      <reference ref="Maven.DownloadSelectedDocs"/>
+      <reference ref="Maven.DownloadSelectedSourcesAndDocs"/>
       <separator/>
-      <reference id="Maven.ViewDependencyAnalyzer"/>
+      <reference ref="Maven.ViewDependencyAnalyzer"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
-      <reference id="Maven.ReimportProject"/>
-      <reference id="Maven.UpdateFoldersForProject"/>
+      <reference ref="Maven.ReimportProject"/>
+      <reference ref="Maven.UpdateFoldersForProject"/>
       <separator/>
-      <reference id="Maven.IgnoreProjects"/>
-      <reference id="Maven.RemoveManagedFiles"/>
+      <reference ref="Maven.IgnoreProjects"/>
+      <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference id="Maven.OpenSettingsXml"/>
+      <reference ref="Maven.OpenSettingsXml"/>
       <separator/>
-      <reference id="Maven.DownloadAllGroup"/>
+      <reference ref="Maven.DownloadAllGroup"/>
       <separator/>
-      <reference id="Maven.ShowEffectivePom"/>
+      <reference ref="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
       <reference ref="Maven.BaseProjectMenu"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
+      <reference ref="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
-      <reference id="EditSource"/>
+      <reference ref="EditSource"/>
     </group>
 
     <group id="Maven.ProfilesMenu" popup="true">
@@ -918,9 +945,14 @@
   <projectListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
   </projectListeners>
+
   <applicationListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
               activeInTestMode="true" activeInHeadlessMode="true"/>
+
+    <listener class="org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorListener"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 </idea-plugin>

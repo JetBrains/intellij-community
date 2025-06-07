@@ -91,7 +91,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   @Override
-  public void removeParameter(@NotNull final String name) {
+  public void removeParameter(final @NotNull String name) {
     for (Section section : myOriginalDocString.getParameterSections()) {
       final List<SectionField> sectionFields = section.getFields();
       for (SectionField field : sectionFields) {
@@ -122,8 +122,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     }
   }
 
-  @NotNull
-  private static Substring expandParamNameSubstring(@NotNull Substring name) {
+  private static @NotNull Substring expandParamNameSubstring(@NotNull Substring name) {
     final String superString = name.getSuperString();
     int startWithStars = name.getStartOffset();
     int prevNonWhitespace = skipSpacesBackward(superString, name.getStartOffset() - 1);
@@ -197,11 +196,10 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     }
   }
 
-  @NotNull
-  private static String buildBlock(@NotNull SectionBasedDocStringBuilder builder,
-                                   @NotNull List<AddParameter> params,
-                                   @NotNull String sectionIndent,
-                                   @NotNull String indent) {
+  private static @NotNull String buildBlock(@NotNull SectionBasedDocStringBuilder builder,
+                                            @NotNull List<AddParameter> params,
+                                            @NotNull String sectionIndent,
+                                            @NotNull String indent) {
     return addParametersInBlock(builder, params, sectionIndent).buildContent(indent, true);
   }
 
@@ -268,11 +266,9 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
 
   protected abstract void updateParamDeclarationWithType(@NotNull Substring nameSubstring, @NotNull String type);
 
-  @NotNull
-  protected abstract SectionBasedDocStringBuilder createBuilder();
+  protected abstract @NotNull SectionBasedDocStringBuilder createBuilder();
 
-  @Nullable
-  private Substring findParamNameSubstring(@NotNull final String name) {
+  private @Nullable Substring findParamNameSubstring(final @NotNull String name) {
     return ContainerUtil.find(myOriginalDocString.getParameterSubstrings(), substring -> substring.toString().equals(name));
   }
 
@@ -289,26 +285,22 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
       .buildContent(docStringIndent, true);
   }
 
-  @Nullable
-  protected Section findFirstParametersSection() {
+  protected @Nullable Section findFirstParametersSection() {
     return ContainerUtil.find(myOriginalDocString.getSections(),
                               section -> section.getNormalizedTitle().equals(SectionBasedDocString.PARAMETERS_SECTION));
   }
 
-  @Nullable
-  protected Section findFirstReturnSection() {
+  protected @Nullable Section findFirstReturnSection() {
     return ContainerUtil.find(myOriginalDocString.getSections(),
                               section -> section.getNormalizedTitle().equals(SectionBasedDocString.RETURNS_SECTION));
   }
 
-  @NotNull
-  protected String getExpectedSectionIndent() {
+  protected @NotNull String getExpectedSectionIndent() {
     final Section first = ContainerUtil.getFirstItem(myOriginalDocString.getSections());
     return first != null ? getSectionIndent(first) : myMinContentIndent;
   }
 
-  @NotNull
-  protected String getExpectedFieldIndent() {
+  protected @NotNull String getExpectedFieldIndent() {
     for (Section section : myOriginalDocString.getSections()) {
       final List<SectionField> fields = section.getFields();
       if (fields.isEmpty()) {
@@ -319,16 +311,14 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     return createBuilder().mySectionIndent;
   }
 
-  @NotNull
-  protected String getFieldIndent(@NotNull Section section, @NotNull SectionField field) {
+  protected @NotNull String getFieldIndent(@NotNull Section section, @NotNull SectionField field) {
     final String titleIndent = getSectionIndent(section);
     final String fieldIndent = getLineIndent(getFieldStartLine(field));
     final int diffSize = Math.max(0, PyIndentUtil.getLineIndentSize(fieldIndent) - PyIndentUtil.getLineIndentSize(titleIndent));
     return StringUtil.repeatSymbol(' ', diffSize);
   }
 
-  @NotNull
-  protected String getSectionIndent(@NotNull Section section) {
+  protected @NotNull String getSectionIndent(@NotNull Section section) {
     return getLineIndent(getSectionStartLine(section));
   }
 
@@ -354,8 +344,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
                               field.getNameAsSubstring()).getEndLine();
   }
 
-  @NotNull
-  private static <T> T chooseFirstNotNull(T @NotNull ... values) {
+  private static @NotNull <T> T chooseFirstNotNull(T @NotNull ... values) {
     for (T value : values) {
       if (value != null) {
         return value;
@@ -365,8 +354,8 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   private static class AddParameter {
-    @NotNull final String name;
-    @Nullable final String type;
+    final @NotNull String name;
+    final @Nullable String type;
 
     AddParameter(@NotNull String name, @Nullable String type) {
       this.name = name;

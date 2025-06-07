@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -13,8 +15,10 @@ import java.util.function.Supplier;
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
-  MarkerTreeWithPartialSums(@NotNull Document document) {
+@ApiStatus.Internal
+public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+  @VisibleForTesting
+  public MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
 
@@ -27,7 +31,8 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
    * Should be called whenever a value associated with a marker is changed,
    * so that internal caches related to calculating value sums could be updated.
    */
-  void valueUpdated(T marker) {
+  @VisibleForTesting
+  public void valueUpdated(T marker) {
     Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
@@ -35,14 +40,15 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
   /**
    * Calculates sum of values associated with markers having offset less than or equal to given offset.
    */
-  int getSumOfValuesUpToOffset(int offset) {
+  @VisibleForTesting
+  public int getSumOfValuesUpToOffset(int offset) {
     return getSumOfValuesForOverlappingRanges(getRoot(), offset, 0);
   }
 
   private int getSumOfValuesForOverlappingRanges(@Nullable Node<T> node, int offset, int deltaUpToRootExclusive) {
     if (node == null) return 0;
-    int delta = deltaUpToRootExclusive + node.delta;
-    if (offset >= node.maxEnd + delta) return node.subtreeSum;
+    int delta = deltaUpToRootExclusive + node.getDelta();
+    if (offset >= node.getMaxEnd() + delta) return node.subtreeSum;
     int value = getSumOfValuesForOverlappingRanges(node.getLeft(), offset, delta);
     if (offset >= node.intervalStart() + delta) {
       value += node.getLocalSum();
@@ -66,12 +72,13 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
   }
 
   @Override
-  void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
+  @ApiStatus.Internal
+  public static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,
@@ -124,13 +131,13 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     }
 
     @Override
-    void addInterval(@NotNull T interval) {
+    public void addInterval(@NotNull T interval) {
       super.addInterval(interval);
       recalculateSubTreeSumUp();
     }
 
     @Override
-    void removeIntervalInternal(int i) {
+    public void removeIntervalInternal(int i) {
       super.removeIntervalInternal(i);
       recalculateSubTreeSumUp();
     }

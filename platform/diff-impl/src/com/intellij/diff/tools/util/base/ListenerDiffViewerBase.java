@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -45,8 +45,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     TextDiffViewerUtil.installDocumentListeners(new MyDocumentListener(), documents, this);
   }
 
-  @NotNull
-  private static List<VirtualFile> extractVirtualFiles(@NotNull ContentDiffRequest request) {
+  private static @NotNull List<VirtualFile> extractVirtualFiles(@NotNull ContentDiffRequest request) {
     List<VirtualFile> files = new ArrayList<>(0);
     for (DiffContent content : request.getContents()) {
       if (content instanceof DocumentContent) continue; // handled by DocumentListener

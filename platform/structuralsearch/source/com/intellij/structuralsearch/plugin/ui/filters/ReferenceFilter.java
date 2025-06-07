@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -86,7 +87,7 @@ class ReferenceFilter extends FilterAction {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("reference.label"));
       private final @NotNull ComboBox<Configuration> myComboBox =
-        new ComboBox<>(new CollectionComboBoxModel<>(ConfigurationManager.getInstance(myTable.getProject()).getAllConfigurations()));
+        new ComboBox<>(new CollectionComboBoxModel<>(new ArrayList<>(ConfigurationManager.getInstance(myTable.getProject()).getAllConfigurations())));
       private final SimpleListCellRenderer<Configuration> renderer = new SimpleListCellRenderer<>() {
         @Override
         public void customize(@NotNull JList list, Configuration value, int index, boolean selected, boolean hasFocus) {

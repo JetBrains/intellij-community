@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -22,11 +22,13 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -89,7 +91,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
         }
         if (idSubPart != null && idSubPart.isEmpty()) { // right after the before/after keyword
-          wordIndices.add(new TextRange(orderPart.length(), orderPart.length()));
+          wordIndices = ContainerUtil.append(wordIndices, new TextRange(orderPart.length(), orderPart.length()));
         }
 
         if (idSubPart == null) {
@@ -116,7 +118,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
     return result;
   }
 
-  private static List<TextRange> getWordIndicesInOrderPart(String orderPart) {
+  private static @Unmodifiable List<TextRange> getWordIndicesInOrderPart(String orderPart) {
     return StringUtil.getWordIndicesIn(orderPart, Set.of(' ', ':'));
   }
 
@@ -140,15 +142,13 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       myOrderPart = orderPart;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return DevKitBundle.message("invalid.order.attribute.part", myOrderPart.trim());
     }
 
@@ -169,9 +169,8 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       myExtension = extension;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
       if (extensionPoint == null) {
         return null;
@@ -225,9 +224,8 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return idCompletionVariants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       ExtensionPoint ep = myExtension.getExtensionPoint();
       final String epFqn = ep != null ? ep.getEffectiveQualifiedName() + " " : "";
       return DevKitBundle.message("plugin.xml.convert.extension.order.cannot.resolve", epFqn);
@@ -287,8 +285,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return result;
     }
 
-    @NotNull
-    private static List<LookupElement> getLookupElements(@NotNull Map<Extension, String> targetExtensionsWithMarks) {
+    private static @NotNull List<LookupElement> getLookupElements(@NotNull Map<Extension, String> targetExtensionsWithMarks) {
       List<LookupElement> result = new ArrayList<>(targetExtensionsWithMarks.size());
       for (Map.Entry<Extension, String> entry : targetExtensionsWithMarks.entrySet()) {
         Extension extension = entry.getKey();
@@ -306,11 +303,9 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return result;
     }
 
-    @Nullable
-    @NlsSafe
-    private static String getSpecificExtensionAttribute(@NotNull Extension e,
-                                                        @NotNull PsiClass parentBeanClass,
-                                                        @NotNull @NonNls String attribute) {
+    private static @Nullable @NlsSafe String getSpecificExtensionAttribute(@NotNull Extension e,
+                                                                           @NotNull PsiClass parentBeanClass,
+                                                                           @NotNull @NonNls String attribute) {
       ExtensionPoint ep = e.getExtensionPoint();
       if (ep == null) {
         return null;
@@ -330,8 +325,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return attributeDescription.getDomAttributeValue(e).getStringValue();
     }
 
-    @NotNull
-    private static PsiElement getTargetElement(Extension e) {
+    private static @NotNull PsiElement getTargetElement(Extension e) {
       DomTarget extensionTarget = DomTarget.getTarget(e);
       if (extensionTarget != null) {
         return PomService.convertToPsi(extensionTarget);
@@ -340,11 +334,10 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       return e.getXmlTag();
     }
 
-    @NotNull
-    private static LookupElement createLookupElement(@NotNull PsiElement targetElement,
-                                                     @NotNull String id,
-                                                     @Nullable Module module,
-                                                     @Nullable String mark) {
+    private static @NotNull LookupElement createLookupElement(@NotNull PsiElement targetElement,
+                                                              @NotNull String id,
+                                                              @Nullable Module module,
+                                                              @Nullable String mark) {
       LookupElementBuilder element = LookupElementBuilder.create(targetElement, id);
       if (module != null) {
         element = element.withTypeText(module.getName(), ModuleType.get(module).getIcon(), false).withTypeIconRightAligned(true);

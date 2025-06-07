@@ -159,13 +159,13 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
   override fun getAlias(): String? = alias
 
   override fun toString(): String {
-    return "PyDataclassFieldStubType(callee=$calleeName" +
-           ", hasDefault=${hasDefault}" +
-           ", hasDefaultFactory=${hasDefaultFactory}" +
-           ", initValue=${initValue}" +
-           ", kwOnly=${kwOnly}" +
-           ", alias=${alias}" +
+    return "PyDataclassFieldStubImpl(" +
+           "calleeName=$calleeName, " +
+           "hasDefault=$hasDefault, " +
+           "hasDefaultFactory=$hasDefaultFactory, " +
+           "initValue=$initValue, " +
+           "kwOnly=$kwOnly, " +
+           "alias=$alias" +
            ")"
   }
-
 }

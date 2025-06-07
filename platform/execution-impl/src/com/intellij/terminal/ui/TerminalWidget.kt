@@ -6,10 +6,13 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 interface TerminalWidget : ComponentContainer {
@@ -20,6 +23,12 @@ interface TerminalWidget : ComponentContainer {
    * null, if unavailable, e.g. the component is not shown or not laid out yet
    */
   val termSize: TermSize?
+
+  /**
+   * Returns the future that will be completed once the widget's component is added to the UI hierarchy and resized.
+   */
+  @ApiStatus.Experimental
+  fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize>
 
   /**
    * Command used to run the session related to this widget
@@ -33,6 +42,19 @@ interface TerminalWidget : ComponentContainer {
 
   val ttyConnector: TtyConnector?
     get() = ttyConnectorAccessor.ttyConnector
+
+  @get:ApiStatus.Internal
+  val session: TerminalSession?
+
+  /**
+   * Makes this terminal widget handle output events from this [session] and send input events to it.
+   *
+   * Note that session lifecycle is not bound to the lifecycle of the widget.
+   * If the widget is disposed, the session will continue running.
+   * To close the session, send [com.intellij.terminal.session.TerminalCloseEvent] using [TerminalSession.sendInputEvent].
+   */
+  @ApiStatus.Internal
+  fun connectToSession(session: TerminalSession)
 
   fun writePlainMessage(message: @Nls String)
 
@@ -49,6 +71,15 @@ interface TerminalWidget : ComponentContainer {
 
   @RequiresEdt(generateAssertion = false)
   fun sendCommandToExecute(shellCommand: String)
+
+  /**
+   * Note that implementations might not guarantee that the result is 100% correct.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt(generateAssertion = false)
+  fun isCommandRunning(): Boolean {
+    return false
+  }
 
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)

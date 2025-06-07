@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.searches;
 
@@ -24,21 +24,19 @@ public final class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pai
   public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 
   public static class SearchParameters {
-    @NotNull private final PsiClass myClass;
-    @NotNull private final SearchScope myScope;
+    private final @NotNull PsiClass myClass;
+    private final @NotNull SearchScope myScope;
 
     public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
       myClass = aClass;
       myScope = scope;
     }
 
-    @NotNull
-    public PsiClass getPsiClass() {
+    public @NotNull PsiClass getPsiClass() {
       return myClass;
     }
 
-    @NotNull
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return myScope;
     }
   }
@@ -47,14 +45,12 @@ public final class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pai
     super(EP_NAME);
   }
 
-  @NotNull
-  public static Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
-  @NotNull
-  public static Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass) {
+  public static @NotNull Query<Pair<PsiMethod, PsiMethod>> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

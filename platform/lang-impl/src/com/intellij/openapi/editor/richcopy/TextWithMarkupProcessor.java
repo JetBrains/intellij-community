@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
@@ -29,6 +29,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -132,7 +133,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     return Collections.emptyList();
   }
 
-  void createResult(SyntaxInfo syntaxInfo, Editor editor) {
+  @VisibleForTesting
+  protected void createResult(SyntaxInfo syntaxInfo, Editor editor) {
     myResult = new ArrayList<>(2);
     myResult.add(new HtmlTransferableData(syntaxInfo, EditorUtil.getTabSize(editor)));
     myResult.add(new RtfTransferableData(syntaxInfo));
@@ -168,7 +170,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       buffer.append("    region #").append(i).append(": ").append(start).append('-').append(end).append(", text at range ")
         .append(lineStart).append('-').append(lineEnd).append(": \n'").append(text.subSequence(lineStart, lineEnd)).append("'\n");
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     LOG.debug(String.format(

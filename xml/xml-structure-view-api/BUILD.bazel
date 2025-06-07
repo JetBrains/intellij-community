@@ -1,18 +1,26 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.structureView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
-kt_jvm_library(
-  name = "xml-structureView",
+jvm_resources(
+  name = "structureView_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structureView",
   module_name = "intellij.xml.structureView",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@community//platform/core-api:core",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//xml/xml-psi-api:psi",
+    "//platform/editor-ui-api:editor-ui",
   ],
-  exports = ["@community//xml/xml-psi-api:xml-psi"]
+  runtime_deps = [
+    ":structureView_resources",
+    "//platform/backend",
+  ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.structureView` end

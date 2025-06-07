@@ -42,6 +42,6 @@ public class RunAnythingRunProfile implements RunProfile {
 
   @Override
   public @Nullable Icon getIcon() {
-    return AllIcons.Actions.Run_anything;
+    return AllIcons.Actions.RunAnything;
   }
 }

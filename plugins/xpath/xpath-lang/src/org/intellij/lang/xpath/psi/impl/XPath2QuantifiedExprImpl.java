@@ -27,8 +27,7 @@ public class XPath2QuantifiedExprImpl extends XPath2ElementImpl implements XPath
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     return XPath2Type.BOOLEAN;
   }
 

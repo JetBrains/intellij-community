@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.impl.getProjectPathMacroSubstitutor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -210,7 +211,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun getFolderName() = folderName
-  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean) {
+
+  @JvmOverloads
+  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean, configFilePath: String? = null) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
     if (isStoredInDotIdeaFolder) {
@@ -237,7 +240,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     _configuration = configuration
     uniqueId = null
 
-    PathMacroManager.getInstance(configuration.project).expandPaths(element)
+    getProjectPathMacroSubstitutor(configuration.project, configFilePath).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {

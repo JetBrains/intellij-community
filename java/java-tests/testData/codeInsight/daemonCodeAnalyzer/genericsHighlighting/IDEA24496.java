@@ -11,7 +11,7 @@ class GenericsError {
 
   public List<List<?>> otherMethod() {
     List<?> list = null;
-    <error descr="Incompatible types. Found: 'java.util.List<java.util.List<capture<?>>>', required: 'java.util.List<java.util.List<?>>'">List<List<?>> result = method(list);</error>
+    List<List<?>> result = <error descr="Incompatible types. Found: 'java.util.List<java.util.List<capture<?>>>', required: 'java.util.List<java.util.List<?>>'">method</error>(list);
     return result;
   }
 }

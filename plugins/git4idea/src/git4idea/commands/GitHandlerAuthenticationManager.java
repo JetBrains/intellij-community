@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.*;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelApi;
 import com.intellij.util.EnvironmentUtil;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -182,30 +184,34 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareGpgAgentAuth() {
-    Project project = myHandler.project();
     VirtualFile root = myHandler.getExecutableContext().getRoot();
-    if (project == null || root == null) {
+    if (root == null) {
       return;
     }
 
-    if (!GpgAgentConfigurator.isEnabled(project, myHandler.myExecutable)) {
+    GitCommand command = myHandler.getCommand();
+    boolean isCommandSupported = command == GitCommand.COMMIT
+                                 || command == GitCommand.TAG
+                                 || command == GitCommand.MERGE
+                                 || command == GitCommand.CHERRY_PICK
+                                 || command == GitCommand.REBASE;
+    if (!isCommandSupported) {
+      return;
+    }
+
+    if (!GpgAgentConfigurator.isEnabled(myProject, myHandler.myExecutable)
+        || !GpgAgentConfigurator.getInstance(myProject).isConfigured()) {
       return;
     }
 
     GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
     if (repo == null) return;
 
-    GitCommand command = myHandler.getCommand();
-    boolean needGpgSigning =
-      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE
-       || command == GitCommand.CHERRY_PICK || command == GitCommand.REBASE) &&
-      GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo);
-
-    if (needGpgSigning) {
-      PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
+    if (GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo)) {
+      PinentryService.PinentryData pinentryData = PinentryService.getInstance(myProject).startSession();
       if (pinentryData != null) {
         myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
-        Disposer.register(myDisposable, () -> PinentryService.getInstance(project).stopSession());
+        Disposer.register(myDisposable, () -> PinentryService.getInstance(myProject).stopSession());
       }
     }
   }
@@ -213,10 +219,18 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull ExternalProcessHandlerService<?> service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
-    File scriptFile = service.getCallbackScriptPath(executable.getId(),
-                                                    new GitScriptGenerator(executable),
-                                                    shouldUseBatchScript(executable));
-    String scriptPath = executable.convertFilePath(scriptFile);
+    String scriptPath;
+    if (executable instanceof GitExecutable.Eel) {
+      EelApi eelApi = ((GitExecutable.Eel)executable).getEel();
+      Path scriptFile = service.getCallbackScriptPath(eelApi, shouldUseBatchScript(executable), myDisposable);
+      scriptPath = executable.convertFilePath(scriptFile);
+    }
+    else {
+      File scriptFile = service.getCallbackScriptPath(executable.getId(),
+                                                      new GitScriptGenerator(executable),
+                                                      shouldUseBatchScript(executable));
+      scriptPath = executable.convertFilePath(scriptFile.toPath());
+    }
     myHandler.addCustomEnvironmentVariable(env, scriptPath);
   }
 
@@ -241,8 +255,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     return !command.isEmpty() && !command.startsWith("ssh ");
   }
 
-  @Nullable
-  private String readSshCommand() {
+  private @Nullable String readSshCommand() {
     String sshCommand = EnvironmentUtil.getValue(GitCommand.GIT_SSH_COMMAND_ENV);
     if (sshCommand != null) return sshCommand;
 

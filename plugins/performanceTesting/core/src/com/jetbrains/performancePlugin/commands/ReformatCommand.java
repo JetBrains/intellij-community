@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -21,9 +22,8 @@ public class ReformatCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback myActionCallback = new ActionCallbackProfilerStopper();
     ReformatCodeProcessor codeProcessor = new ReformatCodeProcessor(context.getProject(), false);
     codeProcessor.setPostRunnable(() -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,23 +59,11 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
     try {
-      StorageUpdate indexUpdate = super.mapInputAndPrepareUpdate(inputId, content);
-      IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+      StorageUpdate indexUpdate = withStubIndexingDiagnosticUpdate(inputId, content, super.mapInputAndPrepareUpdate(inputId, content));
 
       return () -> {
         try {
-          boolean updateSuccessful = indexUpdate.update();
-          if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
-            ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
-            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
-              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
-            }
-          }
-          else {
-            // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
-            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
-          }
-          return updateSuccessful;
+          return indexUpdate.update();
         }
         catch (Throwable t) {
           // ProcessCanceledException is not expected here
@@ -94,6 +82,24 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       LOG.warn("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + t, FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES ? t : null);
       throw t;
     }
+  }
+
+  public static @NotNull StorageUpdate withStubIndexingDiagnosticUpdate(int inputId, @Nullable FileContent content, @NotNull StorageUpdate indexUpdate) {
+    IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    return () -> {
+      boolean updateSuccessful = indexUpdate.update();
+      if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
+        ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+        if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+          LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
+        }
+      }
+      else {
+        // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
+        LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
+      }
+      return updateSuccessful;
+    };
   }
 
   @Override
@@ -184,14 +190,14 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   }
 
   @Override
-  protected FileIndexingState isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    if (myCompositeBinaryBuilderMap == null) return FileIndexingState.UP_TO_DATE;
+  protected FileIndexingStateWithExplanation isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+    if (myCompositeBinaryBuilderMap == null) return FileIndexingStateWithExplanation.upToDate();
     try {
       return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
     }
     catch (IOException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("IOException");
     }
   }
 

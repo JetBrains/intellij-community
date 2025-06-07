@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.openapi.components.*
@@ -21,7 +21,7 @@ sealed class SEHistoryManager : PersistentStateComponent<SEHistoryManager.State>
   }
 
   private var _state = State()
-  override fun getState() = _state
+  override fun getState(): State = _state
   override fun loadState(state: State) { _state = state }
 }
 
@@ -40,6 +40,6 @@ open class RecentSet<T> : LinkedHashSet<T>() {
 class ActionHistoryManager : SEHistoryManager() {
   companion object {
     @JvmStatic
-    fun getInstance() = service<ActionHistoryManager>()
+    fun getInstance(): ActionHistoryManager = service<ActionHistoryManager>()
   }
 }

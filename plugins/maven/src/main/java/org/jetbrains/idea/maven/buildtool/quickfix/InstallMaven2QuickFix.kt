@@ -22,14 +22,14 @@ class InstallMaven2BuildIssue : BuildIssue {
 
   companion object {
     private fun getTitle(): String {
-      if (MavenVersionSupportUtil.isMaven2PluginDisabled())
+      if (MavenVersionSupportUtil.isMaven2PluginDisabled)
         return MavenProjectBundle.message("label.invalid.enable.maven2plugin")
       else
         return MavenProjectBundle.message("label.invalid.install.maven2plugin")
     }
 
     private fun getDescription(): String {
-      if (MavenVersionSupportUtil.isMaven2PluginDisabled())
+      if (MavenVersionSupportUtil.isMaven2PluginDisabled)
         return MavenProjectBundle.message("label.invalid.enable.maven2plugin.with.link", EnableMaven2QuickFix.ID)
       else
         return MavenProjectBundle.message("label.invalid.install.maven2plugin.with.link", InstallMaven2QuickFix.ID)

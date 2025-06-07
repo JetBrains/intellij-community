@@ -1,0 +1,13 @@
+// "Change parameter 'x' type of function 'foo' to 'T'" "true"
+// LANGUAGE_VERSION: 1.8
+package a
+
+fun <T> foo(x: T & Any) {}
+
+fun <T> bar(x: T) {
+    foo(x<caret>)
+}
+
+// IGNORE_K1
+// For K1-specific behaviour, see changeFunctionParameterType5K1.kt
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

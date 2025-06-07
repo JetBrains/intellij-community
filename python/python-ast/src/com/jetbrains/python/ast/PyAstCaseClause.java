@@ -8,13 +8,11 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByClass;
 
 @ApiStatus.Experimental
 public interface PyAstCaseClause extends PyAstStatementPart {
-  @Nullable
-  default PyAstPattern getPattern() {
+  default @Nullable PyAstPattern getPattern() {
     return findChildByClass(this, PyAstPattern.class);
   }
 
-  @Nullable
-  default PyAstExpression getGuardCondition() {
+  default @Nullable PyAstExpression getGuardCondition() {
     return findChildByClass(this, PyAstExpression.class);
   }
 

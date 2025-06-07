@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaHomeFinderEel")
 
 package com.intellij.openapi.projectRoots.impl
@@ -9,10 +9,12 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
-import java.io.IOException
 import java.nio.file.Path
 
 private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.SystemInfoProvider() {
@@ -28,19 +30,19 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 
   override fun getPath(path: String, vararg more: String): Path =
-    eel.mapper.toNioPath(EelPath.Absolute.parse(eel.fs.pathOs, path, *more))
+    more.fold(EelPath.parse(path, eel.descriptor), EelPath::resolve).asNioPath()
 
   override fun getUserHome(): Path? = with(eel) {
-    mapper.toNioPath(fs.user.home)
+    fs.user.home.asNioPath()
   }
 
   override fun getFsRoots(): Collection<Path> = runBlockingMaybeCancellable {
     val paths = when (val fs = eel.fs) {
-      is EelFileSystemPosixApi -> listOf(EelPath.Absolute.build("/"))
+      is EelFileSystemPosixApi -> listOf(EelPath.build(listOf("/"), eel.descriptor))
       is EelFileSystemWindowsApi -> fs.getRootDirectories()
       else -> error(fs)
     }
-    paths.map(eel.mapper::toNioPath)
+    paths.map { it.asNioPath() }
   }
 
   override fun getPathSeparator(): String? =
@@ -52,7 +54,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 
   private val isCaseSensitive = service<ScopeService>().suspendingLazy {
     val testDir = eel.fs.user.home
-    val type = when (val stat = eel.fs.stat(testDir, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)) {
+    val type = when (val stat = eel.fs.stat(testDir).resolveAndFollow().eelIt()) {
       is EelResult.Ok -> stat.value.type
       is EelResult.Error -> error(stat)
     }
@@ -74,7 +76,8 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 }
 
-internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
+internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
+  val eel = descriptor.toEelApiBlocking()
   val systemInfoProvider = EelSystemInfoProvider(eel)
 
   val parentFinder = when (eel.platform) {
@@ -86,7 +89,9 @@ internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
         processRunner = { cmd ->
           runBlockingMaybeCancellable {
             // TODO Introduce Windows Registry access in EelApi
-            val process = eel.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(cmd.first()).args(cmd.drop(1)).build()).getOr {
+            val process = try {
+              eel.exec.spawnProcess(cmd.first()).args(cmd.drop(1)).eelIt()
+            } catch (_ : ExecuteProcessException) {
               // registry reading can fail, in this case we return no output just like `com.intellij.openapi.util.io.WindowsRegistryUtil.readRegistry`
               return@runBlockingMaybeCancellable ""
             }
@@ -94,7 +99,7 @@ internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
             if (result.exitCode != 0) {
               return@runBlockingMaybeCancellable ""
             }
-            result.stdout
+            result.stdoutString
           }
         }
       )
@@ -102,9 +107,11 @@ internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
     is EelPlatform.Darwin -> JavaHomeFinderMac(systemInfoProvider)
 
     is EelPlatform.Linux -> {
-      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.toMutableSet()
+      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.map {
+        EelPath.parse(it, descriptor).asNioPath().toString()
+      }.toMutableSet()
       val userHome = eel.fs.user.home
-      checkPaths.add(eel.mapper.toNioPath(userHome.resolve(EelPath.Relative.build(".jdks"))).toString())
+      checkPaths.add(userHome.resolve(".jdks").asNioPath().toString())
       JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(*checkPaths.toTypedArray())
     }
 

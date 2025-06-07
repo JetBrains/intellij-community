@@ -81,6 +81,11 @@ class KotlinULambdaExpression(
     }
 
     override fun asRenderString(): String {
+        val renderedAnnotations = uAnnotations.joinToString(
+            separator = " ",
+            postfix = if (uAnnotations.isNotEmpty()) " " else "", // @... {...
+            transform = UAnnotation::asRenderString
+        )
         val renderedValueParameters = if (valueParameters.isEmpty())
             ""
         else
@@ -88,6 +93,6 @@ class KotlinULambdaExpression(
         val expressions =
             (body as? UBlockExpression)?.expressions?.joinToString("\n") { it.asRenderString().withMargin } ?: body.asRenderString()
 
-        return "{ $renderedValueParameters\n$expressions\n}"
+        return "$renderedAnnotations{ $renderedValueParameters\n$expressions\n}"
     }
 }

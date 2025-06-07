@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.dir;
 
 import com.intellij.diff.DiffContext;
@@ -70,9 +56,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, settings);
 
     myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow() {
-      @NotNull
       @Override
-      public Disposable getDisposable() {
+      public @NotNull Disposable getDisposable() {
         return DirDiffViewer.this;
       }
 
@@ -88,9 +73,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     });
   }
 
-  @NotNull
   @Override
-  public FrameDiffTool.ToolbarComponents init() {
+  public @NotNull FrameDiffTool.ToolbarComponents init() {
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = Arrays.asList(myDirDiffPanel.getActions());
     components.statusPanel = myDirDiffPanel.extractFilterPanel();
@@ -102,15 +86,13 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     Disposer.dispose(myDirDiffPanel);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myDirDiffPanel.getTable();
   }
 
@@ -144,8 +126,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     return false;
   }
 
-  @NotNull
-  private static DiffElement createDiffElement(@NotNull DiffContent content) {
+  private static @NotNull DiffElement createDiffElement(@NotNull DiffContent content) {
     if (content instanceof EmptyContent) {
       return new DiffElement() {
         @Override
@@ -153,9 +134,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
           return "";
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return "Nothing";
         }
 

@@ -73,6 +73,7 @@ public class OutputEventQueueImpl implements OutputEventQueue {
     addEvent(new NodeEvent(TRACE_POINT, null, text));
   }
 
+  @Override
   public void setEnabled(boolean b) {
     myEnabled = b;
   }
@@ -91,6 +92,7 @@ public class OutputEventQueueImpl implements OutputEventQueue {
     }
   }
 
+  @Override
   public List<NodeEvent> getEvents() {
     try {
       return new ArrayList<>(myEvents);

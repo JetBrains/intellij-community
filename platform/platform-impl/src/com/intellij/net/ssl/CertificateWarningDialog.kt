@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -22,13 +21,13 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.net.ssl.CertificateProvider
 import com.intellij.util.net.ssl.CertificateWrapper
 import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.util.logging.logger
-import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point
@@ -40,8 +39,6 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JTextPane
 import javax.swing.JTree
-import javax.swing.event.TreeSelectionEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeSelectionModel
@@ -53,12 +50,14 @@ internal class CertificateWarningDialog(
   private val remoteHost: @NlsSafe String? = null,
   private val manager: X509ExtendedTrustManager,
   private val authType: String,
-  private val selectedCerts: MutableSet<X509Certificate>,
+  private val certificateProvider: CertificateProvider,
 ) : DialogWrapper(false) {
   private var expandedByButton = false
-  private var currentCertificate = CertificateWrapper(certificates.first())
-  private val certificateErrorsMap = getCertificateErrorsMap()
 
+  private val certificateErrorsMap = getCertificateErrorsMap()
+  private val hasUntrusted = certificateErrorsMap.entries.any { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
+  private var currentCertificate = CertificateWrapper(certificates.reversed().firstOrNull { certificateErrorsMap[it]!!.isNotEmpty() }
+                                                      ?: certificates.first())
 
   private val tree = createCertificateTree()
   private val errorColor = JBColor.namedColor("Label.errorForeground", JBColor.red)
@@ -89,10 +88,10 @@ internal class CertificateWarningDialog(
           certificates.forEach {
             val errors = certificateErrorsMap[it]!!
             when {
-              errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("label.certificate.self.signed")
-              errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("label.certificate.not.yet.valid")
-              errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("label.certificate.expired")
-              errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("label.certificate.signed.by.untrusted.authority")
+              errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("ssl.certificate.error.self.signed")
+              errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("ssl.certificate.error.not.yet.valid")
+              errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("ssl.certificate.error.expired")
+              errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("ssl.certificate.error.untrusted.authority")
               else -> null
             }?.let {
               error = it
@@ -101,7 +100,7 @@ internal class CertificateWarningDialog(
           }
         }
         icon(AllIcons.General.WarningDialog)
-        val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it) }
+        val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it, if (hasUntrusted) IdeBundle.message("ssl.certificate.warning.plural") else IdeBundle.message("ssl.certificate.warning.singular")) }
                         ?: IdeBundle.message("ssl.certificate.warning.default")
         text(HtmlChunk.text(errorText).bold().toString())
       }
@@ -125,9 +124,9 @@ internal class CertificateWarningDialog(
             expandedByButton = false
           }
           if (it && !isDetailsShown) {
-            setOKButtonText(IdeBundle.message("trust.certificate"))
+            setOKButtonText(IdeBundle.message("save.as.trusted.certificate"))
             isDetailsShown = true
-            isOKActionEnabled = selectedCerts.isNotEmpty()
+            isOKActionEnabled = true
             updateDetails()
           }
           pack()
@@ -147,8 +146,11 @@ internal class CertificateWarningDialog(
       detailsCollapsibleRow.expanded = true
     }
     else {
+      val certificate = currentCertificate.certificate
+      certificateProvider.selectedCertificate= certificate
+      certificateProvider.isChainRemainUnsafe = certificate != certificates.first() && certificates.subList(0, certificates.indexOf(certificate) - 1).any { certificateErrorsMap[it]!!.isNotEmpty() }
       super.doOKAction()
-      CertificateWarningStatisticsCollector.certificateAccepted(selectedCerts.count())
+      CertificateWarningStatisticsCollector.certificateAccepted()
     }
   }
 
@@ -158,17 +160,15 @@ internal class CertificateWarningDialog(
   }
 
   private fun createCertificateTree(): JTree {
-    val untrusted = certificateErrorsMap.entries.filter { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
     val certificatesTree =
-      if ((untrusted.isNotEmpty() && certificates.size > 1) || certificateErrorsMap.filter { entry -> entry.value.isNotEmpty() }.size > 1) {
+      if ((hasUntrusted && certificates.size > 1) || certificateErrorsMap.filter { entry -> entry.value.isNotEmpty() }.size > 1) {
         val root = CheckedTreeNode("root").apply { isChecked = false }
         var lastNode = root
         certificates.reversed().forEach {
-          val node = CheckedTreeNode(it).apply { isChecked = false }
+          val node = CheckedTreeNode(it).apply { isChecked = it == currentCertificate.certificate }
           lastNode.add(node)
           lastNode = node
         }
-        lastNode.apply { isChecked = true }
 
         @Suppress("HardCodedStringLiteral")
         val renderer = object : CheckboxTreeCellRenderer() {
@@ -182,13 +182,20 @@ internal class CertificateWarningDialog(
             textRenderer.append(textAndColor.first, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, textAndColor.second))
           }
         }
-        val checkboxTree = object : CheckboxTree(renderer, root, CheckPolicy(false, false, false, false)) {
+        val checkboxTree = object : CheckboxTree(renderer, root, CheckPolicy(false, false, false, false, true)) {
           override fun onNodeStateChanged(node: CheckedTreeNode?) {
             val userObject = node?.userObject as? X509Certificate ?: return
-            if (node.isChecked) selectedCerts.add(userObject)
-            else selectedCerts.remove(userObject)
+            if (node.isChecked) {
+              unselectOtherNodes(root, node)
+              currentCertificate = CertificateWrapper(userObject)
+              updateDetails()
+            }
+            else {
+              //prevent unselect a certificate
+              node.isChecked = true
+            }
             if (isDetailsShown) {
-              isOKActionEnabled = selectedCerts.isNotEmpty()
+              isOKActionEnabled = true
             }
           }
         }
@@ -226,14 +233,18 @@ internal class CertificateWarningDialog(
       RoundedLineBorder(JBColor.border(), 10),
       JBUI.Borders.empty(3)
     )
-    certificatesTree.addTreeSelectionListener(object : TreeSelectionListener {
-      override fun valueChanged(e: TreeSelectionEvent?) {
-        val lastPathComponent = e?.path?.lastPathComponent as? DefaultMutableTreeNode
-        (lastPathComponent?.userObject as? X509Certificate)?.let { currentCertificate = CertificateWrapper(it) }
-        updateDetails()
-      }
-    })
     return certificatesTree
+  }
+
+  private fun unselectOtherNodes(root: CheckedTreeNode, selectedNode: CheckedTreeNode) {
+    root.children().asSequence()
+      .filterIsInstance<CheckedTreeNode>()
+      .forEach { child ->
+        if (child != selectedNode && child.isChecked) {
+          child.isChecked = false
+        }
+        unselectOtherNodes(root = child, selectedNode = selectedNode)
+      }
   }
 
   @NlsSafe
@@ -265,46 +276,67 @@ internal class CertificateWarningDialog(
   private fun updateDetails() {
     val errors = certificateErrorsMap[currentCertificate.certificate] ?: emptyList()
     detailsPlaceholder.component = panel {
-      row {
-        label(IdeBundle.message("section.title.issued.to"))
-      }
-      indent {
-        addPrincipalData(currentCertificate.subjectFields, true)
-      }
+      panel {
+        customizeSpacingConfiguration(object : IntelliJSpacingConfiguration() {
+          override val verticalMediumGap: Int = 6
+          override val verticalSmallGap: Int = 2
+          override val verticalComponentGap: Int = 3
+          override val horizontalIndent: Int = 20
+        }) {
+          row {
+            label(IdeBundle.message("section.title.issued.to"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            addPrincipalData(currentCertificate.subjectFields, true)
+          }
 
-      row {
-        label(IdeBundle.message("section.title.issued.by"))
-      }
-      indent {
-        addPrincipalData(currentCertificate.issuerFields, false)
-      }
+          row {
+            label(IdeBundle.message("section.title.issued.by"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            addPrincipalData(currentCertificate.issuerFields, false)
+          }
 
-      row {
-        label(IdeBundle.message("section.title.validity.period"))
-      }
-      indent {
-        val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
-        row(IdeBundle.message("label.valid.from")) {
-          val notBefore = dateFormat.format(currentCertificate.notBefore)
-          cell(createColoredComponent(notBefore, IdeBundle.message("label.certificate.not.yet.valid"), errors.contains(CertificateError.NOT_YET_VALID)))
-        }
-        row(IdeBundle.message("label.valid.until")) {
-          val notAfter = dateFormat.format(currentCertificate.notAfter)
-          cell(createColoredComponent(notAfter, IdeBundle.message("label.certificate.expired"), errors.contains(CertificateError.EXPIRED)))
-        }
-      }
+          row {
+            label(IdeBundle.message("section.title.validity.period"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
+            row(IdeBundle.message("label.valid.from")) {
+              val notBefore = dateFormat.format(currentCertificate.notBefore)
+              val hasError = errors.contains(CertificateError.NOT_YET_VALID)
+              val text = if (hasError) "$notBefore (${IdeBundle.message("label.certificate.not.yet.valid")})" else "$notBefore"
+              text(text).apply {
+                if (hasError) {
+                  component.foreground = errorColor
+                }
+              }
+            }
+            row(IdeBundle.message("label.valid.until")) {
+              val notAfter = dateFormat.format(currentCertificate.notAfter)
+              val hasError = errors.contains(CertificateError.EXPIRED)
+              val text = if (hasError) "$notAfter (${IdeBundle.message("label.certificate.expired")})" else "$notAfter"
+              text(text).apply {
+                if (hasError) {
+                  component.foreground = errorColor
+                }
+              }
+            }
+          }
 
-      row {
-        label(IdeBundle.message("section.title.fingerprints"))
-      }
-      @Suppress("HardCodedStringLiteral")
-      indent {
-        row("SHA-256:") {
-          val pane = getTextPane(formatHex(currentCertificate.sha256Fingerprint))
-          cell(pane).align(AlignX.FILL)
-        }
-        row("SHA-1:") {
-          cell(getTextPane(formatHex(currentCertificate.sha1Fingerprint))).align(AlignX.FILL)
+          row {
+            label(IdeBundle.message("section.title.fingerprints"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          @Suppress("HardCodedStringLiteral")
+          indent {
+            row("SHA-256:") {
+              val pane = getTextPane(formatHex(currentCertificate.sha256Fingerprint))
+              cell(pane).align(AlignX.FILL)
+            }
+            row("SHA-1:") {
+              cell(getTextPane(formatHex(currentCertificate.sha1Fingerprint))).align(AlignX.FILL)
+            }
+          }
         }
       }
       row {
@@ -362,17 +394,6 @@ internal class CertificateWarningDialog(
         }
       }
     }
-  }
-
-  private fun createColoredComponent(mainText: @NlsContexts.Label String, errorText: @Nls String?, hasError: Boolean = true): JComponent {
-    val component = SimpleColoredComponent()
-    if (hasError && errorText != null) {
-      component.append("$mainText ($errorText)", SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, errorColor))
-    }
-    else {
-      component.append(mainText)
-    }
-    return component
   }
 
   fun formatHex(hex: String): String {
@@ -433,6 +454,7 @@ internal class CertificateWarningDialog(
         }
       }
     }
+    if (result.flatMap { it.value }.isEmpty()) result.put(certificates.first(), mutableListOf(CertificateError.UNTRUSTED_AUTHORITY))
     return result
   }
 }

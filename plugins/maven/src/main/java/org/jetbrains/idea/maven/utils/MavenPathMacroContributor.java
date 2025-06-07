@@ -7,7 +7,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * Maven home path depends on an environment where the project is located.
+ * On one hand, we have an application-wide macros in `path.macros.xml`. The data from these macros is inapplicable to non-local projects,
+ * such as WSL and Docker based. Here we decide the location by project.
+ */
 final class MavenPathMacroContributor implements PathMacroContributor {
+
   @Override
   public void registerPathMacros(@NotNull Map<String, String> macros, @NotNull Map<String, String> legacyMacros) {
     String repository = MavenUtil.resolveDefaultLocalRepository(null).toAbsolutePath().toString();

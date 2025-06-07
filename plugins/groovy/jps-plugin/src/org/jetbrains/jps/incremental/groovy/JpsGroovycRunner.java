@@ -7,9 +7,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
@@ -148,7 +148,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final Set<String> toCompilePaths = getPathsToCompile(toCompile);
 
     JpsSdk<JpsDummyElement> jdk = GroovyBuilder.getJdk(chunk);
-    int version = jdk != null ? JpsJavaSdkType.getJavaVersion(jdk) : JavaVersion.current().feature;
+    int version = jdk != null ? JpsJavaSdkType.getJavaVersion(jdk) : CurrentJavaVersion.currentJavaVersion().feature;
     boolean inProcess = shouldRunGroovycInProcess(version);
     boolean mayDependOnUtilJar = version >= 6;
     // Optimized classloader is in fact a UrlClassLoader that refers to jar archives in the SDK distribution
@@ -205,7 +205,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   private static boolean shouldRunGroovycInProcess(int jdkVersion) {
     String explicitProperty = System.getProperty(GROOVYC_IN_PROCESS);
     return explicitProperty != null ? "true".equals(explicitProperty)
-                                    : jdkVersion == JavaVersion.current().feature
+                                    : jdkVersion == CurrentJavaVersion.currentJavaVersion().feature
                                       || jdkVersion < 5; // our own jars require at least JDK 5
   }
 

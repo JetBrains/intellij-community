@@ -104,7 +104,8 @@ public final class AttributeList extends AbstractList<Attribute> implements Rand
    *
    * @param parent Element whose Attributes are to be held
    */
-  AttributeList(final Element parent) {
+  @ApiStatus.Internal
+  public AttributeList(final Element parent) {
     this.parent = parent;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -117,9 +117,8 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
     return decl;
   }
 
-  @NotNull
   @Override
-  public @IntentionName String getText(@NotNull PsiElement element) {
+  public @NotNull @IntentionName String getText(@NotNull PsiElement element) {
     GrVariableDeclaration decl = (GrVariableDeclaration)element;
     GrVariable[] variables = decl.getVariables();
     if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
@@ -133,9 +132,8 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
     return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

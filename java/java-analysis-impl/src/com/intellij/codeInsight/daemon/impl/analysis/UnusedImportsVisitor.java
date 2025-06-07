@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -16,6 +18,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -26,37 +29,42 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
-  @NotNull private final Project myProject;
-  private final PsiFile myFile;
-  @NotNull private final Document myDocument;
-  private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
+  private final @NotNull Project myProject;
+  private final PsiFile myPsiFile;
+  private final @NotNull Document myDocument;
+  private final @NotNull CodeInsightContext myContext;
+  private boolean requiresFix = false;
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
-  UnusedImportsVisitor(@NotNull PsiFile file, @NotNull Document document) throws ProcessCanceledException {
+  UnusedImportsVisitor(@NotNull PsiFile psiFile, @NotNull Document document) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myProject = file.getProject();
-    myFile = file;
+    myProject = psiFile.getProject();
+    myPsiFile = psiFile;
     myDocument = document;
-    myRefCountHolder = LocalRefUseInfo.forFile(file);
+    myRefCountHolder = LocalRefUseInfo.forFile(psiFile);
+    myContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportInspection.SHORT_NAME);
-    PsiJavaFile javaFile = ObjectUtils.tryCast(myFile, PsiJavaFile.class);
+    PsiJavaFile javaFile = ObjectUtils.tryCast(myPsiFile, PsiJavaFile.class);
     PsiImportList importList = javaFile == null ? null : javaFile.getImportList();
     if (unusedImportKey != null && isUnusedImportEnabled(unusedImportKey) && importList != null) {
       PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -69,17 +77,19 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     if (errorFound) {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
+      fileStatusMap.setErrorFoundFlag(myDocument, myContext, true);
     }
-    IntentionAction fix = myOptimizeImportsFix;
-    if (fix != null) {
-      OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
+    ModCommandAction fixNotOnFly = null;
+    if (requiresFix) {
+      ModCommandAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myPsiFile);
+      OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myPsiFile, fix);
+      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myPsiFile);
     }
     HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
-    if (misSortedKey != null && isToolEnabled(misSortedKey) && fix != null && importList != null) {
+    if (misSortedKey != null && isToolEnabled(misSortedKey) && fixNotOnFly != null && importList != null) {
       holder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
         .range(importList)
-        .registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
+        .registerFix(fixNotOnFly, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
         .create());
     }
   }
@@ -95,25 +105,24 @@ class UnusedImportsVisitor extends JavaElementVisitor {
   private boolean isUnusedImportEnabled(@NotNull HighlightDisplayKey unusedImportKey) {
     if (isToolEnabled(unusedImportKey)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-      if (provider instanceof UnusedImportProvider uip && uip.isUnusedImportEnabled(myFile)) return true;
+      if (provider instanceof UnusedImportProvider uip && uip.isUnusedImportEnabled(myPsiFile)) return true;
     }
     return false;
   }
 
   private boolean isToolEnabled(@NotNull HighlightDisplayKey displayKey) {
-    if (!(myFile instanceof PsiJavaFile)) {
+    if (!(myPsiFile instanceof PsiJavaFile)) {
       return false;
     }
-    InspectionProfile profile = getCurrentProfile(myFile);
-    return profile.isToolEnabled(displayKey, myFile) &&
-           HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
-           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
+    InspectionProfile profile = getCurrentProfile(myPsiFile);
+    return profile.isToolEnabled(displayKey, myPsiFile) &&
+           HighlightingLevelManager.getInstance(myProject).shouldInspect(myPsiFile) &&
+           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myPsiFile);
   }
 
-  @NotNull
-  private static InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
-    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
-    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
+  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile psiFile) {
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(psiFile);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
@@ -135,9 +144,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     }
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
-    if (entryIndex < myCurrentEntryIndex && myOptimizeImportsFix == null) {
+    if (entryIndex < myCurrentEntryIndex && !requiresFix) {
       // mis-sorted imports found
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+      requiresFix = true;
     }
     myCurrentEntryIndex = entryIndex;
   }
@@ -160,21 +169,34 @@ class UnusedImportsVisitor extends JavaElementVisitor {
         }
       }
     }
+    if (isRedundant && importStatement instanceof PsiImportModuleStatement moduleStatement &&
+        !JavaCodeStyleSettings.getInstance(javaFile).isDeleteUnusedModuleImports()) {
+      List<PsiImportModuleStatement> moduleStatements = ImportUtils.optimizeModuleImports(javaFile);
+      if (moduleStatements.contains(moduleStatement)) {
+        return false;
+      }
+    }
+    if (importStatement instanceof PsiImportModuleStatement moduleStatement) {
+      List<PsiImportModuleStatement> moduleStatements = ImportUtils.optimizeModuleImports(javaFile);
+      if (!moduleStatements.contains(moduleStatement)) {
+        return true;
+      }
+    }
     return isRedundant;
   }
 
   private void registerRedundantImport(@NotNull HighlightInfoHolder holder,
                                        @NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myPsiFile);
     Set<String> imports = virtualFile != null ? virtualFile.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
-    InspectionProfile profile = getCurrentProfile(myFile);
-    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myFile),
+    InspectionProfile profile = getCurrentProfile(myPsiFile);
+    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myPsiFile),
                                                 JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
-      new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(), key);
+      new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myPsiFile).getSeverity(), key);
 
     ProblemGroup problemGroup = new ExternalSourceProblemGroup() {
       @Override
@@ -197,8 +219,8 @@ class UnusedImportsVisitor extends JavaElementVisitor {
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
-    if (!predefinedImport && myOptimizeImportsFix == null) {
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+    if (!predefinedImport && !requiresFix) {
+      requiresFix = true;
     }
     addInfo(holder, builder);
   }

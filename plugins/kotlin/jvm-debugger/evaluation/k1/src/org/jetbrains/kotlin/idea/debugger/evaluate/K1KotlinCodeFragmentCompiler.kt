@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -18,9 +19,11 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
-import java.util.Collections
+import java.util.*
 
-class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+private class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+    override val compilerType: CompilerType = CompilerType.IR
+
     override fun compileCodeFragment(
       context: ExecutionContext,
       codeFragment: KtCodeFragment
@@ -28,6 +31,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         val debugProcess = context.debugProcess
 
         val compilerStrategy = IRCodeFragmentCompilingStrategy(codeFragment)
+        compilerStrategy.stats.origin = XEvaluationOrigin.getOrigin(context.evaluationContext)
         try {
             patchCodeFragment(context, codeFragment, compilerStrategy.stats)
         } catch (e: Exception) {
@@ -49,7 +53,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         logCompilation(codeFragment)
 
-        return createCompiledDataDescriptor(result)
+        return createCompiledDataDescriptor(result, canBeCached = true)
     }
 
     private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl, compilerStrategy: IRCodeFragmentCompilingStrategy): ErrorCheckingResult {
@@ -116,7 +120,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                     EvaluationCompilerResult.COMPILATION_FAILURE,
                     stats
                 )
-                evaluationException(DefaultErrorMessages.render(it))
+                throw IncorrectCodeFragmentException(DefaultErrorMessages.render(it))
             }
     }
 

@@ -25,6 +25,7 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -335,7 +336,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
     }
     else {
-      Long longArgument = evaluateLongConstant(argument);
+      Long longArgument = MagicConstantUtils.evaluateLongConstant(argument);
       if (longArgument == null) { return null; }
 
       // try to find ored flags
@@ -343,7 +344,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       List<PsiAnnotationMemberValue> flags = new ArrayList<>();
       for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
         if (value instanceof PsiExpression expression) {
-          Long constantValue = evaluateLongConstant(expression);
+          Long constantValue = MagicConstantUtils.evaluateLongConstant(expression);
           if (constantValue == null) {
             continue;
           }
@@ -358,7 +359,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (flags.size() > 1) {
           for (int i = flags.size() - 1; i >= 0; i--) {
             PsiAnnotationMemberValue flag = flags.get(i);
-            Long flagValue = evaluateLongConstant((PsiExpression)flag);
+            Long flagValue = MagicConstantUtils.evaluateLongConstant((PsiExpression)flag);
             if (flagValue != null && flagValue == 0) {
               // no sense in ORing with '0'
               flags.remove(i);
@@ -369,17 +370,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
           return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)));
         }
       }
-    }
-    return null;
-  }
-
-  private static Long evaluateLongConstant(@NotNull PsiExpression expression) {
-    Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
-    if (constantValue instanceof Long ||
-                 constantValue instanceof Integer ||
-                 constantValue instanceof Short ||
-                 constantValue instanceof Byte) {
-      return ((Number)constantValue).longValue();
     }
     return null;
   }
@@ -466,11 +456,8 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
 
   private static final Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");
   private static @NotNull PsiExpression getLiteralExpression(@NotNull PsiExpression context, @NotNull PsiManager manager, @NotNull String text) {
-    Map<String, PsiExpression> cache = LITERAL_EXPRESSION_CACHE.get(manager);
-    if (cache == null) {
-      cache = ContainerUtil.createConcurrentSoftValueMap();
-      cache = manager.putUserDataIfAbsent(LITERAL_EXPRESSION_CACHE, cache);
-    }
+    Map<String, PsiExpression> cache = ConcurrencyUtil.computeIfAbsent(manager, LITERAL_EXPRESSION_CACHE, () ->
+      ContainerUtil.createConcurrentSoftValueMap());
     PsiExpression expression = cache.get(text);
     if (expression == null) {
       expression = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(text, context);

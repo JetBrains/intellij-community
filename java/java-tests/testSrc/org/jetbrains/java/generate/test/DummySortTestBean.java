@@ -32,6 +32,7 @@ public class DummySortTestBean {
     private DummyTestBean bean;
 
 
+    @Override
     public String toString() {
         return "DummySortTestBean{" +
                 "age=" + age +

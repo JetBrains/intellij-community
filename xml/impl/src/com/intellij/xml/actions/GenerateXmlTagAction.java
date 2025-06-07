@@ -57,10 +57,10 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   private static final Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     try {
-      final XmlTag contextTag = getContextTag(editor, file);
+      final XmlTag contextTag = getContextTag(editor, psiFile);
       if (contextTag == null) {
         throw new CommonRefactoringUtil.RefactoringErrorHintException("Caret should be positioned inside a tag");
       }
@@ -69,7 +69,7 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        WriteCommandAction.writeCommandAction(project, file).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
+        WriteCommandAction.writeCommandAction(project, psiFile).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
           if (selected == null) return;
           XmlTag newTag = createTag(contextTag, selected);
 
@@ -79,7 +79,7 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
             Document document = editor.getDocument();
             document.insertString(offset, newTag.getText());
             PsiDocumentManager.getInstance(project).commitDocument(document);
-            newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
+            newTag = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset + 1), XmlTag.class, false);
           }
           else {
             newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
@@ -283,10 +283,10 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof XmlFile)) return false;
 
-    XmlTag contextTag = getContextTag(editor, file);
+    XmlTag contextTag = getContextTag(editor, psiFile);
     return contextTag != null && isInsideTagBody(contextTag, editor) && contextTag.getDescriptor() != null;
   }
 

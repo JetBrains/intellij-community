@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -29,8 +29,8 @@ public class ManifestBuilder {
 
   private static final Map<String, String> PACKAGING_PLUGINS = Map.of("jar", "maven-jar-plugin", "ejb", "maven-ejb-plugin", "ejb-client", "maven-ejb-plugin", "war", "maven-war-plugin", "ear", "maven-ear-plugin");
 
-  @NotNull private final MavenProject myMavenProject;
-  @Nullable private String myJdkVersion;
+  private final @NotNull MavenProject myMavenProject;
+  private @Nullable String myJdkVersion;
 
   public ManifestBuilder(@NotNull MavenProject mavenProject) {
     myMavenProject = mavenProject;
@@ -41,8 +41,7 @@ public class ManifestBuilder {
     return this;
   }
 
-  @NotNull
-  public java.util.jar.Manifest build() throws ManifestBuilderException {
+  public @NotNull java.util.jar.Manifest build() throws ManifestBuilderException {
     try {
       Element mavenPackagingPluginConfiguration = getMavenPackagingPluginConfiguration(myMavenProject);
       final Element mavenArchiveConfiguration =
@@ -76,8 +75,7 @@ public class ManifestBuilder {
     }
   }
 
-  @NotNull
-  public static String getClasspath(@NotNull MavenProject mavenProject) {
+  public static @NotNull String getClasspath(@NotNull MavenProject mavenProject) {
     Element mavenPackagingPluginConfiguration = getMavenPackagingPluginConfiguration(mavenProject);
     final Element mavenArchiveConfiguration =
       mavenPackagingPluginConfiguration != null ? mavenPackagingPluginConfiguration.getChild("archive") : null;
@@ -86,17 +84,15 @@ public class ManifestBuilder {
     return manifestImporter.getClasspath(mavenProject, manifestConfiguration);
   }
 
-  @NotNull
-  public static String getClasspathPrefix(@Nullable Element manifestConfiguration) {
+  public static @NotNull String getClasspathPrefix(@Nullable Element manifestConfiguration) {
     String classpathPrefix = MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "classpathPrefix", "").replaceAll("\\\\", "/");
-    if (classpathPrefix.length() != 0 && !classpathPrefix.endsWith("/")) {
+    if (!classpathPrefix.isEmpty() && !classpathPrefix.endsWith("/")) {
       classpathPrefix += "/";
     }
     return classpathPrefix;
   }
 
-  @Nullable
-  private static Element getMavenPackagingPluginConfiguration(@NotNull MavenProject mavenProject) {
+  private static @Nullable Element getMavenPackagingPluginConfiguration(@NotNull MavenProject mavenProject) {
     Element mavenPackagingPluginConfiguration = null;
     final String packaging = mavenProject.getPackaging();
     if (StringUtil.isEmpty(packaging)) {
@@ -147,8 +143,7 @@ public class ManifestBuilder {
     }
   }
 
-  @NotNull
-  private Manifest getDefaultManifest(@NotNull Map<String, String> entries) throws ManifestException {
+  private @NotNull Manifest getDefaultManifest(@NotNull Map<String, String> entries) throws ManifestException {
     Manifest finalManifest = new Manifest();
     addManifestAttribute(finalManifest, entries, "Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
     addManifestAttribute(finalManifest, entries, "Built-By", System.getProperty("user.name"));
@@ -176,8 +171,7 @@ public class ManifestBuilder {
     }
   }
 
-  @Nullable
-  private Manifest getUserSuppliedManifest(@Nullable Element mavenArchiveConfiguration) {
+  private @Nullable Manifest getUserSuppliedManifest(@Nullable Element mavenArchiveConfiguration) {
     String manifestPath = MavenJDOMUtil.findChildValueByPath(mavenArchiveConfiguration, "manifestFile");
     if (manifestPath != null) {
       Path manifestFile = Path.of(manifestPath);
@@ -195,10 +189,9 @@ public class ManifestBuilder {
     return null;
   }
 
-  @NotNull
-  private static Manifest getConfiguredManifest(@NotNull MavenProject mavenProject,
-                                                @Nullable Element manifestConfiguration,
-                                                @NotNull Map<String, String> entries) throws ManifestException {
+  private static @NotNull Manifest getConfiguredManifest(@NotNull MavenProject mavenProject,
+                                                         @Nullable Element manifestConfiguration,
+                                                         @NotNull Map<String, String> entries) throws ManifestException {
     final Manifest manifest = new Manifest();
 
     boolean isAddDefaultSpecificationEntries =

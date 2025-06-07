@@ -16,14 +16,14 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiFunctionalExpression;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.java.IJavaElementType;
 
 public class FunctionalExpressionStub<T extends PsiFunctionalExpression> extends StubBase<T> {
   private final String myPresentableText;
 
-  protected FunctionalExpressionStub(StubElement parent, IStubElementType elementType, String presentableTextRef) {
+  public FunctionalExpressionStub(StubElement parent, IJavaElementType elementType, String presentableTextRef) {
     super(parent, elementType);
     myPresentableText = presentableTextRef;
   }

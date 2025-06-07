@@ -5,16 +5,18 @@
 4(5) READ ACCESS: isinstance
 5(6) READ ACCESS: s
 6(7) READ ACCESS: basestring
-7(8,14) element: PyCallExpression: isinstance
-8(9) element: PyStatementList. Condition: (isinstance(s, basestring)):true
-9(10) ASSERTTYPE ACCESS: s
-10(11) element: PyAssignmentStatement
-11(12) READ ACCESS: s
-12(13) element: PyCallExpression: s.split
-13(19) WRITE ACCESS: s2
-14(15) element: PyStatementList. Condition: (isinstance(s, basestring)):false
-15(16) ASSERTTYPE ACCESS: s
-16(17) element: PyAssignmentStatement
-17(18) READ ACCESS: s
-18(19) WRITE ACCESS: x
-19() element: null
+7(8,10) element: PyCallExpression: isinstance
+8(9) element: null. Condition: (isinstance(s, basestring)):false
+9(17) ASSERTTYPE ACCESS: s
+10(11) element: null. Condition: (isinstance(s, basestring)):true
+11(12) ASSERTTYPE ACCESS: s
+12(13) element: PyStatementList
+13(14) element: PyAssignmentStatement
+14(15) READ ACCESS: s
+15(16) element: PyCallExpression: s.split
+16(21) WRITE ACCESS: s2
+17(18) element: PyStatementList
+18(19) element: PyAssignmentStatement
+19(20) READ ACCESS: s
+20(21) WRITE ACCESS: x
+21() element: null

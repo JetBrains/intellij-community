@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -37,9 +37,8 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     return (ExternalSystemNode)getParent();
   }
 
-  @NotNull
   @Override
-  protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     setIdeGrouping(null);
     final List<? extends ExternalSystemNode<?>> children = super.doBuildChildren();
     final List<ExternalSystemNode<?>> visibleChildren = ContainerUtil.filter(children, node -> node.isVisible());
@@ -86,8 +85,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     return desc.toString();
   }
 
-  @Nullable
-  public String getIdeGrouping() {
+  public @Nullable String getIdeGrouping() {
     ProjectData data = getData();
     if (data == null) return null;
     return data.getIdeGrouping();
@@ -101,9 +99,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return "ExternalSystemView.ProjectMenu";
   }
 

@@ -14,9 +14,9 @@ import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
 internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
   ApplicationBundle.message("group.code.folding"), "reference.settingsdialog.IDE.editor.code.folding"),
@@ -41,8 +41,8 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
         if (ExperimentalUI.isNewUI()) {
           comboBox(
             listOf(false, true),
-            renderer = SimpleListCellRenderer.create { label, value, _ ->
-              label.text = if (value) ApplicationBundle.message("checkbox.show.code.folding.outline.on.hover")
+            renderer = textListCellRenderer {
+              if (it == true) ApplicationBundle.message("checkbox.show.code.folding.outline.on.hover")
               else ApplicationBundle.message("checkbox.show.code.folding.outline.always")
             }
           ).bindItem({ settings.isFoldingOutlineShownOnlyOnHover }, { settings.isFoldingOutlineShownOnlyOnHover = it!! })

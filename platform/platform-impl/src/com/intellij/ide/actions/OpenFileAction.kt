@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.MultipleFileOpener
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.*
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -27,6 +29,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,6 +39,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
+import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,16 +75,12 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
-    val descriptor =
-      if (showFiles) ProjectOrFileChooserDescriptor()
-      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
     var toSelect: VirtualFile? = null
     val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultProjectDirectory.isNotEmpty()) {
       toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
+    val descriptor = createFileChooserDescriptor(project, toSelect)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
       for (file in files) {
         if (!descriptor.isFileSelectable(file)) {
@@ -90,11 +90,26 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         }
       }
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        for (file in files) {
-          doOpenFile(project, file)
+        if (!MultipleFileOpener.openFiles(files, project)) {
+          for (file in files) {
+            doOpenFile(project, file)
+          }
         }
       }
     }
+  }
+
+  protected open fun createFileChooserDescriptor(
+    project: Project?,
+    fileToSelect: VirtualFile?
+  ): FileChooserDescriptor {
+    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
+    val descriptor =
+      if (showFiles) ProjectOrFileChooserDescriptor()
+      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, fileToSelect == null && showFiles)
+
+    return descriptor
   }
 
   @Suppress("unused")
@@ -147,11 +162,14 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     override fun isChooseMultiple() = true
   }
 
-  private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+  protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
       @Suppress("TestOnlyProblems")
-      ProjectUtil.openExistingDir(file, project)
+      val openedProject = ProjectUtil.openExistingDir(file, project)
+      if (openedProject != null && Registry.`is`("ide.create.project.root.entity")) {
+        registerProjectRoot(openedProject, virtualFile.toNioPath())
+      }
       return
     }
 
@@ -172,8 +190,11 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
 
     LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
     readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
-    ?: FileTypeChooser.associateFileType(virtualFile.name)
+    ?: withContext(Dispatchers.EDT) {
+      FileTypeChooser.associateFileType(virtualFile.name)
+    }
     ?: return
+
     if (project == null || project.isDefault) {
       PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
     }

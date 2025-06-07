@@ -311,8 +311,7 @@ public class DelombokHandler {
     }
   }
 
-  @NotNull
-  private static String getTypeParameterAsString(@NotNull PsiTypeParameter typeParameter) {
+  private static @NotNull String getTypeParameterAsString(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] referencedTypes = typeParameter.getExtendsList().getReferencedTypes();
     String extendsText = "";
     if (referencedTypes.length > 0) {
@@ -322,8 +321,7 @@ public class DelombokHandler {
     return typeParameter.getName() + extendsText;
   }
 
-  @NotNull
-  private static String getTypeWithParameter(@NotNull PsiClassType psiClassType) {
+  private static @NotNull String getTypeWithParameter(@NotNull PsiClassType psiClassType) {
     if (psiClassType instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)psiClassType).getReference().getText();
     }

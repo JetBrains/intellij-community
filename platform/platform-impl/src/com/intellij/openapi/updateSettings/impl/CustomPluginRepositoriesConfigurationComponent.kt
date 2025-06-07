@@ -2,19 +2,20 @@
 @file:JvmName("UpdateSettingsProviderHelper")
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 
 
 internal class ConfigurationScriptPluginRepositoriesProvider : UpdateSettingsProvider {
   override fun getPluginRepositories(): List<String> {
     return getOpenedProjects()
-      .filter { it.isTrusted() }
+      .filter { TrustedProjects.isProjectTrusted(it) }
       .flatMap { project ->
         project.service<CustomPluginRepositoriesConfigurationComponent>().repositories
       }
@@ -29,7 +30,8 @@ internal class CustomPluginRepositoriesConfigurationComponent(val project: Proje
     get() = state.repositories
 }
 
+@ApiStatus.Internal
 class PluginsConfiguration : BaseState() {
   @get:XCollection
-  val repositories by list<String>()
+  val repositories: MutableList<String> by list<String>()
 }

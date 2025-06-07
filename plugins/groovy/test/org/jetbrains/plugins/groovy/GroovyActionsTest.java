@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -143,6 +144,12 @@ this.allOptions = [:];
 """);
   }
 
+  private void assertEditorTextContains(String s) {
+    if (!myFixture.getEditor().getDocument().getText().contains(s)) {
+      fail("Missing '" + s + "' in editor document text: " + myFixture.getEditor().getDocument().getText());
+    }
+  }
+
   public void test_hippie_completion_in_groovydoc() {
     String text = """
       class A {
@@ -155,7 +162,7 @@ this.allOptions = [:];
       """;
     myFixture.configureByText("a.groovy", text);
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
-    assert myFixture.getEditor().getDocument().getText().contains("** longName\n");
+    assertEditorTextContains("** longName\n");
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
     myFixture.checkResult(text);
   }
@@ -168,13 +175,13 @@ this.allOptions = [:];
         }
       ]""");
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
-    assert myFixture.getEditor().getDocument().getText().contains(" hello-world\n");
+    assertEditorTextContains(" hello-world\n");
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
-    assert myFixture.getEditor().getDocument().getText().contains(" helloWorld\n");
+    assertEditorTextContains(" helloWorld\n");
 
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf(" f") + 2);
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
-    assert myFixture.getEditor().getDocument().getText().contains(" foo\n");
+    assertEditorTextContains(" foo\n");
   }
 
   public void testSWforMemberWithDoc() {

@@ -18,6 +18,10 @@ internal class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspecti
 
   override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 
+  override fun shouldBeInvokedAlongsideActivityTracking(): Boolean {
+    return true
+  }
+
   override fun isApplicable(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext): Boolean =
     !ApplicationManager.getApplication().isUnitTestMode
 

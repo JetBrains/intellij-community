@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.restructuredtext` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+
+jvm_resources(
+  name = "restructuredtext_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "restructuredtext_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_provided_library(
+  name = "lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "execution-impl_provided",
+  lib = "//platform/execution-impl"
+)
+
+jvm_provided_library(
+  name = "core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "spellchecker_provided",
+  lib = "//spellchecker"
+)
+
+jvm_library(
+  name = "restructuredtext",
+  module_name = "intellij.restructuredtext",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "@lib//:guava",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
+    "@lib//:jsoup",
+    "//platform/util/jdom",
+    "@lib//:jcef",
+    "//platform/indexing-api:indexing",
+    ":lang-impl_provided",
+    ":execution-impl_provided",
+    ":core-ui_provided",
+    ":spellchecker_provided",
+  ],
+  runtime_deps = [":restructuredtext_resources"]
+)
+### auto-generated section `build intellij.restructuredtext` end

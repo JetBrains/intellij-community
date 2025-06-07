@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDescriptor, GradleResourcesTarget> {
+public final class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDescriptor, GradleResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(GradleResourcesBuilder.class);
 
   public GradleResourcesBuilder() {
@@ -35,10 +35,10 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
   }
 
   @Override
-  public void build(@NotNull final GradleResourcesTarget target,
-                    @NotNull final DirtyFilesHolder<GradleResourceRootDescriptor, GradleResourcesTarget> holder,
-                    @NotNull final BuildOutputConsumer outputConsumer,
-                    @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public void build(final @NotNull GradleResourcesTarget target,
+                    final @NotNull DirtyFilesHolder<GradleResourceRootDescriptor, GradleResourcesTarget> holder,
+                    final @NotNull BuildOutputConsumer outputConsumer,
+                    final @NotNull CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
     final GradleModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
@@ -115,7 +115,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
         fileProcessor.copyFile(file, fileRef, rd.getConfiguration(), context, FileFilters.EVERYTHING);
         outputConsumer.registerOutputFile(fileRef.get(), Collections.singleton(file.getPath()));
 
-        if (context.getCancelStatus().isCanceled()) return;
+        if (context.isCanceled()) return;
       }
     }
 
@@ -124,8 +124,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return GradleJpsBundle.message("gradle.resources.compiler");
   }
 }

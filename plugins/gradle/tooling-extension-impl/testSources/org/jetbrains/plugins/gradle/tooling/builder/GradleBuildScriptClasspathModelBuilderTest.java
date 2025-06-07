@@ -27,7 +27,7 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
 
   @Test
   public void testModelBuildScriptClasspathBuilder() {
-    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(false)
+    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(gradleVersion, false)
       .include("moduleWithoutAdditionalClasspath")
       .include("moduleWithAdditionalClasspath")
       .include("baseModule")

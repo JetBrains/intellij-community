@@ -4,6 +4,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode;
@@ -67,6 +68,7 @@ final class LambdaIndy {
    * @param valueSupplier function to create new values by type
    * @return list of lambda argument values
    */
+  @Unmodifiable
   List<BasicValue> getLambdaMethodArguments(List<? extends BasicValue> captured, Function<? super Type, ? extends BasicValue> valueSupplier) {
     // Lambda runtime representation args consist of captured values and invocation values
     // E.g.:
@@ -76,6 +78,7 @@ final class LambdaIndy {
     return ContainerUtil.concat(captured, ContainerUtil.map(getFunctionalMethodType().getArgumentTypes(), valueSupplier));
   }
 
+  @Override
   public String toString() {
     return "Lambda [" + myMethod.methodName + "]: " + StringUtil.getShortName(myFunctionalInterfaceType.getClassName());
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -19,7 +20,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class EAPUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 8);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
   private static final StringEventField METADATA = EventFields.StringValidatedByRegexpReference("metadata", "license_metadata");
@@ -56,6 +57,9 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
             result.add(newLicencingMetric(LicenceType.license, facade));
           }
+          else if (!isLicenseRequired()) {
+            result.add(newLicencingMetric(LicenceType.noLicenseNeeded, facade));
+          }
         }
         return result;
       }
@@ -89,7 +93,11 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     return LICENSING.metric(data);
   }
 
-  private enum LicenceType {evaluation, license}
+  public static boolean isLicenseRequired() {
+    return !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
+  }
+
+  private enum LicenceType {evaluation, license, noLicenseNeeded}
 
   private enum BuildType {eap, release}
 }

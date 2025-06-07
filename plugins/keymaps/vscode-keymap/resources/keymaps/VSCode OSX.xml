@@ -354,7 +354,6 @@
     <action id="GotoSuperMethod" />
     <action id="GotoSymbol">
         <keyboard-shortcut first-keystroke="meta t" />
-        <keyboard-shortcut first-keystroke="meta shift o"/>
     </action>
     <action id="GotoTest" />
     <action id="GotoTypeDeclaration">

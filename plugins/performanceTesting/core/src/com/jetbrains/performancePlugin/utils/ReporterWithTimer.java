@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.utils;
 
 import com.intellij.notification.Notification;
@@ -46,8 +47,7 @@ public class ReporterWithTimer implements PlaybackCommandReporter {
       });
   }
 
-  @NotNull
-  private static Notification getDelayNotification(long totalTime, long averageDelay, long maxDelay) {
+  private static @NotNull Notification getDelayNotification(long totalTime, long averageDelay, long maxDelay) {
     return new Notification(PlaybackRunnerExtended.NOTIFICATION_GROUP,
                             PerformanceTestingBundle.message("delay.notification.title"),
                             PerformanceTestingBundle.message("delay.notification.message", totalTime, averageDelay, maxDelay),

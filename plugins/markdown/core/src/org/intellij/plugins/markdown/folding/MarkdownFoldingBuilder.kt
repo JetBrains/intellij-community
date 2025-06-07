@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.siblings
@@ -32,7 +33,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     if (root.language !== root.containingFile.viewProvider.baseLanguage) {
       return
     }
-    root.accept(object: MarkdownElementVisitor() {
+    root.accept(object: MarkdownElementVisitor(), PsiRecursiveVisitor {
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
         if (element.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER)) {

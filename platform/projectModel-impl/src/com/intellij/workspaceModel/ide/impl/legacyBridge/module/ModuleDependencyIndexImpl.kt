@@ -39,7 +39,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
+open class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
@@ -62,11 +62,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
-  
+
+  private val workspaceModel = project.workspaceModel
   private val libraryTablesListener = LibraryTablesListener()
   private val jdkChangeListener = JdkChangeListener()
   private val rootSetChangeListener = ReferencedRootSetChangeListener()
-  
+
   init {
     if (!project.isDefault) {
       val messageBusConnection = project.messageBus.connect(this)
@@ -119,6 +120,10 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   override fun hasDependencyOn(sdk: Sdk): Boolean {
+    return jdkChangeListener.hasDependencyOn(sdk)
+  }
+
+  override fun hasDependencyOn(sdk: SdkId): Boolean {
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
@@ -194,7 +199,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   override fun dispose() {
     if (project.isDefault) return
-    
+
     //there is no need to send events since the project will be disposed anyway
     libraryTablesListener.unsubscribe(false)
     jdkChangeListener.unsubscribe(false)
@@ -285,7 +290,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    fun hasDependencyOn(libraryId: LibraryId) = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
+    fun hasDependencyOn(libraryId: LibraryId) = workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
       ThreadingAssertions.assertWriteAccess()
@@ -298,7 +303,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
         // We are allowed to get all modules and then update the project model because we are in a write action
         //   However, if the write action has to be removed from here, this all has to be done in `WorkspaceModel.update` for consistency
-        val affectedModules = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
+        val affectedModules = workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
 
         if (affectedModules.any()) {
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
@@ -483,12 +488,20 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun hasDependencyOn(jdk: Sdk): Boolean {
-      return sdkDependencies.get(SdkDependency(SdkId(jdk.name, jdk.sdkType.name))).isNotEmpty()
-             || isProjectSdk(jdk) && hasProjectSdkDependency()
+      return hasDependencyOn(SdkId(jdk.name, jdk.sdkType.name))
     }
 
-    private fun isProjectSdk(jdk: Sdk) =
-      jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
+    fun hasDependencyOn(sdk: SdkId): Boolean {
+      return sdkDependencies.get(SdkDependency(sdk)).isNotEmpty()
+             || isProjectSdk(sdk) && (hasProjectSdkDependency() || watchedSdks.isEmpty())
+    }
+
+    private fun isProjectSdk(jdk: Sdk) = isProjectSdk(jdk.name, jdk.sdkType.name)
+
+    private fun isProjectSdk(sdkId: SdkId) = isProjectSdk(sdkId.name, sdkId.type)
+
+    private fun isProjectSdk(sdkName: String, sdkType: String) =
+      sdkName == projectRootManager.projectSdkName && sdkType == projectRootManager.projectSdkTypeName
 
     fun unsubscribe(fireEvents: Boolean) {
       watchedSdks.forEach { sdk ->

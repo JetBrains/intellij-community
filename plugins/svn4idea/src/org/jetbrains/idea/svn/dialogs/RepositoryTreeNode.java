@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -24,12 +24,12 @@ import java.util.List;
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private TreeNode myParentNode;
-  @NotNull private final List<TreeNode> myChildren;
+  private final @NotNull List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
   private final Url myURL;
   private final Object myUserObject;
 
-  @NotNull private final NodeLoadState myLoadState;
+  private final @NotNull NodeLoadState myLoadState;
   private NodeLoadState myChildrenLoadState;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode,
@@ -94,13 +94,13 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     reload(removeCurrentChildren ? myModel.getSelectionKeepingExpander() : myModel.getLazyLoadingExpander(), removeCurrentChildren);
   }
 
-  @Nullable
-  public TreeNode getNextChildByKey(final String key, final boolean isFolder) {
+  public @Nullable TreeNode getNextChildByKey(final String key, final boolean isFolder) {
     final ByKeySelectedSearcher searcher = (isFolder) ? new FolderByKeySelectedSearcher(key, myChildren) :
                                                  new FileByKeySelectedSearcher(key, myChildren);
     return searcher.getNextSelectedByKey();
   }
 
+  @Override
   public String toString() {
     if (myParentNode instanceof RepositoryTreeRootNode) {
       return myURL.toString();
@@ -138,8 +138,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myURL;
   }
 
-  @Nullable
-  public DirectoryEntry getSVNDirEntry() {
+  public @Nullable DirectoryEntry getSVNDirEntry() {
     return myUserObject instanceof DirectoryEntry ? (DirectoryEntry)myUserObject : null;
   }
 
@@ -155,13 +154,11 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return ! (myUserObject instanceof DirectoryEntry);
   }
 
-  @NotNull
-  public List<TreeNode> getAllAlreadyLoadedChildren() {
+  public @NotNull List<TreeNode> getAllAlreadyLoadedChildren() {
     return new ArrayList<>(myChildren);
   }
 
-  @NotNull
-  public List<RepositoryTreeNode> getAlreadyLoadedChildren() {
+  public @NotNull List<RepositoryTreeNode> getAlreadyLoadedChildren() {
     return ContainerUtil.filterIsInstance(myChildren, RepositoryTreeNode.class);
   }
 
@@ -222,8 +219,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return NodeLoadState.CACHED.equals(myLoadState);
   }
 
-  @Nullable
-  public RepositoryTreeNode getNodeWithSamePathUnderModelRoot() {
+  public @Nullable RepositoryTreeNode getNodeWithSamePathUnderModelRoot() {
     return myModel.findByUrl(this);
   }
 
@@ -237,8 +233,8 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   private static final class SubTreeWalker {
 
-    @NotNull private final RepositoryTreeNode myNode;
-    @NotNull private final NotNullFunction<RepositoryTreeNode, Object> myFunction;
+    private final @NotNull RepositoryTreeNode myNode;
+    private final @NotNull NotNullFunction<RepositoryTreeNode, Object> myFunction;
 
     private SubTreeWalker(@NotNull RepositoryTreeNode node, @NotNull NotNullFunction<RepositoryTreeNode, Object> function) {
       myNode = node;

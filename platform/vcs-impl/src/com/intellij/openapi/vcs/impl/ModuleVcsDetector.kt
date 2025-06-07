@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
@@ -13,10 +14,17 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 
+private const val INITIAL_DETECTION_KEY = "ModuleVcsDetector.initialDetectionPerformed"
+
+@Internal
 @Service(Service.Level.PROJECT)
-internal class ModuleVcsDetector(private val project: Project, private val coroutineScope: CoroutineScope) {
+class ModuleVcsDetector(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val queue = MergingUpdateQueue(
     name = "ModuleVcsDetector",
     mergingTimeSpan = 1000,
@@ -30,17 +38,38 @@ internal class ModuleVcsDetector(private val project: Project, private val corou
     it.setRestartTimerOnAdd(true)
   }
 
+  private val initialDetectionDone = CompletableDeferred<Unit>(parent = coroutineScope.coroutineContext[Job])
+
   private val dirtyContentRoots = LinkedHashSet<VirtualFile>()
 
   private suspend fun getVcsManager(): ProjectLevelVcsManagerImpl {
     return project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerImpl
   }
 
-  private suspend fun startDetection() {
+  /**
+   * Returns 'true' during initial project setup, i.e.:
+   * * Project was not reopened a second time ([INITIAL_DETECTION_KEY])
+   * * There are no configured mappings
+   */
+  @VisibleForTesting
+  fun needInitialDetection(props: PropertiesComponent, vcsManager: ProjectLevelVcsManager): Boolean {
+    return !props.getBoolean(INITIAL_DETECTION_KEY) && !vcsManager.hasAnyMappings() && VcsUtil.shouldDetectVcsMappingsFor(project);
+  }
+
+  suspend fun awaitInitialDetection() {
+    val props = project.serviceAsync<PropertiesComponent>()
+    val vcsManager = getVcsManager()
+    val willRun = needInitialDetection(props, vcsManager)
+    if (!willRun) return
+    initialDetectionDone.await()
+  }
+
+  private suspend fun startInitialDetection() {
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
 
     val vcsManager = getVcsManager()
-    if (vcsManager.needAutodetectMappings() && vcsManager.haveDefaultMapping() == null && VcsUtil.shouldDetectVcsMappingsFor(project)) {
+    val props = project.serviceAsync<PropertiesComponent>()
+    if (needInitialDetection(props, vcsManager)) {
       queue.queue(object : Update("initial scan") {
         override fun run() = throw UnsupportedOperationException("Sync execution is not supported")
 
@@ -48,6 +77,8 @@ internal class ModuleVcsDetector(private val project: Project, private val corou
           val contentRoots = project.serviceAsync<DefaultVcsRootPolicy>().defaultVcsRoots
           MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectDefaultRoots - contentRoots", contentRoots)
           autoDetectForContentRoots(contentRoots = contentRoots, isInitialDetection = true, vcsManager = vcsManager)
+          props.updateValue(INITIAL_DETECTION_KEY, true)
+          initialDetectionDone.complete(Unit)
         }
       })
     }
@@ -173,7 +204,7 @@ internal class ModuleVcsDetector(private val project: Project, private val corou
       get() = VcsInitObject.MAPPINGS.order + 10
 
     override suspend fun execute(project: Project) {
-      project.serviceAsync<ModuleVcsDetector>().startDetection()
+      project.serviceAsync<ModuleVcsDetector>().startInitialDetection()
     }
   }
 }

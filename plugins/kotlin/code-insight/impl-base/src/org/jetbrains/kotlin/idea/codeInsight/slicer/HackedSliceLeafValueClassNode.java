@@ -15,8 +15,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public class HackedSliceLeafValueClassNode extends SliceLeafValueRootNode {
-  @NlsSafe
-  private final String myClassName;
+  private final @NlsSafe String myClassName;
 
   HackedSliceLeafValueClassNode(@NotNull Project project, @NotNull SliceNode root, @NotNull String className) {
     super(project,

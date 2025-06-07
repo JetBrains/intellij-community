@@ -45,13 +45,8 @@ internal fun createClientIdGutterPopupPanel(project: Project, clientIds: List<Cl
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
         val dataContext = DataManager.getInstance().getDataContext(label)
         val actionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.EDITOR_GUTTER, dataContext)
-        if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent)
-          return true
-        }
-        else {
-          return false
-        }
+        val result = ActionUtil.performAction(action, actionEvent)
+        return !result.isIgnored
       }
     }.installOn(label)
   }

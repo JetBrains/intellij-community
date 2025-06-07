@@ -1,6 +1,7 @@
 package com.intellij.notebooks.ui
 
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.observable.properties.ObservableProperty
 import javax.swing.JPanel
 import javax.swing.plaf.PanelUI
 
@@ -23,4 +24,19 @@ open class SteadyUIPanel(private val steadyUi: PanelUI) : JPanel() {
   }
 }
 
-val isFoldingEnabledKey = Key.create<Boolean>("jupyter.editor.folding.cells")
+fun <T> ObservableProperty<T>.bind(parentDisposable: Disposable, setter: (T) -> Unit) {
+  setter(get())
+  afterDistinctChange(parentDisposable) {
+    setter(it)
+  }
+}
+
+fun <T> ObservableProperty<T>.afterDistinctChange(parentDisposable: Disposable, setter: (T) -> Unit) {
+  var prevValue: T? = null
+  afterChange(parentDisposable) {
+    if (prevValue == it)
+      return@afterChange
+    prevValue = it
+    setter(it)
+  }
+}

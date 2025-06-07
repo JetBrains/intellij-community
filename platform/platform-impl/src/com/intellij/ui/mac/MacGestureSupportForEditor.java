@@ -28,8 +28,11 @@ public final class MacGestureSupportForEditor {
         InputEvent inputEvent = new ForceTouchEvent(component, e);
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(()-> {
           if (listener != null) listener.eventDispatched(inputEvent);
-          IdeEventQueue.getInstance().getMouseEventDispatcher().processEvent(
-            inputEvent, 0, ActionPlaces.FORCE_TOUCH, new PressureShortcut(e.getStage()), component, false);
+          IdeEventQueue.getInstance().getThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+            IdeEventQueue.getInstance().getMouseEventDispatcher().processEvent(
+              inputEvent, 0, ActionPlaces.FORCE_TOUCH, new PressureShortcut(e.getStage()), component, false);
+            return null;
+          });
         });
       }
     });

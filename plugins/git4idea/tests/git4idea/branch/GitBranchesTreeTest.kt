@@ -7,18 +7,14 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.FilteringSpeedSearch
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ThreeState
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.dashboard.BranchInfo
-import git4idea.ui.branch.dashboard.BranchNodeDescriptor
-import git4idea.ui.branch.dashboard.BranchTreeNode
-import git4idea.ui.branch.dashboard.FilteringBranchesTreeBase
-import git4idea.ui.branch.dashboard.RefsCollection
-import git4idea.ui.branch.dashboard.TagInfo
+import git4idea.ui.branch.dashboard.*
 import junit.framework.TestCase.assertEquals
 
 abstract class GitBranchesTreeTest: LightPlatformTestCase() {
@@ -28,8 +24,23 @@ abstract class GitBranchesTreeTest: LightPlatformTestCase() {
 
 internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolean, private val groupByRepos: Boolean, private val project: Project) {
   val tree = Tree()
+  private val model = object : BranchesTreeModelBase() {
+    override val groupingConfig: Map<GroupingKey, Boolean> = buildMap {
+      this[GroupingKey.GROUPING_BY_REPOSITORY] = groupByRepos
+      this[GroupingKey.GROUPING_BY_DIRECTORY] = groupByDirectories
+    }
+
+    fun setRefs(refs: RefsCollection, onlyMy: Boolean) {
+      setTree(NodeDescriptorsModel.buildTreeNodes(
+        project,
+        refs,
+        if (onlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
+        groupingConfig,
+      ))
+    }
+  }
   val branchesTree = GitBranchesTestTree()
-  val searchTextField = branchesTree.installSearchField()
+  private val searchTextField = branchesTree.installSearchField()
 
   fun assertTree(expected: String) {
     assertEquals("Tree state doesn't match expected. Search field - '${searchTextField.text}'", expected.trim(), printTree())
@@ -61,14 +72,21 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     tags: Collection<TagInfo> = emptyList(),
     expanded: Boolean = false,
   ) {
-    branchesTree.refreshNodeDescriptorsModel(
-      RefsCollection(localBranches.toMutableSet(), remoteBranches.toMutableSet(), tags.toMutableSet()),
-      showOnlyMy = false,
-    )
-    branchesTree.searchModel.updateStructure()
+    model.setRefs(RefsCollection(localBranches.toMutableSet(), remoteBranches.toMutableSet(), tags.toMutableSet()),
+                  onlyMy = false)
     if (expanded) {
       TreeTestUtil(tree).expandAll()
     }
+  }
+
+  fun filter(filterText: String) {
+    searchTextField.text = filterText
+    branchesTree.speedSearch.refilter(searchTextField.text)
+  }
+
+  fun appendFilter(character: Char) {
+    searchTextField.text += character
+    branchesTree.speedSearch.refilter(searchTextField.text)
   }
 
   fun selectBranch(branch: String) {
@@ -82,14 +100,18 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     throw AssertionError("Node with text $branch not found")
   }
 
-  internal inner class GitBranchesTestTree(): FilteringBranchesTreeBase(tree, project = project) {
+  internal inner class GitBranchesTestTree : FilteringBranchesTreeBase(model, tree) {
     @Suppress("UNCHECKED_CAST")
     val speedSearch: FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
       get() = searchModel.speedSearch as FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
 
-    override val groupingConfig: Map<GroupingKey, Boolean> = buildMap {
-      this[GroupingKey.GROUPING_BY_REPOSITORY] = groupByRepos
-      this[GroupingKey.GROUPING_BY_DIRECTORY] = groupByDirectories
+    init {
+      model.addListener(object : BranchesTreeModel.Listener {
+        override fun onTreeChange() {
+          searchModel.updateStructure()
+        }
+      })
+      searchModel.updateStructure()
     }
   }
 

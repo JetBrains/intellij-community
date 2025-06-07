@@ -1,0 +1,53 @@
+### auto-generated section `build kotlin.base.analysis-api-platform` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+  ]
+)
+
+jvm_resources(
+  name = "analysis-api-platform_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-api-platform",
+  module_name = "kotlin.base.analysis-api-platform",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:caffeine",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//platform/util",
+    "//plugins/kotlin/base/indices",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-api:psi",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/base/facet",
+    "//platform/analysis-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/codeserver/core",
+  ],
+  runtime_deps = [":analysis-api-platform_resources"]
+)
+### auto-generated section `build kotlin.base.analysis-api-platform` end

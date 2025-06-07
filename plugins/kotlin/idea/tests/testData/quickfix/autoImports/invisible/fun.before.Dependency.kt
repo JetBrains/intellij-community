@@ -2,4 +2,4 @@ package my.pack
 
 private fun f() = Unit
 
-/* IGNORE_K2 */
+// IGNORE_K2

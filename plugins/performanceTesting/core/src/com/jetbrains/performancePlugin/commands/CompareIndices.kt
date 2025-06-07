@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.concurrency.JobLauncher
@@ -41,6 +42,8 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import com.jetbrains.performancePlugin.utils.errors.ErrorCollector
 import com.jetbrains.performancePlugin.utils.errors.ToDirectoryWritingErrorCollector
 import com.jetbrains.performancePlugin.utils.indexes.CurrentIndexedFileResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import java.io.File
@@ -52,6 +55,8 @@ import kotlin.io.path.readText
 
 internal const val PREFIX = AbstractCommand.CMD_PREFIX + "compareIndices"
 private val LOG = logger<CompareIndices>()
+
+private const val LIMIT_OF_ERRORS_PER_COLLECTOR = 100
 
 /**
  * Fully compares two indexes built for the same project: the *stored* index and the *current* index,
@@ -76,11 +81,6 @@ private val LOG = logger<CompareIndices>()
  * The folder with the stored indices should be defined by the parameter '-Dcompare.indices.command.stored.indexes.directory'.
  */
 internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, line) {
-
-  private companion object {
-    private const val LIMIT_OF_ERRORS_PER_COLLECTOR = 100
-  }
-
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()
     val storedIndexDir = getStoredIndicesDirectory()
@@ -158,6 +158,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     System.getProperty("compare.indices.file.types.with.no.stub.tree", "").split(",").filterNot { it.isEmpty() }.toSet()
   }
 
+  @Suppress("RAW_RUN_BLOCKING")
   private fun compareIndexes(storedIndexDir: Path, indicator: ProgressIndicator, project: Project) {
     val failureDiagnosticDirectory = getFailureDiagnosticDirectory()
     (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
@@ -198,23 +199,25 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val comparisonTaskProgressManager = ConcurrentTasksProgressManager(indicator, idsToCompare.size)
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(idsToCompare, indicator, Processor { id ->
       val subIndicator = comparisonTaskProgressManager.createSubTaskIndicator(1)
-      val (extension, disposable) = runReadAction { findFileBasedIndexExtension(id, storedIndexDir) }
-      try {
-        val errorCollector = errorCollectors.getValue(id)
-        compareCurrentAndStoredIndexData(
-          resolvedFiles,
-          extension,
-          storedIndexDir,
-          subIndicator,
-          errorCollector,
-          project
-        )
-      }
-      catch (e: Exception) {
-        LOG.warn("Index comparison for ${id.name} has failed", e)
-      }
-      finally {
-        runCatching { Disposer.dispose(disposable) }.onFailure { LOG.warn(it) }
+      runBlocking {
+        val (extension, disposable) = runReadAction { findFileBasedIndexExtension(id, storedIndexDir, coroutineScope = this@runBlocking) }
+        try {
+          val errorCollector = errorCollectors.getValue(id)
+          compareCurrentAndStoredIndexData(
+            resolvedFiles,
+            extension,
+            storedIndexDir,
+            subIndicator,
+            errorCollector,
+            project
+          )
+        }
+        catch (e: Exception) {
+          LOG.warn("Index comparison for ${id.name} has failed", e)
+        }
+        finally {
+          runCatching { Disposer.dispose(disposable) }.onFailure { LOG.warn(it) }
+        }
       }
       LOG.info("Index comparison has finished for ${finishedCounter.incrementAndGet()} / ${idsToCompare.size}")
       true
@@ -228,9 +231,13 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     LOG.info("Success. All indices are equal: ${idsToCompare.joinToString { it.name }}")
   }
 
-  private fun findFileBasedIndexExtension(id: ID<*, *>, storedIndexDir: Path): Pair<FileBasedIndexExtension<*, *>, Disposable> {
+  private fun findFileBasedIndexExtension(
+    id: ID<*, *>,
+    storedIndexDir: Path,
+    coroutineScope: CoroutineScope,
+  ): Pair<FileBasedIndexExtension<*, *>, Disposable> {
     return if (id.name == "Stubs") {
-      val storedSerializationManager = SerializationManagerImpl(storedIndexDir.resolve("rep.names"), true)
+      val storedSerializationManager = SerializationManagerImpl(storedIndexDir.resolve("rep.names"), true, coroutineScope)
       // Stored indexes must have been dumped with -D${com.intellij.psi.stubs.StubForwardIndexExternalizer.USE_SHAREABLE_STUBS_PROP}=true option specified
       // to make stubs be serialized in shareable form (when [ID.getUniqueId()] is not serialized but the [ID.getName()] ID name is).
       val nameStorageDump = storedSerializationManager.dumpNameStorage()
@@ -249,14 +256,14 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
 
   private data class FileDescriptor(
     val originalFilePath: IndexedFilePath,
-    val currentFile: VirtualFile
+    val currentFile: VirtualFile,
   )
 
   private fun resolveFiles(
     storedIndexedFileResolver: StoredIndexedFileResolver,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ): List<FileDescriptor> {
     val allCurrentFiles = CurrentIndexedFileResolver.getAllToBeIndexedFilesInProject(project, indicator).values.flatMapTo(
       hashSetOf()) { it }
@@ -291,7 +298,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     storedIndexDir: Path,
     indicator: ProgressIndicator,
     errorCollector: ErrorCollector,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.index", indexId.name)
@@ -332,7 +339,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     storedIndex: UpdatableIndex<K, V, FileContent, *>,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.forward.index", indexId.name)
@@ -350,7 +357,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     currentIndex: UpdatableIndex<K, V, FileContent, *>,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.inverted.index", indexId.name)
@@ -379,13 +386,27 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     for ((index, storedKey: K) in allStoredKeys.withIndex()) {
       indicator.fraction = index.toDouble() / allStoredKeys.size
 
-      val storedFileIdToValue = errorCollector.runCatchingError {
-        runReadAction { storedIndex.getData(storedKey!!).toMap() }
-      } ?: continue
+      val storedFileIdToValue: MutableMap<Int, V?> = mutableMapOf()
+      errorCollector.runCatchingError {
+        runReadAction {
+          storedIndex.withDataOf(storedKey!!) { container ->
+            storedFileIdToValue.putAll(container.toMap())
+            true
+          }
+        }
+      }
+      if (storedFileIdToValue.isEmpty()) continue
 
-      val currentFileIdToValue = errorCollector.runCatchingError {
-        runReadAction { currentIndex.getData(storedKey!!).toMap() }
-      } ?: continue
+      val currentFileIdToValue: MutableMap<Int, V?> = mutableMapOf()
+      errorCollector.runCatchingError {
+        runReadAction {
+          currentIndex.withDataOf(storedKey!!) { container ->
+            currentFileIdToValue.putAll(container.toMap())
+            true
+          }
+        }
+      }
+      if (currentFileIdToValue.isEmpty()) continue
 
       for ((storedFileId, storedValue) in storedFileIdToValue) {
         val fileDescriptor = originalFileIdToFileDescriptor[storedFileId] ?: continue
@@ -421,16 +442,21 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     allStoredKeys: Set<K>,
     allCurrentKeys: Set<K>,
     errorCollector: ErrorCollector,
-    project: Project
+    project: Project,
   ) {
     val missingKeys = allStoredKeys - allCurrentKeys
     if (missingKeys.isNotEmpty()) {
       val originalFileIdToFileDescriptor = resolvedFiles.associateBy { it.originalFilePath.originalFileSystemId }
       for (missingKey in missingKeys) {
-        val storedFileIdToValue = errorCollector.runCatchingError {
-          runReadAction { storedIndex.getData(missingKey!!).toMap().filterKeys { it in originalFileIdToFileDescriptor } }
-        } ?: continue
-
+        val storedFileIdToValue: MutableMap<Int, V?> = mutableMapOf()
+        errorCollector.runCatchingError {
+          runReadAction {
+            storedIndex.withDataOf(missingKey!!) { container ->
+              storedFileIdToValue.putAll(container.toMap().filterKeys { it in originalFileIdToFileDescriptor })
+              true
+            }
+          }
+        }
         if (storedFileIdToValue.isEmpty()) {
           continue
         }
@@ -490,8 +516,10 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
   }
 
   @Synchronized
-  private fun <K, V> openStoredIndex(storedIndexDir: Path,
-                                     extension: FileBasedIndexExtension<K, V>): VfsAwareMapReduceIndex<K, V, IndexerIdHolder> {
+  private fun <K, V> openStoredIndex(
+    storedIndexDir: Path,
+    extension: FileBasedIndexExtension<K, V>,
+  ): VfsAwareMapReduceIndex<K, V, IndexerIdHolder> {
     val propertyName = "index_root_path"
     val oldValue = System.setProperty(propertyName, storedIndexDir.toAbsolutePath().toString())
     try {
@@ -508,7 +536,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     storedIndex: UpdatableIndex<K, V, FileContent, *>,
     extension: FileBasedIndexExtension<K, V>,
     errorCollector: ErrorCollector,
-    project: Project
+    project: Project,
   ) {
     val storedData: Map<K, V> = errorCollector.runCatchingError {
       runReadAction { storedIndex.getIndexedFileData(fileDescriptor.originalFilePath.originalFileSystemId) }
@@ -534,7 +562,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     extension: FileBasedIndexExtension<K, V>,
     expectedData0: Map<K, V>,
     actualData0: Map<K, V>,
-    project: Project
+    project: Project,
   ) {
     val expectedData: Map<K, V>
     val actualData: Map<K, V>
@@ -582,8 +610,10 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     }
   }
 
-  private fun isKnownError(extension: FileBasedIndexExtension<*, *>,
-                           fileNameOrIndexData: String): Boolean {
+  private fun isKnownError(
+    extension: FileBasedIndexExtension<*, *>,
+    fileNameOrIndexData: String,
+  ): Boolean {
     val fileExtension = File(fileNameOrIndexData).extension
     ignoredPatternsForReporting.forEach {
       if (it.first == extension.name.name && it.second == fileExtension) {
@@ -594,8 +624,10 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     return false
   }
 
-  private fun isKnownError(extension: FileBasedIndexExtension<*, *>,
-                           fileDescriptor: FileDescriptor): Boolean {
+  private fun isKnownError(
+    extension: FileBasedIndexExtension<*, *>,
+    fileDescriptor: FileDescriptor,
+  ): Boolean {
     val fileExtension = fileDescriptor.currentFile.extension
     ignoredPatternsForReporting.forEach {
       if (it.first == extension.name.name && it.second == fileExtension) {
@@ -628,7 +660,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     reason: String,
     extension: FileBasedIndexExtension<*, *>,
     fileDescriptor: FileDescriptor,
-    project: Project
+    project: Project,
   ) = buildString {
     appendLine("Index mismatch ${extension.name.name} for ${fileDescriptor.originalFilePath.portableFilePath.presentablePath}: $reason")
     appendLine("File of expected data:")

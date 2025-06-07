@@ -56,8 +56,7 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.problem.descriptor");
   }
 
@@ -71,8 +70,7 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
   private static class AbstractMethodOverridesAbstractMethodFix extends ModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.remove.quickfix");
     }
 

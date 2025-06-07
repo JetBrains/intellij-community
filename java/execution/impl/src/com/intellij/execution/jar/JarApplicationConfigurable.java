@@ -7,7 +7,7 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  public void applyEditorTo(@NotNull final JarApplicationConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(final @NotNull JarApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
@@ -51,7 +51,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  public void resetEditorFrom(@NotNull final JarApplicationConfiguration configuration) {
+  public void resetEditorFrom(final @NotNull JarApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myJarPathComponent.getComponent().setText(FileUtil.toSystemDependentName(configuration.getJarPath()));
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled()
@@ -60,15 +60,14 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 
   private void createUIComponents() {
     myJarPathComponent = new LabeledComponent<>();
     var textFieldWithBrowseButton = new TextFieldWithBrowseButton();
-    textFieldWithBrowseButton.addBrowseFolderListener(myProject, new FileChooserDescriptor(false, false, true, true, false, false)
+    textFieldWithBrowseButton.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor("jar")
       .withTitle(ExecutionBundle.message("choose.jar.file")));
     myJarPathComponent.setComponent(textFieldWithBrowseButton);
   }

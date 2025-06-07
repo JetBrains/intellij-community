@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.StreamUtil;
@@ -34,7 +34,7 @@ final class StubSerializationHelper extends StubTreeSerializerBase<IntEnumerator
   @Override
   protected int writeSerializerId(@NotNull ObjectStubSerializer<Stub, Stub> serializer,
                                   @NotNull IntEnumerator enumerator) throws IOException {
-    return enumerator.enumerate(myEnumerator.getClassId(serializer));
+    return enumerator.enumerate(myEnumerator.getSerializerId(serializer));
   }
 
   @Override
@@ -42,13 +42,13 @@ final class StubSerializationHelper extends StubTreeSerializerBase<IntEnumerator
                                                             @Nullable Stub parentStub,
                                                             @NotNull IntEnumerator enumerator) throws SerializerNotFoundException {
     int id = enumerator.valueOf(localId);
-    return myEnumerator.getClassById((id1, name, externalId) -> {
+    return myEnumerator.getSerializerById((id1, name, externalId) -> {
       myEnumerator.tryDiagnose();
       var root = ourRootStubSerializer.get();
       return (root != null ? StubSerializationUtil.brokenStubFormat(root, null) : "") +
              "No serializer is registered for stub ID: " +
              id1 + ", externalId: " + externalId + ", name: " + name +
-             "; parent stub class: " + (parentStub != null ? parentStub.getClass().getName() + ", parent stub type: " + parentStub.getStubType() : "null");
+             "; parent stub class: " + (parentStub != null ? parentStub.getClass().getName() + ", parent stub type: " + (parentStub instanceof StubElement ? ((StubElement<?>)parentStub).getElementType() : parentStub.getStubSerializer()) : "null");
     }, id);
   }
 

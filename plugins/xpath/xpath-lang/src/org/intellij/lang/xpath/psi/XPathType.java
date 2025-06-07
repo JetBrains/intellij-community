@@ -35,6 +35,7 @@ public class XPathType {
         myAbstract = isAbstract;
     }
 
+    @Override
     public String toString() {
         return "XPathType: " + type;
     }
@@ -96,7 +97,7 @@ public class XPathType {
     public static XPathType create(XPathType... types) {
       final StringBuilder name = new StringBuilder();
       for (XPathType type : types) {
-        if (name.length() > 0) {
+        if (!name.isEmpty()) {
           name.append(", ");
         }
         name.append(type.getName());

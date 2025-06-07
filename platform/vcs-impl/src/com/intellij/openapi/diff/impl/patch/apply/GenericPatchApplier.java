@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.*;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance(GenericPatchApplier.class);
-  private final static int ourMaxWalk = 1000;
+  private static final int ourMaxWalk = 1000;
 
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
@@ -38,10 +38,10 @@ public class GenericPatchApplier {
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
-  @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
+  private final @NotNull List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
   private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
 
-  private static void debug(@NonNls final String s) {
+  private static void debug(final @NonNls String s) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(s);
     }
@@ -60,8 +60,7 @@ public class GenericPatchApplier {
     myAppliedInfo = new ArrayList<>();
   }
 
-  @Nullable
-  public static AppliedPatch apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
+  public static @Nullable AppliedPatch apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedPatch(patchedText, SUCCESS);
@@ -75,8 +74,7 @@ public class GenericPatchApplier {
     return new AppliedPatch(applier.getAfter(), applier.getStatus());
   }
 
-  @NotNull
-  public static AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
+  public static @NotNull AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedSomehowPatch(patchedText, SUCCESS, false);
@@ -91,8 +89,8 @@ public class GenericPatchApplier {
   }
 
   public static class AppliedPatch {
-    @NotNull public final String patchedText;
-    @NotNull public final ApplyPatchStatus status;
+    public final @NotNull String patchedText;
+    public final @NotNull ApplyPatchStatus status;
 
     public AppliedPatch(@NotNull String patchedText, @NotNull ApplyPatchStatus status) {
       this.patchedText = patchedText;
@@ -129,7 +127,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private void printTransformations(@NonNls final String comment) {
+  private void printTransformations(final @NonNls String comment) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(comment + " GenericPatchApplier.printTransformations ---->");
       int cnt = 0;
@@ -248,8 +246,7 @@ public class GenericPatchApplier {
     }
   }
 
-  @NotNull
-  private static SplitHunk copySplitHunk(@NotNull SplitHunk hunk, @NotNull List<String> contextAfter, @NotNull List<String> contextBefore) {
+  private static @NotNull SplitHunk copySplitHunk(@NotNull SplitHunk hunk, @NotNull List<String> contextAfter, @NotNull List<String> contextBefore) {
     ArrayList<BeforeAfter<List<String>>> steps = new ArrayList<>();
     for (BeforeAfter<List<String>> step : hunk.getPatchSteps()) {
       steps.add(new BeforeAfter<>(new ArrayList<>(step.getBefore()), new ArrayList<>(step.getAfter())));
@@ -292,8 +289,7 @@ public class GenericPatchApplier {
     return copy;
   }
 
-  @NotNull
-  private static String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
+  private static @NotNull String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
     return VcsBundle.message("patch.apply.hunk.warning", startLineBefore, sizeBefore,
                          startLineAfter, sizeAfter);
   }
@@ -387,7 +383,7 @@ public class GenericPatchApplier {
 
   private boolean testForPartialContextMatch(final SplitHunk splitHunkWithExtendedContext,
                                              final MismatchSolver mismatchSolver,
-                                             final int maxWalkFromBinding, @Nullable final SplitHunk originalSplitHunk) {
+                                             final int maxWalkFromBinding, final @Nullable SplitHunk originalSplitHunk) {
     final List<BeforeAfter<List<String>>> steps = splitHunkWithExtendedContext.getPatchSteps();
     final BetterPoint betterPoint = new BetterPoint();
 
@@ -499,8 +495,7 @@ public class GenericPatchApplier {
     return fragmentResult;
   }
 
-  @NotNull
-  public List<AppliedTextPatch.AppliedSplitPatchHunk> getAppliedInfo() {
+  public @NotNull List<AppliedTextPatch.AppliedSplitPatchHunk> getAppliedInfo() {
     return myAppliedInfo;
   }
 
@@ -695,7 +690,7 @@ public class GenericPatchApplier {
   private static class BetterPoint {
     private Point myPoint;
 
-    public void feed(@NotNull final Point point) {
+    public void feed(final @NotNull Point point) {
       if (myPoint == null || point.meBetter(myPoint)) {
         myPoint = point;
       }
@@ -1185,7 +1180,7 @@ public class GenericPatchApplier {
   public static class SplitHunk {
     private final List<String> myContextBefore;
     private final List<String> myContextAfter;
-    @NotNull private final List<BeforeAfter<List<String>>> myPatchSteps;
+    private final @NotNull List<BeforeAfter<List<String>>> myPatchSteps;
     private final int myStartLineBefore;
     private final int myStartLineAfter;
 
@@ -1327,8 +1322,7 @@ public class GenericPatchApplier {
       return myContextAfter;
     }
 
-    @NotNull
-    public List<BeforeAfter<List<String>>> getPatchSteps() {
+    public @NotNull List<BeforeAfter<List<String>>> getPatchSteps() {
       return myPatchSteps;
     }
 
@@ -1391,7 +1385,7 @@ public class GenericPatchApplier {
   }
 
   private static class HunksComparator implements Comparator<SplitHunk> {
-    private final static HunksComparator ourInstance = new HunksComparator();
+    private static final HunksComparator ourInstance = new HunksComparator();
 
     public static HunksComparator getInstance() {
       return ourInstance;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -37,6 +38,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -55,14 +58,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
-
-  private boolean myIsLoading = false;
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -71,20 +72,93 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
-    Editor editor = consoleView != null ? consoleView.getEditor() : null;
-    boolean isShown = editor != null && editor.getGutter().isAnnotationsShown();
-    e.getPresentation().setEnabled(editor != null && !isShown && !myIsLoading);
+    ConsoleViewImpl consoleView = getConsoleView(e);
+    e.getPresentation().setEnabled(consoleView != null && isEnabled(consoleView) && !isLoading(consoleView));
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    myIsLoading = true;
-    Project project = e.getProject();
-    ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
-    Editor editor = consoleView != null ? consoleView.getEditor() : null;
-    if (project == null || editor == null) return;
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    ConsoleViewImpl consoleView = getConsoleView(e);
+    if (consoleView == null) return;
+    showStackTraceAnnotations(consoleView);
+  }
+
+  @ApiStatus.Internal
+  public static class Provider implements AnnotateToggleAction.Provider {
+    @Override
+    public boolean isEnabled(@NotNull AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+
+      return AnnotateStackTraceAction.isEnabled(consoleView);
+    }
+
+    @Override
+    public boolean isSuspended(@NotNull AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+
+      return AnnotateStackTraceAction.isLoading(consoleView);
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return false;
+      Editor editor = consoleView.getEditor();
+      if (editor == null) return false;
+
+      List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
+      return !ContainerUtil.filterIsInstance(annotations, MyActiveAnnotationGutter.class).isEmpty();
+    }
+
+    @Override
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
+      ConsoleViewImpl consoleView = getConsoleView(e);
+      if (consoleView == null) return;
+
+      if (selected) {
+        showStackTraceAnnotations(consoleView);
+      }
+      else {
+        closeStackTraceAnnotations(consoleView);
+      }
+    }
+  }
+
+  private static boolean isEnabled(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return false;
+
+    return !editor.getGutter().isAnnotationsShown();
+  }
+
+  private static boolean isLoading(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return false;
+
+    return createActionLock(consoleView.getProject(), consoleView).isLocked();
+  }
+
+  private static void closeStackTraceAnnotations(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return;
+
+    List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
+    if (ContainerUtil.filterIsInstance(annotations, MyActiveAnnotationGutter.class).isEmpty()) return;
+
+    editor.getGutter().closeAllAnnotations();
+  }
+
+  private static void showStackTraceAnnotations(@NotNull ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    if (editor == null) return;
+
+    Project project = consoleView.getProject();
     EditorHyperlinkSupport hyperlinks = consoleView.getHyperlinks();
+
+    BackgroundableActionLock actionLock = createActionLock(project, consoleView);
+    actionLock.lock();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(
       project, LangBundle.message("progress.title.getting.file.history"), true) {
@@ -100,7 +174,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        myIsLoading = false;
+        actionLock.unlock();
         Disposer.dispose(myUpdateQueue);
       }
 
@@ -163,8 +237,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
         ((EditorGutterComponentEx)editor.getGutter()).revalidateMarkup();
       }
 
-      @Nullable
-      private LastRevision getLastRevision(@NotNull VirtualFile file) {
+      private @Nullable LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
           AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
           if (vcs == null) return null;
@@ -197,9 +270,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     });
   }
 
-  @Nullable
   @RequiresReadLock
-  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<? extends RangeHighlighter> links) {
+  private static @Nullable VirtualFile getHyperlinkVirtualFile(@NotNull List<? extends RangeHighlighter> links) {
     RangeHighlighter key = ContainerUtil.getLastItem(links);
     if (key == null) return null;
     HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
@@ -208,11 +280,19 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     return descriptor != null ? descriptor.getFile() : null;
   }
 
+  private static @Nullable ConsoleViewImpl getConsoleView(@NotNull AnActionEvent e) {
+    return ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
+  }
+
+  private static @NotNull BackgroundableActionLock createActionLock(@NotNull Project project, @NotNull ConsoleViewImpl consoleView) {
+    return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, consoleView);
+  }
+
   private static class LastRevision {
-    @NotNull private final VcsRevisionNumber myNumber;
-    @NotNull private final String myAuthor;
-    @NotNull private final Date myDate;
-    @NotNull private final String myMessage;
+    private final @NotNull VcsRevisionNumber myNumber;
+    private final @NotNull String myAuthor;
+    private final @NotNull Date myDate;
+    private final @NotNull String myMessage;
 
     LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
       myNumber = number;
@@ -221,8 +301,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       myMessage = message;
     }
 
-    @NotNull
-    public static LastRevision create(@NotNull VcsFileRevision revision) {
+    public static @NotNull LastRevision create(@NotNull VcsFileRevision revision) {
       VcsRevisionNumber number = revision.getRevisionNumber();
       String author = StringUtil.notNullize(revision.getAuthor(), VcsBundle.message("vfs.revision.author.unknown"));
       Date date = revision.getRevisionDate();
@@ -230,34 +309,29 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       return new LastRevision(number, author, date, message);
     }
 
-    @NotNull
-    public VcsRevisionNumber getNumber() {
+    public @NotNull VcsRevisionNumber getNumber() {
       return myNumber;
     }
 
-    @NotNull
-    @NlsSafe
-    public String getAuthor() {
+    public @NotNull @NlsSafe String getAuthor() {
       return myAuthor;
     }
 
-    @NotNull
-    public Date getDate() {
+    public @NotNull Date getDate() {
       return myDate;
     }
 
-    @NotNull
-    public String getMessage() {
+    public @NotNull String getMessage() {
       return myMessage;
     }
   }
 
   private static class MyActiveAnnotationGutter implements TextAnnotationGutterProvider, EditorGutterAction {
-    @NotNull private final Project myProject;
-    @NotNull private final EditorHyperlinkSupport myHyperlinks;
-    @NotNull private final ProgressIndicator myIndicator;
+    private final @NotNull Project myProject;
+    private final @NotNull EditorHyperlinkSupport myHyperlinks;
+    private final @NotNull ProgressIndicator myIndicator;
 
-    @NotNull private Map<Integer, LastRevision> myRevisions = Collections.emptyMap();
+    private @NotNull Map<Integer, LastRevision> myRevisions = Collections.emptyMap();
     private Date myNewestDate = null;
     private int myMaxDateLength = 0;
 

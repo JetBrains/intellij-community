@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,8 +45,7 @@ public class GradleExtensionsSettings {
     });
   }
 
-  @NotNull
-  public static Settings getInstance(@NotNull Project project) {
+  public static @NotNull Settings getInstance(@NotNull Project project) {
     return project.getService(GradleExtensionsSettings.class).myState;
   }
 
@@ -109,8 +108,7 @@ public class GradleExtensionsSettings {
     /**
      * Returns extensions available in the context of the gradle project related to the IDE module.
      */
-    @Nullable
-    public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
+    public @Nullable GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
                               getGradleIdentityPathOrNull(module));
@@ -123,16 +121,14 @@ public class GradleExtensionsSettings {
      * @param gradlePath      gradle project path notation
      * @return gradle extensions
      */
-    @Nullable
-    public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
+    public @Nullable GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
       GradleProject gradleProject = getRootGradleProject(rootProjectPath);
       if (gradleProject == null) return null;
       return gradleProject.extensions.get(gradlePath);
     }
 
     @Contract("null -> null")
-    @Nullable
-    public GradleProject getRootGradleProject(@Nullable String rootProjectPath) {
+    public @Nullable GradleProject getRootGradleProject(@Nullable String rootProjectPath) {
       if (rootProjectPath == null) return null;
       return projects.get(rootProjectPath);
     }
@@ -174,25 +170,21 @@ public class GradleExtensionsSettings {
       this.buildScriptConfigurations = Collections.unmodifiableMap(buildScriptConfigurations);
     }
 
-    @Nullable
-    public GradleExtensionsData getParent() {
+    public @Nullable GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;
       return myGradleProject.extensions.get(parent);
     }
 
-    @Nullable
-    public GradleProp findProperty(@Nullable String name) {
+    public @Nullable GradleProp findProperty(@Nullable String name) {
       return findProperty(this, name);
     }
 
-    @NotNull
-    public Collection<GradleProp> findAllProperties() {
+    public @NotNull Collection<GradleProp> findAllProperties() {
       return findAllProperties(this, new HashMap<>());
     }
 
-    @NotNull
-    private static Collection<GradleProp> findAllProperties(@NotNull GradleExtensionsData extensionsData,
-                                                            @NotNull Map<String, GradleProp> result) {
+    private static @NotNull Collection<GradleProp> findAllProperties(@NotNull GradleExtensionsData extensionsData,
+                                                                     @NotNull Map<String, GradleProp> result) {
       for (GradleProp property : extensionsData.properties.values()) {
         result.putIfAbsent(property.name, property);
       }
@@ -202,8 +194,7 @@ public class GradleExtensionsSettings {
       return result.values();
     }
 
-    @Nullable
-    private static GradleProp findProperty(@NotNull GradleExtensionsData extensionsData, String propName) {
+    private static @Nullable GradleProp findProperty(@NotNull GradleExtensionsData extensionsData, String propName) {
       GradleProp prop = extensionsData.properties.get(propName);
       if (prop != null) return prop;
       if (extensionsData.parent != null && extensionsData.myGradleProject != null) {
@@ -460,15 +451,13 @@ public class GradleExtensionsSettings {
     }
   }
 
-  @Nullable
-  public static GradleProject getRootProject(@NotNull PsiElement element) {
+  public static @Nullable GradleProject getRootProject(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile().getOriginalFile();
     final Project project = containingFile.getProject();
     return getInstance(project).getRootGradleProject(getRootProjectPath(element));
   }
 
-  @Nullable
-  public static String getRootProjectPath(@NotNull PsiElement element) {
+  public static @Nullable String getRootProjectPath(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile().getOriginalFile();
     final Module module = ModuleUtilCore.findModuleForFile(containingFile);
     return ExternalSystemApiUtil.getExternalRootProjectPath(module);

@@ -72,15 +72,18 @@
     <registryKey key="kotlin.indices.nested.access.enabled"
                  defaultValue="false"
                  description="Allows nested indices access" />
-    <registryKey key="kotlin.indices.timing.enabled"
+    <registryKey key="kotlin.indices.diagnostic.enabled"
                  defaultValue="false"
-                 description="Allows indices access time tracking" />
+                 description="Allows indices access diagnostic" />
     <registryKey key="kotlin.indices.timing.threshold.single"
                  defaultValue="2500"
                  description="Time threshold in ms to report slow index single get access" />
     <registryKey key="kotlin.indices.timing.threshold.batch"
                  defaultValue="5000"
                  description="Time threshold in ms to report slow index batch (processAll-like) access" />
+    <registryKey key="kotlin.indices.keys.threshold.size"
+                 defaultValue="100000"
+                 description="Threshold of index key size" />
 
     <notificationGroup
             id="Recover Kotlin Indices"

@@ -1,5 +1,3 @@
-*:com.intellij.xdebugger.attach.XAttachRecentItemsMatcher
-- a:getMatchingAttachItems(com.intellij.xdebugger.impl.actions.AttachToProcessActionBase$RecentItem,java.util.List,Z,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder):java.util.List
 *:com.intellij.xdebugger.impl.ThreadsActionsProvider
 - getFreezeActiveThreadHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getFreezeInactiveThreadsAmongSelectedHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -48,6 +46,12 @@
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider
+- *sf:Companion:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
+- s:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+- a:provideHyperlink(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
+- f:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 *e:com.intellij.xdebugger.impl.dfaassist.DfaHint
 - java.lang.Enum
 - sf:AIOOBE:com.intellij.xdebugger.impl.dfaassist.DfaHint
@@ -164,4 +168,6 @@ com.intellij.xdebugger.impl.ui.XValueTextProvider
 *:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachTreeDebuggersPresentationProvider
 - a:getDebuggersShortName():java.lang.String
 *:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction$ReferrersTreeCustomizer
-- a:getDialog(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.lang.String,com.intellij.xdebugger.XDebugSession):com.intellij.openapi.ui.DialogWrapper
+- a:getDialog(com.intellij.xdebugger.XDebugSession,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):com.intellij.openapi.ui.DialogWrapper
+f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
+- *s:renderName(java.lang.String,I,java.util.function.Consumer):V

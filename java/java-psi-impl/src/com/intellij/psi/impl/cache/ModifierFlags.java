@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.psi.JavaTokenType;
@@ -33,6 +33,7 @@ public final class ModifierFlags {
   public static final int TRANSITIVE_MASK = 0x4000;
   public static final int SEALED_MASK = 0x8000;
   public static final int NON_SEALED_MASK = 0x10000;
+  public static final int VALUE_MASK = 0x20000;
 
   public static final Object2IntMap<String> NAME_TO_MODIFIER_FLAG_MAP = new Object2IntOpenHashMap<>();
   public static final Int2ObjectMap<String> MODIFIER_FLAG_TO_NAME_MAP = new Int2ObjectOpenHashMap<>();
@@ -55,6 +56,7 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.TRANSITIVE, TRANSITIVE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.SEALED, SEALED_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NON_SEALED, NON_SEALED_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.VALUE, VALUE_MASK);
 
     for (String name : NAME_TO_MODIFIER_FLAG_MAP.keySet()) {
       MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.getInt(name), name);
@@ -76,6 +78,7 @@ public final class ModifierFlags {
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.TRANSITIVE_KEYWORD, TRANSITIVE_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.SEALED_KEYWORD, SEALED_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.NON_SEALED_KEYWORD, NON_SEALED_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.VALUE_KEYWORD, VALUE_MASK);
   }
 
   public static boolean hasModifierProperty(String name, int mask) {

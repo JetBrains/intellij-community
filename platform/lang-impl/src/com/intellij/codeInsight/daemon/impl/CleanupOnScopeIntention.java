@@ -22,17 +22,17 @@ public final class CleanupOnScopeIntention extends CleanupIntention {
   private CleanupOnScopeIntention() {}
 
   @Override
-  protected @Nullable AnalysisScope getScope(Project project, PsiFile file) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    AnalysisScope analysisScope = new AnalysisScope(file);
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (file.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
+  protected @Nullable AnalysisScope getScope(Project project, PsiFile psiFile) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
+    AnalysisScope analysisScope = new AnalysisScope(psiFile);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (psiFile.isPhysical() || virtualFile == null || !virtualFile.isInLocalFileSystem()) {
       analysisScope = new AnalysisScope(project);
     }
     BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       CodeInsightBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
       CodeInsightBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
-      project, analysisScope, module, file),
+      project, analysisScope, module, psiFile),
       AnalysisUIOptions.getInstance(project), true);
     if (!dlg.showAndGet()) {
       return null;

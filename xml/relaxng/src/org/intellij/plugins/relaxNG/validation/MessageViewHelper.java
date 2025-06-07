@@ -76,7 +76,7 @@ public final class MessageViewHelper {
   }
 
   public synchronized void processError(final SAXParseException ex, final boolean warning) {
-    if (myErrors.size() == 0 && myErrorsView == null) {
+    if (myErrors.isEmpty() && myErrorsView == null) {
       myErrorsView = new NewErrorTreeViewPanel(myProject, null, true, true, null);
       myErrorsView.setProcessController(myProcessController);
       openMessageViewImpl();

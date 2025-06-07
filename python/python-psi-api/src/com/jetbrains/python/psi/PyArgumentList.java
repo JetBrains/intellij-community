@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.FunctionParameter;
@@ -18,8 +18,7 @@ public interface PyArgumentList extends PyAstArgumentList, PyElement {
    * @return all argument list param expressions (keyword argument or nameless)
    */
   @Override
-  @NotNull
-  default Collection<PyExpression> getArgumentExpressions() {
+  default @NotNull Collection<PyExpression> getArgumentExpressions() {
     //noinspection unchecked
     return (Collection<PyExpression>)PyAstArgumentList.super.getArgumentExpressions();
   }
@@ -30,8 +29,7 @@ public interface PyArgumentList extends PyAstArgumentList, PyElement {
   }
 
   @Override
-  @Nullable
-  default PyKeywordArgument getKeywordArgument(String name) {
+  default @Nullable PyKeywordArgument getKeywordArgument(String name) {
     return (PyKeywordArgument)PyAstArgumentList.super.getKeywordArgument(name);
   }
 
@@ -53,8 +51,7 @@ public interface PyArgumentList extends PyAstArgumentList, PyElement {
    * @return the call expression to which this argument list belongs; not null in correctly parsed cases.
    */
   @Override
-  @Nullable
-  default PyCallExpression getCallExpression() {
+  default @Nullable PyCallExpression getCallExpression() {
     return (PyCallExpression)PyAstArgumentList.super.getCallExpression();
   }
 

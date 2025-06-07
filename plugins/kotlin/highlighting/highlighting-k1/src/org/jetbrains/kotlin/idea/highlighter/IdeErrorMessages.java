@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -29,9 +29,7 @@ public final class IdeErrorMessages {
     private static final DiagnosticFactoryToRendererMap MAP = new DiagnosticFactoryToRendererMap("IDE");
 
     // TODO: i18n
-    @NlsSafe
-    @NotNull
-    public static String render(@NotNull UnboundDiagnostic diagnostic) {
+    public static @NlsSafe @NotNull String render(@NotNull UnboundDiagnostic diagnostic) {
         DiagnosticRenderer renderer = MAP.get(diagnostic.getFactory());
 
         if (renderer != null) {

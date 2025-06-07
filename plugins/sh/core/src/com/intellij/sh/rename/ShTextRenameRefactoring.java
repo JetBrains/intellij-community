@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class ShTextRenameRefactoring {
-  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  private static final @NonNls String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  private static final @NonNls String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
   private final Project myProject;
@@ -54,12 +54,11 @@ final class ShTextRenameRefactoring {
     myOccurrenceRangeAtCaret = occurrenceRangeAtCaret;
   }
 
-  @Nullable
-  static ShTextRenameRefactoring create(@NotNull Editor editor,
-                                        @NotNull Project project,
-                                        @NotNull String occurrenceText,
-                                        @NotNull Collection<TextRange> occurrenceRanges,
-                                        @NotNull TextRange occurrenceRangeAtCaret) {
+  static @Nullable ShTextRenameRefactoring create(@NotNull Editor editor,
+                                                  @NotNull Project project,
+                                                  @NotNull String occurrenceText,
+                                                  @NotNull Collection<TextRange> occurrenceRanges,
+                                                  @NotNull TextRange occurrenceRangeAtCaret) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile != null) {
       return new ShTextRenameRefactoring(editor, project, psiFile, occurrenceText, occurrenceRanges, occurrenceRangeAtCaret);
@@ -125,8 +124,7 @@ final class ShTextRenameRefactoring {
     }
   }
 
-  @Nullable
-  private static TextAttributes getAttributes(@NotNull EditorColorsManager colorsManager, @NotNull String segmentName) {
+  private static @Nullable TextAttributes getAttributes(@NotNull EditorColorsManager colorsManager, @NotNull String segmentName) {
     if (segmentName.equals(PRIMARY_VARIABLE_NAME)) {
       return colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
     }

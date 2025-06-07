@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DirectivePosition
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-import java.nio.file.Paths
-import kotlin.io.path.Path
 
 abstract class AbstractSlicerTest : KotlinLightCodeInsightFixtureTestCase() {
     protected abstract fun doTest(path: String, sliceProvider: SliceLanguageSupportProvider, rootNode: SliceRootNode)

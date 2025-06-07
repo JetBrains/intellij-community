@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.indexer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -11,8 +11,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.maven.archetype.ArchetypeManager;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
-import org.apache.maven.index.Scanner;
 import org.apache.maven.index.*;
+import org.apache.maven.index.Scanner;
 import org.apache.maven.index.context.DefaultIndexingContext;
 import org.apache.maven.index.context.IndexCreator;
 import org.apache.maven.index.context.IndexUtils;
@@ -85,8 +85,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     return result;
   }
 
-  @NotNull
-  private IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException, ComponentLookupException {
+  private @NotNull IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException, ComponentLookupException {
     synchronized (myContexts) {
       IndexingContext context = myContexts.get(mavenIndexId.indexId);
       if (context != null) return context;
@@ -426,8 +425,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  @NotNull
-  private static WildcardQuery getWildcardQuery(String pattern) {
+  private static @NotNull WildcardQuery getWildcardQuery(String pattern) {
     return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 

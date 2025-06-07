@@ -1,0 +1,20 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.grid"/>
+    <module name="intellij.grid.types"/>
+    <module name="intellij.grid.csv.core.impl"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.objectNormalizerProvider" interface="com.intellij.database.datagrid.ObjectNormalizerProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.formatterCreatorProvider" interface="com.intellij.database.datagrid.FormatterCreatorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.extractorsHelper" interface="com.intellij.database.extractors.ExtractorsHelper" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.database.settings.DataGridAppearanceSettingsImpl"/>
+    <registryKey key="grid.tables.columns.limit" defaultValue="2000"
+                 description="Limit the number of columns to be displayed in the table"/>
+  </extensions>
+
+</idea-plugin>

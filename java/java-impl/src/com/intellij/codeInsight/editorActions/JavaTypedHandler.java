@@ -1,13 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
-import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,30 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
-
-  @Override
-  protected boolean isJavaFile(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
-  }
-
-  @Override
-  protected boolean isJspFile(@NotNull PsiFile file) {
-    return file instanceof JspFile;
-  }
-
-  @Override
-  protected boolean isLanguageLevel5OrHigher(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
-  }
-
-  @Override
-  protected @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file),
-                                                  JavaBundle.message("command.name.insert.block.statement"), null);
-    return Result.STOP;
-  }
-
+public final class JavaTypedHandler extends JavaTypedHandlerBase {
   @Override
   public boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
@@ -232,8 +207,16 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
         parent = parent.getParent();
       }
       while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-      if (parent instanceof PsiParameterList ||
+      if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
           (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        if (CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+            parent instanceof PsiParameter parameter &&
+            lastElement instanceof PsiJavaToken javaToken &&
+            javaToken.textMatches(".") &&
+            prevSibling instanceof PsiIdentifier identifier &&
+            parameter.getIdentifyingElement() == identifier) {
+          return true;
+        }
         return false;
       }
 
@@ -255,11 +238,11 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
 
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
-        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
-        PsiElement leaf = f.findElementAt(offset - PsiKeyword.NEW.length());
+        PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
         return leaf instanceof PsiKeyword &&
-               leaf.textMatches(PsiKeyword.NEW) &&
+               leaf.textMatches(JavaKeywords.NEW) &&
                !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
       });
       return Result.STOP;

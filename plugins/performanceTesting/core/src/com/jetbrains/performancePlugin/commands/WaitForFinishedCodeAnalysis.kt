@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -49,7 +51,16 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
   }
 }
 
-internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+private fun isTrafficLightExists(editor: Editor): Boolean {
+  //MD file in preview mode doesn't have traffic light.
+  //TODO Learn how to determine MD file view mode
+  val isMdFile = editor.virtualFile.extension?.contains("md", ignoreCase = true) ?: false
+  return (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null || isMdFile
+}
+
+private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
+
+class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
     val LOG = logger<WaitForFinishedCodeAnalysis>()
@@ -109,7 +120,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
       else {
         //Printing additional information to get information why highlighting was stuck
-        printStatistic()
+        //TODO Temporary disable printStatistic(). AT-2276
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }},\n" +
                  "files ${filesYetToStartHighlighting.keys.joinToString(separator = ",\n") { it.name }}")
       }
@@ -120,6 +131,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
    * @throws TimeoutException when stopped due to provided [timeout]
    */
   suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
+    if (EDT.isCurrentThreadEdt()) {
+      throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
+    }
     LOG.info("Waiting for code analysis to finish in $timeout")
     val future = CompletableFuture<Unit>()
     if (timeout != null) {
@@ -129,7 +143,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       launch {
         while (true) {
           @Suppress("TestOnlyProblems")
-          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
             delay(500)
           }
           else {
@@ -159,12 +173,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     catch (e: CancellationException) {
       throw e
     }
-    catch (_: CompletionException) {
+    catch (e: CompletionException) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       printStatistic()
 
       if (logsError) {
-        LOG.error(errorText)
+        LOG.error(errorText, e)
       }
       if (throws) {
         throw TimeoutException(errorText)
@@ -282,6 +296,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       while (iterator.hasNext()) {
         val (editor, exceptionWithTime) = iterator.next()
         val highlightedEditor = highlightedEditors[editor]
+
+        if (status == "stopped" && checkTrafficLightRenderer() && !isTrafficLightExists(editor.editor)) {
+          LOG.error("Highlighting traffic light should be shown in the top right corner of the editor, in case of $status")
+          takeFullScreenshot("traffic-light-screenshot")
+        }
+
         if (highlightedEditor == null) {
           if (!UIUtil.isShowing(editor.getComponent())) {
             iterator.remove()
@@ -335,8 +355,11 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     if (EDT.isCurrentThreadEdt()) return
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).use { it.daemonCodeAnalyzerStatus }}")
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
       }
+    }
+    catch (ex: CancellationException) {
+      throw ex
     }
     catch (ex: Throwable) {
       LOG.warn("Print Analyzer status failed", ex)

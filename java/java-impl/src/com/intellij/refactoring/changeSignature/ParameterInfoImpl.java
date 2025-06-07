@@ -105,6 +105,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     setType(parameter.getType());
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     return o instanceof ParameterInfoImpl parameterInfo &&
@@ -114,6 +115,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
            getTypeText().equals(parameterInfo.getTypeText());
   }
 
+  @Override
   public int hashCode() {
     final String name = getName();
     int result = name != null ? name.hashCode() : 0;

@@ -21,8 +21,7 @@ import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilin
 
 @Internal
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
-  @NotNull
-  private final GlobalCompilingVisitor myCompilingVisitor;
+  private final @NotNull GlobalCompilingVisitor myCompilingVisitor;
   private final XmlWordOptimizer myOptimizer = new XmlWordOptimizer();
 
   public XmlCompilingVisitor(@NotNull GlobalCompilingVisitor compilingVisitor) {

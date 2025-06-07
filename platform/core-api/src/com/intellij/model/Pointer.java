@@ -71,7 +71,7 @@ public interface Pointer<T> {
   /**
    *
    * Note: should not be called under write lock.
-   * Instead, you shall be using {@link com.intellij.openapi.application.CoroutinesKt#readAndWriteAction}, deference the pointer under
+   * Instead, you shall be using {@link com.intellij.openapi.application.CoroutinesKt#readAndEdtWriteAction}, deference the pointer under
    * a read lock and pass dereferenced symbol to the write action directly with a hard reference.
    *
    * @return referenced value, or {@code null} if the value was invalidated or cannot be restored

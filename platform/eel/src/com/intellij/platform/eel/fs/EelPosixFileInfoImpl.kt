@@ -15,7 +15,8 @@ data class EelPosixFileInfoImpl(
 ) : EelPosixFileInfo {
   data class Directory(override val sensitivity: EelFileInfo.CaseSensitivity) : EelFileInfo.Type.Directory
   data class Regular(override val size: Long) : EelFileInfo.Type.Regular
-  data class SymlinkResolved(override val result: EelPath.Absolute) : EelPosixFileInfo.Type.Symlink.Resolved
+  data class SymlinkResolvedAbsolute(override val result: EelPath) : EelPosixFileInfo.Type.Symlink.Resolved.Absolute
+  data class SymlinkResolvedRelative(override val result: String) : EelPosixFileInfo.Type.Symlink.Resolved.Relative
   data object SymlinkUnresolved : EelPosixFileInfo.Type.Symlink.Unresolved
   data object Other : EelFileInfo.Type.Other
 

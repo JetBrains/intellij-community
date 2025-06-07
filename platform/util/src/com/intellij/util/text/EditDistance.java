@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class EditDistance {
@@ -36,6 +37,11 @@ public final class EditDistance {
    * @return the number of edits (number of char insertions+deletions+replacements+swaps) difference between the two strings.
    */
   public static int optimalAlignment(@NotNull CharSequence str1, @NotNull CharSequence str2, boolean caseSensitive, int limit) {
+    return optimalAlignment(str1, str2, caseSensitive, limit, true);
+  }
+
+  @ApiStatus.Internal
+  public static int optimalAlignment(@NotNull CharSequence str1, @NotNull CharSequence str2, boolean caseSensitive, int limit, boolean transpositionsAllowed) {
     if (str1.length() > str2.length()) {
       @NotNull CharSequence tmp = str1;
       str1 = str2;
@@ -60,7 +66,7 @@ public final class EditDistance {
                         v1[i + 1] + 1, // deletion
                         v1[i] + cost); // substitution (replacement)
 
-        if(i > 0 && j > 0 &&
+        if(transpositionsAllowed && i > 0 && j > 0 &&
            equal(str2.charAt(j), str1.charAt(i - 1), caseSensitive) && equal(str1.charAt(i), str2.charAt(j - 1), caseSensitive)) {
           // transposition (swap)
           v2[i + 1] = Math.min(v2[i + 1], v0[i - 1] + cost);

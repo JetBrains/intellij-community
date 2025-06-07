@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -22,7 +22,7 @@ public final class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance(ClsParsingUtil.class);
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotationValue(builder);
+    (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseAnnotationValue(builder);
 
   private ClsParsingUtil() { }
 

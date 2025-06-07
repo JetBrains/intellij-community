@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -20,8 +20,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.projectAndScopeMethodType
 import com.intellij.openapi.project.impl.projectMethodType
+import com.intellij.platform.kernel.util.kernelCoroutineContext
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.SystemProperties
@@ -44,11 +45,16 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  parentScope = GlobalScope,
+  parentScope = GlobalScope.childScope(
+    "Client[$clientId] Session scope",
+    context = sharedComponentManager.getCoroutineScope().coroutineContext.kernelCoroutineContext()
+  ),
   additionalContext = clientId.asContextElement(),
 ), ClientSession {
-  final override val isLightServiceSupported: Boolean = false
-  final override val isMessageBusSupported: Boolean = false
+  final override val isLightServiceSupported: Boolean
+    get() = false
+  final override val isMessageBusSupported: Boolean
+    get() = false
 
   init {
     @Suppress("LeakingThis")
@@ -91,10 +97,11 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                        app: Application?,
-                                        precomputedExtensionModel: PrecomputedExtensionModel?,
-                                        listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    listenerCallbacks: MutableList<in Runnable>?
+  ) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -113,7 +120,7 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
-    if (!fallbackToShared && !hasComponent(serviceClass)) return null
+    if (!fallbackToShared && !createIfNeeded && !hasComponent(serviceClass)) return null
 
     val clientService = ClientId.withExplicitClientId(clientId) {
       super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
@@ -151,15 +158,18 @@ abstract class ClientSessionImpl(
   override val componentStore: IComponentStore
     get() = sharedComponentManager.componentStore
 
-  final override suspend fun _getComponentStore(): IComponentStore = componentStore
-
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
   final override fun getMessageBus(): MessageBus {
     error("Not supported")
   }
 
   final override fun toString(): String {
-    return "${javaClass.name}(type=${type}, clientId=$clientId)"
+    return "${javaClass.name}(type=$type, clientId=$clientId)"
+  }
+
+  override fun debugString(short: Boolean): String {
+    val className = if (short) javaClass.simpleName else javaClass.name
+    return "$className::$type#$clientId"
   }
 }
 

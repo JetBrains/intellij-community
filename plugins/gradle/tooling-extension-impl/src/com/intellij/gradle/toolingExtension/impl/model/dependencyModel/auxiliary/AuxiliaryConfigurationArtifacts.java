@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary;
 
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -63,7 +63,7 @@ public class AuxiliaryConfigurationArtifacts {
    * @return best match, null otherwise
    */
   @VisibleForTesting
-  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+  public static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
     Iterator<File> auxiliariesIterator = auxiliaries.iterator();
     if (!auxiliariesIterator.hasNext()) {
       return null;

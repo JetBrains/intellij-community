@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.CheckUtil;
@@ -48,6 +49,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(TRANSITIVE, JavaTokenType.TRANSITIVE_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(VALUE, JavaTokenType.VALUE_KEYWORD);
 
     KEYWORD_TYPE_TO_NAME_MAP = new HashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
@@ -108,11 +110,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     Set<String> implicitModifiers = new HashSet<>();
     PsiElement parent = getParent();
     if (parent instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)parent;
       PsiElement grandParent = parent.getContext();
       if (grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
         Collections.addAll(implicitModifiers, PUBLIC, STATIC);
       }
-      if (((PsiClass)parent).isInterface()) {
+      if (aClass.isInterface()) {
         implicitModifiers.add(ABSTRACT);
 
         // nested or local interface is implicitly static
@@ -120,19 +123,26 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
-      if (((PsiClass)parent).isRecord()) {
+      else {
+        if (explicitModifiers.contains(VALUE) && !explicitModifiers.contains(ABSTRACT)) {
+          implicitModifiers.add(FINAL);
+        }
+      }
+      if (aClass.isRecord()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
         implicitModifiers.add(FINAL);
       }
-      if (((PsiClass)parent).isEnum()) {
+      if (aClass.isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
-        List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
-                                                                     : Arrays.asList(((PsiClass)parent).getFields());
-        boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
+        List<PsiField> fields = parent instanceof PsiExtensibleClass
+                                ? ((PsiExtensibleClass)parent).getOwnFields()
+                                : Arrays.asList(aClass.getFields());
+        Condition<PsiField> condition = field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null;
+        boolean hasSubClass = ContainerUtil.find(fields, condition) != null;
         if (hasSubClass) {
           implicitModifiers.add(SEALED);
         }
@@ -140,8 +150,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(FINAL);
         }
 
-        List<PsiMethod> methods = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnMethods()
-                                                                       : Arrays.asList(((PsiClass)parent).getMethods());
+        List<PsiMethod> methods = parent instanceof PsiExtensibleClass
+                                  ? ((PsiExtensibleClass)parent).getOwnMethods()
+                                  : Arrays.asList(aClass.getMethods());
         for (PsiMethod method : methods) {
           if (method.hasModifierProperty(ABSTRACT)) {
             implicitModifiers.add(ABSTRACT);
@@ -173,8 +184,13 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       }
       else {
         PsiClass aClass = ((PsiField)parent).getContainingClass();
-        if (aClass != null && aClass.isInterface()) {
-          Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+        if (aClass != null) {
+          if (aClass.isInterface()) {
+            Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+          }
+          else if (aClass.isValueClass()) {
+            implicitModifiers.add(FINAL);
+          }
         }
       }
     }

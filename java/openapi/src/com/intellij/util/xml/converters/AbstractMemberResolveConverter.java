@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.converters;
 
@@ -28,6 +14,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,13 +24,11 @@ import java.util.Collections;
  * @author Gregory.Shrago
  */
 public abstract class AbstractMemberResolveConverter extends ResolvingConverter<PsiMember> {
-  @Nullable
-  protected abstract PsiClass getTargetClass(final ConvertContext context);
+  protected abstract @Nullable PsiClass getTargetClass(final ConvertContext context);
 
   protected abstract PropertyMemberType @NotNull [] getMemberTypes(final ConvertContext context);
 
-  @NotNull
-  protected PsiType getPsiType(final ConvertContext context) {
+  protected @NotNull PsiType getPsiType(final ConvertContext context) {
     return PsiType.getJavaLangObject(context.getPsiManager(), ProjectScope.getAllScope(context.getPsiManager().getProject()));
   }
 
@@ -85,8 +70,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  @NotNull
-  public Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
+  public @NotNull @Unmodifiable Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 

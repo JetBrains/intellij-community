@@ -2,11 +2,11 @@
 package com.intellij.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiElement;
 import com.intellij.commandInterface.command.Command;
 import com.intellij.commandInterface.command.Help;
 import com.intellij.commandInterface.commandLine.psi.CommandLineCommand;
 import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,18 +17,15 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineCommandReference extends CommandLineElementReference<CommandLineCommand> {
-
-  CommandLineCommandReference(@NotNull final CommandLineCommand element) {
+final class CommandLineCommandReference extends CommandLineElementReference<CommandLineCommand> {
+  CommandLineCommandReference(final @NotNull CommandLineCommand element) {
     super(element);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return null;
   }
-
 
   @Override
   public Object @NotNull [] getVariants() {

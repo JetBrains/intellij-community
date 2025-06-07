@@ -17,12 +17,12 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtifactIdInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
@@ -117,8 +117,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().findFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().findFileByNioFile(filePath)
 
     assertResolved(projectPom, findPsiFile(f))
   }
@@ -468,43 +468,32 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     }
 
     class PsiFileElementVisitor : PsiElementVisitor() {
-      override fun visitFile(file: PsiFile) {
-        MavenLog.LOG.warn("Visiting file $file, text ${file.text}")
+      override fun visitFile(psiFile: PsiFile) {
+        MavenLog.LOG.warn("Visiting file $psiFile, text ${psiFile.text}")
       }
     }
   }
 
   @Test
   fun testHighlightingAbsentGroupId() = runBlocking {
-    fixture.enableInspections(LoggingLocalInspectionTool())
-
+    // Both 3 and 4 Maven versions require the presence of <groupId> if relativePath (default ../pom.xml) does not lead to the parent POM
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <parent>
-                         <artifactId>junit</artifactId>
+                       <<error descr="'groupId' child tag should be defined">parent</error>>
+                         <artifactId>jupiter</artifactId>
                          <version>4.0</version>
                        </parent>
                        """.trimIndent())
-    importProjectAsync()
 
-    val expectedHighlights = arrayOf(
-      Highlight(text = "parent", description = "'groupId' child tag should be defined"),
-      Highlight(text = "junit"),
-      Highlight(text = "4.0"),
-    )
-
-    val highlights1 = doHighlighting(projectPom)
-    val highlights2 = doHighlighting(projectPom)
-
-    assertHighlighting(highlights1, *expectedHighlights)
-    assertHighlighting(highlights2, *expectedHighlights)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    checkHighlighting()
   }
 
   @Test
-  fun testHighlightingAbsentArtifactIdMaven4() = runBlocking {
-    assumeMaven4()
+  fun testHighlightingAbsentArtifactId() = runBlocking {
+    // Both 3 and 4 Maven versions require the presence of <artifactId> if relativePath (default ../pom.xml) does not lead to the parent POM
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -515,9 +504,88 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting()
   }
 
+  @Test
+  fun testHighlightingMaven3AbsentArtifactId() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // In Maven 3, <groupId> and <artifactId> in <parent> are required even if the parent's POM could be found by relativePath.
+    val subprojectPom = createModulePom("subdirectory", """
+                      <<error descr="'artifactId' child tag should be defined">parent</error>>
+                         <groupId>test</groupId> 
+                         <version>1</version>
+                         <relativePath>../pom.xml</relativePath>
+                      </parent>
+                      <artifactId>subproject1</artifactId>
+                      """.trimIndent())
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    checkHighlighting(subprojectPom)
+  }
+
+  @Test
+  fun testHighlightingMaven3AbsentGroupId() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // In Maven 3, <groupId> and <artifactId> in <parent> are required even if the parent's POM could be found by relativePath.
+    val subprojectPom = createModulePom("subdirectory", """
+                      <<error descr="'groupId' child tag should be defined">parent</error>>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                         <relativePath>../pom.xml</relativePath>
+                       </parent>
+                      <artifactId>subproject1</artifactId>
+                      """.trimIndent())
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    checkHighlighting(subprojectPom)
+  }
+
+  @Test
+  fun testHighlightingMaven4AbsentGroupIdArtefactId() = runBlocking {
+    assumeMaven4()
+    createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // In Maven 4, it's possible to omit <groupId> and <artifactId> in <parent> if the parent's POM could be found by relativePath.
+    val subprojectPom = createModulePom("sub/subdirectory", """
+                      <parent>
+                          <relativePath>../../pom.xml</relativePath>
+                      </parent>
+                      <artifactId>subproject1</artifactId>
+                      """.trimIndent())
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    checkHighlighting(subprojectPom)
+  }
+
+  @Test
+  fun testHighlightingMaven4AbsentGroupIdArtefactId_2() = runBlocking {
+    assumeMaven4()
+    createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // In Maven 4, it's possible to omit <groupId> and <artifactId> in <parent> if the parent's POM could be found by relativePath.
+    // If <relativePath> is not specified, the default value is used (../pom.xml)
+    val subprojectPom = createModulePom("subdirectory", """
+                      <parent/>
+                      <artifactId>subproject1</artifactId>
+                      """.trimIndent())
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    checkHighlighting(subprojectPom)
+  }
 
   @Test
   fun testHighlightingAbsentVersion() = runBlocking {

@@ -9,7 +9,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 - com.intellij.openapi.project.DumbAware
 - *:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:getEditorTabTitleAsync$suspendImpl(com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.project.ex.ProjectManagerEx
 - com.intellij.openapi.project.ProjectManager
 - *sf:IS_PER_PROJECT_INSTANCE_ENABLED:Z

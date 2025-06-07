@@ -55,8 +55,8 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     return (HighlightingSettingsPerFile)HighlightingLevelManager.getInstance(project);
   }
 
-  private static int getRootIndex(@NotNull PsiFile file) {
-    FileViewProvider provider = file.getViewProvider();
+  private static int getRootIndex(@NotNull PsiFile psiFile) {
+    FileViewProvider provider = psiFile.getViewProvider();
     Set<Language> languages = provider.getLanguages();
     if (languages.size() == 1) {
       return 0;
@@ -65,9 +65,9 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     array.sort(PsiUtilBase.LANGUAGE_COMPARATOR);
     for (int i = 0; i < array.size(); i++) {
       Language language = array.get(i);
-      if (provider.getPsi(language) == file) return i;
+      if (provider.getPsi(language) == psiFile) return i;
     }
-    throw new RuntimeException("Cannot find root for: " + file);
+    throw new RuntimeException("Cannot find root for: " + psiFile);
   }
 
   public @NotNull FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
@@ -92,8 +92,8 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     return EssentialHighlightingMode.INSTANCE.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
-  private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {
-    int rootsCount = file.getViewProvider().getLanguages().size();
+  private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile psiFile) {
+    int rootsCount = psiFile.getViewProvider().getLanguages().size();
     FileHighlightingSetting[] fileHighlightingSettings = new FileHighlightingSetting[rootsCount];
     Arrays.fill(fileHighlightingSettings, FileHighlightingSetting.FORCE_HIGHLIGHTING);
     return fileHighlightingSettings;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -8,8 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,10 +25,11 @@ import java.util.function.Consumer;
  * In the end, remaining highlighters are disposed (while maintaining invariant that these should be synchronized with {@link HighlightInfoUpdater} internal data structures)
  * NOT THREAD-SAFE
  */
-final class ManagedHighlighterRecycler {
+@ApiStatus.Internal
+public final class ManagedHighlighterRecycler {
   private final Long2ObjectMap<List<InvalidPsi>> incinerator = new Long2ObjectOpenHashMap<>();  // range -> list of highlighters in this range; these are managed highlighters (ones which are registered in HighlightInfoUpdaterImpl)
-  @NotNull final HighlightingSession myHighlightingSession;
-  @NotNull private final HighlightInfoUpdaterImpl myHighlightInfoUpdater;
+  final @NotNull HighlightingSession myHighlightingSession;
+  private final @NotNull HighlightInfoUpdaterImpl myHighlightInfoUpdater;
 
   /** do not instantiate, use {@link #runWithRecycler} instead */
   private ManagedHighlighterRecycler(@NotNull HighlightingSession session) {
@@ -48,8 +51,7 @@ final class ManagedHighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  @Nullable
-  synchronized InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized @Nullable InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<InvalidPsi> list = incinerator.get(range);
     if (list != null) {
@@ -70,9 +72,8 @@ final class ManagedHighlighterRecycler {
     }
     return null;
   }
-  //
-  @NotNull
-  synchronized Collection<? extends InvalidPsi> forAllInGarbageBin() {
+
+  synchronized @NotNull @Unmodifiable Collection<InvalidPsi> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 
@@ -81,7 +82,7 @@ final class ManagedHighlighterRecycler {
    * - run {@code consumer} which usually calls {@link ManagedHighlighterRecycler#recycleHighlighter} and {@link HighlighterRecycler#pickupHighlighterFromGarbageBin}
    * - and then incinerate all remaining highlighters, or in the case of PCE, release them back to recyclable state
    */
-  static void runWithRecycler(@NotNull HighlightingSession session, @NotNull Consumer<? super ManagedHighlighterRecycler> consumer) {
+  public static void runWithRecycler(@NotNull HighlightingSession session, @NotNull Consumer<? super ManagedHighlighterRecycler> consumer) {
     ManagedHighlighterRecycler recycler = new ManagedHighlighterRecycler(session);
     consumer.accept(recycler);
     recycler.myHighlightInfoUpdater.incinerateAndRemoveFromDataAtomically(recycler);

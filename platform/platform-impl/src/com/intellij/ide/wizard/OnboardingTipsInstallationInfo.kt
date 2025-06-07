@@ -4,4 +4,7 @@ package com.intellij.ide.wizard
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class OnboardingTipsInstallationInfo(val simpleSampleText: String, val fileName: String, val offsetForBreakpoint: (CharSequence) -> Int?)
+data class OnboardingTipsInstallationInfo(val fileName: String, val offsetForBreakpoint: (CharSequence) -> Int?) {
+  @Deprecated("Use constructor without simpleSampleText", ReplaceWith("OnboardingTipsInstallationInfo(fileName, offsetForBreakpoint)"))
+  constructor(simpleSampleText: String, fileName: String, offsetForBreakpoint: (CharSequence) -> Int?) : this(fileName, offsetForBreakpoint)
+}

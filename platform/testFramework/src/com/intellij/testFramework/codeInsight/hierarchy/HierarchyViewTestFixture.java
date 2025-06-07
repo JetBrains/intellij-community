@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -73,11 +73,10 @@ public final class HierarchyViewTestFixture {
     checkHierarchyTreeStructure(treeStructure, element, comparator);
   }
 
-  @NotNull
-  public static String dump(@NotNull HierarchyTreeStructure treeStructure,
-                            @Nullable HierarchyNodeDescriptor descriptor,
-                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
-                            int level) {
+  public static @NotNull String dump(@NotNull HierarchyTreeStructure treeStructure,
+                                     @Nullable HierarchyNodeDescriptor descriptor,
+                                     @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                                     int level) {
     StringBuilder s = new StringBuilder();
     dump(treeStructure, descriptor, comparator,level, s);
     return s.toString();
@@ -114,10 +113,9 @@ public final class HierarchyViewTestFixture {
     }
   }
 
-  @NotNull
-  private static Object @NotNull [] getSortedChildren(@NotNull HierarchyTreeStructure treeStructure,
-                                                      @NotNull HierarchyNodeDescriptor descriptor,
-                                                      @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
+  private static @NotNull Object @NotNull [] getSortedChildren(@NotNull HierarchyTreeStructure treeStructure,
+                                                               @NotNull HierarchyNodeDescriptor descriptor,
+                                                               @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     Object[] children = treeStructure.getChildElements(descriptor);
     if (comparator == null) comparator = Comparator.comparingInt(NodeDescriptor::getIndex);
     Arrays.sort(children, (Comparator)comparator);

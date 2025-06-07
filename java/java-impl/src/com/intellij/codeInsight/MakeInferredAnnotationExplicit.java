@@ -29,6 +29,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,11 +43,11 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    final PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return false;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
-    return isAvailable(file, owner);
+    return isAvailable(psiFile, owner);
   }
 
   public boolean isAvailable(PsiFile file, PsiModifierListOwner owner) {
@@ -66,7 +67,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return false;
   }
 
-  private List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
+  private @Unmodifiable List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
     if (annotations.isEmpty() || !needToAddDependency(file, annotations)) return annotations;
     if (InferNullityAnnotationsAction.maySuggestAnnotationDependency(file.getProject())) {
       myNeedToAddDependency = true;
@@ -89,21 +90,21 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
     if (myNeedToAddDependency) {
-      makeAnnotationsExplicit(project, file, owner);
+      makeAnnotationsExplicit(project, psiFile, owner);
     } else {
       doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
     }
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return IntentionPreviewInfo.EMPTY;
     PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     if (owner == null) return IntentionPreviewInfo.EMPTY;
@@ -158,7 +159,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                                () -> doMakeAnnotationExplicit(project, owner, annotations)), file);
   }
 
-  private @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
+  private @Unmodifiable @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
     List<PsiAnnotation> allAnnotations = StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
       .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
       .map(MakeInferredAnnotationExplicit::correctAnnotation)

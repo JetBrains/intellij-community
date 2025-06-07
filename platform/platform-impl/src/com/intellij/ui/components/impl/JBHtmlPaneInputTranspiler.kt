@@ -10,6 +10,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
@@ -20,7 +21,7 @@ internal object JBHtmlPaneInputTranspiler {
 
   private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
     it.addAll(listOf("ul", "ol", "dl", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td",
-                     "table", "pre", "blockquote", "div"))
+                     "table", "pre", "blockquote", "div", "details", "summary"))
   }
 
   /**
@@ -44,6 +45,7 @@ internal object JBHtmlPaneInputTranspiler {
         }
       }
     })
+    sanitizeTables(document)
     document.outputSettings().prettyPrint(false)
     return document.html()
   }
@@ -207,5 +209,20 @@ internal object JBHtmlPaneInputTranspiler {
     val parent = parent() as? Element ?: return
     parent.insertChildren(siblingIndex(), nodes)
     remove()
+  }
+
+  /**
+   * IJPL-160370 - JEditorPane with HtmlToolkit crashes when there is text within the <table> tag.
+   * Move it before the table as browsers do.
+   */
+  private fun sanitizeTables(document: Document) {
+    document.select("table").forEach { table ->
+      table.textNodes().forEach {
+        if (!it.isBlank) {
+          it.remove()
+          table.before(it)
+        }
+      }
+    }
   }
 }

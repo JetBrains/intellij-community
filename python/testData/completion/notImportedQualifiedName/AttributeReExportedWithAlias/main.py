@@ -1,3 +1,1 @@
-@pytest.<caret>
-def test():
-    pass
+foo.<caret>

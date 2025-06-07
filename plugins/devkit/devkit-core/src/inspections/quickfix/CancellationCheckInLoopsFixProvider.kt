@@ -44,7 +44,7 @@ internal class JavaCancellationCheckInLoopsFixProvider : CancellationCheckInLoop
 internal class InsertCancellationCheckInLoopFix(cancellationCheckCallFqn: String, loopKeyword: PsiElement)
   : AbstractInsertCancellationCheckInLoopFix(cancellationCheckCallFqn, loopKeyword) {
 
-  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
+  override fun isAvailable(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
     return startElement.parentOfType<PsiLoopStatement>() != null
   }
 
@@ -74,7 +74,7 @@ internal abstract class AbstractInsertCancellationCheckInLoopFix(
 
   override fun getText(): String = familyName
 
-  override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+  override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val codeBlock = getCodeBlock(startElement) ?: return
     val cancellationCheckStatement = createCancellationCheckStatement(project, startElement)
     codeBlock.addBefore(cancellationCheckStatement, codeBlock.firstBodyElement)?.also {

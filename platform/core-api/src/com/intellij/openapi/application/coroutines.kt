@@ -2,9 +2,9 @@
 package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.application.UiDispatcherKind.RELAX
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -13,8 +13,12 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
+import java.nio.file.Files
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
+import kotlin.io.path.writeText
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -138,7 +142,7 @@ sealed interface ReadResult<out R> {
 
   @Internal
   companion object : ReadAndWriteScope {
-    
+
     @JvmStatic
     override fun <R> value(value: R): ReadResult<R> = Value(value)
 
@@ -153,6 +157,22 @@ sealed interface ReadAndWriteScope {
 }
 
 /**
+ * This method is renamed. Consider using [readAndEdtWriteAction].
+ */
+@Deprecated(message = "This method is renamed because it has unclear threading semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.readAndEdtWriteAction(action)", "com.intellij.openapi.application.readAndEdtWriteAction"))
+suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return constrainedReadAndWriteAction(action = action)
+}
+
+/**
+ * Same as [readAndEdtWriteAction], but invokes write actions on a background thread instead of EDT.
+ */
+@Experimental
+suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, action)
+}
+
+/**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
  * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope.writeAction]
  * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
@@ -160,12 +180,14 @@ sealed interface ReadAndWriteScope {
  * write action happens after the read completion but before the returned write action was able to run.
  * In other words, it's guaranteed that no other write occurs between the read action and returned write action.
  *
+ * Write actions are invoked on **EDT**.
+ *
  * See [constrainedReadAndWriteAction] for details.
  *
  * @see constrainedReadAction
  */
-suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return constrainedReadAndWriteAction(action = action)
+suspend fun <T> readAndEdtWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), true, action)
 }
 
 /**
@@ -216,32 +238,40 @@ suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>
  *
  */
 suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint, action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return readWriteActionSupport().executeReadAndWriteAction(constraints, action = action)
+  return readWriteActionSupport().executeReadAndWriteAction(constraints, true, action = action)
 }
 
 /**
- * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction] using [Dispatchers.EDT].
  *
- * Currently, the [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
+ * The [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
  * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
  * Acquiring the write-lock happens in blocking manner,
  * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
  * until all currently running read actions are finished.
  *
- * NB This function is an API stub.
- * The implementation will change once running write actions would be allowed on other threads.
- * This function exists to make it possible to use it in suspending contexts
- * before the platform is ready to handle write actions differently.
- *
- * @see readAndWriteAction
+ * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
+ */
+suspend fun <T> edtWriteAction(action: () -> T): T {
+  return withContext(Dispatchers.EDT) {
+    ApplicationManager.getApplication().runWriteAction(Computable(action))
+  }
+}
+
+/**
+ * Runs [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ *
+ * This function is deprecated in favor of [edtWriteAction]. This deprecation is needed to free the name [writeAction], as we are
+ * planning to schedule all write actions to background by default.
+ *
+ * NB This function is an API stub. The implementation will change once running write actions would be allowed on other threads. This
+ * function exists to make it possible to use it in suspending contexts before the platform is ready to handle write actions differently.
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
   return withContext(Dispatchers.EDT) {
-    blockingContext {
-      ApplicationManager.getApplication().runWriteAction(Computable(action))
-    }
+    ApplicationManager.getApplication().runWriteAction(Computable(action))
   }
 }
 
@@ -251,17 +281,10 @@ private object RunInBackgroundWriteActionMarker
   override val key: CoroutineContext.Key<*> get() = this
 }
 
-@Experimental
+@Internal
 @ApiStatus.Obsolete
 fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
-
-internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): Boolean {
-  if (!useBackgroundWriteAction) {
-    return false
-  }
-  return contextModality == null || contextModality == ModalityState.nonModal()
-}
 
 /**
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
@@ -276,15 +299,12 @@ internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): B
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
  *
- * @see readAndWriteAction
+ * @see readAndBackgroundWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
-@ApiStatus.Obsolete
-@Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  val isBackgroundActionAllowed = isBackgroundWriteActionPossible(coroutineContext.contextModality())
-  val context = if (isBackgroundActionAllowed) {
+  val context = if (useBackgroundWriteAction) {
     Dispatchers.Default + RunInBackgroundWriteActionMarker
   }
   else {
@@ -292,10 +312,27 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
   }
 
   return withContext(context) {
-    val dumpJob = if (isBackgroundActionAllowed) launch {
+    val dumpJob = if (useBackgroundWriteAction) launch {
       delay(10.seconds)
-      logger<ApplicationManager>().warn("Cannot execute write action in 10 seconds: ${dumpCoroutines()}")
-    } else null
+      val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+      val dumpDir = PathManager.getLogDir().resolve("bg-wa")
+      val file = dumpDir.resolve("thread-dump-${Random.nextInt().absoluteValue}.txt")
+      try {
+        Files.createDirectories(dumpDir)
+        Files.createFile(file)
+        file.writeText(dump.rawDump)
+        logger<ApplicationManager>().warn(
+          """Cannot execute background write action in 10 seconds. Thread dump is stored in ${file.toUri()}""")
+      }
+      catch (_: IOException) {
+        logger<ApplicationManager>().warn(
+          """Cannot execute background write action in 10 seconds.
+Thread dump:
+${dump.rawDump}""")
+      }
+
+    }
+    else null
     try {
       @Suppress("ForbiddenInSuspectContextMethod")
       ApplicationManager.getApplication().runWriteAction(ThrowableComputable(action))
@@ -318,14 +355,12 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
  *
- * @see readAndWriteAction
+ * @see readAndEdtWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
 suspend fun <T> writeIntentReadAction(action: () -> T): T {
-  return blockingContext {
-    ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
-  }
+  return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
 }
 
 private fun readWriteActionSupport() = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
@@ -335,13 +370,76 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * The computations scheduled by this dispatcher **are** protected by the Write-Intent lock, and they are allowed to upgrade to write actions.
+ *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  *
- * This dispatcher is also installed as [Dispatchers.Main].
- * Use [Dispatchers.EDT] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IJ model,
- * e.g., when it can be executed outside of IJ process.
+ * This dispatcher is also installed as [Dispatchers.Main]. Prefer [Dispatchers.UI] for computations on EDT.
  */
 @Suppress("UnusedReceiverParameter")
-val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
+val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(UiDispatcherKind.LEGACY, false)
+
+/**
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
+ *
+ * The behavior of the Write-Intent lock can be configured by the use of [kind].
+ *
+ * Prefer [Dispatchers.UI] for computations on EDT.
+ */
+@Experimental
+@Suppress("UnusedReceiverParameter")
+@JvmOverloads
+fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: Boolean = false): CoroutineContext = coroutineSupport().uiDispatcher(kind, immediate)
+
+/**
+ * Defines the behavior of a dispatcher that manages Event Dispatch Thread.
+ * The behavior of the dispatchers differs in their treatment of the Read-Write lock
+ * and possibility of interaction with the IntelliJ Platform model (PSI, VFS, etc.)
+ * By default, consider using [RELAX].
+ */
+@Experimental
+enum class UiDispatcherKind {
+  /**
+   * This UI dispatcher **forbids** any attempt to access the RW lock.
+   * Use it if you are performing strictly UI-related computations.
+   */
+  STRICT,
+
+  /**
+   * This UI dispatcher **allows** taking the RW lock, but **does not** acquire it by default.
+   * Use it for incremental migration from [LEGACY].
+   */
+  RELAX,
+
+  /**
+   * This UI dispatcher **acquires** the Write-Intent lock for all computations by default.
+   * We would like to move away from unconditional acquisition of the Read-Write lock, so please use [RELAX] for replacement.
+   */
+  @ApiStatus.Obsolete
+  LEGACY;
+}
+
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.LEGACY, immediate = true)
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = true)
+
+/**
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * The computations scheduled by this dispatcher are **not** protected by any lock, and it is forbidden to initiate Read or Write actions.
+ *
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
+ *
+ * Use [Dispatchers.UI] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IntelliJ Platform model (PSI, VFS, etc.),
+ * e.g., when it can be executed outside of IJ process.
+ */
+@get:Experimental
+@Suppress("UnusedReceiverParameter")
+val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = false)
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

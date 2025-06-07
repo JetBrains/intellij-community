@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * Abstract base class for the different configuration panels that tries to simplify the use of
- * of nested forms
+ * nested forms.
  */
 public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T> {
   private final List<Field> myOtherPanels = new ArrayList<>(3);
@@ -35,10 +35,9 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
   protected final Project myProject;
 
   /**
-   * The orignal item - must not be modified unless apply() is called.
+   * The original item - must not be modified unless apply() is called.
    */
-  @NotNull
-  protected final T myOrigInjection;
+  protected final @NotNull T myOrigInjection;
 
   /**
    * Represents the current UI state. Outside access should use {@link #getInjection()}

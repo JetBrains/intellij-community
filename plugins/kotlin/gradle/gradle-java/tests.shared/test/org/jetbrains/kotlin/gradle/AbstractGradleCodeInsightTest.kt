@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -123,12 +124,12 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
     companion object {
         @JvmStatic
         protected val GRADLE_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create("version-catalogs-kotlin-dsl") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("version-catalogs-kotlin-dsl")
                 includeBuild("includedBuild1")
                 includeBuild("includedBuildWithoutSettings")
             }
-            withBuildFile(gradleVersion, useKotlinDsl = true) {
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinDsl()
                 withMavenCentral()
             }
@@ -140,11 +141,13 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 [versions]
                 test_library-version = "1.0"
                 kotlin = "1.9.24"
+                [bundles]
+                some_test-bundle = [ "some_test-library" ]
                 """.trimIndent()
             )
             // included build files
-            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) { }
-            withBuildFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, "includedBuild1", gradleDsl = GradleDsl.KOTLIN) { }
+            withBuildFile(gradleVersion, "includedBuild1", gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
@@ -159,7 +162,7 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 """.trimIndent()
             )
             // included build without settings
-            withBuildFile(gradleVersion, relativeModulePath = "includedBuildWithoutSettings", useKotlinDsl = true) {}
+            withBuildFile(gradleVersion, "includedBuildWithoutSettings", gradleDsl = GradleDsl.KOTLIN) {}
             withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", /* language=TOML */ """
                 [libraries]
                 some_test-library = { module = "org.junit.jupiter:junit-jupiter" }

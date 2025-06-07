@@ -48,8 +48,7 @@ public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModC
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor");
   }
 

@@ -28,6 +28,7 @@ public class CallInstruction extends GoToInstruction {
     this.procEnd = procEnd;
   }
 
+  @Override
   public String toString() {
     return "CALL " + offset ;
   }

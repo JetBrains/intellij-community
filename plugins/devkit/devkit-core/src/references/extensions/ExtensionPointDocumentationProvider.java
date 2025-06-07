@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -165,8 +165,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return HtmlChunk.tag("tr").children(headerCell, contentCell);
   }
 
-  @Nullable
-  private static ExtensionPoint findExtensionPoint(PsiElement element) {
+  private static @Nullable ExtensionPoint findExtensionPoint(PsiElement element) {
     if ((element instanceof PomTargetPsiElement || element instanceof XmlTag) &&
         DescriptorUtil.isPluginXml(element.getContainingFile())) {
       return ExtensionPoint.resolveFromDeclaration(element);

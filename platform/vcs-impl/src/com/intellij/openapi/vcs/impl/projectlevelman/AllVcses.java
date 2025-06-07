@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -138,9 +138,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
     return vcs;
   }
 
-  @Nullable
   @Override
-  public VcsDescriptor getDescriptor(String name) {
+  public @Nullable VcsDescriptor getDescriptor(String name) {
     final VcsEP ep;
     synchronized (myLock) {
       ep = myExtensions.get(name);
@@ -257,9 +256,9 @@ public final class AllVcses implements AllVcsesI, Disposable {
     CVS("CVS", "CVS", "https://plugins.jetbrains.com/plugin/10746-cvs-integration"),
     TFS("TFS", "TFS", "https://plugins.jetbrains.com/plugin/4578-tfs");
 
-    @NotNull private final String vcsName;
-    @NotNull private final PluginId pluginId;
-    @NotNull private final String pluginUrl;
+    private final @NotNull String vcsName;
+    private final @NotNull PluginId pluginId;
+    private final @NotNull String pluginUrl;
 
     ObsoleteVcs(@NotNull String vcsName, @NotNull String pluginId, @NotNull String pluginUrl) {
       this.vcsName = vcsName;
@@ -267,8 +266,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       this.pluginUrl = pluginUrl;
     }
 
-    @Nullable
-    public static ObsoleteVcs findByName(@NotNull String name) {
+    public static @Nullable ObsoleteVcs findByName(@NotNull String name) {
       return ContainerUtil.find(values(), vcs -> vcs.vcsName.equals(name));
     }
   }

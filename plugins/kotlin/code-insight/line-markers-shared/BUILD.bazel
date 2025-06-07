@@ -1,0 +1,37 @@
+### auto-generated section `build kotlin.code-insight.line-markers.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-code-insight-line-markers-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-line-markers-shared",
+  module_name = "kotlin.code-insight.line-markers.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/code-insight",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/indices",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+  ],
+  runtime_deps = [":kotlin-code-insight-line-markers-shared_resources"]
+)
+### auto-generated section `build kotlin.code-insight.line-markers.shared` end

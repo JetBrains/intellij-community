@@ -47,9 +47,8 @@ public final class JsonPathSpellcheckerStrategy extends SpellcheckingStrategy im
     }
   };
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof JsonPathStringLiteral) {
       return ourStringLiteralTokenizer;
     }

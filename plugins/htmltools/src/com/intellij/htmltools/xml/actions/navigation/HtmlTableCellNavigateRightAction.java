@@ -14,8 +14,8 @@ public final class HtmlTableCellNavigateRightAction extends CodeInsightAction {
   public HtmlTableCellNavigateRightAction() {
     myHandler = new CodeInsightActionHandler() {
       @Override
-      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-        TableCellNavigator.moveCaret(project, editor, file, TableCellNavigator.Directions.RIGHT);
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+        TableCellNavigator.moveCaret(project, editor, psiFile, TableCellNavigator.Directions.RIGHT);
       }
 
       @Override
@@ -30,7 +30,7 @@ public final class HtmlTableCellNavigateRightAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    return TableCellNavigator.isActionAvailable(editor, file);
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    return TableCellNavigator.isActionAvailable(editor, psiFile);
   }
 }

@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
@@ -186,7 +186,7 @@ public final class UnreachableCodeInspection extends AbstractBaseJavaLocalInspec
           if (value instanceof Boolean || "".equals(value) || value instanceof Number number && number.doubleValue() == 0.0) {
             return true;
           }
-          if (literal.textMatches(PsiKeyword.NULL)) return true;
+          if (literal.textMatches(JavaKeywords.NULL)) return true;
         }
         return false;
       }

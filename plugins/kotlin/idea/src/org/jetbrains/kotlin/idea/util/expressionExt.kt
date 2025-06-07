@@ -5,12 +5,17 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.replaceWithBranch
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -19,8 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn as _textRangeIn
 
@@ -30,13 +34,6 @@ fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArg
         newTypeArgumentList,
         calleeExpression,
     )
-}
-
-// TODO: add cases
-fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
-    is KtStringTemplateExpression -> !hasInterpolation()
-    is KtConstantExpression -> true
-    else -> ConstantExpressionEvaluator.getConstant(this, analyze(BodyResolveMode.PARTIAL)) != null
 }
 
 @Deprecated(
@@ -80,4 +77,23 @@ fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
     val descriptorWithSource = itDescriptor.containingDeclaration as? DeclarationDescriptorWithSource ?: return null
     val lambdaExpression = descriptorWithSource.source.getPsi()?.parent as? KtLambdaExpression ?: return null
     return lambdaExpression.leftCurlyBrace.treeNext?.psi
+}
+
+internal fun KtExpression.replaceWithBranchAndMoveCaret(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
+    val originalExpression = this
+
+    // TODO get rid of this caret model manipulation when all usages are migrated to Mod command - it doesn't work there 
+    val caretModel = originalExpression.findExistingEditor()?.caretModel
+
+    // This code can be called non-Mod command usages, so we have to allow calling it from EDT and write action
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    val replaced = allowAnalysisOnEdt {
+        allowAnalysisFromWriteAction {
+            originalExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
+        }
+    }
+
+    if (replaced != null) {
+        caretModel?.moveToOffset(replaced.startOffset)
+    }
 }

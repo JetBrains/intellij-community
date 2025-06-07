@@ -18,6 +18,7 @@ package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -70,7 +71,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     memberInfoChanged(event.getChangedMembers());
   }
 
-  public void memberInfoChanged(final Collection<? extends M> changedMembers) {
+  public void memberInfoChanged(@Unmodifiable Collection<? extends M> changedMembers) {
     if (myTooltipManager != null) myTooltipManager.invalidate();
     for (M changedMember : changedMembers) {
       myMemberDependencyGraph.memberChanged(changedMember);

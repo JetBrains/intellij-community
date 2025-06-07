@@ -3,6 +3,7 @@ package com.intellij.vcs.log.graph.impl.facade
 
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,7 +31,7 @@ abstract class CascadeController protected constructor(protected val delegateCon
   protected abstract fun performAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer?
 
   companion object {
-    internal fun LinearGraphController.performActionRecursively(action: (LinearGraphController) -> GraphChanges<Int>?): GraphChanges<Int>? {
+    internal fun LinearGraphController.performActionRecursively(action: (LinearGraphController) -> GraphChanges<VcsLogGraphNodeId>?): GraphChanges<VcsLogGraphNodeId>? {
       val graphChanges = action(this)
       if (graphChanges != null) return graphChanges
 

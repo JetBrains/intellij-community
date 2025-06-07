@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -10,12 +11,32 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.lang.UrlClassLoader
+import com.jetbrains.plugin.structure.base.utils.isFile
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildCancellationException
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxLibcImpl
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.TestingOptions
+import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
@@ -35,14 +56,21 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.copyTo
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.outputStream
 import kotlin.io.path.readLines
+import kotlin.random.Random
 
 private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
-  private val context: CompilationContext = if (options.useArchivedCompiledClasses) ArchivedCompilationContext(context) else context
+  private val context: CompilationContext = if (options.useArchivedCompiledClasses) context.asArchived else context
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {
@@ -162,7 +190,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     else {
       val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
-      loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
+      if (options.isTestDiscoveryEnabled) {
+        loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
+      }
       if (runConfigurations == null) {
         runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, checkNotNull(mainModule) {
           "Main module is not specified"
@@ -220,10 +250,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     additionalJvmOptions: List<String>,
     systemProperties: Map<String, String>,
   ) {
-    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT) {
+    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES) {
       context.messages.warning(
         "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
-        "while only '${JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT.serialized}' is supported. Scope will be ignored"
+        "while only '${JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized}' is supported. Scope will be ignored"
       )
     }
     try {
@@ -255,8 +285,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       for (module in context.project.modules) {
         val contentRoots = module.contentRootsList.urls
         if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          excludedRootPaths.add(context.getModuleOutputDir(module))
-          excludedRootPaths.add(context.getModuleTestsOutputDir(module))
+          excludedRootPaths.addAll(context.getModuleOutputRoots(module))
+          excludedRootPaths.addAll(context.getModuleOutputRoots(module, forTests = true))
         }
       }
       val excludedRoots = replaceWithArchivedIfNeededLP(excludedRootPaths).filter(Files::exists).map(Path::toString)
@@ -294,10 +324,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>) {
-    if (!options.isTestDiscoveryEnabled) {
-      return
-    }
-
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
                   ?: throw RuntimeException("Can't find the $testDiscovery library, but test discovery capturing enabled.")
@@ -374,7 +400,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     remoteDebugging: Boolean,
   ) {
     val useKotlinK2 = System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean() ||
-                      System.getProperty("teamcity.buildType.id", "").contains("KotlinK2Tests")
+                      jvmArgs.contains("-Didea.kotlin.plugin.use.k2=true")
     val mainJpsModule = context.findRequiredModule(mainModule)
     val testRoots = JpsJavaExtensionService.dependencies(mainJpsModule).recursively()
       .withoutSdk()  // if the project requires different SDKs, they all shouldn't be added to the test classpath
@@ -386,11 +412,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkOutput = runBlocking(Dispatchers.Default) {
-        context.getModuleOutputDir(testFrameworkCoreModule).toFile()
+      val testFrameworkCoreModuleOutputRoots = runBlocking(Dispatchers.Default) {
+        context.getModuleOutputRoots(testFrameworkCoreModule).map(Path::toFile)
       }
-      if (!testRoots.contains(testFrameworkOutput)) {
-        testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
+      for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
+        if (!testRoots.contains(testFrameworkOutput)) {
+          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
+        }
       }
     }
 
@@ -417,6 +445,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     Files.writeString(classpathFile, replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
+    systemProperties.put("io.netty.allocator.type", "pooled")
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
@@ -428,6 +457,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val messages = context.messages
     if (isRunningInBatchMode) {
       messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
+    }
+    else if (!testPatterns.isNullOrEmpty()) {
+      messages.info("Starting tests from patterns '${testPatterns}' from classpath of module '${mainModule}'")
     }
     else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
@@ -538,6 +570,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         bundledRuntime = context.bundledRuntime,
         customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
         additionalVmOptions = customMemoryOptions ?: emptyList(),
+        platformPrefix = options.platformPrefix,
       ),
     )
 
@@ -567,11 +600,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
+      "user.home" to System.getProperty("user.home"),
     )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
       }
     }
+
+    systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG] = options.bucketIndex.toString()
+    systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG] = options.bucketsCount.toString()
 
     System.getProperties().forEach { key, value ->
       key as String
@@ -579,11 +616,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (key.startsWith("pass.")) {
         systemProperties[key.substring("pass.".length)] = value as String
       }
-
-      /**
-       * Make test inherit Maven dependency resolver settings
-       * See [org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder]
-       */
 
       /**
        * Make test inherit Maven dependency resolver settings
@@ -642,7 +674,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     if (context is ArchivedCompilationContext) {
       context.archivesLocation.absolutePathString().let {
-        systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it:$old" }
+        systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it${File.pathSeparatorChar}$old" }
         systemProperties.put("intellij.test.jars.location", it)
       }
       context.paths.tempDir.resolve("tests.jar.mapping").let { file ->
@@ -699,15 +731,29 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private suspend fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
-    val root = context.getModuleTestsOutputDir(context.findRequiredModule(mainModule))
-    val testClasses = Files.walk(root).use { stream ->
-      stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
-        filteringPattern.matcher(it).matches()
-      }.toList()
-    } ?: listOf()
+    val testClasses: List<String> = context.getModuleOutputRoots(context.findRequiredModule(mainModule), forTests = true).flatMap { root ->
+      if (root.isRegularFile() && root.extension == "jar") {
+        val classes = ArrayList<String>()
+        val regex = filteringPattern.toRegex()
+        readZipFile(root) { name, _ ->
+          if (FileUtilRt.toSystemIndependentName(name).matches(regex)) {
+            classes.add(name)
+          }
+          ZipEntryProcessorResult.CONTINUE
+        }
+        classes
+      }
+      else {
+        Files.walk(root).use { stream ->
+          stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
+            filteringPattern.matcher(it).matches()
+          }.toList()
+        } ?: listOf()
+      }
+    }
 
     if (testClasses.isEmpty()) {
-      throw RuntimeException("No tests were found in $root with $filteringPattern")
+      throw RuntimeException("No tests were found in module '$mainModule' with $filteringPattern")
     }
 
     return testClasses
@@ -829,6 +875,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       context.messages.info("Will run tests in dedicated runtimes ('${options.isDedicatedTestRuntime}')")
       // First, collect all tests for both JUnit5 and JUnit3+4
       val testClassesJUnit5 = spanBuilder("collect junit 5 tests").use {
+        if (options.shouldSkipJUnit5Tests) {
+          context.messages.warning("JUnit 5 tests collections is skipped")
+          return@use emptyList()
+        }
+
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -844,6 +895,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
 
       val testClassesJUnit34 = block("collect junit 3+4 tests") {
+        if (options.shouldSkipJUnit34Tests) {
+          context.messages.warning("JUnit 3+4 tests collections is skipped")
+          return@block emptyList()
+        }
+
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -952,8 +1008,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
         else emptyMap()
       }
-      var runJUnit5 = true
-      var runJUnit34 = true
+      var runJUnit5 = !options.shouldSkipJUnit5Tests
+      var runJUnit34 = !options.shouldSkipJUnit34Tests
       for (attempt in 1..options.attemptCount) {
         if (!runJUnit5 && !runJUnit34) break
         val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
@@ -1030,6 +1086,36 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   private class NoTestsFound : Exception()
 
+  /**
+   * we need to gather all the jars from original classpath entries into one directory
+   * to be able to pass them as a classpath argument using asterisk mask.
+   * otherwise classpath may be too long and contradict with maximal allowed parameter size (see ARG_MAX)
+   */
+  @OptIn(ExperimentalPathApi::class)
+  private fun prepareMuslClassPath(classpath: ArrayList<String>) : ArrayList<String> {
+    val muslClasspathEntries = ArrayList<String>()
+
+    val muslClassPath = ULTIMATE_HOME.resolve("musl_classpath_${Random.nextInt(Int.MAX_VALUE)}").let {
+      if (it.exists()) {
+        it.deleteRecursively()
+      }
+      Files.createDirectory(it)
+    }
+
+    muslClasspathEntries.add("${muslClassPath.absolutePathString()}/*")
+
+    classpath.forEach { classPathFile ->
+      val cpf = Path.of(classPathFile)
+      if (cpf.isFile) {
+        //copy the original classpath entry to the directory, which is already included in the resulting classpath above
+        cpf.copyTo(muslClassPath.resolve(cpf.fileName.toString()), overwrite = true)
+      } else {
+        muslClasspathEntries.add(classPathFile)
+      }
+    }
+    return muslClasspathEntries
+  }
+
   private fun runJUnit5Engine(systemProperties: Map<String, String?>,
                               jvmArgs: List<String>,
                               envVariables: Map<String, String>,
@@ -1050,7 +1136,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       classpath += testClasspath
     }
     args += "-classpath"
-    args += classpath.joinToString(separator = File.pathSeparator)
+
+    val classpathForTests = if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
+      prepareMuslClassPath(classpath)
+    } else {
+      classpath
+    }
+    args += classpathForTests.joinToString(separator = File.pathSeparator)
 
     if (modulePath != null) {
       args += "--module-path"
@@ -1058,6 +1150,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       appendJUnitStarter(mp)
       args += mp.joinToString(separator = File.pathSeparator)
       args += "--add-modules=ALL-MODULE-PATH"
+    }
+
+    if (isMultiRoutingFileSystemEnabledForProduct(null)) {
+      args += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
     }
 
     args += jvmArgs

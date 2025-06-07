@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -30,7 +30,7 @@ import java.util.HashSet;
 
 public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiMethod> consumer) {
+  public boolean execute(final @NotNull OverridingMethodsSearch.SearchParameters parameters, final @NotNull Processor<? super PsiMethod> consumer) {
     final PsiMethod method = parameters.getMethod();
 
     Project project = ReadAction.compute(method::getProject);
@@ -74,7 +74,7 @@ public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMet
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
                                            @NotNull PsiMethod method,
                                            @NotNull Project project,
-                                           @NotNull final Processor<? super PsiMethod> consumer) {
+                                           final @NotNull Processor<? super PsiMethod> consumer) {
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
@@ -111,8 +111,7 @@ public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMet
     return success[0];
   }
 
-  @NotNull
-  private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, OverridingMethodsSearch.SearchParameters parameters, @NotNull Project project) {
+  private static @NotNull Iterable<PsiMethod> compute(@NotNull PsiMethod method, OverridingMethodsSearch.SearchParameters parameters, @NotNull Project project) {
     final PsiClass containingClass = ReadAction.compute(method::getContainingClass);
     assert containingClass != null;
     Collection<PsiMethod> result = new HashSet<>();
@@ -158,10 +157,9 @@ public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMet
     }
   }
   
-  @Nullable
-  public static PsiMethod findOverridingMethod(@NotNull PsiClass inheritor,
-                                               @NotNull PsiMethod method,
-                                               @NotNull PsiClass methodContainingClass) {
+  public static @Nullable PsiMethod findOverridingMethod(@NotNull PsiClass inheritor,
+                                                         @NotNull PsiMethod method,
+                                                         @NotNull PsiClass methodContainingClass) {
     String name = method.getName();
     if (inheritor.findMethodsByName(name, false).length > 0) {
       PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, getSuperSignature(inheritor, methodContainingClass, method), false);
@@ -183,8 +181,7 @@ public final class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMet
     return null;
   }
 
-  @NotNull
-  private static MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
+  private static @NotNull MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
     PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
     // if null, we have EJB custom inheritance here and still check overriding
     return method.getSignature(substitutor != null ? substitutor : PsiSubstitutor.EMPTY);

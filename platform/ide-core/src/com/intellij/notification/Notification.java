@@ -71,6 +71,8 @@ public class Notification {
   private @Nullable Boolean myImportant;
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
+  private boolean myRemoveWhenExpired;
+  private boolean myAddExtraAction;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private boolean myIsShowingPopupSuppressed;
@@ -121,6 +123,26 @@ public class Notification {
     return this;
   }
 
+  public boolean isRemoveWhenExpired() {
+    return myRemoveWhenExpired;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setRemoveWhenExpired(boolean removeWhenExpired) {
+    myRemoveWhenExpired = removeWhenExpired;
+    return this;
+  }
+
+  public boolean isAddExtraAction() {
+    return myAddExtraAction;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setAddExtraAction(boolean addExtraAction) {
+    myAddExtraAction = addExtraAction;
+    return this;
+  }
+
   /**
    * Returns the time (in milliseconds since Jan 1, 1970) when the notification was created.
    */
@@ -168,7 +190,11 @@ public class Notification {
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    if (myDoNotAskId == null) {
+    if (myDoNotAskId == null && myDisplayId != null) {
+      myDoNotAskDisplayName = myTitle;
+      myDoNotAskId = myDisplayId;
+    }
+    else if (myDoNotAskId == null) {
       @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
       if (title == null) {
         title = myGroupId;
@@ -449,7 +475,7 @@ public class Notification {
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
     var event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.NOTIFICATION, ActionUiKind.NONE, null);
-    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
+    IdeUiService.getInstance().performAction(action, event);
   }
 
   /**

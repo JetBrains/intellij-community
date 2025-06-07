@@ -55,6 +55,30 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSmartNegationNoneAny() {
     doTest();
   }
+  
+  public void testAlreadyNegated() {
+    doTest();
+  }
+  
+  public void testObjectsNonNull() {
+    doTest();
+  }
+  
+  public void testMethodRef() {
+    doTest();
+  }
+  
+  public void testMethodRef2Lambda() {
+    doTest();
+  }
+  
+  public void testMethodRefOptional() {
+    doTest();
+  }
+  
+  public void testMethodRefComplexQualifier() {
+    doTest();
+  }
 
   @Override
   protected void setUp() throws Exception {

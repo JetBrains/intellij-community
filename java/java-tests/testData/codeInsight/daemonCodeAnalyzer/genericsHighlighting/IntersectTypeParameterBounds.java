@@ -29,6 +29,6 @@ class Main2 {
     List r1 = foo("", obj);
     List<T> r2 = foo("", obj);
     List<?> r3 = foo("", obj);
-    <error descr="Incompatible types. Found: 'java.util.List<java.io.Serializable>', required: 'java.util.List<java.lang.Object>'">List<Object> r4 = foo("", obj);</error>
+    List<Object> r4 = <error descr="Incompatible types. Found: 'java.util.List<java.io.Serializable>', required: 'java.util.List<java.lang.Object>'">foo</error>("", obj);
   }
 }

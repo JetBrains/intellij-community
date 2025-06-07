@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,8 +24,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "JUnit5";
   }
 
@@ -48,15 +47,13 @@ public class JUnit5Framework extends JUnitTestFramework {
     return true;
   }
 
-  @Nullable
   @Override
-  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+  public @Nullable ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return JUnitExternalLibraryDescriptor.JUNIT5;
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return null;
   }
 
@@ -69,9 +66,8 @@ public class JUnit5Framework extends JUnitTestFramework {
     }, false);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), ()->{
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, 0)) return each;
@@ -80,9 +76,8 @@ public class JUnit5Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (each.hasModifierProperty(PsiModifier.STATIC)
@@ -92,9 +87,8 @@ public class JUnit5Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_EACH_ANNOTATION_NAME, 0)) return each;
@@ -103,9 +97,8 @@ public class JUnit5Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (each.hasModifierProperty(PsiModifier.STATIC)
@@ -118,8 +111,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+  protected @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
     PsiMethod method = findSetUpMethod(clazz);
     if (method != null) return method;
 
@@ -136,7 +128,8 @@ public class JUnit5Framework extends JUnitTestFramework {
                                              JUnitBundle.message("create.setup.dialog.title"),
                                              Messages.getWarningIcon());
       if (exit == Messages.OK) {
-        new AddAnnotationFix(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, PsiNameValuePair.EMPTY_ARRAY, 
+                                                          existingMethod.getModifierList());
         return existingMethod;
       }
     }
@@ -190,8 +183,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Method.java");
   }
 

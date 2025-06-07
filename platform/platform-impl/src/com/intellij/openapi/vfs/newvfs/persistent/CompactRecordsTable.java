@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,11 +20,13 @@ import java.util.concurrent.locks.Lock;
 // same if size / capacity is overflowed: new record is created to hold integer offset / capacity and original record contains its
 // negative number
 //TODO RC: this class is not really thread-safe, even though it does use locks here and there
-final class CompactRecordsTable extends AbstractRecordsTable {
+@ApiStatus.Internal
+public final class CompactRecordsTable extends AbstractRecordsTable {
   private final byte[] zeroes;
   private final boolean forceSplit;
 
-  CompactRecordsTable(@NotNull Path recordsFile, StorageLockContext pool, boolean forceSplit) throws IOException {
+  @VisibleForTesting
+  public CompactRecordsTable(@NotNull Path recordsFile, StorageLockContext pool, boolean forceSplit) throws IOException {
     super(recordsFile, pool);
     zeroes = new byte[getRecordSize()];
     this.forceSplit = forceSplit;

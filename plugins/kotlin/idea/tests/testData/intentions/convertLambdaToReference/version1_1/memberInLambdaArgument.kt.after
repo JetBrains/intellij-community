@@ -8,3 +8,4 @@ class Owner(val z: Int) {
 }
 
 // IGNORE_K2
+

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -200,14 +200,17 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       });
       button.setOptions(actions);
       ExecutorAction action = createAction(selected, executor);
-      String tooltip = UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) +
-                       " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")";
+      String tooltip = UIUtil.removeMnemonic(executor.getStartActionText(selected.getName()));
+      String actionShortcut = KeymapUtil.getFirstKeyboardShortcutText(action);
+      if(!actionShortcut.isEmpty()) {
+        tooltip += " (" + actionShortcut + ")";
+      }
+
       button.setToolTipText(tooltip);
     }
   }
 
-  @NotNull
-  private ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
+  private @NotNull ExecutorAction createAction(@NotNull RunnerAndConfigurationSettings selected, @NotNull Executor executor) {
     return new ExecutorAction(executor) {
       {
         AnAction action = ActionManager.getInstance().getAction(executor.getId());

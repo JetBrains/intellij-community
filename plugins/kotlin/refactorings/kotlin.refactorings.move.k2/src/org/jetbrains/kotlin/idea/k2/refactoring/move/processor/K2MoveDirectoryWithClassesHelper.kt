@@ -14,6 +14,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -94,10 +95,10 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         moveFileHandler.updateMovedFile(newElement)
     }
 
-    override fun retargetUsages(usages: MutableList<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
         val usagesToProcess = usages.filterIsInstance<K2MoveRenameUsageInfo>()
         moveFileHandler.retargetUsages(usagesToProcess, oldToNewMap)
-        usages.removeAll(usagesToProcess)
+        return usages.filter { !usagesToProcess.contains(it) }
     }
 
     override fun postProcessUsages(usages: Array<out UsageInfo>?, newDirMapper: Function<in PsiDirectory, out PsiDirectory>?) {

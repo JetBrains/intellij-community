@@ -53,6 +53,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       exclusiveOn = listOf("--class-path")
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
+        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
         displayName(CLASSPATH_ARGUMENT_NAME)
       }
     }
@@ -114,6 +115,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     option("--class-path") {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
+        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
         displayName(CLASSPATH_ARGUMENT_NAME)
       }
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
@@ -24,7 +25,7 @@ class DebugToggleBreakpointCommand(text: String, line: Int) : AbstractCallbackBa
     val (virtualFile, line) = getArguments(context.project)
 
     val utils = XDebuggerUtilImpl.getInstance() as XDebuggerUtilImpl
-    utils.toggleAndReturnLineBreakpoint(context.project, virtualFile, line, false)
+    utils.toggleAndReturnLineBreakpoint(context.project, virtualFile, line-1, false)
       .onError {
         logger.info("Error on breakpoint toggling $it")
         callback.reject(it.message)

@@ -4,7 +4,9 @@ package com.intellij.debugger.feedback
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class KotlinDebuggerFeedbackTestAction : AnAction("Show Kotlin Debugger Feedback Test Action") {
+class KotlinDebuggerFeedbackTestAction : AnAction(
+  KotlinDebuggerFeedbackSurveyBundle.message("kotlin.debugger.feedback.notification.test.name")
+) {
 
   override fun actionPerformed(e: AnActionEvent) {
     KotlinDebuggerSurveyFeedbackDialog(e.project, true).show()

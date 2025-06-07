@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -71,9 +71,8 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
     return Set.of(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,
@@ -194,8 +193,7 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
         }
       }
 
-      @NotNull
-      private LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context) {
+      private @NotNull LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context) {
         return new ForEachWithRecordCanBeUsedFix(context.base, context.currentParameter);
       }
     };
@@ -239,8 +237,7 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
     processor.accept(context, components);
   }
 
-  @Nullable
-  private static ComponentContext createContext(@NotNull PsiForeachStatement statement, @NotNull Options options) {
+  private static @Nullable ComponentContext createContext(@NotNull PsiForeachStatement statement, @NotNull Options options) {
     PsiStatement body = statement.getBody();
     if (body == null) {
       return null;
@@ -269,9 +266,8 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
     return new ComponentContext(0, parameter, parameterClass, substitutor, statement, options, new ShowInfoFolder());
   }
 
-  @NotNull
-  private static Map<String, List<PsiElement>> processReferences(@NotNull List<? extends PsiElement> references,
-                                                                 @NotNull ComponentContext context) {
+  private static @NotNull Map<String, List<PsiElement>> processReferences(@NotNull List<? extends PsiElement> references,
+                                                                          @NotNull ComponentContext context) {
     Map<String, List<PsiElement>> result = new HashMap<>();
     for (PsiElement reference : references) {
       PsiElement element = PsiUtil.skipParenthesizedExprUp(reference.getParent());
@@ -314,10 +310,9 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
     return result;
   }
 
-  @NotNull
-  private static PsiElement normalizeElement(@NotNull PsiReferenceExpression reference,
-                                             @NotNull PsiRecordComponent component,
-                                             @NotNull ComponentContext context) {
+  private static @NotNull PsiElement normalizeElement(@NotNull PsiReferenceExpression reference,
+                                                      @NotNull PsiRecordComponent component,
+                                                      @NotNull ComponentContext context) {
     PsiElement expectedCallExpression = reference;
     if (PsiUtil.skipParenthesizedExprUp(expectedCallExpression.getParent()) instanceof PsiMethodCallExpression methodCallExpression) {
       expectedCallExpression = methodCallExpression;
@@ -349,10 +344,8 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
       myParameter = SmartPointerManager.createPointer(parameter);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name");
     }
 
@@ -424,9 +417,8 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
       }
     }
 
-    @Nullable
-    private static PatternDefinition createPatternDefinition(@NotNull ForEachWithRecordPatternCanBeUsedInspection.ComponentContext context,
-                                                             @NotNull Map<String, List<String>> usedVariable) {
+    private static @Nullable PatternDefinition createPatternDefinition(@NotNull ForEachWithRecordPatternCanBeUsedInspection.ComponentContext context,
+                                                                       @NotNull Map<String, List<String>> usedVariable) {
       PsiClass recordClass = context.recordClass;
       PsiStatement body = context.base.getBody();
       if (body == null) {
@@ -475,9 +467,8 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
       }
     }
 
-    @NotNull
-    private static Map<String, List<String>> deleteVariablesAndMapToMethodCalls(@NotNull Map<String, List<PsiElement>> map,
-                                                                                @NotNull ComponentContext context) {
+    private static @NotNull Map<String, List<String>> deleteVariablesAndMapToMethodCalls(@NotNull Map<String, List<PsiElement>> map,
+                                                                                         @NotNull ComponentContext context) {
       PsiParameter currentElement = context.currentParameter;
       String name = currentElement.getName();
       HashMap<String, List<String>> usedNames = new HashMap<>();

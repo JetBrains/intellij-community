@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -41,6 +41,7 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   public void testClassInitializers() { doTest(); }
   public void testStaticMembers() { doTest(); }
   public void testSuperReference() { doTest(); }
+  public void testProtectedMember() { doTest(); }
   public void testInnerClassReference() { doTest(); }
   public void testStaticImport() { doTest(); }
   public void testNewArrayInitializerExpr() { doTest(); }

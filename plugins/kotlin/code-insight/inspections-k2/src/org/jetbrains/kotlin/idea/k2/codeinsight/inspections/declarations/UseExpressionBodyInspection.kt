@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -76,10 +76,10 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    context(KaSession)
-    override fun prepareContext(element: KtDeclarationWithBody): Context? {
-        val valueStatement = element.findValueStatement() ?: return null
-        val requireType = valueStatement.expressionType?.isNothingType == true
+    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
+        val valueStatementResult = element.findValueStatement() ?: return null
+        val valueStatement = valueStatementResult.statement
+        val requireType = valueStatement?.expressionType?.isNothingType == true
         return when {
             valueStatement !is KtReturnExpression -> Context(KotlinBundle.message("block.body"), INFORMATION)
             valueStatement.returnedExpression is KtWhenExpression -> Context(KotlinBundle.message("return.when"), INFORMATION)
@@ -88,17 +88,20 @@ internal class UseExpressionBodyInspection :
         }.copy(requireType = requireType)
     }
 
+    @JvmInline
+    private value class ValueStatementResult(val statement: KtExpression?)
+
     context(KaSession)
-    private fun KtDeclarationWithBody.findValueStatement(): KtExpression? {
+    private fun KtDeclarationWithBody.findValueStatement(): ValueStatementResult? {
         val statements = bodyBlockExpression?.statements
         if (statements.isNullOrEmpty()) {
-            return KtPsiFactory(project).createExpression("Unit")
+            return ValueStatementResult(statement = null)
         }
 
         val statement = statements.singleOrNull() ?: return null
         when (statement) {
             is KtReturnExpression -> {
-                return statement
+                return ValueStatementResult(statement)
             }
 
             //TODO: IMO this is not good code, there should be a way to detect that KtExpression does not have value
@@ -119,7 +122,8 @@ internal class UseExpressionBodyInspection :
                         return null
                     }
                 }
-                return statement
+
+                return ValueStatementResult(statement)
             }
         }
     }
@@ -136,7 +140,7 @@ internal class UseExpressionBodyInspection :
     override fun createQuickFix(
         element: KtDeclarationWithBody,
         context: Context,
-    ) = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
+    ): KotlinModCommandQuickFix<KtDeclarationWithBody> = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.to.expression.body.fix.text")

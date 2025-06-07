@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.rename;
 
@@ -163,6 +163,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("classAndTypeAliasRedeclaration/classAndTypeAliasRedeclaration.test")
     public void testClassAndTypeAliasRedeclaration_ClassAndTypeAliasRedeclaration() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/classAndTypeAliasRedeclaration/classAndTypeAliasRedeclaration.test");
+    }
+
+    @TestMetadata("classByPrimaryConstructorFromJava/classByPrimaryConstructor.test")
+    public void testClassByPrimaryConstructorFromJava_ClassByPrimaryConstructor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/classByPrimaryConstructorFromJava/classByPrimaryConstructor.test");
     }
 
     @TestMetadata("classByPrimaryConstructorWithSpace/classByPrimaryConstructorWithSpace.test")

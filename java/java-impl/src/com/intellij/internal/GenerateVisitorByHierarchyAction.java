@@ -35,8 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 final class GenerateVisitorByHierarchyAction extends AnAction {
 
@@ -126,7 +126,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE ||
         dialog.getSelectedPackage() == null ||
-        dialog.getSelectedPackage().getQualifiedName().length() == 0 ||
+        dialog.getSelectedPackage().getQualifiedName().isEmpty() ||
         parentClassRef.isNull()) {
       return;
     }

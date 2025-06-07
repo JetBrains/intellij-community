@@ -40,8 +40,7 @@ public final class SwitchStatementDensityInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Integer intDensity = (Integer)infos[0];
     return InspectionGadgetsBundle.message("switch.statement.density.problem.descriptor", intDensity);
   }

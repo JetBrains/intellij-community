@@ -34,6 +34,7 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -75,18 +76,22 @@ public class RegistryUi implements Disposable {
     myTable.setShowGrid(false);
     myTable.setVisibleRowCount(15);
     myTable.setEnableAntialiasing(true);
-    final MyRenderer r = new MyRenderer();
+    MyRenderer r = new MyRenderer();
 
-    final TableColumn c1 = myTable.getColumnModel().getColumn(0);
+    TableColumn c1 = myTable.getColumnModel().getColumn(0);
     c1.setPreferredWidth(JBUI.scale(400));
     c1.setCellRenderer(r);
     c1.setHeaderValue("Key");
 
-    final TableColumn c2 = myTable.getColumnModel().getColumn(1);
+    TableColumn c2 = myTable.getColumnModel().getColumn(1);
     c2.setPreferredWidth(JBUI.scale(100));
     c2.setCellRenderer(r);
     c2.setHeaderValue("Value");
     c2.setCellEditor(new MyEditor());
+
+    TableColumn c3 = myTable.getColumnModel().getColumn(2);
+    c3.setPreferredWidth(JBUI.scale(100));
+    c3.setHeaderValue("Source");
 
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setMargin(JBUI.insets(2));
@@ -95,8 +100,9 @@ public class RegistryUi implements Disposable {
     myDescriptionLabel.setEditable(false);
     myDescriptionLabel.setBackground(UIUtil.getPanelBackground());
     myDescriptionLabel.setFont(JBFont.label());
-    final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel, SideBorder.NONE);
-    final JPanel descriptionPanel = new JPanel(new BorderLayout());
+
+    JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel, SideBorder.NONE);
+    JPanel descriptionPanel = new JPanel(new BorderLayout());
     descriptionPanel.add(label, BorderLayout.CENTER);
     descriptionPanel.setBorder(JBUI.Borders.emptyTop(8));
 
@@ -155,6 +161,7 @@ public class RegistryUi implements Disposable {
               keyChanged(rv.getKey());
               myModel.fireTableCellUpdated(modelRow, 0);
               myModel.fireTableCellUpdated(modelRow, 1);
+              myModel.fireTableCellUpdated(modelRow, 2);
             }
           }
           invalidateActions();
@@ -266,7 +273,7 @@ public class RegistryUi implements Disposable {
 
     @Override
     public int getColumnCount() {
-      return 2;
+      return 3;
     }
 
     @Override
@@ -275,6 +282,10 @@ public class RegistryUi implements Disposable {
       return switch (columnIndex) {
         case 0 -> value.getKey();
         case 1 -> value.asString();
+        case 2 -> {
+          RegistryValueSource source = value.getSource();
+          yield source != null ? source.name() : "";
+        }
         default -> value;
       };
     }
@@ -289,13 +300,13 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private static List<String> getRecent() {
+  private static @Unmodifiable List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
     return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
-    final List<String> recent = getRecent();
+    final List<String> recent = new ArrayList<>(getRecent());
     recent.remove(key);
     recent.add(0, key);
     PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, StringUtil.join(recent, "="), "");
@@ -344,7 +355,6 @@ public class RegistryUi implements Disposable {
         return "Registry";
       }
 
-
       @Override
       public JComponent getPreferredFocusedComponent() {
         return myTable;
@@ -361,6 +371,10 @@ public class RegistryUi implements Disposable {
         myCloseAction = new AbstractAction(IdeBundle.message("registry.close.action.text")) {
           @Override
           public void actionPerformed(@NotNull ActionEvent e) {
+            final TableCellEditor cellEditor = myTable.getCellEditor();
+            if (cellEditor != null) {
+              cellEditor.stopCellEditing();
+            }
             processClose();
             doOKAction();
           }
@@ -372,10 +386,15 @@ public class RegistryUi implements Disposable {
       public void doCancelAction() {
         final TableCellEditor cellEditor = myTable.getCellEditor();
         if (cellEditor != null) {
-          cellEditor.stopCellEditing();
+          cellEditor.cancelCellEditing();
         }
         processClose();
         super.doCancelAction();
+      }
+
+      @Override
+      public @NotNull Dimension getInitialSize() {
+        return new JBDimension(800, 600, false);
       }
     };
 
@@ -405,7 +424,7 @@ public class RegistryUi implements Disposable {
       // remove stored value if it is equals to the new value
       myModifiedValues.remove(key);
     }
-    registryValue.setValue(value);
+    registryValue.setValue(value, RegistryValueSource.USER);
   }
 
   private void restoreDefaults() {
@@ -583,7 +602,7 @@ public class RegistryUi implements Disposable {
         }
         else if (myValue.isMultiValue()) {
           String selected = (String)myComboBox.getSelectedItem();
-          myValue.setSelectedOption(selected);
+          myValue.setSelectedOption(selected, RegistryValueSource.USER);
         }
         else {
           setValue(myValue, myField.getText().trim());

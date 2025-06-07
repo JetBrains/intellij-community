@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.MethodImplementor;
@@ -49,12 +49,11 @@ public final class GroovyMethodImplementor implements MethodImplementor {
     return null;
   }
 
-  @NotNull
   @Override
-  public Consumer<PsiMethod> createDecorator(final PsiClass targetClass,
-                                             final PsiMethod baseMethod,
-                                             final boolean toCopyJavaDoc,
-                                             final boolean insertOverrideIfPossible) {
+  public @NotNull Consumer<PsiMethod> createDecorator(final PsiClass targetClass,
+                                                      final PsiMethod baseMethod,
+                                                      final boolean toCopyJavaDoc,
+                                                      final boolean insertOverrideIfPossible) {
     return new PsiMethodConsumer(targetClass, toCopyJavaDoc, baseMethod, insertOverrideIfPossible);
   }
 

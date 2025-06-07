@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,7 +50,9 @@ public class IElementType {
     push(init);
   }
 
-  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -58,6 +61,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull ClassLoader loader, @NotNull PluginDescriptor pluginDescriptor) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
@@ -67,6 +71,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull Language language, @NotNull PluginDescriptor pluginDescriptor) {
     if (language == Language.ANY) {
       throw new IllegalArgumentException("Trying to unregister Language.ANY");
@@ -165,7 +170,7 @@ public class IElementType {
 
   /**
    * Controls whitespace balancing behavior of PsiBuilder.
-   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbour, forming following tree:
+   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbor, forming the following tree:
    * <pre>
    *  [previous_element]
    *  [whitespace]
@@ -173,7 +178,7 @@ public class IElementType {
    *    &lt;empty&gt;
    *  [next_element]
    * </pre>
-   * <p>Left-bound elements are bounded to the left (next) neighbour instead:
+   * <p>Left-bound elements are bounded to the left (next) neighbor instead:
    * <pre>
    *  [previous_element]
    *  [empty_element]
@@ -195,11 +200,14 @@ public class IElementType {
    * @return the element type at the specified index.
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
-  public static IElementType find(short idx) {
+  public static @NotNull IElementType find(short idx) {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
       throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
+    }
+    if (type == null) {
+      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (size - 1) + ")");
     }
     return type;
   }
@@ -215,7 +223,8 @@ public class IElementType {
   }
 
   @TestOnly
-  static short getAllocatedTypesCount() {
+  @ApiStatus.Internal
+  public static short getAllocatedTypesCount() {
     synchronized (lock) {
       return size;
     }
@@ -235,6 +244,28 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[0]);
+  }
+
+  /**
+   * todo IJPL-562 mark experimental?
+   *
+   * Map all registered token types that match the specified predicate.
+   *
+   * @param p the predicate which should be matched by the element types.
+   * @return the list of matching element types.
+   */
+  @ApiStatus.Internal
+  public static <R> @NotNull @Unmodifiable List<@NotNull R> mapNotNull(@NotNull Function<? super IElementType, ? extends R> p) {
+    List<R> matches = new ArrayList<>();
+    for (IElementType value : ourRegistry) {
+      if (value != null) {
+        R result = p.apply(value);
+        if (result != null) {
+          matches.add(result);
+        }
+      }
+    }
+    return matches;
   }
 
   private void checkSizeDoesNotExceedLimit() {

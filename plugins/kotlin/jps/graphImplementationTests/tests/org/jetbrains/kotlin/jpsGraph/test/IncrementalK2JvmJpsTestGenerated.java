@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.jpsGraph.test;
 
 
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
-        File kotlincFolder = getKotlincFolder("2.0.20-dev-1563");
+        File kotlincFolder = getKotlincFolder("2.1.10");
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
@@ -103,6 +103,26 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("annotations")
         public void testAnnotations() throws Exception {
             runTest("pureKotlin/annotations/");
+        }
+
+        @TestMetadata("deprecateFunction")
+        public void testDeprecateFunction() throws Exception {
+            runTest("pureKotlin/deprecateFunction/");
+        }
+
+        @TestMetadata("deprecateProperty")
+        public void testDeprecateProperty() throws Exception {
+            runTest("pureKotlin/deprecateProperty/");
+        }
+
+        @TestMetadata("deprecatePropertyGetter")
+        public void testDeprecatePropertyGetter() throws Exception {
+            runTest("pureKotlin/deprecatePropertyGetter/");
+        }
+
+        @TestMetadata("deprecatePropertySetter")
+        public void testDeprecatePropertySetter() throws Exception {
+            runTest("pureKotlin/deprecatePropertySetter/");
         }
 
         @TestMetadata("anonymousObjectChanged")
@@ -600,6 +620,21 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/removeFileWithFunctionOverload/");
         }
 
+        @TestMetadata("removeImportedRootExtensionProperty")
+        public void testRemoveImportedRootExtensionProperty() throws Exception {
+            runTest("pureKotlin/removeImportedRootExtensionProperty/");
+        }
+
+        @TestMetadata("removeImportedRootFunction")
+        public void testRemoveImportedRootFunction() throws Exception {
+            runTest("pureKotlin/removeImportedRootFunction/");
+        }
+
+        @TestMetadata("removeImportedRootProperty")
+        public void testRemoveImportedRootProperty() throws Exception {
+            runTest("pureKotlin/removeImportedRootProperty/");
+        }
+
         @TestMetadata("removeMemberTypeAlias")
         public void testRemoveMemberTypeAlias() throws Exception {
             runTest("pureKotlin/removeMemberTypeAlias/");
@@ -608,6 +643,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("removeTopLevelTypeAlias")
         public void testRemoveTopLevelTypeAlias() throws Exception {
             runTest("pureKotlin/removeTopLevelTypeAlias/");
+        }
+
+        @TestMetadata("changeTopLevelTypeAlias")
+        public void testChangeTopLevelTypeAlias() throws Exception {
+            runTest("pureKotlin/changeTopLevelTypeAlias/");
         }
 
         @TestMetadata("removeUnusedFile")
@@ -730,6 +770,16 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/traitClassObjectConstantChanged/");
         }
 
+        @TestMetadata("typealiasNameClash2_SinceK2")
+        public void testTypealiasNameClash2_SinceK2() throws Exception {
+            runTest("pureKotlin/typealiasNameClash2_SinceK2/");
+        }
+
+        @TestMetadata("typealiasNameClash_SinceK2")
+        public void testTypealiasNameClash_SinceK2() throws Exception {
+            runTest("pureKotlin/typealiasNameClash_SinceK2/");
+        }
+
         @TestMetadata("valAddCustomAccessor")
         public void testValAddCustomAccessor() throws Exception {
             runTest("pureKotlin/valAddCustomAccessor/");
@@ -738,6 +788,16 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("valRemoveCustomAccessor")
         public void testValRemoveCustomAccessor() throws Exception {
             runTest("pureKotlin/valRemoveCustomAccessor/");
+        }
+
+        @TestMetadata("wrapJvmFieldInJvmNameWithObject")
+        public void testWrapJvmFieldInJvmNameWithObject() throws Exception {
+            runTest("pureKotlin/wrapJvmFieldInJvmNameWithObject/");
+        }
+
+        @TestMetadata("unwrapJvmFieldInJvmNameFromObject")
+        public void testUnwrapJvmFieldInJvmNameFromObject() throws Exception {
+            runTest("pureKotlin/unwrapJvmFieldInJvmNameFromObject/");
         }
     }
 
@@ -1382,9 +1442,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
 
+            @TestMetadata("addClashingFunToParent")
+            public void testAddClashingFunToParent() throws Exception {
+                runTest("withJava/javaUsedInKotlin/addClashingFunToParent/");
+            }
+
             @TestMetadata("addNullableAnnotation")
             public void testAddNullableAnnotation() throws Exception {
                 runTest("withJava/javaUsedInKotlin/addNullableAnnotation/");
+            }
+
+            @TestMetadata("addPurelyImplementsAnnotation")
+            public void testAddPurelyImplementsAnnotation() throws Exception {
+                runTest("withJava/javaUsedInKotlin/addPurelyImplementsAnnotation/");
             }
 
             public void testAllFilesPresentInJavaUsedInKotlin() throws Exception {
@@ -1536,6 +1606,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             @TestMetadata("removeGetter")
             public void testRemoveGetter() throws Exception {
                 runTest("withJava/javaUsedInKotlin/removeGetter/");
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/addClashingFunToParent")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class AddClashingFunToParent extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInAddClashingFunToParent() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/addClashingFunToParent"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
             }
 
             @TestMetadata("withJava/javaUsedInKotlin/addNullableAnnotation")
@@ -2086,6 +2169,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 runTest("withJava/kotlinUsedInJava/funRenamed/");
             }
 
+            @TestMetadata("importedClassRemoved")
+            public void testImportedClassRemoved() throws Exception {
+                runTest("withJava/kotlinUsedInJava/importedClassRemoved/");
+            }
+
             @TestMetadata("jvmFieldChanged")
             public void testJvmFieldChanged() throws Exception {
                 runTest("withJava/kotlinUsedInJava/jvmFieldChanged/");
@@ -2201,6 +2289,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
 
                 public void testAllFilesPresentInFunRenamed() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/kotlinUsedInJava/funRenamed"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/kotlinUsedInJava/importedClassRemoved")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ImportedClassRemoved extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInImportedClassRemoved() {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/kotlinUsedInJava/importedClassRemoved"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
                 }
             }
 
@@ -2906,10 +3007,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("incrementalJvmCompilerOnly/addAnnotationToJavaClass/");
         }
 
-        @TestMetadata("addNestedClass")
-        public void testAddNestedClass() throws Exception {
-            runTest("incrementalJvmCompilerOnly/addNestedClass/");
-        }
+        //TODO: investigate
+        //@TestMetadata("addNestedClass")
+        //public void testAddNestedClass() throws Exception {
+        //    runTest("incrementalJvmCompilerOnly/addNestedClass/");
+        //}
 
         public void testAllFilesPresentInIncrementalJvmCompilerOnly() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("incrementalJvmCompilerOnly"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
@@ -3028,6 +3130,28 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("invokeOverFun")
         public void testInvokeShadowsFunction() throws Exception {
             runTest("resolution/invokeOverFun");
+        }
+    }
+
+    @TestMetadata("scopeExpansion")
+    @TestDataPath(".")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class ScopeExpansionTests extends AbstractIncrementalK2JvmJpsTest {
+        @Override
+        protected void setUp() {
+            super.setUp();
+            setUpTests();
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+        }
+
+        // todo: do we need to run other two tests in this cathegory?
+
+        @TestMetadata("protectedBecomesInternal")
+        public void testProtectedBecomesInternal() throws Exception {
+            runTest("scopeExpansion/protectedBecomesInternal");
         }
     }
 

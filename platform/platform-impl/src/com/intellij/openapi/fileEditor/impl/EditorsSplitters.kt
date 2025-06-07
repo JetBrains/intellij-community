@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
@@ -31,7 +32,6 @@ import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.ui.Divider
@@ -49,7 +49,6 @@ import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -70,6 +69,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -79,6 +79,7 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -104,7 +105,7 @@ private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 @DirtyUI
 open class EditorsSplitters internal constructor(
   @Internal val manager: FileEditorManagerImpl,
-  @JvmField internal val coroutineScope: CoroutineScope,
+  @Internal @JvmField val coroutineScope: CoroutineScope,
 ) : JPanel(BorderLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
@@ -287,7 +288,15 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
-    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+      return
+    }
+
+    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
+      add(it, BorderLayout.CENTER)
+      InternalUICustomization.getInstance()?.installEditorBackground(it)
+    }
     withContext(Dispatchers.EDT) {
       validate()
 
@@ -306,11 +315,19 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't reopen editors from local files on JetBrains Client, it is done from the backend
+      return
+    }
+
     UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
       .process(
         state = state,
         requestFocus = true,
-        addChild = { add(it, BorderLayout.CENTER) },
+        addChild = {
+          add(it, BorderLayout.CENTER)
+          InternalUICustomization.getInstance()?.installEditorBackground(it)
+        },
       )
   }
 
@@ -363,6 +380,7 @@ open class EditorsSplitters internal constructor(
     _currentWindowFlow.value = window
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
   fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
@@ -780,7 +798,9 @@ open class EditorsSplitters internal constructor(
 
   @JvmOverloads
   @RequiresEdt
-  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? {
+  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? = openInRightSplit(file, requestFocus, null)
+
+  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
     if (parent is Splitter) {
@@ -791,13 +811,13 @@ open class EditorsSplitters internal constructor(
           manager.openFile(
             file = file,
             window = rightSplitWindow,
-            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false),
+            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
           )
           return rightSplitWindow
         }
       }
     }
-    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus)
+    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
   }
 }
 
@@ -944,7 +964,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       )
     }
     else {
-      val splitter = withContext(Dispatchers.EDT) {
+      val splitter = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         val splitter = createSplitter(
           isVertical = splitState.isVertical,
           proportion = splitState.proportion,
@@ -1069,19 +1089,17 @@ private fun computeFileEntry(
   val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
     // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
     if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-      blockingContext {
-        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-          try {
-            notFullyPreparedFile.contentsToByteArray(true)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (ignore: FileTooBigException) {
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
+      ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+        try {
+          notFullyPreparedFile.contentsToByteArray(true)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (ignore: FileTooBigException) {
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
         }
       }
     }
@@ -1330,7 +1348,8 @@ private fun getSplittersToActivate(activeWindow: Window, project: Project?): Edi
   return getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+@Internal
+fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
   return object : Splitter(isVertical, proportion, minProp, maxProp) {
     init {
       setDividerWidth(1)

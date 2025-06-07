@@ -62,9 +62,8 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     myRepository = HeaderParserRepository.getInstance();
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -121,9 +120,8 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
       myNewName = newName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return ManifestBundle.message("inspection.header.rename.fix.family.name");
     }
 

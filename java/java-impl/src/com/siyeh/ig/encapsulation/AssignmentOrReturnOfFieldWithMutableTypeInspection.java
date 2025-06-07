@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -6,9 +6,12 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -40,19 +43,28 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
-    final PsiExpression rhs = (PsiExpression)infos[1];
-    final PsiType type = field.getType();
-    final boolean assignment = ((Boolean)infos[3]).booleanValue();
-    return assignment
-           ? InspectionGadgetsBundle.message("assignment.of.field.with.mutable.type.problem.descriptor",
-                                             type.getPresentableText(), field.getName(), rhs.getText())
-           : InspectionGadgetsBundle.message("return.of.field.with.mutable.type.problem.descriptor",
-                                             type.getPresentableText(), field.getName());
+    if (infos[0] instanceof PsiRecordComponent component) {
+      final int reportAssignment = (boolean)infos[1] ? 0b01 : 0;
+      final int reportReturn = (boolean)infos[2] ? 0b10 : 0;
+      final String type = component.getType().getPresentableText();
+      return InspectionGadgetsBundle.message("assignment.and.return.of.mutable.record.component", reportAssignment | reportReturn, type);
+    }
+    else {
+      final PsiField field = (PsiField)infos[0];
+      final PsiExpression rhs = (PsiExpression)infos[1];
+      final PsiType type = field.getType();
+      final boolean assignment = ((Boolean)infos[3]).booleanValue();
+      return assignment
+             ? InspectionGadgetsBundle.message("assignment.of.field.with.mutable.type.problem.descriptor",
+                                               type.getPresentableText(), field.getName(), rhs.getText())
+             : InspectionGadgetsBundle.message("return.of.field.with.mutable.type.problem.descriptor",
+                                               type.getPresentableText(), field.getName());
+    }
   }
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
+    if (infos[0] instanceof PsiRecordComponent) return null;
     final PsiReferenceExpression returnValue = (PsiReferenceExpression)infos[1];
     final String type = (String)infos[2];
     if (CommonClassNames.JAVA_UTIL_DATE.equals(type) ||
@@ -141,6 +153,26 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
           ClassUtils.isImmutable(field.getType()) ||
           Mutability.getMutability(field).isUnmodifiable()) return;
       registerError(returnValue, field, returnValue, type, Boolean.FALSE);
+    }
+
+    @Override
+    public void visitRecordHeader(@NotNull PsiRecordHeader recordHeader) {
+      super.visitRecordHeader(recordHeader);
+      final PsiClass recordClass = recordHeader.getContainingClass();
+      if (recordClass == null || ignorePrivateMethods && recordClass.hasModifierProperty(PsiModifier.PRIVATE)) return;
+      boolean reportAssignment = !ContainerUtil.or(recordClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
+      for (PsiRecordComponent component : recordHeader.getRecordComponents()) {
+        final PsiType type = component.getType();
+        final boolean mutable = type instanceof PsiArrayType ||
+                                ContainerUtil.exists(MUTABLE_TYPES, typeName -> InheritanceUtil.isInheritor(type, typeName));
+        if (!mutable) continue;
+        final PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
+        final boolean reportReturn = accessor == null || accessor instanceof SyntheticElement;
+        if (!reportAssignment && !reportReturn) continue;
+        final PsiIdentifier identifier = component.getNameIdentifier();
+        if (identifier == null) continue;
+        registerError(identifier, component, reportAssignment, reportReturn);
+      }
     }
   }
 }

@@ -47,6 +47,7 @@ class VcsHistoryCache {
     return factory.createFromCachedData(customData, cachedHistory.revisions, cachedHistory.path, cachedHistory.currentRevision)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use getSession instead", replaceWith = ReplaceWith("getSession(filePath, vcsKey, factory, false)"))
   fun <C : Serializable, T : VcsAbstractHistorySession> getFull(filePath: FilePath, vcsKey: VcsKey,
                                                                 factory: VcsCacheableHistorySessionFactory<C, T>): T? {

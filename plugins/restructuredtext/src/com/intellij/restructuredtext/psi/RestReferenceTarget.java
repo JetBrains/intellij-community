@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class RestReferenceTarget extends RestElement {
-  public RestReferenceTarget(@NotNull final ASTNode node) {
+  public RestReferenceTarget(final @NotNull ASTNode node) {
     super(node);
   }
 

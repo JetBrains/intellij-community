@@ -122,7 +122,7 @@ public final class SelectionModelImpl implements SelectionModel {
   @Override
   public void removeSelectionListener(@NotNull SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
-    LOG.assertTrue(success);
+    LOG.assertTrue(success, "Failed to remove listener: " + listener + "from editor: " + myEditor);
   }
 
   @Override

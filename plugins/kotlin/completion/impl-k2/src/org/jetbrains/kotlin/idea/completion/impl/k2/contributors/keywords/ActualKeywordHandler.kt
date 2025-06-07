@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -98,7 +98,7 @@ internal class ActualKeywordHandler(
         val expectDeclarationPackageQualifiedName = expectDeclaration.packageDirective?.qualifiedName ?: return false
         if (expectDeclarationPackageQualifiedName != packageFqnForActual) return false
 
-        val actualsForExpected = expectDeclaration.actualsForExpected(targetModule)
+        val actualsForExpected = expectDeclaration.actualsForExpect(targetModule)
         return actualsForExpected.isEmpty()
     }
 

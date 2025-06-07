@@ -11,7 +11,7 @@ import com.jetbrains.python.debugger.ArrayChunkBuilder
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import com.jetbrains.python.debugger.values.getColumnData
+import com.jetbrains.python.debugger.values.getInformationColumns
 
 fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFrameAccessor): XValueChildrenList {
   val list = XValueChildrenList(vars.size)
@@ -27,7 +27,10 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
 
 fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor): PyDebugValue {
   return if (value.type == "DataFrame") {
-    val columns = value.value?.let { getColumnData(it) }
+    val columns = try {
+      value.value?.let { getInformationColumns(it) }
+    } catch (_: Exception) { null }
+
     val dataFrameDebugValue = DataFrameDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
                                                   value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden,
                                                   value.isErrorOnEval,
@@ -36,8 +39,8 @@ fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor): PyDeb
     dataFrameDebugValue
   }
   else PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
-                    value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
-                    value.typeRendererId, frameAccessor)
+                    value.isContainer, value.shape, value.arrayElementType, value.isReturnedValue, value.isIPythonHidden,
+                    value.isErrorOnEval, value.typeRendererId, frameAccessor)
 }
 
 fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor): ArrayChunk {

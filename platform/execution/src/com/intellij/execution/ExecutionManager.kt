@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.RunProfileState
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -114,7 +115,16 @@ abstract class ExecutionManager {
   }
 
   @ApiStatus.Internal
+  fun isStartingFlow(environment: ExecutionEnvironment): Flow<Boolean> {
+    return isStartingFlow(environment.runnerAndConfigurationSettings?.uniqueID ?: "",
+                          environment.executor.id, environment.runner.runnerId)
+  }
+
+  @ApiStatus.Internal
   abstract fun isStarting(configurationId: String, executorId: String, runnerId: String): Boolean
+
+  @ApiStatus.Internal
+  abstract fun isStartingFlow(configurationId: String, executorId: String, runnerId: String): Flow<Boolean>
 
   @ApiStatus.Experimental
   abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>

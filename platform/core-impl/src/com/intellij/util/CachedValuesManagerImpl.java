@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.lang.ASTNode;
@@ -11,12 +11,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
@@ -24,7 +24,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   private static final Object NULL = new Object();
 
   private ConcurrentMap<UserDataHolder, Object> myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
-  private Set<Key<?>> myKeys = ContainerUtil.newConcurrentSet();
+  private Set<Key<?>> myKeys = ConcurrentHashMap.newKeySet();
 
   private final Project myProject;
   private final CachedValuesFactory myFactory;
@@ -129,6 +129,6 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     }
     CachedValueStabilityChecker.cleanupFieldCache();
     myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
-    myKeys = ContainerUtil.newConcurrentSet();
+    myKeys = ConcurrentHashMap.newKeySet();
   }
 }

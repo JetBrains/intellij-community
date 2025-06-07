@@ -7,10 +7,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.imgscalr.Scalr
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -19,7 +19,6 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import java.util.*
 
 object ImageLoader {
   @Suppress("unused")
@@ -113,6 +112,7 @@ object ImageLoader {
   }
 
   @Suppress("unused")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Do not use")
   class Dimension2DDouble(var width: Double, var height: Double) {
     fun setSize(@Suppress("DEPRECATION") size: Dimension2DDouble) {

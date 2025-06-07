@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -61,7 +62,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
   }
 
   @Override
-  public void perform(@NotNull final Project project,
+  public void perform(final @NotNull Project project,
                       @NotNull ProjectSystemId projectSystemId,
                       @NotNull AbstractExternalEntityData externalEntityData,
                       @NotNull AnActionEvent e) {
@@ -84,7 +85,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
                                        : linkedProjectSettings.getExternalProjectPath();
 
     ImportSpecBuilder importSpec = new ImportSpecBuilder(project, projectSystemId);
-    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, projectSystemId)) {
+    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, projectSystemId)) {
       ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
     }
   }

@@ -26,15 +26,18 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextLayout;
 import java.util.List;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 final class EmojiListPanel extends JBScrollPane {
-  private static final Image NO_EMOJI_FOUND_IMAGE =
-    ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"));
+  private static final Image NO_EMOJI_FOUND_IMAGE = ImageLoader.loadFromStream(
+    requireNonNull(EmojiListPanel.class.getResourceAsStream("/org/jetbrains/plugins/emojipicker/icons/NoEmojiFound.png"))
+  );
+
   private static final int HORIZONTAL_PADDING = 8;
   private final Dimension myCellSize = new Dimension(JBUIScale.scale(40), JBUIScale.scale(40));
   private final Dimension myCellGaps = new Dimension(JBUIScale.scale(3), JBUIScale.scale(3));
-  private final Image myNoEmojiFoundImage = ImageLoader.scaleImage(Objects.requireNonNull(NO_EMOJI_FOUND_IMAGE), JBUIScale.scale(40));
+  private final Image myNoEmojiFoundImage = ImageLoader.scaleImage(requireNonNull(NO_EMOJI_FOUND_IMAGE), JBUIScale.scale(40));
 
   private final EmojiPicker myEmojiPicker;
   private final EmojiPickerStyle myStyle;
@@ -213,7 +216,7 @@ final class EmojiListPanel extends JBScrollPane {
     private static final int NO_LABEL_PADDING = 12;
     private static final int LABEL_HEIGHT = 32;
     private EmojiCategory myCategory;
-    @Nls private final String myName;
+    private final @Nls String myName;
     private final Insets myPadding;
 
     private Category(EmojiCategory category) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -23,8 +23,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
 
@@ -487,6 +487,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
       myOffset = offset;
     }
 
+    @Override
     public String toString() {
       return getString();
     }
@@ -578,6 +579,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
       // does nothing
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "DUMMY";
@@ -621,7 +623,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
     }
   }
 
-  public static final class ButtonSettings extends PainterSettings {
+  static final class ButtonSettings extends PainterSettings {
     public static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered

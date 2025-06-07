@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -40,34 +26,31 @@ public abstract class BaseGenerateAction extends CodeInsightAction implements Ge
   protected void update(@NotNull Presentation presentation,
                         @NotNull Project project,
                         @NotNull Editor editor,
-                        @NotNull PsiFile file,
+                        @NotNull PsiFile psiFile,
                         @NotNull DataContext dataContext,
                         @Nullable String actionPlace) {
-    super.update(presentation, project, editor, file, dataContext, actionPlace);
+    super.update(presentation, project, editor, psiFile, dataContext, actionPlace);
     if (myHandler instanceof ContextAwareActionHandler && presentation.isEnabled()) {
-      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, file, dataContext));
+      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, psiFile, dataContext));
     }
   }
 
   @Override
-  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    presentation.setEnabledAndVisible(isValidForFile(project, editor, file));
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    presentation.setEnabledAndVisible(isValidForFile(project, editor, psiFile));
   }
 
   @Override
-  @Nullable
-  public AnAction createEditTemplateAction(DataContext dataContext) {
+  public @Nullable AnAction createEditTemplateAction(DataContext dataContext) {
     return null;
   }
 
-  @NotNull
   @Override
-  protected final CodeInsightActionHandler getHandler() {
+  protected final @NotNull CodeInsightActionHandler getHandler() {
     return myHandler;
   }
 
-  @Nullable
-  protected PsiClass getTargetClass (Editor editor, PsiFile file) {
+  protected @Nullable PsiClass getTargetClass (Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -76,11 +59,11 @@ public abstract class BaseGenerateAction extends CodeInsightAction implements Ge
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    if (file instanceof PsiCompiledElement) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) return false;
+    if (psiFile instanceof PsiCompiledElement) return false;
 
-    PsiClass targetClass = getTargetClass(editor, file);
+    PsiClass targetClass = getTargetClass(editor, psiFile);
     return targetClass != null && isValidForClass(targetClass);
   }
 

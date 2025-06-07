@@ -26,19 +26,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 public final class GroovyOctalIntegerInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.octal.integer.ref");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull GrLiteral literal) {
         super.visitLiteralExpression(literal);
-        @NonNls final String text = literal.getText();
+        final @NonNls String text = literal.getText();
         if (!text.startsWith("0")) return;
 
         if (text.replaceAll("0", "").isEmpty()) return;

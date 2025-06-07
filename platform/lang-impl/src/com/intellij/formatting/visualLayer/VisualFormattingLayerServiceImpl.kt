@@ -2,6 +2,7 @@
 package com.intellij.formatting.visualLayer
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
@@ -54,6 +55,9 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
           .filterIsInstance<Folding>()
           .forEach { it.applyToEditor(editor) }
       }, true, false)
+
+    // IJPL-165293 -- the height of rendered docs should be recomputed if we've changed indentation size
+    DocRenderItemUpdater.updateRenderers(editor, false)
   }
 
   override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {

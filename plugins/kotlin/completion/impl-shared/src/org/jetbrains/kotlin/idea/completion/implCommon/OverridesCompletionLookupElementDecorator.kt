@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -29,7 +30,8 @@ class OverridesCompletionLookupElementDecorator(
     private val declaration: KtCallableDeclaration?,
     private val text: String,
     private val tailText: String?,
-    private val isImplement: Boolean,
+    @ApiStatus.Internal
+    val isImplement: Boolean, // True if the element would implement a method that is not implemented yet
     private val icon: RowIcon,
     private val baseClassName: String?,
     private val baseClassIcon: Icon?,
@@ -98,8 +100,17 @@ class OverridesCompletionLookupElementDecorator(
         val tailComments = dummyMemberChildren.toList().takeLastWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace)
 
         val prototype = generateMember()
-        context.copyRetainedAnnotations(from = prototype.modifierList!!, to = modifierList)
-        prototype.modifierList!!.replace(modifierList)
+        val prototypeModifierList = prototype.modifierList!!
+        prototypeModifierList.contextReceiverList?.let { receiverList ->
+            val anchor = modifierList.firstChild
+            when (val sibling = receiverList.nextSibling) {
+                is PsiWhiteSpace -> modifierList.addRangeBefore(receiverList, sibling, anchor)
+                else -> modifierList.addBefore(receiverList, anchor)
+            }
+        }
+        context.copyRetainedAnnotations(from = prototypeModifierList, to = modifierList)
+
+        prototypeModifierList.replace(modifierList)
         val insertedMember = dummyMember.replaced(prototype)
         if (isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
 

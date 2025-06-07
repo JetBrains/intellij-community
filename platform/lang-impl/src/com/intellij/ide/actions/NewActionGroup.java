@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * @author Dmitry Avdeev
- */
-public final class NewActionGroup extends ActionGroup {
+public final class NewActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
   private static final @NonNls String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
@@ -46,6 +43,11 @@ public final class NewActionGroup extends ActionGroup {
     return mergedActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  @Override
+  public @NotNull ActionGroup getDelegate() {
+    return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+  }
+
   /** @deprecated Avoid explicit synchronous group expansion! */
   @Deprecated(forRemoval = true)
   public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {
@@ -67,7 +69,9 @@ public final class NewActionGroup extends ActionGroup {
   @Deprecated(forRemoval = true)
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
                                                   @NotNull Predicate<? super AnAction> condition) {
-    for (AnAction child : group.getChildren(null)) {
+    AnAction[] actions = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+                         group.getChildren(null);
+    for (AnAction child : actions) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup o) {
         if ((processPopupSubGroups || !o.isPopup()) && anyActionFromGroupMatches(o, processPopupSubGroups, condition)) {

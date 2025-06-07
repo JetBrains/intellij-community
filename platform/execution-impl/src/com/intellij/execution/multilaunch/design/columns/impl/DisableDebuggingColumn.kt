@@ -2,16 +2,12 @@ package com.intellij.execution.multilaunch.design.columns.impl
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.UIUtil
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvidersContainer
-import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI
-import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
-import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.ItemEvent
 import javax.swing.*

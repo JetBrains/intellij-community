@@ -1419,6 +1419,15 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  // PY-26947
+  public void testVariableDeclaredOnClassLevelResolvesOnlyToItself() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("correct", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
   // PY-29975
   public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
     assertResolvesTo(PyNamedParameter.class, "foo");
@@ -2131,6 +2140,18 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
        <ref>""";
     assertResolvedElement(LanguageLevel.PYTHON35, starImport, e -> assertResolveResult(e, PyClass.class, "DivisionByZero", null));
     assertResolvedElement(LanguageLevel.PYTHON34, starImport, TestCase::assertNull);
+  }
+
+  // PY-77168
+  public void testResolveFromUnderUnmatchedVersionCheck() {
+    assertResolvesTo("""
+                       import sys
+                       
+                       Alias = int
+                       if sys.version_info < (3, 12):
+                           name: Alias
+                       #          <ref>
+                       """, PyTargetExpression.class, "Alias");
   }
 
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {

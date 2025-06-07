@@ -246,6 +246,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <modules>
                          <module>m</module>
                        </modules>
@@ -480,7 +481,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRepositoriesListForSimpleProject() = runBlocking {
-    assumeMaven3()
+    updateSettingsXml("")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -498,7 +499,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRepositoriesListWithNewRepo() = runBlocking {
-    assumeMaven3()
+    updateSettingsXml("")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

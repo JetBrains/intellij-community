@@ -23,6 +23,7 @@ abstract class LogicalContainerPresentationProvider<T: ContainerElementsProvider
   /**
    * If true, then elements will be shown not grouped but right under the parent model node
    */
+  @Deprecated("Use a common LogicalStructureElementsProvider instead of ContainerElementsProvider if you don't want to group elements")
   open fun isFlatElements(t: Any?): Boolean = false
 
   /**

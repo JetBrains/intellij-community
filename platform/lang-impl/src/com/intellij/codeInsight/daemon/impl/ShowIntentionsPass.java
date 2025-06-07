@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -7,7 +7,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
@@ -37,6 +39,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +49,7 @@ import java.util.*;
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
   private final Editor myEditor;
 
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final boolean myQueryIntentionActions;
   private final @NotNull ProperTextRange myVisibleRange;
   private volatile CachedIntentions myCachedIntentions;
@@ -61,20 +64,20 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     super(psiFile.getProject(), editor.getDocument(), false);
     myQueryIntentionActions = queryIntentionActions;
     myEditor = editor;
-    myFile = psiFile;
+    myPsiFile = psiFile;
     myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
   }
 
   public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,
-                                                                                         @NotNull PsiFile file,
+                                                                                         @NotNull PsiFile psiFile,
                                                                                          int passId,
                                                                                          int offset) {
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
                                                        info-> {
-                                                         addAvailableFixesForGroups(info, editor, file, result, passId, offset, true);
+                                                         addAvailableFixesForGroups(info, editor, psiFile, result, passId, offset, true);
                                                          return true;
                                                        });
     return result;
@@ -93,55 +96,51 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     }
   }
 
-  private static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
-                                                 @NotNull Editor editor,
-                                                 @NotNull PsiFile file,
-                                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
-                                                 int group,
-                                                 int offset,
-                                                 boolean checkOffset) {
+  @ApiStatus.Internal
+  public static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
+                                                @NotNull Editor editor,
+                                                @NotNull PsiFile psiFile,
+                                                @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
+                                                int group,
+                                                int offset,
+                                                boolean checkOffset) {
     if (group != -1 && group != info.getGroup()) return;
-    boolean fixRangeIsEmpty = info.getFixTextRange().isEmpty();
     Editor[] injectedEditor = {null};
     PsiFile[] injectedFile = {null};
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
-    info.findRegisteredQuickFix((descriptor, range) -> {
-      if (!fixRangeIsEmpty && isEmpty(range)) {
+    info.findRegisteredQuickFix((descriptor, fixRange) -> {
+      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 
-      if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
-        return null;
-      }
-
-      if (checkOffset && !range.contains(offset) && offset != range.getEndOffset()) {
+      if (checkOffset && !fixRange.contains(offset) && offset != fixRange.getEndOffset()) {
         return null;
       }
       Editor editorToUse;
-      PsiFile fileToUse;
+      PsiFile psiFileToUse;
       int offsetToUse;
       if (info.isFromInjection()) {
         if (injectedEditor[0] == null) {
-          injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(file, offset);
+          injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(psiFile, offset);
           injectedEditor[0] = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile[0]);
         }
         editorToUse = injectedFile[0] == null ? editor : injectedEditor[0];
-        fileToUse = injectedFile[0] == null ? file : injectedFile[0];
+        psiFileToUse = injectedFile[0] == null ? psiFile : injectedFile[0];
         offsetToUse = !(editorToUse instanceof EditorWindow editorWindow)
                       ? offset : editorWindow.logicalPositionToOffset(editorWindow.hostToInjected(editor.offsetToLogicalPosition(offset)));
       }
       else {
         editorToUse = editor;
-        fileToUse = file;
+        psiFileToUse = psiFile;
         offsetToUse = offset;
       }
       if (indicator != null) {
         indicator.setText(descriptor.getDisplayName());
       }
-      if (ShowIntentionActionsHandler.availableFor(fileToUse, editorToUse, offsetToUse, descriptor.getAction())) {
+      if (ShowIntentionActionsHandler.availableFor(psiFileToUse, editorToUse, offsetToUse, descriptor.getAction())) {
         outList.add(descriptor);
         hasAvailableAction[0] = true;
       }
@@ -248,10 +247,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
-    getActionsToShow(myEditor, myFile, intentionsInfo, -1, myQueryIntentionActions);
-    myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
+    getActionsToShow(myEditor, myPsiFile, intentionsInfo, -1, myQueryIntentionActions);
+    myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myPsiFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
-    UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
+    LazyQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myPsiFile, myEditor, myVisibleRange);
   }
 
   @Override
@@ -298,7 +297,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true);
+    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, hostFile.getProject());
+    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
@@ -306,7 +306,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }

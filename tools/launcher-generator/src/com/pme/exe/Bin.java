@@ -212,7 +212,7 @@ public abstract class Bin {
     }
   }
 
-  public static abstract class ReadOnlyValue extends Value {
+  public abstract static class ReadOnlyValue extends Value {
     public ReadOnlyValue(String name) {
       super(name);
     }
@@ -279,6 +279,7 @@ public abstract class Bin {
       _report(writer, getDescription(), (byte)getValue());
     }
 
+    @Override
     public String toString() {
       return BitsUtil.byteToHexString((int)getValue());
     }
@@ -324,6 +325,7 @@ public abstract class Bin {
       short sh = (short) getValue();
       _report(writer, getDescription(), sh);
     }
+    @Override
     public String toString() {
       return BitsUtil.shortToHexString( (int)getValue() );
     }
@@ -368,6 +370,7 @@ public abstract class Bin {
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, getDescription(), (int) getValue());
     }
+    @Override
     public String toString() {
       return BitsUtil.intToHexString( (int)getValue() );
     }

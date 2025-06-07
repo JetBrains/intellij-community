@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.lang.parameterInfo.*;
@@ -35,33 +35,28 @@ public final class GroovyAnnotationAttributeInfoHandler implements ParameterInfo
     return o.getAttributes();
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParameterDelimiterType() {
+  public @NotNull IElementType getActualParameterDelimiterType() {
     return GroovyTokenTypes.mCOMMA;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParametersRBraceType() {
+  public @NotNull IElementType getActualParametersRBraceType() {
     return GroovyTokenTypes.mRPAREN;
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getArgumentListAllowedParentClasses() {
+  public @NotNull Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Set<? extends Class<?>> getArgListStopSearchClasses() {
+  public @NotNull Set<? extends Class<?>> getArgListStopSearchClasses() {
     return STOP_SEARCHING_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Class<GrAnnotationArgumentList> getArgumentListClass() {
+  public @NotNull Class<GrAnnotationArgumentList> getArgumentListClass() {
     return GrAnnotationArgumentList.class;
   }
 
@@ -81,8 +76,7 @@ public final class GroovyAnnotationAttributeInfoHandler implements ParameterInfo
     return findAnchor(context.getEditor(), context.getFile());
   }
 
-  @Nullable
-  private static GrAnnotationArgumentList findAnchor(@NotNull final Editor editor, @NotNull final PsiFile file) {
+  private static @Nullable GrAnnotationArgumentList findAnchor(final @NotNull Editor editor, final @NotNull PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
 
@@ -105,8 +99,7 @@ public final class GroovyAnnotationAttributeInfoHandler implements ParameterInfo
     }
   }
 
-  @Nullable
-  private static PsiAnnotationMethod findAnnotationMethod(@NotNull PsiFile file, @NotNull Editor editor) {
+  private static @Nullable PsiAnnotationMethod findAnnotationMethod(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiNameValuePair pair = ParameterInfoUtils.findParentOfType(file, inferOffset(editor), PsiNameValuePair.class);
     if (pair == null) return null;
     final PsiReference reference = pair.getReference();
@@ -124,7 +117,7 @@ public final class GroovyAnnotationAttributeInfoHandler implements ParameterInfo
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), context.getEditor()));
   }
 
-  private static int inferOffset(@NotNull final Editor editor) {
+  private static int inferOffset(final @NotNull Editor editor) {
     CharSequence chars = editor.getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, editor.getCaretModel().getOffset(), " \t");
     final char character = chars.charAt(offset1);

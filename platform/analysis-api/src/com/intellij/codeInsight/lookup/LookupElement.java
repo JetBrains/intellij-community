@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -12,6 +12,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -44,7 +45,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * The returned set must contain {@link #getLookupString()}.
    * @see #isCaseSensitive()
    */
-  public Set<String> getAllLookupStrings() {
+  public @Unmodifiable Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
   }
 
@@ -62,17 +63,17 @@ public abstract class LookupElement extends UserDataHolderBase {
    */
   public @Nullable PsiElement getPsiElement() {
     Object o = getObject();
-    if (o instanceof PsiElement) {
-      return (PsiElement)o;
+    if (o instanceof PsiElement psiElement) {
+      return psiElement;
     }
-    if (o instanceof ResolveResult) {
-      return ((ResolveResult)o).getElement();
+    if (o instanceof ResolveResult resolveResult) {
+      return resolveResult.getElement();
     }
-    if (o instanceof PsiElementNavigationItem) {
-      return ((PsiElementNavigationItem)o).getTargetElement();
+    if (o instanceof PsiElementNavigationItem navigationItem) {
+      return navigationItem.getTargetElement();
     }
-    if (o instanceof SmartPsiElementPointer) {
-      return ((SmartPsiElementPointer<?>)o).getElement();
+    if (o instanceof SmartPsiElementPointer<?> pointer) {
+      return pointer.getElement();
     }
     return null;
   }
@@ -84,8 +85,8 @@ public abstract class LookupElement extends UserDataHolderBase {
    */
   public boolean isValid() {
     final Object object = getObject();
-    if (object instanceof PsiElement) {
-      return ((PsiElement)object).isValid();
+    if (object instanceof PsiElement psiElement) {
+      return psiElement.isValid();
     }
     return true;
   }

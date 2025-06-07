@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -14,9 +14,8 @@ public interface InspectionProfileLoader<T extends InspectionProfileImpl> {
   @Nullable
   T loadProfileByPath(@NotNull String profilePath);
 
-  @Nullable
-  default T tryLoadProfileByNameOrPath(@Nullable String profileName, @Nullable String profilePath,
-                                       @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure) {
+  default @Nullable T tryLoadProfileByNameOrPath(@Nullable String profileName, @Nullable String profilePath,
+                                                 @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure) {
     //fetch profile by name from project file (project profiles can be disabled)
     if (profileName != null && !profileName.isEmpty()) {
       T inspectionProfile = loadProfileByName(profileName);

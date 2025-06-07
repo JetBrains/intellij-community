@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search
 
 import com.intellij.util.Query
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
  * Implementations should be registered at `com.intellij.searcher` extension point.
  *
  * It's highly advised to use [SearchService] methods to build additional queries.
- *
- * @see PsiSymbolReferenceSearcher
- * @see PsiSymbolDeclarationSearcher
  */
 @OverrideOnly
 interface Searcher<P : SearchParameters<R>, R : Any> {

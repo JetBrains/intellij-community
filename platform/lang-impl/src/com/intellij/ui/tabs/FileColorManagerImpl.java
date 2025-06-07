@@ -15,8 +15,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
@@ -105,7 +105,7 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  public Collection<@NonNls String> getColorIDs() {
+  public @Unmodifiable Collection<@NonNls String> getColorIDs() {
     return ContainerUtil.sorted(ourDefaultColors.keySet());
   }
 

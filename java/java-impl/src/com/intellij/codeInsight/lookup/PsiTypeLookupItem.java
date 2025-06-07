@@ -128,10 +128,10 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    boolean insideVarDeclaration = false;
+    boolean insideTypeElement = false;
     if (position != null) {
-      insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
-                             typeElement.getParent() instanceof PsiVariable;
+      insideTypeElement = position.getParent() instanceof PsiTypeElement ||
+                          position.getParent().getParent() instanceof PsiTypeElement;
       int genericsStart = context.getTailOffset();
       context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
       JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
@@ -146,7 +146,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
         targetOffset += braces.length() + 1;
       } else {
         context.getDocument().insertString(targetOffset, braces);
-        targetOffset += insideVarDeclaration ? braces.length() : 1;
+        targetOffset += insideTypeElement ? braces.length() : 1;
         if (context.getCompletionChar() == '[') {
           context.setAddCompletionChar(false);
         }

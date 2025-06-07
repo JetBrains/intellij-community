@@ -14,7 +14,7 @@ public final class SaveJavaAsTemplateHandler implements SaveFileAsTemplateHandle
   public @Nullable String getTemplateText(final PsiFile psiFile, String fileText, String nameWithoutExtension) {
     if(psiFile instanceof PsiJavaFile javaFile){
       String packageName = javaFile.getPackageName();
-      if (packageName.length() > 0){
+      if (!packageName.isEmpty()){
         fileText = StringUtil.replace(fileText, packageName, "${PACKAGE_NAME}");
       }
       PsiClass[] classes = javaFile.getClasses();

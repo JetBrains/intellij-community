@@ -1,0 +1,106 @@
+### auto-generated section `build intellij.repository.search` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+jvm_resources(
+  name = "repository-search_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_resources(
+  name = "repository-search_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_library(
+  name = "repository-search",
+  module_name = "intellij.repository.search",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/maven-model",
+    "//platform/statistics",
+    "@lib//:gson",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:ktor-client-logging",
+    "@lib//:kotlinx-coroutines-slf4j",
+    "//libraries/io",
+    "//libraries/ktor-client",
+    "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
+    "@lib//:mvstore",
+  ],
+  exports = ["@lib//:package-search-api-client"],
+  runtime_deps = [":repository-search_resources"]
+)
+
+jvm_library(
+  name = "repository-search_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":repository-search"],
+  deps = [
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/maven-model",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:gson",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:ktor-client-logging",
+    "@lib//:kotlinx-coroutines-slf4j",
+    "@lib//:ktor-client-mock",
+    "@lib//:kotlinx-coroutines-test",
+    "//libraries/io",
+    "//libraries/ktor-client",
+    "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
+    "@lib//:mvstore",
+  ],
+  runtime_deps = [
+    ":repository-search_resources",
+    ":repository-search_test_resources",
+  ]
+)
+
+jvm_test(
+  name = "repository-search_test",
+  runtime_deps = [":repository-search_test_lib"]
+)
+### auto-generated section `build intellij.repository.search` end

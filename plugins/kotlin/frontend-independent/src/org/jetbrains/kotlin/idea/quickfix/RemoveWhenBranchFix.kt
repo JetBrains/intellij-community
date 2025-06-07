@@ -1,15 +1,12 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -18,27 +15,25 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class RemoveWhenBranchFix(
     element: KtWhenEntry,
-) : KotlinCrossLanguageQuickFixAction<KtWhenEntry>(element) {
-    override fun getFamilyName(): String = if (runReadAction { element?.isElse } == true) {
-        KotlinBundle.message("remove.else.branch")
-    } else {
-        KotlinBundle.message("remove.branch")
-    }
+    private val elseBranch: Boolean,
+) : PsiUpdateModCommandAction<KtWhenEntry>(element) {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        if (elseBranch) KotlinBundle.message("remove.else.branch") else KotlinBundle.message("remove.branch")
 
-    override fun getText(): String = familyName
-
-    override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
-        element?.delete()
-    }
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenEntry,
+        updater: ModPsiUpdater,
+    ): Unit = element.delete()
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             val whenEntry = psiElement.getParentOfType<KtWhenEntry>(strict = false)
-            if (whenEntry != null && (whenEntry.isElse || whenEntry.conditions.size == 1)) {
-                return listOf(RemoveWhenBranchFix(whenEntry))
+            return if (whenEntry != null && (whenEntry.isElse || whenEntry.conditions.size == 1)) {
+                listOf(RemoveWhenBranchFix(whenEntry, whenEntry.isElse).asIntention())
+            } else {
+                emptyList()
             }
-
-            return emptyList()
         }
     }
 }

@@ -70,7 +70,12 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
 
     fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
 
+    moveCaretTo(m, "<parent<caret>>")
     checkHighlighting(m, Highlight(text = "parent", description = "'version' child tag should be defined"))
+    val action = getIntentionAtCaret(m, "Insert required child tag version")
+    assertNotNull("Quick Fix for adding <version> child tag must be available", action)
+    fixture.launchAction(action!!)
+    checkHighlighting(m)
   }
 
   @Test

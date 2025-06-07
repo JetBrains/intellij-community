@@ -29,7 +29,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 
 public final class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {

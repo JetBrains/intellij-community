@@ -56,14 +56,22 @@ private class BackendValueEntityTypesProvider : EntityTypeProvider {
  */
 @ApiStatus.Internal
 suspend fun <T : Any> newValueEntity(value: T): BackendValueEntity<T> {
-  return withKernel {
-    val rhizomeEntity = change {
-      BackendRhizomeValueEntity.new {
-        it[BackendRhizomeValueEntity.Value] = value
+  var entity: BackendValueEntity<T>? = null
+  return try {
+    withKernel {
+      val rhizomeEntity = change {
+        BackendRhizomeValueEntity.new {
+          it[BackendRhizomeValueEntity.Value] = value
+        }
       }
+      @Suppress("UNCHECKED_CAST")
+      entity = BackendValueEntity(rhizomeEntity.eid, value, rhizomeEntity as BackendRhizomeValueEntity<T>)
+      entity
     }
-    @Suppress("UNCHECKED_CAST")
-    BackendValueEntity(rhizomeEntity.eid, value, rhizomeEntity as BackendRhizomeValueEntity<T>)
+  }
+  catch (e: Exception) {
+    entity?.delete()
+    throw e
   }
 }
 

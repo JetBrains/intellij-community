@@ -2,6 +2,7 @@
 // ACTION: Create function 'ext'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: ext
+// K2_AFTER_ERROR: Unresolved reference 'ext'.
 package p
 
 open class Foo {

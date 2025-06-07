@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -34,6 +34,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -46,8 +47,7 @@ import java.util.List;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
-  @NotNull
-  protected final String myLevel;
+  protected final @NotNull String myLevel;
 
   protected BaseLibrariesConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable,
                                       @NotNull String libraryTableLevel) {
@@ -67,9 +67,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   public abstract LibraryTablePresentation getLibraryTablePresentation();
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return "reference.settingsdialog.project.structure.library";
   }
 
@@ -105,9 +103,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     createLibrariesNode(myContext.createModifiableModelProvider(myLevel));
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> result = new ArrayList<>();
     for (LibraryConfigurable libraryConfigurable : getLibraryConfigurables()) {
       result.add(new LibraryProjectStructureElement(myContext, libraryConfigurable.getEditableObject()));
@@ -148,8 +145,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     });
   }
 
-  @NotNull
-  public String getLevel() {
+  public @NotNull String getLevel() {
     return myLevel;
   }
 
@@ -167,7 +163,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
   }
 
-  public void removeLibraryNode(@NotNull final Library library) {
+  public void removeLibraryNode(final @NotNull Library library) {
     removeLibrary(new LibraryProjectStructureElement(myContext, library));
   }
 
@@ -181,8 +177,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   @Override
-  @NotNull
-  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+  protected @NotNull @Unmodifiable List<? extends AnAction> createCopyActions(boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new CopyLibraryAction());
     if (fromPopup) {
@@ -198,7 +193,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(getAddText()) {
       @Override
-      public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
         return CreateNewLibraryAction.createActionOrGroup(getAddText(), BaseLibrariesConfigurable.this, myProject);
       }
     };
@@ -270,7 +265,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
           final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
           final Collection<ProjectStructureElementUsage> usages =
             new ArrayList<>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
-          if (usages.size() > 0) {
+          if (!usages.isEmpty()) {
             if (librariesWithUsages == 0) {
               final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<>();
               for (final ProjectStructureElementUsage usage : usages) {
@@ -345,8 +340,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   @Override
-  @Nullable
-  protected String getEmptySelectionString() {
+  protected @Nullable String getEmptySelectionString() {
     return JavaUiBundle.message("configurable.empty.text.select.library");
   }
 
@@ -356,7 +350,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx selected) {
         final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
@@ -375,7 +369,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);
       } else {

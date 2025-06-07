@@ -17,11 +17,12 @@ import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase.requireJdkHome
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test
@@ -140,7 +141,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
       }
     }
 
-    gradleExecSettings.javaHome = GradleImportingTestCase.requireJdkHome(gradleVersion)
+    gradleExecSettings.javaHome = requireJdkHome(gradleVersion, JavaVersionRestriction.NO)
 
     val settings = GradleExecutionSettings(gradleExecSettings).apply {
       tasks = listOf("help")

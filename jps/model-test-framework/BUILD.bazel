@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.jps.model.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "model-testFramework",
+  module_name = "intellij.platform.jps.model.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//jps/model-impl",
+    "//jps/model-api:model",
+  ]
+)
+### auto-generated section `build intellij.platform.jps.model.testFramework` end

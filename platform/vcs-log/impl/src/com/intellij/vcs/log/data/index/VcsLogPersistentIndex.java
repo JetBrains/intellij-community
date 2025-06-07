@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan;
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -43,6 +43,7 @@ import org.jetbrains.sqlite.AlreadyClosedException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
 
 @ApiStatus.Internal
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
@@ -76,14 +77,14 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   private final @NotNull MyHeavyAwareListener myHeavyAwareListener;
   private final @NotNull AtomicReference<Boolean> myPostponedIndex = new AtomicReference<>(null);
 
-  private final @NotNull Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
+  private final @NotNull Map<VirtualFile, Integer> myNumberOfTasks = new ConcurrentHashMap<>();
   private final @NotNull Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
   private final @NotNull Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
   private final @NotNull Map<VirtualFile, ConcurrentIntObjectMap<Integer>> myIndexingErrors = new HashMap<>();
 
   private final @NotNull List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
+  private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new ConcurrentHashMap<>();
 
   private final @NotNull IdleVcsLogIndexer myIdleIndexer;
 
@@ -103,14 +104,14 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
     myIndexers = indexers;
-    myRoots = new LinkedHashSet<>(indexers.keySet());
+    myRoots = Collections.unmodifiableSet(indexers.keySet());
 
     myBackend = backend;
     myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
                                        myBackend, myStorage, myErrorHandler);
 
     for (VirtualFile root : myRoots) {
-      myNumberOfTasks.put(root, new AtomicInteger());
+      myNumberOfTasks.put(root, 0);
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
       myIndexingErrors.put(root, ConcurrentCollectionFactory.createConcurrentIntObjectMap());
@@ -154,7 +155,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   @TestOnly
-  void indexNow(boolean full) {
+  public void indexNow(boolean full) {
     doScheduleIndex(full, request -> request.run(myProgress.createProgressIndicator(INDEXING)));
   }
 
@@ -219,13 +220,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   }
 
   @Override
-  public synchronized boolean isIndexed(@NotNull VirtualFile root) {
+  public boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
            (!myCommitsToIndex.containsKey(root) && !isIndexingIsProgress(root));
   }
 
   private boolean isIndexingIsProgress(@NotNull VirtualFile root) {
-    return myNumberOfTasks.get(root).get() != 0;
+    return myNumberOfTasks.get(root) != 0;
   }
 
   @Override
@@ -404,21 +405,21 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       myCommits = commits;
       myFull = full;
 
-      myNumberOfTasks.get(root).incrementAndGet();
+      myNumberOfTasks.computeIfPresent(root, (k, v) -> v + 1);
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
       if (myBigRepositoriesList.isBig(myRoot)) {
         LOG.info("Indexing repository " + myRoot.getName() + " is skipped");
         markCommits();
-        myNumberOfTasks.get(myRoot).decrementAndGet();
+        myNumberOfTasks.computeIfPresent(myRoot, (k, v) -> v - 1);
         return;
       }
 
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsBackendTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -476,7 +477,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
         }
 
-        myNumberOfTasks.get(myRoot).decrementAndGet();
+        myNumberOfTasks.computeIfPresent(myRoot, (k, v) -> v - 1);
 
         myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
         boolean isIndexed = isIndexed(myRoot);

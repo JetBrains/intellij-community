@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
@@ -137,11 +138,13 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     return container != null ? container : getGlobalBusy();
   }
 
-  void initBusyObjectFor(@Nullable Project key) {
+  @VisibleForTesting
+  public void initBusyObjectFor(@Nullable Project key) {
     myObjects.put(key, new BusyContainer(key));
   }
 
-  boolean hasObjectFor(Project project) {
+  @VisibleForTesting
+  public boolean hasObjectFor(Project project) {
     return myObjects.containsKey(project);
   }
 
@@ -234,7 +237,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
       final ModalityState current = getCurrentState();
       for (Map.Entry<UiActivity, ActivityInfo> entry : infoToCheck.entrySet()) {
         final ActivityInfo info = entry.getValue();
-        if (!current.dominates(info.getEffectiveState())) {
+        if (current.accepts(info.getEffectiveState())) {
           return false;
         }
       }

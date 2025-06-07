@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl
 
 import com.intellij.core.CoreFileTypeRegistry
@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -14,18 +13,17 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
 import com.intellij.util.UriUtil
+import com.intellij.util.system.OS
+import com.jetbrains.JBRFileDialog
 import java.awt.Component
 import java.awt.FileDialog
 import java.awt.KeyboardFocusManager
@@ -36,10 +34,10 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
-  private val localFs = lazy<VirtualFileSystem> {
+  private val localFs = lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.local() } ?: CoreLocalFileSystem()
   }
-  private val jarFs = lazy<VirtualFileSystem> {
+  private val jarFs = lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.jar() } ?: CoreJarFileSystem()
   }
 
@@ -52,20 +50,34 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     }
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose() { }
 
   fun setNativeDialogProperties() {
-    if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       System.setProperty("sun.awt.windows.useCommonItemDialog", "true")
     }
   }
 
+  fun setFileFilter(fileDialog: JBRFileDialog, descriptor: FileChooserDescriptor) {
+    val extFilter = descriptor.extensionFilter
+    if (extFilter != null) {
+      val fileTypes = extFilter.second.toTypedArray()
+      if (OS.CURRENT == OS.macOS) {
+        // `NSOpenPanel` doesn't recognize complex extensions (like e.g. "gradle.kts")
+        for (i in fileTypes.indices) {
+          val p = fileTypes[i]!!.lastIndexOf('.')
+          if (p >= 0) {
+            fileTypes[i] = fileTypes[i]!!.substring(p + 1)
+          }
+        }
+      }
+      fileDialog.setFileFilterExtensions(extFilter.first, fileTypes)
+    }
+  }
+
   fun showNativeDialog(fileDialog: FileDialog) {
-    val commandProcessor = if (ApplicationManager.getApplication() != null) CommandProcessorEx.getInstance() as CommandProcessorEx else null
-    if (commandProcessor != null) {
-      commandProcessor.enterModal()
+    val app = ApplicationManager.getApplication()
+    if (app != null) {
       LaterInvocator.enterModal(fileDialog)
     }
     val previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
@@ -73,13 +85,10 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
       fileDialog.isVisible = true
     }
     finally {
-      if (commandProcessor != null) {
-        commandProcessor.leaveModal()
+      if (app != null) {
         LaterInvocator.leaveModal(fileDialog)
-        if (previousFocusOwner != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { previousFocusOwner.requestFocus() }
-        }
       }
+      previousFocusOwner?.requestFocus()
       Disposer.dispose(this)
     }
   }

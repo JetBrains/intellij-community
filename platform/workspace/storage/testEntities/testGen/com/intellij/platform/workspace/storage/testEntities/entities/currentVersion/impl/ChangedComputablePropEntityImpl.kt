@@ -23,8 +23,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedComputablePropEntityData) : ChangedComputablePropEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedComputablePropEntityData) : ChangedComputablePropEntity,
+                                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -53,8 +53,9 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
   }
 
 
-  internal class Builder(result: ChangedComputablePropEntityData?) : ModifiableWorkspaceEntityBase<ChangedComputablePropEntity, ChangedComputablePropEntityData>(
-    result), ChangedComputablePropEntity.Builder {
+  internal class Builder(result: ChangedComputablePropEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedComputablePropEntity, ChangedComputablePropEntityData>(result),
+    ChangedComputablePropEntity.Builder {
     internal constructor() : this(ChangedComputablePropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -150,7 +151,8 @@ internal class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComp
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

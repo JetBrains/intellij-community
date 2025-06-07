@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 annotation class Ann
 
 // Not supported scenario because of use-site target

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -17,6 +17,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +39,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
     if (!BaseIntentionAction.canModify(context.file())) return null;
     return getConstructorOrClass(context.findLeaf()) != null
-           ? Presentation.of(getFamilyName()).withIcon(AllIcons.Actions.RefactoringBulb)
+           ? Presentation.of(getFamilyName()).withIcon(NewUiValue.isEnabled() ? null : AllIcons.Actions.RefactoringBulb)
            : null;
   }
 
@@ -205,7 +206,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     List<PsiNewExpression> newUsages = new ArrayList<>();
     List<PsiElement> otherUsages = new ArrayList<>();
 
-    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false)) {
+    for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false).asIterable()) {
       PsiElement element = reference.getElement();
 
       if (element.getParent() instanceof PsiNewExpression newExpression) {
@@ -239,6 +240,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
     if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
+    if (containingClass.getRBrace() == null) return null; // Incomplete class declaration: adding a method may cause errors
     if (containingClass.getConstructors().length > 0) return null;
     return containingClass;
   }

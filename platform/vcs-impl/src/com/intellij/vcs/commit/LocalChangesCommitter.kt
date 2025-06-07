@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.history.LocalHistory
@@ -7,15 +7,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.VcsActivity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+
+private val FRESH_ROOTS_KEY = Key.create<Set<VirtualFile>>("Git.Commit.FreshRoots")
+var CommitContext.freshRoots: Set<VirtualFile>? by commitProperty(FRESH_ROOTS_KEY, null)
 
 private val COMMIT_WITHOUT_CHANGES_ROOTS_KEY = Key.create<Collection<VcsRoot>>("Vcs.Commit.CommitWithoutChangesRoots")
 var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProperty(COMMIT_WITHOUT_CHANGES_ROOTS_KEY, emptyList())
@@ -68,16 +73,16 @@ open class LocalChangesCommitter(
     try {
       val refreshAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
 
-      if (pathsToRefresh.isNotEmpty()) {
-        ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
-      }
-
       val toRefresh = mutableListOf<Change>()
+      val additionalPathsToRefresh = mutableListOf<FilePath>()
+
       processChangesByVcs(project, changes) { vcs, changes ->
         val environment = vcs.checkinEnvironment
         if (environment != null && environment.isRefreshAfterCommitNeeded) {
           toRefresh.addAll(changes)
         }
+
+        additionalPathsToRefresh.addAll(VcsPathsToRefreshProvider.collectPathsToRefreshForVcs(project, vcs))
       }
 
       if (toRefresh.isNotEmpty()) {
@@ -87,7 +92,12 @@ open class LocalChangesCommitter(
 
       refreshAction.finish()
 
-      VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToRefresh, null)
+      val allPathsToRefresh = pathsToRefresh + additionalPathsToRefresh
+      if (allPathsToRefresh.isNotEmpty()) {
+        ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
+      }
+
+      VcsDirtyScopeManager.getInstance(project).filePathsDirty(allPathsToRefresh, null)
 
       LocalHistory.getInstance().putEventLabel(project, getLocalHistoryEventName(commitContext, commitMessage), VcsActivity.Commit)
     }

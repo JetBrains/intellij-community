@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private FList<@NotNull Descriptor> myDeclarations = FList.emptyList();
   private final List<CustomMembersHolder> myMemberHolders = new ArrayList<>();
   private final GroovyClassDescriptor myDescriptor;
-  @Nullable private final Map<String, List> myBindings;
+  private final @Nullable Map<String, List> myBindings;
 
   public CustomMembersGenerator(@NotNull GroovyClassDescriptor descriptor, @Nullable Map<String, List> bindings) {
     myDescriptor = descriptor;
@@ -49,8 +49,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @Override
-  @Nullable
-  public PsiClass getClassType() {
+  public @Nullable PsiClass getClassType() {
     return getPsiClass();
   }
 
@@ -59,9 +58,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return myDescriptor.getPsiType();
   }
 
-  @Nullable
   @Override
-  public PsiClass getPsiClass() {
+  public @Nullable PsiClass getPsiClass() {
     return myDescriptor.getPsiClass();
   }
 
@@ -75,8 +73,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     return myDescriptor.getProject();
   }
 
-  @Nullable
-  public List<CustomMembersHolder> getMembersHolder() {
+  public @Nullable List<CustomMembersHolder> getMembersHolder() {
     if (!myDeclarations.isEmpty()) {
       addMemberHolder(new CustomMembersHolderImpl(myDeclarations));
     }
@@ -199,8 +196,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public Object methodMissing(String name, Object args) {
+  public @Nullable Object methodMissing(String name, Object args) {
     final Object[] newArgs = constructNewArgs((Object[])args);
 
     // Get other DSL methods from extensions
@@ -214,8 +210,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public Object propertyMissing(String name) {
+  public @Nullable Object propertyMissing(String name) {
     if (myBindings != null) {
       final List list = myBindings.get(name);
       if (list != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldEvaluator
@@ -25,11 +25,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldEvaluator implements Evaluator {
+public class FieldEvaluator implements ModifiableEvaluator {
   private final Evaluator myObjectEvaluator;
   private final TargetClassFilter myTargetClassFilter;
   private final String myFieldName;
+
+  // TODO remove non-final fields, see IDEA-366793
+  @Deprecated
   private Object myEvaluatedQualifier;
+  @Deprecated
   private Field myEvaluatedField;
 
   public interface TargetClassFilter {
@@ -44,8 +48,7 @@ public class FieldEvaluator implements Evaluator {
     myTargetClassFilter = filter;
   }
 
-  @NotNull
-  public static TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
+  public static @NotNull TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
     if (psiType == null || psiType instanceof PsiArrayType) {
       return TargetClassFilter.ALL;
     }
@@ -67,8 +70,7 @@ public class FieldEvaluator implements Evaluator {
     return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
-  @Nullable
-  private Field findField(@Nullable Type t) {
+  private @Nullable Field findField(@Nullable Type t) {
     if (t instanceof ClassType cls) {
       if (myTargetClassFilter.acceptClass(cls)) {
         return DebuggerUtils.findField(cls, myFieldName);
@@ -96,15 +98,9 @@ public class FieldEvaluator implements Evaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    myEvaluatedField = null;
-    myEvaluatedQualifier = null;
+  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
     Object object = myObjectEvaluator.evaluate(context);
 
-    return evaluateField(object, context);
-  }
-
-  private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
     if (object instanceof ReferenceType refType) {
       Field field = findField(refType);
       if (field == null || !field.isStatic()) {
@@ -113,9 +109,10 @@ public class FieldEvaluator implements Evaluator {
       if (field == null || !field.isStatic()) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
+      MyModifier modifier = new MyModifier(refType, field);
       myEvaluatedField = field;
       myEvaluatedQualifier = refType;
-      return refType.getValue(field);
+      return new ModifiableValue(refType.getValue(field), modifier);
     }
 
     if (object instanceof ObjectReference objRef) {
@@ -127,7 +124,7 @@ public class FieldEvaluator implements Evaluator {
 
       // expressions like 'array.length' must be treated separately
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
-        return context.getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
+        return new ModifiableValue(context.getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length()), null);
       }
 
       Field field = findField(refType);
@@ -138,9 +135,11 @@ public class FieldEvaluator implements Evaluator {
       if (field == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.field", myFieldName));
       }
-      myEvaluatedQualifier = field.isStatic() ? refType : objRef;
+      Object qualifier = field.isStatic() ? refType : objRef;
+      MyModifier modifier = new MyModifier(qualifier, field);
+      myEvaluatedQualifier = qualifier;
       myEvaluatedField = field;
-      return field.isStatic() ? refType.getValue(field) : objRef.getValue(field);
+      return new ModifiableValue(field.isStatic() ? refType.getValue(field) : objRef.getValue(field), modifier);
     }
 
     if (object == null) {
@@ -152,48 +151,10 @@ public class FieldEvaluator implements Evaluator {
 
   @Override
   public Modifier getModifier() {
-    Modifier modifier = null;
     if (myEvaluatedField != null && (myEvaluatedQualifier instanceof ClassType || myEvaluatedQualifier instanceof ObjectReference)) {
-      modifier = new Modifier() {
-        @Override
-        public boolean canInspect() {
-          return myEvaluatedQualifier instanceof ObjectReference;
-        }
-
-        @Override
-        public boolean canSetValue() {
-          return true;
-        }
-
-        @Override
-        public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
-          if (myEvaluatedQualifier instanceof ReferenceType) {
-            ClassType classType = (ClassType)myEvaluatedQualifier;
-            classType.setValue(myEvaluatedField, value);
-          }
-          else {
-            ObjectReference objRef = (ObjectReference)myEvaluatedQualifier;
-            objRef.setValue(myEvaluatedField, value);
-          }
-        }
-
-        @Override
-        public Type getExpectedType() throws ClassNotLoadedException {
-          return myEvaluatedField.type();
-        }
-
-        @Override
-        public NodeDescriptorImpl getInspectItem(Project project) {
-          if (myEvaluatedQualifier instanceof ObjectReference) {
-            return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
-          }
-          else {
-            return null;
-          }
-        }
-      };
+      return new MyModifier(myEvaluatedQualifier, myEvaluatedField);
     }
-    return modifier;
+    return null;
   }
 
   @Override
@@ -238,6 +199,52 @@ public class FieldEvaluator implements Evaluator {
         }
       }
       return false;
+    }
+  }
+
+  private static class MyModifier implements Modifier {
+    private final Object myEvaluatedQualifier;
+    private final Field myEvaluatedField;
+
+    private MyModifier(Object qualifier, Field field) {
+      myEvaluatedQualifier = qualifier;
+      myEvaluatedField = field; }
+
+    @Override
+    public boolean canInspect() {
+      return myEvaluatedQualifier instanceof ObjectReference;
+    }
+
+    @Override
+    public boolean canSetValue() {
+      return true;
+    }
+
+    @Override
+    public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
+      if (myEvaluatedQualifier instanceof ReferenceType) {
+        ClassType classType = (ClassType)myEvaluatedQualifier;
+        classType.setValue(myEvaluatedField, value);
+      }
+      else {
+        ObjectReference objRef = (ObjectReference)myEvaluatedQualifier;
+        objRef.setValue(myEvaluatedField, value);
+      }
+    }
+
+    @Override
+    public Type getExpectedType() throws ClassNotLoadedException {
+      return myEvaluatedField.type();
+    }
+
+    @Override
+    public NodeDescriptorImpl getInspectItem(Project project) {
+      if (myEvaluatedQualifier instanceof ObjectReference) {
+        return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
+      }
+      else {
+        return null;
+      }
     }
   }
 }

@@ -12,6 +12,6 @@ internal class VcsLogUiDataRule : UiDataRule {
     val logUi = snapshot[VcsLogDataKeys.VCS_LOG_UI]
     sink[VcsLogInternalDataKeys.FILE_HISTORY_UI] = logUi as? FileHistoryUi
     sink[VcsLogInternalDataKeys.MAIN_UI] = logUi as? MainVcsLogUi
-    sink[VcsLogInternalDataKeys.LOG_UI_EX] = logUi as? MainVcsLogUi
+    sink[VcsLogInternalDataKeys.LOG_UI_EX] = logUi as? VcsLogUiEx
   }
 }

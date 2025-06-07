@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java;
 
 import com.intellij.openapi.util.Key;
@@ -55,7 +56,7 @@ public final class UastAnonymousClassUtil {
   }
 
 
-  private final static class MyAnonymousClassesNamesCollectingVisitor extends AbstractUastNonRecursiveVisitor {
+  private static final class MyAnonymousClassesNamesCollectingVisitor extends AbstractUastNonRecursiveVisitor {
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends UElement> @NotNull [] OUR_EXPECTED_UAST_TYPES = new Class[]{

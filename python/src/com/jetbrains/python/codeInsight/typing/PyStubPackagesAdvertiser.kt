@@ -27,7 +27,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
+import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
@@ -45,13 +45,16 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "pika" to "pika",
                                 "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
-                                "pyspark" to "pyspark",
+                                "pandas" to "pandas",
+                                "celery" to "celery",
+                                "urllib3" to "urllib3",
+                                "pillow" to "Pillow",
+                                "boto3" to "boto3",
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
+    private val EXTRAS = mapOf("boto3-stubs" to "[full]")
+
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = Cancellation.forceNonCancellableSectionInClassInitializer {
-      NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
-    }
   }
 
   var ignoredPackages: MutableList<String> = mutableListOf()
@@ -66,6 +69,9 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   private class Visitor(private val ignoredPackages: MutableList<String>,
                         holder: ProblemsHolder,
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
+
+    private val BALLOON_NOTIFICATIONS
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
@@ -247,7 +253,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
         .flatMap { it.packages.entries.asSequence() }
         .filterNot { isIgnoredStubPackage(it.key, it.value.first, ignoredStubPackages) }
         .map {
-          pyRequirement(it.key, PyRequirementRelation.EQ, it.value.first)
+          pyRequirement(it.key, PyRequirementRelation.EQ, it.value.first, extras = EXTRAS.getOrDefault(it.key, ""))
         }
         .toList()
       if (requirements.isEmpty()) return emptyList<PyRequirement>() to emptyList()
@@ -304,7 +310,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
-      return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
+      return PyInstallRequirementsFix(name, module, sdk, reqs, args)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {

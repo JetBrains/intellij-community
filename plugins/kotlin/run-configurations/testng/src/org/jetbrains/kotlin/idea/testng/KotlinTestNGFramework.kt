@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.idea.testng
 
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
@@ -96,7 +99,7 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
                 NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, TestNGUtil.TEST_ANNOTATION_FQN)) {
                 YES
-            } else if (findAnnotatedFunction(declaration, testableClassMethodAnnotations) != null) {
+            } else if (containsTestIndicator(declaration)) {
                 YES
             } else if (declaration.hasModifier(KtTokens.OPEN_KEYWORD) || declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                 for (subDeclaration in declaration.declarations) {
@@ -114,6 +117,14 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
             } else {
                 NO
             }
+        }
+
+        private fun containsTestIndicator(classOrObject: KtClassOrObject): Boolean {
+            for (declaration in classOrObject.declarations) {
+                val function = declaration as? KtNamedFunction ?: continue
+                if (isAnnotated(function, testableClassMethodAnnotations) && !isIgnoredMethod(function)) return true
+            }
+            return false
         }
 
         override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {

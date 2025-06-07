@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.BootstrapBundle;
+import com.intellij.ide.logsUploader.LogUploader;
 import com.intellij.ide.plugins.EssentialPluginMissingException;
 import com.intellij.ide.plugins.PluginConflictReporter;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -18,9 +19,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.io.Compressor;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.*;
 
@@ -28,9 +32,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -124,6 +134,8 @@ public final class StartupErrorReporter {
     catch (Throwable ignore) { }
 
     try {
+      var messageObj = prepareMessage(message);
+      var close = BootstrapBundle.message("bootstrap.error.option.close");
       var iconUrl = StartupErrorReporter.class.getResource("/images/questionSign.png");
       var learnMore = iconUrl != null ? new JLabel(new ImageIcon(iconUrl)) : new JLabel("?");
       learnMore.setToolTipText(BootstrapBundle.message("bootstrap.error.option.support"));
@@ -134,16 +146,21 @@ public final class StartupErrorReporter {
           supportCenter();
         }
       });
-      var options = new Object[]{
-        BootstrapBundle.message("bootstrap.error.option.close"),
-        BootstrapBundle.message("bootstrap.error.option.reset"),
-        BootstrapBundle.message("bootstrap.error.option.report"),
-        learnMore
-      };
-      var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
-      switch (choice) {
-        case 1 -> cleanStart();
-        case 2 -> reportProblem(title, message, error);
+      if (error != null) {
+        var options = new Object[]{close, BootstrapBundle.message("bootstrap.error.option.reset"), BootstrapBundle.message("bootstrap.error.option.report"), learnMore};
+        var choice = JOptionPane.showOptionDialog(
+          JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
+        );
+        switch (choice) {
+          case 1 -> cleanStart();
+          case 2 -> reportProblem(title, message, error);
+        }
+      }
+      else {
+        var options = new Object[]{close, learnMore};
+        JOptionPane.showOptionDialog(
+          JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
+        );
       }
     }
     catch (Throwable t) {
@@ -163,20 +180,117 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static void reportProblem(String title, String message, @Nullable Throwable error) {
+  private static void reportProblem(String title, String description, @Nullable Throwable error) {
     if (error != null) {
-      title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
+      title += " (" + error.getClass().getSimpleName() + ": " + shorten(error.getMessage()) + ')';
     }
+
+    var uploadId = (String)null;
+    if (error instanceof ExceptionWithAttachments ewa) {
+      var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.confirm"));
+      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+      if (ok != JOptionPane.OK_OPTION) return;
+
+      try {
+        uploadId = uploadLogs(ewa);
+      }
+      catch (Throwable t) {
+        var buf = new StringWriter();
+        t.printStackTrace(new PrintWriter(buf));
+        message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", buf));
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+    }
+    if (uploadId != null) {
+      description += "\n\n-----\n[Upload ID: " + uploadId + ']';
+    }
+
     try {
       var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
-        .replace("$DESCR$", URLUtil.encodeURIComponent(message))
+        .replace("$DESCR$", URLUtil.encodeURIComponent(description))
         .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
       Desktop.getDesktop().browse(new URI(url));
     }
     catch (Throwable t) {
       showBrowserError(t);
     }
+  }
+
+  private static String shorten(String message) {
+    if (message.length() <= 200) return message;
+    int p = message.indexOf('\n', 200);
+    if (p < 0 || p >= 250) p = message.indexOf(". ", 200);
+    if (p < 0 || p >= 250) p = message.indexOf(' ', 200);
+    if (p < 0 || p >= 250) p = 200;
+    message = message.substring(0, p);
+    return message + (message.endsWith(".") ? ".." : "...");
+  }
+
+  private static @Nullable String uploadLogs(ExceptionWithAttachments error) throws ExecutionException, InterruptedException {
+    var progressBar = new JProgressBar();
+    progressBar.setIndeterminate(true);
+    var label = new JLabel(BootstrapBundle.message("bootstrap.error.message.logs"));
+    var panel = new JPanel(new BorderLayout(5, 5));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(progressBar, BorderLayout.CENTER);
+    var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
+    progressDialog.add(panel);
+    progressDialog.setSize(300, 100);
+    progressDialog.setLocationRelativeTo(null);
+
+    @SuppressWarnings("SSBasedInspection")
+    var worker = new SwingWorker<String, Void>() {
+      @Override
+      protected String doInBackground() throws Exception {
+        var logs = collectLogs(error);
+        try {
+          return LogUploader.uploadFile(logs);
+        }
+        finally {
+          NioFiles.deleteQuietly(logs);
+        }
+      }
+
+      @Override
+      protected void done() {
+        progressDialog.setVisible(false);
+        progressDialog.dispose();
+      }
+    };
+
+    worker.execute();
+    progressDialog.setVisible(true);
+
+    return worker.get();
+  }
+
+  private static Path collectLogs(ExceptionWithAttachments error) throws IOException {
+    var ts = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now());
+    var logs = Files.createTempFile("startup-err-logs-" + ts + '-', ".zip");
+
+    try (var zip = new Compressor.Zip(logs)) {
+      var log = PathManager.getLogDir().resolve("idea.log");
+      if (Files.exists(log)) {
+        zip.addFile(log.getFileName().toString(), log);
+      }
+
+      var productData = Path.of(PathManager.getHomePath(), "product-info.json");
+      if (!Files.exists(productData)) {
+        productData = Path.of(PathManager.getHomePath(), "Resources/product-info.json");
+      }
+      if (Files.exists(productData)) {
+        zip.addFile(productData.getFileName().toString(), productData);
+      }
+
+      for (var attachment : error.getAttachments()) {
+        zip.addFile(attachment.getName(), attachment.getBytes());
+      }
+    }
+
+    return logs;
   }
 
   private static void cleanStart() {

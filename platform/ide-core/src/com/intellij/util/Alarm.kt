@@ -12,7 +12,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -89,8 +88,12 @@ open class Alarm @Internal constructor(
 
   @Deprecated("Please use flow or at least pass coroutineScope")
   constructor() : this(threadToUse = ThreadToUse.SWING_THREAD, parentDisposable = null, activationComponent = null) {
-    val stackFrames = StackWalker.getInstance().walk { stream -> stream.asSequence().drop(1).firstOrNull()?.toString() }
-    LOG.warn("Do not create alarm without coroutineScope: $stackFrames")
+    val application = ApplicationManager.getApplication()
+    if (application == null || application.isUnitTestMode || application.isInternal) {
+      val stackFrames = StackWalker.getInstance().walk { stream -> stream.asSequence().drop(1).firstOrNull()?.toString() } ?: ""
+      // logged only during development, let's not spam users
+      LOG.warn("Do not create alarm without coroutineScope: $stackFrames")
+    }
   }
 
   @Internal
@@ -388,25 +391,22 @@ open class Alarm @Internal constructor(
           taskContext += modalityState.asContextElement()
         }
 
-        withContext(taskContext) {
+        // To emulate before-coroutine implementation, we run the task in a separate coroutine.
+        // Cancellation of `Request.job` does not cancel the running task as before.
+        owner.coroutineScope.launch(taskContext) {
           val task = synchronized(owner.LOCK) {
             task?.also { task = null }
-          } ?: return@withContext
+          } ?: return@launch
 
           ensureActive()
 
-          //todo fix clients and remove NonCancellable
           try {
             if (owner.threadToUse == ThreadToUse.SWING_THREAD) {
-              Cancellation.withNonCancelableSection().use {
-                //todo fix clients and remove WriteIntentReadAction
-                WriteIntentReadAction.run(task)
-              }
+              //todo fix clients and remove WriteIntentReadAction
+              WriteIntentReadAction.run(task)
             }
             else {
-              Cancellation.withNonCancelableSection().use {
-                task.run()
-              }
+              task.run()
             }
           }
           catch (e: CancellationException) {
@@ -415,7 +415,7 @@ open class Alarm @Internal constructor(
           catch (e: Throwable) {
             LOG.error(e)
           }
-        }
+        }.join() // this makes waitForAllExecuted actually wait
       }.also {
         it.invokeOnCompletion {
           synchronized(owner.LOCK) {

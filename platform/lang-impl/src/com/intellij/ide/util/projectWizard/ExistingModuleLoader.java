@@ -95,7 +95,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
       usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
       usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
-      if (usedMacros.size() > 0) {
+      if (!usedMacros.isEmpty()) {
         final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
         if (!ok) {
           return false;

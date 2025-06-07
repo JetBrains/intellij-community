@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -59,7 +59,10 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    AcceptedLanguageLevelsSettings.allowLevel(getTestRootDisposable(), LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
+    AcceptedLanguageLevelsSettings.allowLevel(
+      getTestRootDisposable(),
+      LanguageLevel.getEntries().get(LanguageLevel.HIGHEST.ordinal() + 1)
+    );
   }
 
   @Test
@@ -138,7 +141,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertModules("project", "project.main", "project.test");
     assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project"));
     assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule("project.main"));
-    LanguageLevel highestPreview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1];
+    LanguageLevel highestPreview = LanguageLevel.getEntries().get(LanguageLevel.HIGHEST.ordinal() + 1);
     assertEquals(highestPreview, getLanguageLevelForModule("project.test"));
   }
 
@@ -158,6 +161,73 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertEquals("1.5", getBytecodeTargetLevelForModule("project.main"));
     assertEquals("1.8", getBytecodeTargetLevelForModule("project.test"));
 
+  }
+
+  @Test
+  public void testCompilerArguments() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param1' << '-param2'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion();
+    assertModuleCompilerArgumentsVersion("project");
+    assertModuleCompilerArgumentsVersion("project.main");
+    assertModuleCompilerArgumentsVersion("project.test", "-param1", "-param2");
+
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion("-param");
+    assertModuleCompilerArgumentsVersion("project", "-param");
+    assertModuleCompilerArgumentsVersion("project.main", "-param");
+    assertModuleCompilerArgumentsVersion("project.test", "-param");
+  }
+
+  @Test
+  public void testCompilerArgumentsProvider() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .addPrefix("""
+                   class GStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-DgString=${value}"] }
+                       }
+                   }
+                   
+                   class JavaStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-Dstring=" + value] }
+                       }
+                   }
+                   """)
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgumentProviders.add(new GStringArgumentProvider(value: \"Str1\"))");
+        task.code("options.compilerArgumentProviders.add(new JavaStringArgumentProvider(value: \"Str2\"))");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "-DgString=Str1", "-Dstring=Str2");
   }
 
   @Test
@@ -301,7 +371,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     createSettingsFile("rootProject.name = 'app'");
     importProject("apply plugin: 'java'\n" +
-                  "group 'my_group'");
+                  "group = 'my_group'");
 
     assertModules("app", "my_group.app.main",
                   "my_group.app", "my_group.app.main~1", "my_group.app.test");

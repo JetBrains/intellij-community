@@ -23,6 +23,11 @@ import java.util.function.Predicate;
 
 public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   @Override
+  public boolean isStaticAutoImportName(@Nullable String fqn) {
+    return false;
+  }
+
+  @Override
   public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
     return false;
   }

@@ -28,8 +28,8 @@ import java.util.Collection;
 public class HgUpdateToAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  protected void execute(@NotNull final Project project,
-                         @NotNull final Collection<HgRepository> repositories,
+  protected void execute(final @NotNull Project project,
+                         final @NotNull Collection<HgRepository> repositories,
                          @Nullable HgRepository selectedRepo, @NotNull DataContext dataContext) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project, repositories, selectedRepo);
     if (dialog.showAndGet()) {

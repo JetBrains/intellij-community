@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.commandInterface` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "commandInterface_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "commandInterface",
+  module_name = "intellij.commandInterface",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/execution",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [
+    ":commandInterface_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.commandInterface` end

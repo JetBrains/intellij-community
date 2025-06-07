@@ -85,17 +85,16 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
 
     private final String myColorText;
     private JsonStringLiteral myLiteral;
-
+    private final Icon myIcon;
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
       myColorText = colorText;
       myLiteral = literal;
+      myIcon = computeIcon(colorText);
     }
 
-    @NotNull
-    @Override
-    public Icon getIcon() {
-      Color color = getColor(myColorText);
+    private @NotNull EmptyIcon computeIcon(String colorText) {
+      Color color = getColor(colorText);
       if (color != null) {
         return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
       }
@@ -103,19 +102,22 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
     }
 
     @Override
+    public @NotNull Icon getIcon() {
+      return myIcon;
+    }
+
+    @Override
     public boolean isNavigateAction() {
       return canChooseColor();
     }
 
-    @Nullable
     @Override
-    public String getTooltipText() {
+    public @Nullable String getTooltipText() {
       return canChooseColor() ? DevKitThemesBundle.message("theme.choose.color.tooltip") : null;
     }
 
-    @Nullable
     @Override
-    public AnAction getClickAction() {
+    public @Nullable AnAction getClickAction() {
       if (!canChooseColor()) return null;
 
       return new AnAction(DevKitThemesBundle.messagePointer("action.Anonymous.text.choose.color")) {
@@ -159,8 +161,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return isColorCode(myColorText);
     }
 
-    @Nullable
-    private Color getColor(@NotNull String colorText) {
+    private @Nullable Color getColor(@NotNull String colorText) {
       if (!isColorCode(colorText)) {
         return findNamedColor(colorText);
       }
@@ -168,8 +169,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return parseColor(colorText);
     }
 
-    @Nullable
-    private static Color parseColor(@NotNull String colorHex) {
+    private static @Nullable Color parseColor(@NotNull String colorHex) {
       boolean isRgba = isRgbaColorHex(colorHex);
       if (!isRgba && !isRgbColorHex(colorHex)) return null;
 
@@ -188,8 +188,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       }
     }
 
-    @Nullable
-    private Color findNamedColor(String colorText) {
+    private @Nullable Color findNamedColor(String colorText) {
       final PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
       final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);

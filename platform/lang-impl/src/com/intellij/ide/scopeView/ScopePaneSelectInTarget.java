@@ -26,6 +26,7 @@ public final class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     super(project);
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("select.in.scope");
   }

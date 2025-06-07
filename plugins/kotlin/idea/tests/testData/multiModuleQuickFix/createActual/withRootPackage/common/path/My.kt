@@ -1,5 +1,5 @@
 // "Add missing actual declarations" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IGNORE_K2
 
 expect class <caret>My

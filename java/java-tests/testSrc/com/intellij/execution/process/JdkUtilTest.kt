@@ -154,7 +154,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
       path.matches("$tempDir/idea_vm_params\\d*".toRegex()) -> "#vm_params#"
       path.matches("$tempDir/idea_app_params\\d*".toRegex()) -> "#app_params#"
       path.matches("@$tempDir/idea_arg_file\\d*".toRegex()) -> "#arg_file#"
-      path.endsWith("/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
+      path.contains("/production/intellij.java.rt/") || path.endsWith("/production/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
       else -> path
     }
   }

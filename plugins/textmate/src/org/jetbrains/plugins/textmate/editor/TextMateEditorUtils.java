@@ -24,10 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 public final class TextMateEditorUtils {
-  @Nullable
-  public static TextMateScope getCurrentScopeSelector(@NotNull EditorEx editor) {
+  public static @Nullable TextMateScope getCurrentScopeSelector(@NotNull EditorEx editor) {
     TextMateScope result = getCurrentScopeFromEditor(editor);
-    //retrieve root scope of file
+    //retrieve the root scope of a file
     if (result == null) {
       final VirtualFile file = editor.getVirtualFile();
       if (file != null) {
@@ -40,8 +39,7 @@ public final class TextMateEditorUtils {
     return result;
   }
 
-  @Nullable
-  private static TextMateScope getCurrentScopeFromEditor(@NotNull EditorEx editor) {
+  private static @Nullable TextMateScope getCurrentScopeFromEditor(@NotNull EditorEx editor) {
     final EditorHighlighter highlighter = editor.getHighlighter();
     SelectionModel selection = editor.getSelectionModel();
     final int offset = selection.hasSelection() ? selection.getSelectionStart() : editor.getCaretModel().getOffset();
@@ -54,10 +52,9 @@ public final class TextMateEditorUtils {
     return result;
   }
 
-  @Nullable
-  public static TextMateBracePair findRightHighlightingPair(int leftBraceStartOffset,
-                                                            @NotNull CharSequence fileText,
-                                                            @Nullable TextMateScope currentScope) {
+  public static @Nullable TextMateBracePair findRightHighlightingPair(int leftBraceStartOffset,
+                                                                      @NotNull CharSequence fileText,
+                                                                      @Nullable TextMateScope currentScope) {
     if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftHighlightingBrace(fileText.charAt(leftBraceStartOffset))) {
       return null;
     }
@@ -71,10 +68,9 @@ public final class TextMateEditorUtils {
     return null;
   }
 
-  @Nullable
-  public static TextMateBracePair findLeftHighlightingPair(int rightBraceEndOffset,
-                                                           @NotNull CharSequence fileText,
-                                                           @Nullable TextMateScope currentSelector) {
+  public static @Nullable TextMateBracePair findLeftHighlightingPair(int rightBraceEndOffset,
+                                                                     @NotNull CharSequence fileText,
+                                                                     @Nullable TextMateScope currentSelector) {
     if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightHighlightingBrace(fileText.charAt(rightBraceEndOffset - 1))) {
       return null;
     }
@@ -90,7 +86,7 @@ public final class TextMateEditorUtils {
 
   private static Set<TextMateBracePair> getAllPairsForMatcher(@Nullable TextMateScope selector) {
     if (selector == null) {
-      return Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS;
+      return Constants.Companion.getDEFAULT_HIGHLIGHTING_BRACE_PAIRS();
     }
     Set<TextMateBracePair> result = new HashSet<>();
     List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
@@ -109,7 +105,7 @@ public final class TextMateEditorUtils {
 
   public static Set<TextMateAutoClosingPair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
     if (currentScope == null) {
-      return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
+      return Constants.Companion.getDEFAULT_SMART_TYPING_BRACE_PAIRS();
     }
     List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
     final HashSet<TextMateAutoClosingPair> result = new HashSet<>();

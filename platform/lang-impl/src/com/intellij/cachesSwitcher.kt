@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
+@ApiStatus.Internal
 object CacheSwitcher {
   private val log = thisLogger()
 

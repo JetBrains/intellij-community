@@ -190,6 +190,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     ?: true
   }
   var myStickyLinesLimit: Int by property { EditorSettingsExternalizable.getInstance().stickyLineLimit }
+  var characterGridWidth: Float? by property(null)
 
   // These come from AdvancedSettings
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }

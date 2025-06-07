@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -55,7 +57,10 @@ internal object ExpectedTypeWeigher {
         expectedType: KaType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE
-        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
+        symbol is KaEnumEntrySymbol && expectedType.isEnum() && symbol.returnType.semanticallyEquals(expectedType) ->
+            MatchesExpectedType.MATCHES_PREFERRED
+
+        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol == it || symbol.isSubClassOf(it) } == true ->
             MatchesExpectedType.MATCHES
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
@@ -66,6 +71,7 @@ internal object ExpectedTypeWeigher {
     private var LookupElement.matchesExpectedType by UserDataProperty(Key<MatchesExpectedType>("MATCHES_EXPECTED_TYPE"))
 
     enum class MatchesExpectedType {
+        MATCHES_PREFERRED, // Matches and is also more likely to be something the user wants to use (e.g. enum entries when an enum is expected)
         MATCHES,
 
         /**
@@ -79,6 +85,9 @@ internal object ExpectedTypeWeigher {
         companion object {
             context(KaSession)
             fun matches(actualType: KaType, expectedType: KaType): MatchesExpectedType = when {
+                // We exclude the Nothing type because it would match everything, but we should not give it priority.
+                // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
+                actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
                 actualType isPossiblySubTypeOf expectedType -> MATCHES
                 actualType.withNullability(KaTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY
                 else -> NOT_MATCHES

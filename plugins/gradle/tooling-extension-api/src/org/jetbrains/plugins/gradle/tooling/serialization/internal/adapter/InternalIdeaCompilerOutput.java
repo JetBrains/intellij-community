@@ -39,6 +39,7 @@ public final class InternalIdeaCompilerOutput implements IdeaCompilerOutput {
     this.testOutputDir = testOutputDir;
   }
 
+  @Override
   public String toString() {
     return String.format("IdeaCompilerOutput{inheritOutputDirs=%s, outputDir=%s, testOutputDir=%s}",
                          this.inheritOutputDirs, this.outputDir, this.testOutputDir);

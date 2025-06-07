@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -321,7 +321,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final DefaultMutableTreeNode[] selectedNodes = myRootsTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
@@ -370,7 +370,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
 
   private static class MigrationRootsTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(@NotNull final JTree tree,
+    public void customizeCellRenderer(final @NotNull JTree tree,
                                       final Object value,
                                       final boolean selected,
                                       final boolean expanded,

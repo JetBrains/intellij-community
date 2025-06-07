@@ -11,14 +11,14 @@ class Bug {
 
   interface IFunction extends Function<Integer, Integer> {
     static void a() {
-      Function<Integer, Integer> identity = <error descr="Static method may only be called on its containing interface">identity();</error>
+      Function<Integer, Integer> identity = <error descr="Static method may only be called on its containing interface">identity</error>();
     }
   }
 
   public void foo() {
     Function<Integer, Integer> f = Function.identity();
 
-    Function<Integer, Integer> g = <error descr="Static method may only be called on its containing interface">f.identity();</error>
+    Function<Integer, Integer> g = f.<error descr="Static method may only be called on its containing interface">identity</error>();
 
     Function<Integer, Integer> h = IFunction.<error descr="Static method may only be called on its containing interface">identity</error>();
   }
@@ -40,15 +40,15 @@ class StaticMethodInterfaceExample {
     }
     
     public <T extends MyImplementation>  void doStuff1() {
-      <error descr="Static method may only be called on its containing interface">T.staticMethod();</error>
+      T.<error descr="Static method may only be called on its containing interface">staticMethod</error>();
     }
     
     public <T extends MyInterface & X>  void doStuff2() {
-      <error descr="Static method may only be called on its containing interface">T.staticMethod();</error>
+      T.<error descr="Static method may only be called on its containing interface">staticMethod</error>();
     }
     
     public <T extends MyImplementation & MyInterface>  void doStuff3() {
-      <error descr="Static method may only be called on its containing interface">T.staticMethod();</error>
+      T.<error descr="Static method may only be called on its containing interface">staticMethod</error>();
     }
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.filePrediction.features.vcs
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
 import com.intellij.filePrediction.features.FilePredictionFeaturesCache
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager

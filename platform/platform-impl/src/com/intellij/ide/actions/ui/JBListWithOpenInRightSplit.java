@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.ui;
 
 import com.intellij.icons.AllIcons;
@@ -141,8 +141,7 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
     return myCheckRightSplitter == null || myCheckRightSplitter.value(item);
   }
 
-  @NotNull
-  private Rectangle getIconRectangle(int index) {
+  private @NotNull Rectangle getIconRectangle(int index) {
     Rectangle bounds = getCellBounds(index, index);
     Rectangle visibleRect = getVisibleRect();
     visibleRect.setSize(visibleRect.width - getInsets().right, visibleRect.height);
@@ -172,13 +171,11 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
     return size;
   }
 
-  @NotNull @NonNls
-  private static String getActionId() {
+  private static @NotNull @NonNls String getActionId() {
     return IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
   }
 
-  @NotNull
-  private static Icon getIcon() {
+  private static @NotNull Icon getIcon() {
     return AllIcons.Actions.SplitVertically;
   }
 }

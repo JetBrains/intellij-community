@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
-import org.jetbrains.kotlin.idea.checkers.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
@@ -112,6 +111,7 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
     }
 
     companion object {
+        private const val API_VERSION_DIRECTIVE = "API_VERSION"
         private const val DIAGNOSTICS_DIRECTIVE = "DIAGNOSTICS"
         const val RENDER_DIAGNOSTICS_MESSAGES = "RENDER_DIAGNOSTICS_MESSAGES"
         private val DIAGNOSTICS_PATTERN: Pattern = Pattern.compile("([+\\-!])(\\w+)\\s*")

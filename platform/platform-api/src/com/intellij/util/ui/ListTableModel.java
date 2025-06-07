@@ -10,7 +10,7 @@ import java.util.*;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
   private ColumnInfo[] myColumnInfos;
-  private List<Item> myItems;
+  protected List<Item> myItems;
   private int mySortByColumn;
 
   private boolean myIsSortable;

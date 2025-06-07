@@ -7,11 +7,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
-import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -28,14 +28,9 @@ class K2MoveHandler : MoveHandlerDelegate() {
         if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
         (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
 
-        return targetContainer?.isValidTarget() != false
-    }
-
-    private fun PsiElement.isValidTarget(): Boolean {
-        return when (this) {
-            is PsiDirectory -> getPackage() != null
-            else -> true
-        }
+        // We allow declarations to be moved into non-source roots here,
+        // but in this case they will be moved as files rather than individual declarations.
+        return true
     }
 
     override fun tryToMove(
@@ -45,13 +40,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
         reference: PsiReference?,
         editor: Editor
     ): Boolean {
-        fun PsiElement.findElementToMove(): PsiElement? {
-            val candidate = parentOfTypes(KtNamedDeclaration::class, KtFile::class, PsiFile::class, PsiDirectory::class, withSelf = true)
-            if (candidate is KtConstructor<*>) return candidate.parent.findElementToMove()
-            return candidate
-        }
-
-        val elementToMove = element.findElementToMove() ?: return false
+        val elementToMove = element.findElementToMove(editor) ?: return false
         val elements = arrayOf(elementToMove)
         return if (canMove(elements, null, reference)) {
             doMoveWithCheck(project, elements, null, editor)
@@ -76,5 +65,19 @@ class K2MoveHandler : MoveHandlerDelegate() {
             else
                 show()
         }
+    }
+
+    internal fun PsiElement.findElementToMove(editor: Editor): PsiElement? {
+        // choose the previous declaration when the caret is put right after it
+        if (this is PsiWhiteSpace && startOffset == editor.caretModel.offset) {
+            prevSibling?.findElementToMove(editor)?.let { return it }
+        }
+        // try the last element in the file when the caret is at the end of the file
+        if (this is KtFile && editor.caretModel.offset == editor.document.textLength) {
+            lastChild?.findElementToMove(editor)?.let { return it }
+        }
+        val candidate = parentOfTypes(KtNamedDeclaration::class, KtFile::class, PsiFile::class, PsiDirectory::class, withSelf = true)
+        if (candidate is KtConstructor<*>) return candidate.parent.findElementToMove(editor)
+        return candidate
     }
 }

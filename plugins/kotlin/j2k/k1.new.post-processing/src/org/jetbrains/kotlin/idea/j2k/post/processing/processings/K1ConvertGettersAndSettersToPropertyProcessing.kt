@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode", "DEPRECATION")
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTargetInCommand
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -86,7 +86,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         )
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
         val psiFactory = KtPsiFactory(converterContext.project)
         val searcher = JKInMemoryFilesSearcher.create(ktElements)
@@ -121,8 +121,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         }
     }
 
-    context(KaSession)
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
 
@@ -473,7 +472,7 @@ private class PropertiesDataFilter(
     }
 
     private fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
-        ReferencesSearch.search(this, LocalSearchScope(inElement)).any { reference ->
+        ReferencesSearch.search(this, LocalSearchScope(inElement)).asIterable().any { reference ->
             outsideElements.none { it.isAncestor(reference.element) }
         }
 }
@@ -827,7 +826,7 @@ private class ClassConverter(
             for (accessorEntry in accessor.annotationEntries) {
                 val propertyEntry = property.addAnnotationEntry(accessorEntry)
                 val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
-                propertyEntry.addUseSiteTarget(target, property.project)
+                propertyEntry.addUseSiteTargetInCommand(target, property.project)
             }
             accessor.annotationEntries.forEach { it.delete() }
         }

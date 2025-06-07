@@ -28,7 +28,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
-import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   protected final @NotNull Point myPoint;
   protected final @Nullable Runnable myHideRunnable;
 
-  private VisualizedTextPopupUtil.VisualizedTextPanel myTextPanel;
+  private VisualizedTextPanel myTextPanel;
   private @Nullable JBPopup myPopup;
   protected boolean myTreePopupIsShown = false;
   protected @Nullable Tree myTree;
@@ -125,7 +125,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
 
       @Override
-      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
+      public void evaluated(final @NotNull String fullValue, final @Nullable Font font) {
         if (preventDoubleExecution(fullValue)) return;
 
         AppUIUtil.invokeOnEdt(() -> {
@@ -137,7 +137,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
 
       @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
+      public void errorOccurred(final @NotNull String errorMessage) {
         AppUIUtil.invokeOnEdt(() -> {
           myTextPanel.showError(errorMessage);
         });
@@ -177,7 +177,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   public JBPopup show(@NotNull String initialText) {
-    myTextPanel = new VisualizedTextPopupUtil.VisualizedTextPanel(myProject);
+    myTextPanel = new VisualizedTextPanel(myProject);
     myMainPanel.setBorder(JBUI.Borders.empty());
     myMainPanel.setBackground(myTextPanel.getBackground());
     setContent(myTextPanel, getToolbarActions(), ACTION_PLACE, null);
@@ -247,8 +247,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return toolbarActions;
   }
 
-  @Nullable
-  private XValueNodeImpl getValueNode() {
+  private @Nullable XValueNodeImpl getValueNode() {
     if (myTree instanceof XDebuggerTree) {
       XDebuggerTreeNode node = ((XDebuggerTree)myTree).getRoot();
       return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;

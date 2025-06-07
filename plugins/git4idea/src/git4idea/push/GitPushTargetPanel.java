@@ -3,6 +3,8 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -46,8 +48,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
@@ -117,11 +119,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         // "Set upstream" checkbox isn't shown if there is no existing tracking branch
         defaultTarget.getTargetType() == GitPushTargetType.TRACKING_BRANCH && !defaultTarget.isNewBranchCreated()
     ) {
-      myUpstreamCheckbox = new SetUpstreamCheckbox(defaultTarget.getBranch().getNameForRemoteOperations());
+      myUpstreamCheckbox = new SetUpstreamCheckbox(defaultTarget.getBranch());
       myTargetEditor.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(@NotNull DocumentEvent event) {
-          myUpstreamCheckbox.setVisible(myTargetEditor.getText());
+          myUpstreamCheckbox.setVisible(myTargetEditor.getText(), myRemoteRenderer.getText());
         }
       });
       add(myUpstreamCheckbox, BorderLayout.EAST);
@@ -145,8 +147,25 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }
       }
     });
+
+    setupBranchNameInputValidation(myTargetEditor);
     //record undo only in active edit mode and set to ignore by default
     UndoUtil.disableUndoFor(myTargetEditor.getDocument());
+  }
+
+  private void setupBranchNameInputValidation(@NotNull PushTargetTextField editor) {
+    editor.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        String targetName = myTargetEditor.getText();
+        String validTargetName = GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping(targetName);
+        if (validTargetName.equals(targetName)) return;
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myTargetEditor.setText(validTargetName);
+        }, ModalityState.stateForComponent(myTargetEditor));
+      }
+    });
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -172,7 +191,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myRemoteRenderer.updateLinkText(noRemotes ? GitBundle.message("push.dialog.target.panel.define.remote") : initialRemote);
 
     if (myUpstreamCheckbox != null) {
-      myUpstreamCheckbox.setVisible(initialBranch);
+      myUpstreamCheckbox.setVisible(initialBranch, initialRemote);
     }
 
     myTargetEditor.setVisible(!noRemotes);
@@ -309,18 +328,22 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         myTargetRenderer.setSelected(isSelected);
         myTargetRenderer.setTransparent(!isActive);
         myTargetRenderer.render(renderer);
+        GitRemoteBranch targetBranch = (target != null) ? target.getBranch() : null;
         boolean newUpstream = myUpstreamCheckbox != null &&
-                              target != null &&
+                              targetBranch != null &&
                               myUpstreamCheckbox.isSelected() &&
-                              !myUpstreamCheckbox.isDefaultUpstream(target.getBranch().getNameForRemoteOperations());
+                              !myUpstreamCheckbox.isDefaultUpstream(targetBranch.getNameForRemoteOperations(),
+                                                                    targetBranch.getRemote().getName());
         if (newRemoteBranch || newUpstream) {
           renderer.setIconOnTheRight(true);
         }
         if (newRemoteBranch && newUpstream) {
           renderer.setIcon(BranchLabels.getNewAndUpstreamBranchLabel(renderer.getFont(), isSelected));
-        } else if (newRemoteBranch) {
+        }
+        else if (newRemoteBranch) {
           renderer.setIcon(BranchLabels.getNewBranchLabel(renderer.getFont(), isSelected));
-        } else if (newUpstream) {
+        }
+        else if (newUpstream) {
           renderer.setIcon(BranchLabels.getUpstreamBranchLabel(renderer.getFont(), isSelected));
         }
       }
@@ -342,7 +365,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       // Checkbox should be explicitly enabled and disabled when toggling editing, as click
       // to start editing can change checkbox state
       // See BasicTreeUi#startEditing for details
-      myUpstreamCheckbox.setVisible(myTargetEditor.getText());
+      myUpstreamCheckbox.setVisible(myTargetEditor.getText(), myRemoteRenderer.getText());
       myUpstreamCheckbox.setEnabled(true);
     }
   }
@@ -530,24 +553,25 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private static class SetUpstreamCheckbox extends JBCheckBox {
-    private final String upstreamBranchName;
+    private final GitRemoteBranch defaultTarget;
 
-    SetUpstreamCheckbox(String upstreamBranchName) {
+    SetUpstreamCheckbox(GitRemoteBranch defaultTarget) {
       super(GitBundle.message("push.dialog.target.panel.upstream.checkbox"), false);
 
-      this.upstreamBranchName = upstreamBranchName;
+      this.defaultTarget = defaultTarget;
       setBorder(JBUI.Borders.empty(0, 5, 0, 10));
       setOpaque(false);
       setFocusable(false);
     }
 
-    public void setVisible(String targetName) {
+    public void setVisible(String targetName, String remoteName) {
       boolean valid = GitRefNameValidator.getInstance().checkInput(targetName);
-      setVisible(valid && !isDefaultUpstream(targetName));
+      setVisible(valid && !isDefaultUpstream(targetName, remoteName));
     }
 
-    public boolean isDefaultUpstream(String targetName) {
-      return upstreamBranchName.equals(targetName);
+    public boolean isDefaultUpstream(String targetName, String remoteName) {
+      return defaultTarget.getNameForRemoteOperations().equals(targetName) &&
+             defaultTarget.getRemote().getName().equals(remoteName);
     }
   }
 

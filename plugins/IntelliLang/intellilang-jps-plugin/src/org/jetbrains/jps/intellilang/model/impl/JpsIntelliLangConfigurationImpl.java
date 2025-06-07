@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.intellilang.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,21 +17,18 @@ public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLa
   private String myPatternAnnotationClassName = "org.intellij.lang.annotations.Pattern";
   private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
 
-  @NotNull
   @Override
-  public JpsIntelliLangConfigurationImpl createCopy() {
+  public @NotNull JpsIntelliLangConfigurationImpl createCopy() {
     return new JpsIntelliLangConfigurationImpl();
   }
 
-  @NotNull
   @Override
-  public String getPatternAnnotationClass() {
+  public @NotNull String getPatternAnnotationClass() {
     return myPatternAnnotationClassName;
   }
 
-  @NotNull
   @Override
-  public InstrumentationType getInstrumentationType() {
+  public @NotNull InstrumentationType getInstrumentationType() {
     return myInstrumentationType;
   }
 

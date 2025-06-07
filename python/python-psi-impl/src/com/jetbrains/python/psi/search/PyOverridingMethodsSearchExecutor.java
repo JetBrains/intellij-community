@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final PyOverridingMethodsSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super PyFunction> consumer) {
+  public boolean execute(final @NotNull PyOverridingMethodsSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<? super PyFunction> consumer) {
     final PyFunction baseMethod = queryParameters.getFunction();
 
     final PyClass containingClass = ReadAction.compute(() -> baseMethod.getContainingClass());

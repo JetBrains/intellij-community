@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @deprecated please implement {@link FileNameMatcher} directly and define {@link #acceptsCharSequence(CharSequence)} there.
  */

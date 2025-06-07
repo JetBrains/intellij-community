@@ -39,6 +39,7 @@ internal class ConvertLambdaToReferenceIntention :
         val newElement: SmartPsiElementPointer<KtElement>,
         val renderedPropertyType: String?,
         val renderedTypeArguments: String?,
+        val redundantTypeArgumentList: Boolean = false
     )
 
     override fun getFamilyName(): String =
@@ -67,9 +68,8 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtLambdaExpression): Context? {
+    override fun KaSession.prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
             is KtCallExpression -> {
@@ -139,12 +139,15 @@ internal class ConvertLambdaToReferenceIntention :
                 appendFixedText(")")
             }
 
-            outerCallExpression.typeArgumentList?.let {
-                if (areTypeArgumentsRedundant(it, approximateFlexible = false)) {
-                    it.delete()
-                }
-            }
-            return Context(newArgumentList.createSmartPointer(), null, renderedTypeArguments)
+            val isOuterCallExpressionTypeArgumentListRedundant = outerCallExpression.typeArgumentList?.let {
+                areTypeArgumentsRedundant(it, approximateFlexible = false)
+            } ?: false
+            return Context(
+                newArgumentList.createSmartPointer(),
+                null,
+                renderedTypeArguments,
+                isOuterCallExpressionTypeArgumentListRedundant
+            )
         }
     }
 
@@ -165,9 +168,13 @@ internal class ConvertLambdaToReferenceIntention :
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
-            elementContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, actionContext.project)
-                outerCallExpression.typeArgumentList?.let(::shortenReferences)
+            if (elementContext.redundantTypeArgumentList) {
+                outerCallExpression.typeArgumentList?.delete()
+            } else {
+                elementContext.renderedTypeArguments?.let {
+                    addTypeArguments(outerCallExpression, it, actionContext.project)
+                    outerCallExpression.typeArgumentList?.let(::shortenReferences)
+                }
             }
         }
 

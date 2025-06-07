@@ -3,19 +3,12 @@ package com.intellij.ide.scratch;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
 /**
  * Root for files placed under the "Scratches" folder in the
@@ -53,27 +46,6 @@ public final class ScratchRootType extends RootType {
                                                  @Nullable Language language,
                                                  @NotNull String text,
                                                  @NotNull ScratchFileService.Option option) {
-    try {
-      return
-        WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
-                          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
-                          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
-          ScratchFileService fileService = ScratchFileService.getInstance();
-          VirtualFile file = fileService.findFile(this, fileName, option);
-          // save text should go before any other manipulations that load document,
-          // otherwise undo will be broken
-          VfsUtil.saveText(file, text);
-          if (language != null) {
-            Language fileLanguage = LanguageUtil.getFileLanguage(file);
-            fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
-          }
-          return file;
-        });
-    }
-    catch (IOException e) {
-      Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
-                                 UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-      return null;
-    }
+    return ScratchFileActions.createScratchFile(project, fileName, language, text, option, this);
   }
 }

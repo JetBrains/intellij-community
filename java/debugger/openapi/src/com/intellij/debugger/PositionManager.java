@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -41,6 +29,7 @@ public interface PositionManager {
    * @throws NoDataException if the location is not in the code managed by this {@code PositionManager}
    */
   @Nullable
+  @RequiresBlockingContext
   SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException;
 
   /**
@@ -52,6 +41,7 @@ public interface PositionManager {
    * @see com.intellij.debugger.engine.jdi.VirtualMachineProxy#classesByName
    */
   @NotNull
+  @Unmodifiable
   List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException;
 
   /**
@@ -85,8 +75,7 @@ public interface PositionManager {
    *
    * @return set of accepted file types, or null if it accepts all
    */
-  @Nullable
-  default Set<? extends FileType> getAcceptedFileTypes() {
+  default @Nullable Set<? extends FileType> getAcceptedFileTypes() {
     return null;
   }
 }

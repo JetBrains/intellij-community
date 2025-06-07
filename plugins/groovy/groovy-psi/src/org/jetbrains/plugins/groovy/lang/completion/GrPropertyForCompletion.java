@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.lang.Language;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 
 public class GrPropertyForCompletion extends LightFieldBuilder {
-  @NotNull private final PsiMethod myOriginalAccessor;
+  private final @NotNull PsiMethod myOriginalAccessor;
 
   public GrPropertyForCompletion(@NotNull PsiMethod method, @NotNull String name, @NotNull PsiType type) {
     super(method.getManager(), name, type);
@@ -37,14 +37,12 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     setBaseIcon(JetgroovyIcons.Groovy.Property);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return GroovyLanguage.INSTANCE;
   }
 
-  @NotNull
-  public PsiMethod getOriginalAccessor() {
+  public @NotNull PsiMethod getOriginalAccessor() {
     return myOriginalAccessor;
   }
 

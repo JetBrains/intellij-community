@@ -17,15 +17,12 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateSubstitutor;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public final class JavaTemplateSubstitutor implements TemplateSubstitutor {
   @Override

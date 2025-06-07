@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,8 +104,7 @@ public class TreeTableView extends TreeTable implements SelectionProvider {
     return (ListTreeTableModelOnColumns)getTableModel();
   }
 
-  @Unmodifiable
-  public List<DualTreeElement> getFlattenItems() {
+  public @Unmodifiable List<DualTreeElement> getFlattenItems() {
     List<DualTreeElement> items = getTreeViewModel().getItems();
     return ContainerUtil.findAll(items, object -> object.shouldBeInTheFlatView());
   }

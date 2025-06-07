@@ -1,14 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
@@ -37,6 +40,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourCheckIconRect = new Rectangle();
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
+  private final MyHoverListener hoverListener = new MyHoverListener();
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -52,8 +56,14 @@ public class IdeaMenuUI extends BasicMenuUI {
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-      radius = 0;
+      if (ShowMode.Companion.isMergedMainMenu()) {
+        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
+        radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
+      }
+      else {
+        outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
+        radius = 0;
+      }
     }
     else {
       radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
@@ -81,10 +91,43 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    if (c instanceof JMenuItem && ShowMode.Companion.isMergedMainMenu()) {
+      hoverListener.addTo(c);
+    }
+  }
+
+  @Override
+  public void uninstallUI(JComponent c) {
+    super.uninstallUI(c);
+    hoverListener.removeFrom(c);
+  }
+
+  private static class MyHoverListener extends HoverListener {
+    @Override
+    public void mouseEntered(@NotNull Component component, int x, int y) {
+      if (component.getParent() instanceof JMenuBar) {
+        ((JMenuItem)component).getModel().setArmed(true);
+      }
+    }
+
+    @Override
+    public void mouseExited(@NotNull Component component) {
+      if (component.getParent() instanceof JMenuBar) {
+        ((JMenuItem)component).getModel().setArmed(false);
+      }
+    }
+
+    @Override
+    public void mouseMoved(@NotNull Component component, int x, int y) { }
+  }
+
+  @Override
   protected void installDefaults() {
     super.installDefaults();
     Integer integer = UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
-    if (integer != null){
+    if (integer != null) {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
@@ -94,6 +137,16 @@ public class IdeaMenuUI extends BasicMenuUI {
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
       selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
       selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
+      if (ShowMode.Companion.isMergedMainMenu()) {
+        JBColor hoverBG = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background());
+        if (ProjectWindowCustomizerService.Companion.getInstance().isActive()) {
+          selectionBackground = JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground",
+                                        getDefaultSelectionBackground());
+        }
+        else {
+          selectionBackground = hoverBG;
+        }
+      }
     }
   }
 

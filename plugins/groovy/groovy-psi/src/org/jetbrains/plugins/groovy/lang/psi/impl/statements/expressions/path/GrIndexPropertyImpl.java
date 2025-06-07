@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
@@ -33,15 +33,13 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     super(node);
   }
 
-  @Nullable
   @Override
-  public GroovyMethodCallReference getRValueReference() {
+  public @Nullable GroovyMethodCallReference getRValueReference() {
     return isRValue(this) && isIndexAccess() ? myRValueReference : null;
   }
 
-  @Nullable
   @Override
-  public GroovyMethodCallReference getLValueReference() {
+  public @Nullable GroovyMethodCallReference getLValueReference() {
     return isLValue(this) && isIndexAccess() ? myLValueReference : null;
   }
 
@@ -61,26 +59,22 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   }
 
   @Override
-  @NotNull
-  public GrExpression getInvokedExpression() {
+  public @NotNull GrExpression getInvokedExpression() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
-  @Nullable
   @Override
-  public PsiElement getSafeAccessToken() {
+  public @Nullable PsiElement getSafeAccessToken() {
     return findChildByType(T_Q);
   }
 
   @Override
-  @NotNull
-  public GrArgumentList getArgumentList() {
+  public @NotNull GrArgumentList getArgumentList() {
     return findNotNullChildByClass(GrArgumentList.class);
   }
 
-  @Nullable
   @Override
-  public PsiType getNominalType() {
+  public @Nullable PsiType getNominalType() {
     return GroovyIndexPropertyUtil.getSimpleArrayAccessType(this);
   }
 

@@ -16,8 +16,7 @@ public class RestFile extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return RestFileType.INSTANCE;
   }
 

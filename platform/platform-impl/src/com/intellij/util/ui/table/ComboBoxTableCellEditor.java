@@ -12,7 +12,7 @@ import com.intellij.util.ListWithSelection;
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
-import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * Supported value type: {@link ListWithSelection} and {@link Enum}.
@@ -25,7 +25,7 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
 
   public ComboBoxTableCellEditor() {
     //noinspection unchecked
-    super(new JComboBox(new CollectionComboBoxModel(Collections.emptyList())));
+    super(new JComboBox(new CollectionComboBoxModel(new ArrayList<>())));
 
     comboBox = (JComboBox)getComponent();
 

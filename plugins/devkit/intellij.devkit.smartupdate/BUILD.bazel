@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.devkit.smartupdate` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "smartupdate_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "smartupdate",
+  module_name = "intellij.devkit.smartupdate",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/smart-update",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":smartupdate_resources"]
+)
+### auto-generated section `build intellij.devkit.smartupdate` end

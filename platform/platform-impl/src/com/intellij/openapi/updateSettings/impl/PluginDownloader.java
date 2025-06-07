@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,14 +21,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Date;
@@ -175,7 +174,7 @@ public final class PluginDownloader {
 
     IdeaPluginDescriptor descriptor = null;
 
-    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManagerCore.isPluginInstalled(myPluginId)) {
+    if (PluginManagerCore.isPluginInstalled(myPluginId)) {
       descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
 
@@ -255,7 +254,7 @@ public final class PluginDownloader {
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (myBuildNumber == null) {
-      return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), null);
+      return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(getFilePath(), null);
     }
     else {
       return PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(getFilePath());
@@ -296,7 +295,9 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
-  @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -395,9 +396,9 @@ public final class PluginDownloader {
 
   private static String toAbsoluteUrl(String downloadUrl, String host) throws IOException {
     try {
-      return new URI(downloadUrl).isAbsolute() ? downloadUrl : new URL(new URL(host), downloadUrl).toExternalForm();
+      return new URL(new URL(host), downloadUrl).toExternalForm();
     }
-    catch (URISyntaxException e) {
+    catch (MalformedURLException e) {
       throw new IOException(e);
     }
   }

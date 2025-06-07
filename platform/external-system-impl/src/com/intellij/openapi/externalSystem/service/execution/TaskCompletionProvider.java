@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -78,7 +78,7 @@ public class TaskCompletionProvider extends CommandLineCompletionProvider {
     result.addAllElements(cachedElements);
   }
 
-  protected List<LookupElement> getVariants(@NotNull final DataNode<ProjectData> projectDataNode, @NotNull final String modulePath) {
+  protected List<LookupElement> getVariants(final @NotNull DataNode<ProjectData> projectDataNode, final @NotNull String modulePath) {
     final DataNode<ModuleData> moduleDataNode = findModuleDataNode(projectDataNode, modulePath);
     if (moduleDataNode == null) {
       return Collections.emptyList();
@@ -92,9 +92,8 @@ public class TaskCompletionProvider extends CommandLineCompletionProvider {
     return elements;
   }
 
-  @Nullable
-  public static DataNode<ModuleData> findModuleDataNode(@NotNull final DataNode<ProjectData> projectDataNode,
-                                                        @NotNull final String projectPath) {
+  public static @Nullable DataNode<ModuleData> findModuleDataNode(final @NotNull DataNode<ProjectData> projectDataNode,
+                                                                  final @NotNull String projectPath) {
     final DataNode<?> node =
       ExternalSystemApiUtil.findFirstRecursively(projectDataNode, node1 -> node1.getKey().equals(ProjectKeys.MODULE) &&
                                                                            node1.getData() instanceof ModuleData &&

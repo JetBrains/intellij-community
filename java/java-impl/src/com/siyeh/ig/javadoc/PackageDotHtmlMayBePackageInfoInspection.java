@@ -7,7 +7,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
@@ -144,31 +143,26 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
   private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      if (!(file instanceof XmlFile)) {
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      if (!(psiFile instanceof XmlFile)) {
         return;
       }
-      final @NonNls String fileName = file.getName();
+      final @NonNls String fileName = psiFile.getName();
       if (!"package.html".equals(fileName)) {
         return;
       }
-      final PsiDirectory directory = file.getContainingDirectory();
+      final PsiDirectory directory = psiFile.getContainingDirectory();
       if (directory == null) {
         return;
       }
-      final String aPackage = getPackage(directory);
+      final Project project = directory.getProject();
+      final String aPackage = PackageIndex.getInstance(project).getPackageName(psiFile.getVirtualFile());
       if (aPackage == null) {
         return;
       }
       final boolean exists = directory.findFile("package-info.java") != null;
-      registerError(file, aPackage, exists);
-    }
-
-    public static String getPackage(@NotNull PsiDirectory directory) {
-      final VirtualFile virtualFile = directory.getVirtualFile();
-      final Project project = directory.getProject();
-      return PackageIndex.getInstance(project).getPackageNameByDirectory(virtualFile);
+      registerError(psiFile, aPackage, exists);
     }
   }
 }

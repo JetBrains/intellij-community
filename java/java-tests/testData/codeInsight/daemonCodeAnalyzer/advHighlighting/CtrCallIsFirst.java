@@ -20,14 +20,14 @@ class b extends a {
 
  b(String s) {
    try {
-     <error descr="Call to 'super()' must be a top level statement in constructor body">super(2)</error>;
+     <error descr="Call to 'super()' must be top-level statement in constructor body">super(2)</error>;
    }
    finally {
    }
  }
  b(String s, int i) {
    {
-     <error descr="Call to 'super()' must be a top level statement in constructor body">super(2)</error>;
+     <error descr="Call to 'super()' must be top-level statement in constructor body">super(2)</error>;
    }
  }
 
@@ -41,7 +41,7 @@ class b extends a {
 }
 class Z {
   Z() {
-    Object x = <error descr="Call to 'super()' must be a top level statement in constructor body">super()</error>;
+    Object x = <error descr="Call to 'super()' must be top-level statement in constructor body">super()</error>;
   }
 }
 class O extends A.B

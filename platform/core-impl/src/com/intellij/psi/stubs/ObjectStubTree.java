@@ -1,14 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +26,8 @@ public class ObjectStubTree<T extends Stub> {
     myRoot = root;
     myPlainList = enumerateStubs(root);
     if (withBackReference) {
-      myRoot.putUserData(STUB_TO_TREE_REFERENCE, this); // This will prevent soft references to stub tree to be collected before all of the stubs are collected.
+      // this will prevent soft references to a stub tree to be collected before all the stubs are collected
+      myRoot.putUserData(STUB_TO_TREE_REFERENCE, this);
     }
   }
 
@@ -37,11 +35,12 @@ public class ObjectStubTree<T extends Stub> {
     return myRoot;
   }
 
-  public @NotNull List<T> getPlainList() {
+  public @Unmodifiable @NotNull List<T> getPlainList() {
     return myPlainList;
   }
 
   @NotNull
+  @Unmodifiable
   List<T> getPlainListFromAllRoots() {
     return getPlainList();
   }
@@ -61,7 +60,7 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  protected @NotNull List<T> enumerateStubs(@NotNull Stub root) {
+  protected @Unmodifiable @NotNull List<T> enumerateStubs(@NotNull Stub root) {
     List<T> result = new ArrayList<>();
     //noinspection rawtypes,unchecked
     enumerateStubsInto(root, (List)result);
@@ -87,7 +86,7 @@ public class ObjectStubTree<T extends Stub> {
     myDebugInfo = info;
   }
 
-  public static @Nullable ObjectStubTree getStubTree(@NotNull ObjectStubBase root) {
+  public static @Nullable ObjectStubTree<?> getStubTree(@NotNull ObjectStubBase<?> root) {
     return root.getUserData(STUB_TO_TREE_REFERENCE);
   }
 
@@ -127,7 +126,7 @@ public class ObjectStubTree<T extends Stub> {
       else {
         int lastNonZero = ArrayUtil.lastIndexOfNot(list, 0);
         if (lastNonZero >= 0 && list[lastNonZero] == myStubIdx) {
-          // second and subsequent occurrence calls for the same value are no op
+          // the second and later occurrence calls for the same value are no op
           return;
         }
         int firstZero = lastNonZero + 1;

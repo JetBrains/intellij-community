@@ -1,3 +1,77 @@
+*:com.intellij.codeInsight.completion.command.CommandCompletionFactory
+- com.intellij.openapi.project.PossiblyDumbAware
+- commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
+- createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
+- filterSuffix():java.lang.Character
+- isApplicable(com.intellij.psi.PsiFile,I):Z
+- suffix():C
+- supportFiltersWithDoublePrefix():Z
+*f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):V
+- f:component1():com.intellij.openapi.project.Project
+- f:component2():com.intellij.openapi.editor.Editor
+- f:component3():I
+- f:component4():com.intellij.psi.PsiFile
+- f:component5():com.intellij.openapi.editor.Editor
+- f:component6():I
+- f:component7():com.intellij.psi.PsiFile
+- f:component8():Z
+- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- equals(java.lang.Object):Z
+- f:getEditor():com.intellij.openapi.editor.Editor
+- f:getOffset():I
+- f:getOriginalEditor():com.intellij.openapi.editor.Editor
+- f:getOriginalOffset():I
+- f:getOriginalPsiFile():com.intellij.psi.PsiFile
+- f:getProject():com.intellij.openapi.project.Project
+- f:getPsiFile():com.intellij.psi.PsiFile
+- hashCode():I
+- f:isReadOnly():Z
+*:com.intellij.codeInsight.completion.command.CommandProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- getId():java.lang.String
+- supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.CompletionCommand
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- customPrefixMatcher(java.lang.String):com.intellij.codeInsight.completion.PrefixMatcher
+- a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- getAdditionalInfo():java.lang.String
+- getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- a:getI18nName():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+- getPriority():java.lang.Integer
+- getSynonyms():java.util.List
+*f:com.intellij.codeInsight.completion.command.CompletionCommandKt
+- sf:KEY_FORCE_CARET_OFFSET:com.intellij.openapi.util.Key
+- sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+*:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
+- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+*f:com.intellij.codeInsight.completion.command.ForceOffsetData
+- <init>(I,I):V
+- f:component1():I
+- f:component2():I
+- f:copy(I,I):com.intellij.codeInsight.completion.command.ForceOffsetData
+- bs:copy$default(com.intellij.codeInsight.completion.command.ForceOffsetData,I,I,I,java.lang.Object):com.intellij.codeInsight.completion.command.ForceOffsetData
+- equals(java.lang.Object):Z
+- f:getNewOffset():I
+- f:getOldOffset():I
+- hashCode():I
+*f:com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):V
+- f:component1():com.intellij.openapi.util.TextRange
+- f:component2():com.intellij.openapi.editor.colors.TextAttributesKey
+- f:component3():I
+- f:copy(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- bs:copy$default(com.intellij.codeInsight.completion.command.HighlightInfoLookup,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I,I,java.lang.Object):com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- equals(java.lang.Object):Z
+- f:getAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
+- f:getPriority():I
+- f:getRange():com.intellij.openapi.util.TextRange
+- hashCode():I
 *:com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 - s:wrap(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.lookup.LookupElement
 *:com.intellij.codeInsight.highlighting.PsiHighlightedReference
@@ -7,6 +81,9 @@
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+com.intellij.codeInsight.lookup.LookupEx
+- com.intellij.codeInsight.lookup.Lookup
+- *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
 *e:com.intellij.codeInsight.lookup.LookupPositionStrategy
 - java.lang.Enum
 - sf:ONLY_ABOVE:com.intellij.codeInsight.lookup.LookupPositionStrategy
@@ -38,6 +115,28 @@ com.intellij.codeInsight.template.TemplateBuilder
 - deserializeData(java.lang.String):java.lang.Object
 - s:find(java.lang.String):com.intellij.codeInspection.options.CustomComponentExtension
 - serializeData(java.lang.Object):java.lang.String
+*f:com.intellij.codeInspection.options.OptMultiSelector
+- java.lang.Record
+- com.intellij.codeInspection.options.OptControl
+- com.intellij.codeInspection.options.OptRegularComponent
+- <init>(java.lang.String,java.util.List,com.intellij.codeInspection.options.OptMultiSelector$SelectionMode):V
+- bindId():java.lang.String
+- elements():java.util.List
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- mode():com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- prefix(java.lang.String):com.intellij.codeInspection.options.OptMultiSelector
+*:com.intellij.codeInspection.options.OptMultiSelector$OptElement
+- getSecondaryText():java.lang.String
+- a:getText():java.lang.String
+*e:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- java.lang.Enum
+- sf:MULTIPLE:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- sf:MULTIPLE_OR_EMPTY:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- sf:SINGLE:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- sf:SINGLE_OR_EMPTY:com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- s:valueOf(java.lang.String):com.intellij.codeInspection.options.OptMultiSelector$SelectionMode
+- s:values():com.intellij.codeInspection.options.OptMultiSelector$SelectionMode[]
 *:com.intellij.codeInspection.options.OptionControllerProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:forContext(com.intellij.psi.PsiElement):com.intellij.codeInspection.options.OptionController
@@ -60,6 +159,8 @@ f:com.intellij.inlinePrompt.InlinePrompt
 - *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,java.lang.Integer):Z
 - *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project):Z
 - *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project,I,java.lang.Object):Z
+com.intellij.lang.annotation.AnnotationBuilder
+- *a:withLazyQuickFix(java.util.function.Consumer):com.intellij.lang.annotation.AnnotationBuilder
 *f:com.intellij.lang.documentation.DocumentationSettings
 - s:autoShowQuickDocInModalDialogs():Z
 - s:getHighlightingSaturation(Z):F
@@ -80,25 +181,7 @@ f:com.intellij.inlinePrompt.InlinePrompt
 - com.intellij.testFramework.LightVirtualFile
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
 - getParent():com.intellij.openapi.vfs.VirtualFile
-*f:com.intellij.modcommand.ModChooseMember
-- java.lang.Record
-- com.intellij.modcommand.ModCommand
-- <init>(java.lang.String,java.util.List,java.util.List,com.intellij.modcommand.ModChooseMember$SelectionMode,java.util.function.Function):V
-- defaultSelection():java.util.List
-- elements():java.util.List
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- mode():com.intellij.modcommand.ModChooseMember$SelectionMode
-- nextCommand():java.util.function.Function
-- title():java.lang.String
-*e:com.intellij.modcommand.ModChooseMember$SelectionMode
-- java.lang.Enum
-- sf:MULTIPLE:com.intellij.modcommand.ModChooseMember$SelectionMode
-- sf:MULTIPLE_OR_EMPTY:com.intellij.modcommand.ModChooseMember$SelectionMode
-- sf:SINGLE:com.intellij.modcommand.ModChooseMember$SelectionMode
-- sf:SINGLE_OR_EMPTY:com.intellij.modcommand.ModChooseMember$SelectionMode
-- s:valueOf(java.lang.String):com.intellij.modcommand.ModChooseMember$SelectionMode
-- s:values():com.intellij.modcommand.ModChooseMember$SelectionMode[]
+- isDirectory():Z
 com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
 - *s:chooseMultipleMembers(java.lang.String,java.util.List,java.util.function.Function):com.intellij.modcommand.ModCommand
@@ -219,7 +302,10 @@ a:com.intellij.openapi.command.undo.UndoManager
 - *a:isNextRedoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
 - *a:isNextUndoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
 a:com.intellij.openapi.fileEditor.FileEditorManager
+- *a:canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
+- *a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
 - *a:getOpenFilesWithRemotes():java.util.List
+- *a:getSelectedEditorFlow():kotlinx.coroutines.flow.StateFlow
 - *:getSelectedEditorWithRemotes():java.util.Collection
 - *:getSelectedTextEditor(Z):com.intellij.openapi.editor.Editor
 - *:getSelectedTextEditorWithRemotes():com.intellij.openapi.editor.Editor[]

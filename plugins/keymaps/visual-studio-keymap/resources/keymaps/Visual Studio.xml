@@ -278,6 +278,7 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control H"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="alt PAGE_DOWN"/>
   </action>
@@ -599,6 +600,11 @@
   <action id="PreviousDiff">
     <keyboard-shortcut first-keystroke="shift F7" />
     <keyboard-shortcut first-keystroke="shift F8" />
+  </action>
+  <action id="OptimizeImports">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="G"/>
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="control G"/>
+    <keyboard-shortcut first-keystroke="control alt O"/>
   </action>
 
   <action id="EditorDecreaseFontSizeGlobal"/>

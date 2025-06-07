@@ -9,7 +9,7 @@ package com.intellij.notebooks.visualization
  * Changes represented as list of trivial changes. [Change]
  * Intervals which was just moved are not mentioned in changes. For example, when inserting code before them.
  */
-data class NotebookIntervalPointersEvent(val changes: List<Change>) {
+data class NotebookIntervalPointersEvent(val isInBulkUpdate: Boolean,val changes: List<Change>) {
 
 
   data class PointerSnapshot(val pointer: NotebookIntervalPointer, val interval: NotebookCellLines.Interval)

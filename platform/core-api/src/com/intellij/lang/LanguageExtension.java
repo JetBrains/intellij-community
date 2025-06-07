@@ -106,7 +106,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   /**
    *  @see #allForLanguageOrAny(Language)
    */
-  public @NotNull List<T> allForLanguage(@NotNull Language language) {
+  public @NotNull @Unmodifiable List<T> allForLanguage(@NotNull Language language) {
     List<T> cached = language.getUserData(allCacheKey);
     if (cached != null) {
       return cached;
@@ -125,7 +125,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @Override
-  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+  protected @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
     List<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);
@@ -139,7 +139,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return buildExtensions(allKeys);
   }
 
-  public @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
+  public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
     List<T> forLanguage = allForLanguage(l);
     if (l == Language.ANY) {
       return forLanguage;

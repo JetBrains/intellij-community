@@ -51,14 +51,12 @@ public final class ReplaceAssignmentWithOperatorAssignmentInspection extends Bas
   public boolean ignoreObscureOperators = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "AssignmentReplaceableWithOperatorAssignment";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiExpression lhs = (PsiExpression)infos[0];
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[1];
     return InspectionGadgetsBundle.message(
@@ -131,15 +129,13 @@ public final class ReplaceAssignmentWithOperatorAssignmentInspection extends Bas
       m_name = CommonQuickFixBundle.message("fix.replace.x.with.y", "=", signText+"=");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return m_name;
     }
 

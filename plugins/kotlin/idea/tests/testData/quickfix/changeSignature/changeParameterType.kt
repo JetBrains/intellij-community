@@ -1,5 +1,5 @@
 // "Change the signature of function 'mmm'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Add 'toString()' call
 // ACTION: Change parameter 's' type of function 'mmm' to 'Int'
 // ACTION: Do not show hints for current method

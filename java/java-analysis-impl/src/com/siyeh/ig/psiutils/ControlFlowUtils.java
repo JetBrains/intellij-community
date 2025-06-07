@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.BitSet;
 import java.util.Collections;
@@ -84,7 +81,7 @@ public final class ControlFlowUtils {
       if (method.equals(psiMethod)) {
         return false;
       }
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -102,7 +99,7 @@ public final class ControlFlowUtils {
       return whileStatementMayCompleteNormally(whileStatement);
     }
     else if (statement instanceof PsiDoWhileStatement doWhileStatement) {
-      return doWhileStatementMayCompleteNormally(doWhileStatement, psiMethod);
+      return doWhileStatementMayCompleteNormally(doWhileStatement);
     }
     else if (statement instanceof PsiSynchronizedStatement synchronizedStatement) {
       return codeBlockMayCompleteNormally(synchronizedStatement.getBody(), psiMethod);
@@ -147,33 +144,23 @@ public final class ControlFlowUtils {
     return BoolUtils.isTrue(loopStatement.getCondition());
   }
 
-  private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement, @Nullable PsiMethod method) {
-    final PsiExpression condition = loopStatement.getCondition();
-    final Object value = ExpressionUtils.computeConstantExpression(condition);
-    final PsiStatement body = loopStatement.getBody();
-    return statementMayCompleteNormally(body, method) && value != Boolean.TRUE
-           || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+  private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
   }
 
   private static boolean whileStatementMayCompleteNormally(@NotNull PsiWhileStatement loopStatement) {
-    final PsiExpression condition = loopStatement.getCondition();
-    final Object value = ExpressionUtils.computeConstantExpression(condition);
-    return value != Boolean.TRUE || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
   }
 
   private static boolean forStatementMayCompleteNormally(@NotNull PsiForStatement loopStatement) {
-    if (statementContainsBreakToStatementOrAncestor(loopStatement)) {
-      return true;
-    }
-    if (statementContainsContinueToAncestor(loopStatement)) {
-      return true;
-    }
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
+  }
+
+  private static boolean conditionalLoopStatementMayCompleteNormally(@NotNull PsiConditionalLoopStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
-    if (condition == null) {
-      return false;
-    }
     final Object value = ExpressionUtils.computeConstantExpression(condition);
-    return Boolean.TRUE != value;
+    return value != Boolean.TRUE
+           || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
   }
 
   private static boolean switchStatementMayCompleteNormally(@NotNull PsiSwitchStatement switchStatement, @Nullable PsiMethod method) {
@@ -211,7 +198,8 @@ public final class ControlFlowUtils {
           continue;
         }
         // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
-        // but for now javac considers the switch statement containing at least either case default label element or an unconditional pattern "incomplete normally"
+        // but for now javac considers the switch statement containing at least either
+        // case default label element or an unconditional pattern "incomplete normally"
         PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
         if (labelElementList == null) {
           continue;
@@ -229,7 +217,8 @@ public final class ControlFlowUtils {
         return true;
       }
     }
-    // todo actually there is no information about an impact of enum constants on switch statements being complete normally in spec (Unreachable statements)
+    // Actually there is no information about an impact of enum constants on switch statements completing normally in the spec
+    // (Unreachable statements)
     // todo comparing to javac that produces some false-negative highlighting in enum switch statements containing all possible constants
     final boolean isEnum = isEnumSwitch(switchStatement);
     if (!hasDefaultCase && !hasUnconditionalPattern && !isEnum) {
@@ -518,9 +507,8 @@ public final class ControlFlowUtils {
     }
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
+  private static @Nullable PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
   }
 
@@ -538,13 +526,11 @@ public final class ControlFlowUtils {
     return false;
   }
 
-  @Nullable
-  public static PsiStatement getFirstStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getFirstStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     return PsiTreeUtil.getChildOfType(codeBlock, PsiStatement.class);
   }
 
-  @Nullable
-  public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;
     for (PsiElement child = codeBlock.getLastChild(); child != null; child = child.getPrevSibling()) {
       if (child instanceof PsiStatement) {
@@ -557,8 +543,7 @@ public final class ControlFlowUtils {
   /**
    * @return null, if zero or more than one statements in the specified code block.
    */
-  @Nullable
-  public static PsiStatement getOnlyStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getOnlyStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     return getOnlyChildOfType(codeBlock, PsiStatement.class);
   }
 
@@ -792,8 +777,7 @@ public final class ControlFlowUtils {
     return false;
   }
 
-  @Nullable
-  private static PsiStatement firstStatement(@Nullable PsiStatement statement) {
+  private static @Nullable PsiStatement firstStatement(@Nullable PsiStatement statement) {
     while (statement instanceof PsiBlockStatement) {
       PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       if (statements.length == 0) break;
@@ -803,8 +787,7 @@ public final class ControlFlowUtils {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+  private static @Nullable PsiStatement nextExecutedStatement(PsiStatement statement) {
     if (statement == null) return null;
     PsiStatement next = firstStatement(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class));
     if (next == null) {
@@ -839,7 +822,7 @@ public final class ControlFlowUtils {
                                                                  final int start,
                                                                  final PsiElement statement,
                                                                  @NotNull PsiVariable variable,
-                                                                 @NotNull Set<Integer> excluded) {
+                                                                 @NotNull @Unmodifiable Set<Integer> excluded) {
     final int statementStart = flow.getStartOffset(statement);
     final int statementEnd = flow.getEndOffset(statement);
 
@@ -883,8 +866,7 @@ public final class ControlFlowUtils {
    * @param statement a statement where variable is used
    * @return initializer usage status for variable
    */
-  @NotNull
-  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement statement) {
+  public static @NotNull InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement statement) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, statement)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression
@@ -962,8 +944,7 @@ public final class ControlFlowUtils {
    * @param statement statement to find the return after
    * @return the found return statement or null.
    */
-  @Nullable
-  public static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+  public static @Nullable PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
     while (true) {
       PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
       if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
@@ -1194,7 +1175,7 @@ public final class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }

@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.platform.jewel.samples.standalone` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "standalone_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "standalone",
+  module_name = "intellij.platform.jewel.samples.standalone",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
+    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
+    "//platform/jewel/markdown/extensions/autolink",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
+    "//libraries/skiko",
+    "//platform/jewel/decorated-window",
+    "//platform/jewel/markdown/int-ui-standalone-styling",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/markdown/extensions/gfm-alerts",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/samples/showcase",
+  ],
+  runtime_deps = [
+    ":standalone_resources",
+    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
+    "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
+    "@lib//:jna",
+    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.samples.standalone` end

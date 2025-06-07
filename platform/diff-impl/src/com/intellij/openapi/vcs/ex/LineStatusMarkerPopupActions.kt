@@ -147,12 +147,13 @@ object LineStatusMarkerPopupActions {
   }
 
   @ApiStatus.NonExtendable
-  open class ToggleByWordDiffAction(private val editor: Editor,
-                                    private val tracker: LineStatusTrackerI<*>,
-                                    private val range: Range,
-                                    private val mousePosition: Point?,
-                                    private val controller: LineStatusMarkerRendererWithPopupController)
-    : ToggleAction(DiffBundle.message("highlight.words"), null, AllIcons.Actions.Highlighting), DumbAware, LightEditCompatible {
+  open class ToggleByWordDiffAction(
+    private val editor: Editor,
+    private val tracker: LineStatusMarkerRangesSource<*>,
+    private val range: Range,
+    private val mousePosition: Point?,
+    private val controller: LineStatusMarkerRendererWithPopupController,
+  ) : ToggleAction(DiffBundle.message("highlight.words"), null, AllIcons.Actions.Highlighting), DumbAware, LightEditCompatible {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 

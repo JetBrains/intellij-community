@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -69,9 +69,8 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     return dfType;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return "[" + myIndex + "]";
   }
 
@@ -159,10 +158,9 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       .orElseGet(factory::getUnknown);
   }
 
-  @NotNull
-  private static DfaValue getAdvancedExpressionDfaValue(@NotNull DfaValueFactory factory,
-                                                        @Nullable PsiExpression expression,
-                                                        @NotNull DfType targetType) {
+  private static @NotNull DfaValue getAdvancedExpressionDfaValue(@NotNull DfaValueFactory factory,
+                                                                 @Nullable PsiExpression expression,
+                                                                 @NotNull DfType targetType) {
     if (expression == null) return factory.getUnknown();
     DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {

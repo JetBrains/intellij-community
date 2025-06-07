@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -228,6 +228,13 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
   }
 
   /**
+   * @return string representation that may contain additional diagnostic information
+   */
+  default String debugInfo() {
+    return toString();
+  }
+
+  /**
    * @param type {@link DfType} to extract {@link TypeConstraint} from
    * @return an extracted type constraint
    */
@@ -371,13 +378,17 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     }
 
     @Override
+    default String debugInfo() {
+      return toString() + '[' + superTypes().joining(",") + ']';
+    }
+
+    @Override
     default @NotNull String getPresentationText(@Nullable PsiType type) {
       return type != null && exact(type).equals(this) ? "" : "exactly " + toShortString();
     }
 
     @Override
-    @NotNull
-    default Exact convert(TypeConstraintFactory factory) {
+    default @NotNull Exact convert(TypeConstraintFactory factory) {
       return this;
     }
   }
@@ -702,6 +713,15 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     @Override
     public int hashCode() {
       return 31 * myInstanceOf.hashCode() + myNotInstanceOf.hashCode();
+    }
+
+    @Override
+    public String debugInfo() {
+      return EntryStream.of("instanceof ", myInstanceOf,
+                            "not instanceof ", myNotInstanceOf)
+        .removeValues(Set::isEmpty)
+        .mapKeyValue((prefix, set) -> StreamEx.of(set).map(e -> e.debugInfo()).joining(", ", prefix, ""))
+        .joining(" ");
     }
 
     @Override

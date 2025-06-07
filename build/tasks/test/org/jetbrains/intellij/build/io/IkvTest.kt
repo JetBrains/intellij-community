@@ -1,17 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.lang.Ikv
-import com.intellij.util.lang.Xxh3
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.*
 import kotlin.random.Random
+
+private fun sizeAwareIkvWriter(file: Path): IkvWriter {
+  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)))
+}
 
 private fun generateDb(file: Path, count: Int, random: Random): List<Pair<Long, ByteArray>> {
   Files.createDirectories(file.parent)
@@ -19,7 +26,7 @@ private fun generateDb(file: Path, count: Int, random: Random): List<Pair<Long, 
   sizeAwareIkvWriter(file).use { writer ->
     (0 until count).forEach { i ->
       val data = random.nextBytes(random.nextInt(64, 512))
-      val key = Xxh3.hash(data)
+      val key = Hashing.xxh3_64().hashBytesToLong(data)
       writer.write(writer.entry(key, data.size), data)
       list.add(Pair(key, data))
     }
@@ -39,7 +46,7 @@ internal class IkvTest {
     val file = tempDir!!.resolve("db")
 
     val data = random.nextBytes(random.nextInt(64, 512))
-    val key = Xxh3.hash(data)
+    val key = Hashing.xxh3_64().hashBytesToLong(data)
 
     Files.createDirectories(file.parent)
     sizeAwareIkvWriter(file).use { writer ->
@@ -47,7 +54,7 @@ internal class IkvTest {
     }
 
     Ikv.loadSizeAwareIkv(file).use {
-      assertThat(it.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
+      assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
     }
   }
 
@@ -73,7 +80,7 @@ internal class IkvTest {
     val list = generateDb(file = file, count = 2, random = random)
     Ikv.loadSizeAwareIkv(file).use {
       for ((key, data) in list) {
-        assertThat(it.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
+        assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
       }
     }
   }
@@ -86,7 +93,7 @@ internal class IkvTest {
     val list = generateDb(file = file, count = keyCount, random = random)
     Ikv.loadSizeAwareIkv(file).use { ikv ->
       for ((key, data) in list) {
-        assertThat(ikv.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
+        assertThat(ikv.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
       }
     }
   }

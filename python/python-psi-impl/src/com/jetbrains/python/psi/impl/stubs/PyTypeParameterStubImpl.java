@@ -31,26 +31,22 @@ public class PyTypeParameterStubImpl extends StubBase<PyTypeParameter> implement
   }
 
   @Override
-  @Nullable
-  public String getBoundExpressionText() {
+  public @Nullable String getBoundExpressionText() {
     return myBoundExpressionText;
   }
 
   @Override
-  @Nullable
-  public String getDefaultExpressionText() {
+  public @Nullable String getDefaultExpressionText() {
     return myDefaultExpressionText;
   }
 
   @Override
-  @NotNull
-  public PyTypeParameter.Kind getKind() {
+  public @NotNull PyTypeParameter.Kind getKind() {
     return myKind;
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 

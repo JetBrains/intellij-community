@@ -2819,18 +2819,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "wI",
-    "name": "intellij.space.kotlin",
-    "n": "i.space.kotlin",
-    "package": "com.intellij.space.kotlin",
-    "sourceModule": "intellij.space.kotlin",
-    "descriptor": "plugins/space/kotlin/resources/intellij.space.kotlin.xml",
-    "parent": "cmA",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "wr",
     "name": "intellij.space.index",
     "n": "i.space.index",

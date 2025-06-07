@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginUtils.joinedPluginIds
+import com.intellij.ide.plugins.PluginUtils.parseAsPluginIdSet
+import com.intellij.ide.plugins.PluginUtils.toPluginIdSet
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -14,10 +17,13 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.io.path.Path
 
 @ApiStatus.Internal
 class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
   companion object {
+    private val DISABLED_PLUGINS_CUSTOM_FILE_PATH = System.getProperty("disabled.plugins.file.path")
+
     const val DISABLED_PLUGINS_FILENAME: @NonNls String = "disabled_plugins.txt"
 
     @Volatile
@@ -28,7 +34,12 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     private var isDisabledStateIgnored = EarlyAccessRegistryManager.getBoolean("idea.ignore.disabled.plugins")
 
     private val defaultFilePath: Path
-      get() = PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
+      get() {
+        if (DISABLED_PLUGINS_CUSTOM_FILE_PATH != null) {
+          return Path(DISABLED_PLUGINS_CUSTOM_FILE_PATH)
+        }
+        return PathManager.getConfigDir().resolve(DISABLED_PLUGINS_FILENAME)
+      }
 
     // do not use class reference here
     @Suppress("SSBasedInspection")
@@ -52,7 +63,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       val requiredPlugins = getRequiredPlugins()
       var updateFile = false
       try {
-        val pluginIdsFromFile = tryReadPluginIdsFromFile(path, logger)
+        val pluginIdsFromFile = PluginStringSetFile.readIdsSafe(path, logger)
         val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
         val suppressedPluginsSet = getSuppressedPluginsSet()
 
@@ -140,7 +151,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
-      if (!PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, logger)) {
+      if (!PluginStringSetFile.writeIdsSafe(defaultFilePath, pluginIds, logger)) {
         return false
       }
 
@@ -156,7 +167,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     @TestOnly
     @Throws(IOException::class)
     fun saveDisabledPluginsAndInvalidate(configPath: Path, pluginIds: List<String> = emptyList()) {
-      PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds)
+      PluginStringSetFile.write(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.toSet())
       invalidate()
     }
 
@@ -166,7 +177,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
     private fun splitByComma(key: String): Set<PluginId> {
       val property = System.getProperty(key, "")
-      return if (property.isEmpty()) emptySet() else PluginManagerCore.toPluginIds(property.split(','))
+      return if (property.isEmpty()) emptySet() else property.split(',').parseAsPluginIdSet()
     }
   }
 

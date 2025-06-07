@@ -116,7 +116,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     return getState().getModifiableRootModel();
   }
 
-  public void selectOrderEntry(@NotNull final OrderEntry entry) {
+  public void selectOrderEntry(final @NotNull OrderEntry entry) {
     myPanel.selectOrderEntry(entry);
   }
 
@@ -144,7 +144,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     myDisposed = true;
   }
 
-  public void setSdk(@Nullable final Sdk newJDK) {
+  public void setSdk(final @Nullable Sdk newJDK) {
     final ModifiableRootModel model = getModel();
     if (newJDK != null) {
       model.setSdk(newJDK);

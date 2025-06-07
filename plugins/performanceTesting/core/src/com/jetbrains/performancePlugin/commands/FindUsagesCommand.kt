@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -44,8 +46,9 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     private val LOG = logger<FindUsagesCommand>()
 
     @Suppress("TestOnlyProblems")
-    suspend fun getElement(project: Project, editor: Editor, offset: Int): PsiElement? {
+    suspend fun getElement(project: Project, editor: Editor, rangeMarker: RangeMarker): PsiElement? {
       return smartReadAction(project) {
+        val offset = rangeMarker.startOffset
         if (GotoDeclarationAction.findElementToShowUsagesOf(editor, offset) == null) {
           GotoDeclarationAction.findTargetElement(project, editor, offset)
         }
@@ -88,17 +91,26 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           throw Exception("No editor is opened")
         }
 
-        val (offset, scope) = writeIntentReadAction {
-          Pair(editor.caretModel.offset, FindUsagesOptions.findScopeByName(project, null, options.scope))
+        val scope = readAction {
+          FindUsagesOptions.findScopeByName(project, null, options.scope)
         }
 
         AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
 
-        val element = getElement(project, editor, offset)
+        val rangeMarker = readAction {
+          editor.document.createRangeMarker(editor.caretModel.offset, editor.caretModel.offset)
+        }
+
+        val element = getElement(project, editor, rangeMarker)
+
+        if (!elementName.isNullOrEmpty()) {
+          val foundElementName = readAction { (element as PsiNamedElement).name }
+          check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+        }
 
         val searchTargets = readAction {
-          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
+          PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, rangeMarker.startOffset) }
         }
         if (!searchTargets.isNullOrEmpty()) {
           val target = searchTargets.first()
@@ -113,11 +125,6 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
         else if (element != null) {
           LOG.info("Command find usages is called on element $element")
 
-          if (!elementName.isNullOrEmpty()) {
-            val foundElementName = readAction { (element as PsiNamedElement).name }
-            check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
-          }
-
           spanRef = spanBuilder.startSpan()
           scopeRef = spanRef!!.makeCurrent()
 
@@ -125,7 +132,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
         }
 
         if (findUsagesFuture == null) {
-          throw Exception("Can't find an element or search target under $offset offset.")
+          throw Exception("Can't find an element or search target at $position.")
         }
       }
     }

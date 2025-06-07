@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -90,8 +90,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     }.show());
   }
 
-  @Nullable
-  private static String getTypeName(ValueDescriptorImpl descriptor) {
+  private static @Nullable String getTypeName(ValueDescriptorImpl descriptor) {
     Type type = descriptor.getType();
     return type != null ? type.name() : null;
   }
@@ -129,9 +128,8 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     }).getPath();
   }
 
-  @Nullable
   @Override
-  protected Rectangle getEditorBounds() {
+  protected @Nullable Rectangle getEditorBounds() {
     Rectangle bounds = super.getEditorBounds();
     if (bounds == null) {
       return null;

@@ -5,7 +5,7 @@ fun foo(s: String) {
     when (s) {
         "a" -> {
             // comment 1
-            println("a") // comment 2
+            println("a") // comment 2 
         }
 
         else -> {

@@ -3,6 +3,9 @@ package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.HashSet;
@@ -24,5 +27,14 @@ abstract public class LineMarkerTestCase extends LightJavaCodeInsightFixtureTest
     finally {
       super.tearDown();
     }
+  }
+
+  protected void setupRunConfiguration(RunConfiguration configuration) {
+    RunManager manager = RunManager.getInstance(myFixture.getProject());
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
+      new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, configuration);
+    manager.addConfiguration(runnerAndConfigurationSettings);
+    myTempSettings.add(runnerAndConfigurationSettings);
+    manager.setSelectedConfiguration(runnerAndConfigurationSettings);
   }
 }

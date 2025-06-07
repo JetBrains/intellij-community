@@ -23,6 +23,7 @@ data class OpenProjectTask @Internal constructor(
   val callback: ProjectOpenedCallback?,
   val line: Int,
   val column: Int,
+  @Deprecated("Not used")
   val isRefreshVfsNeeded: Boolean,
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
@@ -95,7 +96,7 @@ data class OpenProjectTask @Internal constructor(
   fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
 }
 
-class OpenProjectTaskBuilder internal constructor() {
+class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
@@ -147,7 +148,7 @@ class OpenProjectTaskBuilder internal constructor() {
 
   var project: Project? = null
 
-  internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  @PublishedApi internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
@@ -185,6 +186,6 @@ class OpenProjectTaskBuilder internal constructor() {
 }
 
 @Internal
-fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+inline fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
   return OpenProjectTaskBuilder().build(buildAction)
 }

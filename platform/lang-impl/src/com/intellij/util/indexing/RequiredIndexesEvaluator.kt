@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
+/** Evaluates indexes applicable for a particular file or file type */
 internal class RequiredIndexesEvaluator(private val registeredIndexes: RegisteredIndexes) {
   private interface IndexedFilePredicate : Predicate<IndexedFile>
 

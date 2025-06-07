@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator
+import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyProgressComponent
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.ComponentUtil
@@ -27,17 +27,17 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 internal class ProcessBalloon(private val maxVisible: Int) {
-  private val indicators = ArrayList<MyInlineProgressIndicator>()
+  private val indicators = ArrayList<MyProgressComponent>()
   private var isVisible = 0
 
-  fun addIndicator(pane: JRootPane?, indicator: MyInlineProgressIndicator) {
+  fun addIndicator(pane: JRootPane?, indicator: MyProgressComponent) {
     if (pane != null) {
       indicators.add(indicator)
       show(pane)
     }
   }
 
-  fun removeIndicator(pane: JRootPane?, indicator: MyInlineProgressIndicator) {
+  fun removeIndicator(pane: JRootPane?, indicator: MyProgressComponent) {
     indicators.remove(indicator)
 
     if (indicator.presentationModeProgressPanel != null) {
@@ -50,7 +50,7 @@ internal class ProcessBalloon(private val maxVisible: Int) {
   }
 
   private fun show(pane: JRootPane) {
-    val indicators = ArrayList<MyInlineProgressIndicator>()
+    val indicators = ArrayList<MyProgressComponent>()
 
     for (indicator in this.indicators) {
       if (indicator.presentationModeProgressPanel == null) {

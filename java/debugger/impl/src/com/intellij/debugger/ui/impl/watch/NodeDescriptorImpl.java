@@ -126,6 +126,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     return myLabel;
   }
 
+  @Override
   public String toString() {
     return getLabel();
   }

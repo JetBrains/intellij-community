@@ -29,8 +29,11 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +42,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
   public static final Key<TypedEvent> AUTO_POPUP_TYPED_EVENT = Key.create("AutoPopupTypedEvent");
+  @ApiStatus.Internal
+  public static final Key<String> CUSTOM_CODE_COMPLETION_ACTION_ID = Key.create("CodeCompletionActionID");
 
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
@@ -88,7 +94,8 @@ public abstract class CompletionPhase implements Disposable {
       myTracker.ignoreCurrentDocumentChange();
     }
 
-    private boolean isExpired() {
+    @ApiStatus.Internal
+    public boolean isExpired() {
       return myTracker.hasAnythingHappened() || myRequestCount <= 0;
     }
 
@@ -175,7 +182,12 @@ public abstract class CompletionPhase implements Disposable {
             LOG.trace("Starting completion phase :: completionEditor=" + completionEditor);
             phase.requestCompleted();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
-            CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
+
+            String customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
+            if (customId == null) {
+              customId = "CodeCompletion";
+            }
+            CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId);
             handler.invokeCompletion(project, completionEditor, time, false);
           }
           else if (phase == CompletionServiceImpl.getCompletionPhase()) {
@@ -262,7 +274,17 @@ public abstract class CompletionPhase implements Disposable {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
-            indicator.scheduleRestart();
+            indicator.cancel();
+            if (EDT.isCurrentThreadEdt()) {
+              indicator.scheduleRestart();
+            } else {
+              // this branch is possible because completion can be canceled on background write action
+              ApplicationManager.getApplication().invokeLater(
+                indicator::scheduleRestart,
+                // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+                // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
+                (__) -> CompletionServiceImpl.getCurrentCompletionProgressIndicator() != indicator);
+            }
           }
         }
       }, this);

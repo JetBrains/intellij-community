@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -21,6 +21,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -186,9 +187,9 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
-  private @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
-                                               @NotNull GeneralCommandLine commandLine,
-                                               @Nullable ProgressIndicator pi) {
+  private @Unmodifiable @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
+                                                             @NotNull GeneralCommandLine commandLine,
+                                                             @Nullable ProgressIndicator pi) {
     WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
     final ProcessOutput output;

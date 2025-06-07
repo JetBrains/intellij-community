@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.structureView.StructureViewModel;
@@ -20,8 +20,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private static final Logger LOG = Logger.getInstance(CachingChildrenTreeNode.class);
   private List<CachingChildrenTreeNode<?>> myChildren;
   private List<CachingChildrenTreeNode<?>> myOldChildren;
-  @NotNull
-  protected final TreeModel myTreeModel;
+  protected final @NotNull TreeModel myTreeModel;
 
   CachingChildrenTreeNode(Project project, @NotNull Value value, @NotNull TreeModel treeModel) {
     super(project,
@@ -30,8 +29,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     ensureChildrenAreInitialized();
     return new ArrayList<>(myChildren);
   }
@@ -176,13 +174,11 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  @NotNull
-  protected TreeElementWrapper createChildNode(@NotNull TreeElement child) {
+  protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child) {
     return new TreeElementWrapper(getProject(), child, myTreeModel);
   }
 
-  @NotNull
-  private static Map<TreeElement, AbstractTreeNode> collectValues(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
+  private static @NotNull Map<TreeElement, AbstractTreeNode> collectValues(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
     Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<>();
     for (final AbstractTreeNode<TreeElement> node : ungrouped) {
       objects.put(node.getValue(), node);
@@ -190,8 +186,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return objects;
   }
 
-  @NotNull
-  private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
+  private @NotNull Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
     Map<Group, GroupWrapper> result = CollectionFactory.createSmallMemoryFootprintMap(groups.size());
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
@@ -199,8 +194,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     return result;
   }
 
-  @NotNull
-  protected GroupWrapper createGroupWrapper(final Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
+  protected @NotNull GroupWrapper createGroupWrapper(final Project project, @NotNull Group group, @NotNull TreeModel treeModel) {
     return new GroupWrapper(project, group, treeModel);
   }
 

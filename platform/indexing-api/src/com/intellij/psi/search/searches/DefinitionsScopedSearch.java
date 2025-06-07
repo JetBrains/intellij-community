@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.searches;
 
@@ -63,7 +63,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
     private final boolean myCheckDeep;
     private final Project myProject;
 
-    public SearchParameters(@NotNull final PsiElement element) {
+    public SearchParameters(final @NotNull PsiElement element) {
       this(element, ReadAction.compute(element::getUseScope), true);
     }
 
@@ -74,8 +74,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       myProject = PsiUtilCore.getProjectInReadAction(myElement);
     }
 
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
@@ -83,9 +82,8 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       return myCheckDeep;
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -94,8 +92,7 @@ public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiEle
       return myElement.isValid();
     }
 
-    @NotNull
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return ReadAction.compute(() -> {
         PsiFile file = myElement.getContainingFile();
         return myScope.intersectWith(

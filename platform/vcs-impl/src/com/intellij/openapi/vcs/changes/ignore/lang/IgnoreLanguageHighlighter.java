@@ -43,8 +43,7 @@ import java.util.Map;
  */
 @ApiStatus.Internal
 public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
-  @Nullable
-  private final VirtualFile currentHighlightedFile;
+  private final @Nullable VirtualFile currentHighlightedFile;
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
 
@@ -59,9 +58,8 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
     this.currentHighlightedFile = currentHighlightedFile;
   }
 
-  @NotNull
   @Override
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new IgnoreLexerAdapter(currentHighlightedFile);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -135,7 +135,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                public void doSomething() {
                  run();
                }
-
+             
                public void run() {}
              }
              class Concrete extends Impl implements Runnable {
@@ -286,9 +286,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
       }""");
     addJavaFile("y/Test.java", """
       package y;
-
+      
       import x.MyConsumer;
-
+      
       public class Test {
           void ddd(MyConsumer consumer) {
               consumer.doIt(() -> {});
@@ -306,7 +306,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
           static Inner makeInner() {
               return new Inner();
           }
-
+      
           static class Inner {
               void frob() {}
           }
@@ -331,7 +331,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                      return null;
                  }
                  static class Inner {}
-
+            
                  void x(Inner2 inner) {}
                  class Inner2 {}
                 \s
@@ -349,12 +349,12 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     addJavaFile("mypackage/sub1/Sub123.java",
                 """
                   package mypackage.sub1;
-
+                  
                   public class Sub123 {}""");
     addJavaFile("mypackage/sub1/Intermediate.java",
                 """
                   package mypackage.sub1;
-
+                  
                   public class Intermediate {
                     public Sub123 getSub() {return null;}
                   }""");
@@ -369,7 +369,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
       public class Outer {
           enum E {A}
           static final E abc = E.A;
-
+      
           public static void main(String[] args) {
               System.out.println(abc.ordinal());
           }
@@ -405,23 +405,52 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                      System.out.println(user.email());
                      user.xylophone();
                  }
-
+            
                  public record User(String email, String phone){
                      public User {
                          if (email == null && phone == null) {
                              throw new IllegalArgumentException();
                          }
                      }
-
+            
                      public String email() {
                          return email;
                      }
-
+            
                      /*Access can be 'private'*/public/**/ void xylophone() {
-
+            
                      }
                  }
              }""");
+  }
+
+  public void testRecordConstructor() {
+    doTest("""
+             class InnerRecordHolder {
+                 private record InnerRecord() {
+                     /*Access can be 'private'*/public/**/ InnerRecord {
+                     }
+                 }
+             }
+             """);
+    myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
+    doTest("""
+             class InnerRecordHolder {
+                 private record InnerRecord() {
+                     /*Access can be package-private*/public/**/ InnerRecord {
+                     }
+                 }
+             }
+             """);
+    myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+    doTest("""
+             class InnerRecordHolder {
+                 private record InnerRecord() {
+                     public InnerRecord {
+                     }
+                 }
+             }
+             """);
   }
 
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
@@ -430,7 +459,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     addJavaFile("x/Outer.java", """
       package x;
       public class Outer {
-
+      
       }
       """);
     addJavaFile("x/Consumer.java", """
@@ -635,7 +664,6 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
   
   public void testImplicitClass() {
-    //noinspection ConfusingMainMethod
     myFixture.configureByText("Implicit.java", """
       int field = 5;
       <warning descr="Access can be 'private'">protected</warning> int protectedField = 6;

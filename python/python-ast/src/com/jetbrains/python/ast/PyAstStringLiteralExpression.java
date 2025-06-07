@@ -76,8 +76,7 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
     pyVisitor.visitPyStringLiteralExpression(this);
   }
 
-  @NotNull
-  default List<ASTNode> getStringNodes() {
+  default @NotNull List<ASTNode> getStringNodes() {
     final TokenSet stringNodeTypes = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.FSTRING_NODE));
     return Arrays.asList(getNode().getChildren(stringNodeTypes));
   }
@@ -85,8 +84,7 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
   /**
    * Returns a list of implicitly concatenated string elements composing this literal expression.
    */
-  @NotNull
-  default List<? extends PyAstStringElement> getStringElements() {
+  default @NotNull List<? extends PyAstStringElement> getStringElements() {
     return StreamEx.of(getStringNodes())
       .map(ASTNode::getPsi)
       .select(PyAstStringElement.class)
@@ -112,8 +110,7 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
    * ]
    * </code></pre>
    */
-  @NotNull
-  default List<TextRange> getStringValueTextRanges() {
+  default @NotNull List<TextRange> getStringValueTextRanges() {
     final int elementStart = getTextRange().getStartOffset();
     return ContainerUtil.map(getStringElements(), node -> {
       final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
@@ -121,9 +118,8 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
     });
   }
 
-  @NotNull
   @Override
-  default String getStringValue() {
+  default @NotNull String getStringValue() {
     final StringBuilder out = new StringBuilder();
     for (Pair<TextRange, String> fragment : getDecodedFragments()) {
       out.append(fragment.getSecond());
@@ -157,8 +153,7 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
    * ]
    * </code></pre>
    */
-  @NotNull
-  default List<Pair<TextRange, String>> getDecodedFragments() {
+  default @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
     final int elementStart = getTextRange().getStartOffset();
     return StreamEx.of(getStringElements())
       .flatMap(node -> StreamEx.of(node.getDecodedFragments())
@@ -182,11 +177,10 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
   }
 
   @Override
-  @NotNull
-  default LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  default @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new LiteralTextEscaper<>(this) {
       @Override
-      public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
+      public boolean decode(final @NotNull TextRange rangeInsideHost, final @NotNull StringBuilder outChars) {
         for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
           final TextRange encodedTextRange = fragment.getFirst();
           final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
@@ -208,7 +202,7 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
       }
 
       @Override
-      public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+      public int getOffsetInHost(final int offsetInDecoded, final @NotNull TextRange rangeInsideHost) {
         int offset = 0; // running offset in the decoded fragment
         int endOffset = -1;
         for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
@@ -252,9 +246,8 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
         return true;
       }
 
-      @NotNull
       @Override
-      public TextRange getRelevantTextRange() {
+      public @NotNull TextRange getRelevantTextRange() {
         return myHost.getStringValueTextRange();
       }
     };

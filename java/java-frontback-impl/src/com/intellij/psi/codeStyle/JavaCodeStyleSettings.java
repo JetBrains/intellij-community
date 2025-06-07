@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -116,6 +117,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // @Foo int param
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = false;
 
+  public boolean ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT = false;
+
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
@@ -132,6 +135,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
   public int BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = 0;
+
+  public int BLANK_LINES_BETWEEN_RECORD_COMPONENTS = 0;
 
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
   public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;
@@ -171,6 +176,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // Imports
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
+  public boolean PRESERVE_MODULE_IMPORTS = true;
+  public boolean DELETE_UNUSED_MODULE_IMPORTS = false;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -180,6 +187,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
 
+  private boolean updatedModuleImportLayout = false;
 
   /**
    * <pre>
@@ -255,6 +263,12 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   @Property(externalName = "doc_keep_invalid_tags")
   public boolean JD_KEEP_INVALID_TAGS = true;
+  /**
+   * Note: this option is internal and not visible to the user.
+   *
+   * @see JavaCodeStyleSettings#shouldKeepEmptyTrailingLines()
+   */
+  private boolean myJdKeepTrailingEmptyLines = true;
   @Property(externalName = "doc_keep_empty_lines")
   public boolean JD_KEEP_EMPTY_LINES = true;
   @Property(externalName = "doc_do_not_wrap_if_one_line")
@@ -280,6 +294,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean JD_INDENT_ON_CONTINUATION = false;
 
   // endregion
+
+  public boolean shouldKeepEmptyTrailingLines() {
+    return myJdKeepTrailingEmptyLines && JD_KEEP_EMPTY_LINES;
+  }
 
   @Override
   public boolean isLayoutStaticImportsSeparately() {
@@ -338,6 +356,22 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return USE_SINGLE_CLASS_IMPORTS;
   }
 
+  public boolean isPreserveModuleImports() {
+    return PRESERVE_MODULE_IMPORTS;
+  }
+
+  public void setPreserveModuleImports(boolean value) {
+    PRESERVE_MODULE_IMPORTS = value;
+  }
+
+  public boolean isDeleteUnusedModuleImports() {
+    return DELETE_UNUSED_MODULE_IMPORTS;
+  }
+
+  public void setDeleteUnusedModuleImports(boolean value) {
+    this.DELETE_UNUSED_MODULE_IMPORTS = value;
+  }
+
   @Override
   public void setUseSingleClassImports(boolean value) {
     USE_SINGLE_CLASS_IMPORTS = value;
@@ -365,7 +399,12 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
-    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "javax.swing", false));
+    initImportLayout();
+  }
+
+  private void initImportLayout() {
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
@@ -374,6 +413,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
+  public void setKeepTrailingEmptyLines(boolean JD_KEEP_TRAILING_EMPTY_LINES) {
+    this.myJdKeepTrailingEmptyLines = JD_KEEP_TRAILING_EMPTY_LINES;
+  }
 
   @SuppressWarnings("unused") // Used in objectEquals.vm
   public boolean isGenerateFinalLocals() {
@@ -442,6 +484,34 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
     myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
     myIsInitialized = true;
+    PackageEntry[] entries = IMPORT_LAYOUT_TABLE.getEntries();
+    //if it is broken, try to restore
+    if (entries.length == 0) {
+      initImportLayout();
+    }
+    else {
+      //if something is missed, restore it
+      if (LAYOUT_STATIC_IMPORTS_SEPARATELY && !ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+        IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+        updatedModuleImportLayout = true;
+      }
+    }
   }
 
   @Override
@@ -449,7 +519,32 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.writeExternal(parentElement, parentSettings);
     writeExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     writeExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    //don't change setting file if it was generated and not changed
+    if (updatedModuleImportLayout && IMPORT_LAYOUT_TABLE.getEntries() != null &&
+        IMPORT_LAYOUT_TABLE.getEntries()[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+      deleteFirstModuleFromImportLayoutTable(parentElement);
+    }
     writeVersion(parentElement);
+  }
+
+  private void deleteFirstModuleFromImportLayoutTable(Element parentElement) {
+    Element child = parentElement.getChild(getTagName());
+    if (child == null) return;
+    Element table = null;
+    for (Element option : child.getChildren("option")) {
+      if (option.getAttributeValue("name").equals("IMPORT_LAYOUT_TABLE")) {
+        table = option;
+        break;
+      }
+    }
+    if (table == null) return;
+    Element value = table.getChild("value");
+    if (value == null) return;
+    List<Element> entries = value.getChildren();
+    if (entries == null || entries.isEmpty()) return;
+    Element firstEntry = entries.get(0);
+    if (!"true".equals(firstEntry.getAttributeValue("module"))) return;
+    firstEntry.detach();
   }
 
 
@@ -574,9 +669,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
 
-  @NotNull
   @Override
-  public List<String> getKnownTagNames() {
+  public @NotNull List<String> getKnownTagNames() {
     return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
   }
 

@@ -1,14 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.impl.FindInProjectUtil;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,19 +24,26 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
-public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible {
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
@@ -40,6 +51,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   public ReformatCodeAction() {
     setInjectedContext(true);
     setEnabledInModalContext(true);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    // TODO: cannot be on the FE side until IJPL-185748 and IJPL-189393 resolved
+    //return ActionRemoteBehavior.FrontendOtherwiseBackend;
+    return ActionRemoteBehavior.BackendOnly;
   }
 
   @Override
@@ -143,6 +162,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     new FileInEditorProcessor(file, editor, currentRunOptions).processCode();
   }
 
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
+  }
 
   private static @Nullable DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
@@ -276,13 +299,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
-    if (editor != null){
+    if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || file.getVirtualFile() == null) {
         return false;
       }
 
-      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
+      if (canFormat(file)) {
         return true;
       }
     }
@@ -293,8 +316,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
         if (psiFile == null) {
           return false;
         }
-        final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
-        if (builder != null) {
+        if (canFormat(psiFile)) {
           anyFormatters = true;
           break;
         }
@@ -314,10 +336,19 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
       }
       if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file == null || LanguageFormatting.INSTANCE.forContext(file) == null) {
-          return false;
+        if (file != null && canFormat(file)) {
+          return true;
         }
       }
+    }
+
+    return false;
+  }
+
+  private static boolean canFormat(PsiFile psiFile) {
+    FormattingService service = FormattingServiceUtil.findService(psiFile, true, true);
+    if (service instanceof CoreFormattingService) {
+      return LanguageFormatting.INSTANCE.forContext(psiFile) != null;
     }
     return true;
   }

@@ -3,13 +3,14 @@ package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.vcs.log.graph.GraphColorManager
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
 import org.jetbrains.annotations.ApiStatus
 
 private class GraphColorGetterByHead<CommitId : Any>(private val permanentGraphInfo: PermanentGraphInfo<CommitId>,
                                                      private val colorManager: GraphColorManager<CommitId>) : GraphColorGetter {
-  override fun getNodeColor(nodeId: Int, layoutIndex: Int): Int {
+  override fun getNodeColor(nodeId: VcsLogGraphNodeId, layoutIndex: Int): Int {
     val headNodeId = if (nodeId < 0) 0 else permanentGraphInfo.permanentGraphLayout.getOneOfHeadNodeIndex(nodeId)
     val headCommitId = permanentGraphInfo.permanentCommitsInfo.getCommitId(headNodeId)
     val headLayoutIndex = permanentGraphInfo.permanentGraphLayout.getLayoutIndex(headNodeId)

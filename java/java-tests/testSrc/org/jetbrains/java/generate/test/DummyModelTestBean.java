@@ -33,6 +33,7 @@ public abstract class DummyModelTestBean {
             return false;
         }
 
+        @Override
         public String toString() {
             return "MyInnerClass{" +
                     "title='" + title + '\'' +
@@ -69,6 +70,7 @@ public abstract class DummyModelTestBean {
     }
 
 
+    @Override
     public String toString() {
         return "DummyModelTestBean{" +
                 "age='" + age + '\'' +

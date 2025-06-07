@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -57,6 +58,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -81,7 +83,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
-  public static final Color SECTION_COLOR = Gray.get(0x90);
+  public static final Color SECTION_COLOR = JBUI.CurrentTheme.Tooltip.grayedForeground();
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
@@ -666,7 +668,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
       super(actions);
       getTemplatePresentation().setPopupGroup(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.More);
-      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
     }
   }
 

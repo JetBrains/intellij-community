@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
 import org.jetbrains.idea.reposearch.DependencySearchService
@@ -51,6 +52,9 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
                       <version>1</version>
                       """.trimIndent())
     }
+    else {
+      MavenSettingsCache.getInstance(project).reloadAsync();
+    }
     ApplicationManager.getApplication().invokeAndWait { myIndicesFixture!!.setUpAfterImport() }
   }
 
@@ -59,12 +63,12 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   }
 
   protected open fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+    return MavenIndicesTestFixture(dir, project, testRootDisposable)
   }
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     super.importProjectsAsync(files)
-    MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted();
+    MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted()
   }
 
   override fun tearDown() {

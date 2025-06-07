@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -251,7 +251,7 @@ public final class GitChangeUtils {
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
-    final String[] parents = parentsLine.length() == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
+    final String[] parents = parentsLine.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);
@@ -260,10 +260,10 @@ public final class GitChangeUtils {
     String commentBody = s.boundedToken('\u0003', true);
     // construct full comment
     String fullComment;
-    if (commentSubject.length() == 0) {
+    if (commentSubject.isEmpty()) {
       fullComment = commentBody;
     }
-    else if (commentBody.length() == 0) {
+    else if (commentBody.isEmpty()) {
       fullComment = commentSubject;
     }
     else {
@@ -290,7 +290,7 @@ public final class GitChangeUtils {
         String diff = Git.getInstance().runCommand(diffHandler).getOutputOrThrow();
         parseChanges(project, root, thisRevision, parentRevision, diff, changes);
 
-        if (changes.size() > 0) {
+        if (!changes.isEmpty()) {
           break;
         }
       }
@@ -417,8 +417,23 @@ public final class GitChangeUtils {
     GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
     VirtualFile root = repository.getRoot();
 
+    Set<FilePath> unmergedPaths = parseLsResult(result, root);
+
+    return new ArrayList<>(unmergedPaths);
+  }
+
+  public static @NotNull List<FilePath> getResolvedFiles(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().getResolvedFiles(repository);
+    VirtualFile root = repository.getRoot();
+
+    Set<FilePath> resolvedPaths = parseLsResult(result, root);
+
+    return new ArrayList<>(resolvedPaths);
+  }
+
+  private static @NotNull Set<FilePath> parseLsResult(@NotNull GitCommandResult result, @NotNull VirtualFile root) throws VcsException {
     String output = result.getOutputOrThrow();
-    Set<FilePath> unmergedPaths = new HashSet<>();
+    Set<FilePath> resultedPaths = new HashSet<>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
@@ -428,10 +443,9 @@ public final class GitChangeUtils {
       String relative = s.line();
       String path = GitUtil.unescapePath(relative);
       FilePath filePath = VcsUtil.getFilePath(root, path, false);
-      unmergedPaths.add(filePath);
+      resultedPaths.add(filePath);
     }
-
-    return new ArrayList<>(unmergedPaths);
+    return resultedPaths;
   }
 
   public static @NotNull Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
@@ -520,7 +534,7 @@ public final class GitChangeUtils {
   /**
    * @deprecated use getThreeDotDiffOrThrow
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Collection<Change> getThreeDotDiff(@NotNull GitRepository repository,
                                                             @NotNull @NonNls String oldRevision,
                                                             @NotNull @NonNls String newRevision) {

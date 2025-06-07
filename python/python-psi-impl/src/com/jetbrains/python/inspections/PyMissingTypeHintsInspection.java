@@ -31,9 +31,8 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
    */
   public boolean m_onlyWhenTypesAreKnown = true;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {
@@ -103,17 +102,13 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return PyPsiBundle.message("INSP.missing.type.hints.add.type.hints.for", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return PyPsiBundle.message("INSP.missing.type.hints.add.type.hints");
     }
 

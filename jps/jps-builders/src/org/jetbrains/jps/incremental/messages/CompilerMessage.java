@@ -97,6 +97,7 @@ public class CompilerMessage extends BuildMessage {
     return Collections.unmodifiableCollection(myModuleNames);
   }
 
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());

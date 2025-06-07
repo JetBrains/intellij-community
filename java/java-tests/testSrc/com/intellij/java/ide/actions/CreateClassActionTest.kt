@@ -16,6 +16,7 @@
 package com.intellij.java.ide.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.JavaTemplateUtil
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -30,5 +31,19 @@ class CreateClassActionTest: LightJavaCodeInsightFixtureTestCase() {
     template.isLiveTemplateEnabled = true
     val clazz = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "Bar", template.name)
     assertEquals("public class Bar {\n    Title\n}", clazz.text)
+  }
+
+  fun testImplicitClassLiveTemplate() {
+    val dir = myFixture.tempDirFixture.findOrCreateDir("")
+    val psiDirectory = PsiManager.getInstance(project).findDirectory(dir)
+    val expectedFileName = "Bar"
+    val clazz = JavaDirectoryService.getInstance().createClass(psiDirectory!!, expectedFileName, JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE)
+    assertEquals("""
+      void main() {
+
+      }
+    """.trimIndent(), clazz.text)
+    val fileName = clazz.containingFile.name
+    assertEquals("$expectedFileName.java", fileName)
   }
 }

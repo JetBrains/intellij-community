@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class ProjectDictionary implements EditableDictionary {
-  private static final @NonNls String DEFAULT_CURRENT_USER_NAME = "default.user";
+  public static final @NonNls String DEFAULT_CURRENT_DICT_NAME = "project";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
   private Set<EditableDictionary> dictionaries;
@@ -74,7 +74,7 @@ public final class ProjectDictionary implements EditableDictionary {
 
   private @NotNull EditableDictionary ensureCurrentUserDictionary() {
     if (activeName == null) {
-      activeName = DEFAULT_CURRENT_USER_NAME;
+      activeName = DEFAULT_CURRENT_DICT_NAME;
     }
     EditableDictionary result = getDictionaryByName(activeName);
     if (result == null) {

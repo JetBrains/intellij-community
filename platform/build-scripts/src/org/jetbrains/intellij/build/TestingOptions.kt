@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
+import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
+import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -12,13 +15,19 @@ private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n")
 private val OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
 private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
 
+/**
+ * Options available for tests running on TeamCity.
+ * If you want to run it locally, see [CommunityRunTestsBuildTarget] or [IdeaUltimateRunTestsBuildTarget].
+ *
+ * When running tests locally, specify the necessary options as VM arguments, e.g. `-Dintellij.build.test.groups=JAVA_TESTS`
+ */
 open class TestingOptions {
   companion object {
-    const val ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
-    const val BOOTSTRAP_SUITE_DEFAULT = "com.intellij.tests.BootstrapTests"
-    const val PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests"
-    const val TEST_JRE_PROPERTY = "intellij.build.test.jre"
-    const val REDIRECT_STDOUT_TO_FILE = "intellij.build.test.redirectStdoutToFile"
+    const val ALL_EXCLUDE_DEFINED_GROUP: String = "ALL_EXCLUDE_DEFINED"
+    const val BOOTSTRAP_SUITE_DEFAULT: String = "com.intellij.tests.BootstrapTests"
+    const val PERFORMANCE_TESTS_ONLY_FLAG: String = "idea.performance.tests"
+    const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
+    const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
   }
 
   /**
@@ -39,7 +48,7 @@ open class TestingOptions {
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
    * [testGroups], [testPatterns] and [mainModule] will be ignored.
    */
-  var testConfigurations = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
+  var testConfigurations: String? = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
 
   /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
@@ -47,9 +56,9 @@ open class TestingOptions {
   var platformPrefix: String? = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
 
   /**
-   * Enables debug for testing process
+   * Enables debug for a testing process
    */
-  var isDebugEnabled = getBooleanProperty("intellij.build.test.debug.enabled", true)
+  var isDebugEnabled: Boolean = getBooleanProperty("intellij.build.test.debug.enabled", true)
 
   /**
    * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
@@ -64,7 +73,7 @@ open class TestingOptions {
   /**
    * If `true` to suspend the testing process until a debugger connects to it.
    */
-  var isSuspendDebugProcess = getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
+  var isSuspendDebugProcess: Boolean = getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
 
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
@@ -94,7 +103,7 @@ open class TestingOptions {
    * and allows to rerun only corresponding tests for desired method or class in your project.
    *
    *
-   * For the further information please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
+   * For more information, please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
    */
   var isTestDiscoveryEnabled: Boolean = getBooleanProperty("intellij.build.test.discovery.enabled", false)
 
@@ -121,7 +130,7 @@ open class TestingOptions {
   /**
    * If `true` causal profiler agent will be attached to the testing process.
    */
-  var isEnableCausalProfiling = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
+  var isEnableCausalProfiling: Boolean = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
    * Pattern to match tests in [mainModule] or default main module tests compilation outputs.
@@ -140,19 +149,19 @@ open class TestingOptions {
    */
   var isDedicatedTestRuntime: String = System.getProperty("intellij.build.test.dedicated.runtime", "false")
 
-  var isPerformanceTestsOnly = getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
+  var isPerformanceTestsOnly: Boolean = getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
   /**
    * When running on TeamCity and this option is true, cancel the build (instead of failing it) in case
    * the build problem occurred while preparing for the test run, for example, if we failed to download
    * the compilation cache for some reason.
    */
-  var isCancelBuildOnTestPreparationFailure = getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
+  var isCancelBuildOnTestPreparationFailure: Boolean = getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
 
   /**
    * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
    */
-  var attemptCount = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
+  var attemptCount: Int = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
 
   /**
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
@@ -169,6 +178,12 @@ open class TestingOptions {
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
   val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+
+  /** Skip running (and collection) of JUnit5 tests */
+  val shouldSkipJUnit5Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit5", false)
+
+  /** Skip running (and collection) of JUnit3/4 tests */
+  val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

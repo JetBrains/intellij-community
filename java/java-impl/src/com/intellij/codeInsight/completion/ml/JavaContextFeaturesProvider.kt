@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.codeInsight.completion.JavaIncorrectElements
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NotNull
+import java.util.Locale
 
 class JavaContextFeaturesProvider : ContextFeatureProvider {
   override fun getName(): String = "java"
@@ -15,7 +16,7 @@ class JavaContextFeaturesProvider : ContextFeatureProvider {
     JavaCompletionFeatures.calculateVariables(environment)
     JavaCompletionFeatures.collectPackages(environment)
     JavaCompletionUtil.getExpectedTypes(environment.parameters)?.forEach {
-      features["${JavaCompletionFeatures.asJavaType(it).name.toLowerCase()}_expected"] = MLFeatureValue.binary(true)
+      features["${JavaCompletionFeatures.asJavaType(it).name.lowercase(Locale.getDefault())}_expected"] = MLFeatureValue.binary(true)
     }
     if (JavaCompletionFeatures.isInQualifierExpression(environment)) {
       features["is_in_qualifier_expression"] = MLFeatureValue.binary(true)

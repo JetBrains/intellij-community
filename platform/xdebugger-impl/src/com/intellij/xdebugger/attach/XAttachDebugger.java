@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -22,8 +22,7 @@ public interface XAttachDebugger {
   /**
    * @return title for `Attach to process` module window, which will be shown when choosing this debugger
    */
-  @Nullable
-  default @NlsContexts.PopupTitle String getDebuggerSelectedTitle() {
+  default @Nullable @NlsContexts.PopupTitle String getDebuggerSelectedTitle() {
     String title = getDebuggerDisplayName();
     title = StringUtil.shortenTextWithEllipsis(title, 50, 0);
     return XDebuggerBundle.message("xdebugger.attach.popup.title", title);

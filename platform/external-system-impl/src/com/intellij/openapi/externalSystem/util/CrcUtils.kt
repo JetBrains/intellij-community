@@ -46,7 +46,7 @@ private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, c
   }
   catch (ex: IOException) {
     LOG.warn(ex)
-    modificationStamp
+    0
   }
   setCachedCrc(crc, modificationStamp)
   return crc

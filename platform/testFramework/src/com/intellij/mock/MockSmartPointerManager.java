@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.project.Project;
@@ -11,36 +11,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MockSmartPointerManager extends SmartPointerManager {
-  @NotNull
   @Override
-  public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
+  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element, element.getContainingFile());
   }
 
-  @NotNull
   @Override
-  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     return new SmartPsiElementPointer<>() {
       @Override
       public E getElement() {
         return element;
       }
 
-      @Nullable
       @Override
-      public PsiFile getContainingFile() {
+      public @Nullable PsiFile getContainingFile() {
         return containingFile;
       }
 
-      @NotNull
       @Override
-      public Project getProject() {
+      public @NotNull Project getProject() {
         return containingFile.getProject();
       }
 
@@ -49,15 +44,13 @@ public class MockSmartPointerManager extends SmartPointerManager {
         return containingFile.getVirtualFile();
       }
 
-      @Nullable
       @Override
-      public Segment getRange() {
+      public @Nullable Segment getRange() {
         return element.getTextRange();
       }
 
-      @Nullable
       @Override
-      public Segment getPsiRange() {
+      public @Nullable Segment getPsiRange() {
         return getRange();
       }
     };

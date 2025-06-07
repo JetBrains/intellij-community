@@ -1,0 +1,14 @@
+query issueSearch($query: String!, $pageSize: Int = 100, $cursor: String) {
+  search(first: $pageSize, after: $cursor, type: ISSUE, query: $query) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...pullRequestInfoShort
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

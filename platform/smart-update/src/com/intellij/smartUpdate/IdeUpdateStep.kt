@@ -21,7 +21,7 @@ import javax.swing.JComponent
 
 private val LOG = logger<IdeUpdateStep>()
 
-class IdeUpdateStep : StepOption {
+internal class IdeUpdateStep : StepOption {
   override val id = "ide.update"
   override val stepName: String = SmartUpdateBundle.message("checkbox.update.ide")
   override val optionName: String = SmartUpdateBundle.message("update.ide.option.toolbox")
@@ -65,7 +65,7 @@ fun beforeRestart() {
 
 private const val IDE_RESTARTED_KEY = "smart.update.ide.restarted"
 
-class IdeRestartedActivity: ProjectActivity {
+internal class IdeRestartedActivity: ProjectActivity {
   override suspend fun execute(project: Project) {
     val service = project.service<SmartUpdate>()
     if (PropertiesComponent.getInstance().isTrueValue(IDE_RESTARTED_KEY)) {

@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
+import module java.base;
 
 public class beforeSimpleModuleImport {
     public static void main(String[] args) {

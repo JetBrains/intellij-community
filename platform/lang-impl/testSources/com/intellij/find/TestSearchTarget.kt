@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find
 
 import com.intellij.find.usages.api.*
@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.psi.*
-import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService
@@ -105,11 +104,11 @@ private class TestSearcher : UsageSearcher {
     return SearchService.getInstance()
       .searchWord(parameters.project, search_word)
       .caseSensitive(false)
-      .inContexts(SearchContext.IN_COMMENTS)
+      .inContexts(SearchContext.inComments())
       .inScope(parameters.searchScope)
-      .buildQuery(LeafOccurrenceMapper {
+      .buildQuery {
         listOf(TestUsage(it.scope.containingFile, it.start.textRange))
-      })
+      }
   }
 }
 

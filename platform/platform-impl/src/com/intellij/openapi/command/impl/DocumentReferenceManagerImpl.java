@@ -133,7 +133,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   }
 
   private static void assertIsWriteThread() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   @TestOnly

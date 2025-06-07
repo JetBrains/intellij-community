@@ -19,7 +19,7 @@ package kotlin.time
         <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> fun <symbolName descr="null">toString</symbolName>(): kotlin.<symbolName descr="null">String</symbolName> { /* compiled code */ }
 
         <symbolName descr="null">@kotlin.jvm.JvmInline</symbolName> <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.WasExperimental</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">final</symbolName> <symbolName descr="null">value</symbolName> class <symbolName descr="null">ValueTimeMark</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">constructor</symbolName>(<symbolName descr="null">reading</symbolName>: kotlin.<symbolName descr="null">Long</symbolName> /* from: kotlin.time.ValueTimeMarkReading */) : kotlin.time.<symbolName descr="null">ComparableTimeMark</symbolName> {
-            <symbolName descr="null">internal</symbolName> <symbolName descr="null">final</symbolName> val <symbolName descr="null">reading</symbolName>: kotlin.<symbolName descr="null">Long</symbolName> /* from: kotlin.time.ValueTimeMarkReading */ /* compiled code */
+            <symbolName descr="null">internal</symbolName> <symbolName descr="null">final</symbolName> val <symbolName descr="null">reading</symbolName>: kotlin.<symbolName descr="null">Long</symbolName> /* from: kotlin.time.ValueTimeMarkReading */ /* compiled code */ /* hasBackingField: true */
 
             <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> fun <symbolName descr="null">elapsedNow</symbolName>(): kotlin.time.<symbolName descr="null">Duration</symbolName> { /* compiled code */ }
 

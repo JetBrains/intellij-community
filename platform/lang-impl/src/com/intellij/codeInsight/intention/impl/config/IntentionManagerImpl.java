@@ -4,7 +4,10 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.CleanupOnScopeIntention;
 import com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -32,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -84,13 +88,12 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  public @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
+  public @NotNull @Unmodifiable List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
     checkForDuplicates();
-    List<IntentionAction> options = new ArrayList<>(9);
-    options.add(new EditInspectionToolsSettingsAction(displayKey));
-    options.add(new RunInspectionIntention(displayKey));
-    options.add(new DisableInspectionToolAction(displayKey));
-    return options;
+    return List.of(
+    new EditInspectionToolsSettingsAction(displayKey),
+    new RunInspectionIntention(displayKey),
+    new DisableInspectionToolAction(displayKey));
   }
 
   @Override
@@ -137,11 +140,10 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  public @NotNull List<IntentionAction> getCleanupIntentionOptions() {
-    List<IntentionAction> options = new ArrayList<>();
-    options.add(EditCleanupProfileIntentionAction.INSTANCE);
-    options.add(CleanupOnScopeIntention.INSTANCE);
-    return options;
+  public @NotNull @Unmodifiable List<IntentionAction> getCleanupIntentionOptions() {
+    return List.of(
+    EditCleanupProfileIntentionAction.INSTANCE,
+    CleanupOnScopeIntention.INSTANCE);
   }
 
   @Override
@@ -211,7 +213,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  public @NotNull List<IntentionAction> getAvailableIntentions(Collection<String> languageIds) {
+  public @NotNull List<IntentionAction> getAvailableIntentions(@NotNull @Unmodifiable Collection<String> languageIds) {
     if (myIntentionsDisabled) {
       return Collections.emptyList();
     }
@@ -228,7 +230,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     return list;
   }
 
-  private static boolean isLanguageSupported(Collection<String> fileLanguageIds, IntentionAction action) {
+  private static boolean isLanguageSupported(@NotNull @Unmodifiable Collection<String> fileLanguageIds, @NotNull IntentionAction action) {
     if (action instanceof IntentionActionWrapper) {
       return ((IntentionActionWrapper)action).isApplicable(fileLanguageIds);
     }

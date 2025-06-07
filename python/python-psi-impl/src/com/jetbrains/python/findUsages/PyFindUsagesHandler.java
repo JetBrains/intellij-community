@@ -35,15 +35,14 @@ public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
     super(psiElement);
   }
 
-  @NotNull
   @Override
-  public FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
+  public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
     PyFindUsagesOptions sharedOpts = PyFindUsagesOptions.getInstance(getProject());
     return !isSearchForTextOccurrencesAvailable(getPsiElement(), false) ? (PyFindUsagesOptions)sharedOpts.clone() : sharedOpts;
   }
 
   @Override
-  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return super.isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
   }
 
@@ -73,15 +72,13 @@ public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
     result.addAll(additionalElements);
   }
 
-  @Nullable
-  protected static PsiElement tryGetStubElement(@Nullable PsiElement element) {
+  protected static @Nullable PsiElement tryGetStubElement(@Nullable PsiElement element) {
     if (!(element instanceof PyElement)) return null;
     PsiElement result = PyiUtil.getPythonStub((PyElement)element);
     return result != element ? result : null;
   }
 
-  @Nullable
-  protected static PsiElement tryGetOriginalElement(@Nullable PsiElement element) {
+  protected static @Nullable PsiElement tryGetOriginalElement(@Nullable PsiElement element) {
     if (!(element instanceof PyElement)) return null;
     PsiElement result = PyiUtil.getOriginalElement((PyElement)element);
     return result != element ? result : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
@@ -27,6 +27,7 @@ public final class WindowWrapperBuilder {
   private @Nullable @NlsContexts.DialogTitle String title;
   private @Nullable Computable<JComponent> myPreferredFocusedComponent;
   private @NonNls @Nullable String myDimensionServiceKey;
+  private @Nullable Dimension myInitialSize;
   private @Nullable Runnable myOnShowCallback;
   private @Nullable BooleanGetter myOnCloseHandler;
 
@@ -62,6 +63,11 @@ public final class WindowWrapperBuilder {
 
   public @NotNull WindowWrapperBuilder setDimensionServiceKey(@NonNls @Nullable String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
+    return this;
+  }
+
+  public @NotNull WindowWrapperBuilder setInitialSize(@NotNull Dimension size) {
+    myInitialSize = size;
     return this;
   }
 
@@ -102,7 +108,8 @@ public final class WindowWrapperBuilder {
       myDialog = builder.myParent != null
                  ? new MyDialogWrapper(builder.myParent, builder.myComponent)
                  : new MyDialogWrapper(builder.myProject, builder.myComponent);
-      myDialog.setParameters(builder.myDimensionServiceKey, builder.myPreferredFocusedComponent, builder.myOnCloseHandler);
+      myDialog.setParameters(builder.myDimensionServiceKey, builder.myInitialSize, builder.myPreferredFocusedComponent,
+                             builder.myOnCloseHandler);
 
       installOnShowCallback(myDialog.getWindow(), builder.myOnShowCallback);
 
@@ -170,6 +177,7 @@ public final class WindowWrapperBuilder {
     private static final class MyDialogWrapper extends DialogWrapper {
       private final @NotNull JComponent myComponent;
       private @Nullable @NonNls String myDimensionServiceKey;
+      private @Nullable Dimension myInitialSize;
       private @Nullable Computable<? extends JComponent> myPreferredFocusedComponent;
       private @Nullable BooleanGetter myOnCloseHandler;
 
@@ -183,10 +191,17 @@ public final class WindowWrapperBuilder {
         myComponent = component;
       }
 
+      @Override
+      public void init() {
+        super.init();
+      }
+
       public void setParameters(@Nullable @NonNls String dimensionServiceKey,
+                                @Nullable Dimension initialSize,
                                 @Nullable Computable<? extends JComponent> preferredFocusedComponent,
                                 @Nullable BooleanGetter onCloseHandler) {
         myDimensionServiceKey = dimensionServiceKey;
+        myInitialSize = initialSize;
         myPreferredFocusedComponent = preferredFocusedComponent;
         myOnCloseHandler = onCloseHandler;
       }
@@ -215,6 +230,11 @@ public final class WindowWrapperBuilder {
       @Override
       protected @Nullable String getDimensionServiceKey() {
         return myDimensionServiceKey;
+      }
+
+      @Override
+      public @Nullable Dimension getInitialSize() {
+        return myInitialSize == null ? super.getInitialSize() : myInitialSize;
       }
 
       @Override

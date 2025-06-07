@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -17,8 +14,7 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public abstract class SearchListModel extends AbstractListModel<Object> {
-
-  static final Object MORE_ELEMENT = new Object();
+  public static final Object MORE_ELEMENT = new Object();
 
   public record ResultsNotificationElement(@NotNull @Nls String label) {
   }
@@ -110,7 +106,7 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
-  public @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+  public @Unmodifiable @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
                                                       && !(info.element instanceof ResultsNotificationElement));
   }

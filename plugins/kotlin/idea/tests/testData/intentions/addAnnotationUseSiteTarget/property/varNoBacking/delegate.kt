@@ -1,5 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: delegate
-// IS_APPLICABLE: false
+// NO_OPTION: PROPERTY_DELEGATE_FIELD|Add use-site target 'delegate'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A
 

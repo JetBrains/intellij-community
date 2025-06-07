@@ -1,4 +1,6 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+// DISABLE_K2_ERRORS
+// TODO: KTIJ-32773
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 
 plugins {

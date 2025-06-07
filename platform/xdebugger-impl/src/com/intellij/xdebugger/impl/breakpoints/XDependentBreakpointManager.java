@@ -26,7 +26,7 @@ public final class XDependentBreakpointManager {
     myEventPublisher = breakpointManager.getProject().getMessageBus().syncPublisher(XDependentBreakpointListener.TOPIC);
     messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
-      public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
+      public void breakpointRemoved(final @NotNull XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);
         if (info != null) {
           myMaster2Info.remove(info.myMasterBreakpoint, info);
@@ -126,8 +126,7 @@ public final class XDependentBreakpointManager {
     myMaster2Info.putValue(master, info);
   }
 
-  @Nullable
-  public XBreakpoint<?> getMasterBreakpoint(@NotNull XBreakpoint<?> slave) {
+  public @Nullable XBreakpoint<?> getMasterBreakpoint(@NotNull XBreakpoint<?> slave) {
     XDependentBreakpointInfo info = mySlave2Info.get(slave);
     return info != null ? info.myMasterBreakpoint : null;
   }

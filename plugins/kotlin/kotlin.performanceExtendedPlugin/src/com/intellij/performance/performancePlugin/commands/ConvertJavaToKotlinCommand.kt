@@ -12,7 +12,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiJavaFile
 import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction

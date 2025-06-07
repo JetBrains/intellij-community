@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -11,9 +11,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-final class ObjectNode {
+@ApiStatus.Internal
+public final class ObjectNode {
   @VisibleForTesting
-  static final int REASONABLY_BIG = 500;
+  public static final int REASONABLY_BIG = 500;
 
   private final Disposable myObject;
   private @NotNull NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock
@@ -127,6 +128,14 @@ final class ObjectNode {
     }
   }
 
+  @TestOnly
+  void assertNoReferencesKept(@NotNull Class<Disposable> disposableClass) {
+    assert getObject().getClass() != disposableClass;
+    for (ObjectNode node : myChildren.getAllNodes()) {
+      node.assertNoReferencesKept(disposableClass);
+    }
+  }
+
   ObjectNode findChildNode(@NotNull Disposable object) {
     return myChildren.findChildNode(object);
   }
@@ -140,6 +149,11 @@ final class ObjectNode {
     ObjectNode childNode = new ObjectNode(object, isRootNode());
     addChildNode(childNode);
     return childNode;
+  }
+
+  @TestOnly
+  void clean() {
+    myChildren = EMPTY;
   }
 
   // must not override hasCode/equals because ObjectNode must have identity semantics
@@ -260,7 +274,7 @@ final class ObjectNode {
     void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
     @NotNull
-    Collection<ObjectNode> getAllNodes();
+    @Unmodifiable Collection<ObjectNode> getAllNodes();
   }
 
   private static final NodeChildren EMPTY = new NodeChildren() {

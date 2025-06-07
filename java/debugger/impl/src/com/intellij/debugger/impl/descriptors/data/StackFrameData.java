@@ -2,7 +2,6 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -13,21 +12,20 @@ import java.util.Objects;
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
   private final StackFrameProxyImpl myFrame;
   private final FrameDisplayKey myDisplayKey;
-  private final MethodsTracker myMethodsTracker;
 
   public StackFrameData(@NotNull StackFrameProxyImpl frame) {
     super();
 
     myFrame = frame;
     myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKeyForFrame(frame));
-    myMethodsTracker = new MethodsTracker();
   }
 
   @Override
   protected StackFrameDescriptorImpl createDescriptorImpl(@NotNull Project project) {
-    return new StackFrameDescriptorImpl(myFrame, myMethodsTracker);
+    return new StackFrameDescriptorImpl(myFrame);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof StackFrameData)) {
       return false;
@@ -35,6 +33,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
     return ((StackFrameData)object).myFrame == myFrame;
   }
 
+  @Override
   public int hashCode() {
     return myFrame.hashCode();
   }
@@ -51,6 +50,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
       myContextKey = contextKey;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -62,6 +62,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return myContextKey == null ? 0 : myContextKey.hashCode();
     }

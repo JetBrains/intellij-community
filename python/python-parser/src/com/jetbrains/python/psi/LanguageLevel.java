@@ -64,7 +64,8 @@ public enum LanguageLevel {
   PYTHON310(310),
   PYTHON311(311),
   PYTHON312(312),
-  PYTHON313(313);
+  PYTHON313(313),
+  PYTHON314(314);
 
   public static final Comparator<LanguageLevel> VERSION_COMPARATOR = (first, second) -> {
     return first == second ? 0 : first.isOlderThan(second) ? -1 : 1;
@@ -124,71 +125,86 @@ public enum LanguageLevel {
     return myVersion >= other.myVersion;
   }
 
+  /**
+   * This function returns default value if argument can't be parsed, consider using {@link #fromPythonVersionSafe(String)}
+   */
   @Contract("null->null;!null->!null")
   public static @Nullable LanguageLevel fromPythonVersion(@Nullable String pythonVersion) {
     if (pythonVersion == null) return null;
+    var version = fromPythonVersionSafe(pythonVersion);
+    return (version != null) ? version : getDefault();
+  }
 
-    if (pythonVersion.startsWith("2")) {
-      if (pythonVersion.startsWith("2.4")) {
+  /**
+   * Provide version as string (i.e "3.12") to get language level
+   *
+   * @return language level or null if can't be parsed
+   */
+  public static @Nullable LanguageLevel fromPythonVersionSafe(@NotNull String pythonVersionOutput) {
+    if (pythonVersionOutput.startsWith("2")) {
+      if (pythonVersionOutput.startsWith("2.4")) {
         return PYTHON24;
       }
-      if (pythonVersion.startsWith("2.5")) {
+      if (pythonVersionOutput.startsWith("2.5")) {
         return PYTHON25;
       }
-      if (pythonVersion.startsWith("2.6")) {
+      if (pythonVersionOutput.startsWith("2.6")) {
         return PYTHON26;
       }
-      if (pythonVersion.startsWith("2.7")) {
+      if (pythonVersionOutput.startsWith("2.7")) {
         return PYTHON27;
       }
       return DEFAULT2;
     }
-    if (pythonVersion.startsWith("3")) {
-      if (pythonVersion.startsWith("3.0")) {
+    if (pythonVersionOutput.startsWith("3")) {
+      if (pythonVersionOutput.startsWith("3.0")) {
         return PYTHON30;
       }
-      if (pythonVersion.startsWith("3.1.") || pythonVersion.equals("3.1")) {
+      if (pythonVersionOutput.startsWith("3.1.") || pythonVersionOutput.equals("3.1")) {
         return PYTHON31;
       }
-      if (pythonVersion.startsWith("3.2")) {
+      if (pythonVersionOutput.startsWith("3.2")) {
         return PYTHON32;
       }
-      if (pythonVersion.startsWith("3.3")) {
+      if (pythonVersionOutput.startsWith("3.3")) {
         return PYTHON33;
       }
-      if (pythonVersion.startsWith("3.4")) {
+      if (pythonVersionOutput.startsWith("3.4")) {
         return PYTHON34;
       }
-      if (pythonVersion.startsWith("3.5")) {
+      if (pythonVersionOutput.startsWith("3.5")) {
         return PYTHON35;
       }
-      if (pythonVersion.startsWith("3.6")) {
+      if (pythonVersionOutput.startsWith("3.6")) {
         return PYTHON36;
       }
-      if (pythonVersion.startsWith("3.7")) {
+      if (pythonVersionOutput.startsWith("3.7")) {
         return PYTHON37;
       }
-      if (pythonVersion.startsWith("3.8")) {
+      if (pythonVersionOutput.startsWith("3.8")) {
         return PYTHON38;
       }
-      if (pythonVersion.startsWith("3.9")) {
+      if (pythonVersionOutput.startsWith("3.9")) {
         return PYTHON39;
       }
-      if (pythonVersion.startsWith("3.10")) {
+      if (pythonVersionOutput.startsWith("3.10")) {
         return PYTHON310;
       }
-      if (pythonVersion.startsWith("3.11")) {
+      if (pythonVersionOutput.startsWith("3.11")) {
         return PYTHON311;
       }
-      if (pythonVersion.startsWith("3.12")) {
+      if (pythonVersionOutput.startsWith("3.12")) {
         return PYTHON312;
       }
-      if (pythonVersion.startsWith("3.13")) {
+      if (pythonVersionOutput.startsWith("3.13")) {
         return PYTHON313;
+      }
+      if (pythonVersionOutput.startsWith("3.14")) {
+        return PYTHON314;
       }
       return DEFAULT3;
     }
-    return getDefault();
+    return null;
   }
 
   public @NotNull String toPythonVersion() {

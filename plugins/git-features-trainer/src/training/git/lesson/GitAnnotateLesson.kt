@@ -118,6 +118,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     var firstDiffSplitter: DiffSplitter? = null
     task {
       text(GitLessonsBundle.message("git.annotate.choose.show.diff", strong(showDiffText)))
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation")
       restoreByUi(openFirstDiffTaskId, delayMillis = defaultRestoreDelay)
       test { clickShowDiffAction() }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -234,6 +234,25 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
+        public static class CallablesDeclaredInClasses extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("noImportOfPartiallyPrivateCallables.test")
+            public void testNoImportOfPartiallyPrivateCallables() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/innerClass")
         public static class InnerClass extends AbstractQuickFixMultiFileTest {
             @java.lang.Override
@@ -251,14 +270,29 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
             }
 
+            @TestMetadata("innerClassInCallableReference_fromJava.test")
+            public void testInnerClassInCallableReference_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInCallableReference_fromJava.test");
+            }
+
             @TestMetadata("innerClassInExpression.test")
             public void testInnerClassInExpression() throws Exception {
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
             }
 
+            @TestMetadata("innerClassInExpression_fromJava.test")
+            public void testInnerClassInExpression_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInExpression_fromJava.test");
+            }
+
             @TestMetadata("innerClassInTypeReference.test")
             public void testInnerClassInTypeReference() throws Exception {
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+            }
+
+            @TestMetadata("innerClassInTypeReference_fromJava.test")
+            public void testInnerClassInTypeReference_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInTypeReference_fromJava.test");
             }
         }
 
@@ -302,6 +336,95 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/invoke")
+        public static class Invoke extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeExtension.test")
+            public void testInvokeExtension() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension.test");
+            }
+
+            @TestMetadata("invokeExtensionNoOperator_afterConstructorCall.test")
+            public void testInvokeExtensionNoOperator_afterConstructorCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionNoOperator_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter.test")
+            public void testInvokeExtensionWithLambdaParameter() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter_qualifiedCall.test")
+            public void testInvokeExtensionWithLambdaParameter_qualifiedCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall.test")
+            public void testInvokeExtension_afterConstructorCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_extraArguments_unrelatedInvokes_single.test")
+            public void testInvokeExtension_extraArguments_unrelatedInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_extraArguments_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall.test")
+            public void testInvokeExtension_qualifiedCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_topLevelVal.test")
+            public void testInvokeExtension_topLevelVal() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_topLevelVal.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_single.test")
+            public void testInvokeExtension_unrelatedInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_two.test")
+            public void testInvokeExtension_unrelatedInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_unresolvedReceiver.test")
+            public void testInvokeExtension_unresolvedReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_unresolvedReceiver.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/kt21515")
         public static class Kt21515 extends AbstractQuickFixMultiFileTest {
             @java.lang.Override
@@ -322,90 +445,158 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/mismatchingArgs")
-        public static class MismatchingArgs extends AbstractQuickFixMultiFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+        public abstract static class MismatchingArgs extends AbstractQuickFixMultiFileTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/autoImports/mismatchingArgs/inapplicable")
+            public static class Inapplicable extends AbstractQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("alreadyImportedFromStdlib.test")
+                public void testAlreadyImportedFromStdlib() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/alreadyImportedFromStdlib.test");
+                }
+
+                @TestMetadata("extraArguments.test")
+                public void testExtraArguments() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/extraArguments.test");
+                }
+
+                @TestMetadata("extraTypeArguments.test")
+                public void testExtraTypeArguments() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/extraTypeArguments.test");
+                }
+
+                @TestMetadata("missingArguments.test")
+                public void testMissingArguments() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/missingArguments.test");
+                }
+
+                @TestMetadata("typeMismatch.test")
+                public void testTypeMismatch() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/typeMismatch.test");
+                }
+
+                @TestMetadata("wrongNamedArgument.test")
+                public void testWrongNamedArgument() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/inapplicable/wrongNamedArgument.test");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/autoImports/mismatchingArgs")
+            public static class Uncategorized extends AbstractQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
 
-            @TestMetadata("constantExpectedTypeMismatch.test")
-            public void testConstantExpectedTypeMismatch() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/constantExpectedTypeMismatch.test");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
 
-            @TestMetadata("expectedTypeRequired.test")
-            public void testExpectedTypeRequired() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
-            }
+                @TestMetadata("constantExpectedTypeMismatch.test")
+                public void testConstantExpectedTypeMismatch() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/constantExpectedTypeMismatch.test");
+                }
 
-            @TestMetadata("extensionExplicitReceiver.test")
-            public void testExtensionExplicitReceiver() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
-            }
+                @TestMetadata("expectedTypeRequired.test")
+                public void testExpectedTypeRequired() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
+                }
 
-            @TestMetadata("extensionImplicitReceiver.test")
-            public void testExtensionImplicitReceiver() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
-            }
+                @TestMetadata("expectedTypeRequired2.test")
+                public void testExpectedTypeRequired2() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired2.test");
+                }
 
-            @TestMetadata("extensionOperator.before.Main.kt")
-            public void testExtensionOperator() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
-            }
+                @TestMetadata("extensionExplicitReceiver.test")
+                public void testExtensionExplicitReceiver() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
+                }
 
-            @TestMetadata("extensionWrongReceiver.test")
-            public void testExtensionWrongReceiver() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongReceiver.test");
-            }
+                @TestMetadata("extensionImplicitReceiver.test")
+                public void testExtensionImplicitReceiver() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam.test")
-            public void testExtensionWrongTypeParam() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam.test");
-            }
+                @TestMetadata("extensionOperator.before.Main.kt")
+                public void testExtensionOperator() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
+                }
 
-            @TestMetadata("extensionWrongTypeParam2.test")
-            public void testExtensionWrongTypeParam2() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
-            }
+                @TestMetadata("extensionWrongReceiver.test")
+                public void testExtensionWrongReceiver() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongReceiver.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam3.test")
-            public void testExtensionWrongTypeParam3() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
-            }
+                @TestMetadata("extensionWrongTypeParam.test")
+                public void testExtensionWrongTypeParam() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam.test");
+                }
 
-            @TestMetadata("ignoreErrorsOutsideCall.test")
-            public void testIgnoreErrorsOutsideCall() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2.test")
+                public void testExtensionWrongTypeParam2() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
+                }
 
-            @TestMetadata("namedArgument.test")
-            public void testNamedArgument() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/namedArgument.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2_class.test")
+                public void testExtensionWrongTypeParam2_class() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_class.test");
+                }
 
-            @TestMetadata("smartCast.test")
-            public void testSmartCast() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/smartCast.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2_rootPackage.test")
+                public void testExtensionWrongTypeParam2_rootPackage() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_rootPackage.test");
+                }
 
-            @TestMetadata("topLevelFun.test")
-            public void testTopLevelFun() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/topLevelFun.test");
-            }
+                @TestMetadata("extensionWrongTypeParam3.test")
+                public void testExtensionWrongTypeParam3() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
+                }
 
-            @TestMetadata("topLevelFun_notWithReceiver.test")
-            public void testTopLevelFun_notWithReceiver() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/topLevelFun_notWithReceiver.test");
-            }
+                @TestMetadata("ignoreErrorsOutsideCall.test")
+                public void testIgnoreErrorsOutsideCall() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
+                }
 
-            @TestMetadata("typeMismatch.test")
-            public void testTypeMismatch() throws Exception {
-                runTest("testData/quickfix/autoImports/mismatchingArgs/typeMismatch.test");
+                @TestMetadata("namedArgument.test")
+                public void testNamedArgument() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/namedArgument.test");
+                }
+
+                @TestMetadata("returnTypeInference.test")
+                public void testReturnTypeInference() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/returnTypeInference.test");
+                }
+
+                @TestMetadata("smartCast.test")
+                public void testSmartCast() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/smartCast.test");
+                }
+
+                @TestMetadata("topLevelFun.test")
+                public void testTopLevelFun() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/topLevelFun.test");
+                }
+
+                @TestMetadata("topLevelFun_notWithReceiver.test")
+                public void testTopLevelFun_notWithReceiver() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/topLevelFun_notWithReceiver.test");
+                }
+
+                @TestMetadata("typeMismatch.test")
+                public void testTypeMismatch() throws Exception {
+                    runTest("testData/quickfix/autoImports/mismatchingArgs/typeMismatch.test");
+                }
             }
         }
 
@@ -472,6 +663,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/constructorParameterAnnotation.test");
             }
 
+            @TestMetadata("containsOperator.test")
+            public void testContainsOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/containsOperator.test");
+            }
+
+            @TestMetadata("containsOperator_withStdlib.test")
+            public void testContainsOperator_withStdlib() throws Exception {
+                runTest("testData/quickfix/autoImports/containsOperator_withStdlib.test");
+            }
+
             @TestMetadata("delegateExtensionBoth.test")
             public void testDelegateExtensionBoth() throws Exception {
                 runTest("testData/quickfix/autoImports/delegateExtensionBoth.test");
@@ -502,6 +703,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/delegateNoOperator.test");
             }
 
+            @TestMetadata("delegateToBinaryExpression.test")
+            public void testDelegateToBinaryExpression() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateToBinaryExpression.test");
+            }
+
+            @TestMetadata("delegateToStringLiteral.test")
+            public void testDelegateToStringLiteral() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateToStringLiteral.test");
+            }
+
             @TestMetadata("divOperator.before.Main.kt")
             public void testDivOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/divOperator.before.Main.kt");
@@ -517,6 +728,31 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
             }
 
+            @TestMetadata("enumEntries_CallableReference.test")
+            public void testEnumEntries_CallableReference() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_CallableReference.test");
+            }
+
+            @TestMetadata("enumEntries_ExplicitReceiver.test")
+            public void testEnumEntries_ExplicitReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_ExplicitReceiver.test");
+            }
+
+            @TestMetadata("enumEntries_FromJava.test")
+            public void testEnumEntries_FromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_FromJava.test");
+            }
+
+            @TestMetadata("enumEntries_FromJava_private.test")
+            public void testEnumEntries_FromJava_private() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_FromJava_private.test");
+            }
+
+            @TestMetadata("enumEntries_Private.test")
+            public void testEnumEntries_Private() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_Private.test");
+            }
+
             @TestMetadata("extensionErroneousReceiver.test")
             public void testExtensionErroneousReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionErroneousReceiver.test");
@@ -530,6 +766,21 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("extensionFunctionImportImplicitReceiver.before.Main.kt")
             public void testExtensionFunctionImportImplicitReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver.test")
+            public void testExtensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver.test");
+            }
+
+            @TestMetadata("extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver.test")
+            public void testExtensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver.test");
+            }
+
+            @TestMetadata("extensionFunctionImport_definitelyNotNullableTypeReceiver.test")
+            public void testExtensionFunctionImport_definitelyNotNullableTypeReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionImport_definitelyNotNullableTypeReceiver.test");
             }
 
             @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
@@ -717,11 +968,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
             }
 
-            @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
-            public void testImportOperatorInvokeWithConvention() throws Exception {
-                runTest("testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-            }
-
             @TestMetadata("indexCallExtensionGet.test")
             public void testIndexCallExtensionGet() throws Exception {
                 runTest("testData/quickfix/autoImports/indexCallExtensionGet.test");
@@ -767,24 +1013,24 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/infixCall2.before.Main.kt");
             }
 
-            @TestMetadata("invokeExtension.test")
-            public void testInvokeExtension() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension.test");
+            @TestMetadata("infixCallK1.before.Main.kt")
+            public void testInfixCallK1() throws Exception {
+                runTest("testData/quickfix/autoImports/infixCallK1.before.Main.kt");
             }
 
-            @TestMetadata("invokeExtension2.test")
-            public void testInvokeExtension2() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension2.test");
-            }
-
-            @TestMetadata("invokeExtensionNoOperator.test")
-            public void testInvokeExtensionNoOperator() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtensionNoOperator.test");
-            }
-
-            @TestMetadata("iteratorOperator.before.Main.kt")
+            @TestMetadata("iteratorOperator.test")
             public void testIteratorOperator() throws Exception {
-                runTest("testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
+                runTest("testData/quickfix/autoImports/iteratorOperator.test");
+            }
+
+            @TestMetadata("iteratorOperator_literalReceiver.test")
+            public void testIteratorOperator_literalReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/iteratorOperator_literalReceiver.test");
+            }
+
+            @TestMetadata("iteratorOperator_wrongReceiverType.test")
+            public void testIteratorOperator_wrongReceiverType() throws Exception {
+                runTest("testData/quickfix/autoImports/iteratorOperator_wrongReceiverType.test");
             }
 
             @TestMetadata("ktij27440.test")
@@ -872,6 +1118,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent1.test");
             }
 
+            @TestMetadata("multiDeclarationExtensionComponent1_flexibleReceiver.test")
+            public void testMultiDeclarationExtensionComponent1_flexibleReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent1_flexibleReceiver.test");
+            }
+
             @TestMetadata("multiDeclarationExtensionComponent2.test")
             public void testMultiDeclarationExtensionComponent2() throws Exception {
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent2.test");
@@ -880,6 +1131,31 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("multiDeclarationExtensionComponentNoOperator.test")
             public void testMultiDeclarationExtensionComponentNoOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionAllComponents.test")
+            public void testMultiDeclarationInLambdaParameterExtensionAllComponents() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionAllComponents.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent1.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent1() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent2.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent2() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent2.test");
+            }
+
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1.test")
+            public void testMultiDeclarationInLoopExtensionComponent1() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test")
+            public void testMultiDeclarationInLoopExtensionComponent1_ambiguousFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test");
             }
 
             @TestMetadata("multiFunctionCandidate.test")
@@ -1288,6 +1564,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/changeSignature/addParameterWithImport.before.Main.kt");
             }
 
+            @TestMetadata("addSecondParameter.before.Main.kt")
+            public void testAddSecondParameter() throws Exception {
+                runTest("testData/quickfix/changeSignature/addSecondParameter.before.Main.kt");
+            }
+
+            @TestMetadata("addSecondParameter1.before.Main.kt")
+            public void testAddSecondParameter1() throws Exception {
+                runTest("testData/quickfix/changeSignature/addSecondParameter1.before.Main.kt");
+            }
+
             @TestMetadata("changeParameter.before.Main.kt")
             public void testChangeParameter() throws Exception {
                 runTest("testData/quickfix/changeSignature/changeParameter.before.Main.kt");
@@ -1692,6 +1978,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnTypeFromAnotherPackage.before.Main.kt");
                     }
 
+                    @TestMetadata("extensionValOnFlexibleType.before.Main.kt")
+                    public void testExtensionValOnFlexibleType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionValOnFlexibleType.before.Main.kt");
+                    }
+
                     @TestMetadata("staticExtensionFunOnJavaClass.before.Main.kt")
                     public void testStaticExtensionFunOnJavaClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/staticExtensionFunOnJavaClass.before.Main.kt");
@@ -1852,6 +2143,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 public void testClassMember() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/classMember.before.Main.kt");
                 }
+
+                @TestMetadata("noExtFunctionForJavaClass.before.Main.kt")
+                public void testNoExtFunctionForJavaClass() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/fromKotlinToJava/noExtFunctionForJavaClass.before.Main.kt");
+                }
             }
         }
 
@@ -1949,6 +2245,40 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("testData/quickfix/createFromUsage/createVariable/property")
             public abstract static class Property extends AbstractQuickFixMultiFileTest {
                 @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createVariable/property/extension")
+                public static class Extension extends AbstractQuickFixMultiFileTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("extensionPropertyOnTypeFromAnotherPackage.before.Main.kt")
+                    public void testExtensionPropertyOnTypeFromAnotherPackage() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionPropertyOnTypeFromAnotherPackage.before.Main.kt");
+                    }
+
+                    @TestMetadata("extensionValOnGroovyType.before.Main.kt")
+                    public void testExtensionValOnGroovyType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnGroovyType.before.Main.kt");
+                    }
+
+                    @TestMetadata("extensionValOnJavaType.before.Main.kt")
+                    public void testExtensionValOnJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnJavaType.before.Main.kt");
+                    }
+
+                    @TestMetadata("staticExtensionValOnJavaType.before.Main.kt")
+                    public void testStaticExtensionValOnJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/staticExtensionValOnJavaType.before.Main.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/property/fieldFromJava")
                 public static class FieldFromJava extends AbstractQuickFixMultiFileTest {
                     @java.lang.Override
@@ -1959,6 +2289,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("brokenJavaType.before.Main.java")
+                    public void testBrokenJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/brokenJavaType.before.Main.java");
                     }
 
                     @TestMetadata("classMemberLateinitVar.before.Main.java")
@@ -1993,26 +2328,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("extensionPropertyOnTypeFromAnotherPackage.before.Main.kt")
-                    public void testExtensionPropertyOnTypeFromAnotherPackage() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionPropertyOnTypeFromAnotherPackage.before.Main.kt");
-                    }
-
-                    @TestMetadata("extensionValOnGroovyType.before.Main.kt")
-                    public void testExtensionValOnGroovyType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnGroovyType.before.Main.kt");
-                    }
-
-                    @TestMetadata("extensionValOnJavaType.before.Main.kt")
-                    public void testExtensionValOnJavaType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnJavaType.before.Main.kt");
-                    }
-
-                    @TestMetadata("staticExtensionValOnJavaType.before.Main.kt")
-                    public void testStaticExtensionValOnJavaType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/staticExtensionValOnJavaType.before.Main.kt");
                     }
 
                     @TestMetadata("staticValOnJavaClass.before.Main.kt")
@@ -2102,6 +2417,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/annotation.before.Main.kt");
                 }
 
+                @TestMetadata("classUsage.before.Main.kt")
+                public void testClassUsage() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/classUsage.before.Main.kt");
+                }
+
                 @TestMetadata("noParenthesesAnnotation.before.Main.kt")
                 public void testNoParenthesesAnnotation() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/noParenthesesAnnotation.before.Main.kt");
@@ -2170,6 +2490,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("addImportsWithSameName.before.Main.kt")
             public void testAddImportsWithSameName() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
+            }
+
+            @TestMetadata("changeImports.before.Main.kt")
+            public void testChangeImports() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
             }
 
             @TestMetadata("rootPackage.before.Main.kt")
@@ -2619,6 +2944,40 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("twoPackages.before.Main.kt")
             public void testTwoPackages() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/twoPackages.before.Main.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/override/overriddenJavaAccessor")
+        public static class OverriddenJavaAccessor extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("getterWithDifferentType.test")
+            public void testGetterWithDifferentType() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/getterWithDifferentType.test");
+            }
+
+            @TestMetadata("notAGetterSignature.test")
+            public void testNotAGetterSignature() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
+            }
+
+            @TestMetadata("nothingToOverride.test")
+            public void testNothingToOverride() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/nothingToOverride.test");
+            }
+
+            @TestMetadata("simpleGetter.test")
+            public void testSimpleGetter() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");
             }
         }
 

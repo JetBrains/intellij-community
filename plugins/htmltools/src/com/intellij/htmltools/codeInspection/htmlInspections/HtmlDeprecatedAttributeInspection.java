@@ -14,7 +14,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
-import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
+import static com.intellij.polySymbols.PolySymbolApiStatus.isDeprecatedOrObsolete;
 
 public final class HtmlDeprecatedAttributeInspection extends HtmlLocalInspectionTool {
 

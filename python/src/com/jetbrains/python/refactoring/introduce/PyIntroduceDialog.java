@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -92,7 +92,7 @@ public class PyIntroduceDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameComboBox, true));
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (@Nls String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
@@ -131,7 +131,7 @@ public class PyIntroduceDialog extends DialogWrapper {
 
   public @Nullable String getName() {
     final Object item = myNameComboBox.getEditor().getItem();
-    if ((item instanceof String) && ((String)item).length() > 0) {
+    if ((item instanceof String) && !((String)item).isEmpty()) {
       return ((String)item).trim();
     }
     return null;

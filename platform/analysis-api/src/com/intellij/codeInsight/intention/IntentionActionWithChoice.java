@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -32,5 +33,6 @@ public interface IntentionActionWithChoice<T extends IntentionAction, V extends 
    * Not, that if you need variants to maintain specific order,
    * you'll have to implement Comparable for T.
    */
-  @NotNull List<@NotNull V> getVariants();
+  @NotNull @Unmodifiable
+  List<@NotNull V> getVariants();
 }

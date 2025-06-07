@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.move;
 
@@ -195,6 +195,51 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToObject/moveToObject.test");
     }
 
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevel/deepInnerToTopLevel.test")
+    public void testKotlin_moveMethod_moveToTopLevel_deepInnerToTopLevel_DeepInnerToTopLevel() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevel/deepInnerToTopLevel.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/dropEmptyCompanion/dropEmptyCompanion.test")
+    public void testKotlin_moveMethod_moveToTopLevel_dropEmptyCompanion_DropEmptyCompanion() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/dropEmptyCompanion/dropEmptyCompanion.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/externalFunctionUsageContextReceiver/externalFunctionUsageContextReceiver.test")
+    public void testKotlin_moveMethod_moveToTopLevel_externalFunctionUsageContextReceiver_ExternalFunctionUsageContextReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/externalFunctionUsageContextReceiver/externalFunctionUsageContextReceiver.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/externalFunctionUsageFromJava/externalFunctionUsageFromJava.test")
+    public void testKotlin_moveMethod_moveToTopLevel_externalFunctionUsageFromJava_ExternalFunctionUsageFromJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/externalFunctionUsageFromJava/externalFunctionUsageFromJava.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/externalFunctionUsage/externalFunctionUsage.test")
+    public void testKotlin_moveMethod_moveToTopLevel_externalFunctionUsage_ExternalFunctionUsage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/externalFunctionUsage/externalFunctionUsage.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/implicitReceiver/implicitReceiver.test")
+    public void testKotlin_moveMethod_moveToTopLevel_implicitReceiver_ImplicitReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/implicitReceiver/implicitReceiver.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/implicitRefToCompanionObject/implicitRefToCompanionObject.test")
+    public void testKotlin_moveMethod_moveToTopLevel_implicitRefToCompanionObject_ImplicitRefToCompanionObject() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/implicitRefToCompanionObject/implicitRefToCompanionObject.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/nameClash/nameClash.test")
+    public void testKotlin_moveMethod_moveToTopLevel_nameClash_NameClash() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/nameClash/nameClash.test");
+    }
+
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/outerInstanceAddParameter/outerInstanceAddParameter.test")
+    public void testKotlin_moveMethod_moveToTopLevel_outerInstanceAddParameter_OuterInstanceAddParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/outerInstanceAddParameter/outerInstanceAddParameter.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/callableReferences/nestedToAnotherClass/nestedToAnotherClass.test")
     public void testKotlin_moveNestedClass_callableReferences_nestedToAnotherClass_NestedToAnotherClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/callableReferences/nestedToAnotherClass/nestedToAnotherClass.test");
@@ -240,9 +285,24 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelAddInstanceParam/innerToTopLevelAddInstanceParam.test");
     }
 
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelImplicitReceiver_InnerToTopLevelImplicitReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelInnerClassUsageNoThis_InnerToTopLevelInnerClassUsageNoThis() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test")
     public void testKotlin_moveNestedClass_innerToTopLevelNoThis_InnerToTopLevelNoThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelSimpleThis_InnerToTopLevelSimpleThis() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test");
     }
 
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelWithThisOuterRefConflicts/innerToTopLevelWithThisOuterRefConflicts.test")
@@ -290,6 +350,11 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelCompanionConflict/nonInnerToTopLevelCompanionConflict.test");
     }
 
+    @TestMetadata("kotlin/moveNestedClass/nonInnerToTopLevelCompanionK2NoConflict/nonInnerToTopLevelCompanionK2NoConflict.test")
+    public void testKotlin_moveNestedClass_nonInnerToTopLevelCompanionK2NoConflict_NonInnerToTopLevelCompanionK2NoConflict() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelCompanionK2NoConflict/nonInnerToTopLevelCompanionK2NoConflict.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/nonInnerToTopLevelPrivateClass/nonInnerToTopLevelPrivateClass.test")
     public void testKotlin_moveNestedClass_nonInnerToTopLevelPrivateClass_NonInnerToTopLevelPrivateClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelPrivateClass/nonInnerToTopLevelPrivateClass.test");
@@ -318,5 +383,20 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
     @TestMetadata("kotlin/moveNestedClass/protectedClass/protectedClass.test")
     public void testKotlin_moveNestedClass_protectedClass_ProtectedClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/protectedClass/protectedClass.test");
+    }
+
+    @TestMetadata("kotlin/moveProperty/moveToTopLevel/externalPropertyUsageFromJava/externalPropertyUsageFromJava.test")
+    public void testKotlin_moveProperty_moveToTopLevel_externalPropertyUsageFromJava_ExternalPropertyUsageFromJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveProperty/moveToTopLevel/externalPropertyUsageFromJava/externalPropertyUsageFromJava.test");
+    }
+
+    @TestMetadata("kotlin/moveProperty/moveToTopLevel/moveWithInstanceReference/moveWithInstanceReference.test")
+    public void testKotlin_moveProperty_moveToTopLevel_moveWithInstanceReference_MoveWithInstanceReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveProperty/moveToTopLevel/moveWithInstanceReference/moveWithInstanceReference.test");
+    }
+
+    @TestMetadata("kotlin/moveProperty/moveToTopLevel/moveWithoutInstanceReference/moveWithoutInstanceReference.test")
+    public void testKotlin_moveProperty_moveToTopLevel_moveWithoutInstanceReference_MoveWithoutInstanceReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveProperty/moveToTopLevel/moveWithoutInstanceReference/moveWithoutInstanceReference.test");
     }
 }

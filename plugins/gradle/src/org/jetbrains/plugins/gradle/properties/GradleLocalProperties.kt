@@ -6,8 +6,4 @@ import org.jetbrains.plugins.gradle.properties.models.Property
 interface GradleLocalProperties  {
 
   val javaHomeProperty: Property<String>?
-
-  object EMPTY : GradleLocalProperties {
-    override val javaHomeProperty: Nothing? = null
-  }
 }

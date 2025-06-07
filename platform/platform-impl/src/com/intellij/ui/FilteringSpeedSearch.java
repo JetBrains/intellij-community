@@ -6,11 +6,14 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
@@ -22,12 +25,11 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends SpeedSearch implements FilteringTree.FilteringTreeUserObjectMatcher<U> {
   private final JTextComponent myField;
   private final FilteringTree<T, U> myFilteringTree;
-
-  private boolean myUpdating = false;
 
   protected FilteringSpeedSearch(@NotNull FilteringTree<T, U> filteringTree, @NotNull SearchTextField field) {
     myFilteringTree = filteringTree;
@@ -35,18 +37,9 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     myField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!myUpdating) {
-          myUpdating = true;
-          try {
-            String text = myField.getText();
-            updatePattern(text);
-            onUpdatePattern(text);
-            update();
-          }
-          finally {
-            myUpdating = false;
-          }
-        }
+        String text = myField.getText();
+        updatePattern(text);
+        onSearchPatternUpdated(text);
       }
     });
     setEnabled(true);
@@ -60,14 +53,6 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     });
     getTreeComponent().addKeyListener(this);
     installSupplyTo(getTreeComponent());
-  }
-
-  protected void onSearchFieldUpdated(String pattern) {
-    TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
-    myFilteringTree.getSearchModel().refilter();
-    myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
-    getTreeComponent().getSelectionModel().setSelectionPaths(paths);
-    myFilteringTree.onSpeedSearchUpdateComplete(pattern);
   }
 
   public void select(@NotNull T node) {
@@ -106,16 +91,20 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
   @Override
   public void update() {
     String filter = getFilter();
-    if (!myUpdating) {
-      myUpdating = true;
-      try {
-        myField.setText(filter);
-      }
-      finally {
-        myUpdating = false;
-      }
-    }
-    onSearchFieldUpdated(filter);
+    myField.setText(filter);
+  }
+
+  protected void onSearchPatternUpdated(@Nullable String pattern) {
+    refilter(pattern);
+  }
+
+  @VisibleForTesting
+  public void refilter(@Nullable String pattern) {
+    TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
+    myFilteringTree.getSearchModel().refilter();
+    myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
+    getTreeComponent().getSelectionModel().setSelectionPaths(paths);
+    myFilteringTree.onSpeedSearchUpdateComplete(pattern);
     updateSelection();
   }
 
@@ -154,15 +143,12 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     return null;
   }
 
-  @NotNull
-  private JBIterator<T> filterMatchingNodes(JBIterator<T> nodes, boolean fullMatch) {
+  private @NotNull JBIterator<T> filterMatchingNodes(JBIterator<T> nodes, boolean fullMatch) {
     return nodes.filter(item -> {
       FilteringTree.Matching matching = checkMatching(item);
       return fullMatch ? matching == FilteringTree.Matching.FULL : matching != FilteringTree.Matching.NONE;
     });
   }
-
-  protected void onUpdatePattern(@Nullable String text) { }
 
   public @NotNull Iterator<T> iterate(T start, boolean fwd, boolean wrap) {
     if (!wrap || start == null) return iterate(start, fwd);
@@ -218,30 +204,28 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
   }
 
   public @NotNull Iterator<T> iterate(@Nullable T start, boolean fwd) {
+    Set<TreeNode> rootPath = CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
+    for (TreeNode node = start; node != null; node = node.getParent()) {
+      rootPath.add(node);
+    }
+    // Lazy traversal. Skip preceding nodes for a forward flag and following nodes for the opposite.
     JBTreeTraverser<T> traverser = JBTreeTraverser.from(n -> {
+      boolean onRootPath = rootPath.contains(n);
       int count = n.getChildCount();
       List<T> children = new ArrayList<>(count);
+      boolean skip = onRootPath && n != start;
       for (int i = 0; i < count; ++i) {
         T c = ObjectUtils.tryCast(n.getChildAt(fwd ? i : count - i - 1), myFilteringTree.getNodeClass());
-        if (c != null) children.add(c);
+        if (skip && rootPath.contains(c)) skip = false;
+        if (c != null && !skip) children.add(c);
       }
       return children;
     });
-    if (start == null) {
-      traverser = traverser.withRoot(myFilteringTree.getRoot());
-    }
-    else {
-      List<T> roots = new ArrayList<>();
-      for (TreeNode node = null, parent = start; parent != null; node = parent, parent = node.getParent()) {
-        int idx = node == null ? -1 : parent.getIndex(node);
-        for (int i = fwd ? idx + 1 : 0, c = fwd ? parent.getChildCount() : idx; i < c; ++i) {
-          T child = ObjectUtils.tryCast(parent.getChildAt(fwd ? i : idx - i - 1), myFilteringTree.getNodeClass());
-          if (child != null) roots.add(child);
-        }
-      }
-      traverser = traverser.withRoots(roots);
-    }
-    return traverser.preOrderDfsTraversal().iterator();
+
+    traverser = traverser.withRoots(myFilteringTree.getRoot());
+    if (start == null) return traverser.preOrderDfsTraversal().iterator();
+    if (!fwd) return traverser.postOrderDfsTraversal().skipWhile(n -> n != start).skip(1).iterator();
+    return traverser.preOrderDfsTraversal().skipWhile(n -> n != start).skip(1).iterator();
   }
 
   private @NotNull Tree getTreeComponent() {

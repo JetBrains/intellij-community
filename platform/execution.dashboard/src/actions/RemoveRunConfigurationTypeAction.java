@@ -9,16 +9,20 @@ import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
+final class RemoveRunConfigurationTypeAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -51,7 +55,7 @@ final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
     runDashboardManager.setTypes(types);
   }
 
-  private static Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
+  private static @Unmodifiable Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
     List<RunDashboardRunConfigurationNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
     return ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getType());
   }

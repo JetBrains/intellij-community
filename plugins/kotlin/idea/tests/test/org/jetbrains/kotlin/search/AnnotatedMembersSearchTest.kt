@@ -8,9 +8,11 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import java.io.File
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
 
@@ -20,8 +22,19 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    fun doTest(unused: String) {
+    protected open fun doTest(path: String) {
         val testDataFile = dataFile()
+        val controlDirective = if (isFirPlugin) {
+            IgnoreTests.DIRECTIVES.IGNORE_K2
+        } else {
+            IgnoreTests.DIRECTIVES.IGNORE_K1
+        }
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testDataFile.toPath(), controlDirective) {
+            doTestInternal(testDataFile)
+        }
+    }
+
+    private fun doTestInternal(testDataFile: File) {
 
         myFixture.configureByFile(fileName())
         val fileText = FileUtil.loadFile(testDataFile, true)

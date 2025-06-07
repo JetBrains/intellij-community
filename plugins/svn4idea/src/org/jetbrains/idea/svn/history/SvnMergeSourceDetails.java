@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -77,8 +77,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return null;
   }
 
@@ -99,7 +98,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    private final static int ourMaxWidth = 100;
+    private static final int ourMaxWidth = 100;
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
@@ -205,8 +204,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
 
     @Override
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return getBannerSlogan();
     }
 

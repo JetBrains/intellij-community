@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration
 
 import com.intellij.history.*
@@ -12,7 +12,7 @@ import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -29,7 +29,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
@@ -48,7 +47,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     private fun getProjectId(p: Project): String = p.getLocationHash()
   }
 
-  private var daysToKeep = getInt(DAYS_TO_KEEP)
+  private var daysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP)
 
   override val isEnabled: Boolean
     get() = !isDisabled
@@ -201,14 +200,14 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
   }
 
-  override fun getByteContent(virtualFile: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? {
+  override fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? {
     if (!isInitialized()) {
       return null
     }
 
     return ApplicationManager.getApplication().runReadAction(Computable {
-      if (gateway.areContentChangesVersioned(virtualFile)) {
-        ByteContentRetriever(gateway, facade, virtualFile, condition).getResult()
+      if (gateway.areContentChangesVersioned(file)) {
+        ByteContentRetriever(gateway, facade, file, condition).getResult()
       }
       else {
         null
@@ -241,14 +240,14 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
 
     val rootEntry = runReadAction { gateway.createTransientRootEntryForPaths(targetPaths, true) }
-    val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet!!.id), path,
+    val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet.id), path,
                                        /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)
     val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
     if (diff.isEmpty()) return // nothing to revert
 
     val reverter = DifferenceReverter(project, facade, gateway, diff) {
-      getRevertCommandName((targetChange as? PutLabelChange)?.name, targetChangeSet!!.timestamp, false)
+      getRevertCommandName((targetChange as? PutLabelChange)?.name, targetChangeSet.timestamp, false)
     }
     try {
       reverter.revert()

@@ -346,15 +346,24 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     assertVariableFullValue(findVar(vars, name), value);
   }
 
-  public static void assertVariables(@NotNull List<? extends XValue> vars, String... names) {
-
+  private static @NotNull List<String> getNames(@NotNull List<? extends XValue> vars) {
     List<String> actualNames = new ArrayList<>();
     for (XValue each : vars) {
       actualNames.add(computePresentation(each).myName);
     }
+    return actualNames;
+  }
 
+  public static void assertVariables(@NotNull List<? extends XValue> vars, String... names) {
+    List<String> actualNames = getNames(vars);
     Collections.sort(actualNames);
     List<String> expectedNames = ContainerUtil.sorted(Arrays.asList(names));
+    UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
+  }
+
+  public static void assertOrderedVariables(@NotNull List<? extends XValue> vars, String... names) {
+    List<String> actualNames = getNames(vars);
+    List<String> expectedNames = Arrays.asList(names);
     UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
   }
 

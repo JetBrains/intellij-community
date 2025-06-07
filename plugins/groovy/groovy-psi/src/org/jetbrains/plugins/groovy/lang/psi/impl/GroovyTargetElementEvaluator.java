@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
@@ -84,8 +84,7 @@ public final class GroovyTargetElementEvaluator extends JavaTargetElementEvaluat
     return null;
   }
 
-  @Nullable
-  public static PsiElement correctSearchTargets(@Nullable PsiElement target) {
+  public static @Nullable PsiElement correctSearchTargets(@Nullable PsiElement target) {
     if (target instanceof ClsMethodImpl) {
       PsiElement mirror = ((ClsMethodImpl)target).getSourceMirrorMethod();
       if (mirror != null) {
@@ -103,9 +102,8 @@ public final class GroovyTargetElementEvaluator extends JavaTargetElementEvaluat
     return target;
   }
 
-  @Nullable
   @Override
-  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
+  public @Nullable Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     if (reference instanceof GrReferenceExpression referenceExpression) {
       if (referenceExpression.hasMemberPointer()) {
         GroovyResolveResult[] results = referenceExpression.multiResolve(false);
@@ -117,9 +115,8 @@ public final class GroovyTargetElementEvaluator extends JavaTargetElementEvaluat
     return super.getTargetCandidates(reference);
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
+  public @Nullable PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
     if (targetElement instanceof GrPropertyForCompletion) {
       return ((GrPropertyForCompletion)targetElement).getOriginalAccessor();
     }

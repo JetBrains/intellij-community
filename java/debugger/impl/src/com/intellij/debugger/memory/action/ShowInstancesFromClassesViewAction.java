@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.memory.filtering.ClassInstancesProvider;
@@ -12,7 +12,7 @@ import com.intellij.xdebugger.memory.ui.ClassesTable;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
 
-public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
+final class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   private static final String POPUP_ELEMENT_LABEL = "Show Instances";
 
   @Override

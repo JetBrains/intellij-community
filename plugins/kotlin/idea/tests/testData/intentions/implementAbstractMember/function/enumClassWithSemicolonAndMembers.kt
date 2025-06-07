@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface T<X> {
     fun <caret>foo(x: X): X
 }

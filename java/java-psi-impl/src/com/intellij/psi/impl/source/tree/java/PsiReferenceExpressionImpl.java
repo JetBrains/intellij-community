@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -37,8 +38,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -64,10 +67,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
     if (getQualifierExpression() != null) {
       throw new IncorrectOperationException("Reference is qualified: "+getText());
-    }
-    if (!isPhysical()) {
-      // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
-      return this;
     }
     String staticName = getReferenceName();
     PsiFile containingFile = getContainingFile();
@@ -105,10 +104,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     String qualifiedName  = qualifierClass.getQualifiedName();
     List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     JavaFileCodeStyleFacade javaCodeStyleSettingsFacade = JavaFileCodeStyleFacade.forContext(importList.getContainingFile());
-    if (!javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) && refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand() ||
-        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(qualifierClass.getProject());
+    boolean hasToBeImportedBySettings =
+      (javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) ||
+      refs.size() + 1 >= javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand());
+    if (!hasToBeImportedBySettings ||
+        javaCodeStyleManager.hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));
-    } else {
+    }
+    else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
         if (importStatement != null) {
@@ -119,7 +123,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  private static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
+  /**
+   * Retrieves the static import statements from the given import list that reference
+   * a specified class.
+   *
+   * @param importList the list of import statements in a Java file.
+   * @param className the fully qualified name of the class for which static imports are to be retrieved.
+   * @return a list of static import references corresponding to the specified class.
+   */
+  public static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
     List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       PsiClass psiClass = staticStatement.resolveTargetClass();
@@ -541,7 +553,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return aClass instanceof PsiCompiledElement && seemsScrambledByStructure(aClass);
   }
 
-  static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
     PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null && !seemsScrambledByStructure(containingClass)) {
       return false;
@@ -624,7 +638,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       throw new IncorrectOperationException();
     }
     String oldRefName = oldIdentifier.getText();
-    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName) || newElementName.equals(oldRefName)) return this;
+    if (JavaKeywords.THIS.equals(oldRefName) || JavaKeywords.SUPER.equals(oldRefName) || newElementName.equals(oldRefName)) return this;
     PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;

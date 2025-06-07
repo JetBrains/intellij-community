@@ -50,13 +50,11 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.quoted.string");
   }
 
-  @Nullable
-  private static PyStringElement findConvertibleStringElementUnderCaret(@NotNull PsiElement element) {
+  private static @Nullable PyStringElement findConvertibleStringElementUnderCaret(@NotNull PsiElement element) {
     IElementType elementType = element.getNode().getElementType();
     if (!(PyTokenTypes.STRING_NODES.contains(elementType) || PyTokenTypes.FSTRING_TOKENS.contains(elementType))) return null;
     PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);

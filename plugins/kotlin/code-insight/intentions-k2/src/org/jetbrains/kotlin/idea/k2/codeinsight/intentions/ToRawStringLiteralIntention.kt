@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteralAndRestoreCaretPosition
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 internal class ToRawStringLiteralIntention :
@@ -20,8 +20,7 @@ internal class ToRawStringLiteralIntention :
     override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression) {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression) {
     }
 
     override fun invoke(
@@ -30,7 +29,7 @@ internal class ToRawStringLiteralIntention :
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
-        convertToStringLiteral(element, actionContext, updater)
+        convertToRawStringLiteralAndRestoreCaretPosition(element, actionContext, updater)
     }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.canBeConvertedToStringLiteral()

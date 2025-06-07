@@ -1,6 +1,7 @@
 package com.intellij.tools.launch.ide
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.util.SystemProperties
@@ -11,9 +12,11 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.logging.Logger
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 class ClassPathBuilder(private val paths: PathsProvider, private val modulesToScopes: Map<String, JpsJavaClasspathKind>) {
@@ -63,7 +66,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
-    if (!productionOutput.isDirectory) {
+    if (!productionOutput.isDirectory && PathManager.getArchivedCompiledClassesMapping() == null) {
       error("Production classes output directory is missing: $productionOutput")
     }
 
@@ -77,7 +80,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   }
 
   private fun <T : Comparable<T>> buildClasspath(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean, mapper: (Path) -> T): List<T> {
-    val classpath = mutableListOf<T>()
+    val classpath = LinkedHashSet<T>()
     for ((moduleName, jpsJavaClasspathKind) in modulesToScopes) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
                    ?: throw Exception("Module $moduleName not found")
@@ -98,7 +101,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
       logger.warning("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
-    return classpath
+    return classpath.toList()
   }
 
   private fun <T> getClasspathForModule(module: JpsModule, jpsJavaClasspathKind: JpsJavaClasspathKind, mapper: (Path) -> T): List<T> {
@@ -106,6 +109,15 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
       .dependencies(module)
       .recursively()
       .includedIn(jpsJavaClasspathKind)
-      .classes().roots.filter { it.exists() }.map { mapper(it.toPath()) }.toList()
+      .classes().paths.replaceWithArchivedIfNeeded().filter { Files.exists(it) }.map { mapper(it) }.toList()
+  }
+
+  private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
+    val mapping = PathManager.getArchivedCompiledClassesMapping() ?: return this
+    return map { path ->
+      if (Files.isRegularFile(path)) path
+      // path is absolute, mapping contains only the last two path elements
+      else mapping[path.parent.name + "/" + path.name]?.let { Path.of(it) } ?: path
+    }
   }
 }

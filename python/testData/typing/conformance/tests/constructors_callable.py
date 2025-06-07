@@ -114,7 +114,7 @@ class Class6:
     """__new__ that causes __init__ to be ignored"""
 
     def __new__(cls) -> Class6Proxy:
-        return Class6Proxy.__new__(cls)
+        return Class6Proxy()
 
     def __init__(self, x: int) -> None:
         """This __init__ is ignored for purposes of conversion"""

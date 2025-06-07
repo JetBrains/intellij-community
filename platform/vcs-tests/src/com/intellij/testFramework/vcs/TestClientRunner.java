@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -34,7 +34,7 @@ public final class TestClientRunner {
 
   public ProcessOutput runClient(@NotNull String exeName,
                                  @Nullable String stdin,
-                                 @Nullable final File workingDir,
+                                 final @Nullable File workingDir,
                                  String... commandLine) throws IOException {
     final List<String> arguments = new ArrayList<>();
 
@@ -76,11 +76,11 @@ public final class TestClientRunner {
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
-      if (out.length() > 0) {
+      if (!out.isEmpty()) {
         LOG.debug("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
-      if (err.length() > 0) {
+      if (!err.isEmpty()) {
         LOG.debug("*** error:\n" + err);
       }
     }

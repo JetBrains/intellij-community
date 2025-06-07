@@ -1,17 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/** Internal API. See a note in {@link MessagePool}. */
+@ApiStatus.Internal
 public abstract class AbstractMessage {
   private final Date myDate = Calendar.getInstance().getTime();
   private boolean myIsRead;
@@ -24,16 +27,15 @@ public abstract class AbstractMessage {
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
 
-  /** Returns a user message (see {@link LogMessage#eventOf}), if present. */
+  /** Returns a message passed along with a throwable to {@link com.intellij.openapi.diagnostic.Logger#error}, if present. */
   public abstract @Nullable String getMessage();
 
   /** Returns a (possibly empty) list of all attachments. */
-  public @NotNull List<Attachment> getAllAttachments() {
-    return Collections.emptyList();
+  public @NotNull @Unmodifiable List<Attachment> getAllAttachments() {
+    return List.of();
   }
 
-  /** Returns a list of attachments marked by a user to be included in the error report. */
-  public @NotNull List<Attachment> getIncludedAttachments() {
+  public @NotNull @Unmodifiable List<Attachment> getIncludedAttachments() {
     return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
   }
 

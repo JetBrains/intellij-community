@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.jar.Attributes;
 
 public final class ManifestBuilder {
-  @NonNls private static final String NAME = "Created-By";
+  private static final @NonNls String NAME = "Created-By";
   private static final Attributes.Name CREATED_BY = new Attributes.Name(NAME);
 
   private ManifestBuilder() {

@@ -1,0 +1,12 @@
+Original text:
+---------------
+def foo():
+    s = ''abc'''
+    print(s)
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>s = '''abc'''
+    print(s)</reparse>
+---------------

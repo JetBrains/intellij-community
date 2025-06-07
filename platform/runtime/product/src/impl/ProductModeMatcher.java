@@ -8,16 +8,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-final class ProductModeMatcher {
+public final class ProductModeMatcher {
   private final @NotNull String myIncompatibleRootModule;
   private final Map<String, Boolean> myCache;
 
-  ProductModeMatcher(@NotNull ProductMode productMode) {
+  public ProductModeMatcher(@NotNull ProductMode productMode) {
     myIncompatibleRootModule = ProductModes.getIncompatibleRootModule(productMode).getStringId();
     myCache = new HashMap<>();
   }
 
-  boolean matches(@NotNull RuntimeModuleDescriptor moduleDescriptor) {
+  public boolean matches(@NotNull RuntimeModuleDescriptor moduleDescriptor) {
     String stringId = moduleDescriptor.getModuleId().getStringId();
     Boolean cached = myCache.get(stringId);
     if (cached != null) return cached;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -19,14 +19,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+/**
+ * A JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link JavaCodeInsightTestFixture}.
+ * <p>
+ * This class is similar to {@link LightJavaCodeInsightFixtureTestCase}, but with some differences:
+ * <ul>
+ *   <li>Uses a full project fixture setup with {@link IdeaProjectTestFixture}</li>
+ *   <li>Creates a real module structure using {@link JavaModuleFixtureBuilder}</li>
+ *   <li>Requires more setup time but provides a more complete environment</li>
+ * </ul>
+ * It can be considered a "heavy test", even though it doesn't inherit from {@link com.intellij.testFramework.HeavyPlatformTestCase}.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html">Light and Heavy Tests (IntelliJ Platform Docs)</a>
+ */
 @TestDataPath("$CONTENT_ROOT/testData")
 public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected JavaCodeInsightTestFixture myFixture;
   private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
-  @NotNull
   @Override
-  public Disposable getTestRootDisposable() {
+  public @NotNull Disposable getTestRootDisposable() {
     return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
   }
 
@@ -75,8 +87,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return relative path to the test data.
    */
-  @NonNls
-  protected String getBasePath() {
+  protected @NonNls String getBasePath() {
     return "";
   }
 
@@ -85,12 +96,11 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return absolute path to the test data.
    */
-  @NonNls
-  protected String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
-  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {}
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception { }
 
   protected Project getProject() {
     return myFixture.getProject();

@@ -5,10 +5,12 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -36,7 +38,6 @@ import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.serviceContainer.ComponentManagerImpl
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -96,7 +97,7 @@ open class TextEditorImpl @Internal constructor(
         try {
           val customizer = extension.instance ?: continue
           val scope = asyncLoader.coroutineScope.childScope(extension.implementationClassName)
-          scope.attachAsChildTo((project as ComponentManagerImpl).pluginCoroutineScope(customizer::class.java.classLoader))
+          scope.attachAsChildTo((project as ComponentManagerEx).pluginCoroutineScope(customizer::class.java.classLoader))
           scope.launch {
             customizer.execute(textEditor = this@TextEditorImpl)
           }
@@ -116,7 +117,7 @@ open class TextEditorImpl @Internal constructor(
   companion object {
     @Internal
     fun getDocumentLanguage(editor: Editor): Language? {
-      val project = editor.project!!
+      val project = editor.project ?: return LanguageUtil.getFileTypeLanguage(editor.virtualFile.fileType)
       if (project.isDisposed) {
         logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: ${project.name}")
         return null
@@ -272,4 +273,9 @@ fun createEditorImpl(project: Project, file: VirtualFile, asyncLoader: AsyncEdit
   return (EditorFactory.getInstance() as EditorFactoryImpl).createMainEditor(document = document, project = project, file = file, highlighter = null, afterCreation = {
     it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
   }) to asyncLoader
+}
+
+@Internal
+fun TextEditorImpl.performWhenLoaded(action: () -> Unit) {
+  AsyncEditorLoader.performWhenLoaded(asyncLoader, action)
 }

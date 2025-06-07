@@ -31,13 +31,12 @@ public final class ModifierListUtil {
   public static @Nullable PsiModifierList createSortedModifierList(@NotNull PsiModifierList modifierList,
                                                                    @Nullable Comparator<? super PsiAnnotation> customAnnotationComparator,
                                                                    boolean allowAnnotationTypeBeInAnyAllowedPlace) {
-    @NonNls final String text = String.join(" ", getSortedModifiers(modifierList, customAnnotationComparator, allowAnnotationTypeBeInAnyAllowedPlace));
+    final @NonNls String text = String.join(" ", getSortedModifiers(modifierList, customAnnotationComparator, allowAnnotationTypeBeInAnyAllowedPlace));
     return createNewModifierList(modifierList, text);
   }
 
 
-  @Nullable
-  private static PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
+  private static @Nullable PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
     PsiElement parent = oldModifierList.getParent();
     if (parent instanceof PsiRequiresStatement) {
@@ -131,7 +130,7 @@ public final class ModifierListUtil {
    */
   public static class ModifierComparator implements Comparator<String> {
 
-    @NonNls private static final String[] s_modifierOrder =
+    private static final @NonNls String[] s_modifierOrder =
       {
         PsiModifier.PUBLIC,
         PsiModifier.PROTECTED,

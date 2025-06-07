@@ -62,6 +62,7 @@ public final class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodS
         return newMethod;
     }
 
+    @Override
     public String toString() {
         return "After equals/hashCode";
     }

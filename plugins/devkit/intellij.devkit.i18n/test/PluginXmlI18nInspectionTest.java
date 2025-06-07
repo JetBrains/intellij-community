@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.notification.impl.NotificationGroupEP;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -14,7 +15,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/pluginXmlI18n")
 public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase {
@@ -28,8 +28,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
-      .resolveSibling("intellij.platform.resources").toString());
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/defaultFileTypes.xml"));
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
     moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
   }

@@ -94,7 +94,7 @@ interface I2 {
 
 //IDEA-9321
 abstract class MyMap<K, V> implements java.util.Map<K, V> {
-    public  <error descr="'put(K, V)' in 'MyMap' clashes with 'put(K, V)' in 'java.util.Map'; attempting to use incompatible return type">Object</error> put(K key, V value) {
+    public  <error descr="'put(K, V)' in 'MyMap' clashes with 'put(K, V)' in 'java.util.Map'; incompatible return type">Object</error> put(K key, V value) {
         return null;
     }
 }

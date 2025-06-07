@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.hints;
 
@@ -185,6 +185,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/NestedClassWithoutImport.kt");
     }
 
+    @TestMetadata("ParameterNamesInFunctionTypes.kt")
+    public void testParameterNamesInFunctionTypes() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterNamesInFunctionTypes.kt");
+    }
+
     @TestMetadata("ParameterType.kt")
     public void testParameterType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterType.kt");
@@ -208,6 +213,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/SAMConstructor.kt");
+    }
+
+    @TestMetadata("SuspendFunctionalType.kt")
+    public void testSuspendFunctionalType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/SuspendFunctionalType.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")

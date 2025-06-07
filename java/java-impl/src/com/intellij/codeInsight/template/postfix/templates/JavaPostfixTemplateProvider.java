@@ -71,7 +71,14 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new SwitchStatementPostfixTemplate(),
     new TryStatementPostfixTemplate(),
     new TryWithResourcesPostfixTemplate(),
-    new StreamPostfixTemplate()
+    new StreamPostfixTemplate(),
+
+    new AsListToListPostfixTemplate(this),
+    new ListOfToListPostfixTemplate(this),
+    new NewArrayListToListPostfixTemplate(this),
+    new NewHashSetToSetPostfixTemplate(this),
+    new LocalDateToJavaSqlDatePostfixTemplate(this),
+    new JavaUtilDateToLocalDatePostfixTemplate(this)
   );
 
   @Override
@@ -172,6 +179,9 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     String id = condition.getAttributeValue(PostfixTemplateExpressionCondition.ID_ATTR);
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();
+    }
+    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition.ID.equals(id)) {
+      return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition();
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition();

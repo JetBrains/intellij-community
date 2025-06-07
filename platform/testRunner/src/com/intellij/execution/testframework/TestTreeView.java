@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -53,8 +53,7 @@ public abstract class TestTreeView extends Tree implements UiCompatibleDataProvi
     return myModel;
   }
 
-  @Nullable
-  public AbstractTestProxy getSelectedTest() {
+  public @Nullable AbstractTestProxy getSelectedTest() {
     TreePath[] paths = getSelectionPaths();
     if (paths != null && paths.length > 1) return null;
     final TreePath selectionPath = getSelectionPath();

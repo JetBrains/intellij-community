@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.parser;
 
 import com.intellij.lang.ASTNode;
@@ -22,60 +22,51 @@ import org.jetbrains.annotations.NotNull;
 public class MarkdownParserDefinition implements ParserDefinition {
   public static final IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = new MarkdownFileElementType();
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new MarkdownToplevelLexer();
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new MarkdownParserAdapter();
   }
 
-  @NotNull
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return MARKDOWN_FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return MarkdownTokenTypeSets.WHITE_SPACES;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     return type instanceof MarkdownStubElementType
            ? ((MarkdownStubElementType<?, ?>)type).createElement(node)
            : MarkdownPsiFactory.createElement(node);
   }
 
-  @NotNull
   @Override
-  public PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return MarkdownFlavourUtil.createMarkdownFile(viewProvider);
   }
 
-  @NotNull
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

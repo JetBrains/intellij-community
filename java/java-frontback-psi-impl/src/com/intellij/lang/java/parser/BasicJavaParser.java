@@ -1,33 +1,31 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 @ApiStatus.Experimental
-abstract public class BasicJavaParser {
+public abstract class BasicJavaParser {
 
-  @NotNull
-  abstract public BasicFileParser getFileParser();
+  public abstract @NotNull BasicFileParser getFileParser();
 
-  @NotNull
-  abstract public BasicModuleParser getModuleParser();
+  public abstract @NotNull BasicModuleParser getModuleParser();
 
-  @NotNull
-  abstract public BasicDeclarationParser getDeclarationParser();
+  public abstract @NotNull BasicDeclarationParser getDeclarationParser();
 
-  @NotNull
-  abstract public BasicStatementParser getStatementParser();
+  public abstract @NotNull BasicStatementParser getStatementParser();
 
-  @NotNull
-  abstract public BasicExpressionParser getExpressionParser();
+  public abstract @NotNull BasicExpressionParser getExpressionParser();
 
-  @NotNull
-  abstract public BasicReferenceParser getReferenceParser();
+  public abstract @NotNull BasicReferenceParser getReferenceParser();
 
-  @NotNull
-  abstract public BasicPatternParser getPatternParser();
+  public abstract @NotNull BasicPatternParser getPatternParser();
 
-  abstract public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory();
+  public abstract AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory();
 }

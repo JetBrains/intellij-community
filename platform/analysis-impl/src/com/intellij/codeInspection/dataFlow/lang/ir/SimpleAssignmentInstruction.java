@@ -36,6 +36,7 @@ public class SimpleAssignmentInstruction extends ExpressionPushingInstruction {
     DfaValue value = stateBefore.pop();
     interpreter.getListener().beforeAssignment(value, myDestination, stateBefore, getDfaAnchor());
     stateBefore.setVarValue(myDestination, value);
+    interpreter.getListener().afterAssignment(value, myDestination, stateBefore, getDfaAnchor());
     pushResult(interpreter, stateBefore, myDestination);
     return nextStates(interpreter, stateBefore);
   }

@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileTypeEditor;
 import com.intellij.lang.Commenter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
-import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
+public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType,
                                                                                 CustomSyntaxTableFileType, PlainTextLikeFileType, AbstractFileTypeBase {
   private static final String SEMICOLON = ";";
   private @NotNull SyntaxTable mySyntaxTable;

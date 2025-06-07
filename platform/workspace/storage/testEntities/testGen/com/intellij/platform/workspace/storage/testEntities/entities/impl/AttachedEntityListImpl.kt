@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -27,12 +26,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityL
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class AttachedEntityListImpl(private val dataSource: AttachedEntityListData) : AttachedEntityList, WorkspaceEntityBase(
-  dataSource) {
+internal class AttachedEntityListImpl(private val dataSource: AttachedEntityListData) : AttachedEntityList,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val REF_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityList::class.java, AttachedEntityList::class.java,
-                                                                       ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val REF_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(MainEntityList::class.java, AttachedEntityList::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       REF_CONNECTION_ID,
@@ -60,8 +59,8 @@ internal class AttachedEntityListImpl(private val dataSource: AttachedEntityList
   }
 
 
-  internal class Builder(result: AttachedEntityListData?) : ModifiableWorkspaceEntityBase<AttachedEntityList, AttachedEntityListData>(
-    result), AttachedEntityList.Builder {
+  internal class Builder(result: AttachedEntityListData?) :
+    ModifiableWorkspaceEntityBase<AttachedEntityList, AttachedEntityListData>(result), AttachedEntityList.Builder {
     internal constructor() : this(AttachedEntityListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -197,7 +196,8 @@ internal class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityList") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityList"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

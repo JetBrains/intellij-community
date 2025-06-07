@@ -3,9 +3,7 @@ package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.isTrusted
-import com.intellij.ide.impl.setTrusted
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -14,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager
@@ -27,7 +24,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun canBrowse(project: Project?, uri: String): Boolean {
-    if (project == null || project.isTrusted()) {
+    if (project == null || TrustedProjects.isProjectTrusted(project)) {
       return true
     }
     val yesLabel = IdeBundle.message("external.link.confirmation.yes.label")
@@ -42,19 +39,18 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
       .show(project)
     when (answer) {
       yesLabel -> return true
-      trustLabel -> { project.setTrusted(true); return true }
+      trustLabel -> { TrustedProjects.setProjectTrusted(project, true); return true }
       else -> return false
     }
   }
 
   override fun signUrl(url: String): String {
     val parsedUrl = Urls.parse(url, false)
-    val serverManager = BuiltInServerManager.getInstance()
-    if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
-      if (Registry.`is`("ide.built.in.web.server.activatable", false)) {
-        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true)
+    if (parsedUrl != null) {
+      val serverManager = BuiltInServerManager.getInstance()
+      if (serverManager.isOnBuiltInWebServer(parsedUrl)) {
+        return serverManager.addAuthToken(parsedUrl).toExternalForm()
       }
-      return serverManager.addAuthToken(parsedUrl).toExternalForm()
     }
     return url
   }
@@ -70,15 +66,20 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun showError(message: @NotificationContent String?, project: Project?, browser: WebBrowser?, retry: (() -> Unit)?) {
+    val title = IdeBundle.message(if (retry != null) "notification.title.browser.config.problem" else "notification.title.cannot.open")
     val content = message ?: IdeBundle.message("unknown.error")
-    Notification("BrowserCfgProblems", IdeBundle.message("notification.title.browser.config.problem"), content, NotificationType.WARNING)
-      .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("button.fix")) {
-        val browserSettings = BrowserSettings()
-        val initializer = browser?.let { Runnable { browserSettings.selectBrowser(it) } }
-        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, initializer)) {
-          retry?.invoke()
+    Notification("BrowserCfgProblems", title, content, NotificationType.WARNING)
+      .apply {
+        if (retry != null) {
+          addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("button.fix")) {
+            val browserSettings = BrowserSettings()
+            val initializer = browser?.let { Runnable { browserSettings.selectBrowser(it) } }
+            if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, initializer)) {
+              retry.invoke()
+            }
+          })
         }
-      })
+      }
       .notify(project)
   }
 }

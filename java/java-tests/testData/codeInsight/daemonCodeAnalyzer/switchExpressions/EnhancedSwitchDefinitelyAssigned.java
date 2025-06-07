@@ -69,7 +69,7 @@ class C {
 
 
   static class FinalFieldAssignedInSomeBranches {
-    <error descr="Variable 'n' might not have been initialized">final int n</error>;
+    <error descr="Field 'n' might not have been initialized">final int n</error>;
     {
       switch ((int)Math.random()) {
         case 1 -> n = 1;
@@ -79,7 +79,7 @@ class C {
   }
 
   static class FinalFieldAssignedInSomeBranchesNoDefault {
-    <error descr="Variable 'n' might not have been initialized">final int n</error>;
+    <error descr="Field 'n' might not have been initialized">final int n</error>;
     {
       switch ((int)Math.random()) {
         case 1 -> n = 1;

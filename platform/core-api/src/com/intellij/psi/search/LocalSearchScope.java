@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.lang.LanguageMatcher;
@@ -243,6 +243,7 @@ public class LocalSearchScope extends SearchScope {
     return false;
   }
 
+  /** @see PsiSearchScopeUtil#restrictScopeTo(SearchScope, FileType...) */
   @Contract(pure = true)
   public static @NotNull LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
@@ -271,7 +272,7 @@ public class LocalSearchScope extends SearchScope {
       return EMPTY;
     }
     return ReadAction.compute(() -> {
-      List<PsiElement> result = ContainerUtil.filter(
+      List<? extends PsiElement> result = ContainerUtil.filter(
         scope.getScope(),
         element -> matcher.matchesLanguage(element.getContainingFile().getLanguage())
       );

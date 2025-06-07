@@ -13,17 +13,31 @@ internal annotation class LcrDslMarker
  * Covers the most common kinds of renderers and provides all necessary functionality:
  *
  * * Rectangular selection and correct insets for old UI
- * * Rounded selection, correct insets and height for new UI
+ * * Rounded selection (including multi-selection), correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
  * * Uses gray text and icons in disabled state
  * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default, it is concatenation of accessible names of all visible cells
+ * * Supports `Copy` feature for selected item(-s)
+ * * Supports `Search` feature in the settings dialog (can be used from search everywhere as well)
  *
  * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
   return UiDslRendererProvider.getInstance().getLcrRenderer(init)
+}
+
+@ApiStatus.Internal
+fun <T> listCellRenderer(nullValue: @Nls String, init: LcrRow<T>.() -> Unit): ListCellRenderer<T?> {
+  return listCellRenderer {
+    if (value == null) {
+      text(nullValue)
+    } else {
+      @Suppress("UNCHECKED_CAST")
+      (this as LcrRow<T>).init()
+    }
+  }
 }
 
 /**
@@ -32,6 +46,19 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
 fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
     text(textExtractor(value) ?: "")
+  }
+}
+
+@ApiStatus.Internal
+fun <T> textListCellRenderer(nullValue: @Nls String, textExtractor: (T) -> @Nls String?): ListCellRenderer<T?> {
+  return listCellRenderer {
+    val value = value
+    if (value == null) {
+      text(nullValue)
+    }
+    else {
+      text(textExtractor(value) ?: nullValue)
+    }
   }
 }
 

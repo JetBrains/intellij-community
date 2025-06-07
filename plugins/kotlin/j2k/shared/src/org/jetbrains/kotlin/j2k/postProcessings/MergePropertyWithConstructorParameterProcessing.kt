@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k.postProcessings
 
@@ -19,13 +19,13 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIEL
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
-import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.j2k.resolve
-import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
+import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.descendantsOfType
+import org.jetbrains.kotlin.nj2k.escaped
+import org.jetbrains.kotlin.nj2k.getExplicitLabelComment
+import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.asAssignment
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val ktElement = elements.firstIsInstanceOrNull<KtElement>() ?: return
         val context = runReadAction {
             allowAnalysisOnEdt {
@@ -62,19 +62,19 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         }
     }
 
-    context(KaSession)
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         val context = prepareContext(elements)
         return Applier(context)
     }
 
-    context(KaSession)
     private fun prepareContext(elements: List<PsiElement>): Map<KtClass, List<Initialization<*>>> {
         val context = mutableMapOf<KtClass, List<Initialization<*>>>()
 
         for (klass in elements.descendantsOfType<KtClass>()) {
-            val initializations = collectPropertyInitializations(klass)
-            context[klass] = initializations
+            analyze(klass) {
+                val initializations = collectPropertyInitializations(klass)
+                context[klass] = initializations
+            }
         }
 
         return context
@@ -109,7 +109,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
                     val parameter = rightSide.asParameter() ?: return false
                     if (!property.isSameTypeAs(parameter)) return false
                     usedParameters += parameter
-                    val references = ReferencesSearch.search(parameter, LocalSearchScope(parameter.containingKtFile)).toList()
+                    val references = ReferencesSearch.search(parameter, LocalSearchScope(parameter.containingKtFile)).asIterable().toList()
                     initializations += ConstructorParameterInitialization(property, parameter, assignment, references)
                 }
 

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.StubBasedPsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +13,8 @@ public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase 
   private static final Key<Boolean> DANGLING_STUB = Key.create("DIRECT_PARENT_IS_STUBBED");
 
   protected final T myParent;
-  int id;
+  @ApiStatus.Internal
+  public int id;
 
   public ObjectStubBase(T parent) {
     myParent = parent;
@@ -38,8 +26,8 @@ public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase 
   }
 
   /**
-   * @return whether the parent stub is not immediate, i.e. doesn't correspond to the actual AST parent node. In this case,
-   * {@link StubBasedPsiElement#getParent()} should switch to AST.
+   * @return whether the parent stub is not immediate, i.e., doesn't correspond to the actual AST parent node.
+   * In this case, {@link StubBasedPsiElement#getParent()} should switch to AST.
    */
   public boolean isDangling() {
     return Boolean.TRUE.equals(getUserData(DANGLING_STUB));

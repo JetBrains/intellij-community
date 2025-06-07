@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public final class ConfigFileMetaData {
   private static final Logger LOG = Logger.getInstance(ConfigFileMetaData.class);
-  @Nls private final String myTitle;
+  private final @Nls String myTitle;
   private final String myId;
   private final String myFileName;
   private final String myDirectoryPath;
@@ -21,7 +21,7 @@ public final class ConfigFileMetaData {
   private final boolean myFileNameFixed;
   private final boolean myUnique;
 
-  public ConfigFileMetaData(@Nls final String title,
+  public ConfigFileMetaData(final @Nls String title,
                             final @NonNls String id,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
@@ -54,8 +54,7 @@ public final class ConfigFileMetaData {
     this(title, fileName, fileName, directoryPath, versions, defaultVersion, optional, fileNameFixed, unique);
   }
 
-  @Nls
-  public String getTitle() {
+  public @Nls String getTitle() {
     return myTitle;
   }
 
@@ -63,8 +62,7 @@ public final class ConfigFileMetaData {
     return myId;
   }
 
-  @NlsSafe
-  public String getFileName() {
+  public @NlsSafe String getFileName() {
     return myFileName;
   }
 
@@ -80,6 +78,7 @@ public final class ConfigFileMetaData {
     return versions;
   }
 
+  @Override
   public String toString() {
     return myTitle;
   }

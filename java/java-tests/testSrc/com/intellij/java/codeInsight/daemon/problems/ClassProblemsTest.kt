@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -125,7 +126,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
     doTest(targetClass) {
       changeClass(targetClass) { psiClass, factory ->
         val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier, PsiKeyword::class.java)
-        val interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
+        val interfaceKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
         classKeyword?.replace(interfaceKeyword)
       }
       assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))

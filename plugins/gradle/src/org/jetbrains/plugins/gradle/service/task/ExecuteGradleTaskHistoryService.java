@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.intellij.openapi.components.*;
@@ -26,8 +26,7 @@ public final class ExecuteGradleTaskHistoryService implements PersistentStateCom
     return project.getService(ExecuteGradleTaskHistoryService.class);
   }
 
-  @Nullable
-  public String getCanceledCommand() {
+  public @Nullable String getCanceledCommand() {
     return myCanceledCommand;
   }
 
@@ -40,7 +39,7 @@ public final class ExecuteGradleTaskHistoryService implements PersistentStateCom
 
     command = command.trim();
 
-    if (command.length() == 0) return;
+    if (command.isEmpty()) return;
 
     myHistory.remove(command);
     myHistory.addFirst(command);
@@ -54,8 +53,7 @@ public final class ExecuteGradleTaskHistoryService implements PersistentStateCom
     return new ArrayList<>(myHistory);
   }
 
-  @NotNull
-  public String getWorkDirectory() {
+  public @NotNull String getWorkDirectory() {
     return myWorkDirectory;
   }
 

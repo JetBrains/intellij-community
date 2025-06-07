@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels
 
-import com.intellij.ui.components.panels.ListLayout.Axis
 import com.intellij.ui.components.panels.ListLayout.Companion.getDeltaFactor
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue

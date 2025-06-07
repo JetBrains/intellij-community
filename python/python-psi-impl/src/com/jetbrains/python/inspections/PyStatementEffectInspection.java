@@ -37,9 +37,8 @@ import java.util.List;
 
 public final class PyStatementEffectInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -155,15 +154,14 @@ public final class PyStatementEffectInspection extends PyInspection {
       else if (expression instanceof PyPrefixExpression prefixExpr) {
         return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
-      else if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+      else if (expression instanceof PyEllipsisLiteralExpression) {
         return true;
       }
       return false;
     }
   }
 
-  @NotNull
-  private static List<LocalQuickFix> getQuickFixesFromExtensions(@NotNull PyExpressionStatement expressionStatement) {
+  private static @NotNull List<LocalQuickFix> getQuickFixesFromExtensions(@NotNull PyExpressionStatement expressionStatement) {
     return ContainerUtil.mapNotNull(PyStatementEffectQuickFixProvider.EP_NAME.getExtensionList(),
                                     extension -> extension.getQuickFix(expressionStatement));
   }

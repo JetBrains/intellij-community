@@ -1,30 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.fs.EelFileSystemApiKt;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitConfigurationCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,7 +61,6 @@ public class GitExecutableDetector {
     "/Library/Preferences/com.apple.dt.Xcode"
   };
 
-  private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
 
   private static final @NonNls String UNIX_EXECUTABLE = "git";
@@ -65,34 +71,54 @@ public class GitExecutableDetector {
     AppExecutorUtil.createBoundedScheduledExecutorService("GitExecutableDetector WSL thread", 1);
 
   private final @NotNull Object DETECTED_EXECUTABLE_LOCK = new Object();
-  private final @NotNull AtomicReference<DetectedPath> myEnvExecutable = new AtomicReference<>();
-  private final @NotNull AtomicReference<DetectedPath> mySystemExecutable = new AtomicReference<>();
-  private final @NotNull Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
+  private final @NotNull AtomicReference<DetectionResult> myEnvExecutable = new AtomicReference<>();
+  private final @NotNull AtomicReference<DetectionResult> mySystemExecutable = new AtomicReference<>();
+  private final @NotNull Map<WSLDistribution, DetectionResult> myWslExecutables = new ConcurrentHashMap<>();
   private volatile boolean myWslDistributionsProcessed;
 
+  /**
+   * Default choice if detection failed - just an executable name to be resolved by $PATH.
+   */
+  public static @NotNull String getDefaultExecutable() {
+    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+  }
 
-  public @Nullable String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
-    if (detectIfNeeded) {
-      return detect(projectWslDistribution);
+  private static @Nullable WSLDistribution findWslDistributionIfAny(@Nullable Project project, @Nullable Path gitDirectory) {
+    if (gitDirectory != null) {
+      return WslPath.getDistributionByWindowsUncPath(gitDirectory.toString());
+    }
+    if (project != null && project.getBasePath() != null) {
+      return WslPath.getDistributionByWindowsUncPath(project.getBasePath());
+    }
+    return null;
+  }
+
+  public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit) {
+    Path pathToGitParsed = Path.of(pathToGit);
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed);
+
+    if (eel != null && pathToGitParsed.isAbsolute()) {
+      return new GitExecutable.Eel(EelNioBridgeServiceKt.asEelPath(pathToGitParsed).toString(), eel);
+    }
+
+    WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
+    if (wslPath != null) {
+      return new GitExecutable.Wsl(wslPath.getLinuxPath(), wslPath.getDistribution());
+    }
+
+    return new GitExecutable.Local(pathToGit);
+  }
+
+  public @Nullable String getExecutable(@Nullable Project project, @Nullable Path gitDirectory, boolean detectIfNeeded) {
+    List<Detector> detectors = collectDetectors(project, gitDirectory);
+    String detectedPath = getExecutable(detectors);
+    if (detectedPath != null || !detectIfNeeded) {
+      return detectedPath;
     }
     else {
-      return getCachedExecutable(projectWslDistribution);
+      return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"),
+                                        () -> detectExecutable(detectors));
     }
-  }
-
-  private @Nullable String getCachedExecutable(@Nullable WSLDistribution projectWslDistribution) {
-    List<Detector> detectors = collectDetectors(projectWslDistribution);
-    return getExecutable(detectors);
-  }
-
-  public @NotNull String detect(@Nullable WSLDistribution distribution) {
-    List<Detector> detectors = collectDetectors(distribution);
-
-    String detectedPath = getExecutable(detectors);
-    if (detectedPath != null) return detectedPath;
-
-    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"),
-                                    () -> detectExecutable(detectors));
   }
 
   @RequiresBackgroundThread
@@ -101,23 +127,23 @@ public class GitExecutableDetector {
     boolean fireEvent = false;
     synchronized (DETECTED_EXECUTABLE_LOCK) {
       for (Detector detector : detectors) {
-        DetectedPath detectedPath = detector.getPath();
-        if (detectedPath == null) {
+        DetectionResult detectionResult = detector.getPath();
+        if (detectionResult == null) {
           detector.runDetection();
           fireEvent = true;
 
-          detectedPath = detector.getPath();
+          detectionResult = detector.getPath();
         }
 
-        if (detectedPath != null && detectedPath.path != null) {
-          path = detectedPath.path;
+        if (detectionResult != null && detectionResult.detectedPath != null) {
+          path = detectionResult.detectedPath;
           break;
         }
       }
     }
 
     if (fireEvent) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+      fireExecutableChanged();
     }
 
     if (path != null) return path;
@@ -130,8 +156,14 @@ public class GitExecutableDetector {
       myEnvExecutable.set(null);
       mySystemExecutable.set(null);
       myWslExecutables.clear();
+      GitEelExecutableDetectionHelper.getInstance().dropCache();
       myWslDistributionsProcessed = false;
     }
+    fireExecutableChanged();
+  }
+
+  static void fireExecutableChanged() {
+    GitConfigurationCache.getInstance().clearCache();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
@@ -140,45 +172,83 @@ public class GitExecutableDetector {
    */
   private static @Nullable String getExecutable(@NotNull List<Detector> detectors) {
     for (Detector detector : detectors) {
-      DetectedPath path = detector.getPath();
+      DetectionResult path = detector.getPath();
       if (path == null) return null; // not detected yet
-      if (path.path != null) return path.path;
+      if (path.detectedPath != null) return path.detectedPath;
     }
     return getDefaultExecutable();
   }
 
-  public @NotNull List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
+  private static boolean supportWslExecutable() {
+    return WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
+  }
+
+  private @NotNull List<Detector> collectDetectors(@Nullable Project project, @Nullable Path gitDirectory) {
     List<Detector> detectors = new ArrayList<>();
-    if (projectWslDistribution != null &&
-        GitExecutableManager.supportWslExecutable()) {
+
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, gitDirectory);
+    if (eel != null) {
+      final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
+      assert path != null;
+      detectors.add(new EelBasedDetector(eel, path));
+      return detectors;
+    }
+
+    var projectWslDistribution = findWslDistributionIfAny(project, gitDirectory);
+    if (projectWslDistribution != null && supportWslExecutable()) {
       detectors.add(new WslDetector(projectWslDistribution));
     }
 
     detectors.add(new EnvDetector());
-    detectors.add(new SystemPathDetector());
+    if (SystemInfo.isWindows) {
+      detectors.add(new WinSystemPathDetector());
+    }
+    else {
+      detectors.add(new UnixSystemPathDetector());
+    }
 
-    if (projectWslDistribution == null &&
-        GitExecutableManager.supportWslExecutable() &&
-        Registry.is("git.detect.wsl.executables")) {
+    if (projectWslDistribution == null && supportWslExecutable() && Registry.is("git.detect.wsl.executables")) {
       detectors.add(new GlobalWslDetector());
     }
 
     return detectors;
   }
 
-
   private interface Detector {
     /**
      * @return 'null' if detection was not completed yet.
      */
-    @Nullable DetectedPath getPath();
+    @Nullable DetectionResult getPath();
 
     void runDetection();
   }
 
+  private static class EelBasedDetector implements Detector {
+    private final EelApi myEelApi;
+    private final String myRootDir;
+
+    EelBasedDetector(@NotNull final EelApi eelApi, @NotNull final String path) {
+      myEelApi = eelApi;
+      myRootDir = path;
+    }
+
+    @Override
+    public @Nullable DetectionResult getPath() {
+      String detectedPath = GitEelExecutableDetectionHelper.getInstance().getExecutablePathIfReady(myEelApi, myRootDir);
+      if (detectedPath == null) return null;
+      return new DetectionResult(detectedPath);
+    }
+
+    @Override
+    public void runDetection() {
+      // start computing and wait
+      GitEelExecutableDetectionHelper.getInstance().getExecutablePathBlocking(myEelApi, myRootDir);
+    }
+  }
+
   private class EnvDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return myEnvExecutable.get();
     }
 
@@ -187,20 +257,162 @@ public class GitExecutableDetector {
       String executableName = SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
       File executableFromEnv = PathEnvironmentVariableUtil.findInPath(executableName, getPathEnv(), null);
       String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
-      myEnvExecutable.set(new DetectedPath(path));
+      myEnvExecutable.set(new DetectionResult(path));
     }
   }
 
-  private class SystemPathDetector implements Detector {
+  private class UnixSystemPathDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return mySystemExecutable.get();
     }
 
     @Override
     public void runDetection() {
-      String executable = SystemInfo.isWindows ? detectForWindows() : detectForUnix();
-      mySystemExecutable.set(new DetectedPath(executable));
+      String executable = detectForUnix();
+      mySystemExecutable.set(new DetectionResult(executable));
+    }
+
+    private static @Nullable String detectForUnix() {
+      for (String p : UNIX_PATHS) {
+        File f = new File(p, UNIX_EXECUTABLE);
+        if (f.exists()) {
+          return f.getPath();
+        }
+      }
+      return null;
+    }
+  }
+
+  private class WinSystemPathDetector implements Detector {
+    @Override
+    public @Nullable DetectionResult getPath() {
+      return mySystemExecutable.get();
+    }
+
+    @Override
+    public void runDetection() {
+      String executable = detectForWindows();
+      mySystemExecutable.set(new DetectionResult(executable));
+    }
+
+    private @Nullable String detectForWindows() {
+      String exec = checkProgramFiles();
+      if (exec != null) {
+        return exec;
+      }
+
+      exec = checkAppLocal();
+      if (exec != null) {
+        return exec;
+      }
+
+      exec = checkCygwin();
+      if (exec != null) {
+        return exec;
+      }
+
+      return null;
+    }
+
+    private @Nullable String checkProgramFiles() {
+      File winRootInTests = getWinRootInTests();
+      File winRoot = ObjectUtils.chooseNotNull(winRootInTests, new File("C:\\"));
+
+      String programFiles = System.getenv("PROGRAMFILES");
+      String programFilesX86 = System.getenv("PROGRAMFILES(X86)");
+
+      File programFilesFile = !StringUtil.isEmpty(programFiles) && winRootInTests == null ?
+                              new File(programFiles) :
+                              new File(winRoot, "Program Files");
+
+      File programFilesX86File = !StringUtil.isEmpty(programFilesX86) && winRootInTests == null ?
+                                 new File(programFilesX86) :
+                                 new File(winRoot, "Program Files (x86)");
+
+      List<File> dirsToCheck = List.of(programFilesFile, programFilesX86File);
+
+      // collecting all potential msys distributives
+      List<File> distrs = new ArrayList<>();
+      for (File dir : dirsToCheck) {
+        distrs.addAll(findGitDistrsIn(dir));
+      }
+
+      return getPreferredDistrExecutablePath(distrs);
+    }
+
+    private static @Nullable String checkAppLocal() {
+      String appLocal = System.getenv("LocalAppData");
+      if (StringUtil.isEmpty(appLocal)) return null;
+
+      File appLocalFile = new File(appLocal + "\\Programs");
+      List<File> dirsToCheck = List.of(appLocalFile);
+
+      // collecting all potential msys distributives
+      List<File> distrs = new ArrayList<>();
+      for (File dir : dirsToCheck) {
+        distrs.addAll(findGitDistrsIn(dir));
+      }
+
+      return getPreferredDistrExecutablePath(distrs);
+    }
+
+    private @Nullable String checkCygwin() {
+      File winRootInTests = getWinRootInTests();
+      File winRoot = ObjectUtils.chooseNotNull(winRootInTests, new File("C:\\"));
+
+      File defaultCygwinExe = new File(winRoot, "cygwin/bin/git.exe");
+
+      List<File> exeToCheck = List.of(defaultCygwinExe);
+
+      for (File file : exeToCheck) {
+        if (file.exists()) {
+          return file.getPath();
+        }
+      }
+      return null;
+    }
+
+    private static @NotNull List<File> findGitDistrsIn(@NotNull File dir) {
+      File[] children = dir.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
+      if (!dir.exists() || children == null) {
+        return Collections.emptyList();
+      }
+      return Arrays.asList(children);
+    }
+
+    private static @Nullable String getPreferredDistrExecutablePath(@NotNull List<File> distrs) {
+      // greater is better => sorting in the descending order to match the best version first, when iterating
+      distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
+
+      for (File distr : distrs) {
+        String exec = getDistrExecutablePath(distr);
+        if (exec != null) {
+          return exec;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * @param distr folder with git distribution, "C:\Program Files\Git"
+     */
+    private static @Nullable String getDistrExecutablePath(@Nullable File distr) {
+      if (distr == null || !distr.exists()) {
+        return null;
+      }
+
+      for (String binDirName : WIN_BIN_DIRS) {
+        File binDir = new File(distr, binDirName);
+        if (!binDir.exists()) continue;
+
+        File fe = new File(binDir, WIN_EXECUTABLE);
+        if (fe.exists()) {
+          return fe.getPath();
+        }
+      }
+
+      return null;
     }
   }
 
@@ -212,27 +424,27 @@ public class GitExecutableDetector {
     }
 
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return myWslExecutables.get(myDistribution);
     }
 
     @Override
     public void runDetection() {
       String result = checkWslDistributionSafe(myDistribution);
-      myWslExecutables.put(myDistribution, new DetectedPath(result));
+      myWslExecutables.put(myDistribution, new DetectionResult(result));
     }
   }
 
   private class GlobalWslDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       if (!myWslDistributionsProcessed) return null;
 
-      List<String> knownDistros = ContainerUtil.mapNotNull(myWslExecutables.values(), it -> it.path);
-      if (knownDistros.size() != 1) return new DetectedPath(null);
+      List<String> knownDistros = ContainerUtil.mapNotNull(myWslExecutables.values(), it -> it.detectedPath);
+      if (knownDistros.size() != 1) return new DetectionResult(null);
 
       String path = knownDistros.iterator().next();
-      return new DetectedPath(path);
+      return new DetectionResult(path);
     }
 
     @Override
@@ -240,91 +452,21 @@ public class GitExecutableDetector {
       List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
       for (WSLDistribution distribution : distributions) {
         String result = checkWslDistributionSafe(distribution);
-        myWslExecutables.put(distribution, new DetectedPath(result));
+        myWslExecutables.put(distribution, new DetectionResult(result));
       }
       myWslDistributionsProcessed = true;
     }
   }
 
-  private static class DetectedPath {
-    public final @Nullable String path;
+  private static class DetectionResult {
+    public final @Nullable String detectedPath;
 
-    private DetectedPath(@Nullable String path) {
-      this.path = path;
+    private DetectionResult(@Nullable String path) {
+      detectedPath = path;
     }
-  }
-
-  /**
-   * Default choice if detection failed - just an executable name to be resolved by $PATH.
-   */
-  public static @NotNull String getDefaultExecutable() {
-    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
-  }
-
-  private static @Nullable String detectForUnix() {
-    for (String p : UNIX_PATHS) {
-      File f = new File(p, UNIX_EXECUTABLE);
-      if (f.exists()) {
-        return f.getPath();
-      }
-    }
-    return null;
-  }
-
-  private @Nullable String detectForWindows() {
-    String exec = checkProgramFiles();
-    if (exec != null) {
-      return exec;
-    }
-
-    exec = checkCygwin();
-    if (exec != null) {
-      return exec;
-    }
-
-    return null;
-  }
-
-  private @Nullable String checkProgramFiles() {
-    final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
-
-    // collecting all potential msys distributives
-    List<File> distrs = new ArrayList<>();
-    for (String programFiles : PROGRAM_FILES) {
-      File pf = new File(getWinRoot(), programFiles);
-      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
-      if (!pf.exists() || children == null) {
-        continue;
-      }
-      distrs.addAll(Arrays.asList(children));
-    }
-
-    // greater is better => sorting in the descending order to match the best version first, when iterating
-    distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
-
-    for (File distr : distrs) {
-      String exec = checkDistributive(distr);
-      if (exec != null) {
-        return exec;
-      }
-    }
-    return null;
-  }
-
-  private @Nullable String checkCygwin() {
-    final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
-    for (String otherPath : OTHER_WINDOWS_PATHS) {
-      File file = new File(getWinRoot(), otherPath);
-      if (file.exists()) {
-        return file.getPath();
-      }
-    }
-    return null;
   }
 
   private static @Nullable String checkWslDistribution(@NotNull WSLDistribution distribution) {
-    if (distribution.getVersion() != 2) return null;
-
     Path root = distribution.getUNCRootPath();
     for (String p : UNIX_PATHS) {
       Path f = root.resolve(p).resolve(UNIX_EXECUTABLE);
@@ -351,35 +493,7 @@ public class GitExecutableDetector {
   }
 
   @VisibleForTesting
-  protected @NotNull File getWinRoot() {
-    return WIN_ROOT;
-  }
-
-  private static @Nullable String checkDistributive(@Nullable File gitDir) {
-    if (gitDir == null || !gitDir.exists()) {
-      return null;
-    }
-
-    for (String binDir : WIN_BIN_DIRS) {
-      String exec = checkBinDir(new File(gitDir, binDir));
-      if (exec != null) {
-        return exec;
-      }
-    }
-
-    return null;
-  }
-
-  private static @Nullable String checkBinDir(@NotNull File binDir) {
-    if (!binDir.exists()) {
-      return null;
-    }
-
-    File fe = new File(binDir, WIN_EXECUTABLE);
-    if (fe.exists()) {
-      return fe.getPath();
-    }
-
+  protected @Nullable File getWinRootInTests() {
     return null;
   }
 
@@ -388,37 +502,74 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  public static @Nullable String patchExecutablePath(@NotNull String path) {
-    if (SystemInfo.isWindows) {
-      File file = new File(path.trim());
-      if (file.getName().equals("git-cmd.exe") || file.getName().equals("git-bash.exe")) {
-        File patchedFile = new File(file.getParent(), "bin/git.exe");
-        if (patchedFile.exists()) return patchedFile.getPath();
+  static @Nullable String patchExecutablePath(@NotNull Project project, @NotNull String path) {
+    Boolean isWindows = null;
+    Path file = null;
+
+    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
+    if (eel != null) {
+      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+      file = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), path.trim()));
+    }
+
+    if (isWindows == null) {
+      isWindows = SystemInfo.isWindows;
+    }
+
+    if (file == null) {
+      file = Path.of(path.trim());
+    }
+
+    if (isWindows) {
+      if (file.getFileName().toString().equals("git-cmd.exe") || file.getFileName().toString().equals("git-bash.exe")) {
+        final var patchedFile = file.getParent().resolve("bin/git.exe");
+        if (Files.exists(patchedFile)) return patchedFile.toString();
       }
     }
+
     return null;
   }
 
+  public static @Nullable String getBashExecutablePath(@Nullable Project project, @NotNull String gitExecutable) {
+    Boolean isWindows = null;
+    Path gitFile = null;
+
+    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
+    if (eel != null) {
+      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+      gitFile = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), gitExecutable.trim()));
+    }
+
+    if (isWindows == null) {
+      isWindows = SystemInfo.isWindows;
+    }
+
+    if (gitFile == null) {
+      gitFile = Path.of(gitExecutable.trim());
+    }
+
+    if (!isWindows) return null;
+
+    final var gitDirFile = gitFile.getParent();
+    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getFileName().toString())) {
+      final var bashFile = gitDirFile.getParent().resolve("bin/bash.exe");
+      if (Files.exists(bashFile)) return bashFile.toString();
+    }
+
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link #getBashExecutablePath(Project, String)} instead
+   */
+  @Deprecated
   public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
-    if (!SystemInfo.isWindows) return null;
-
-    File gitFile = new File(gitExecutable.trim());
-    File gitDirFile = gitFile.getParentFile();
-    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getName())) {
-      File bashFile = new File(gitDirFile.getParentFile(), "bin/bash.exe");
-      if (bashFile.exists()) return bashFile.getPath();
-    }
-    return null;
+    return getBashExecutablePath(null, gitExecutable);
   }
 
-  public static @NotNull List<Path> getDependencyPaths(@NotNull Path executablePath) {
-    try {
-      if (SystemInfo.isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
-        return ContainerUtil.map(APPLEGIT_DEPENDENCY_PATHS, path -> Paths.get(path));
-      }
-    }
-    catch (InvalidPathException e) {
-      LOG.warn(e);
+  static @NotNull List<String> getDependencyPaths(@NotNull Path executablePath, @NotNull Boolean isMac) {
+    if (isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
+      return Arrays.stream(APPLEGIT_DEPENDENCY_PATHS).toList();
     }
     return Collections.emptyList();
   }

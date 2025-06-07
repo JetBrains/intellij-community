@@ -7,13 +7,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider.AvailabilityInfo
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider.ProviderInfo
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 @OptIn(ExperimentalJewelApi::class)
 private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
-
   override fun createHtmlPanel(): MarkdownHtmlPanel {
     return MarkdownComposePanel()
   }
@@ -23,11 +20,11 @@ private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
   }
 
   override fun isAvailable(): AvailabilityInfo {
-    if (Registry.`is`("markdown.experimental.use.compose.for.preview", false) && !AppMode.isRemoteDevHost()) {
+    if (Registry.`is`("enable.markdown.compose.preview.renderer.choice", false) && !AppMode.isRemoteDevHost()) {
       return AvailabilityInfo.AVAILABLE
     }
     return AvailabilityInfo.UNAVAILABLE
   }
 
-  override fun getProviderInfo() = ProviderInfo("Compose-based", ComposePanelProvider::class.java.name)
+  override fun getProviderInfo() = ProviderInfo("Compose (experimental)", ComposePanelProvider::class.java.name)
 }

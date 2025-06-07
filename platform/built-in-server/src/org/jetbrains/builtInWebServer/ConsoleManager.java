@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -20,15 +20,14 @@ import org.jetbrains.annotations.NotNull;
 public final class ConsoleManager {
   private ConsoleView console;
 
-  @NotNull
-  public ConsoleView getConsole(@NotNull NetService netService) {
+  public @NotNull ConsoleView getConsole(@NotNull NetService netService) {
     if (console == null) {
       createConsole(netService);
     }
     return console;
   }
 
-  private void createConsole(@NotNull final NetService netService) {
+  private void createConsole(final @NotNull NetService netService) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(netService.getProject());
     netService.configureConsole(consoleBuilder);
     console = consoleBuilder.getConsole();

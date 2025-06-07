@@ -6,15 +6,16 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.library.KotlinLibrary
 import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
@@ -60,6 +61,11 @@ fun ModuleId.toKaSourceModuleForTest(project: Project): KaSourceModule? =
  */
 fun ModuleId.toKaSourceModuleForProduction(project: Project): KaSourceModule? =
     toKaSourceModule(project, KaSourceModuleKind.PRODUCTION)
+
+
+fun ModuleEntity.toKaSourceModule(project: Project, kind: KaSourceModuleKind): KaSourceModule? =
+    project.ideProjectStructureProvider.getKaSourceModule(this, kind)
+
 
 /**
  * Converts the [ModuleId] to either a production or test [KaSourceModule].
@@ -123,13 +129,16 @@ fun Module.toKaSourceModuleForProductionOrTest(): KaSourceModule? {
 fun LibraryId.toKaLibraryModules(project: Project): List<KaLibraryModule> =
     project.ideProjectStructureProvider.getKaLibraryModules(this)
 
+fun LibraryEntity.toKaLibraryModules(project: Project): List<KaLibraryModule> =
+    project.ideProjectStructureProvider.getKaLibraryModules(this)
+
 val KaSourceModule.symbolicId: ModuleId
     get() = project.ideProjectStructureProvider.getKaSourceModuleSymbolId(this)
 
 val KaLibraryModule.symbolicId: LibraryId
     get() = project.ideProjectStructureProvider.getKaLibraryModuleSymbolicId(this)
 
-val KaSourceModule.sourceModuleKind: KaSourceModuleKind?
+val KaSourceModule.sourceModuleKind: KaSourceModuleKind
     get() = project.ideProjectStructureProvider.getKaSourceModuleKind(this)
 
 
@@ -214,20 +223,8 @@ inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project,
  * If a virtual file is not part of a project, an empty list is returned.
  * Thus, it never returns [org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule] as a result.
 */
-fun VirtualFile.getContainingKaModules(project: Project): List<KaModule> =
-project.ideProjectStructureProvider.getContainingKaModules(this)
+fun VirtualFile.getAssociatedKaModules(project: Project): List<KaModule> =
+    project.ideProjectStructureProvider.getAssociatedKaModules(this)
 
-
-/**
- * [forcedKaModule] provides a [KaModule] instance for a dummy file. It must not be changed after the first assignment because
- * [IDEProjectStructureProvider] might cache the module info.
- */
-var PsiFile.forcedKaModule: KaModule?
-    @ApiStatus.Internal
-    get() {
-        return project.ideProjectStructureProvider.getForcedKaModule(this)
-    }
-    @ApiStatus.Internal
-    set(value) {
-        project.ideProjectStructureProvider.setForcedKaModule(this, value)
-    }
+fun KaLibraryModule.getKotlinLibraries(project: Project): List<KotlinLibrary> =
+    project.ideProjectStructureProvider.getKotlinLibraries(this)

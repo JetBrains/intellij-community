@@ -11,14 +11,13 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class ShGenerateForLoop extends ShBaseGenerateAction {
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = TemplateSettings.getInstance().getTemplateById("shell_for");
     if (template == null) return;

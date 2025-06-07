@@ -205,7 +205,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
     val result = ItemPresentationImpl()
     result.renderer(item)
 
-    if (result.text.isNullOrEmpty()) {
+    if (result.text.isNullOrEmpty() && result.icon == null) {
       throw UiDslException("Empty text in segmented button presentation is not allowed")
     }
 

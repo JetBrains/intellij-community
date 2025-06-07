@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nls
 
 private const val PYCHARM_PRO_SUGGESTION_DISMISSED_KEY: String = "pycharm.pro.suggestion.dismissed"
 
-private val PACKAGES_TO_ADVERTISE = hashSetOf<String>("pytorch", "sklearn", "pandas",
-                                                      "numpy", "tensorflow", "keras",
-                                                      "torch", "matplotlib", "scipy",
-                                                      "cv2", "torchvision",
-                                                      "sqlalchemy", "seaborn", "django",
-                                                      "flask", "fastapi")
+private val PACKAGES_TO_ADVERTISE = hashSetOf("pytorch", "sklearn", "pandas",
+                                              "numpy", "tensorflow", "keras",
+                                              "torch", "matplotlib", "scipy",
+                                              "torchvision", "sqlalchemy",
+                                              "seaborn", "django",
+                                              "flask", "fastapi")
 
 
 internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
@@ -65,7 +65,7 @@ internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
 
   private fun isUntargetedIDE(): Boolean {
     val productCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-    return productCode == "PY" || productCode == "IU" || productCode == "DS"
+    return productCode == "PY" || productCode == "PC" || productCode == "IU" || productCode == "DS"
   }
 
   private fun isDismissed(): Boolean = PropertiesComponent.getInstance().isTrueValue(PYCHARM_PRO_SUGGESTION_DISMISSED_KEY)

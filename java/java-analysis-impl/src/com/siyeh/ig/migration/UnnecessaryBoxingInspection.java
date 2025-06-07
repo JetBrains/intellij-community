@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -23,7 +24,10 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -54,8 +58,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos.length == 0) {
       return InspectionGadgetsBundle.message("unnecessary.boxing.problem.descriptor");
     }
@@ -82,8 +85,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return name;
     }
 
@@ -137,10 +139,9 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpression(expression, replacementText, commentTracker);
     }
 
-    @Nullable
-    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
-                                                   @NotNull PsiExpression boxedExpression,
-                                                   CommentTracker commentTracker) {
+    private static @Nullable String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
+                                                             @NotNull PsiExpression boxedExpression,
+                                                             CommentTracker commentTracker) {
       final PsiType boxedType = boxedExpression.getType();
       if (boxedType == null) {
         return null;
@@ -234,8 +235,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final PsiExpression boxedExpression = arguments[0];
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls
-      final String referenceName = methodExpression.getReferenceName();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
         return;
       }
@@ -292,7 +292,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
         return true;
       }
       //if it is an enhanced switch, it must work only with objects (at least until JEP 455 or similar)
-      if (parent instanceof PsiSwitchBlock switchBlock && JavaPsiSwitchUtil.isEnhancedSwitch(switchBlock)) {
+      if (parent instanceof PsiSwitchBlock switchBlock && ExpressionUtil.isEnhancedSwitch(switchBlock)) {
         return true;
       }
       else if (parent instanceof PsiVariable) {

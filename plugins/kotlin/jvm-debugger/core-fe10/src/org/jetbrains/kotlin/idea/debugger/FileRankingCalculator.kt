@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
@@ -79,23 +79,23 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private suspend fun rankingForClass(clazz: KtClassOrObject, fqName: String, virtualMachine: VirtualMachine): Ranking {
-        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
+        val bindingContext = smartReadAction(readAction { clazz.project }) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         val jdiType = virtualMachine.classesByName(fqName).firstOrNull() ?: run {
             // Check at least the class name if not found
-            return readAction { rankingForClassName(fqName, descriptor, bindingContext) }
+            return readAction { rankingForClassName(fqName, descriptor) }
         }
 
         return rankingForClass(clazz, jdiType)
     }
 
     private suspend fun rankingForClass(clazz: KtClassOrObject, type: ReferenceType): Ranking {
-        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
+        val bindingContext = smartReadAction(readAction { clazz.project }) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         return collect(
-            readAction { rankingForClassName(type.name(), descriptor, bindingContext) },
+            readAction { rankingForClassName(type.name(), descriptor) },
             Ranking.minor(type.isAbstract && readAction { descriptor.modality } == Modality.ABSTRACT),
             Ranking.minor(type.isFinal && readAction { descriptor.modality } == Modality.FINAL),
             Ranking.minor(type.isStatic && readAction { !descriptor.isInner }),
@@ -103,10 +103,10 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         )
     }
 
-    private fun rankingForClassName(fqName: String, descriptor: ClassDescriptor, bindingContext: BindingContext): Ranking {
+    private fun rankingForClassName(fqName: String, descriptor: ClassDescriptor): Ranking {
         if (DescriptorUtils.isLocal(descriptor)) return ZERO
 
-        val expectedFqName = makeTypeMapper(bindingContext).mapType(descriptor).className
+        val expectedFqName = makeTypeMapper().mapType(descriptor.defaultType).className
         return when {
             checkClassFqName -> if (expectedFqName == fqName) MAJOR else LOW
             else -> if (expectedFqName.simpleName() == fqName.simpleName()) MAJOR else LOW
@@ -114,7 +114,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private suspend fun rankingForMethod(function: KtFunction, method: Method): Ranking {
-        val bindingContext = smartReadAction(function.project) { analyze(function) }
+        val bindingContext = smartReadAction(readAction { function.project }) { analyze(function) }
         val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, function] as? CallableMemberDescriptor ?: return ZERO
 
         if (function !is KtConstructor<*> && method.name() != descriptor.name.asString())
@@ -370,12 +370,10 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         return className to methodName
     }
 
-    private fun makeTypeMapper(bindingContext: BindingContext): KotlinTypeMapper {
+    private fun makeTypeMapper(): KotlinTypeMapper {
         return KotlinTypeMapper(
-            bindingContext,
-            ClassBuilderMode.LIGHT_CLASSES,
             "debugger",
-            KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT, // TODO use proper LanguageVersionSettings
+            LanguageVersionSettingsImpl.DEFAULT, // TODO use proper LanguageVersionSettings
             useOldInlineClassesManglingScheme = false
         )
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -9,23 +9,22 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 17)
+  internal val GROUP = EventLogGroup("vcs", 17)
 
   @JvmField
-  val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
+  internal val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
 
   @JvmField
-  val ANNOTATE_ACTIVITY = GROUP.registerIdeActivity("annotate",
+  internal val ANNOTATE_ACTIVITY = GROUP.registerIdeActivity("annotate",
                                                     finishEventAdditionalFields = arrayOf(ActionsEventLogGroup.CONTEXT_MENU,
                                                                                           EventFields.ActionPlace))
   val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
-  val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
+  internal val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 
   private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
   private val CHANGES_DELTA = EventFields.Int("changesDelta")
@@ -77,10 +76,6 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
       listOf(VCS_FIELD.with(vcs.name),
              IS_FULL_REFRESH_FIELD.with(everythingDirty))
     }
-  }
-
-  fun logNonModalCommitStateChanged(project: Project?) {
-    NON_MODAL_COMMIT_STATE_CHANGED.log(project, VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
   }
 
   private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

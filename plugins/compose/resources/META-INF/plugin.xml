@@ -1,0 +1,27 @@
+<idea-plugin package="com.intellij.compose.ide.plugin">
+  <id>com.intellij.compose</id>
+  <name>Compose Multiplatform</name>
+  <vendor>JetBrains</vendor>
+  <category>Kotlin Frameworks</category>
+  <description>
+    <![CDATA[
+      IDE support for developing <a href="https://www.jetbrains.com/compose-multiplatform/">Compose Multiplatform</a> and <a href="https://developer.android.com/compose">Jetpack Compose</a> applications.
+    ]]>
+  </description>
+
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin" />
+  </dependencies>
+
+  <content>
+    <module name="intellij.compose.ide.plugin.shared"/>
+    <module name="intellij.compose.ide.plugin.k1"/>
+    <module name="intellij.compose.ide.plugin.k2"/>
+    <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
+    <module name="intellij.compose.ide.plugin.resources"/>
+  </content>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
+</idea-plugin>

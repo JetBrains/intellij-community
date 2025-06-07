@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang
 
-import com.intellij.codeInsight.completion.CompletionExtension
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.mock.MockLanguageFileType
 import com.intellij.openapi.Disposable
@@ -20,7 +19,9 @@ import com.intellij.testFramework.registerExtension
 import com.intellij.util.KeyedLazyInstance
 
 class LanguageExtensionCacheTest : LightPlatformTestCase() {
+  @Suppress("UnresolvedPluginConfigReference")
   private val myExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testLangExt")
+  @Suppress("UnresolvedPluginConfigReference")
   private val myCompletionExtensionPointName = ExtensionPointName<KeyedLazyInstance<String>>("testCompletionExt")
 
   private val myExtensionPointXML = """
@@ -37,7 +38,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var area: ExtensionsAreaImpl
   private lateinit var extension: LanguageExtension<String>
-  private lateinit var completionExtension: CompletionExtension<String>
+  private lateinit var completionExtension: LanguageExtensionWithAny<String>
 
   override fun setUp() {
     super.setUp()
@@ -48,7 +49,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
       area.unregisterExtensionPoint(myCompletionExtensionPointName.name)
     })
     extension = LanguageExtension(myExtensionPointName, null)
-    completionExtension = CompletionExtension(myCompletionExtensionPointName.name)
+    completionExtension = LanguageExtensionWithAny(myCompletionExtensionPointName.name)
   }
 
   private fun registerExtension(extensionPointName: ExtensionPointName<KeyedLazyInstance<String>>,

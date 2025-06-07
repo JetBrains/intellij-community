@@ -45,8 +45,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
         return Integer.parseInt(getIndexNumberText());
     }
 
-    @NotNull
-    private String getIndexNumberText() {
+    private @NotNull String getIndexNumberText() {
         final ASTNode node = getNode().findChildByType(RegExpTT.NUMBER);
         if (node != null) {
             return node.getText();
@@ -60,13 +59,11 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                s.substring(1);
     }
 
-    @NotNull
-    private static String getPcreNumberedGroupIndexNumberText(String s) {
+    private static @NotNull String getPcreNumberedGroupIndexNumberText(String s) {
       return trimEnd(s, ")");
     }
 
-    @NotNull
-    private static String getPcreBackrefIndexNumberText(String s) {
+    private static @NotNull String getPcreBackrefIndexNumberText(String s) {
         return trimEnd(trimStart(s, "{"), "}");
     }
 
@@ -92,8 +89,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
           .first();
     }
 
-    @Nullable
-    private static RegExpGroup resolveRelativeGroup(int index, PsiFile file) {
+    private static @Nullable RegExpGroup resolveRelativeGroup(int index, PsiFile file) {
         List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(file)
           .filter(RegExpGroup.class)
           .filter(RegExpGroup::isCapturing)
@@ -105,20 +101,17 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
     public PsiReference getReference() {
         return new PsiReference() {
             @Override
-            @NotNull
-            public PsiElement getElement() {
+            public @NotNull PsiElement getElement() {
                 return RegExpBackrefImpl.this;
             }
 
             @Override
-            @NotNull
-            public TextRange getRangeInElement() {
+            public @NotNull TextRange getRangeInElement() {
                 return TextRange.from(0, getElement().getTextLength());
             }
 
             @Override
-            @NotNull
-            public String getCanonicalText() {
+            public @NotNull String getCanonicalText() {
                 return getElement().getText();
             }
 

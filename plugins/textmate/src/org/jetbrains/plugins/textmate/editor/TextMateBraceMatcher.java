@@ -44,9 +44,8 @@ public class TextMateBraceMatcher implements BraceMatcher {
     return false;
   }
 
-  @Nullable
   @Override
-  public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
+  public @Nullable IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
     return null;
   }
 
@@ -56,7 +55,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(@NotNull PsiFile psiFile, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

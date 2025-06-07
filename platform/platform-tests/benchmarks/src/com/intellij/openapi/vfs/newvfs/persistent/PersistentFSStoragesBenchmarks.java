@@ -2,10 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
-import com.intellij.util.io.StorageLockContext;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
-import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -42,8 +39,6 @@ import static org.openjdk.jmh.runner.options.TimeValue.seconds;
 public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;
-
-  public static final StorageLockContext CONTEXT = new StorageLockContext(true, true, true);
 
   private static final Unsafe UNSAFE;
   private static final long BYTE_BUFFER_ADDRESS_FIELD_OFFSET;
@@ -191,33 +186,6 @@ public class PersistentFSStoragesBenchmarks {
       storage = new PersistentFSRecordsOverInMemoryStorage(
         fileState.file,
         RECORDS_COUNT
-      );
-      for (int i = 0; i < RECORDS_COUNT; i++) {
-        storage.allocateRecord();
-      }
-    }
-
-    @TearDown
-    public void close() throws IOException {
-      storage.close();
-    }
-  }
-
-  @State(Scope.Benchmark)
-  public static class FSRecordsOverLockFreeFPCState {
-
-    private PersistentFSRecordsOverLockFreePagedStorage storage;
-
-    @Setup
-    public void setup(FileState fileState) throws IOException {
-      final int pageSize = 1 << 20;
-      storage = new PersistentFSRecordsOverLockFreePagedStorage(
-        new PagedFileStorageWithRWLockedPageContent(
-          fileState.file,
-          CONTEXT,
-          pageSize,
-          PageContentLockingStrategy.LOCK_PER_PAGE
-        )
       );
       for (int i = 0; i < RECORDS_COUNT; i++) {
         storage.allocateRecord();
@@ -473,24 +441,8 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int FSRecords_OverNewFPC_RandomReadByField(final RecordIterationState it,
-                                                      final FSRecordsOverLockFreeFPCState state) throws IOException {
-      final PersistentFSRecordsStorage storage = state.storage;
-
-      return fsRecords_randomReadByField(it, storage);
-    }
-
-    @Benchmark
     public int FSRecords_MemoryMapped_RandomReadByRecord(final RecordIterationState it,
                                                          final FSRecordsOverMMappedFileState state) throws IOException {
-      final IPersistentFSRecordsStorage storage = state.storage;
-
-      return fsRecords_RandomReadByRecord(it, storage);
-    }
-
-    @Benchmark
-    public int FSRecords_OverNewFPC_RandomReadByRecord(final RecordIterationState it,
-                                                       final FSRecordsOverLockFreeFPCState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
       return fsRecords_RandomReadByRecord(it, storage);
@@ -668,24 +620,8 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void FSRecords_OverNewFPC_RandomWriteByField(final RecordIterationState it,
-                                                        final FSRecordsOverLockFreeFPCState state) throws IOException {
-      final PersistentFSRecordsStorage storage = state.storage;
-
-      fsRecords_randomWriteByField(it, storage);
-    }
-
-    @Benchmark
     public void FSRecords_MemoryMapped_RandomWriteByRecord(final RecordIterationState it,
                                                            final FSRecordsOverMMappedFileState state) throws IOException {
-      final IPersistentFSRecordsStorage storage = state.storage;
-
-      fsRecords_randomWriteByRecord(it, storage);
-    }
-
-    @Benchmark
-    public void FSRecords_OverNewFPC_RandomWriteByRecord(final RecordIterationState it,
-                                                         final FSRecordsOverLockFreeFPCState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
       fsRecords_randomWriteByRecord(it, storage);

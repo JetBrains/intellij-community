@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -47,7 +47,7 @@ public class SvnRevisionPanel extends JPanel {
 
     mySpecified.addActionListener(e -> {
       if (mySpecified.isSelected()) {
-        if (myRevisionField.getText().trim().length() == 0) {
+        if (myRevisionField.getText().trim().isEmpty()) {
           myRevisionField.setText("HEAD");
         }
         myRevisionField.setEnabled(true);
@@ -66,7 +66,7 @@ public class SvnRevisionPanel extends JPanel {
     myRevisionField.getTextField().setColumns(10);
     myRevisionField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         notifyChangeListeners();
       }
     });
@@ -103,8 +103,7 @@ public class SvnRevisionPanel extends JPanel {
     return myHead.isSelected() ? Revision.HEAD.toString() : myRevisionField.getText();
   }
 
-  @NotNull
-  public Revision getRevision() throws ConfigurationException {
+  public @NotNull Revision getRevision() throws ConfigurationException {
 
     if (myHead.isSelected()) return Revision.HEAD;
 
@@ -116,8 +115,7 @@ public class SvnRevisionPanel extends JPanel {
     return result;
   }
 
-  @NotNull
-  public JTextField getRevisionTextField() {
+  public @NotNull JTextField getRevisionTextField() {
     return myRevisionField.getTextField();
   }
 

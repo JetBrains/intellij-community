@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.server.BuildManager;
@@ -26,9 +26,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
-
-import static com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.isCaseSensitiveFS;
 
 public final class JavaBackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final JavaBackwardReferenceIndexReaderFactory INSTANCE = new JavaBackwardReferenceIndexReaderFactory();
@@ -41,16 +40,14 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   }
 
   @Override
-  @Nullable
-  public BackwardReferenceReader create(Project project) {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-
+  public @Nullable BackwardReferenceReader create(Project project) {
+    Path buildDir = BuildManager.getInstance().getProjectSystemDir(project);
     if (!CompilerReferenceIndex.exists(buildDir) || CompilerReferenceIndex.versionDiffers(buildDir, expectedIndexVersion())) {
       return null;
     }
 
     try {
-      return new BackwardReferenceReader(project, buildDir, isCaseSensitiveFS(project));
+      return new BackwardReferenceReader(project, buildDir, CompilerReferenceServiceBase.isCaseSensitiveFS(project));
     }
     catch (RuntimeException e) {
       LOG.error("An exception while initialization of compiler reference index.", e);
@@ -61,12 +58,12 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   public static class BackwardReferenceReader extends CompilerReferenceReader<JavaCompilerBackwardReferenceIndex> {
     private final Project myProject;
 
-    protected BackwardReferenceReader(Project project, File buildDir) {
+    protected BackwardReferenceReader(Project project, Path buildDir) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath()), true));
       myProject = project;
     }
 
-    protected BackwardReferenceReader(Project project, File buildDir, boolean isCaseSensitiveFS) {
+    protected BackwardReferenceReader(Project project, Path buildDir, boolean isCaseSensitiveFS) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath(), isCaseSensitiveFS), true, isCaseSensitiveFS));
       myProject = project;
     }
@@ -93,14 +90,20 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     @Override
     public @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException {
       Set<VirtualFile> result = VfsUtilCore.createCompactVirtualFileSet();
-      myIndex.get(JavaCompilerIndices.IMPLICIT_TO_STRING).getData(ref).forEach(
-        (id, value) -> {
-          final VirtualFile file = findFile(id);
-          if (file != null) {
-            result.add(file);
+      //MAYBE RC: collect fileIds first (under .withData lock), then resolve them into a VirtualFile
+      //          outside the lock?
+      myIndex.get(JavaCompilerIndices.IMPLICIT_TO_STRING).withData(
+        ref,
+        container -> container.forEach(
+          (id, value) -> {
+            VirtualFile file = findFile(id);
+            if (file != null) {
+              result.add(file);
+            }
+            return true;
           }
-          return true;
-        });
+        )
+      );
       return result;
     }
 
@@ -111,8 +114,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
      * 2nd map: candidates. One need to check that these classes are really direct inheritors
      */
     @Override
-    @NotNull
-    public Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
+    public @NotNull Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
                                                             @NotNull GlobalSearchScope searchScope,
                                                             @NotNull GlobalSearchScope dirtyScope,
                                                             @NotNull FileType fileType,
@@ -124,7 +126,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
 
       Map<VirtualFile, SearchId[]> candidatesPerFile = new HashMap<>();
       try {
-        myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(searchElement).process((fileId, defs) -> {
+        myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).withData(searchElement, container -> container.process((fileId, defs) -> {
           final List<CompilerRef> requiredCandidates = ContainerUtil.filter(defs, requiredCompilerRefClass::isInstance);
           if (requiredCandidates.isEmpty()) return true;
           final VirtualFile file = findFile(fileId);
@@ -132,7 +134,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
             candidatesPerFile.put(file, searchType.convertToIds(requiredCandidates, myIndex.getByteSeqEum()));
           }
           return true;
-        });
+        }));
       }
       catch (IOException e) {
         throw new StorageException(e);
@@ -141,17 +143,16 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     @Override
-    @Nullable
-    public Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions) {
+    public @Nullable Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions) {
       try {
         if (checkDefinitions && getDefinitionCount(classDef) != DefCount.ONE) {
           return null;
         }
         final int[] count = {0};
-        myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(classDef).forEach((id, value) -> {
+        myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).withData(classDef, container -> container.forEach((id, value) -> {
           count[0] += value.size();
           return true;
-        });
+        }));
         return count[0];
       }
       catch (StorageException e) {
@@ -163,11 +164,11 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     public int getOccurrenceCount(@NotNull CompilerRef element) {
       try {
         int[] result = new int[]{0};
-        myIndex.get(JavaCompilerIndices.BACK_USAGES).getData(element).forEach(
+        myIndex.get(JavaCompilerIndices.BACK_USAGES).withData(element, container -> container.forEach(
           (id, value) -> {
             result[0] += value;
             return true;
-          });
+          }));
         return result[0];
       }
       catch (StorageException e) {
@@ -179,10 +180,10 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     List<CompilerRef> getMembersFor(@NotNull SignatureData data) {
       try {
         List<CompilerRef> result = new ArrayList<>();
-        myIndex.get(JavaCompilerIndices.BACK_MEMBER_SIGN).getData(data).forEach((id, refs) -> {
+        myIndex.get(JavaCompilerIndices.BACK_MEMBER_SIGN).withData(data, container -> container.forEach((id, refs) -> {
           result.addAll(refs);
           return true;
-        });
+        }));
         return result;
       }
       catch (StorageException e) {
@@ -203,25 +204,25 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     OccurrenceCounter<CompilerRef> getTypeCastOperands(@NotNull CompilerRef castType, @Nullable IntCollection fileIds)
       throws StorageException {
       OccurrenceCounter<CompilerRef> result = new OccurrenceCounter<>();
-      myIndex.get(JavaCompilerIndices.BACK_CAST).getData(castType).forEach((id, values) -> {
+      myIndex.get(JavaCompilerIndices.BACK_CAST).withData(castType, container -> container.forEach((id, values) -> {
         if (fileIds != null && !fileIds.contains(id)) return true;
         for (CompilerRef ref : values) {
           result.add(ref);
         }
         return true;
-      });
+      }));
       return result;
     }
 
     private void addUsages(CompilerRef usage, Set<VirtualFile> sink) throws StorageException {
-      myIndex.get(JavaCompilerIndices.BACK_USAGES).getData(usage).forEach(
+      myIndex.get(JavaCompilerIndices.BACK_USAGES).withData(usage, container -> container.forEach(
         (id, value) -> {
           final VirtualFile file = findFile(id);
           if (file != null) {
             sink.add(file);
           }
           return true;
-        });
+        }));
     }
 
     private VirtualFile findFile(int id) {
@@ -236,10 +237,11 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     @Override
-    public CompilerRef.CompilerClassHierarchyElementDef @Nullable("return null if the class hierarchy contains ambiguous qualified names") [] getHierarchy(CompilerRef.CompilerClassHierarchyElementDef hierarchyElement,
-                                                                                                                                                           boolean checkBaseClassAmbiguity,
-                                                                                                                                                           boolean includeAnonymous,
-                                                                                                                                                           int interruptNumber) {
+    public CompilerRef.CompilerClassHierarchyElementDef @Nullable("return null if the class hierarchy contains ambiguous qualified names") [] getHierarchy(
+      CompilerRef.CompilerClassHierarchyElementDef hierarchyElement,
+      boolean checkBaseClassAmbiguity,
+      boolean includeAnonymous,
+      int interruptNumber) {
       try {
         List<DirectInheritorProvider> directInheritorProviders = DirectInheritorProvider.EP_NAME.getExtensionList(myProject);
         Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
@@ -260,7 +262,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
                 return null;
               }
             }
-            myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
+            myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).withData(curClass, container -> container.forEach((id, children) -> {
               for (CompilerRef child : children) {
                 if (child instanceof CompilerRef.CompilerClassHierarchyElementDef &&
                     (includeAnonymous || !(child instanceof CompilerRef.CompilerAnonymousClassDef))) {
@@ -268,7 +270,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
                 }
               }
               return true;
-            });
+            }));
             try {
               SearchId searchId = curClass instanceof SearchIdHolder
                                   ? ((SearchIdHolder)curClass).getSearchId()
@@ -292,19 +294,19 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(CompilerRef hierarchyElement)
       throws StorageException {
       Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
-      myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(hierarchyElement).forEach((id, children) -> {
+      myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).withData(hierarchyElement, container -> container.forEach((id, children) -> {
         for (CompilerRef child : children) {
           if (child instanceof CompilerRef.CompilerClassHierarchyElementDef && !(child instanceof CompilerRef.CompilerAnonymousClassDef)) {
             result.add((CompilerRef.CompilerClassHierarchyElementDef)child);
           }
         }
         return true;
-      });
+      }));
       return result;
     }
 
     @Override
-    public @NotNull SearchId @NotNull[] getDirectInheritorsNames(CompilerRef hierarchyElement) throws StorageException {
+    public @NotNull SearchId @NotNull [] getDirectInheritorsNames(CompilerRef hierarchyElement) throws StorageException {
       try {
         return CompilerHierarchySearchType.DIRECT_INHERITOR.convertToIds(getDirectInheritors(hierarchyElement), myIndex.getByteSeqEum());
       }
@@ -319,10 +321,9 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
       return getDefinitionCount(def) == DefCount.MANY;
     }
 
-    @NotNull
-    private DefCount getDefinitionCount(CompilerRef def) throws StorageException {
+    private @NotNull DefCount getDefinitionCount(CompilerRef def) throws StorageException {
       DefCount[] result = new DefCount[]{DefCount.NONE};
-      myIndex.get(JavaCompilerIndices.BACK_CLASS_DEF).getData(def).forEach((id, value) -> {
+      myIndex.get(JavaCompilerIndices.BACK_CLASS_DEF).withData(def, container -> container.forEach((id, value) -> {
         if (result[0] == DefCount.NONE) {
           result[0] = DefCount.ONE;
           return true;
@@ -332,7 +333,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
           return true;
         }
         return false;
-      });
+      }));
       return result[0];
     }
   }

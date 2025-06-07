@@ -10,7 +10,7 @@
     <cachesInvalidator implementation="com.intellij.platform.settings.local.CacheStateStorageInvalidator"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint name="settingsController"
-                    interface="com.intellij.platform.settings.DelegatedSettingsController"/>
+    <!-- Settings controllers cannot be loaded/unloaded dynamically, but we delegate this problem to implementations to deal with -->
+    <extensionPoint name="settingsController" interface="com.intellij.platform.settings.DelegatedSettingsController" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

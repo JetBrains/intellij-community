@@ -491,6 +491,41 @@
 
     "Tree.modifiedItemForeground": "#4FF0FF",
 
+    "TrialWidget": {
+      "Default": {
+        "foreground": "#FFFFFF",
+        "background": "#000000",
+        "borderColor": "#FFFFFF",
+        "hoverForeground": "#000000",
+        "hoverBackground": "#FFFFFF",
+        "hoverBorderColor": "#FFFFFF"
+      },
+      "Active": {
+        "foreground": "#00E61F",
+        "background": "#000000",
+        "borderColor": "#00E61F",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#00E61F",
+        "hoverBorderColor": "#00E61F"
+      },
+      "Alert": {
+        "foreground": "#F58231",
+        "background": "#000000",
+        "borderColor": "#F58231",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#F58231",
+        "hoverBorderColor": "#F58231"
+      },
+      "Expiring": {
+        "foreground": "#FFFFFF",
+        "background": "#E6194B",
+        "borderColor": "#E6194B",
+        "hoverForeground": "#FFFFFF",
+        "hoverBackground": "#800002",
+        "hoverBorderColor": "#800002"
+      }
+    },
+
     "ValidationTooltip": {
       "errorBackground": "#800002",
       "errorBorderColor": "#E6194B",

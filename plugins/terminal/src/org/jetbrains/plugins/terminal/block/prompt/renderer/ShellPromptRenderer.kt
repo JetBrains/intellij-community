@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
+import com.intellij.terminal.session.StyleRange
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.emulator.JediEmulator
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
 
@@ -67,7 +67,7 @@ internal class ShellPromptRenderer(
                                  TerminalColor { colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
     val terminalSize = terminalSizeProvider()
-    val textBuffer = TerminalTextBuffer(terminalSize.columns, terminalSize.rows, styleState, 0, null)
+    val textBuffer = TerminalTextBuffer(terminalSize.columns, terminalSize.rows, styleState, 0)
     val terminal = JediTerminal(FakeDisplay(settings), textBuffer, styleState)
     terminal.setModeEnabled(TerminalMode.AutoNewLine, true)
     val dataStream = ArrayTerminalDataStream(escapedPrompt.toCharArray())
@@ -88,10 +88,10 @@ internal class ShellPromptRenderer(
     var curOffset = 0
     for (range in this) {
       if (curOffset < range.startOffset) {
-        highlightings.add(HighlightingInfo(curOffset, range.startOffset, EmptyTextAttributesProvider))
+        highlightings.add(HighlightingInfo(curOffset, range.startOffset.toInt(), EmptyTextAttributesProvider))
       }
-      highlightings.add(HighlightingInfo(range.startOffset, range.endOffset, TextStyleAdapter(range.style, colorPalette)))
-      curOffset = range.endOffset
+      highlightings.add(HighlightingInfo(range.startOffset.toInt(), range.endOffset.toInt(), TextStyleAdapter(range.style, colorPalette)))
+      curOffset = range.endOffset.toInt()
     }
     if (curOffset < totalTextLength) {
       highlightings.add(HighlightingInfo(curOffset, totalTextLength, EmptyTextAttributesProvider))

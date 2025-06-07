@@ -35,6 +35,7 @@ public final class Launcher {
       System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
       System.setProperty("io.netty.serviceThreadPrefix", "Netty");
+      System.setProperty("io.netty.allocator.type", "pooled");
     //}
 
     final Class<?> mainClass = jpsLoader.loadClass(mainClassName);

@@ -80,7 +80,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment under the cell aligned by left edge with the appropriate color and font size.
    * * [comment] can contain HTML tags except `<html>`, which is added automatically
    * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon

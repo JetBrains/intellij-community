@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.vcs.github.git` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-github-git_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-github-git",
+  module_name = "intellij.vcs.github.git",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:caffeine",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/util",
+    "//plugins/github/github-core:vcs-github",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/git4idea:vcs-git",
+    "//platform/util/coroutines",
+    "//platform/util/progress",
+    "//platform/ide-core",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/core-ui",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//plugins/git4idea/shared",
+    "//platform/collaboration-tools",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":vcs-github-git_resources"]
+)
+### auto-generated section `build intellij.vcs.github.git` end

@@ -36,8 +36,7 @@ public abstract class SetOperationToBase extends DumbAwareAction {
     table.repaint();
   }
 
-  @NotNull
-  protected abstract DirDiffOperation getOperation(DirDiffElementImpl element);
+  protected abstract @NotNull DirDiffOperation getOperation(DirDiffElementImpl element);
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
@@ -61,13 +60,11 @@ public abstract class SetOperationToBase extends DumbAwareAction {
 
   protected abstract boolean isEnabledFor(DirDiffElement element);
 
-  @Nullable
-  static JTable getTable(AnActionEvent e) {
+  static @Nullable JTable getTable(AnActionEvent e) {
     return e.getData(DirDiffPanel.DIR_DIFF_TABLE);
   }
 
-  @Nullable
-  public static DirDiffTableModel getModel(AnActionEvent e) {
+  public static @Nullable DirDiffTableModel getModel(AnActionEvent e) {
     return e.getData(DirDiffPanel.DIR_DIFF_MODEL);
   }
 }

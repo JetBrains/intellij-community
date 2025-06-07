@@ -44,7 +44,7 @@ public final class UnnecessaryUnboxingInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyUnboxed = false;
 
-  @NonNls static final Map<String, String> s_unboxingMethods = Map.of(
+  static final @NonNls Map<String, String> s_unboxingMethods = Map.of(
     CommonClassNames.JAVA_LANG_INTEGER, "intValue",
     CommonClassNames.JAVA_LANG_SHORT, "shortValue",
     CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue",
@@ -56,8 +56,7 @@ public final class UnnecessaryUnboxingInspection extends BaseInspection {
   );
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.unboxing.problem.descriptor");
   }
 
@@ -80,8 +79,7 @@ public final class UnnecessaryUnboxingInspection extends BaseInspection {
   private static class UnnecessaryUnboxingFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.unboxing.remove.quickfix");
     }
 
@@ -107,7 +105,7 @@ public final class UnnecessaryUnboxingInspection extends BaseInspection {
           }
           final String classname = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(classname)) {
-            @NonNls final String name = field.getName();
+            final @NonNls String name = field.getName();
             if ("TRUE".equals(name)) {
               PsiReplacementUtil.replaceExpression(methodCall, "true", commentTracker);
               return;

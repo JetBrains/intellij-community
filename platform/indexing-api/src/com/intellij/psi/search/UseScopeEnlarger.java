@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,6 +20,5 @@ public abstract class UseScopeEnlarger {
   @ApiStatus.Internal
   public static final ExtensionPointName<UseScopeEnlarger> EP_NAME = ExtensionPointName.create("com.intellij.useScopeEnlarger");
 
-  @Nullable
-  public abstract SearchScope getAdditionalUseScope(@NotNull PsiElement element);
+  public abstract @Nullable SearchScope getAdditionalUseScope(@NotNull PsiElement element);
 }

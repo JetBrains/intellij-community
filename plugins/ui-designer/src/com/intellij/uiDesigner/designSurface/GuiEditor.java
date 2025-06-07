@@ -661,43 +661,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
         if (!designerConfiguration.INSTRUMENT_CLASSES && designerConfiguration.GENERATE_SOURCES_ON_SAVE) {
           try {
-            LOG.debug("Updating sources for form '" + myFile.getPath());
-
-            FileDocumentManager.getInstance().saveDocument(myDocument);
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-            final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
-            generator.generate(myFile);
-
-            final ArrayList<FormErrorInfo> errors = generator.getErrors();
-            if (!errors.isEmpty()) {
-              StringBuilder builder = new StringBuilder();
-              builder.append("Unable to update sources for form '").append(myFile.getPath()).append("' due to errors:\n");
-              errors.forEach(error -> {
-                builder.append(error.getComponentId()).append(" ").append(error.getErrorMessage()).append("\n");
-              });
-              LOG.info(builder.toString());
-
-              BuildOutputService buildOutput = new BuildOutputService(myProject, "UI Form Compilation"); //NON-NLS
-              Object sessionId = new Object();
-              long stamp = System.currentTimeMillis();
-              buildOutput.onStart(sessionId, stamp, null, null);
-
-              for (FormErrorInfo error : errors) {
-                FormElementNavigatable navigatable = new FormElementNavigatable(myProject, myFile, error.getComponentId());
-                buildOutput.addMessage(
-                  sessionId,
-                  new CompilerMessageImpl(
-                    myProject,
-                    CompilerMessageCategory.ERROR,
-                    myFile.getPresentableUrl() + ": " + error.getErrorMessage(), //NON-NLS
-                    myFile,
-                    -1, -1,
-                    navigatable
-                  ));
-              }
-              buildOutput.onEnd(sessionId, ExitStatus.ERRORS, stamp + 1);
-            }
+            updateSources();
           } catch (Throwable e) {
             LOG.error(e);
           }
@@ -710,6 +674,49 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
+  }
+
+  private void updateSources() {
+    LOG.debug("Updating sources for form '" + myFile.getPath());
+
+    FileDocumentManager.getInstance().saveDocument(myDocument);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(myProject);
+    generator.generate(myFile);
+
+    final ArrayList<FormErrorInfo> errors = generator.getErrors();
+    if (!errors.isEmpty()) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("Unable to update sources for form '").append(myFile.getPath()).append("' due to errors:\n");
+      errors.forEach(error -> {
+        builder.append(error.getComponentId()).append(" ").append(error.getErrorMessage()).append("\n");
+      });
+      LOG.info(builder.toString());
+
+      BuildOutputService buildOutput = new BuildOutputService(
+        myProject,
+        UIDesignerBundle.message("tab.build.ui.designer")
+      );
+      Object sessionId = new Object();
+      long stamp = System.currentTimeMillis();
+      buildOutput.onStart(sessionId, stamp, null, null);
+
+      for (FormErrorInfo error : errors) {
+        FormElementNavigatable navigatable = new FormElementNavigatable(myProject, myFile, error.getComponentId());
+        buildOutput.addMessage(
+          sessionId,
+          new CompilerMessageImpl(
+            myProject,
+            CompilerMessageCategory.ERROR,
+            myFile.getPresentableUrl() + ": " + error.getErrorMessage(), //NON-NLS
+            myFile,
+            -1, -1,
+            navigatable
+          ));
+      }
+      buildOutput.onEnd(sessionId, ExitStatus.ERRORS, stamp + 1);
+    }
   }
 
   public ActiveDecorationLayer getActiveDecorationLayer() {

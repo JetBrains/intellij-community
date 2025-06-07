@@ -114,6 +114,25 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll());
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
   }
+  
+  public void testClassExposedViaContainingClassSubclass() {
+    myFixture.addClass("""
+      package one;
+      interface OuterSuper {
+        interface Inner {}
+      }
+      """);
+    myFixture.addClass("""
+      package one;
+      public interface Child extends OuterSuper {
+      }
+      """);
+    myFixture.addClass("""
+      package two;
+      interface InnerChild extends one.Child.Inner {}
+      """);
+    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("one.OuterSuper.Inner")).findAll());
+  }
 
   public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {
     myFixture.addFileToProject("A.java", "class A {}");

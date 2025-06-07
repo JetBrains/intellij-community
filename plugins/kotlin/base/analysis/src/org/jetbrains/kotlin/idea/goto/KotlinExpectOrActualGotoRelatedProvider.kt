@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 
@@ -25,7 +25,7 @@ class KotlinExpectOrActualGotoRelatedProvider : GotoRelatedProvider() {
     override fun getItems(psiElement: PsiElement): List<GotoRelatedItem> {
         val declaration = psiElement.getParentOfTypeAndBranch<KtNamedDeclaration> { nameIdentifier } ?: return emptyList()
         val targets = when {
-            declaration.isExpectDeclaration() -> declaration.actualsForExpected()
+            declaration.isExpectDeclaration() -> declaration.actualsForExpect()
             declaration.isEffectivelyActual() -> analyze(declaration) {
                 declaration.symbol.getExpectsForActual().mapNotNull { it.psi }
             }

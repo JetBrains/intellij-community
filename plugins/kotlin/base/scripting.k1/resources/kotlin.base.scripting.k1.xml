@@ -1,0 +1,63 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.core.script.k1">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KotlinFe10CompilerPluginsProvider"/>
+
+    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.KotlinScriptExternalLibrariesNodesProvider"/>
+
+    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
+
+    <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.k1.JavaClassesInScriptDependenciesShortNameCache"/>
+
+    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptCacheDependenciesFileInvalidator"/>
+
+    <registryKey
+            key="kotlin.scripting.fs.roots.storage.enabled"
+            description="Cache resolved dependencies paths across all scripts"
+            defaultValue="false"
+            restartRequired="true"/>
+
+    <registryKey
+            key="kotlin.scripting.index.dependencies.sources"
+            description="Index script dependencies sources eagerly (not deferred)"
+            defaultValue="false"
+            restartRequired="true"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.IdeScriptReportSink"/>
+
+    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTrafficLightRendererContributor"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.MultipleScriptDefinitionsChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupportChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
+
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.KotlinScriptResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k1.dependencies.ScriptDependenciesResolveScopeProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultIdeScriptingConfigurationFacade"/>
+
+    <scriptDefinitionsSource
+            id="ScriptTemplatesFromCompilerSettingsProvider"
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromCompilerSettingsProvider"/>
+
+    <scriptDefinitionsSource
+            id="ScriptTemplatesFromDependenciesProvider"
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTemplatesFromDependenciesProvider"/>
+
+    <scriptDefinitionsProvider id="MainKtsScriptDefinitionProvider"
+                               implementation="org.jetbrains.kotlin.idea.core.script.k1.MainKtsScriptDefinitionProvider"/>
+
+    <scriptDefinitionsSource id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
+                             implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
+
+    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
+    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
+
+    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingKaModuleFactory"/>
+    <idea.base.projectStructure.moduleInfoProviderExtension
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingModuleInfoProviderExtension"/>
+  </extensions>
+</idea-plugin>

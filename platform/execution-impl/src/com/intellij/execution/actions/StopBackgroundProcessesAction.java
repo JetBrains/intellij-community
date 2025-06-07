@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressModel;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -101,19 +101,18 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
 
   }
 
-  @Unmodifiable
-  private static @NotNull List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
+  private static @Unmodifiable @NotNull List<Pair<TaskInfo, ProgressModel>>  getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();
 
-    return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
+    return ContainerUtil.findAll(statusBar.getBackgroundProcessModels(),
+                                 pair -> pair.first.isCancellable() && !pair.second.isStopping(pair.first));
   }
 
-  private static @NotNull List<StopAction.HandlerItem> getItemsList(@NotNull List<? extends Pair<TaskInfo, ProgressIndicator>> tasks) {
+  private static @NotNull List<StopAction.HandlerItem> getItemsList(@NotNull List<? extends Pair<TaskInfo, ProgressModel>> tasks) {
     List<StopAction.HandlerItem> items = new ArrayList<>(tasks.size());
-    for (final Pair<TaskInfo, ProgressIndicator> eachPair : tasks) {
+    for (final Pair<TaskInfo, ProgressModel> eachPair : tasks) {
       items.add(new StopAction.HandlerItem(eachPair.first.getTitle(), AllIcons.Process.Step_passive, false) {
         @Override
         void stop() {

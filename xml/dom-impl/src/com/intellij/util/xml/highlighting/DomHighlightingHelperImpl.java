@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -22,6 +22,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +41,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @Override
-  public @NotNull List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
+  public @Unmodifiable @NotNull List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
     final Required required = element.getAnnotation(Required.class);
     if (required != null) {
       final XmlElement xmlElement = element.getXmlElement();
@@ -198,7 +199,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   private static boolean isEmpty(final GenericDomValue child, final String stringValue) {
-    if (stringValue.trim().length() != 0) {
+    if (!stringValue.trim().isEmpty()) {
       return false;
     }
     if (child instanceof GenericAttributeValue) {

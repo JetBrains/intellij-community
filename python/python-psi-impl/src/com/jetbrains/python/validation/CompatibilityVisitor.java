@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -42,17 +43,15 @@ import java.util.function.Predicate;
  */
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
-  @NotNull
-  private static final Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
+  private static final @NotNull Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
-  @NotNull
-  private static final Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+  private static final @NotNull Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
 
-  @NotNull
-  private static final Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
+  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
-  @NotNull
-  protected List<LanguageLevel> myVersionsToProcess;
+  private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
+
+  protected @NotNull List<LanguageLevel> myVersionsToProcess;
 
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -278,16 +277,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  @NotNull
-  private static Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
+  private static @NotNull Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
     if (level.isPython2()) {
       return PYTHON2_PREFIXES;
     }
     else if (level.isOlderThan(LanguageLevel.PYTHON36)) {
       return PYTHON34_PREFIXES;
     }
-    else {
+    else if (level.isOlderThan(LanguageLevel.PYTHON314)) {
       return PYTHON36_PREFIXES;
+    }
+    else {
+      return PYTHON314_PREFIXES;
     }
   }
 
@@ -450,20 +451,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
-    if (node.isEllipsis()) {
-      final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
-      if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
-        return;
-      }
-      final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
-      if (sliceItem != null) {
-        return;
-      }
-      registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.ellipsis.outside.slices"),
-                                     node);
+  public void visitPyEllipsisLiteralExpression(@NotNull PyEllipsisLiteralExpression node) {
+    final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
+    if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
+      return;
     }
+    final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
+    if (sliceItem != null) {
+      return;
+    }
+    registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.ellipsis.outside.slices"),
+                                   node);
   }
 
   @Override
@@ -870,7 +869,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       expression.replace(newExpression);
     }
 
-    private static @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
+    private static @Unmodifiable @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
       if (expression == null) return Collections.emptyList();
       if (expression instanceof PyBinaryExpression) {
         final List<String> leftTypes = collectUnionTypes(((PyBinaryExpression)expression).getLeftExpression());

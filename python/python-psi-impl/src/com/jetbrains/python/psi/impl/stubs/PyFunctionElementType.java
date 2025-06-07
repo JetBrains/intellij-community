@@ -28,7 +28,10 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.stubs.PyFileStub;
+import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,19 +47,17 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyFunctionImpl(node);
   }
 
   @Override
-  public PyFunction createPsi(@NotNull final PyFunctionStub stub) {
+  public PyFunction createPsi(final @NotNull PyFunctionStub stub) {
     return new PyFunctionImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
+  public @NotNull PyFunctionStub createStub(final @NotNull PyFunction psi, final StubElement parentStub) {
     final PyFunctionImpl function = (PyFunctionImpl)psi;
     final String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
@@ -77,7 +78,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   @Override
-  public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PyFunctionStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
@@ -90,8 +91,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   @Override
-  @NotNull
-  public PyFunctionStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyFunctionStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     String docString = dataStream.readUTFFast();
     String deprecationMessage = dataStream.readNameString();
@@ -115,7 +115,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   @Override
-  public void indexStub(@NotNull final PyFunctionStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PyFunctionStub stub, final @NotNull IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);

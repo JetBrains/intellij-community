@@ -446,8 +446,14 @@ public class SplitterTest {
     correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
   }
 
+  @Test
+  public void testCommitMessage() {
+    String text = "(cherry picked from commit a1c205f3d5fbabec1b606c82fa33aa1c5d12ef66)";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "cherry", "picked", "from", "commit");
+  }
+
   @NotNull
-  private static List<String> wordsToCheck(Splitter splitter, final String text) {
+  private static List<String> wordsToCheck(Splitter splitter, String text) {
     final List<String> words = new ArrayList<>();
     splitter.split(text, TextRange.allOf(text), textRange -> words.add(textRange.substring(text)));
     return words;

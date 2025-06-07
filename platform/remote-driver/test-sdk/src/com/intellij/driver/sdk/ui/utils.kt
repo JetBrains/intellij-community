@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -45,6 +46,8 @@ val UiComponent.boundsOnScreen
 
 val UiComponent.accessibleName: String? get() = component.getAccessibleContext()?.getAccessibleName()
 
+val Component.rdTarget get() = (this as RefWrapper).getRef().rdTarget()
+
 @Remote("com.intellij.util.IJSwingUtilities")
 interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
@@ -55,7 +58,7 @@ interface SwingUtilities {
   fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
 }
 
-val Rectangle.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
+val Rectangle.center: Point get() = Point(centerX.toInt(), centerY.toInt())
 
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {
@@ -68,22 +71,6 @@ fun printableString(toPrint: String): String {
     }
   }
   return resultString
-}
-
-fun Driver.setRegistry(key: String, value: String) {
-  utility(Registry::class).get(key).setValue(value)
-}
-
-@Remote("com.intellij.openapi.util.registry.Registry")
-interface Registry {
-  fun get(key: String): RegistryValue
-}
-
-@Remote("com.intellij.openapi.util.registry.RegistryValue")
-interface RegistryValue {
-  fun setValue(value: String)
-
-  fun setSelectedOption(option: String)
 }
 
 @Remote("org.assertj.swing.driver.CellRendererReader")

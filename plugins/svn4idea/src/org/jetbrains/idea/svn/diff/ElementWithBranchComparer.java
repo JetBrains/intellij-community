@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +25,10 @@ public abstract class ElementWithBranchComparer {
 
   private static final Logger LOG = Logger.getInstance(ElementWithBranchComparer.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final SvnVcs myVcs;
-  @NotNull protected final VirtualFile myVirtualFile;
-  @NotNull protected final Url myBranchUrl;
+  protected final @NotNull Project myProject;
+  protected final @NotNull SvnVcs myVcs;
+  protected final @NotNull VirtualFile myVirtualFile;
+  protected final @NotNull Url myBranchUrl;
   protected final long myBranchRevision;
   protected Url myElementUrl;
 
@@ -77,8 +77,7 @@ public abstract class ElementWithBranchComparer {
 
   public abstract @DialogTitle @NotNull String getTitle();
 
-  @Nullable
-  protected Url resolveElementUrl() throws SvnBindException {
+  protected @Nullable Url resolveElementUrl() throws SvnBindException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
     final File file = virtualToIoFile(myVirtualFile);
     final Url fileUrl = urlMapping.getUrlForFile(file);

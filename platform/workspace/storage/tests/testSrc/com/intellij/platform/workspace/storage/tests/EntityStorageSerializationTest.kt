@@ -50,7 +50,7 @@ class EntityStorageSerializationTest {
   }
 
   @Test
-  fun `serialization failed because of unsupported entity collections and maps`() {
+  fun `serialization works with kotlin buildList and other collections`() {
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl()
     val builder = createEmptyBuilder()
     val stringListProperty = buildList {
@@ -72,6 +72,42 @@ class EntityStorageSerializationTest {
     }
     builder.addEntity(CollectionFieldEntity(setProperty, listOf("one", "two", "three"), MySource))
     builder.addEntity(CollectionFieldEntity(setOf(1, 2, 3, 3, 4), listOf("one", "two", "three"), MySource))
+
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
+
+    withTempFile { file ->
+      val result = serializer.serializeCache(file, builder.toSnapshot())
+      assertTrue(result is SerializationResult.Success)
+    }
+  }
+
+  @Test
+  fun `serialization fails on unknown lists in dataclasses`() {
+
+    val builder = createEmptyBuilder()
+
+
+    val entity = builder addEntity OneEntityWithSymbolicId("Data", MySource)
+    val symbolicId = entity.symbolicId
+
+    val weirdList = object : ArrayList<Container>() {
+    }
+    weirdList.add(Container(symbolicId))
+
+    val softLinkEntity = EntityWithSoftLinks(symbolicId,
+                                             listOf(symbolicId),
+                                             Container(symbolicId),
+                                             listOf(Container(symbolicId)),
+                                             listOf(TooDeepContainer(listOf(DeepContainer(weirdList, symbolicId)))),
+                                             SealedContainer.BigContainer(symbolicId),
+                                             listOf(SealedContainer.SmallContainer(symbolicId)),
+                                             "Hello",
+                                             listOf("Hello"),
+                                             DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(symbolicId),
+                                             MySource
+    )
+
+    builder addEntity softLinkEntity
 
     val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, VirtualFileUrlManagerImpl(), ijBuildVersion = "")
 
@@ -346,10 +382,9 @@ private val expectedKryoRegistration = """
   it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
   com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
   com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
-  com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
+  com.intellij.platform.workspace.storage.impl.indices.ImmutableMultimapStorageIndex
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-  it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
   com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
   java.util.List
   java.util.Set
@@ -359,6 +394,9 @@ private val expectedKryoRegistration = """
   kotlin.collections.EmptyList
   kotlin.collections.EmptyMap
   kotlin.collections.EmptySet
+  kotlin.collections.builders.ListBuilder
+  kotlin.collections.builders.MapBuilder
+  kotlin.collections.builders.SetBuilder
   java.util.ArrayList
   java.util.LinkedList
   java.util.Stack
@@ -372,6 +410,7 @@ private val expectedKryoRegistration = """
   java.util.Hashtable
   java.util.WeakHashMap
   java.util.IdentityHashMap
+  java.util.concurrent.ConcurrentHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
@@ -380,6 +419,8 @@ private val expectedKryoRegistration = """
   java.util.LinkedHashSet
   com.intellij.platform.workspace.storage.impl.containers.LinkedBidirectionalMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+  kotlinx.collections.immutable.implementations.immutableMap.PersistentHashMap
+  kotlinx.collections.immutable.implementations.immutableSet.PersistentHashSet
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
   com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
   java.util.Arrays#ArrayList

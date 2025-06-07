@@ -4,9 +4,15 @@ package com.jetbrains.python.inspections;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.pyi.PyiFileType;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFinalInspectionTest extends PyInspectionTestCase {
+
+  // PY-79743
+  public void testImportedVariableFinalReassignment() {
+    doMultiFileTest();
+  }
 
   // PY-34945
   public void testSubclassingFinalClass() {
@@ -106,6 +112,55 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testOverridingOverloadedFinalMethod2() {
+    doTestByText("""
+                   from typing import final, overload
+      
+                   class Base:
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       @final
+                       def foo(self, x: int | str) -> int | str:
+                           pass
+                   
+                   class Derived(Base):
+                       @overload
+                       def foo(self, x: int) -> int: ...
+                   
+                       @overload
+                       def foo(self, x: str) -> str: ...
+                   
+                       def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int | str) -> int | str:
+                           pass""");
+  }
+
+  public void testOverridingOverloadedFinalMethodNoImplementation() {
+    final PsiFile currentFile = myFixture.configureByText(PyiFileType.INSTANCE, """
+      from typing import final, overload
+      
+      class Base:
+          @overload
+          @final
+          def foo(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ...
+      
+      class Derived(Base):
+          @overload
+          def <warning descr="'aaa.Base.foo' is marked as '@final' and should not be overridden">foo</warning>(self, x: int) -> int: ...
+      
+          @overload
+          def foo(self, x: str) -> str: ..."""
+    );
+    configureInspection();
+    assertSdkRootsNotParsed(currentFile);
+  }
+
   // PY-34945
   public void testFinalNonMethodFunction() {
     doTestByText("""
@@ -173,46 +228,6 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
   // PY-34945
   public void testOmittedAssignedValueInStubOnClassLevel() {
-    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
-    configureInspection();
-    assertSdkRootsNotParsed(currentFile);
-  }
-
-  // PY-34945
-  public void testOverloadedFinalMethod() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> doTestByText("""
-                           from typing import overload
-                           from typing_extensions import final
-
-                           class A:
-                               @overload
-                               def foo(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               @final
-                               def foo(self, a):
-                                   pass
-
-                           class B:
-                               @final
-                               @overload
-                               def <warning descr="'@final' should be placed on the implementation">foo</warning>(self, a: int) -> int: ...
-
-                               @overload
-                               def foo(self, a: str) -> str: ...
-
-                               def foo(self, a):
-                                   pass
-                           """)
-    );
-  }
-
-  // PY-34945
-  public void testOverloadedFinalMethodInStub() {
     final PsiFile currentFile = myFixture.configureByFile(getTestFilePath() + "i");
     configureInspection();
     assertSdkRootsNotParsed(currentFile);
@@ -358,7 +373,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
               def __init__(self):
                   <warning descr="Already declared name could not be redefined as 'Final'">self.a</warning>: Final[int] = 2
-                  self.b = "2"
+                  <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> = "2"
                   <warning descr="Either instance attribute or class attribute could be type hinted as 'Final'">self.c</warning>: Final[int] = 2""")
     );
   }
@@ -397,12 +412,12 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                a: Final[int] = 1
 
                                def __init__(self):
-                                   self.a = 2
-                                   self.a += 2
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 2
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 2
 
                                def method(self):
-                                   self.a = 3
-                                   self.a += 3
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 3
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 3
 
                                @classmethod
                                def cls_method(cls):

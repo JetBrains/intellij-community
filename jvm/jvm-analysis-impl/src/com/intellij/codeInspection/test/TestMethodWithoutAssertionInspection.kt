@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -35,7 +35,7 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add(JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
     .add(ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
     .add(ORG_JUNIT_JUPITER_API_ASSERTIONS_KT, "assert.*|fail.*")
-    .add("org.assertj.core.api.Assertions", "assertThat")
+    .add("org.assertj.core.api.Assertions", "assertThat.*")
     .add("org.assertj.core.api.WithAssertions", "assertThat")
     .add("com.google.common.truth.Truth", "assert.*")
     .add("com.google.common.truth.Truth8", "assert.*")

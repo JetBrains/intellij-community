@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
-import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.OnePixelSplitter
@@ -23,18 +24,20 @@ import javax.swing.Icon
 
 @Internal
 class XDebugSessionTab3(
-  session: XDebugSessionImpl,
+  proxy: XDebugSessionProxy.Monolith,
   icon: Icon?,
-  environment: ExecutionEnvironment?
-) : XDebugSessionTabNewUI(session, icon, environment) {
+  environmentProxy: ExecutionEnvironmentProxy?
+) : XDebugSessionTabNewUI(proxy, icon, environmentProxy) {
 
   companion object {
-    private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
+    private const val VIEW_PROPORTION_KEY = "debugger.layout.watches.defaultThreadsProportion"
     //is used by plugins
-    const val debuggerContentId = "DebuggerView"
+    const val debuggerContentId: String = "DebuggerView"
   }
 
-  private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
+  val project: Project = proxy.project
+
+  private val splitter = OnePixelSplitter(VIEW_PROPORTION_KEY, 0.35f).apply {
     addPropertyChangeListener {
       if ("ancestor" == it.propertyName && it.newValue != null) {
         updateSplitterOrientation()
@@ -42,28 +45,29 @@ class XDebugSessionTab3(
     }
   }
 
-  override fun getWatchesContentId() = debuggerContentId
-  override fun getFramesContentId() = debuggerContentId
+  override fun getWatchesContentId(): String = debuggerContentId
+  override fun getFramesContentId(): String = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
-    val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
-    return if (useSplitterView)
+    return if (session.debugProcess.useSplitterView())
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
       XWatchesViewImpl(session, watchesIsVariables, true, false)
   }
 
-  override fun addVariablesAndWatches(session: XDebugSessionImpl) {
+  override fun addVariablesAndWatches(proxy: XDebugSessionProxy) {
     val variablesView: XVariablesView?
     if (isWatchesInVariables) {
-      variablesView = getWatchesViewImpl(session, watchesIsVariables = true)
+      variablesView = getWatchesViewImpl(session!!, watchesIsVariables = true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       myWatchesView = variablesView
-    } else {
-      variablesView = XVariablesView(session)
+    }
+    else {
+      variablesView = XVariablesView(proxy)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
-      val watchesView = getWatchesViewImpl(session, watchesIsVariables = false)
-      myUi.addContent(createWatchesContent(session, watchesView), 0, PlaceInGrid.right, false)
+      val watchesView = getWatchesViewImpl(session!!, watchesIsVariables = false)
+      val watchesContent = createWatchesContent(proxy, watchesView)
+      myUi.addContent(watchesContent, 0, PlaceInGrid.right, false)
     }
     applyVariablesTabLayoutSettings()
 
@@ -72,30 +76,30 @@ class XDebugSessionTab3(
     UIUtil.removeScrollBorder(splitter)
   }
 
-  override fun initDebuggerTab(session: XDebugSessionImpl) {
+  override fun initDebuggerTab(proxy: XDebugSessionProxy) {
     val name = debuggerContentId
     val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null, null).apply {
       isCloseable = false
     }
 
-    val customLayoutOptions = if (session.debugProcess.allowFramesViewCustomization()) {
-      val optionsCollection = XDebugTabLayoutSettings(session, content, this)
+    val customLayoutOptions = if (session!!.debugProcess.allowFramesViewCustomization()) {
+      val optionsCollection = XDebugTabLayoutSettings(content, this)
       content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
       optionsCollection.threadsAndFramesOptions
     }
     else
       null
 
-    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(session)
-    registerThreadsView(session, content, framesView, true)
+    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView(session!!) ?: XFramesView(session!!)
+    registerThreadsView(content, framesView, true)
     framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
-    addVariablesAndWatches(session)
+    addVariablesAndWatches(proxy)
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
 
     ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
 
-    addDebugToolwindowActions(session.project)
+    addDebugToolwindowActions(proxy.project)
 
     CustomActionsListener.subscribe(this, object : CustomActionsListener {
       override fun schemaChanged() {
@@ -131,9 +135,12 @@ class XDebugSessionTab3(
     splitter.orientation = toolWindow?.anchor?.let { it == ToolWindowAnchor.LEFT || it == ToolWindowAnchor.RIGHT } == true
   }
 
-  internal fun registerThreadsView(session: XDebugSessionImpl, content: Content, view: XDebugView) = registerThreadsView(session, content, view, false)
+  internal val session: XDebugSessionImpl?
+    get() = (mySession as? XDebugSessionProxy.Monolith)?.session as? XDebugSessionImpl
 
-  private fun registerThreadsView(session: XDebugSessionImpl, content: Content, view: XDebugView, isInitialization: Boolean) {
+  internal fun registerThreadsView(content: Content, view: XDebugView) = registerThreadsView(content, view, false)
+
+  private fun registerThreadsView(content: Content, view: XDebugView, isInitialization: Boolean) {
 
     unregisterView(DebuggerContentInfo.FRAME_CONTENT)
     registerView(DebuggerContentInfo.FRAME_CONTENT, view)
@@ -142,11 +149,13 @@ class XDebugSessionTab3(
       minimumSize = Dimension(20, 0)
     }
 
-    content.setPreferredFocusedComponent { view.mainComponent }
+    content.preferredFocusableComponent = view.mainComponent
 
     if (!isInitialization) {
-      attachViewToSession(session, view)
-      view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session)
+      mySession?.let {
+        attachViewToSession(it, view)
+        view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, it)
+      }
       initFocusingVariablesFromFramesView()
     }
     UIUtil.removeScrollBorder(splitter)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,10 @@ import org.jetbrains.idea.maven.model.RepositoryKind;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -38,8 +41,7 @@ public final class MavenIndexUtils {
 
   private MavenIndexUtils() { }
 
-  @Nullable
-  public static IndexPropertyHolder readIndexProperty(Path dir) throws MavenIndexException {
+  public static @Nullable IndexPropertyHolder readIndexProperty(Path dir) throws MavenIndexException {
     Properties props = new Properties();
     try (InputStream s = Files.newInputStream(dir.resolve(INDEX_INFO_FILE))) {
       props.load(s);
@@ -98,8 +100,7 @@ public final class MavenIndexUtils {
     }
   }
 
-  @Nullable
-  public static MavenRepositoryInfo getLocalRepository(Project project) {
+  public static @Nullable MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
     Path repository = MavenProjectsManager.getInstance(project).getRepositoryPath();
     return repository == null
@@ -107,8 +108,7 @@ public final class MavenIndexUtils {
            : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.toString(), RepositoryKind.LOCAL);
   }
 
-  @NotNull
-  public static List<MavenRemoteRepository> getRemoteRepositoriesNoResolve(Project project) {
+  public static @NotNull List<MavenRemoteRepository> getRemoteRepositoriesNoResolve(Project project) {
 
     if (project.isDisposed()) {
       return Collections.emptyList();
@@ -132,8 +132,7 @@ public final class MavenIndexUtils {
       .collect(groupingBy(r -> r.getUrl(), mapping(r -> r.getId(), Collectors.toSet())));
   }
 
-  @NotNull
-  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
+  public static @NotNull String normalizePathOrUrl(@NotNull String pathOrUrl) {
     pathOrUrl = pathOrUrl.trim();
     pathOrUrl = FileUtil.toSystemIndependentName(pathOrUrl);
     while (pathOrUrl.endsWith("/")) {

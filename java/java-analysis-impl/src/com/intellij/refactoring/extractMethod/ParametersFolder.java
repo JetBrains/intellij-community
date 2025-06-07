@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
@@ -37,7 +37,7 @@ public class ParametersFolder {
 
   boolean isParameterSafeToDelete(@NotNull VariableData data, @NotNull LocalSearchScope scope) {
     Next:
-    for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+    for (PsiReference reference : ReferencesSearch.search(data.variable, scope).asIterable()) {
       PsiElement expression = reference.getElement();
       while (expression != null) {
         for (PsiExpression psiExpression : myExpressions.values()) {
@@ -71,7 +71,7 @@ public class ParametersFolder {
       if (psiExpression == null) continue;
 
       final Set<PsiExpression> eqExpressions = new HashSet<>();
-      for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
+      for (PsiReference reference : ReferencesSearch.search(data.variable, scope).asIterable()) {
         final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
         if (expression != null && expression.isValid()) {
           eqExpressions.add(expression);
@@ -150,9 +150,8 @@ public class ParametersFolder {
     }
   }
 
-  @NotNull
-  private static Set<PsiVariable> findUsedVariables(@NotNull VariableData data, @NotNull List<? extends PsiVariable> inputVariables,
-                                                    @NotNull PsiExpression expression) {
+  private static @NotNull Set<PsiVariable> findUsedVariables(@NotNull VariableData data, @NotNull List<? extends PsiVariable> inputVariables,
+                                                             @NotNull PsiExpression expression) {
     final Set<PsiVariable> found = new HashSet<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -172,8 +171,7 @@ public class ParametersFolder {
     return !myExpressions.isEmpty();
   }
 
-  @Nullable
-  private List<PsiExpression> getMentionedExpressions(@NotNull PsiVariable var, @NotNull LocalSearchScope scope, @NotNull List<? extends PsiVariable> inputVariables) {
+  private @Nullable List<PsiExpression> getMentionedExpressions(@NotNull PsiVariable var, @NotNull LocalSearchScope scope, @NotNull List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
 
@@ -353,8 +351,7 @@ public class ParametersFolder {
     return false;
   }
 
-  @Nullable
-  private static PsiExpression findEquivalent(PsiExpression expr, @NotNull PsiElement element) {
+  private static @Nullable PsiExpression findEquivalent(PsiExpression expr, @NotNull PsiElement element) {
     PsiElement expression = element;
     while (expression != null) {
       if (PsiEquivalenceUtil.areElementsEquivalent(expression, expr)) {

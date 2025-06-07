@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.breakpoints.WildcardMethodBreakpoint;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implements SyntheticBreakpoint {
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
@@ -27,6 +29,11 @@ public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implemen
   }
 
   @Override
+  protected @NotNull Stream<ReferenceType> matchingClasses(DebugProcessImpl debugProcess) {
+    return debugProcess.getVirtualMachineProxy().classesByName(myProperties.myClassPattern).stream();
+  }
+
+  @Override
   public StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
     String methodName = getMethodName();
     return methods
@@ -34,9 +41,8 @@ public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implemen
       .limit(1);
   }
 
-  @NotNull
   @Override
-  protected JavaMethodBreakpointProperties getProperties() {
+  protected @NotNull JavaMethodBreakpointProperties getProperties() {
     return myProperties;
   }
 

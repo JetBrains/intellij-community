@@ -1,5 +1,5 @@
 ; Installation pages headers
-LangString choose_install_location  ${LANG_SIMPCHINESE} "  选择安装位置"
+LangString choose_install_location ${LANG_SIMPCHINESE} "  选择安装位置"
 LangString choose_start_menu_folder ${LANG_SIMPCHINESE} "  选择“开始”菜单文件夹"
 LangString installing_product ${LANG_SIMPCHINESE} "  正在安装"
 
@@ -34,6 +34,5 @@ LangString uninstall_previous_installations_silent ${LANG_SIMPCHINESE} "静默�
 LangString uninstaller_relocated ${LANG_SIMPCHINESE} "卸载未检测到 ${MUI_PRODUCT} 安装的文件夹。可能 uninstall.exe 已从安装文件夹中移出。"
 LangString choose_empty_folder ${LANG_SIMPCHINESE} "$INSTDIR 不为空。$\n请选择一个空文件夹。"
 LangString application_running ${LANG_SIMPCHINESE} "${MUI_PRODUCT} 正在运行。关闭应用程序并按“确定”重试卸载，或按“取消”中止。"
-LangString not_supported_32bit_win_version ${LANG_SIMPCHINESE} "${MUI_PRODUCT} 不支持 Microsoft Windows 32 位版本。"
-LangString path_var_too_long ${LANG_SIMPCHINESE} "PATH 的长度大于 8192 字节。$\n安装程序无法更新它。"
+LangString unsupported_win_version ${LANG_SIMPCHINESE} "${MUI_PRODUCT} 需要 64 位 Windows 10 1607 或更高版本。"
 LangString out_of_disk_space ${LANG_SIMPCHINESE} "错误: 磁盘空间不足!"

@@ -22,15 +22,19 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.isWritable
+import kotlin.io.path.setPosixFilePermissions
+import kotlin.io.path.writeText
 
 class ResourceCopyingTest : MavenCompilingTestCase() {
 
@@ -84,7 +88,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
   @Test
   fun testCopyWithFilteringIntoReadonlyTarget() = runBlocking {
     val f = createProjectSubFile("res/dir1/file.properties",  /*"Hello world"*/"Hello \${name}")
-    val srcFile = File(f.getPath())
+    val srcFile = f.toNioPath()
 
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -107,11 +111,11 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     assertCopied("target/classes/dir1/file.properties", "Hello world")
 
     // make sure the output file is readonly
-    val outFile = File(projectPath, "target/classes/dir1/file.properties")
-    outFile.setWritable(false)
-    assertFalse(outFile.canWrite())
+    val outFile = projectPath.resolve("target/classes/dir1/file.properties")
+    outFile.setReadOnly()
+    assertFalse(outFile.isWritable())
 
-    FileUtil.writeToFile(srcFile, "Hello, \${name}")
+    srcFile.writeText("Hello, \${name}")
 
     compileModules("project")
     assertCopied("target/classes/dir1/file.properties", "Hello, world")
@@ -615,8 +619,6 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
   @Test
   fun testCopingNonMavenResources() = runBlocking {
-    if (ignore()) return@runBlocking
-
     createProjectSubFile("src/main/resources/a.txt", "a")
 
     val configDir = createProjectSubDir("src/config")
@@ -682,6 +684,39 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     assertCopied("target/test-classes/file.properties")
   }
 
+
+  @Test
+  fun testCopyMainAndTestResourcesWhenBuilding() = runBlocking {
+    createProjectSubFile("src/main/resources/file.properties")
+    createProjectSubFile("src/test/resources/file-test.properties")
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent()
+    )
+
+    assertModules("project", "project.main", "project.test")
+    compileModules("project", "project.main", "project.test")
+    assertCopied("target/classes/file.properties")
+    assertNotCopied("target/classes/file-test.properties")
+    assertCopied("target/test-classes/file-test.properties")
+    assertNotCopied("target/test-classes/file.properties")
+  }
+
   @Test
   fun testAnnotationPathsInCompoundModules() = runBlocking {
     createProjectSubFile("src/main/java/Main.java", "class Main {}")
@@ -740,5 +775,15 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
     assertCopied("target/classes/text.css", cssContent)
     assertCopied("target/classes/text.txt", "hello 2")
+  }
+
+  private fun Path.setReadOnly() {
+    if (SystemInfo.isWindows) {
+      Files.setAttribute(this, "dos:readonly", true)
+    }
+    else {
+      val readOnly = setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+      this.setPosixFilePermissions(readOnly)
+    }
   }
 }

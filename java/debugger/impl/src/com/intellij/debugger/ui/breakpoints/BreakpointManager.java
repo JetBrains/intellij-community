@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -41,13 +41,9 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerSupport;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -75,12 +71,12 @@ import java.util.stream.Stream;
 public class BreakpointManager {
   private static final Logger LOG = Logger.getInstance(BreakpointManager.class);
 
-  @NonNls private static final String MASTER_BREAKPOINT_TAG_NAME = "master_breakpoint";
-  @NonNls private static final String SLAVE_BREAKPOINT_TAG_NAME = "slave_breakpoint";
-  @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
-  @NonNls private static final String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
+  private static final @NonNls String MASTER_BREAKPOINT_TAG_NAME = "master_breakpoint";
+  private static final @NonNls String SLAVE_BREAKPOINT_TAG_NAME = "slave_breakpoint";
+  private static final @NonNls String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
+  private static final @NonNls String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
 
-  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
+  private static final @NonNls String RULES_GROUP_NAME = "breakpoint_rules";
   private static final String CONVERTED_PARAM = "converted";
 
   private final Project myProject;
@@ -149,14 +145,12 @@ public class BreakpointManager {
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-      if (xBreakpoint instanceof XLineBreakpointImpl) {
-        RangeHighlighter highlighter = ((XLineBreakpointImpl<?>)xBreakpoint).getHighlighter();
+      if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
+        RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-              myProject, editor, breakpoint.myXBreakpoint, renderer
-            );
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, XBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
           }
         }
       }
@@ -186,18 +180,15 @@ public class BreakpointManager {
     }
   }
 
-  @Nullable
-  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, boolean ignoreBreakpoints) {
+  public @Nullable RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, boolean ignoreBreakpoints) {
     return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints);
   }
 
-  @Nullable
-  public StepIntoBreakpoint addStepIntoBreakpoint(@NotNull BreakpointStepMethodFilter filter) {
+  public @Nullable StepIntoBreakpoint addStepIntoBreakpoint(@NotNull BreakpointStepMethodFilter filter) {
     return StepIntoBreakpoint.create(myProject, filter);
   }
 
-  @Nullable
-  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaLineBreakpointProperties> setupAction) {
+  public @Nullable LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaLineBreakpointProperties> setupAction) {
     ThreadingAssertions.assertEventDispatchThread();
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
@@ -212,13 +203,11 @@ public class BreakpointManager {
     return null;
   }
 
-  @Nullable
-  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex) {
+  public @Nullable LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex) {
     return addLineBreakpoint(document, lineIndex, p -> {});
   }
 
-  @Nullable
-  public FieldBreakpoint addFieldBreakpoint(@NotNull Document document, int offset) {
+  public @Nullable FieldBreakpoint addFieldBreakpoint(@NotNull Document document, int offset) {
     PsiField field = FieldBreakpoint.findField(myProject, document, offset);
     if (field == null) {
       return null;
@@ -233,8 +222,7 @@ public class BreakpointManager {
     return addFieldBreakpoint(document, line, field.getName());
   }
 
-  @Nullable
-  public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
+  public @Nullable FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
     ThreadingAssertions.assertEventDispatchThread();
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
     Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
@@ -246,8 +234,7 @@ public class BreakpointManager {
     return null;
   }
 
-  @Nullable
-  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName) {
+  public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName) {
     ThreadingAssertions.assertEventDispatchThread();
     final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
     return WriteAction.compute(() -> {
@@ -266,14 +253,12 @@ public class BreakpointManager {
   /**
    * @deprecated use {@link #addExceptionBreakpoint(String)}
    */
-  @Deprecated
-  @Nullable
-  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
+  @Deprecated(forRemoval = true)
+  public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName, final String packageName) {
     return addExceptionBreakpoint(exceptionClassName);
   }
 
-  @Nullable
-  public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
+  public @Nullable MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
     ThreadingAssertions.assertEventDispatchThread();
 
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
@@ -302,8 +287,7 @@ public class BreakpointManager {
   /**
    * @param category breakpoint category, null if the category does not matter
    */
-  @Nullable
-  public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, @Nullable final Key<T> category) {
+  public @Nullable <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, final @Nullable Key<T> category) {
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter<?>)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
@@ -317,7 +301,7 @@ public class BreakpointManager {
 
   private final Map<String, Element> myOriginalBreakpointsNodes = new LinkedHashMap<>();
 
-  public void readExternal(@NotNull final Element parentNode) {
+  public void readExternal(final @NotNull Element parentNode) {
     myOriginalBreakpointsNodes.clear();
     // save old breakpoints
     for (Element element : parentNode.getChildren()) {
@@ -328,7 +312,7 @@ public class BreakpointManager {
     }
   }
 
-  private void doRead(@NotNull final Element parentNode) {
+  private void doRead(final @NotNull Element parentNode) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Map<String, Breakpoint> nameToBreakpointMap = new HashMap<>();
       try {
@@ -495,14 +479,14 @@ public class BreakpointManager {
     checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
   }
 
-  public void removeBreakpoint(@Nullable final Breakpoint breakpoint) {
+  public void removeBreakpoint(final @Nullable Breakpoint breakpoint) {
     if (breakpoint == null) {
       return;
     }
     getXBreakpointManager().removeBreakpoint(breakpoint.myXBreakpoint);
   }
 
-  public void writeExternal(@NotNull final Element parentNode) {
+  public void writeExternal(final @NotNull Element parentNode) {
     // restore old breakpoints
     for (Element group : myOriginalBreakpointsNodes.values()) {
       Element clone = group.clone();
@@ -513,14 +497,12 @@ public class BreakpointManager {
     }
   }
 
-  @NotNull
-  public List<Breakpoint> getBreakpoints() {
+  public @NotNull List<Breakpoint> getBreakpoints() {
     return ReadAction.compute(() ->
       ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), BreakpointManager::getJavaBreakpoint));
   }
 
-  @Nullable
-  public static Breakpoint<?> getJavaBreakpoint(@Nullable final XBreakpoint<?> xBreakpoint) {
+  public static @Nullable Breakpoint<?> getJavaBreakpoint(final @Nullable XBreakpoint<?> xBreakpoint) {
     if (xBreakpoint == null) {
       return null;
     }
@@ -551,7 +533,7 @@ public class BreakpointManager {
   }
 
   //interaction with RequestManagerImpl
-  public void disableBreakpoints(@NotNull final DebugProcessImpl debugProcess) {
+  public void disableBreakpoints(final @NotNull DebugProcessImpl debugProcess) {
     final List<Breakpoint> breakpoints = getBreakpoints();
     if (!breakpoints.isEmpty()) {
       final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
@@ -576,7 +558,7 @@ public class BreakpointManager {
 
   /** @deprecated Use removeThreadFilter or version with LightOrRealThreadInfo parameter */
   @Deprecated
-  public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
+  public void applyThreadFilter(final @NotNull DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
     if (newFilterThread != null) {
       applyThreadFilter(debugProcess, new RealThreadInfo(newFilterThread));
     }
@@ -585,11 +567,11 @@ public class BreakpointManager {
     }
   }
 
-  public void removeThreadFilter(@NotNull final DebugProcessImpl debugProcess) {
+  public void removeThreadFilter(final @NotNull DebugProcessImpl debugProcess) {
     applyThreadFilter(debugProcess, (LightOrRealThreadInfo)null);
   }
 
-  public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable LightOrRealThreadInfo filter) {
+  public void applyThreadFilter(final @NotNull DebugProcessImpl debugProcess, @Nullable LightOrRealThreadInfo filter) {
     final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
     if (Comparing.equal(filter, requestManager.getFilterThread())) {
       // the filter already added
@@ -675,8 +657,7 @@ public class BreakpointManager {
       .onSuccess(b -> b.forEach(Breakpoint::updateUI));
   }
 
-  @Nullable
-  public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
+  public @Nullable Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
     return getJavaBreakpoint(dependentBreakpointManager.getMasterBreakpoint(dependentBreakpoint.myXBreakpoint));
   }

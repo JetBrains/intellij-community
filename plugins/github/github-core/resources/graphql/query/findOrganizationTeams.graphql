@@ -1,0 +1,16 @@
+query($organization: String!, $pageSize: Int = 100, $cursor: String) {
+  organization(login: $organization) {
+    teams(first: $pageSize, after: $cursor) {
+      pageInfo {
+        ...pageInfo
+      }
+      nodes {
+        ...teamInfo
+      }
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

@@ -17,7 +17,7 @@ public class HideRecordConstructorSingleClassesTest extends SingleClassesTestBas
   public Timeout globalTimeout = Timeout.seconds(60);
 
   @Override
-  protected Map<String, String> getDecompilerOptions() {
+  protected Map<String, Object> getDecompilerOptions() {
     return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                   IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
                   IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",

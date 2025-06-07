@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class RestLanguageSubstitutor extends LanguageSubstitutor {
   @Override
-  public Language getLanguage(@NotNull final VirtualFile vFile, @NotNull final Project project) {
+  public Language getLanguage(final @NotNull VirtualFile vFile, final @NotNull Project project) {
     final Module module = ModuleUtilCore.findModuleForFile(vFile, project);
     if (module == null) return null;
     boolean txtIsRst = ReSTService.getInstance(module).txtIsRst();

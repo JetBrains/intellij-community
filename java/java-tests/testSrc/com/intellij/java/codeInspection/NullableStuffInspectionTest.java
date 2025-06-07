@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
@@ -422,6 +423,13 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testOverriddenWithNullMarked() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
   public void testNullableParameterOverride() {
     doTest();
   }
@@ -433,5 +441,29 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testParameterUnderDefaultNotNull() {
     DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
     doTest();
+  }
+  
+  public void testRedundantNotNull() {
+    DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
+    doTest();
+  }
+  
+  public void testNoNotNullWarningIfIndirectSuperMethodIsAnnotated() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest();
+  }
+  
+  public void testIncompatibleConstructors() {
+    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    String nullable = nnnManager.getDefaultNullable();
+    nnnManager.setDefaultNullable("org.jspecify.annotations.Nullable");
+    Disposer.register(myFixture.getTestRootDisposable(), () -> nnnManager.setDefaultNullable(nullable));
+    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+    IntentionAction action = myFixture.findSingleIntention("Fix all '@NotNull/@Nullable problems' problems in file");
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 }

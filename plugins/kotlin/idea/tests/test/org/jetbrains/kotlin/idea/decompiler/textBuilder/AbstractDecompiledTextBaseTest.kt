@@ -28,7 +28,7 @@ abstract class AbstractDecompiledTextBaseTest(
 
     protected abstract fun textToCheck(psiFile: PsiFile): String
 
-    protected open fun checkStubConsistency(file: VirtualFile, decompiledText: String) {}
+    protected open fun checkStubConsistency(file: VirtualFile, decompiledFile: PsiFile) {}
 
     protected val mockSourcesBase = File(IDEA_TEST_DATA_DIR, baseDirectory)
 
@@ -86,7 +86,7 @@ abstract class AbstractDecompiledTextBaseTest(
 
         KotlinTestUtils.assertEqualsToFile(File("$path.expected.kt"), checkedText)
 
-        checkStubConsistency(fileToDecompile, checkedText)
+        checkStubConsistency(fileToDecompile, psiFile)
 
         checkThatFileWasParsedCorrectly(psiFile)
     }

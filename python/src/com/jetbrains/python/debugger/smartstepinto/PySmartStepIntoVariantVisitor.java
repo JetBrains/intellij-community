@@ -18,8 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jetbrains.python.PyNames.BUILTINS_MODULES;
+
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
-  private static final @NotNull @NonNls ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
+  private static final String RERAISE = "RERAISE";
 
   int myVariantIndex = -1;
   private final @NotNull List<PySmartStepIntoVariant> myCollector;
@@ -32,7 +34,32 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
                                        @NotNull List<Pair<String, Boolean>> variantsFromPython,
                                        @NotNull PySmartStepIntoContext context) {
     myCollector = collector;
-    myVariantsFromPython = variantsFromPython;
+    boolean shouldJump = false;
+    int mid = (variantsFromPython.size() - 1) / 2;
+    if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+      int i = 0;
+      while (i < mid) {
+        if (!variantsFromPython.get(i).first.equals(variantsFromPython.get(mid + i).first) ||
+            !(variantsFromPython.get(i).second && !variantsFromPython.get(mid + i).second)) {
+          break;
+        }
+        i++;
+      }
+      if (i == mid) {
+        shouldJump = true;
+      }
+    }
+
+    if (shouldJump) {
+      myVariantsFromPython = variantsFromPython.subList(mid, variantsFromPython.size() - 1);
+    }
+    else if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+      myVariantsFromPython = variantsFromPython.subList(0, variantsFromPython.size() - 1);
+    }
+    else {
+      myVariantsFromPython = variantsFromPython;
+    }
+
     myContext = context;
   }
 
@@ -47,8 +74,6 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
 
     PyExpression callee = node.getCallee();
     if (callee == null || callee.getName() == null) return;
-
-    if (!callee.getName().equals(myVariantsFromPython.get(myVariantIndex + 1).first)) return;
 
     myVariantIndex++;
     int callOrder = getCallOrder();

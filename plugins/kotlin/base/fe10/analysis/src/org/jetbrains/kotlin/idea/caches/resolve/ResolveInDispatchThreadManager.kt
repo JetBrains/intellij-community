@@ -5,8 +5,11 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.ThreadingAssertions.assertEventDispatchThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry
 
 /**
  * Temporary allow resolve in dispatch thread.
@@ -56,13 +59,14 @@ object ResolveInDispatchThreadManager {
     // Guarded by isDispatchThread check
     private var errorHandler: (() -> Unit)? = null
 
+    @OptIn(KaImplementationDetail::class)
     fun assertNoResolveInDispatchThread() {
         val application = ApplicationManager.getApplication() ?: return
         if (!application.isDispatchThread) {
             return
         }
 
-        if (isResolveAllowed) return
+        if (isResolveAllowed || KaAnalysisPermissionRegistry.getInstance().isAnalysisAllowedOnEdt) return
 
         if (application.isUnitTestMode) {
             if (!isForceCheckInTests) return
@@ -99,7 +103,7 @@ object ResolveInDispatchThreadManager {
     }
 
     internal fun <T> runWithForceCheckForResolveInDispatchThreadInTests(errorHandler: (() -> Unit)?, runnable: () -> T): T {
-        ApplicationManager.getApplication()?.assertIsDispatchThread() ?: error("Application is not available")
+        assertEventDispatchThread()
 
         val wasSet = if (!isForceCheckInTests) {
             isForceCheckInTests = true

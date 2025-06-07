@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.DynamicBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,8 +64,9 @@ public final class FormSourceCodeGenerator {
 
   private boolean myNeedGetMessageFromBundle;
 
-  private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
-    PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
+  private static final ElementPattern<PsiExpressionStatement> ourSuperCallPattern =
+    PsiJavaPatterns.psiExpressionStatement().withFirstChild(
+      PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(PlatformPatterns.psiElement().withText(JavaKeywords.SUPER)));
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
@@ -122,6 +124,11 @@ public final class FormSourceCodeGenerator {
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
 
     final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
+    if (doc == null) {
+      LOG.warn("Unable to get document for " + formFile.getPath());
+      return;
+    }
+
     final LwRootContainer rootContainer;
     try {
       rootContainer = Utils.getRootContainer(doc.getText(), propertiesProvider);
@@ -398,7 +405,7 @@ public final class FormSourceCodeGenerator {
           return;
         }
         if (psiElement instanceof PsiField field) {
-          if (field.getContainingClass().equals(classToBind)) {
+          if (field.getContainingClass() == classToBind) {
             if (Utils.isBoundField(rootContainer, field.getName())) {
               result.set(Boolean.TRUE);
             }
@@ -722,11 +729,13 @@ public final class FormSourceCodeGenerator {
 
       final String propertyClass = property.getPropertyClassName();
       if (propertyClass.equals(Color.class.getName())) {
+        //noinspection DataFlowIssue
         ColorDescriptor descriptor = (ColorDescriptor) value;
         if (!descriptor.isColorSet()) continue;
       }
 
       if (propertyClass.equals(Font.class.getName())) {
+        //noinspection DataFlowIssue
         pushFontProperty(variable, (FontDescriptor) value, property.getReadMethodName(), property.getWriteMethodName());
         continue;
       }
@@ -734,45 +743,58 @@ public final class FormSourceCodeGenerator {
       startMethodCall(variable, property.getWriteMethodName());
 
       if (propertyClass.equals(Dimension.class.getName())) {
+        //noinspection DataFlowIssue
         newDimension((Dimension)value);
       }
       else if (propertyClass.equals(Integer.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Integer)value).intValue());
       }
       else if (propertyClass.equals(Double.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Double)value).doubleValue());
       }
       else if (propertyClass.equals(Float.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Float)value).floatValue());
       }
       else if (propertyClass.equals(Long.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Long) value).longValue());
       }
       else if (propertyClass.equals(Short.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Short) value).shortValue());
       }
       else if (propertyClass.equals(Byte.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Byte) value).byteValue());
       }
       else if (propertyClass.equals(Character.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Character) value).charValue());
       }
       else if (propertyClass.equals(Boolean.class.getName())) {
+        //noinspection DataFlowIssue
         push(((Boolean)value).booleanValue());
       }
       else if (propertyClass.equals(Rectangle.class.getName())) {
+        //noinspection DataFlowIssue
         newRectangle((Rectangle)value);
       }
       else if (propertyClass.equals(Insets.class.getName())) {
+        //noinspection DataFlowIssue
         newInsets((Insets)value);
       }
       else if (propertyClass.equals(String.class.getName())) {
         push((String)value);
       }
       else if (propertyClass.equals(Color.class.getName())) {
+        //noinspection DataFlowIssue
         pushColor((ColorDescriptor) value);
       }
       else if (propertyClass.equals(Icon.class.getName())) {
+        //noinspection DataFlowIssue
         pushIcon((IconDescriptor) value);
       }
       else if (property instanceof LwIntroEnumProperty) {
@@ -915,11 +937,18 @@ public final class FormSourceCodeGenerator {
       titledBorderFactoryDescriptor  = findIdeBorderFactoryClass(scope);
       container.getDelegeeClientProperties().put(AsmCodeGenerator.ourBorderFactoryClientProperty, titledBorderFactoryDescriptor);
     }
-    boolean isCustomFactory = titledBorderFactoryDescriptor != null && !titledBorderFactoryDescriptor.getValue().isEmpty();
+
+    String titledBorderFactoryDescriptorValue = getStringDescriptionValue(titledBorderFactoryDescriptor);
+    boolean isCustomFactory = titledBorderFactoryDescriptorValue != null && !titledBorderFactoryDescriptorValue.isEmpty();
 
     return isCustomFactory ?
-           titledBorderFactoryDescriptor.getValue().replace('$', '.') :
+           titledBorderFactoryDescriptorValue.replace('$', '.') :
            BorderFactory.class.getName();
+  }
+
+  @Nullable
+  private static String getStringDescriptionValue(@Nullable StringDescriptor descriptor) {
+    return descriptor == null ? null : descriptor.getValue();
   }
 
   private @Nullable StringDescriptor findIdeBorderFactoryClass(GlobalSearchScope scope) {

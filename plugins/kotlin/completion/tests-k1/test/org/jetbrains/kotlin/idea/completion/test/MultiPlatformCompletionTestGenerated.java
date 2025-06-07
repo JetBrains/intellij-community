@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -32,9 +32,39 @@ public abstract class MultiPlatformCompletionTestGenerated extends AbstractMulti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualClassInIntermediateModule")
+        public void testActualClassInIntermediateModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualClassInIntermediateModule/");
+        }
+
+        @TestMetadata("actualClassInNonLeafModule")
+        public void testActualClassInNonLeafModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualClassInNonLeafModule/");
+        }
+
+        @TestMetadata("actualClassNotInNonLeafModule")
+        public void testActualClassNotInNonLeafModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualClassNotInNonLeafModule/");
+        }
+
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
+        @TestMetadata("actualFunInIntermediateModule")
+        public void testActualFunInIntermediateModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualFunInIntermediateModule/");
+        }
+
+        @TestMetadata("actualFunInNonLeafModule")
+        public void testActualFunInNonLeafModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualFunInNonLeafModule/");
+        }
+
+        @TestMetadata("actualFunNotInNonLeafModule")
+        public void testActualFunNotInNonLeafModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualFunNotInNonLeafModule/");
         }
 
         @TestMetadata("actualKeywordFromSeveralFiles")

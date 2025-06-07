@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -15,18 +15,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
-  @NonNls
-  public static final String TOOL_ID = "HtmlExtraClosingTag";
+  public static final @NonNls String TOOL_ID = "HtmlExtraClosingTag";
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return TOOL_ID;
   }
 
   @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     final TextRange range = XmlTagUtil.getEndTagRange(tag);
 
     if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag, true)

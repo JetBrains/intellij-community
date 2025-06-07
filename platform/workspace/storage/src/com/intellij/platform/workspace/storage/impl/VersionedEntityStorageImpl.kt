@@ -75,7 +75,7 @@ private class ValuesCache {
     private val cachedValueClearCounter = AtomicLong()
     private val cachedValueWithParametersClearCounter = AtomicLong()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val cachedValueFromCacheMeterCounter = meter.counterBuilder("workspaceModel.cachedValue.from.cache.count").buildObserver()
       val cachedValueCalculatedMeterCounter = meter.counterBuilder("workspaceModel.cachedValue.calculated.count").buildObserver()
       val cachedValueTotalMeterCounter = meter.counterBuilder("workspaceModel.cachedValue.total.get.count").buildObserver()
@@ -193,10 +193,11 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() {
+      val pointer = currentPointer
       val snapshotCache = currentSnapshot.get()
-      if (snapshotCache == null || version != snapshotCache.storageVersion) {
+      if (snapshotCache == null || pointer.version != snapshotCache.storageVersion) {
         val cache = ValuesCache()
-        currentSnapshot.set(StorageSnapshotCache(version, cache, current))
+        currentSnapshot.set(StorageSnapshotCache(pointer.version, cache, pointer.storage))
         return cache
       }
       return snapshotCache.cache
@@ -237,8 +238,12 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
    * We may calculate the change in this function as we won't need the changes for bridges initialization.
    */
   @Synchronized
-  public fun replace(newStorage: ImmutableEntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>,
-                     beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
+  public fun replace(
+    newStorage: ImmutableEntityStorage,
+    changes: Map<Class<*>, List<EntityChange<*>>>,
+    beforeChanged: (VersionedStorageChange) -> Unit,
+    afterChanged: (VersionedStorageChange) -> Unit,
+  ) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(oldCopy.storage, newStorage, changes)
@@ -247,7 +252,8 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
       beforeChanged(change)
       currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
       afterChanged(change)
-    } finally {
+    }
+    finally {
       (newStorage as? AbstractEntityStorage)?.isEventHandling = false
     }
   }
@@ -264,7 +270,7 @@ public interface VersionedStorageChangeInternal : VersionedStorageChange {
 private class VersionedStorageChangeImpl(
   override val storageBefore: ImmutableEntityStorage,
   override val storageAfter: ImmutableEntityStorage,
-  private val changes: Map<Class<*>, List<EntityChange<*>>>
+  private val changes: Map<Class<*>, List<EntityChange<*>>>,
 ) : VersionedStorageChangeInternal {
   @Suppress("UNCHECKED_CAST")
   override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> {

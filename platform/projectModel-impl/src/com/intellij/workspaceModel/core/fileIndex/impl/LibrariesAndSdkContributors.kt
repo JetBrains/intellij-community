@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.Disposable
@@ -24,14 +24,17 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
 
-internal class LibrariesAndSdkContributors(private val project: Project,
-                                           private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
-                                           private val fileSetsByPackagePrefix: PackagePrefixStorage,
-                                           parentDisposable: Disposable,
+internal class LibrariesAndSdkContributors(
+  private val project: Project,
+  private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+  private val fileSetsByPackagePrefix: PackagePrefixStorage,
+  private val projectRootManager: ProjectRootManagerEx,
+  parentDisposable: Disposable,
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
@@ -41,13 +44,13 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   
   init {
     moduleDependencyIndex.addListener(this)
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(this)
+    projectRootManager.addProjectJdkListener(this)
     Disposer.register(parentDisposable) {
       moduleDependencyIndex.removeListener(this)
-      ProjectRootManagerEx.getInstanceEx(project).removeProjectJdkListener(this)
+      projectRootManager.removeProjectJdkListener(this)
     }
   }
-  
+
   fun registerFileSets() {
     var noSdkIsUsed = true
     ProjectJdkTable.getInstance().allJdks.forEach { sdk ->
@@ -59,11 +62,11 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     if (noSdkIsUsed) {
       registerProjectSdkRoots()
     }
-    (LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable).forEach { 
-      it.libraries.forEach { library ->
+    for (libraryTable in LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable) {
+      for (library in libraryTable.libraries) {
         if (moduleDependencyIndex.hasDependencyOn(library)) {
           registerLibraryRoots(library)
-        }  
+        }
       }
     }
   }
@@ -94,8 +97,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = GlobalLibraryPointer(library)
-    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
     (library as? LibraryEx)?.excludedRoots?.forEach {
       if (RootFileValidityChecker.ensureValid(it, library, null)) {
         fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, pointer))
@@ -118,8 +121,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = SdkPointer(sdk)
-    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {
@@ -197,6 +200,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library
     }
 
+    /** Consider using [com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.findSdk] instead */
     internal fun getSdk(fileSet: WorkspaceFileSet): Sdk? {
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<SdkPointer>()?.sdk
     }

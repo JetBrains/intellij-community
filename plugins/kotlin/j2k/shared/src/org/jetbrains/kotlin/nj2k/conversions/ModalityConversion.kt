@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.annotationByFqName
 import org.jetbrains.kotlin.nj2k.psi
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
  * Updates the modality (open, final, abstract) of some declarations.
  * Also, adds the "override" modifier to applicable methods.
  */
-class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class ModalityConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

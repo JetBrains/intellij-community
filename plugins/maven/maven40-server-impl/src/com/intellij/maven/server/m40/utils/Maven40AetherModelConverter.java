@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.RepositoryUtils;
@@ -24,11 +24,10 @@ import java.util.stream.Collectors;
  * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
  */
 public final class Maven40AetherModelConverter extends Maven40ModelConverter {
-  @NotNull
-  public static MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
-                                                                Model model,
-                                                                Collection<? extends DependencyNode> dependencyTree,
-                                                                File localRepository) {
+  public static @NotNull MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
+                                                                         Model model,
+                                                                         Collection<? extends DependencyNode> dependencyTree,
+                                                                         File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(mavenProject.getGroupId(), mavenProject.getArtifactId(), mavenProject.getVersion()));
 
@@ -114,8 +113,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     return result;
   }
 
-  @Nullable
-  public static Artifact toArtifact(@Nullable Dependency dependency) {
+  public static @Nullable Artifact toArtifact(@Nullable Dependency dependency) {
     if (dependency == null) {
       return null;
     }

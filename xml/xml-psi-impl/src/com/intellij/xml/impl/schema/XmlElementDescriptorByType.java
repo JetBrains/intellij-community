@@ -61,6 +61,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return false;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof XmlElementDescriptorByType that)) return false;
@@ -70,6 +71,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return (myType != null ? myType.hashCode() : 0);
   }

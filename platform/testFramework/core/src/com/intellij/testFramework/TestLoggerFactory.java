@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -81,22 +81,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       myInitialized = true;
     }
 
-    java.util.logging.Logger julLogger = java.util.logging.Logger.getLogger(category);
-    if (myEchoDebugToStdout) {
-      configureLogToStdoutIfDebug(julLogger);
-    }
-    return new TestLogger(julLogger, this);
-  }
-
-  /**
-   * If the logger has the "FINE" level, add a LogToStdoutJulHandler that streams its log records
-   * to STDOUT with a timestamp relative to the test start time.
-   */
-  private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
-    if (julLogger.isLoggable(Level.FINE) &&
-        ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
-      julLogger.addHandler(new LogToStdoutJulHandler());
-    }
+    return new TestLogger(java.util.logging.Logger.getLogger(category), this);
   }
 
   public static int getRethrowErrorNumber() {
@@ -123,7 +108,13 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null, null, null);
+
+      if (myEchoDebugToStdout) {
+        addConsoleAppenderForDebugRecords();
+      }
+
+      System.out.printf("Test log file: %s%n", logFile.toUri());
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
@@ -135,6 +126,13 @@ public final class TestLoggerFactory implements Logger.Factory {
       e.printStackTrace();
       return false;
     }
+  }
+
+  private static void addConsoleAppenderForDebugRecords() {
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+
+    // just add a single console appender instead of multiple handlers, but for the root logger
+    rootLogger.addHandler(new FilteringLogToStdoutJulHandler(Level.FINE));
   }
 
   public static @NotNull Path getTestLogDir() {
@@ -228,11 +226,11 @@ public final class TestLoggerFactory implements Logger.Factory {
     if (t == null) return null;
 
     StringBuilder sb = new StringBuilder();
-    ExceptionUtil.findCauseAndSuppressed(t, ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
-    ExceptionUtil.findCauseAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
@@ -372,7 +370,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
         List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
-        if (!lines.get(0).startsWith("\n")) lines.set(0, "\n" + lines.get(0));
+        if (!lines.get(0).startsWith("\n")) lines = ContainerUtil.prepend(lines.subList(1, lines.size()),"\n" + lines.get(0));
         System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
     }
@@ -432,7 +430,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       ErrorLog errorLog = TestLoggerKt.getErrorLog();
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
-        errorLog.recordLoggedError(message, details, t);
+        errorLog.recordLoggedError(message, t);
         return;
       }
       if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
@@ -514,8 +512,7 @@ public final class TestLoggerFactory implements Logger.Factory {
      * Calling {@link com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest} reflectively to avoid dependency on a platform module
      */
     private static class Accessor {
-      @NotNull
-      private static final MethodHandle isInStressTest = getMethodHandle();
+      private static final @NotNull MethodHandle isInStressTest = getMethodHandle();
 
       private static @NotNull MethodHandle getMethodHandle() {
         try {
@@ -543,10 +540,10 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   // Cannot extend from ConsoleHandler since it is hard-coded to System.err,
   // and calling setOutputStream(System.out) after the constructor would close System.err.
-  private static class LogToStdoutJulHandler extends StreamHandler {
+  public static class LogToStdoutJulHandler extends StreamHandler {
     private boolean initialized;
 
-    LogToStdoutJulHandler() {
+    public LogToStdoutJulHandler() {
       super(System.out, new WithTimeSinceTestStartedJulFormatter());
       setLevel(Level.ALL);
     }
@@ -574,6 +571,16 @@ public final class TestLoggerFactory implements Logger.Factory {
     public synchronized void close() {
       // Prevent closing System.out.
       flush();
+    }
+  }
+
+  private static class FilteringLogToStdoutJulHandler extends LogToStdoutJulHandler {
+    FilteringLogToStdoutJulHandler(Level level) {
+      super();
+
+      // we'd like to capture all records with level or finer than the level
+      // so we set level to all and do actual level filtering with the filter
+      setFilter(record -> record.getLevel().intValue() <= level.intValue());
     }
   }
 

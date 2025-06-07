@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.analysis.AnalysisScope;
@@ -77,9 +78,8 @@ public class InspectionCommandEx extends AbstractCommand {
     }
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
 
     if (StringUtil.isNotEmpty(myOptions.downloadFileUrl)) {
@@ -270,10 +270,9 @@ public class InspectionCommandEx extends AbstractCommand {
     }
   }
 
-  @NotNull
-  private static String buildIdentifier(@NotNull final String inspectionResultFilename,
-                                        final String @Nullable [] inspectionTrueFields,
-                                        @NotNull Project project) {
+  private static @NotNull String buildIdentifier(final @NotNull String inspectionResultFilename,
+                                                 final String @Nullable [] inspectionTrueFields,
+                                                 @NotNull Project project) {
 
     return Stream.of(project.getName(),
                      StringUtil.trimExtensions(inspectionResultFilename),
@@ -291,13 +290,9 @@ public class InspectionCommandEx extends AbstractCommand {
   }
 
   public static class Options {
-    @Nullable
-    @Argument
-    public String scopeName;
+    @Argument public @Nullable String scopeName;
 
-    @Nullable
-    @Argument
-    public String toolShortName;
+    @Argument public @Nullable String toolShortName;
 
     @Argument
     public String @Nullable [] inspectionTrueFields;
@@ -305,13 +300,9 @@ public class InspectionCommandEx extends AbstractCommand {
     @Argument
     public String @Nullable [] inspectionFalseFields;
 
-    @Nullable
-    @Argument
-    public String downloadFileUrl;
+    @Argument public @Nullable String downloadFileUrl;
 
-    @Nullable
-    @Argument
-    public String directory;
+    @Argument public @Nullable String directory;
 
     @Argument
     public boolean hideResults = false;

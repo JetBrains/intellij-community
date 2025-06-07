@@ -510,7 +510,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - pf:myProductionModulesForTestModules:java.util.Map
 - pf:myUserData:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - <init>(com.intellij.openapi.project.Project):V
-- commit():V
 - createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
 - createLibrary(java.lang.String,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.libraries.Library
 - dispose():V
@@ -521,7 +520,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - findIdeLibrary(com.intellij.openapi.externalSystem.model.project.LibraryData):com.intellij.openapi.roots.libraries.Library
 - findIdeModule(java.lang.String):com.intellij.openapi.module.Module
 - findModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- findModuleByPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):java.lang.String
 - getAllDependentModules(com.intellij.openapi.module.Module):java.util.List
 - getAllLibraries():com.intellij.openapi.roots.libraries.Library[]
 - getContentRoots(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile[]
@@ -534,25 +532,24 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - getModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - a:getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - getModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
-- getModifiableWorkspace():com.intellij.openapi.externalSystem.service.project.ModifiableWorkspace
 - getModules():com.intellij.openapi.module.Module[]
 - getOrderEntries(com.intellij.openapi.module.Module):com.intellij.openapi.roots.OrderEntry[]
 - getProductionModuleName(com.intellij.openapi.module.Module):java.lang.String
 - getSourceRoots(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile[]
 - getSourceRoots(com.intellij.openapi.module.Module,Z):com.intellij.openapi.vfs.VirtualFile[]
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
-- isSubstituted(java.lang.String):Z
 - newModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
 - newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
-- registerModulePublication(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
 - removeLibrary(com.intellij.openapi.roots.libraries.Library):V
 - setTestModuleProperties(com.intellij.openapi.module.Module,java.lang.String):V
-- trySubstitute(com.intellij.openapi.module.Module,com.intellij.openapi.roots.LibraryOrderEntry,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):com.intellij.openapi.roots.ModuleOrderEntry
-- p:updateSubstitutions():V
 pc:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - com.intellij.openapi.util.UserDataHolderBase
 - p:<init>():V
+f:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:findModuleNode(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.DataNode
+- sf:findModuleNode(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.externalSystem.model.DataNode
 f:com.intellij.openapi.externalSystem.service.project.ExternalSystemOperationDescriptor
 - java.io.Serializable
 - sf:OPERATION_DESCRIPTOR_KEY:com.intellij.openapi.externalSystem.model.Key
@@ -592,11 +589,7 @@ c:com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvide
 - p:doGetModifiableLibraryModel(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.roots.libraries.Library$ModifiableModel
 - p:doGetModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - p:doGetModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
-- forceUpdateSubstitutions():V
 - getActualStorageBuilder():com.intellij.platform.workspace.storage.MutableEntityStorage
-- getModifiableFacetModels():java.util.Map
-- getModifiableLibraryModels():java.util.Map
-- getModifiableModels():com.intellij.util.containers.ClassMap
 - getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - newModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
 - newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
@@ -709,6 +702,12 @@ f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrus
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,kotlin.coroutines.Continuation):java.lang.Object
+- f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator
+- com.intellij.ide.trustedProjects.TrustedProjectsLocator
+- <init>():V
+- getProjectRoots(com.intellij.openapi.project.Project):java.util.List
+- getProjectRoots(java.nio.file.Path,com.intellij.openapi.project.Project):java.util.List
 a:com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder
 - p:<init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.settings.ExternalProjectSettings):V
@@ -1096,6 +1095,10 @@ f:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtensi
 - getIcon(Z):javax.swing.Icon
 f:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension$Companion
 - f:setSpinning(javax.swing.JComponent,Z):V
+com.intellij.openapi.externalSystem.service.ui.util.AsyncDistributionsInfo
+- com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
+- a:isReady():Z
+- a:prepare():V
 com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 - com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 - com.intellij.openapi.roots.ui.distribution.FileChooserInfo
@@ -1127,6 +1130,7 @@ a:com.intellij.openapi.externalSystem.util.AbstractCrcCalculator
 - com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
 - <init>():V
 - calculateCrc(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):java.lang.Long
+- createLexer(com.intellij.openapi.project.Project,com.intellij.lang.ParserDefinition):com.intellij.lexer.Lexer
 - a:isIgnoredToken(com.intellij.psi.tree.IElementType,java.lang.CharSequence,com.intellij.lang.ParserDefinition):Z
 f:com.intellij.openapi.externalSystem.util.CrcUtils
 - sf:calculateCrc(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.vfs.VirtualFile):J
@@ -1177,6 +1181,8 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - s:isNewProject(com.intellij.openapi.project.Project):Z
 - s:isNoBackgroundMode():Z
 - s:linkExternalProject(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.project.Project,com.intellij.util.Consumer,Z,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V
+- s:linkExternalProject(com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.externalSystem.importing.ImportSpec):V
+- s:linkExternalProject(com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.externalSystem.importing.ImportSpecBuilder):V
 - s:naturalJoinSystemIds(java.util.Collection):java.lang.String
 - s:refreshAndFindFileByIoFile(java.io.File):com.intellij.openapi.vfs.VirtualFile
 - s:refreshProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback,Z,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V
@@ -1218,6 +1224,7 @@ f:com.intellij.openapi.externalSystem.util.environment.Environment$Companion
 - f:getVariable(java.lang.String):java.lang.String
 com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 - sf:Companion:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- s:create():com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - s:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:getActivateToolWindowBeforeRun():Z
 - a:getActivateToolWindowOnFailure():Z
@@ -1230,6 +1237,7 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getUserData():com.intellij.openapi.util.UserDataHolderBase
 f:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- f:create():com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - f:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:build():com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
@@ -1240,8 +1248,13 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withActivateToolWindowBeforeRun(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withCallback(com.intellij.openapi.externalSystem.task.TaskCallback):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withCallback(java.util.concurrent.CompletableFuture):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withExecutorId(java.lang.String):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withProgressExecutionMode(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withSettings(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withSystemId(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 a:com.intellij.openapi.externalSystem.util.ui.DataView
 - sf:Companion:com.intellij.openapi.externalSystem.util.ui.DataView$Companion

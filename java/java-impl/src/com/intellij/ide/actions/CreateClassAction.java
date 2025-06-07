@@ -3,18 +3,23 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
@@ -33,7 +38,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
@@ -53,6 +59,15 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.addKind(JavaPsiBundle.message("node.exception.tooltip"), PlatformIcons.EXCEPTION_CLASS_ICON,
                     JavaTemplateUtil.INTERNAL_EXCEPTION_TYPE_TEMPLATE_NAME);
 
+    if (JavaFeature.IMPLICIT_CLASSES.isSufficient(level)) {
+      String packageNameByDirectory = PackageIndex.getInstance(project).getPackageNameByDirectory(directory.getVirtualFile());
+      if("".equals(packageNameByDirectory)) {
+        builder.addKind(JavaPsiBundle.message("node.simple.source.file.tooltip"),
+                        IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.JavaFileType),
+                        JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE);
+      }
+    }
+
     PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
@@ -70,7 +85,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
           return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
-        if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
+        if (PsiTypesUtil.isRestrictedIdentifier(shortName, level)) {
           return JavaErrorBundle.message("restricted.identifier", shortName);
         }
         return null;

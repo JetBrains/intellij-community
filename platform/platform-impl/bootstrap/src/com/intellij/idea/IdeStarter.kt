@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
+import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -40,6 +42,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JOptionPane
@@ -78,15 +81,12 @@ open class IdeStarter : ModernApplicationStarter() {
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
 
       val openProjectBlock: suspend CoroutineScope.() -> Unit = {
-        openProjectIfNeeded(args = args, app = app, cs = this, publisher = lifecyclePublisher)
-        // update "open projects" state to whichever projects were decided to be opened in openProjectIfNeeded (=which are open now)
+        openProjectIfNeeded(args = args, app = app, coroutineScope = this, publisher = lifecyclePublisher)
+        // update an "open projects" state to whichever projects were decided to be opened in openProjectIfNeeded (=which are open now)
         serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
 
-      val starterClass = this@IdeStarter.javaClass
-      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(
-        close = isHeadless || (starterClass != IdeStarter::class.java && starterClass != StandaloneLightEditStarter::class.java),
-      )
+      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(close = isHeadless || !shouldRunFusStartUpMeasurer())
       if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
@@ -101,9 +101,13 @@ open class IdeStarter : ModernApplicationStarter() {
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
       PerformanceWatcher.getInstance().startEdtSampling()
 
+      if (Registry.`is`("ide.enable.edt.lock.load.monitor")) {
+        app.serviceAsync<EdtLockLoadMonitorService>().initialize()
+      }
+
       launch { reportPluginErrors() }
 
-      LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+      LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       runCatching {
         lifecyclePublisher.appStarted()
       }.getOrLogException(thisLogger())
@@ -114,7 +118,12 @@ open class IdeStarter : ModernApplicationStarter() {
     }
   }
 
-  protected open suspend fun openProjectIfNeeded(args: List<String>, app: Application, cs: CoroutineScope, publisher: AppLifecycleListener) {
+  protected open suspend fun openProjectIfNeeded(
+    args: List<String>,
+    app: Application,
+    coroutineScope: CoroutineScope,
+    publisher: AppLifecycleListener,
+  ) {
     var willReopenRecentProjectOnStart = false
     lateinit var recentProjectManager: RecentProjectsManager
     val isOpenProjectNeeded = span("isOpenProjectNeeded") {
@@ -130,7 +139,7 @@ open class IdeStarter : ModernApplicationStarter() {
         return@span false
       }
 
-      cs.launch {
+      coroutineScope.launch {
         LifecycleUsageTriggerCollector.onIdeStart()
       }
 
@@ -184,6 +193,9 @@ open class IdeStarter : ModernApplicationStarter() {
     }
   }
 
+  @ApiStatus.Internal
+  protected open fun shouldRunFusStartUpMeasurer(): Boolean = javaClass == IdeStarter::class.java
+
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
     serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
@@ -215,7 +227,12 @@ open class IdeStarter : ModernApplicationStarter() {
   }
 
   internal class StandaloneLightEditStarter : IdeStarter() {
-    override suspend fun openProjectIfNeeded(args: List<String>, app: Application, cs: CoroutineScope, publisher: AppLifecycleListener) {
+    override suspend fun openProjectIfNeeded(
+      args: List<String>,
+      app: Application,
+      coroutineScope: CoroutineScope,
+      publisher: AppLifecycleListener,
+    ) {
       val project = when {
         filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(list = filesToLoad, location = "MacMenu")
         args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
@@ -229,10 +246,14 @@ open class IdeStarter : ModernApplicationStarter() {
       val recentProjectManager = serviceAsync<RecentProjectsManager>()
       val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
       if (!isOpened) {
-        cs.launch(Dispatchers.EDT) {
-          LightEditService.getInstance().showEditorWindow()
+        coroutineScope.launch(Dispatchers.EDT) {
+          serviceAsync<LightEditService>().showEditorWindow()
         }
       }
+    }
+
+    override fun shouldRunFusStartUpMeasurer(): Boolean {
+      return javaClass == StandaloneLightEditStarter::class.java
     }
   }
 }
@@ -261,7 +282,7 @@ private fun CoroutineScope.postOpenUiTasks() {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
+  else if (SystemInfoRt.isUnix && SystemInfo.isJetBrainsJvm) {
     launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
@@ -272,7 +293,7 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    startSystemHealthMonitor()
+    SystemHealthMonitor.start()
   }
 
   launch {
@@ -289,17 +310,18 @@ private fun CoroutineScope.postOpenUiTasks() {
 }
 
 private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
+  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
   if (pluginErrors.isEmpty()) {
     return
   }
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
-    val actions = linksToActions(pluginErrors)
-    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
+    val pluginErrorMessages = pluginErrors.map { it.get() }.toMutableList()
+    val actions = linksToActions(pluginErrorMessages)
+    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
     @Suppress("DEPRECATION")
-    NotificationGroupManager.getInstance().getNotificationGroup(
+    serviceAsync<NotificationGroupManager>().getNotificationGroup(
       "Plugin Error").createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()

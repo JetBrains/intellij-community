@@ -225,8 +225,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return port;
   }
 
-  @NotNull
-  public Future<?> release(@NotNull Target target, @Nullable Parameters configuration) {
+  public @NotNull Future<?> release(@NotNull Target target, @Nullable Parameters configuration) {
     List<Info> infos = new ArrayList<>();
     synchronized (myProcMap) {
       for (Pair<Target, Parameters> key : myProcMap.keySet()) {
@@ -265,8 +264,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private void startProcess(@NotNull Target target, @NotNull Parameters configuration, @NotNull Pair<Target, Parameters> key) {
     ProgramRunner<?> runner = new ProgramRunner<>() {
       @Override
-      @NotNull
-      public String getRunnerId() {
+      public @NotNull String getRunnerId() {
         return "MyRunner";
       }
 
@@ -363,7 +361,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return null;
   }
 
-  private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
+  private ProcessListener getProcessListener(final @NotNull Pair<Target, Parameters> key) {
     return new ProcessListener() {
       @Override
       public void startNotified(@NotNull ProcessEvent event) {
@@ -496,8 +494,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return info != null;
   }
 
-  @Nullable
-  private EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
+  private @Nullable EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     if (!RemoteObject.IN_PROCESS) return null;
     Pair<Target, Parameters> key = Pair.create(target, configuration);
     InProcessInfo<EntryPoint> info;
@@ -518,8 +515,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
-  @NotNull
-  protected ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
+  protected @NotNull ThrowableComputable<@Nullable EntryPoint, Exception> acquireInProcessFactory(Target target, Parameters configuration)
     throws Exception {
     return () -> null;
   }

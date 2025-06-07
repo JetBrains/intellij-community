@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket;
 
 import io.netty.buffer.ByteBuf;
@@ -24,8 +25,7 @@ public class WebSocketClient extends Client {
     return sendFrame(message, false);
   }
 
-  @NotNull
-  public ChannelFuture sendFrame(@NotNull ByteBuf message, boolean binary) {
+  public @NotNull ChannelFuture sendFrame(@NotNull ByteBuf message, boolean binary) {
     if (channel.isOpen()) {
       return channel.writeAndFlush(binary ? new BinaryWebSocketFrame(message) : new TextWebSocketFrame(message));
     }

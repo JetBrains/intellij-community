@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 public class UpdateableZipTest extends TestCase {
   protected File zipFile;

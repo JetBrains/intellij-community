@@ -14,9 +14,11 @@ import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
+import com.intellij.vcs.log.ui.table.getCommitId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onClosed
@@ -48,7 +50,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
     })
   }
 
-  fun getStatus(model: GraphTableModel, row: Int): T? = model.getCommitId(row)?.let { providers[model]?.getData(it) }
+  fun getStatus(model: GraphTableModel, row: VcsLogTableIndex): T? = model.getCommitId(row)?.let { providers[model]?.getData(it) }
 
   abstract fun getDataLoader(project: Project): VcsCommitsDataLoader<T>
 

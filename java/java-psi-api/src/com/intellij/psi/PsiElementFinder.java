@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -34,8 +35,7 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
    * @return the PSI class, or null if no class with such name is found.
    * @see JavaPsiFacade#findClass(String, GlobalSearchScope)
    */
-  @Nullable
-  public abstract PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -49,6 +49,19 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
   public abstract PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
+   * Returns {@code true} if the specified scope contains the class with the specified fully qualified name satisfying the provided filter, 
+   * and {@code false} otherwise.
+   */
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
+    PsiClass[] classes = findClasses(qualifiedName, scope);
+    if (filter == Predicates.<PsiClass>alwaysTrue()) return classes.length > 0;
+    for (PsiClass aClass : classes) {
+      if (filter.test(aClass)) return true;
+    }
+    return false;
+  }
+
+  /**
    * Searches the project for the package with the specified full-qualified name and returns one
    * if it is found.
    *
@@ -56,8 +69,7 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
    * @return the PSI package, or null if no package with such name is found.
    * @see JavaPsiFacade#findPackage(String)
    */
-  @Nullable
-  public PsiPackage findPackage(@NotNull String qualifiedName) {
+  public @Nullable PsiPackage findPackage(@NotNull String qualifiedName) {
     return null;
   }
 
@@ -116,21 +128,18 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
    * @param scope      the scope in which children are requested.
    * @return the filter to use, or null if no additional filtering is necessary.
    */
-  @Nullable
-  public Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @Nullable Condition<PsiFile> getPackageFilesFilter(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return null;
   }
 
   /**
    * A method to optimize resolve (to only search classes in a package which might be there)
    */
-  @NotNull
-  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return getClassNames(getClasses(psiPackage, scope));
   }
 
-  @NotNull
-  protected static Set<String> getClassNames(PsiClass @NotNull [] classes) {
+  protected static @NotNull Set<String> getClassNames(PsiClass @NotNull [] classes) {
     if (classes.length == 0) {
       return Collections.emptySet();
     }
@@ -152,6 +161,18 @@ public abstract class PsiElementFinder implements PossiblyDumbAware {
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
+    return true;
+  }
+
+  /**
+   * @param psiPackage package to search
+   * @param scope scope to search in
+   * @param consumer processor that processes every single-file source root that belongs to this package
+   * @return true if the consumer never returned false
+   */
+  public boolean processPackageFiles(@NotNull PsiPackage psiPackage,
+                                     @NotNull GlobalSearchScope scope,
+                                     @NotNull Processor<? super PsiFile> consumer) {
     return true;
   }
 

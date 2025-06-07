@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Wrap with '?.let { ... }' call" "true"
+// ERROR: Type mismatch: inferred type is A? but A was expected
 package p;
 
 fun f(x: A) {}
@@ -39,6 +40,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Wrap with '?.let { ... }' call" "true"
+// ERROR: Type mismatch: inferred type is A? but A was expected
 package p;
 
 fun f(x: A) {}

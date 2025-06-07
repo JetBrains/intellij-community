@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -31,7 +31,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
 
   private final IPyDebugProcess myDebugProcess;
-  @NotNull private final String myHost;
+  private final @NotNull String myHost;
   private final int myPort;
 
   private final Object myDebuggersObject = new Object();
@@ -60,7 +60,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     }
   }
 
-  public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
+  public ClientModeMultiProcessDebugger(final @NotNull IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myHost = host;
@@ -177,14 +177,20 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute) throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute);
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, int evaluationTimeout)
+    throws PyDebuggerException {
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout);
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, boolean trimResult)
+  public PyDebugValue evaluate(String threadId,
+                               String frameId,
+                               String expression,
+                               boolean execute,
+                               int evaluationTimeout,
+                               boolean trimResult)
     throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, trimResult);
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout, trimResult);
   }
 
   @Override
@@ -201,7 +207,17 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public @Nullable String execTableCommand(String threadId,
                                            String frameId,
                                            String command,
-                                           TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
+    return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
+  }
+
+  @Override
+  public @Nullable String execTableImageCommand(String threadId,
+                                           String frameId,
+                                           String command,
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
     return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
   }
 
@@ -229,19 +245,20 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  @NotNull
-  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+  public @NotNull DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
     assert builder.getThreadId() != null;
     return debugger(builder.getThreadId()).executeDataViewerCommand(builder);
   }
 
   @Override
-  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
+  public void loadReferrers(String threadId,
+                            String frameId,
+                            PyReferringObjectsValue var,
+                            PyDebugCallback<? super XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 
-  @NotNull
-  private ProcessDebugger debugger(@NotNull String threadId) {
+  private @NotNull ProcessDebugger debugger(@NotNull String threadId) {
     ProcessDebugger debugger = myThreadRegistry.getDebugger(threadId);
     if (debugger != null) {
       return debugger;

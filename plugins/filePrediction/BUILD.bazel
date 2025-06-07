@@ -1,0 +1,92 @@
+### auto-generated section `build intellij.filePrediction` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "filePrediction_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "filePrediction_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "filePrediction",
+  module_name = "intellij.filePrediction",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl",
+    "//plugins/git4idea:vcs-git",
+    "//uast/uast-common:uast",
+    "//platform/platform-impl/internal",
+    "//platform/statistics",
+    "@lib//:file_prediction-file-prediction-model",
+    "//platform/core-ui",
+    "//platform/ml-impl",
+    "@lib//:ngram-slp",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":filePrediction_resources"]
+)
+
+jvm_library(
+  name = "filePrediction_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":filePrediction"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//uast/uast-common:uast",
+    "//platform/platform-impl/internal",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:file_prediction-file-prediction-model",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "@lib//:ngram-slp",
+    "//platform/lang-impl",
+    "//platform/statistics/testFramework",
+  ],
+  runtime_deps = [
+    ":filePrediction_resources",
+    ":filePrediction_test_resources",
+  ]
+)
+
+jvm_test(
+  name = "filePrediction_test",
+  runtime_deps = [":filePrediction_test_lib"]
+)
+### auto-generated section `build intellij.filePrediction` end

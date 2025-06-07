@@ -56,6 +56,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -189,9 +190,9 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           TimeoutUtil.sleep(1000); // make it run longer than LIP
-          super.visitFile(file);
+          super.visitFile(psiFile);
         }
 
         @Override
@@ -257,15 +258,15 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
     MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
-    PsiFile otherFile = createFile(myModule, file.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    PsiFile otherPsiFile = createFile(myModule, psiFile.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
     int visitedCount = tool.visited.size();
     assertTrue(tool.visited.toString(), visitedCount > 0);
     tool.visited.clear();
 
-    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
+    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherPsiFile));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
 
     infos = doHighlighting(HighlightSeverity.WARNING);
@@ -276,7 +277,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     tool.visited.clear();
 
     //ensure started on another file
-    configureByExistingFile(otherFile.getVirtualFile());
+    configureByExistingFile(otherPsiFile.getVirtualFile());
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
@@ -288,12 +289,12 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     MyTrackingInspection tool = registerInspection(new MyTrackingInspection(){});
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     tool.visited.clear();
 
     getPsiManager().dropPsiCaches();
 
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     assertNotEmpty(tool.visited);
   }
 
@@ -364,6 +365,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEmpty(fixes);
   }
 
+  @Unmodifiable
   private @NotNull List<IntentionAction> findStupidFixes() {
     return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
       .equals(new FindElseBranchInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));
@@ -518,7 +520,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         }
 
         @Override
-        public void visitFile(@NotNull PsiFile file) {
+        public void visitFile(@NotNull PsiFile psiFile) {
           // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
           while (toSleepMs.addAndGet(-100) > 0) {
             TimeoutUtil.sleep(100);
@@ -582,21 +584,16 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
     TextRange range = field.getNameIdentifier().getTextRange();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-      if (System.currentTimeMillis() > deadline) {
-        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
-        fail("Too long waiting for daemon to finish");
-      }
+      t.assertNoTimeout("daemon to finish");
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()));
       if (found) {
@@ -856,20 +853,16 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     try {
       boolean fastToolFinishedFaster = false;
       while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-        if (System.currentTimeMillis() > deadline) {
-          fail("Too long waiting for daemon to finish\n" + ThreadDumper.dumpThreadsToString());
-        }
+        t.assertNoTimeout("daemon to finish");
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         if (fastToolFinished.get() && !slowToolFinished.get()) {
           fastToolFinishedFaster = true;
@@ -925,7 +918,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new PsiElementVisitor() {
           @Override
-          public void visitFile(@NotNull PsiFile file) {
+          public void visitFile(@NotNull PsiFile psiFile) {
             throw new MyException();
           }
         };
@@ -999,19 +992,15 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     type("// another comment\nvoid anotherMethod(){}");
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     // now when the LIP restarted, we should observe the range highlighter for the inspection to disappear as soon as visitIdentifier() method is finished
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to finish\n"+ThreadDumper.dumpThreadsToString());
-      }
+      t.assertNoTimeout("daemon to finish");
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (fieldHighlightsUpdated.get()) {
         boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),

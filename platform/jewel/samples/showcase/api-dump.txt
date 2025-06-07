@@ -1,0 +1,6 @@
+f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
+- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
+- <init>():V
+- f:getLambda$-1202427549$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$-318909375$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$-408485079$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2

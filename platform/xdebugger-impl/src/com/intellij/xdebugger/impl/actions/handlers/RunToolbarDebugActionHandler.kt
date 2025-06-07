@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.execution.RunManager
@@ -47,8 +47,9 @@ abstract class RunToolbarDebugActionHandler : DebuggerActionHandler() {
   protected fun getAppropriateSession(descriptor: RunContentDescriptor, project: Project): XDebugSessionImpl? {
     return XDebuggerManager.getInstance(project)
       ?.debugSessions
-      ?.filter { it.runContentDescriptor == descriptor }
-      ?.filterIsInstance<XDebugSessionImpl>()?.firstOrNull { !it.isStopped }
+      ?.filterIsInstance<XDebugSessionImpl>()
+      ?.filter { it.getRunContentDescriptorIfInitialized() == descriptor }
+      ?.firstOrNull { !it.isStopped }
   }
 
   protected abstract fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean
@@ -69,7 +70,7 @@ internal class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
 @Internal
 open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
-    return !session.isPauseActionSupported || session.isPaused
+    return !session.isPauseActionSupported() || session.isPaused
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
@@ -103,7 +104,7 @@ internal open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugAction
   }
 
   override fun perform(session: XDebugSessionImpl, dataContext: DataContext?) {
-    if (session.isReadOnly || !session.isPauseActionSupported) return
+    if (session.isReadOnly || !session.isPauseActionSupported()) return
 
     if (session.isPaused) session.resume() else session.pause()
   }
@@ -116,7 +117,7 @@ internal open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugAction
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     dataContext?.getData(CommonDataKeys.PROJECT)?.let { pr ->
       RunWidgetResumeManager.getInstance(pr).let {
-        return session.isReadOnly || !session.isPauseActionSupported
+        return session.isReadOnly || !session.isPauseActionSupported()
       }
     }
     return false

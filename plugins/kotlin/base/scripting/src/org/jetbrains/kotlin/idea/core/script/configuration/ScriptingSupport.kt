@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * Extension point for overriding default Kotlin scripting support.
  *
  * Implementation should store script configuration internally (in memory and/or fs),
- * and provide it inside [collectConfigurations] using the [ScriptClassRootsCache.LightScriptInfo].
- * Custom data can be attached to [ScriptClassRootsCache.LightScriptInfo] and retrieved
+ * and provide it inside [collectConfigurations] using the [LightScriptInfo].
+ * Custom data can be attached to [LightScriptInfo] and retrieved
  * by calling [ScriptClassRootsCache.getLightScriptInfo].
  *
  * [ScriptChangeListener] can be used to listen script changes.
- * [CompositeScriptConfigurationManager.updater] should be used to schedule configuration reloading.
+ * [org.jetbrains.kotlin.idea.core.script.CompositeScriptConfigurationManager.updater] should be used to schedule configuration reloading.
  *
  * [isApplicable] should return true for files that is covered by that support.
  *
@@ -47,7 +47,7 @@ interface ScriptingSupport {
     fun getConfigurationImmediately(file: VirtualFile): ScriptCompilationConfigurationWrapper? = null
 
     companion object {
-        val EPN: ProjectExtensionPointName<ScriptingSupport> =
+        val EP_NAME: ProjectExtensionPointName<ScriptingSupport> =
             ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.scriptingSupport")
     }
 }

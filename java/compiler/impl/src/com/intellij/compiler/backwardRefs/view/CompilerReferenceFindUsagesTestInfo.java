@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.openapi.module.Module;
@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 public final class CompilerReferenceFindUsagesTestInfo {
-  @Nullable private final Set<VirtualFile> myFiles;
-  @NotNull private final DirtyScopeTestInfo myDirtyScopeInfo;
+  private final @Nullable Set<VirtualFile> myFiles;
+  private final @NotNull DirtyScopeTestInfo myDirtyScopeInfo;
 
   public CompilerReferenceFindUsagesTestInfo(@Nullable Set<VirtualFile> occurrences, @NotNull DirtyScopeTestInfo dirtyScopeTestInfo) {
     myFiles = occurrences;

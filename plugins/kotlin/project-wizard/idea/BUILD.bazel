@@ -1,0 +1,56 @@
+### auto-generated section `build kotlin.project-wizard.idea` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "idea_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "idea",
+  module_name = "kotlin.project-wizard.idea",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/observable",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:java_compatibility",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/project-wizard/core",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/vcs-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/base/indices",
+    "//platform/platform-api:ide",
+    "//plugins/kotlin/code-insight/api",
+  ],
+  runtime_deps = [":idea_resources"]
+)
+### auto-generated section `build kotlin.project-wizard.idea` end

@@ -4,7 +4,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
@@ -43,7 +42,8 @@ interface NotebookCellLines {
 
     val firstContentLine: Int
       get() =
-        if (markers.hasTopLine) lines.first + 1
+        if (markers.hasTopLine)
+          lines.first + 1
         else lines.first
 
     val lastContentLine: Int
@@ -58,11 +58,31 @@ interface NotebookCellLines {
 
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
 
+    fun getCellEndOffset(editor: Editor): Int {
+      return getCellEndOffset(editor.document)
+    }
+
+    fun getCellStartOffset(editor: Editor): Int {
+      return getCellStartOffset(editor.document)
+    }
+
     fun getCellRange(editor: Editor): TextRange {
       val document = editor.document
-      val startOffset = document.getLineStartOffset(lines.first)
-      val endOffset = document.getLineEndOffset(lines.last)
+      return getCellRange(document)
+    }
+
+    fun getCellRange(document: Document): TextRange {
+      val startOffset = getCellStartOffset(document)
+      val endOffset = getCellEndOffset(document)
       return TextRange(startOffset, endOffset)
+    }
+
+    fun getCellEndOffset(document: Document): Int {
+      return document.getLineEndOffset(lines.last)
+    }
+
+    fun getCellStartOffset(document: Document): Int {
+      return document.getLineStartOffset(lines.first)
     }
 
     fun getContentRange(editor: Editor): TextRange {
@@ -70,7 +90,7 @@ interface NotebookCellLines {
       return getContentRange(document)
     }
 
-    private fun getContentRange(document: Document): TextRange {
+    fun getContentRange(document: Document): TextRange {
       val startOffset = document.getLineStartOffset(contentLines.first)
       val endOffset = document.getLineEndOffset(contentLines.last)
       return TextRange(startOffset, endOffset)
@@ -78,12 +98,19 @@ interface NotebookCellLines {
 
     fun getContentText(editor: Editor): String {
       val document = editor.document
-      return getContentText(document)
+      return getContentText(document).toString()
     }
 
-     fun getContentText(document: Document): @NlsSafe String {
-      val range = getContentRange(document)
-      return document.getText(range)
+    fun getContentText(document: Document): CharSequence {
+      val first = firstContentLine
+      val last = lastContentLine
+      val charsSequence = document.charsSequence
+      return if (first <= last) {
+        charsSequence.subSequence(document.getLineStartOffset(first), document.getLineEndOffset(last))
+      }
+      else {
+        ""
+      }
     }
 
     fun getTopMarker(document: Document): String? =
@@ -107,11 +134,12 @@ interface NotebookCellLines {
      * Listener shouldn't throw exceptions
      */
     fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
+    fun bulkUpdateFinished() {}
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
-  fun getCell(line: Int) = intervals.firstOrNull { it.lines.contains(line) }
+  fun getCell(line: Int): Interval? = intervals.firstOrNull { it.lines.contains(line) }
 
   val intervals: List<Interval>
 

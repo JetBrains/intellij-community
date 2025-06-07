@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.searchEverywhereMl.ranking.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
+    "//plugins/search-everywhere-ml/ranking/core",
+    "//plugins/search-everywhere-ml/ranking/ext",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl",
+  ],
+  runtime_deps = [":vcs_resources"]
+)
+### auto-generated section `build intellij.searchEverywhereMl.ranking.vcs` end

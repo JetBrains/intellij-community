@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
 import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
 
 @ApiStatus.Internal
@@ -37,16 +38,14 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     };
   }
 
-  @NotNull
   @Override
-  public String getTemplateUrl() {
+  public @NotNull String getTemplateUrl() {
     final String regionUrl = StatisticsRegionUrlMapperService.Companion.getInstance().getRegionUrl();
     return regionUrl == null ? EVENT_LOG_SETTINGS_URL_TEMPLATE : regionUrl;
   }
 
-  @NotNull
   @Override
-  public String getProductCode() {
+  public @NotNull String getProductCode() {
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     String fullIdeProductCode = applicationInfo.getFullIdeProductCode();
     return fullIdeProductCode != null ? fullIdeProductCode : applicationInfo.getBuild().getProductCode();
@@ -64,9 +63,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     return info.getBuild().getBaselineVersion();
   }
 
-  @NotNull
   @Override
-  public EventLogConnectionSettings getConnectionSettings() {
+  public @NotNull EventLogConnectionSettings getConnectionSettings() {
     return myConnectionSettings;
   }
 
@@ -93,9 +91,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     return ApplicationManager.getApplication().isEAP();
   }
 
-  @NotNull
   @Override
-  public DataCollectorDebugLogger getLogger() {
+  public @NotNull DataCollectorDebugLogger getLogger() {
     return LOG;
   }
 

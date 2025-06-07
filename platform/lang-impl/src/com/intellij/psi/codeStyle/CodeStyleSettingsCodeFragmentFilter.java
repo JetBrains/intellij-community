@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,19 +33,19 @@ public final class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
   private final Project myProject;
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
   private final Document myDocument;
   private final RangeMarker myTextRangeMarker;
   private final LanguageCodeStyleSettingsProvider myProvider;
 
-  public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file,
+  public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile psiFile,
                                              @NotNull TextRange range,
                                              @NotNull LanguageCodeStyleSettingsProvider settingsProvider) {
     myProvider = settingsProvider;
-    myProject = file.getProject();
-    myFile =
-      PsiFileFactory.getInstance(myProject).createFileFromText("copy" + file.getName(), file.getLanguage(), file.getText(), true, false);
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+    myProject = psiFile.getProject();
+    myPsiFile =
+      PsiFileFactory.getInstance(myProject).createFileFromText("copy" + psiFile.getName(), psiFile.getLanguage(), psiFile.getText(), true, false);
+    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myPsiFile);
     LOG.assertTrue(myDocument != null);
     myTextRangeMarker = myDocument.createRangeMarker(range.getStartOffset(), range.getEndOffset());
   }
@@ -53,7 +53,7 @@ public final class CodeStyleSettingsCodeFragmentFilter {
   public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
     CodeStyle.runWithLocalSettings(myProject,
-                                   CodeStyle.getSettings(myFile),
+                                   CodeStyle.getSettings(myPsiFile),
                                    tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
     return settingsToShow.get();
   }
@@ -128,7 +128,7 @@ public final class CodeStyleSettingsCodeFragmentFilter {
     final int rangeEnd = myTextRangeMarker.getEndOffset();
     CharSequence textBefore = myDocument.getCharsSequence();
 
-    ApplicationManager.getApplication().runWriteAction(() -> CodeStyleManager.getInstance(myProject).reformatText(myFile, rangeStart, rangeEnd));
+    ApplicationManager.getApplication().runWriteAction(() -> CodeStyleManager.getInstance(myProject).reformatText(myPsiFile, rangeStart, rangeEnd));
 
     if (rangeStart != myTextRangeMarker.getStartOffset() || rangeEnd != myTextRangeMarker.getEndOffset()) {
       return true;
@@ -277,7 +277,7 @@ final class CompositeSequentialTask implements SequentialTask {
 
   @Override
   public boolean isDone() {
-    return myCurrentTask == null && myUnfinishedTasks.size() == 0;
+    return myCurrentTask == null && myUnfinishedTasks.isEmpty();
   }
 
   @Override
@@ -306,7 +306,7 @@ final class CompositeSequentialTask implements SequentialTask {
       popUntilCurrentTaskUnfinishedOrNull();
     }
     else {
-      if (myUnfinishedTasks.size() > 0) {
+      if (!myUnfinishedTasks.isEmpty()) {
         myCurrentTask = myUnfinishedTasks.get(0);
         myUnfinishedTasks.remove(0);
         popUntilCurrentTaskUnfinishedOrNull();

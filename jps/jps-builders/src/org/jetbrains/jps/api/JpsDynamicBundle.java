@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import com.intellij.AbstractBundle;
@@ -16,7 +16,8 @@ import java.util.ResourceBundle;
 /**
  * A base class for resource bundles used in JPS build process
  * This class provides support for "dynamic" resource bundles provided by {@link com.intellij.DynamicBundle.LanguageBundleEP} extension.
- * if JPS plugin inherits the ResourceBundle from this class, IDE's language pack's localized resources will be automatically available for the JPS process launched by the IDE.
+ * A JPS plugin should create an instance of this class and use its {@link #getMessage} method.
+ * In that case, IDE's language pack's localized resources will be automatically used for the JPS process launched by the IDE.
  */
 public class JpsDynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(JpsDynamicBundle.class);
@@ -59,9 +60,9 @@ public class JpsDynamicBundle extends AbstractBundle {
   }
 
   /**
-   * Use this constructor in bundle classes which inherit from this class.
-   * Note that it's better to prefer delegation to inheritance, and use {@link #JpsDynamicBundle(Class, String)} instead.
+   * @deprecated create an instance using {@link #JpsDynamicBundle(Class, String)} and delegate to it instead of using inheritance 
    */
+  @Deprecated
   protected JpsDynamicBundle(@NonNls @NotNull String pathToBundle) {
     super(pathToBundle);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.util.ActionCandidate;
 import org.jetbrains.idea.devkit.util.ComponentCandidate;
 import org.jetbrains.idea.devkit.util.ListenerCandidate;
@@ -80,15 +80,13 @@ final class LineMarkerInfoHelper {
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action"),
-                                      (NullableFunction<Action, String>)action ->
-                                        ObjectUtils.chooseNotNull(action.getId().getStringValue(), action.getClazz().getStringValue()));
+                                      (NullableFunction<Action, String>)action -> action.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action.group"),
-                                      (NullableFunction<Group, String>)group ->
-                                        ObjectUtils.chooseNotNull(group.getId().getStringValue(), group.getClazz().getStringValue()));
+                                      (NullableFunction<Group, String>)group -> group.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
@@ -114,9 +112,8 @@ final class LineMarkerInfoHelper {
             return getDomElementName((T)domElement, namer);
           }
 
-          @Nls
           @Override
-          public @Nullable String getCustomContainerName() {
+          public @Nls @Nullable String getCustomContainerName() {
             PsiElement psiElement = getElement();
             if (psiElement == null) return null;
             return UniqueVFilePathBuilder.getInstance()
@@ -132,25 +129,21 @@ final class LineMarkerInfoHelper {
         return getDomElementName((T)domElement, namer);
       })
       .setTargetRenderer(() -> new PsiTargetPresentationRenderer<>() {
-        @Nls
-        @NotNull
         @Override
-        public String getElementText(@NotNull PsiElement element) {
+        public @Nls @NotNull String getElementText(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           //noinspection unchecked
           return getDomElementName((T)domElement, namer);
         }
 
-        @Nls
         @Override
-        public String getContainerText(@NotNull PsiElement element) {
+        public @Nls String getContainerText(@NotNull PsiElement element) {
           return UniqueVFilePathBuilder.getInstance()
             .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
         }
 
-        @Nullable
         @Override
-        protected Icon getIcon(@NotNull PsiElement element) {
+        protected @Nullable Icon getIcon(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           assert domElement != null;
           return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(0));
@@ -160,8 +153,7 @@ final class LineMarkerInfoHelper {
       .createLineMarkerInfo(element);
   }
 
-  @NlsSafe
-  private static <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
+  private static @NlsSafe <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
     return StringUtil.defaultIfEmpty(namer.fun(domElement), "?");
   }
 }

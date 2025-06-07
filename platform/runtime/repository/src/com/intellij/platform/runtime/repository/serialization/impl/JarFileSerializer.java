@@ -26,8 +26,7 @@ public final class JarFileSerializer {
   private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
   private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
-  @NotNull
-  public static RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
+  public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
     Map<String, RawRuntimeModuleDescriptor> rawData = new HashMap<>();
     String mainPluginModuleId;
     try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
@@ -92,7 +91,8 @@ public final class JarFileSerializer {
     attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, SPECIFICATION_VERSION + "." + generatorVersion);
     if (bootstrapModuleName != null) {
       attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
-      attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, computeClasspath(descriptors, bootstrapModuleName));
+      Collection<String> bootstrapClasspath = CachedClasspathComputation.computeClasspath(descriptors, bootstrapModuleName);
+      attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, String.join(" ", bootstrapClasspath));
     }
     if (mainPluginModuleId != null) {
       attributes.put(MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME, mainPluginModuleId);
@@ -106,29 +106,6 @@ public final class JarFileSerializer {
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
         jarOutput.closeEntry();
       }
-    }
-  }
-
-  private static String computeClasspath(Collection<RawRuntimeModuleDescriptor> descriptors, String moduleName) {
-    Set<String> classpath = new LinkedHashSet<>();
-    Map<String, RawRuntimeModuleDescriptor> descriptorMap = new HashMap<>();
-    for (RawRuntimeModuleDescriptor descriptor : descriptors) {
-      descriptorMap.put(descriptor.getId(), descriptor);
-    }
-    collectClasspathEntries(moduleName, descriptorMap, new HashSet<String>(), classpath);
-    return String.join(" ", classpath);
-  }
-
-  private static void collectClasspathEntries(String moduleName,
-                                              Map<String, RawRuntimeModuleDescriptor> descriptorMap,
-                                              Set<String> processedModules,
-                                              Set<String> classpath) {
-    if (!processedModules.add(moduleName)) return;
-    RawRuntimeModuleDescriptor descriptor = descriptorMap.get(moduleName);
-    if (descriptor == null) return;
-    classpath.addAll(descriptor.getResourcePaths());
-    for (String dependency : descriptor.getDependencies()) {
-      collectClasspathEntries(dependency, descriptorMap, processedModules, classpath);
     }
   }
 }

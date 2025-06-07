@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.DirectoryPackagingElementEntity;
@@ -26,7 +26,7 @@ import java.util.Objects;
  * classpath is used for exploded WAR and EJB directories under exploded EAR
  */
 public class DirectoryPackagingElement extends CompositeElementWithManifest<DirectoryPackagingElement> {
-  @NonNls public static final String NAME_ATTRIBUTE = "name";
+  public static final @NonNls String NAME_ATTRIBUTE = "name";
   private String myDirectoryName;
 
   public DirectoryPackagingElement() {
@@ -39,8 +39,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DirectoryElementPresentation(this);
   }
 
@@ -49,8 +48,8 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     return this;
   }
 
-  @NonNls @Override
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "dir:" + getMyDirectoryName();
   }
 

@@ -35,7 +35,7 @@ public class ImplementsExtendsQuickFixTest extends LightJavaCodeInsightFixtureTe
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     String fileText = data.get(0);
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), fileText);
-    assert psiFile instanceof GroovyFileBase;
+    assertInstanceOf(psiFile, GroovyFileBase.class);
     final GrTypeDefinition[] typeDefinitions = ((GroovyFileBase)psiFile).getTypeDefinitions();
     final GrTypeDefinition typeDefinition = typeDefinitions[typeDefinitions.length - 1];
     String newText;

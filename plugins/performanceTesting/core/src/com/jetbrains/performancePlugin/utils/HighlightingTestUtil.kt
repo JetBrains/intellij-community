@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.utils
 
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -19,6 +20,6 @@ class HighlightingTestUtil {
       additionalAttributes.forEach { attributesPair -> span.setAttribute(attributesPair.first, attributesPair.second) }
       span.end(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
     }
-  }
 
+  }
 }

@@ -5,7 +5,6 @@ import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
-import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
@@ -27,8 +26,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.TOOLTIPS_DELA
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
@@ -46,7 +43,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -336,22 +332,10 @@ internal class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurab
     super.apply()
 
     if (wasModified) {
-      clearAllIdentifierHighlighters()
       reinitAllEditors()
       UISettings.getInstance().fireUISettingsChanged()
       restartDaemons()
       ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied()
-    }
-  }
-
-  private fun clearAllIdentifierHighlighters() {
-    for (project in ProjectManager.getInstance().openProjects) {
-      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-        if (fileEditor is TextEditor) {
-          val document = fileEditor.editor.document
-          IdentifierHighlighterPass.clearMyHighlights(document, project)
-        }
-      }
     }
   }
 }
@@ -426,11 +410,11 @@ internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorO
         row(message("combobox.next.error.action.goes.to.label")) {
           comboBox(
             DefaultComboBoxModel(arrayOf(true, false)),
-            renderer = SimpleListCellRenderer.create("") {
+            renderer = textListCellRenderer {
               when (it) {
                 true -> message("combobox.next.error.action.goes.to.errors")
                 false -> message("combobox.next.error.action.goes.to.all.problems")
-                else -> it.toString()
+                null -> ""
               }
             }
           ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst
@@ -458,7 +442,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
   row(label) {
     val itemWithSeparator: E = values.first { it.osDefault === OsDefault.NONE }
 
-    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItemRenderer(itemWithSeparator))
+    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItem.createRenderer(itemWithSeparator))
       .applyToComponent { isSwingPopup = false }
       .align(AlignX.FILL)
       .bind(

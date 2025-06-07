@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
@@ -12,6 +12,11 @@ import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -80,6 +85,11 @@ fun KtDeclaration.isAbstract(): Boolean = when {
     this is KtProperty -> initializer == null && delegate == null && accessors.isEmpty()
     this is KtNamedFunction -> !hasBody()
     else -> false
+}
+
+fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
+    val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
+    return containingObject.isCompanion() && containingObject.containingClassOrObject == klass
 }
 
 fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
@@ -198,6 +208,69 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     }
 
     return originalList
+}
+
+context(KaSession)
+@ApiStatus.Internal
+fun KtCallExpression.canMoveLambdaOutsideParentheses(
+    skipComplexCalls: Boolean = true
+): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) {
+        return false
+    }
+
+    if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) {
+        return false
+    }
+    val lastLambdaExpression = getLastLambdaExpression() ?: return false
+
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) {
+        return false
+    }
+
+    val callee = calleeExpression
+    if (callee !is KtNameReferenceExpression) return true
+
+    val resolveCall = callee.resolveToCall() ?: return false
+    val call = resolveCall.successfulFunctionCallOrNull()
+
+    fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
+
+    if (call == null) {
+        val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType
+        if (paramType != null && paramType.isFunctionalType()) {
+            return true
+        }
+        val calls =
+            (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaSimpleFunctionCall>() ?:
+            emptyList()
+
+        return calls.isEmpty() || calls.all { functionalCall ->
+            val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()
+            val lastParameterType = lastParameter?.returnType
+            lastParameterType != null && lastParameterType.isFunctionalType()
+        }
+    }
+
+    val lastParameter = call.argumentMapping[lastLambdaExpression]
+        ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
+        ?: return false
+
+    if (lastParameter.symbol.isVararg) {
+        // Passing value as a vararg is allowed only inside a parenthesized argument list
+        return false
+    }
+
+    return if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
+        false
+    } else {
+        lastParameter.returnType.isFunctionalType()
+    }
+}
+
+@ApiStatus.Internal
+fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+    return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
 }
 
 fun KtNamedDeclaration.getDeclarationBody(): KtElement? = when (this) {
@@ -331,3 +404,40 @@ fun Project.checkConflictsInteractively(
 
 fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
 fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
+
+fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
+    return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
+}
+
+fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
+    call: KtCallExpression,
+    newFunctionName: String
+) {
+    val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
+    if (callOrQualified is KtQualifiedExpression) {
+        appendExpression(callOrQualified.receiverExpression)
+        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
+        appendFixedText(".")
+    }
+    appendNonFormattedText(newFunctionName)
+    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let {
+        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
+        appendNonFormattedText(it.text)
+    }
+}
+
+@ApiStatus.Internal
+fun PsiElement.removeOverrideModifier() {
+    when (this) {
+        is KtNamedFunction, is KtProperty -> {
+            (this as KtModifierListOwner).modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+        }
+
+        is PsiMethod -> {
+            modifierList.annotations.firstOrNull { annotation ->
+                annotation.qualifiedName == "java.lang.Override"
+            }?.delete()
+        }
+    }
+}

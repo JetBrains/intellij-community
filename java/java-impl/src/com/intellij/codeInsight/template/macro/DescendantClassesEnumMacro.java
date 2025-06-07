@@ -32,7 +32,7 @@ public final class DescendantClassesEnumMacro extends Macro {
   @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
     Result[] results = calculateResults(classes);
 
     return results[0];
@@ -84,7 +84,7 @@ public final class DescendantClassesEnumMacro extends Macro {
   @Override
   public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
     Result[] results = calculateResults(classes);
 
     return results[0];
@@ -93,14 +93,14 @@ public final class DescendantClassesEnumMacro extends Macro {
   @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
 
     Set<LookupElement> set = new LinkedHashSet<>();
     boolean isShortName = params.length > 1 && !Boolean.parseBoolean(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
       final String name = isShortName ? object.getName() : object.getQualifiedName();
-      if (name != null && name.length() > 0) {
+      if (name != null && !name.isEmpty()) {
         set.add(LookupElementBuilder.create(name));
       }
     }

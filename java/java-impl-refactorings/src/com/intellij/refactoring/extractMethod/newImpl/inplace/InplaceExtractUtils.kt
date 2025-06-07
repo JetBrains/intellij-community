@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.hint.HintManager
@@ -13,6 +12,7 @@ import com.intellij.ide.ui.IdeUiService
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
@@ -118,7 +118,7 @@ object InplaceExtractUtils {
       return false
     }
     val variable = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiVariable::class.java, false)
-    if (variable != null && HighlightUtil.checkVariableAlreadyDefined(variable) != null) {
+    if (variable != null && JavaPsiVariableUtil.findPreviousVariableDeclaration(variable) != null) {
       showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.variable.already.defined"))
       return false
     }

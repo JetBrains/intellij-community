@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
@@ -19,7 +19,7 @@ import static com.intellij.internal.statistic.uploader.ExternalDataCollectorLogg
 public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   private static final int CURRENT_VERSION = 1;
 
-  @SuppressWarnings("NonConstantLogger") @NonNls private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final @NonNls Logger myLogger;
 
   public ExternalEventsLogger() {
     myLogger = Logger.getLogger("com.intellij.internal.statistic.uploader.events");
@@ -30,8 +30,7 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     }
   }
 
-  @NotNull
-  public static Handler newAppender(@NotNull String logPath) {
+  public static @NotNull Handler newAppender(@NotNull String logPath) {
     try {
       @NonNls FileHandler appender = new FileHandler(logPath, false);
       appender.setFormatter(new Formatter() {
@@ -50,8 +49,7 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     }
   }
 
-  @NotNull
-  private static File getEventLogFile(@NotNull String logDirectory, int version) {
+  private static @NotNull File getEventLogFile(@NotNull String logDirectory, int version) {
     return new File(logDirectory, "idea_statistics_uploader_events_v" + version + ".log");
   }
 
@@ -90,8 +88,7 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     myLogger.info(ExternalSystemEventSerializer.serialize(event));
   }
 
-  @NotNull
-  public static List<ExternalSystemEvent> parseEvents(@NotNull File directory) throws IOException {
+  public static @NotNull List<ExternalSystemEvent> parseEvents(@NotNull File directory) throws IOException {
     VersionedFile versionedFile = VersionedFile.find(directory.getAbsolutePath());
     List<String> lines = versionedFile.file.exists() ? Files.readAllLines(versionedFile.file.toPath()) : Collections.emptyList();
     if (!lines.isEmpty()) {

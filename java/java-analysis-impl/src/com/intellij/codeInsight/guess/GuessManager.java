@@ -1,5 +1,5 @@
 
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.guess;
 
 import com.intellij.openapi.project.Project;
@@ -20,14 +20,11 @@ public abstract class GuessManager {
 
   public abstract PsiType @NotNull [] guessTypeToCast(PsiExpression expr);
 
-  @NotNull
-  public abstract MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace, boolean honorAssignments);
+  public abstract @NotNull MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace, boolean honorAssignments);
 
-  @NotNull
-  public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
+  public @NotNull List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
     return getControlFlowExpressionTypeConjuncts(expr, true);
   }
 
-  @NotNull
-  public abstract List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr, boolean honorAssignments);
+  public abstract @NotNull List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr, boolean honorAssignments);
 }

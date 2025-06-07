@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
@@ -146,7 +146,7 @@ internal class GradleTestEventConverter(
       isTestSuite ->
         extractName(displayName, JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR)
         ?: displayName
-      isTestClass ->
+      isTestClass && displayName == className ->
         extractName(displayName, JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR)
         ?: displayName
       isOldJunit5ParametrizedTestMethod -> {

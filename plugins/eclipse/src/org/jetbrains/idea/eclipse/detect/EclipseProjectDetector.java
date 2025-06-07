@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.detect;
 
 import com.intellij.ide.ProjectGroup;
@@ -17,28 +17,31 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
-final class EclipseProjectDetector extends ProjectDetector {
-  private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
+@ApiStatus.Internal
+public final class EclipseProjectDetector extends ProjectDetector {
+  private static final Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
   void collectProjectPaths(List<String> projects) {
     String home = System.getProperty("user.home");
     Path path = Path.of(home, ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
-    File file = path.toFile();
-    if (file.exists()) {
+    if (Files.exists(path)) {
       try {
-        List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
+        List<String> workspaceUrls = parseOomphLocations(Files.readString(path));
         for (String url : workspaceUrls) {
           scanForProjects(URI.create(url).getPath(), projects);
         }
@@ -129,7 +132,8 @@ final class EclipseProjectDetector extends ProjectDetector {
     }
   }
 
-  static String[] getWorkspaces(String prefs) throws IOException {
+  @VisibleForTesting
+  public static String[] getWorkspaces(String prefs) throws IOException {
     Properties properties = new Properties();
     try {
       properties.load(new StringReader(prefs));
@@ -160,7 +164,8 @@ final class EclipseProjectDetector extends ProjectDetector {
     }
   }
 
-  static List<String> parseOomphLocations(String fileContent) throws Exception {
+  @VisibleForTesting
+  public static List<String> parseOomphLocations(String fileContent) throws Exception {
     Element root = JDOMUtil.load(fileContent);
     List<Element> elements = root.getChildren("workspace");
     return ContainerUtil.map(elements, element1 -> StringUtil

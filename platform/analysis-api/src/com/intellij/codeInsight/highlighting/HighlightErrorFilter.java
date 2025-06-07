@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Allows disabling syntax errors highlighting for {@link PsiErrorElement}s.
  * <p>
  * It can be used in situations when custom error annotation provides better explanation,
- * or when syntax error can be ignored or annotated on different level (e.g. warning, info, etc.).
+ * or when syntax error can be ignored or annotated on different level (e.g., warning, info, etc.).
  *
  * @see com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/syntax-errors.html">Syntax Errors (IntelliJ Platform Docs)</a>
@@ -18,5 +18,5 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HighlightErrorFilter {
   public static final ProjectExtensionPointName<HighlightErrorFilter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.highlightErrorFilter");
 
-  public abstract boolean shouldHighlightErrorElement(final @NotNull PsiErrorElement element);
+  public abstract boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element);
 }

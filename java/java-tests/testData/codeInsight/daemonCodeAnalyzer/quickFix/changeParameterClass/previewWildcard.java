@@ -4,6 +4,7 @@ interface b<T> {
 }
 
 class a implements b<Integer> {
+    @Override
     public void f(Integer integer) {
 
     }

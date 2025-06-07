@@ -1,0 +1,12 @@
+- name: lib/dotenv.jar
+  modules:
+  - name: intellij.dotenv
+  - name: intellij.dotenv.php
+  - name: intellij.dotenv.go
+  - name: intellij.dotenv.ruby
+  - name: intellij.dotenv.docker
+  - name: intellij.dotenv.ultimate
+  contentModules:
+  - name: intellij.dotenv.kotlin
+  - name: intellij.dotenv.python
+  - name: intellij.dotenv.java

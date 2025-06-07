@@ -21,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstParenthesizedExpression extends PyAstExpression {
-  @Nullable
-  default PyAstExpression getContainedExpression() {
+  default @Nullable PyAstExpression getContainedExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 

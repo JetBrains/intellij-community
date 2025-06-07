@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.metadata;
 
 import com.intellij.ide.ui.UIThemeMetadata;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +24,7 @@ public final class UIThemeMetadataService {
   public static final ExtensionPointName<UIThemeMetadataProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.themeMetadataProvider");
 
-  private final Map<UIThemeMetadata, Map<String, UIThemeMetadata.UIKeyMetadata>> myCache = new HashMap<>();
+  private final Map<UIThemeMetadata, @Unmodifiable Map<String, UIThemeMetadata.UIKeyMetadata>> myCache = new HashMap<>();
 
   public static UIThemeMetadataService getInstance() {
     return ApplicationManager.getApplication().getService(UIThemeMetadataService.class);
@@ -56,8 +57,7 @@ public final class UIThemeMetadataService {
     return true;
   }
 
-  @Nullable
-  public Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findByKey(String key) {
+  public @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findByKey(String key) {
     var baseKey = key;
     baseKey = StringUtil.trimEnd(baseKey, ".compact");
     baseKey = StringUtil.trimEnd(baseKey, ".os.mac");

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +31,6 @@ public final class ConsentOptions implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
-  private static final String TEST_DEFAULT_CONSENTS_FILE_PROPERTY = "test.default.consents.file";
-  private static final String TEST_CONFIRMED_CONSENTS_FILE_PROPERTY = "test.confirmed.consents.file";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
@@ -52,20 +47,12 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   private static @NotNull Path getDefaultConsentsFile() {
-    Path fileForTests = getDefaultConsentsFileForTests();
-    if (fileForTests != null) {
-      return fileForTests;
-    }
     return PathManager.getCommonDataPath()
       .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
       .resolve("consentOptions/cached");
   }
 
   private static @NotNull Path getConfirmedConsentsFile() {
-    Path fileForTests = getConfirmedConsentsFileForTests();
-    if (fileForTests != null) {
-      return fileForTests;
-    }
     return PathManager.getCommonDataPath().resolve("consentOptions/accepted");
   }
 
@@ -153,7 +140,8 @@ public final class ConsentOptions implements ModificationTracker {
 
   private final IOBackend myBackend;
 
-  ConsentOptions(IOBackend backend, boolean isEap) {
+  @VisibleForTesting
+  public ConsentOptions(IOBackend backend, boolean isEap) {
     myBackend = backend;
     myIsEap = () -> isEap;
   }
@@ -208,6 +196,10 @@ public final class ConsentOptions implements ModificationTracker {
     return consent -> isProductConsentOfKind(EAP_FEEDBACK_OPTION_ID, consent.getId());
   }
 
+  public static @NotNull Predicate<Consent> condAiDataCollectionConsent() {
+    return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
+  }
+
   /**
    * Warning: For JetBrains products this setting is relevant for release builds only.
    * Statistics sending for JetBrains EAP builds is managed by a separate flag.
@@ -238,14 +230,6 @@ public final class ConsentOptions implements ModificationTracker {
 
   public void setAiDataCollectionPermission(boolean permitted) {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
-  }
-
-  public @NotNull Pair<@NotNull Consent, @NotNull Boolean> getAiDataCollectionConsent() {
-    final Pair<List<Consent>, Boolean> consents = getConsents(consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId()), false);
-    if (consents.getFirst().size() != 1) {
-      throw new IllegalStateException("Cannot find AI data sharing agreement, it is expected to be bundled");
-    }
-    return new Pair<>(consents.getFirst().get(0), consents.getSecond());
   }
 
   private @NotNull Permission getPermission(final String consentId) {
@@ -320,23 +304,14 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
-    return getConsents(filter, true);
-  }
-
-  @NotNull
-  private Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter, boolean skipIrrelevant) {
     final Map<String, Map<Locale, Consent>> allDefaults = loadDefaultConsents();
-    if (skipIrrelevant) {
-      if (isEAP()) {
-        // for EA builds there is a different option for statistics sending management
-        allDefaults.remove(STATISTICS_OPTION_ID);
-      }
-      else {
-        // EAP feedback consent is relevant to EA builds only
-        allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
-      }
-      // AI plugin specific, only relevant to the plugin and must be requested explicitly.
-      allDefaults.remove(AI_DATA_COLLECTION_OPTION_ID);
+    if (isEAP()) {
+      // for EA builds there is a different option for statistics sending management
+      allDefaults.remove(STATISTICS_OPTION_ID);
+    }
+    else {
+      // EAP feedback consent is relevant to EA builds only
+      allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
     }
 
     for (Iterator<Map.Entry<String, Map<Locale, Consent>>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
@@ -604,7 +579,17 @@ public final class ConsentOptions implements ModificationTracker {
     }
   }
 
-  protected interface IOBackend {
+  @TestOnly
+  public static @NotNull Path getDefaultConsentsFileForTests() {
+    return getDefaultConsentsFile();
+  }
+
+  @TestOnly
+  public static @NotNull Path getConfirmedConsentsFileForTests() {
+    return getConfirmedConsentsFile();
+  }
+
+  public interface IOBackend {
     void writeDefaultConsents(@NotNull String data) throws IOException;
     @NotNull
     String readDefaultConsents() throws IOException;
@@ -615,15 +600,5 @@ public final class ConsentOptions implements ModificationTracker {
     void writeConfirmedConsents(@NotNull String data) throws IOException;
     @NotNull
     String readConfirmedConsents() throws IOException;
-  }
-
-  private static @Nullable Path getDefaultConsentsFileForTests() {
-    String path = System.getProperty(TEST_DEFAULT_CONSENTS_FILE_PROPERTY);
-    return path != null ? Path.of(path) : null;
-  }
-
-  private static @Nullable Path getConfirmedConsentsFileForTests() {
-    String path = System.getProperty(TEST_CONFIRMED_CONSENTS_FILE_PROPERTY);
-    return path != null ? Path.of(path) : null;
   }
 }

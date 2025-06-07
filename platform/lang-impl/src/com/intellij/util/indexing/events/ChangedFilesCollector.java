@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
@@ -78,6 +77,12 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public void clear() {
     myDirtyFiles.clear();
     ReadAction.run(() -> {
+      if (ApplicationManager.getApplication() == null) {
+        // If the application is already disposed (ApplicationManager.getApplication() == null)
+        // it means that this method is invoked via ShutDownTracker and the process will be shut down
+        // so we don't need to clear collectors.
+        return;
+      }
       processFilesInReadAction(info -> {
         return true;
       });
@@ -171,7 +176,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
             try {
               FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
             }
-            catch (AlreadyDisposedException | ProcessCanceledException ignored) {
+            catch (ProcessCanceledException ignored) {
             }
             catch (Exception e) {
               LOG.error(e);

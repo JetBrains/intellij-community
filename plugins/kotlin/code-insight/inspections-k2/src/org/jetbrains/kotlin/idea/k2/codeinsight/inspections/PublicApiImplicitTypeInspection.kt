@@ -1,24 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
@@ -53,22 +51,31 @@ class PublicApiImplicitTypeInspection(
                 if (declaration is KtParameter) return
 
                 analyze(declaration) {
-                    if (reportInternalOrPublic(declaration)) {
-                        val fix = IntentionWrapper(SpecifyExplicitTypeQuickFix(declaration, CallableReturnTypeUpdaterUtils.getTypeInfo(declaration)))
+                    if (shouldReportDeclarationVisibility(declaration)) {
+                        val typeInfo = CallableReturnTypeUpdaterUtils.getTypeInfo(declaration, useTemplate = holder.isOnTheFly)
+                        val fix = SpecifyExplicitTypeQuickFix(declaration, typeInfo).asQuickFix()
                         holder.registerProblem(nameIdentifier, problemText, fix)
                     }
                 }
             }
 
             context(KaSession)
-            private fun reportInternalOrPublic(
+            private fun shouldReportDeclarationVisibility(
                 declaration: KtCallableDeclaration,
             ): Boolean  {
                 val declarationSymbol = declaration.symbol
-                if ((reportInternal || reportPrivate) && declarationSymbol.visibility == KaSymbolVisibility.INTERNAL) {
+                if (
+                    reportInternal && declarationSymbol.visibility == KaSymbolVisibility.INTERNAL ||
+                    reportPrivate && declarationSymbol.visibility == KaSymbolVisibility.PRIVATE
+                ) {
                     return true
                 }
-                return declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED && isPublicApi(declarationSymbol)
+
+                // To avoid reporting public declarations multiple times (by IDE inspection and by compiler diagnostics),
+                // we want to report them only when Explicit API is disabled in the compiler.
+                val reportPublic = declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED
+
+                return reportPublic && isPublicApi(declarationSymbol)
             }
         }
     }

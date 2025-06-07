@@ -14,6 +14,7 @@ public final class TailTypeEx {
       return moveCaret(editor, insertChar(editor, tailOffset, ')'), -1);
     }
 
+    @Override
     public @NonNls String toString() {
       return "SMART_LPARENTH";
     }

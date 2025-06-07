@@ -30,15 +30,16 @@ import org.jetbrains.uast.util.ClassSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.uast.util.ClassSetKt.isInstanceOf;
+import static org.jetbrains.uast.util.ClassSetKt.*;
 
 /**
  * This ModificationTracker is incremented if changes in file (class) of VFS could change the number of stereotype components scanned
  * by "component scan" models (@ComponentScan/<ctx:component-scan ../>/ repositories scan, etc.)
  * <p/>
- * VirtualFileListener: count++ if file was added/moved/deleted. This file could be scanned by component scan (if it's stereotype)
+ * VirtualFileListener: count++ if a file was added/moved/deleted.
+ * This file could be scanned by component scan (if it's a stereotype)
  * PsiTreeChangeListener: count++ on: adding/removing/editing annotations and adding/removing of inner classes.
- * as if it is spring stereotype anno (@Component, @Configuration) this class could become part of scanned model.
+ * As if it is spring stereotype anno (@Component, @Configuration), this class could become part of the scanned model.
  */
 @ApiStatus.Internal
 public class OuterModelsModificationTracker extends SimpleModificationTracker {
@@ -91,7 +92,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
     @Override
     public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-      incModificationCountIfMine(event); // before... otherwise project is null
+      incModificationCountIfMine(event); // before... otherwise a project is null
     }
 
     @Override
@@ -121,6 +122,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       incModificationCount();
     }
 
+    @SuppressWarnings({"removal", "deprecation"})
     private static boolean isIgnoredFileType(@NotNull FileType type) {
       return type.equals(HtmlFileType.INSTANCE) ||
              type instanceof LanguageFileType && "JavaScript".equals(((LanguageFileType)type).getLanguage().getID()) ||
@@ -282,22 +284,11 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       final var newChild = event.getNewChild();
       final var grandParent = parent == null ? null : parent.getParent();
       final var firstSibling = parent != null && parent.isValid() ? parent.getFirstChild() : null;
-      PsiElement unsafeGrandChild = null;
-      if (!(child instanceof LazyParseablePsiElement)) { // Chameleons unconditionally log an error IDEA-255174
-        try {
-          unsafeGrandChild = child == null ? null : child.getFirstChild();
-        }
-        catch (PsiInvalidElementAccessException ignored) {
-          // we can not check if the child is valid since most of the time
-          // they are indeed invalid due to user typing, so the `getFirstChild()`
-          // may throw an exception. But we are forced here to ask for the child
-          // since we do not have any other information.
-        }
-      }
+      PsiElement unsafeGrandChild = getUnsafeGrandChild(child);
 
       if (isRelevantAnnotation(child, possiblePsiTypes)                                              // removed annotation
           || isRelevantAnnotation(unsafeGrandChild, possiblePsiTypes)                                // removed annotation
-          || isRelevantAnnotation(newChild, possiblePsiTypes)                                        // added   annotation
+          || isRelevantAnnotation(newChild, possiblePsiTypes)                                        // added annotation
           || (isInstanceOf(grandParent, possiblePsiTypes.forClasses)                                 // modifier changed (static, public)
               && !isInstanceOf(parent, possiblePsiTypes.forAnnotationOwners))
           || ((isInstanceOf(parent, possiblePsiTypes.forClasses)                                     // added/removed inner class
@@ -317,6 +308,23 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       }
     }
 
+    private static @Nullable PsiElement getUnsafeGrandChild(PsiElement child) {
+      PsiElement unsafeGrandChild = null;
+      if (!(child instanceof LazyParseablePsiElement)) { // Chameleons unconditionally log an error IDEA-255174
+        try {
+          unsafeGrandChild = child == null ? null : child.getFirstChild();
+        }
+        catch (PsiInvalidElementAccessException ignored) {
+          // We cannot check if the child is valid since most of the time
+          // they are indeed invalid due to user typing, so the `getFirstChild()`
+          // may throw an exception.
+          // But we are forced here to ask for the child
+          // since we do not have any other information.
+        }
+      }
+      return unsafeGrandChild;
+    }
+
     private static boolean isRelevantAnnotation(@Nullable PsiElement psiElement, @NotNull MyPsiPossibleTypes possiblePsiTypes) {
       if (!isInstanceOf(psiElement, possiblePsiTypes.forAnnotations)) {
         return false;
@@ -328,7 +336,8 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       return modifierListOwner == null // just added annotation
              || isInstanceOf(modifierListOwner, possiblePsiTypes.forClasses)
              || (isInstanceOf(modifierListOwner, possiblePsiTypes.forMethods)
-                 && !isInstanceOf(modifierListOwner, possiblePsiTypes.forVariables));
+                 && !isInstanceOf(modifierListOwner, possiblePsiTypes.forVariables))
+             || isInstanceOf(modifierListOwner, possiblePsiTypes.forPackageStatements);
     }
 
     private @Nullable MyPsiPossibleTypes getPossiblePsiTypesFor(@NotNull String languageId) {
@@ -352,6 +361,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     public final @NotNull ClassSet<PsiElement> forImports;
     public final @NotNull ClassSet<PsiElement> forAnnotations;
     public final @NotNull ClassSet<PsiElement> forAnnotationOwners;
+    public final @NotNull ClassSet<PsiElement> forPackageStatements;
 
     private MyPsiPossibleTypes(@NotNull UastLanguagePlugin uastPlugin) {
       this.forClasses = uastPlugin.getPossiblePsiSourceTypes(UClass.class);
@@ -359,7 +369,8 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       this.forVariables = uastPlugin.getPossiblePsiSourceTypes(UVariable.class);
       this.forImports = uastPlugin.getPossiblePsiSourceTypes(UImportStatement.class);
       this.forAnnotations = uastPlugin.getPossiblePsiSourceTypes(UAnnotation.class);
-      this.forAnnotationOwners = uastPlugin.getPossiblePsiSourceTypes(UAnnotated.class);
+      this.forPackageStatements = classSetOf(PsiPackageStatement.class);
+      this.forAnnotationOwners = classSetsUnion(uastPlugin.getPossiblePsiSourceTypes(UAnnotated.class), forPackageStatements);
     }
   }
 }

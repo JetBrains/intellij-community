@@ -1,0 +1,57 @@
+### auto-generated section `build kotlin.compiler-reference-index.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:gson",
+    "@lib//:junit4",
+    "//jps/model-api:model",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/compiler-reference-index",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//jps/jps-builders:build",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/compiler/impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/java-tests:tests_test_lib",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `build kotlin.compiler-reference-index.tests` end

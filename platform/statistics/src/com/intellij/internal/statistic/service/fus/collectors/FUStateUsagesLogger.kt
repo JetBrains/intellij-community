@@ -17,8 +17,8 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
@@ -61,7 +61,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
       project: Project?,
       recorderLoggers: MutableMap<String, StatisticsEventLogger>,
       usagesCollector: FeatureUsagesCollector,
-      metrics: Set<MetricEvent>,
+      metrics: suspend () -> Set<MetricEvent>,
     ) {
       var group = usagesCollector.group
       if (group == null) {
@@ -77,9 +77,15 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
       }
 
       try {
-        logUsagesAsStateEvents(project = project, group = group, metrics = metrics, logger = logger)
+        val data = metrics.invoke()
+
+        logUsagesAsStateEvents(project = project, group = group, metrics = data, logger = logger)
       }
       catch (e: Throwable) {
+        if (Logger.shouldRethrow(e)) {
+          throw e
+        }
+
         if (project != null && project.isDisposed) {
           return
         }
@@ -87,6 +93,8 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
         val data = FeatureUsageData(recorder).addProject(project)
         @Suppress("UnstableApiUsage")
         logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).asDeferred().join()
+
+        LOG.error(e)
       }
     }
 
@@ -107,15 +115,13 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              blockingContext { logger.logAsync(group, metric.eventId, eventData, true) }.asDeferred().join()
+              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
             }
           }
         }
 
         launch {
-          blockingContext {
-            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
-          }
+          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
         }
       }
     }
@@ -182,7 +188,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
             project = null,
             recorderLoggers = recorderLoggers,
             usagesCollector = usagesCollector,
-            metrics = usagesCollector.getMetricsAsync(),
+            metrics = usagesCollector::getMetricsAsync,
           )
         }
       }
@@ -225,13 +231,11 @@ class ProjectFUStateUsagesLogger(
       }
 
       launch {
-        val metrics = usagesCollector.collect(project)
-
         FUStateUsagesLogger.logMetricsOrError(
           project = project,
           recorderLoggers = recorderLoggers,
           usagesCollector = usagesCollector,
-          metrics = metrics,
+          metrics = { usagesCollector.collect(project) },
         )
       }
     }

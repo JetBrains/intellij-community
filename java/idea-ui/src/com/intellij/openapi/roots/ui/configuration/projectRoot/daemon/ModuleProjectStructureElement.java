@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.CommonBundle;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModuleProjectStructureElement extends ProjectStructureElement {
+public final class ModuleProjectStructureElement extends ProjectStructureElement {
   private final Module myModule;
 
   public ModuleProjectStructureElement(@NotNull StructureConfigurableContext context, @NotNull Module module) {

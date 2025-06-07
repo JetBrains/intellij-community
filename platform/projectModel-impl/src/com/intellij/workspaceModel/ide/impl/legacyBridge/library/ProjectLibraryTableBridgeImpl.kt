@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -12,7 +11,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
@@ -45,7 +43,7 @@ private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
       builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder,
@@ -56,7 +54,7 @@ private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
 }
 
 @ApiStatus.Internal
-class ProjectLibraryTableBridgeImpl(
+open class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
@@ -117,7 +115,7 @@ class ProjectLibraryTableBridgeImpl(
               if (library != null) {
                 // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
                 dispatcher.multicaster.afterLibraryRemoved(library)
-                Disposer.dispose(library)
+                LibraryBridgeImpl.disposeLibrary(library)
               }
             }
             is EntityChange.Replaced -> {
@@ -138,7 +136,7 @@ class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  suspend fun loadLibraries(targetBuilder: MutableEntityStorage?) {
+  suspend fun loadLibraries(targetBuilder: MutableEntityStorage?, workspaceModel: WorkspaceModelImpl) {
     val storage = targetBuilder ?: entityStorage.current
     val libraries = storage
       .entities(LibraryEntity::class.java)
@@ -147,7 +145,7 @@ class ProjectLibraryTableBridgeImpl(
       .map { libraryEntity ->
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = libraryEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = targetBuilder
@@ -161,12 +159,12 @@ class ProjectLibraryTableBridgeImpl(
 
     if (targetBuilder == null) {
       withContext(Dispatchers.EDT) {
-        (project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+        workspaceModel.updateProjectModelSilent("Add project library mapping") {
           for ((entity, library) in libraries) {
             it.mutableLibraryMap.addIfAbsent(entity, library)
           }
         }
-        writeAction {
+        edtWriteAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)
           }
@@ -251,7 +249,7 @@ class ProjectLibraryTableBridgeImpl(
 
   override fun dispose() {
     for (library in libraries) {
-      Disposer.dispose(library)
+      LibraryBridgeImpl.disposeLibrary(library)
     }
   }
 

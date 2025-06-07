@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
@@ -57,8 +57,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     }
   }
 
-  @Nullable
-  static DetectedJavaChangeInfo createFromMethod(PsiMethod method, final boolean delegate) {
+  static @Nullable DetectedJavaChangeInfo createFromMethod(PsiMethod method, final boolean delegate) {
     final String newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     final PsiType returnType = method.getReturnType();
     final CanonicalTypes.Type newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;

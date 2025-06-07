@@ -14,8 +14,8 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
- * @deprecated use {@link AddAnnotationPsiFix#createAddNullableFix(PsiModifierListOwner)} or
- * {@link AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}.
+ * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationModCommandAction#createAddNullableFix(PsiModifierListOwner)} or
+ * {@link com.intellij.codeInsight.intention.AddAnnotationModCommandAction#createAddNotNullFix(PsiModifierListOwner)}.
  */
 @Deprecated(forRemoval = true)
 public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
@@ -25,13 +25,13 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    if (!super.isAvailable(project, file, startElement, endElement)) {
+    if (!super.isAvailable(project, psiFile, startElement, endElement)) {
       return false;
     }
-    PsiModifierListOwner owner = getContainer(file, startElement.getTextRange().getStartOffset());
+    PsiModifierListOwner owner = getContainer(psiFile, startElement.getTextRange().getStartOffset());
     return owner != null &&
            !AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], CHECK_EXTERNAL | CHECK_TYPE) &&
            isNullabilityAnnotationApplicable(owner);

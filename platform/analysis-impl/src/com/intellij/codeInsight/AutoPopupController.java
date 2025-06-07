@@ -54,15 +54,15 @@ public abstract class AutoPopupController {
   }
 
 
-  public abstract void autoPopupMemberLookup(Editor editor, @Nullable Condition<? super PsiFile> condition);
+  public abstract void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition);
 
-  public abstract void autoPopupMemberLookup(Editor editor, CompletionType completionType, @Nullable Condition<? super PsiFile> condition);
+  public abstract void autoPopupMemberLookup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable Condition<? super PsiFile> condition);
 
   public abstract void scheduleAutoPopup(@NotNull Editor editor,
                                          @NotNull CompletionType completionType,
                                          @Nullable Condition<? super PsiFile> condition);
 
-  public abstract void scheduleAutoPopup(Editor editor);
+  public abstract void scheduleAutoPopup(@NotNull Editor editor);
 
   public abstract void cancelAllRequests();
 

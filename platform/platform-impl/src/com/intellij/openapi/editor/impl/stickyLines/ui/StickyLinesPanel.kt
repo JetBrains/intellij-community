@@ -13,6 +13,7 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.BoxLayout
+import javax.swing.border.LineBorder
 
 internal class StickyLinesPanel(
   private val editor: EditorEx,
@@ -95,7 +96,8 @@ internal class StickyLinesPanel(
     val panelWidth = stickyLinesPanelWidth() // panelW can be outdated here
     val lineHeight = editor.lineHeight
     if (g is Graphics2D && panelHeight > 0 && panelWidth > 0 && lineHeight > 0) {
-      shadowPainter.paintShadow(g, panelHeight, panelWidth, lineHeight)
+      val borderHeight = (border as LineBorder).thickness
+      shadowPainter.paintShadow(g, panelHeight + borderHeight, panelWidth, lineHeight)
     }
   }
 

@@ -32,7 +32,7 @@ abstract class AbstractReferenceResolveWithCompilerPluginsWithCrossLibTest : Abs
         get() = additionalLibCompilationOptions
 }
 
-private const val KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.5.0"
+const val KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.5.0"
 
 private fun Project.resolveAdditionalLibClasspath(): List<File> {
     val dependencyCoordinates = listOf(
@@ -56,7 +56,7 @@ private val additionalLibCompilationOptions: List<String>
         return compilerPlugins.map { "-Xplugin=${it.bundledJarLocation.absolutePathString()}" }
     }
 
-private fun Project.loadSingleJarFromMaven(mavenCoordinates: String): File {
+fun Project.loadSingleJarFromMaven(mavenCoordinates: String): File {
     val jarDescriptor = RepositoryLibraryProperties(mavenCoordinates, /* includeTransitiveDependencies = */ false)
 
     val dependencyRoots = JarRepositoryManager.loadDependenciesModal(

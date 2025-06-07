@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.Executor
 import com.intellij.execution.console.ConsoleExecuteAction
 import com.intellij.execution.console.LanguageConsoleBuilder
@@ -33,7 +32,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
@@ -56,7 +54,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -65,9 +62,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.repl.ReplState
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.awt.Color
 import java.awt.Font
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
@@ -286,7 +283,7 @@ class KotlinConsoleRunner(
                     "${consoleView.virtualFile.name}$lineNumber${KotlinParserDefinition.STD_SCRIPT_EXT}",
                     KotlinLanguage.INSTANCE, text
                 ).apply {
-                    charset = CharsetToolkit.UTF8_CHARSET
+                    charset = StandardCharsets.UTF_8
                     isWritable = false
                 }
             val psiFile = (PsiFileFactory.getInstance(project) as PsiFileFactoryImpl).trySetupPsiForFile(
@@ -321,28 +318,5 @@ class KotlinConsoleRunner(
         psiFile.forcedModuleInfo = module.testSourceInfo
             ?: module.productionSourceInfo
             ?: NotUnderContentRootModuleInfo(psiFile.project, psiFile)
-    }
-}
-
-class ConsoleScriptDefinitionSource : ScriptDefinitionsSource {
-
-    private val definitionsSet = ConcurrentCollectionFactory.createConcurrentSet<ScriptDefinition>()
-
-    override val definitions: Sequence<ScriptDefinition>
-        get() = definitionsSet.asSequence()
-
-    fun registerDefinition(definition: ScriptDefinition) {
-        definitionsSet.add(definition)
-    }
-
-    fun unregisterDefinition(definition: ScriptDefinition) {
-        definitionsSet.remove(definition)
-    }
-
-    companion object {
-        fun getInstance(project: Project): ConsoleScriptDefinitionSource? =
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<ConsoleScriptDefinitionSource>()
-                .singleOrNull()
     }
 }

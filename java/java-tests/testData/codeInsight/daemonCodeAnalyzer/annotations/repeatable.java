@@ -25,7 +25,7 @@ class C5 { }
 
 @interface AA6 { A6[] value() default { }; }
 @Repeatable(AA6.class) @interface A6 { }
-@A6 @A6 <error descr="Container annotation 'AA6' must not be present at the same time as the element it contains">@AA6</error> class C6 { }
+@A6 @A6 <error descr="Container annotation 'AA6' must not be present together with the element it contains">@AA6</error> class C6 { }
 @A6 @A6 class C6bis1 { }
 @A6 @AA6 class C6bis2 { }
 @A6 
@@ -48,7 +48,7 @@ class DupTypeAnno {
 }
 
 @interface AA7 { A7[] value() default { }; }
-@Target({METHOD}) @Repeatable(<error descr="Target of container annotation 'AA7' is not a subset of target of this annotation">AA7.class</error>) @interface A7 { }
+@Target({METHOD}) @Repeatable(<error descr="Target of container annotation 'AA7' is not a subset of this annotation’s target">AA7.class</error>) @interface A7 { }
 
 @Target({METHOD}) @interface AA8 { A8[] value() default { }; }
 @Target({METHOD, FIELD}) @Repeatable(AA8.class) @interface A8 { }

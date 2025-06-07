@@ -87,9 +87,8 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getTypeArgumentElements());
   }
 }

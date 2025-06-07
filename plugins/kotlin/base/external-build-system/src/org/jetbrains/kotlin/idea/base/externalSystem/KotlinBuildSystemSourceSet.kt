@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.externalSystem
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsSafe
 import java.nio.file.Path
 
 /**
@@ -20,7 +21,7 @@ data class KotlinBuildSystemSourceSet(
      * - "commonTest",
      * - ...
      */
-    val name: String,
+    @NlsSafe val name: String,
 
     /**
      * Actual file paths which are included into this Source Set

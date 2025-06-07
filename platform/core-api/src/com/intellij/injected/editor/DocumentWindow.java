@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.text.StringOperation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -53,5 +54,6 @@ public interface DocumentWindow extends Document {
    * <p>
    * This method doesn't modify the host document.
    */
+  @Unmodifiable
   @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s);
 }

@@ -2,6 +2,7 @@
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -62,6 +63,7 @@ public interface VcsLogRefManager {
    * <p>Groups must be pre-sorted in the order which they are to be painted on the panel.</p>
    */
   @NotNull
+  @Unmodifiable
   List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs);
 
   /**
@@ -69,7 +71,7 @@ public interface VcsLogRefManager {
    * All references given to this method are from the same commit.
    */
   @NotNull
-  List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames);
+  @Unmodifiable List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames);
 
   /**
    * Writes given reference type to the output.

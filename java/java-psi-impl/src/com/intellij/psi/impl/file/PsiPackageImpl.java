@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,6 +32,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -42,9 +44,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
 
   private volatile CachedValue<PsiModifierList> myAnnotationList;
+  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
-  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
+  private volatile CachedValue<Collection<PsiFile>> myFiles;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -53,7 +56,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
+  protected @Unmodifiable Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope) {
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -68,6 +71,14 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @Override
+  public @Unmodifiable @NotNull Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope) {
+    if (myFiles == null) {
+      myFiles = createCachedFiles();
+    }
+    return ContainerUtil.filter(myFiles.getValue(), d -> scope.contains(d.getVirtualFile()));
+  }
+
   private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
@@ -77,8 +88,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }, false);
   }
 
+  private @NotNull CachedValue<Collection<PsiFile>> createCachedFiles() {
+    return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+      Collection<PsiFile> result = new ArrayList<>();
+      Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
+      getFacade().processPackageFiles(this, allScope(), processor);
+      return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
+    }, false);
+  }
+
   @Override
-  protected PsiPackageImpl findPackage(String qName) {
+  protected PsiPackageImpl findPackage(@NotNull String qName) {
     return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 
@@ -104,9 +124,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return !getProject().isDisposed() &&
-           (PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) ||
-            getDirectories().length > 0);
+    return !getProject().isDisposed();
   }
 
   @Override
@@ -140,7 +158,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
-    return getFacade().getPackageFiles(this, scope);
+    PsiFile[] files = getFacade().getPackageFiles(this, scope);
+    Collection<@NotNull PsiFile> individualFiles = getIndividualFiles(scope);
+    return individualFiles.isEmpty() ? files : ArrayUtil.mergeArrays(files, individualFiles.toArray(PsiFile.EMPTY_ARRAY));
   }
 
   @Override
@@ -171,24 +191,30 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    Map<String, PsiClass[]> map = dereference(myClassCache);
-    if (map == null) {
-      myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(getProject())) {
+      // todo IJPL-339 this line introduces performance degradation, see IDEA-367535
+      return findAllClasses(name, scope);
     }
-    PsiClass[] classes = map.get(name);
-    if (classes != null) {
+    else {
+      Map<String, PsiClass[]> map = dereference(myClassCache);
+      if (map == null) {
+        myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
+      }
+      PsiClass[] classes = map.get(name);
+      if (classes != null) {
+        return classes;
+      }
+
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
+      if (stamp.mayCacheNow()) {
+        map.put(name, classes);
+      }
       return classes;
     }
-
-    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-    classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
-    if (stamp.mayCacheNow()) {
-      map.put(name, classes);
-    }
-    return classes;
   }
 
-  private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
+  private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
     String qName = getQualifiedName();
     String classQName = !qName.isEmpty() ? qName + "." + shortName : shortName;
     return getFacade().findClasses(classQName, scope);
@@ -236,7 +262,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
-        List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
+        List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(scope), file -> file.getName().contains(name));
         PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
         for (PsiClass aClass : classes) {
           if (name.equals(aClass.getName())) {
@@ -257,7 +283,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public PsiClass @NotNull [] findClassByShortName(@NotNull String name, final @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {
@@ -273,6 +299,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                   return file instanceof PsiClassOwner ? ((PsiClassOwner)file).getPackageName() : "";
                 }))
       .toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  @Override
+  public boolean hasClassWithShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    PsiClass[] classes = getCachedClassesByName(name, scope);
+    return ContainerUtil.exists(classes, aClass -> PsiSearchScopeUtil.isInScope(scope, aClass));
   }
 
   private @Nullable PsiPackage findSubPackageByName(@NotNull String name) {

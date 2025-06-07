@@ -255,12 +255,13 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   @Override
-  public int getDropIndexFor(Point point) {
+  public int getDropIndexFor(@NotNull Point point) {
     if (lastSingRowLayout == null) return -1;
 
     int result = -1;
 
-    Component c = tabs.getComponentAt(point);
+    var adjustedPoint = getStrategy().adjustDropPoint(point);
+    Component c = tabs.getComponentAt(adjustedPoint);
 
     if (c instanceof JBTabsImpl) {
       for (int i = 0; i < lastSingRowLayout.visibleInfos.size() - 1; i++) {
@@ -274,15 +275,15 @@ public abstract class SingleRowLayout extends TabLayout {
 
         boolean horizontal = getStrategy() instanceof SingleRowLayoutStrategy.Horizontal;
         if (horizontal) {
-          between = firstBounds.getMaxX() < point.x
-                    && secondBounds.getX() > point.x
-                    && firstBounds.y < point.y
-                    && secondBounds.getMaxY() > point.y;
+          between = firstBounds.getMaxX() < adjustedPoint.x
+                    && secondBounds.getX() > adjustedPoint.x
+                    && firstBounds.y < adjustedPoint.y
+                    && secondBounds.getMaxY() > adjustedPoint.y;
         } else {
-          between = firstBounds.getMaxY() < point.y
-                    && secondBounds.getY() > point.y
-                    && firstBounds.x < point.x
-                    && secondBounds.getMaxX() > point.x;
+          between = firstBounds.getMaxY() < adjustedPoint.y
+                    && secondBounds.getY() > adjustedPoint.y
+                    && firstBounds.x < adjustedPoint.x
+                    && secondBounds.getMaxX() > adjustedPoint.x;
         }
 
         if (between) {

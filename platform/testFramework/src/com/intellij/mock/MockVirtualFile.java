@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.*;
@@ -57,9 +57,8 @@ public class MockVirtualFile extends VirtualFile {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -67,9 +66,8 @@ public class MockVirtualFile extends VirtualFile {
     myParent = parent;
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
     MockVirtualFile file = new MockVirtualFile(name);
     addChild(file);
     return file;
@@ -80,15 +78,13 @@ public class MockVirtualFile extends VirtualFile {
     myChildren.add(child);
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return ourFileSystem;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     String prefix = myParent == null ? "MOCK_ROOT:" : myParent.getPath();
     return prefix + "/" + myName;
   }
@@ -113,9 +109,8 @@ public class MockVirtualFile extends VirtualFile {
     return true;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getParent() {
+  public @Nullable VirtualFile getParent() {
     return myParent;
   }
 
@@ -134,9 +129,8 @@ public class MockVirtualFile extends VirtualFile {
     return super.hashCode();
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     return new ByteArrayOutputStream() {
       @Override
       public void close() {

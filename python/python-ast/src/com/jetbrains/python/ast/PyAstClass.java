@@ -39,27 +39,23 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
   ArrayFactory<PyAstClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstClass[count];
 
   @Override
-  @Nullable
-  default String getName() {
+  default @Nullable String getName() {
     ASTNode node = getNameNode();
     return node != null ? node.getText() : null;
   }
 
-  @Nullable
   @Override
-  default PsiElement getNameIdentifier() {
+  default @Nullable PsiElement getNameIdentifier() {
     final ASTNode nameNode = getNameNode();
     return nameNode != null ? nameNode.getPsi() : null;
   }
 
-  @Nullable
-  default ASTNode getNameNode() {
+  default @Nullable ASTNode getNameNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
   @Override
-  @NotNull
-  default PyAstStatementList getStatementList() {
+  default @NotNull PyAstStatementList getStatementList() {
     final PyAstStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
     assert statementList != null : "Statement list missing for class " + getText();
     return statementList;
@@ -70,8 +66,7 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
    * <p/>
    * Operates at the AST level.
    */
-  @Nullable
-  default PyAstArgumentList getSuperClassExpressionList() {
+  default @Nullable PyAstArgumentList getSuperClassExpressionList() {
     final PyAstArgumentList argList = PsiTreeUtil.getChildOfType(this, PyAstArgumentList.class);
     if (argList != null && argList.getFirstChild() != null) {
       return argList;
@@ -87,14 +82,12 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
   PyAstExpression @NotNull [] getSuperClassExpressions();
 
   @Override
-  @Nullable
-  default String getDocStringValue() {
+  default @Nullable String getDocStringValue() {
     return DocStringUtilCore.getDocStringValue(this);
   }
 
   @Override
-  @Nullable
-  default PyAstStringLiteralExpression getDocStringExpression() {
+  default @Nullable PyAstStringLiteralExpression getDocStringExpression() {
     return DocStringUtilCore.findDocStringExpression(getStatementList());
   }
 

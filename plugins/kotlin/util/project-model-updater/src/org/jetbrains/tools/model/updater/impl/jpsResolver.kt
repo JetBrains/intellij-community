@@ -18,7 +18,9 @@ data class JpsResolverSettings(val sha256ChecksumsEnabled: Boolean, val bindRepo
 fun readJpsResolverSettings(communityRoot: File, monorepoRoot: File?): JpsResolverSettings {
     // Checksums and bind repository must be set locally and committed by developer:
     // don't update them automatically on teamcity.
-    if (System.getenv("TEAMCITY_VERSION") != null) {
+    if (System.getenv("TEAMCITY_VERSION") != null
+        && !System.getenv("MODEL_UPDATER_ALLOW_UPDATING_SETTINGS_ON_TEAMCITY").toBoolean()
+    ) {
         val settings = JpsResolverSettings(false, false)
         println("Under TeamCity, resetting settings to: $settings")
         return settings

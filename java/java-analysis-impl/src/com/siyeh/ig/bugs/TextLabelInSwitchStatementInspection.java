@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TextLabelInSwitchStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("text.label.in.switch.statement.problem.descriptor",
                                            infos[0] instanceof PsiSwitchStatement ? 1 : 2);
   }

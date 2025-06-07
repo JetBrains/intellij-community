@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.utils.io.getChildren
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
@@ -71,7 +70,7 @@ abstract class GradleRelativeConfigCalculatingTestCase : GradleTestCase() {
   }
 
   fun assertFileExists(relativePath: String) {
-    val path = testRoot.toNioPath().getResolvedPath(relativePath)
+    val path = testPath.resolve(relativePath).normalize()
     Assertions.assertTrue(path.exists(), "File doesn't exists $path")
     Assertions.assertTrue(path.isRegularFile(), "Path doesn't reference file $path")
   }

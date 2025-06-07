@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,8 +39,7 @@ public class FindUsagesProcessPresentation {
     myShowPanelIfOnlyOneUsage = showPanelIfOnlyOneUsage;
   }
 
-  @Nullable
-  public Runnable searchIncludingProjectFileUsages() {
+  public @Nullable Runnable searchIncludingProjectFileUsages() {
     return mySearchWithProjectFiles;
   }
 
@@ -51,8 +51,7 @@ public class FindUsagesProcessPresentation {
     myLargeFiles = largeFiles;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getLargeFiles() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getLargeFiles() {
     return myLargeFiles == null ? Collections.emptyList() : myLargeFiles;
   }
 
@@ -60,8 +59,7 @@ public class FindUsagesProcessPresentation {
     return myShowFindOptionsPrompt;
   }
 
-  @NotNull
-  public UsageViewPresentation getUsageViewPresentation() {
+  public @NotNull UsageViewPresentation getUsageViewPresentation() {
     return myUsageViewPresentation;
   }
 

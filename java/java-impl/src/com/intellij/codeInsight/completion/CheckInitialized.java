@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.InheritanceUtil;
@@ -111,7 +112,7 @@ class CheckInitialized implements ElementFilter {
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
           final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-          if (methodExpression.textMatches(PsiKeyword.THIS)) {
+          if (methodExpression.textMatches(JavaKeywords.THIS)) {
             fields.clear();
           }
         }

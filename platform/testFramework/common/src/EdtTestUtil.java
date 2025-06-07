@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.NakedRunnable;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
+import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
 import static com.intellij.testFramework.UITestUtil.setupEventQueue;
 
 public final class EdtTestUtil {
@@ -60,10 +62,7 @@ public final class EdtTestUtil {
     else if (EDT.isCurrentThreadEdt()) {
       if (writeIntent) {
         setupEventQueue();
-        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
-          runnable.run();
-          return null;
-        });
+        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(runnable));
       }
       else {
         runnable.run();
@@ -76,10 +75,7 @@ public final class EdtTestUtil {
                  () -> {
                    try {
                      setupEventQueue();
-                     IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
-                       runnable.run();
-                       return null;
-                     });
+                     IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(runnable));
                    }
                    catch (Throwable e) {
                      //noinspection unchecked
@@ -102,8 +98,8 @@ public final class EdtTestUtil {
     else {
       if (app != null) {
         Runnable pr = r;
-        // Wrap r to writeIntent unlock, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
-        r = () -> app.runUnlockingIntendedWrite(() -> { pr.run(); return null; });
+        // Wrap r to writeIntent unlock and mark to avoid wrapping, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
+        r = (NakedRunnable)() -> pr.run();
       }
       try {
         SwingUtilities.invokeAndWait(r);

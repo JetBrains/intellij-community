@@ -17,7 +17,7 @@ class ScriptOptionsSaveTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testSaveAutoReload() {
       val project = myFixture.project
       val settings = KotlinScriptingSettings.getInstance(project)
-      val definition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
+      val definition = ScriptDefinitionsManager.getInstance(project).getDefinitions().first()
       val initialAutoReload = settings.autoReloadConfigurations(definition)
 
       settings.setAutoReloadConfigurations(definition, !initialAutoReload)
@@ -35,7 +35,7 @@ class ScriptOptionsSaveTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testSaveScriptDefinitionOff() {
       val project = myFixture.project
-      val scriptDefinition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
+      val scriptDefinition = ScriptDefinitionsManager.getInstance(project).getDefinitions().first()
 
       val settings = KotlinScriptingSettings.getInstance(project)
 

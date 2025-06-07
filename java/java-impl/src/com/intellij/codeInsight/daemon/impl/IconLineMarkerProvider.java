@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -17,12 +17,13 @@ import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UIdentifier;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
-import org.jetbrains.uast.values.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.values.UConstant;
+import org.jetbrains.uast.values.UStringConstant;
+import org.jetbrains.uast.values.UValue;
+import org.jetbrains.uast.values.UValueKt;
 
 import javax.swing.*;
 import java.util.*;
@@ -48,9 +49,8 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    if (!hasIconTypeExpressions(elements)) {
-      return;
-    }
+    Set<PsiClassType> uniqueTypes = new HashSet<>();
+    Set<PsiClassType> applicableTypes = new HashSet<>();
 
     for (PsiElement element : elements) {
       UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
@@ -58,54 +58,68 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         continue;
       }
 
+      // Only calls with arguments may have string literal
+      if (expression.getValueArgumentCount() < 1) continue;
+
+      UIdentifier identifier = expression.getMethodIdentifier();
+      if (identifier == null) continue;
+      PsiElement sourcePsi = identifier.getSourcePsi();
+      if (sourcePsi == null) continue;
+
       ProgressManager.checkCanceled();
 
-      if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
+      UExpression argument = expression.getValueArguments().get(0);
+      if (!canBeStringConstant(argument)) {
         continue;
       }
 
-      UValue uValue = UEvaluationContextKt.uValueOf(expression);
-      if (!(uValue instanceof UCallResultValue)) {
+      PsiType expressionType = expression.getExpressionType();
+      if (!(expressionType instanceof PsiClassType)) continue;
+      if (uniqueTypes.add((PsiClassType)expressionType) &&
+          expressionType.isValid() &&
+          ProjectIconsAccessor.isIconClassType(expressionType)) {
+        applicableTypes.add((PsiClassType)expressionType);
+      }
+
+      if (!applicableTypes.contains(expressionType)) {
         continue;
       }
 
-      List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
-      if (!arguments.isEmpty()) {
+      UValue uValue = UEvaluationContextKt.uValueOf(argument);
+      if (uValue != null) {
         Collection<UExpression> constants = new ArrayList<>();
-        for (UConstant constant : UValueKt.toPossibleConstants(arguments.get(0))) {
+        for (UConstant constant : UValueKt.toPossibleConstants(uValue)) {
           if (constant instanceof UStringConstant) {
             UExpression source = constant.getSource();
             constants.add(source);
           }
         }
         if (!constants.isEmpty()) {
-          UIdentifier identifier = expression.getMethodIdentifier();
-          if (identifier != null && identifier.getSourcePsi() != null) {
-            LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getSourcePsi());
-            if (marker != null) {
-              result.add(marker);
-            }
+          LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), sourcePsi);
+          if (marker != null) {
+            result.add(marker);
           }
         }
       }
     }
   }
 
-  private static boolean hasIconTypeExpressions(@NotNull List<? extends PsiElement> elements) {
-    Set<PsiClassType> uniqueValues = new HashSet<>();
-    for (PsiElement e : elements) {
-      UCallExpression element = UastContextKt.toUElement(e, UCallExpression.class);
-      if (element != null) {
-        PsiType type = element.getExpressionType();
-        if (type instanceof PsiClassType) {
-          if (uniqueValues.add((PsiClassType)type)
-              && type.isValid()
-              && ProjectIconsAccessor.isIconClassType(type)) {
-            return true;
-          }
-        }
-      }
+  private static boolean canBeStringConstant(@NotNull UExpression expression) {
+    if (expression instanceof UPolyadicExpression ||
+        expression instanceof ULiteralExpression ||
+        expression instanceof UReferenceExpression ||
+        expression instanceof UInjectionHost) {
+      return true;
     }
+
+    if (expression instanceof UUnaryExpression uUnaryExpression) {
+      return canBeStringConstant(uUnaryExpression.getOperand());
+    }
+
+    if (expression instanceof UParenthesizedExpression uParenthesizedExpression) {
+      return canBeStringConstant(uParenthesizedExpression.getExpression());
+    }
+
     return false;
   }
 

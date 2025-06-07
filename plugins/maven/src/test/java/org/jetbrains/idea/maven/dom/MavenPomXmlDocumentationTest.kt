@@ -2,8 +2,6 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

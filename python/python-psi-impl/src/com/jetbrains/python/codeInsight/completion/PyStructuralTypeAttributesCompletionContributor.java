@@ -13,7 +13,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -120,9 +119,6 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
 
       final Set<PyClass> suitableClasses = new HashSet<>();
       for (PyClass candidate : candidates) {
-        if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
-          continue;
-        }
         final Set<String> inherited = getAllInheritedAttributeNames(candidate, context, ancestorsCache);
         if (LOG.isDebugEnabled()) {
           LOG.debug("All attributes of " + debugClassCoordinates(candidate) + ": " + inherited);
@@ -134,10 +130,9 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
       return Collections.unmodifiableSet(suitableClasses);
     }
 
-    @NotNull
-    private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
-                                                             @NotNull TypeEvalContext context,
-                                                             @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static @NotNull Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
         availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
@@ -150,8 +145,7 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
      * The approach used here does not require proper MRO order of ancestors and its performance is greatly improved by reusing
      * intermediate results in case of a large class hierarchy.
      */
-    @NotNull
-    private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+    private static @NotNull Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
                                                        @NotNull TypeEvalContext context,
                                                        @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
@@ -179,8 +173,7 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
       return result;
     }
 
-    @NotNull
-    private static String debugClassCoordinates(PyClass cls) {
+    private static @NotNull String debugClassCoordinates(PyClass cls) {
       return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";
     }
   }

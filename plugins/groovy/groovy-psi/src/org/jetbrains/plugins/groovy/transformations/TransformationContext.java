@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.project.Project;
@@ -57,13 +57,11 @@ public interface TransformationContext {
 
   boolean hasModifierProperty(@NotNull GrModifierList list, @GrModifierConstant @NotNull String name);
 
-  @NotNull
-  default List<PsiClassType> getSuperTypes() {
+  default @NotNull List<PsiClassType> getSuperTypes() {
     return ContainerUtil.concat(getExtendsTypes(), getImplementsTypes());
   }
 
-  @NotNull
-  default GlobalSearchScope getResolveScope() {
+  default @NotNull GlobalSearchScope getResolveScope() {
     return getCodeClass().getResolveScope();
   }
 

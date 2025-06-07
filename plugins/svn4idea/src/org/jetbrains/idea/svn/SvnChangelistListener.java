@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class SvnChangelistListener implements ChangeListListener {
-  private final static Logger LOG = Logger.getInstance(SvnChangelistListener.class);
+  private static final Logger LOG = Logger.getInstance(SvnChangelistListener.class);
 
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final Condition<FilePath> myUnderSvnCondition;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull Condition<FilePath> myUnderSvnCondition;
 
   public SvnChangelistListener(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -58,9 +58,7 @@ public class SvnChangelistListener implements ChangeListListener {
     removeFromChangeList(list.getChanges());
   }
 
-  @NotNull
-  @Unmodifiable
-  private List<FilePath> getPathsFromChanges(@NotNull Collection<? extends Change> changes) {
+  private @NotNull @Unmodifiable List<FilePath> getPathsFromChanges(@NotNull Collection<? extends Change> changes) {
     return ContainerUtil.findAll(ChangesUtil.getPaths(changes), myUnderSvnCondition);
   }
 
@@ -90,8 +88,7 @@ public class SvnChangelistListener implements ChangeListListener {
     addToChangeList(toList.getName(), changes, fromLists);
   }
 
-  @Nullable
-  public static String getCurrentMapping(@NotNull SvnVcs vcs, @NotNull File file) {
+  public static @Nullable String getCurrentMapping(@NotNull SvnVcs vcs, @NotNull File file) {
     try {
       final Status status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangeListName();

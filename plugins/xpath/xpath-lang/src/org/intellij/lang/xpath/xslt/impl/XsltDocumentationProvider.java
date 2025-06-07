@@ -208,7 +208,7 @@ final class XsltDocumentationProvider implements DocumentationProvider {
         final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
         if (tag != null && XsltSupport.XSLT_NS.equals(tag.getNamespace())) {
           final String prefix = tag.getNamespacePrefix();
-          if (prefix.length() == 0) {
+          if (prefix.isEmpty()) {
             return new DocElement(mgr, psiElement, "element", (String)object);
           }
           else if (StringUtil.startsWithConcatenation(((String)object), prefix, ":")) {

@@ -23,11 +23,9 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle;
 import java.util.*;
 
 public abstract class HackedSliceNullnessAnalyzerBase {
-  @NotNull
-  private final SliceLeafEquality myLeafEquality;
+  private final @NotNull SliceLeafEquality myLeafEquality;
 
-  @NotNull
-  private final SliceLanguageSupportProvider myProvider;
+  private final @NotNull SliceLanguageSupportProvider myProvider;
 
   public HackedSliceNullnessAnalyzerBase(@NotNull SliceLeafEquality leafEquality,
           @NotNull SliceLanguageSupportProvider provider) {
@@ -49,8 +47,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
                           "slice.nullness.tab.title.grouped.by.nullness")));
   }
 
-  @NotNull
-  public SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public @NotNull SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.getCachedChildren().size() == 1;
     SliceNode oldRootStart = oldRoot.getCachedChildren().get(0);
@@ -119,7 +116,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
               root.getProject(),
               KotlinCodeInsightBundle.message("slice.nullness.progress.title.expanding.all.nodes"), true) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
         leafExpressions.set(l);
       }
@@ -155,14 +152,14 @@ public abstract class HackedSliceNullnessAnalyzerBase {
     return nulls.get(node).groupedByValue[group];
   }
 
-  @NotNull
-  public NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+  public @NotNull NullAnalysisResult calcNullableLeaves(
+          final @NotNull SliceNode root,
           @NotNull AbstractTreeStructure treeStructure,
-          @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+          final @NotNull Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
         @Override
-        public void visit(@NotNull final SliceNode element) {
+        public void visit(final @NotNull SliceNode element) {
             element.calculateDupNode();
             node(element, map).clear();
             SliceNode duplicate = element.getDuplicate();
@@ -205,8 +202,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
    * @param element element to find nullability for
    * @return element nullability
    */
-  @NotNull
-  protected Nullability checkNullability(final PsiElement element) {
+  protected @NotNull Nullability checkNullability(final PsiElement element) {
     throw new UnsupportedOperationException();
   }
 

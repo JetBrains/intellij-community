@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.fir.uast.test;
 
@@ -33,6 +33,16 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("annotationOnElvis.kt")
     public void testAnnotationOnElvis() throws Exception {
         runTest("testData/declaration/annotationOnElvis.kt");
+    }
+
+    @TestMetadata("annotationOnLocal.kt")
+    public void testAnnotationOnLocal() throws Exception {
+        runTest("testData/declaration/annotationOnLocal.kt");
+    }
+
+    @TestMetadata("annotationOnPropertyWithValueClass.kt")
+    public void testAnnotationOnPropertyWithValueClass() throws Exception {
+        runTest("testData/declaration/annotationOnPropertyWithValueClass.kt");
     }
 
     @TestMetadata("build.gradle.kts")

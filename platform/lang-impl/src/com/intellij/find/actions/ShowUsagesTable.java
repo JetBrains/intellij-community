@@ -1,21 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
@@ -43,6 +41,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+
+import static com.intellij.platform.ide.navigation.NavigationServiceKt.navigateBlocking;
 
 @ApiStatus.Internal
 public final class ShowUsagesTable extends JBTable implements UiDataProvider {
@@ -93,7 +93,7 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
 
   @NotNull
   Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable,
-                        @NotNull ShowUsagesActionHandler actionHandler) {
+                        @NotNull ShowUsagesActionHandler actionHandler, @NotNull ShowUsagesParameters parameters) {
     SpeedSearchBase<JTable> speedSearch = MySpeedSearch.installOn(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
@@ -175,6 +175,8 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
       List<Object> usages = selectedUsages.get();
       if (usages != null) {
         for (Object usage : usages) {
+          DataContext dataContext = parameters.editor != null ?
+                                    DataManager.getInstance().getDataContext(parameters.editor.getContentComponent()) : null;
           if (usage instanceof UsageInfo usageInfo) {
             PsiElement selectedElement = usageInfo.getElement();
             if (selectedElement != null) {
@@ -190,10 +192,10 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
                                                          numberOfLettersTyped,
                                                          selectedElement.getLanguage(), false);
             }
-            UsageViewUtil.navigateTo(usageInfo, true);
+            UsageNavigation.getInstance(parameters.project).navigate(usageInfo, true, dataContext);
           }
-          else if (usage instanceof Navigatable) {
-            ((Navigatable)usage).navigate(true);
+          else if (usage instanceof Navigatable navigatable) {
+            navigateBlocking(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
           }
         }
       }

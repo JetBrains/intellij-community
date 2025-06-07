@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -39,14 +39,16 @@ import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
 
-  private final @NotNull PsiFile myFile;
+  private final @NotNull PsiFile myPsiFile;
   private final @NotNull TextRange myPriorityBounds;
   private final @NotNull TextRange myRestrictRange;
 
@@ -54,14 +56,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
   private final HighlightingSession myHighlightingSession;
 
   LineMarkersPass(@NotNull Project project,
-                  @NotNull PsiFile file,
+                  @NotNull PsiFile psiFile,
                   @NotNull Document document,
                   @NotNull TextRange priorityBounds,
                   @NotNull TextRange restrictRange,
                   @NotNull LineMarkersPass.Mode mode,
                   @NotNull HighlightingSession session) {
     super(project, document, false);
-    myFile = file;
+    myPsiFile = psiFile;
     myPriorityBounds = priorityBounds;
     myRestrictRange = restrictRange;
     myMode = mode;
@@ -79,7 +81,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
+      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId(), progress);
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -91,12 +93,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       return Collections.emptyList();
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
-    FileViewProvider viewProvider = myFile.getViewProvider();
+    FileViewProvider viewProvider = myPsiFile.getViewProvider();
     int passId = getId();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile root = viewProvider.getPsi(language);
       if (root == null) {
-        LOG.error(viewProvider+" for file " +myFile+" returned null root for language "+language+" despite listing it as one of its own languages: "+viewProvider.getLanguages());
+        LOG.error(viewProvider + " for file " +
+                  myPsiFile + " returned null root for language " + language + " despite listing it as one of its own languages: " + viewProvider.getLanguages());
         continue;
       }
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
@@ -109,7 +112,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
-                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info, myHighlightingSession);
                });
              queryProviders(elements.outside(), root, providersList,
                (__, info) -> {
@@ -152,7 +155,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     return result;
   }
 
-  public static @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
+  public static @Unmodifiable @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     LineMarkerSettings settings = LineMarkerSettings.getSettings();
@@ -182,7 +185,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           catch (IndexNotReadyException e) {
             continue;
           }
-          catch (ProcessCanceledException e) {
+          catch (CancellationException e) {
             throw e;
           }
           catch (Exception e) {
@@ -205,7 +208,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
 
     if (myMode == Mode.FAST) return;
 
-    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myFile)) {
+    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myPsiFile)) {
       Set<PsiFile> visitedInjectedFiles = new HashSet<>();
       // line markers for injected could be slow
       //noinspection ForLoopReplaceableByForEach
@@ -282,13 +285,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     });
   }
 
-  public static @NotNull Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
-    if (file.getNode() == null) {
+  public static @NotNull Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile psiFile, @NotNull Document document) {
+    if (psiFile.getNode() == null) {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL,
-                                               HighlightingSessionImpl.getFromCurrentIndicator(file));
+    LineMarkersPass pass = new LineMarkersPass(psiFile.getProject(), psiFile, document, psiFile.getTextRange(), psiFile.getTextRange(), Mode.ALL,
+                                               HighlightingSessionImpl.getFromCurrentIndicator(psiFile));
     return pass.doCollectMarkers();
   }
 

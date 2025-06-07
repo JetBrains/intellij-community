@@ -16,8 +16,6 @@ interface TreeNodeDomainModel {
   suspend fun computeIsLeaf(): Boolean
   suspend fun computePresentation(builder: TreeNodePresentationBuilder): Flow<TreeNodePresentation>
   suspend fun computeChildren(): List<TreeNodeDomainModel>
-  @ApiStatus.Internal
-  fun getUserObject(): Any
 }
 
 @ApiStatus.Experimental

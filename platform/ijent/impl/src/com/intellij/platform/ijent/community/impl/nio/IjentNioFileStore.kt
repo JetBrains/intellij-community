@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import java.nio.file.FileStore
@@ -10,7 +11,7 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.attribute.FileStoreAttributeView
 
 internal class IjentNioFileStore(
-  private val path: EelPath.Absolute,
+  private val path: EelPath,
   private val ijentFsApi: IjentFileSystemApi,
 ) : FileStore() {
 

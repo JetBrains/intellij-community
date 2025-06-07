@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit;
 
 import com.intellij.DynamicBundle;
@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 public final class DevKitBundle {
 
-  @NonNls public static final String BUNDLE = "messages.DevKitBundle";
+  public static final @NonNls String BUNDLE = "messages.DevKitBundle";
 
   private static final DynamicBundle ourInstance = new DynamicBundle(DevKitBundle.class, BUNDLE);
 
@@ -19,9 +19,8 @@ public final class DevKitBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 }

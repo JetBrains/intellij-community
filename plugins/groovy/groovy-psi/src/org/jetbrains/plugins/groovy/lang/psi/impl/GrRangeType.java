@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -13,8 +14,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Maxim.Medvedev
  */
 public class GrRangeType extends GrLiteralClassType {
-  @Nullable private final PsiType myLeft;
-  @Nullable private final PsiType myRight;
+  private final @Nullable PsiType myLeft;
+  private final @Nullable PsiType myRight;
   private final PsiType myIterationType;
   private final String myQualifiedName;
 
@@ -44,9 +45,8 @@ public class GrRangeType extends GrLiteralClassType {
     this(LanguageLevel.JDK_1_5, scope, facade, left, right);
   }
 
-  @NotNull
   @Override
-  protected String getJavaClassName() {
+  protected @NotNull String getJavaClassName() {
     return myQualifiedName;
   }
 
@@ -64,19 +64,17 @@ public class GrRangeType extends GrLiteralClassType {
     return new PsiType[]{myIterationType};
   }
 
-  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new GrRangeType(languageLevel, myScope, myFacade, myLeft, myRight);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return "[" +
-           (myLeft == null ? PsiKeyword.NULL : myLeft.getInternalCanonicalText()) +
+           (myLeft == null ? JavaKeywords.NULL : myLeft.getInternalCanonicalText()) +
            ".." +
-           (myRight == null ? PsiKeyword.NULL : myRight.getInternalCanonicalText()) +
+           (myRight == null ? JavaKeywords.NULL : myRight.getInternalCanonicalText()) +
            "]";
   }
 
@@ -85,18 +83,15 @@ public class GrRangeType extends GrLiteralClassType {
     return (myLeft == null || myLeft.isValid()) && (myRight == null || myRight.isValid());
   }
 
-  @Nullable
-  public PsiType getIterationType() {
+  public @Nullable PsiType getIterationType() {
     return myIterationType;
   }
 
-  @Nullable
-  public PsiType getLeft() {
+  public @Nullable PsiType getLeft() {
     return myLeft;
   }
 
-  @Nullable
-  public PsiType getRight() {
+  public @Nullable PsiType getRight() {
     return myRight;
   }
 }

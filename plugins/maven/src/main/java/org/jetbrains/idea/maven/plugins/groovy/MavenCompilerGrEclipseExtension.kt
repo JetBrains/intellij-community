@@ -21,7 +21,7 @@ import kotlin.io.path.exists
  *
  */
 class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
-  override fun getMavenCompilerId(): String = "groovy-eclipse-compiler"
+  override val mavenCompilerId: String = "groovy-eclipse-compiler"
 
   override fun getCompiler(project: Project): BackendCompiler? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
@@ -31,7 +31,7 @@ class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
   override fun configureOptions(compilerOptions: CompilerOptions?,
                                 module: Module,
                                 mavenProject: MavenProject,
-                                compilerArgs: MutableList<String>) {
+                                compilerArgs: List<String>) {
     val eclipseBatchId = mavenProject.plugins.filter { it.artifactId == "maven-compiler-plugin" && it.groupId == "org.apache.maven.plugins" }
       .flatMap { it.dependencies }
       .find { it.groupId == "org.codehaus.groovy" && it.artifactId == "groovy-eclipse-batch" }

@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -19,7 +20,8 @@ import org.jetbrains.uast.*;
 import java.util.Set;
 import java.util.function.Predicate;
 
-final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHODS_TO_IGNORE_CLASS = {
     "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction", "invokeForPreview"};
@@ -75,16 +77,16 @@ final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBas
                                  new RemoveAnnotationQuickFix(annotation, field));
         }
       } else {
-        holder.registerProblem(psiAnchor,
-                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"),
-                               new AddAnnotationFix(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field));
+        holder.problem(psiAnchor,
+                       DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"))
+          .fix(new AddAnnotationModCommandAction(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field))
+          .register();
       }
     }
     return holder.getResultsArray();
   }
 
-  @Nullable
-  private static PsiElement getAnchor(PsiField field) {
+  private static @Nullable PsiElement getAnchor(PsiField field) {
     UField uField = UastContextKt.toUElement(field, UField.class);
     if (uField == null) return null;
     UElement anchor = uField.getUastAnchor();
@@ -92,8 +94,7 @@ final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBas
     return anchor.getSourcePsi();
   }
 
-  @Nullable
-  private static PsiElement getAnchor(PsiAnnotation field) {
+  private static @Nullable PsiElement getAnchor(PsiAnnotation field) {
     UAnnotation uAnnotation = UastContextKt.toUElement(field, UAnnotation.class);
     if (uAnnotation == null) return null;
     return uAnnotation.getSourcePsi();

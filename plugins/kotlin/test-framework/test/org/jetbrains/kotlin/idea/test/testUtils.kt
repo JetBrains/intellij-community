@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
@@ -31,7 +31,7 @@ val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/tests/testData")
 
 fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet()): String {
     val text = text
-    if (InTextDirectivesUtils.isDirectiveDefined(text, "// DISABLE-ERRORS")) return text
+    if (InTextDirectivesUtils.isDirectiveDefined(text, DISABLE_ERRORS_DIRECTIVE)) return text
     val diagnostics = kotlin.run {
         var lastException: Exception? = null
         for (attempt in 0 until 2) {
@@ -58,7 +58,7 @@ fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet
 }
 
 fun JavaCodeInsightTestFixture.dumpErrorLines(): List<String> {
-    if (InTextDirectivesUtils.isDirectiveDefined(file.text, "// DISABLE-ERRORS")) return emptyList()
+    if (InTextDirectivesUtils.isDirectiveDefined(file.text, DISABLE_ERRORS_DIRECTIVE)) return emptyList()
     return doHighlighting().filter { it.severity == HighlightSeverity.ERROR }.map {
         "// ERROR: ${it.description.replace('\n', ' ')}"
     }
@@ -93,7 +93,6 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    FileDocumentManager.getInstance().saveAllDocuments() // TODO remove, this is a workaround until IJPL-149853 is fixed
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets

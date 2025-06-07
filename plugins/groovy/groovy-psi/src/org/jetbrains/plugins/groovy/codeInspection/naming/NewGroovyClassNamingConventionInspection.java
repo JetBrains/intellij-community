@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 public final class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
-  @NonNls private static final String GROOVY = "Groovy";
+  private static final @NonNls String GROOVY = "Groovy";
 
   public NewGroovyClassNamingConventionInspection() {
     super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), GROOVY + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
@@ -61,9 +61,8 @@ public final class NewGroovyClassNamingConventionInspection extends AbstractNami
     super.unregisterConvention(wrapClassExtension(extension));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!(holder.getFile() instanceof PsiClassOwner)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.*
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Inside IntelliJ platform, a source root is usually referred to as a source directory containing source code.
@@ -47,7 +47,8 @@ interface SingleFileSourcesTracker {
 /**
  * This is a dummy implementation for the [SingleFileSourcesTracker] that makes sure no changes in behaviour are introduced to the platform
  */
-internal class DefaultSingleFileSourcesTracker : SingleFileSourcesTracker {
+@ApiStatus.Internal
+class DefaultSingleFileSourcesTracker : SingleFileSourcesTracker {
   override fun isSingleFileSource(file: VirtualFile): Boolean = false
   override fun isSourceDirectoryInModule(dir: VirtualFile, module: Module): Boolean = false
   override fun getSourceDirectoryIfExists(file: VirtualFile): VirtualFile? = null

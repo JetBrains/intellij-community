@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -65,12 +65,12 @@ public class RollbackProgressModifier implements RollbackProgressListener {
   }
 
   @Override
-  public void accept(@NotNull final Change change) {
+  public void accept(final @NotNull Change change) {
     acceptImpl(ChangesUtil.getFilePath(change).getPath());
   }
 
   @Override
-  public void accept(@NotNull final FilePath filePath) {
+  public void accept(final @NotNull FilePath filePath) {
     acceptImpl(filePath.getPath());
   }
 

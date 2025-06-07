@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,14 +195,17 @@ public final class GitVersion implements Comparable<GitVersion> {
     return parse(result.getStdout());
   }
 
+  @ApiStatus.Internal
+  public static boolean isUnsupportedWslVersion(@NotNull Type type) {
+    return !Registry.is("git.allow.wsl1.executables") && type == Type.WSL1;
+  }
+
   /**
    * @return true if the version is supported by the plugin
    */
   public boolean isSupported() {
     Type type = getType();
-    return type != Type.NULL &&
-           (Registry.is("git.allow.wsl1.executables") || type != Type.WSL1) &&
-           compareTo(MIN) >= 0;
+    return type != Type.NULL && !isUnsupportedWslVersion(type) && compareTo(MIN) >= 0;
   }
 
   /**

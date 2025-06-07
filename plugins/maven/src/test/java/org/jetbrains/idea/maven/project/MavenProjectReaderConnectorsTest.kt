@@ -3,9 +3,11 @@ package org.jetbrains.idea.maven.project
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.server.*
+import org.junit.Test
 import java.rmi.ConnectException
 
 class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
+  @Test
   fun `test when using stopped connector always then get exception`() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -14,11 +16,12 @@ class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
                        """.trimIndent())
     assertThrows(ConnectException::class.java) {
       runBlocking {
-        withStoppedConnector { readProject(projectPom).mavenId }
+        withStoppedConnector { evaluateEffectivePom(projectPom) }
       }
     }
   }
 
+  @Test
   fun `test when using stopped connector once then recover`() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -32,6 +35,7 @@ class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
   }
 
 
+  @Test
   fun `test when connector is shut down then it is removed from manager`() = runBlocking {
     val mavenServerManager = MavenServerManager.getInstance()
     val connector1 = withCompatibleConnector { mavenServerManager.getConnector(project, project.basePath + "/1") }

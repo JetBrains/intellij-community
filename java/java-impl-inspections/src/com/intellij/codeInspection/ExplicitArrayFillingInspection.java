@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,9 +46,8 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
       checkbox("mySuggestSetAll", JavaBundle.message("inspection.explicit.array.filling.suggest.set.all")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -70,7 +70,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    JavaBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance()
-                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR)));
+                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", JavaKeywords.FOR)));
             return;
           }
           registerProblem(statement, false);
@@ -130,8 +130,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
           ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, flow.getEndOffset(def) + 1, statement, arrayVar, exclude));
       }
 
-      @Nullable
-      private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+      private static @Nullable ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
         try {
           return ControlFlowFactory.getInstance(block.getProject())
             .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -182,8 +181,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
         return ContainerUtil.and(initializer.getInitializers(), init -> isDefaultValue(init, defaultValue, init.getType()));
       }
 
-      @Nullable
-      private static Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
+      private static @Nullable Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
         Set<Integer> set = new HashSet<>();
         for (PsiElement def : defs) {
           int start = flow.getStartOffset(def);
@@ -220,8 +218,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
         holder.registerProblem(statement, message, type, range, fix);
       }
 
-      @NotNull
-      private TextRange getRange(@NotNull PsiForStatement statement, @NotNull ProblemHighlightType type) {
+      private @NotNull TextRange getRange(@NotNull PsiForStatement statement, @NotNull ProblemHighlightType type) {
         PsiStatement initialization = statement.getInitialization();
         LOG.assertTrue(initialization != null);
         TextRange range = TextRange.from(initialization.getStartOffsetInParent(), initialization.getTextLength());
@@ -244,10 +241,8 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
       myIsRhsConstant = isRhsConstant;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.explicit.array.filling.fix.family.name", myIsRhsConstant ? "fill" : "setAll");
     }
 
@@ -281,8 +276,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @NotNull
-    private static String getCast(@NotNull PsiElement context, @Nullable PsiType elementType, @Nullable PsiType rType) {
+    private static @NotNull String getCast(@NotNull PsiElement context, @Nullable PsiType elementType, @Nullable PsiType rType) {
       if (elementType == null || rType == null) return "";
       PsiType assignTo = tryCast(elementType, PsiPrimitiveType.class);
       if (assignTo == null) assignTo = TypeUtils.getObjectType(context);
@@ -290,8 +284,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  @Nullable
-  private static IndexedContainer getContainer(CountingLoop loop, PsiAssignmentExpression assignment) {
+  private static @Nullable IndexedContainer getContainer(CountingLoop loop, PsiAssignmentExpression assignment) {
     IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
     if (container == null) {
       if (!(assignment.getLExpression() instanceof PsiArrayAccessExpression arrayAccessExpression)) {

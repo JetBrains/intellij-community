@@ -62,23 +62,19 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     return null;
   }
 
-  @Nullable
-  private PyTargetExpression resolveGlobalVariable(@NotNull PyFile owner) {
+  private @Nullable PyTargetExpression resolveGlobalVariable(@NotNull PyFile owner) {
     return owner.findTopLevelAttribute(getCanonicalText());
   }
 
-  @Nullable
-  private PyTargetExpression resolveInstanceVariable(@NotNull PyClass owner) {
+  private @Nullable PyTargetExpression resolveInstanceVariable(@NotNull PyClass owner) {
     return owner.findInstanceAttribute(getCanonicalText(), true);
   }
 
-  @Nullable
-  private PyTargetExpression resolveClassVariable(@NotNull PyClass owner) {
+  private @Nullable PyTargetExpression resolveClassVariable(@NotNull PyClass owner) {
     return owner.findClassAttribute(getCanonicalText(), true, null);
   }
 
-  @Nullable
-  private PyNamedParameter resolveParameter(PyFunction owner) {
+  private @Nullable PyNamedParameter resolveParameter(PyFunction owner) {
     final PyParameterList parameterList = owner.getParameterList();
     final PyNamedParameter resolved = parameterList.findParameterByName(getCanonicalText());
     if (resolved != null) {
@@ -100,8 +96,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  @NotNull
-  public List<PyNamedParameter> collectParameterVariants() {
+  public @NotNull List<PyNamedParameter> collectParameterVariants() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction) {
       List<PyNamedParameter> result = new ArrayList<>();
@@ -131,15 +126,13 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     return myType;
   }
 
-  @Nullable
   @Override
-  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+  public @Nullable HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     return HighlightSeverity.WEAK_WARNING;
   }
 
-  @Nullable
   @Override
-  public String getUnresolvedDescription() {
+  public @Nullable String getUnresolvedDescription() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction function) {
       return PyPsiBundle.message("unresolved.docstring.param.reference", function.getName(), getCanonicalText());

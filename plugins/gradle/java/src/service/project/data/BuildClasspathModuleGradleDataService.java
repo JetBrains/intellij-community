@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -11,9 +10,10 @@ import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClas
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -34,6 +34,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -43,17 +45,16 @@ import java.util.*;
 public final class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
-  @NotNull
   @Override
-  public Key<BuildScriptClasspathData> getTargetDataKey() {
+  public @NotNull Key<BuildScriptClasspathData> getTargetDataKey() {
     return BuildScriptClasspathData.KEY;
   }
 
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<BuildScriptClasspathData>> toImport,
-                         @Nullable final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
+                         final @Nullable ProjectData projectData,
+                         final @NotNull Project project,
+                         final @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (projectData == null || toImport.isEmpty()) {
       return;
     }
@@ -62,7 +63,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
-    AbstractExternalSystemLocalSettings<?> localSettings = manager.getLocalSettingsProvider().fun(project);
+    ProjectBuildClasspathManager buildClasspathManager = project.getService(ProjectBuildClasspathManager.class);
 
     final String linkedExternalProjectPath = projectData.getLinkedExternalProjectPath();
     final File gradleHomeDir = toImport.iterator().next().getData().getGradleHomeDir();
@@ -75,12 +76,12 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     Interner<List<String>> interner = Interner.createInterner();
     final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
       final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
-      File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
-      if (gradleHome != null && gradleHome.isDirectory()) {
-        final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
+      Path gradleHome = gradleInstallationManager.getGradleHomePath(project, linkedExternalProjectPath);
+      if (gradleHome != null && Files.isDirectory(gradleHome)) {
+        final Collection<Path> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
         if (libraries != null) {
-          for (File library : libraries) {
-            gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
+          for (Path library : libraries) {
+            gradleSdkLibraries.add(library.toString());
           }
         }
       }
@@ -88,7 +89,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     });
 
     final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath =
-      new HashMap<>(localSettings.getProjectBuildClasspath());
+      new HashMap<>(buildClasspathManager.getProjectBuildClasspath());
 
     for (final DataNode<BuildScriptClasspathData> node : toImport) {
       if (GradleConstants.SYSTEM_ID.equals(node.getData().getOwner())) {
@@ -143,9 +144,16 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
       }
     }
 
-    WriteAction.runAndWait(() -> localSettings.setProjectBuildClasspath(localProjectBuildClasspath));
+    buildClasspathManager.setProjectBuildClasspathSync(localProjectBuildClasspath);
+  }
 
-    if (!project.isDisposed()) {
+  @Override
+  public void onSuccessImport(@NotNull Collection<DataNode<BuildScriptClasspathData>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModelsProvider modelsProvider) {
+    if (!project.isDisposed() && !imported.isEmpty()) {
+      project.getService(ProjectBuildClasspathManager.class).removeUnavailableClasspaths();
       GradleBuildClasspathManager.getInstance(project).reload();
     }
   }

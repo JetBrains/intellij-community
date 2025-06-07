@@ -1,5 +1,5 @@
 // "Add dependency on module 'jvm'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // FIR_COMPARISON
 package bar
 

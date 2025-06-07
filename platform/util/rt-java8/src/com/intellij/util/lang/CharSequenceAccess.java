@@ -25,7 +25,7 @@ public final class CharSequenceAccess {
                                              ? LittleEndianCharSequenceAccess.INSTANCE
                                              : BigEndianCharSequenceAccess.INSTANCE;
 
-  private static abstract class BaseCharSequenceAccess implements Access<CharSequence> {
+  private abstract static class BaseCharSequenceAccess implements Access<CharSequence> {
     private static int ix(long offset) {
       return (int)(offset >> 1);
     }

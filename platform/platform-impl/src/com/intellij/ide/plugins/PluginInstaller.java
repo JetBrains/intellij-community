@@ -85,11 +85,13 @@ public final class PluginInstaller {
   }
 
   @ApiStatus.Internal
-  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
+  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptor pluginDescriptor) throws IOException {
     if (pluginDescriptor.isBundled()) {
       throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
     }
-    addActionCommand(new DeleteCommand(pluginDescriptor.getPluginPath()));
+    // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
+    // This way plugin installation always takes place after plugin uninstallation.
+    addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
   }
 
   @ApiStatus.Internal
@@ -245,7 +247,7 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
@@ -301,7 +303,8 @@ public final class PluginInstaller {
         new Task.WithResult<>(null, parent, IdeBundle.message("progress.title.checking.plugin.dependencies"), true) {
           @Override
           protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
-            var repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+            var repositoryPlugins = ContainerUtil.map(CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
+                                                      it -> (PluginNode)it.getDescriptor());
             var operation = new PluginInstallOperation(List.of(), repositoryPlugins, pluginEnabler, indicator);
             operation.setAllowInstallWithoutRestart(true);
             return operation.checkMissingDependencies(pluginDescriptor, null) ?
@@ -393,13 +396,23 @@ public final class PluginInstaller {
 
     var targetPluginId = targetDescriptor.getPluginId();
 
+    // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
+    var loadedPlugin = PluginManagerCore.findPlugin(targetPluginId);
+    if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
+      loadedPlugin.setMarkedForLoading(false);
+      var unloaded = DynamicPlugins.INSTANCE.unloadPlugin(loadedPlugin);
+      if (!unloaded) {
+        return false;
+      }
+    }
+
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
-      var pluginSet = PluginManagerCore.INSTANCE.getPluginSet();
+      var pluginSet = PluginManagerCore.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
         //  so load first, then enable
-        targetDescriptor.setEnabled(true);
+        targetDescriptor.setMarkedForLoading(true);
         var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
         PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
         return result;
@@ -414,7 +427,7 @@ public final class PluginInstaller {
   }
 
   private static Set<String> findNotInstalledPluginDependencies(
-    List<IdeaPluginDependency> dependencies,
+    List<? extends IdeaPluginDependency> dependencies,
     InstalledPluginsTableModel model,
     Set<PluginId> installedDependencies
   ) {
@@ -424,7 +437,10 @@ public final class PluginInstaller {
       if (dependency.isOptional()) continue;
 
       var pluginId = dependency.getPluginId();
-      if (installedDependencies.contains(pluginId) || model.isLoaded(pluginId) || PluginManagerCore.isModuleDependency(pluginId)) {
+      if (installedDependencies.contains(pluginId) ||
+          model.isLoaded(pluginId) ||
+          PluginManagerCore.looksLikePlatformPluginAlias(pluginId) ||
+          PluginManagerCore.findPluginByPlatformAlias(pluginId) != null) {
         continue;
       }
 

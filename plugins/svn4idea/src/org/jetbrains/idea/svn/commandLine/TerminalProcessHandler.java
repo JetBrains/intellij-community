@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -94,13 +80,11 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     return result;
   }
 
-  @NotNull
-  protected String filterCombinedText(@NotNull String currentLine) {
+  protected @NotNull String filterCombinedText(@NotNull String currentLine) {
     return currentLine;
   }
 
-  @NotNull
-  protected String filterText(@NotNull String text) {
+  protected @NotNull String filterText(@NotNull String text) {
     return text;
   }
 
@@ -116,8 +100,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     }
   }
 
-  @NotNull
-  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+  protected @NotNull Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     Key result = outputType;
 
     if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
@@ -130,8 +113,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     return result;
   }
 
-  @NotNull
-  private StringBuilder getLastLineFor(Key outputType) {
+  private @NotNull StringBuilder getLastLineFor(Key outputType) {
     if (ProcessOutputTypes.STDERR.equals(outputType)) {
       return errorLine;
     }

@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.concurrency.resetThreadContext
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
@@ -33,28 +36,33 @@ private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { 
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun findSdkByName(name: String): Sdk? {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val currentSnapshot = globalWorkspaceModel.currentSnapshot
-    val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
-      .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
-    return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
+    val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
+    for (globalWorkspaceModel in globalWorkspaceModels) {
+      val currentSnapshot = globalWorkspaceModel.currentSnapshot
+      val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
+                        .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
+      return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
+    }
+    return null
   }
 
   override fun getAllSdks(): List<Sdk> {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val currentSnapshot = globalWorkspaceModel.currentSnapshot
-    return currentSnapshot.entities(SdkEntity::class.java)
-      .mapNotNull { currentSnapshot.sdkMap.getDataByEntity(it) }
-      .toList()
+    val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
+    return globalWorkspaceModels.map {
+      it.currentSnapshot
+    }.flatMap { snapshot ->
+      snapshot.entities(SdkEntity::class.java).mapNotNull { snapshot.sdkMap.getDataByEntity(it) }
+    }.toList()
   }
 
   override fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk {
-    return ProjectJdkImpl(name, type, homePath ?: "", null);
+    return ProjectJdkImpl(name, type, homePath ?: "", null)
   }
 
   override fun addNewSdk(sdk: Sdk) {
     val delegateSdk = (sdk as ProjectJdkImpl).delegate as SdkBridgeImpl
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    val descriptor = delegateSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
     val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk)
 
     if (existingSdkEntity != null) {
@@ -84,7 +92,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun removeSdk(sdk: Sdk) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    val descriptor = sdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
 
     // It's absolutely OK if we try to remove what does not yet exist in `ProjectJdkTable` SDK
     // E.g. org.jetbrains.idea.maven.actions.AddMavenDependencyQuickFixTest
@@ -97,7 +106,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk) {
     modifiedSdk as ProjectJdkImpl
     originalSdk as ProjectJdkImpl
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    val descriptor = modifiedSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
     val sdkEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java)
                            .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }
                      ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))
@@ -119,7 +129,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun saveOnDisk() {
     runBlocking {
       resetThreadContext().use {
-        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+        (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
       }
     }
   }

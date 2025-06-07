@@ -445,13 +445,14 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       if (scrollToTarget || !myPostRunnables.isEmpty()) {
         _scrollHorizontally(myEndHOffset);
         _scrollVertically(myEndVOffset);
-        executePostRunnables();
       }
 
       Disposer.dispose(myAnimator);
       if (currentAnimationRequest == this) {
         currentAnimationRequest = null;
       }
+
+      executePostRunnables();
     }
 
     private void executePostRunnables() {

@@ -24,8 +24,10 @@ import java.util.Set;
 
 final class DomFileIconProvider extends IconProvider {
 
+  private final int gistVersion = DomApplicationComponent.getInstance().getCumulativeVersion(false);
+
   private final PsiFileGist<DomTag> DOM_FILE_DESCRIPTION =
-    GistManager.getInstance().newPsiFileGist("DOM_FILE_DESCRIPTION", 1, new DomFileDescriptionTagExternalizer(), new NullableFunction<>() {
+    GistManager.getInstance().newPsiFileGist("DOM_FILE_DESCRIPTION", gistVersion, new DomFileDescriptionTagExternalizer(), new NullableFunction<>() {
       @Override
       public @Nullable DomFileIconProvider.DomTag fun(PsiFile file) {
         if (file instanceof XmlFile) {
@@ -35,9 +37,12 @@ final class DomFileIconProvider extends IconProvider {
       }
 
       private static @Nullable DomFileIconProvider.DomTag findDomFileDescription(@NotNull XmlFile file) {
-        return AstLoadingFilter.forceAllowTreeLoading(file, () -> {
+        PsiFile originalFile = file.getOriginalFile(); // DOM often needs proper module and origin
+        if (!(originalFile instanceof XmlFile)) return null;
+
+        return AstLoadingFilter.forceAllowTreeLoading(originalFile, () -> {
           DomFileDescription<?> description =
-            DomManager.getDomManager(file.getProject()).getDomFileDescription(file);
+            DomManager.getDomManager(originalFile.getProject()).getDomFileDescription((XmlFile)originalFile);
 
           if (description != null) {
             return new DomTag(

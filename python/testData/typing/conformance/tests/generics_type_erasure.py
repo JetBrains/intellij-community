@@ -10,7 +10,9 @@ T = TypeVar("T")
 
 class Node(Generic[T]):
     label: T
-    def __init__(self, label: T | None = None) -> None: ...
+    def __init__(self, label: T | None = None) -> None:
+        if label is not None:
+            self.label = label
 
 assert_type(Node(''), Node[str])
 assert_type(Node(0), Node[int])

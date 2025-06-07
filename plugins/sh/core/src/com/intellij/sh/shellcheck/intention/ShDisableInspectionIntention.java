@@ -28,34 +28,32 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
     myMessage = message;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.disable.inspection.text", myMessage);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return ShBundle.message("sh.shell.script");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (file == null) return;
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (psiFile == null) return;
 
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
-      ShShellcheckInspection tool = (ShShellcheckInspection)it.getUnwrappedTool(ShShellcheckInspection.SHORT_NAME, file);
+      ShShellcheckInspection tool = (ShShellcheckInspection)it.getUnwrappedTool(ShShellcheckInspection.SHORT_NAME, psiFile);
       if (tool != null) {
         tool.disableInspection(myInspectionCode);
       }
     });
-    DaemonCodeAnalyzer.getInstance(project).restart(file);
+    DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
   }
 
   @Override

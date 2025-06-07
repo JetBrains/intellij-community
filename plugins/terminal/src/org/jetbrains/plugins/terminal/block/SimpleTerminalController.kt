@@ -14,18 +14,19 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
-import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 
-internal class SimpleTerminalController(
+@ApiStatus.Internal
+class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
   private val session: BlockTerminalSession,
-  private val editor: EditorEx
+  private val editor: EditorEx,
 ) : Disposable {
   val document: Document
     get() = editor.document
@@ -51,7 +52,7 @@ internal class SimpleTerminalController(
     val eventsHandler = SimpleTerminalEventsHandler(session, settings, outputModel)
     setupKeyEventDispatcher(editor, eventsHandler, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
-    TerminalOutputEditorInputMethodSupport(editor, session, caretModel).install(this)
+    setupInputMethodSupport(editor, session, caretModel, this)
     terminalModel.withContentLock {
       updateEditorContent()
     }

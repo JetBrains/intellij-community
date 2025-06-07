@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +9,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,6 +33,11 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
   public void renderTreeNode(final SimpleColoredComponent component, final JTree tree) {
     component.append(myOverridingPercent + "% ", SimpleTextAttributes.GRAY_ATTRIBUTES);
     super.renderTreeNode(component, tree);
+  }
+
+  @Override
+  public @Nls @Nullable String getSecondaryText() {
+    return myOverridingPercent + "% " + super.getSecondaryText();
   }
 
   @TestOnly

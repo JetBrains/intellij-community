@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.CompressingAlgo;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.VFSContentStorageOverMMappedFile;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 

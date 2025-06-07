@@ -19,10 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
@@ -111,19 +108,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResult();
   }
   public void testNewStaticProblem() throws Throwable { doTest(); }
-
-  public void testChainingPerformance() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    Benchmark.newBenchmark(getTestName(false), new ThrowableRunnable() {
-      @Override
-      public void run() throws Exception {
-        configure();
-        assertNotNull(myItems);
-        LookupManager.getInstance(getProject()).hideActiveLookup();
-      }
-    }).start();
-
-  }
 
   public void testArrayMemberAccess() throws Throwable { doTest(); }
   public void testVarargMemberAccess() throws Throwable { doTest(); }

@@ -132,7 +132,7 @@ public class CFGBuilder {
    */
   @Contract("_ -> this")
   public @NotNull CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
-    return add(new UnwrapDerivedVariableInstruction(descriptor));
+    return add(new GetQualifiedValueInstruction(descriptor));
   }
 
   /**
@@ -161,7 +161,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushForWrite(DfaVariableValue variable) {
-    return add(new JvmPushInstruction(variable, null, true));
+    return add(new JvmPushForWriteInstruction(variable));
   }
 
   /**
@@ -175,7 +175,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value) {
-    return add(new JvmPushInstruction(value, null));
+    return add(new PushInstruction(value, null));
   }
 
   /**
@@ -190,7 +190,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value, PsiExpression expression) {
-    return add(new JvmPushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
+    return add(new PushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
   }
 
   /**
@@ -960,8 +960,7 @@ public class CFGBuilder {
    * @param type a type of variable to create
    * @return newly created variable
    */
-  @NotNull
-  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
+  public @NotNull DfaVariableValue createTempVariable(@Nullable PsiType type) {
     return myAnalyzer.createTempVariable(type);
   }
 

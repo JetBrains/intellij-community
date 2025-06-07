@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
@@ -24,19 +25,47 @@ import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service
-class CondaPackageCache : PythonPackageCache<String> {
+internal class CondaPackageCache : PythonPackageCache<String> {
   @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
 
-  override val packages: List<String>
-    get() = cache.keys.toList()
+  override val packages: Set<String>
+    get() = cache.keys
 
-  suspend fun refreshAll(sdk: Sdk, project: Project) {
+  private val lock = Mutex()
+  private var loadInProgress: Boolean = false
+
+  suspend fun forceReloadCache(sdk: Sdk, project: Project) {
+    return reloadCache(sdk, project, true)
+  }
+
+  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false) {
+    lock.withLock {
+      if ((cache.isNotEmpty() && !force) || loadInProgress) {
+        return
+      }
+
+      loadInProgress = true
+    }
+
+    try {
+      refreshAll(sdk, project)
+    }
+    finally {
+      lock.withLock {
+        loadInProgress = false
+      }
+    }
+  }
+
+  private suspend fun refreshAll(sdk: Sdk, project: Project) {
     withContext(Dispatchers.IO) {
       val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration

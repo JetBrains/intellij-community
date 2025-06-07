@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.quarantine.execution
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -42,14 +43,16 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertThat(runOutput)
       .contains("Configuration cache entry stored.")
       .contains("0 problems were found storing the configuration cache.")
-    assertTaskExecuted(message, runOutput)
+      .contains("BUILD SUCCESSFUL")
+      .contains(message)
 
     val debugOutput = executeRunConfiguration("myTask", isDebugServerProcess = true)
     assertThat(debugOutput)
       .contains("Configuration cache entry reused.")
       .doesNotContain("configuration cache cannot be reused")
       .doesNotContain("Configuration cache entry stored.")
-    assertTaskExecuted(message, debugOutput)
+      .contains("BUILD SUCCESSFUL")
+      .contains(message)
   }
 
   @Test
@@ -324,9 +327,42 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile)
   }
 
-  private fun assertTaskExecuted(expectedMessage: String, output: String) {
-    assertThat(output)
-      .contains("BUILD SUCCESSFUL")
-      .contains(expectedMessage)
+  @Test
+  fun `test tasks debugging for test task`() {
+    val jUnitTestAnnotationClass = when (isJunit5Supported(currentGradleVersion)) {
+      true -> "org.junit.jupiter.api.Test"
+      else -> "org.junit.Test"
+    }
+    createProjectSubFile("src/test/java/TestCase.java", """
+      |import java.io.BufferedWriter;
+      |import java.io.FileWriter;
+      |import java.io.IOException;
+      |import java.lang.management.ManagementFactory;
+      |import java.lang.management.RuntimeMXBean;
+      |import java.util.List;
+      |
+      |public class TestCase {
+      |
+      |  @$jUnitTestAnnotationClass
+      |  public void test() {
+      |    RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+      |    List<String> jvmArgs = runtimeMxBean.getInputArguments();
+      |
+      |    try (BufferedWriter os = new BufferedWriter(new FileWriter("args.txt", false))) {
+      |      os.write(jvmArgs.toString());
+      |    } catch (IOException e) {
+      |      throw new RuntimeException(e);
+      |    }
+      |  }
+      |}
+    """.trimMargin())
+
+    importProject {
+      withJavaPlugin()
+      withJUnit()
+    }
+
+    executeRunConfiguration(":test")
+    assertDebugJvmArgs(":test", File(projectPath, "args.txt"))
   }
 }

@@ -1,0 +1,13 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: BLUE
+package test
+
+val blue = <caret>BLUE
+
+// FILE: foo/ColorEnum.java
+package foo;
+
+enum PackagePrivateColorEnum {
+    RED, GREEN, BLUE
+}

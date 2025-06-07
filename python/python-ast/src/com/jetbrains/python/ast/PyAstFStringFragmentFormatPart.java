@@ -11,8 +11,7 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildrenByType;
 
 @ApiStatus.Experimental
 public interface PyAstFStringFragmentFormatPart extends PyAstElement {
-  @NotNull
-  default List<? extends PyAstFStringFragment> getFragments() {
+  default @NotNull List<? extends PyAstFStringFragment> getFragments() {
     return findChildrenByType(this, PyElementTypes.FSTRING_FRAGMENT);
   }
 }

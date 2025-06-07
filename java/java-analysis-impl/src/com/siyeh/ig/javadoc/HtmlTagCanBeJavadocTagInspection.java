@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -6,8 +6,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -19,20 +20,21 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.problem.descriptor");
   }
 
@@ -41,20 +43,25 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     return new HtmlTagCanBeJavaDocTagFix();
   }
 
-  private static class HtmlTagCanBeJavaDocTagFix extends ModCommandQuickFix {
+  private static class HtmlTagCanBeJavaDocTagFix extends ModCommandBatchQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
     }
 
     @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommand.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
+      record FixData(PsiElement element, TextRange textRange) {}
+
+      return ModCommand.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
+        List<FixData> data =
+          ContainerUtil.map(descriptors, d -> new FixData(updater.getWritable(d.getPsiElement()), d.getTextRangeInElement()));
+        data.forEach(d -> applyFix(updater.getWritable(d.element), d.textRange));
+      });
     }
 
-    protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
+    private static void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
       PsiFile file = element.getContainingFile();
       Document document = file.getFileDocument();
       final int startOffset = range.getStartOffset();
@@ -64,7 +71,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       if (!"<code>".equalsIgnoreCase(text.substring(startOffset, startTag))) {
         return;
       }
-      @NonNls final StringBuilder newCommentText = new StringBuilder("{@code");
+      final @NonNls StringBuilder newCommentText = new StringBuilder("{@code");
       int endTag = StringUtil.indexOfIgnoreCase(text, "</code>", startTag);
       while (endTag < 0) {
         appendElementText(text, startTag, text.length(), newCommentText);
@@ -104,6 +111,8 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
   }
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
+    private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
+
     @Override
     public void visitDocToken(@NotNull PsiDocToken token) {
       super.visitDocToken(token);
@@ -111,7 +120,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType) || !JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(token)) {
         return;
       }
-      @NonNls final String text = token.getText();
+      final @NonNls String text = token.getText();
       int startIndex = 0;
       while (true) {
         startIndex = StringUtil.indexOfIgnoreCase(text, "<code>", startIndex);
@@ -128,7 +137,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
       int balance = 0;
       while (element != null) {
-        @NonNls final String text = element.getText();
+        final @NonNls String text = element.getText();
         final int endIndex = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
         final int end = endIndex >= 0 ? endIndex : text.length();
         if (text.equals("{")) {
@@ -152,15 +161,10 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       }
       return false;
     }
-  }
 
-  private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
-
-  static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
-    final Matcher matcher = START_TAG_PATTERN.matcher(text);
-    if (matcher.find(startIndex)) {
-      return matcher.start() < endIndex;
+    private static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
+      final Matcher matcher = START_TAG_PATTERN.matcher(text);
+      return matcher.find(startIndex) && matcher.start() < endIndex;
     }
-    return false;
   }
 }

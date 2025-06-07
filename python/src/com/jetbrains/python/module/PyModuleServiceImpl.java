@@ -4,22 +4,16 @@ package com.jetbrains.python.module;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class PyModuleServiceImpl extends PyModuleServiceEx {
-  @Override
-  public ModuleBuilder createPythonModuleBuilder(DirectoryProjectGenerator generator) {
-    return new PythonModuleBuilderBase(generator);
-  }
 
   @Override
   public boolean isFileIgnored(@NotNull VirtualFile file) {

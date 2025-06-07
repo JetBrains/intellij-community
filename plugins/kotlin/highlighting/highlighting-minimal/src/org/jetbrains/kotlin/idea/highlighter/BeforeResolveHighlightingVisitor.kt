@@ -32,6 +32,7 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
                     else -> KotlinHighlightInfoTypeSemanticNames.KEYWORD
                 }
             }
+            elementType == KtTokens.ALL_KEYWORD -> KotlinHighlightInfoTypeSemanticNames.KEYWORD // workaround can be removed after KT-77099
             elementType == KtTokens.SAFE_ACCESS -> KotlinHighlightInfoTypeSemanticNames.SAFE_ACCESS
             elementType == KtTokens.EXCLEXCL -> KotlinHighlightInfoTypeSemanticNames.EXCLEXCL
             else -> return
@@ -70,6 +71,7 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         val eq = argument.equalsToken ?: return
         val parent = argument.parent
         highlightName(argument.project,
+                      argument,
             TextRange(argumentName.startOffset, eq.endOffset),
             if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry)
                 KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES

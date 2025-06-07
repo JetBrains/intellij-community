@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyParameterInfoUtils.CallInfo> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
@@ -209,8 +209,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     }
   }
 
-  @Nls
-  private String getActionLinkText(int numOfOverloads) {
+  private @Nls String getActionLinkText(int numOfOverloads) {
     return hideOverloads
            ? PyBundle.message("param.info.show.more.n.overloads",
                               numOfOverloads,

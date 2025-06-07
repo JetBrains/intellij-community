@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.facet;
 
 import com.intellij.util.xmlb.XmlSerializer;
@@ -17,11 +17,11 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class JpsFacetSerializer {
-  @NonNls public static final String FACET_TAG = "facet";
-  @NonNls public static final String TYPE_ATTRIBUTE = "type";
-  @NonNls public static final String CONFIGURATION_TAG = "configuration";
-  @NonNls public static final String NAME_ATTRIBUTE = "name";
-  @NonNls public static final String FACET_MANAGER_COMPONENT_NAME = "FacetManager";
+  public static final @NonNls String FACET_TAG = "facet";
+  public static final @NonNls String TYPE_ATTRIBUTE = "type";
+  public static final @NonNls String CONFIGURATION_TAG = "configuration";
+  public static final @NonNls String NAME_ATTRIBUTE = "name";
+  public static final @NonNls String FACET_MANAGER_COMPONENT_NAME = "FacetManager";
 
   public static void loadFacets(JpsModule module, @Nullable Element facetManagerElement) {
     if (facetManagerElement == null) return;
@@ -29,7 +29,7 @@ public final class JpsFacetSerializer {
     addFacets(module, state.facets, null);
   }
 
-  private static void addFacets(JpsModule module, List<FacetState> facets, @Nullable final JpsElement parentFacet) {
+  private static void addFacets(JpsModule module, List<FacetState> facets, final @Nullable JpsElement parentFacet) {
     for (FacetState facetState : facets) {
       final JpsFacetConfigurationSerializer<?> serializer = getModuleExtensionSerializer(facetState.getFacetType());
       if (serializer != null) {
@@ -45,8 +45,7 @@ public final class JpsFacetSerializer {
     return serializer.loadExtension(facetConfiguration != null ? facetConfiguration : new Element(CONFIGURATION_TAG), facet.getName(), module, parentFacet);
   }
 
-  @Nullable
-  public static JpsFacetConfigurationSerializer<?> getModuleExtensionSerializer(@NotNull String typeId) {
+  public static @Nullable JpsFacetConfigurationSerializer<?> getModuleExtensionSerializer(@NotNull String typeId) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsFacetConfigurationSerializer<?> serializer : extension.getFacetConfigurationSerializers()) {
         if (serializer.getFacetTypeId().equals(typeId)) {

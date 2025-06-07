@@ -1,5 +1,5 @@
 // "Add missing actual members" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
+
 
 actual class <caret>My(actual val name: String)

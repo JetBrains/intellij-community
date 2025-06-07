@@ -2,18 +2,18 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.psi.*
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.JavaPsiConstructorUtil
 import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.MINUSMINUS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.PLUSPLUS
@@ -181,11 +181,11 @@ private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
     val usefulConstructors: MutableList<PsiMethod> = ArrayList()
     for (constructor in constructors) {
         val ctrBody = constructor.getBody() ?: return true
-        val redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor)
+        val redirectedConstructors = JavaPsiConstructorUtil.getChainedConstructors(constructor)
         val usefulRedirectedConstructors: MutableList<PsiMethod> = ArrayList()
         for (redirectedConstructor in redirectedConstructors) {
             val body = redirectedConstructor.getBody()
-            if (body != null && (HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body) || isValidThisMethodInConstructor(
+            if (body != null && (ControlFlowUtil.variableDefinitelyAssignedIn(field, body) || isValidThisMethodInConstructor(
                     redirectedConstructor
                 ))
             ) {
@@ -193,7 +193,7 @@ private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
             }
         }
         if (usefulRedirectedConstructors.isNotEmpty() && usefulRedirectedConstructors.size != redirectedConstructors.size) return true
-        if (ctrBody.isValid() && (HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, ctrBody) || isValidThisMethodInConstructor(
+        if (ctrBody.isValid() && (ControlFlowUtil.variableDefinitelyAssignedIn(field, ctrBody) || isValidThisMethodInConstructor(
                 constructor
             ))
         ) {
@@ -274,7 +274,7 @@ private fun JKFieldAccessExpression.asQualifiedAssignmentFromTarget(): JKQualifi
     }
 
 context(KaSession)
-private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> =
+private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> =
     findUsages(scope, context).filter {
         it.asAssignmentFromTarget() != null
                 || it.isInDecrementOrIncrement() || it.asQualifiedAssignmentFromTarget() != null
@@ -282,7 +282,7 @@ private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: NewJ2kC
     }.distinct()
 
 context(KaSession)
-fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findWritableUsages(scope, context).isNotEmpty()
 
 

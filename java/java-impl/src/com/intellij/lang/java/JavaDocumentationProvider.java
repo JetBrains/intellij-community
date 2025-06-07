@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -16,6 +16,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -135,7 +136,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
+  public @Unmodifiable List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return getExternalJavaDocUrl(element);
   }
 
@@ -180,7 +181,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     if (file instanceof PsiJavaFile) {
       String packageName = ((PsiJavaFile)file).getPackageName();
-      if (packageName.length() > 0) {
+      if (!packageName.isEmpty()) {
         buffer.append(packageName);
         newLine(buffer);
       }
@@ -222,12 +223,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     JavaDocHighlightingManagerImpl highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
 
-    final String classString = aClass.isAnnotationType() ? '@' + PsiKeyword.INTERFACE :
-                               aClass.isInterface() ? PsiKeyword.INTERFACE :
+    final String classString = aClass.isAnnotationType() ? '@' + JavaKeywords.INTERFACE :
+                               aClass.isInterface() ? JavaKeywords.INTERFACE :
                                aClass instanceof PsiTypeParameter ? JavaBundle.message("java.terms.type.parameter") :
-                               aClass.isEnum() ? PsiKeyword.ENUM :
-                               aClass.isRecord() ? PsiKeyword.RECORD :
-                               PsiKeyword.CLASS;
+                               aClass.isEnum() ? JavaKeywords.ENUM :
+                               aClass.isRecord() ? JavaKeywords.RECORD :
+                               JavaKeywords.CLASS;
     appendStyledSignatureFragment(buffer, classString, highlightingManager.getKeywordAttributes()).append(" ");
 
     appendStyledSignatureFragment(
@@ -459,7 +460,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    appendStyledSignatureFragment(sb, PsiKeyword.MODULE, JavaDocHighlightingManagerImpl.getInstance().getKeywordAttributes());
+    appendStyledSignatureFragment(sb, JavaKeywords.MODULE, JavaDocHighlightingManagerImpl.getInstance().getKeywordAttributes());
     sb.append(' ');
     appendStyledSignatureFragment(sb, module.getName(), JavaDocHighlightingManagerImpl.getInstance().getClassNameAttributes());
 
@@ -649,7 +650,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return builder.length() > 0 ? builder.toString() : null;
+    return !builder.isEmpty() ? builder.toString() : null;
   }
 
   public static void generateParametersTakingDocFromSuperMethods(StringBuilder builder,
@@ -915,7 +916,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     sb.append("<br>");
   }
 
-  public static @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
+  public static @Unmodifiable @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
     List<String> urls = null;
 
     if (element instanceof PsiClass) {
@@ -926,7 +927,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (aClass != null) {
         urls = findUrlForClass(aClass);
         if (urls != null) {
-          urls.replaceAll(url -> url + "#" + field.getName());
+          urls = ContainerUtil.map(urls, url -> url + "#" + field.getName());
         }
       }
     }
@@ -959,8 +960,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return null;
     }
     else {
-      urls.replaceAll(FileUtil::toSystemIndependentName);
-      return urls;
+      return ContainerUtil.map(urls, FileUtil::toSystemIndependentName);
     }
   }
 
@@ -1002,7 +1002,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
-  public static @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
+  public static @Unmodifiable @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName != null) {
       PsiFile file = aClass.getContainingFile();
@@ -1033,7 +1033,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  public static @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static @Unmodifiable @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);

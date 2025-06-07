@@ -3,10 +3,17 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
 import com.google.gson.*;
 import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class GradleDependencyNodeDeserializer implements JsonDeserializer<DependencyNode> {
+
+  private GradleDependencyNodeDeserializer() { }
 
   @Override
   public DependencyNode deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
@@ -29,5 +36,18 @@ public class GradleDependencyNodeDeserializer implements JsonDeserializer<Depend
     else {
       return context.deserialize(json, UnknownDependencyNode.class);
     }
+  }
+
+  public static @NotNull List<DependencyScopeNode> fromJson(byte @NotNull [] byteContent) {
+    String content = new String(byteContent, StandardCharsets.UTF_8);
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    gsonBuilder.registerTypeAdapter(DependencyNode.class, new GradleDependencyNodeDeserializer());
+    DependencyScopeNode[] configurationNodes = gsonBuilder.create().fromJson(content, DependencyScopeNode[].class);
+    return configurationNodes != null ? Arrays.asList(configurationNodes) : Collections.emptyList();
+  }
+
+  public static byte @NotNull [] toJson(@NotNull List<DependencyScopeNode> configurationNodes) {
+    String content = new GsonBuilder().create().toJson(configurationNodes);
+    return content.getBytes(StandardCharsets.UTF_8);
   }
 }

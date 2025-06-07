@@ -29,16 +29,15 @@ import java.util.List;
 public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
 
-    final PyFunction function = findSuitableFunction(editor, file);
+    final PyFunction function = findSuitableFunction(editor, psiFile);
     if (function == null) return false;
 
     if (function.getTypeComment() != null) {
@@ -72,8 +71,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 

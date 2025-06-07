@@ -38,7 +38,7 @@ class TestValidationRulesStorageBuilder(private val recorderId: String = "TEST")
 
   fun build(): TestValidationRulesStorage {
     val persistence = TestEventLogMetadataPersistence(recorderId, cachedContent, cachedLastModified)
-    val loader = TestEventLogMetadaLoader(serverContentProvider, serverLastModified)
+    val loader = TestEventLogMetadataLoader(serverContentProvider, serverLastModified)
     return TestValidationRulesStorage(recorderId, persistence, loader)
   }
 }
@@ -62,7 +62,7 @@ private class TestEventLogMetadataPersistence(recorderId: String, private var co
   override fun getLastModified(): Long = modified
 }
 
-private class TestEventLogMetadaLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
+private class TestEventLogMetadataLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
   override fun loadMetadataFromServer(): String = provider.invoke()
 
   override fun getLastModifiedOnServer(): Long = lastModified

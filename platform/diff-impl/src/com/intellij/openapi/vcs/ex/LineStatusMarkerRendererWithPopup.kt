@@ -7,6 +7,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -14,9 +15,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
@@ -57,9 +56,10 @@ abstract class LineStatusMarkerRendererWithPopup(
 
   override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
     if (!rangesSource.isValid()) return
-    val popupDisposable = Disposer.newDisposable(disposable)
-    val popup = createPopupPanel(editor, range, mousePosition, popupDisposable)
-    showPopupAt(editor, popup, mousePosition, popupDisposable)
+    DiffUsageTriggerCollector.logShowMarkerPopup(project)
+    LineStatusMarkerPopupService.instance.buildAndShowPopup(disposable, editor, mousePosition) { popupDisposable ->
+      createPopupPanel(editor, range, mousePosition, popupDisposable)
+    }
   }
 
   protected open fun getTooltipText(): @NlsContexts.Tooltip String? = null

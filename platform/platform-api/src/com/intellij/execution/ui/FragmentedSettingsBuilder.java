@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -31,7 +32,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -215,6 +219,21 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
         minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
         return minimumSize;
       }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJPanel() {
+            @Override
+            public AccessibleRole getAccessibleRole() {
+              return SystemInfoRt.isMac ? AccessibleRole.AWT_COMPONENT : AccessibleRole.PANEL;
+            }
+          };
+          accessibleContext.setAccessibleName(myMain != null ? IdeBundle.message("tag.panel.group.options.accessible.name", myMain.getGroup()) :
+                                              IdeBundle.message("tag.panel.run.options.accessible.name"));
+        }
+        return accessibleContext;
+      }
     };
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
@@ -292,12 +311,11 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
            action.getTemplatePresentation().getDescription() : "";
   }
 
-  private @NotNull DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+  private @NotNull DefaultActionGroup buildGroup(@Unmodifiable List<? extends SettingsEditorFragment<Settings, ?>> fragments,
                                                  Ref<? super JComponent> lastSelected) {
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
-    for (SettingsEditorFragment<Settings, ?> fragment : restoreGroups(fragments)) {
+    for (SettingsEditorFragment<Settings, ?> fragment : ContainerUtil.sorted(restoreGroups(fragments), Comparator.comparingInt(SettingsEditorFragment::getMenuPosition))) {
       if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));

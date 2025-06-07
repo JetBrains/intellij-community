@@ -469,8 +469,18 @@ public final class ActionsTree {
     }
 
     public void restorePaths() {
-      for (DefaultMutableTreeNode node : getNodesByPaths(myPathsToExpand)) {
-        myTree.expandPath(new TreePath(node.getPath()));
+      try {
+        if (myTree instanceof Tree jbTree) {
+          jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+        }
+        for (DefaultMutableTreeNode node : getNodesByPaths(myPathsToExpand)) {
+          myTree.expandPath(new TreePath(node.getPath()));
+        }
+      }
+      finally {
+        if (myTree instanceof Tree jbTree) {
+          jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+        }
       }
 
       if (myTree.getSelectionModel().getSelectionCount() == 0) {
@@ -769,6 +779,12 @@ public final class ActionsTree {
     Set<String> abbreviations = rowData.abbreviations;
 
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+
+    if (ExperimentalUI.isNewUI()) {
+      new ShortcutTextList(shortcuts, abbreviations, tree, g).draw(bounds, g);
+      config.restore();
+      return;
+    }
 
     int totalWidth = 0;
     final FontMetrics metrics = tree.getFontMetrics(tree.getFont());

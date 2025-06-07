@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
@@ -60,15 +61,13 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     myName = name;
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static String getName(@Nullable JvmPrimitiveTypeKind kind) {
+  private static @NotNull String getName(@Nullable JvmPrimitiveTypeKind kind) {
     return kind == null ? "null" : kind.getName();
   }
 
-  @NotNull
   @Override
-  public JvmPrimitiveTypeKind getKind() {
+  public @NotNull JvmPrimitiveTypeKind getKind() {
     return Objects.requireNonNull(
       myKind,
       "getKind() called on PsiType.NULL\n" +
@@ -80,32 +79,27 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     );
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public PsiPrimitiveType annotate(@NotNull TypeAnnotationProvider provider) {
+  public @NotNull PsiPrimitiveType annotate(@NotNull TypeAnnotationProvider provider) {
     return (PsiPrimitiveType)super.annotate(provider);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
+  public @NotNull String getPresentableText(boolean annotated) {
     return getText(false, annotated);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(true, annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getCanonicalText(true);
   }
 
@@ -128,6 +122,13 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
       if (!annotation.isValid()) return false;
     }
     return true;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    if (myKind == JvmPrimitiveTypeKind.VOID) return TypeNullability.UNKNOWN;
+    if (myKind == null) return TypeNullability.NULLABLE_MANDATED;
+    return TypeNullability.NOT_NULL_MANDATED;
   }
 
   @Override
@@ -156,8 +157,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @param type the type to get the unboxed primitive type for.
    * @return the primitive type, or null if the type does not represent a boxed primitive type.
    */
-  @Nullable
-  public static PsiPrimitiveType getUnboxedType(@Nullable PsiType type) {
+  public static @Nullable PsiPrimitiveType getUnboxedType(@Nullable PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
 
     PsiUtil.ensureValidType(type);
@@ -173,8 +173,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     return unboxed.annotate(type.getAnnotationProvider());
   }
 
-  @Nullable
-  public static PsiPrimitiveType getOptionallyUnboxedType(@Nullable PsiType type) {
+  public static @Nullable PsiPrimitiveType getOptionallyUnboxedType(@Nullable PsiType type) {
     return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
   }
 
@@ -213,8 +212,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    *
    * @see JvmPrimitiveTypeKind#getBoxedFqn
    */
-  @Nullable
-  public String getBoxedTypeName() {
+  public @Nullable String getBoxedTypeName() {
     return myKind == null ? null : myKind.getBoxedFqn();
   }
 
@@ -225,8 +223,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @return the class type, or null if the current language level does not support autoboxing or
    * it was not possible to resolve the reference to the class.
    */
-  @Nullable
-  public PsiClassType getBoxedType(@NotNull PsiElement context) {
+  public @Nullable PsiClassType getBoxedType(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
     if (file == null) return null;
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
@@ -243,8 +240,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     return factory.createType(aClass, PsiSubstitutor.EMPTY, languageLevel).annotate(getAnnotationProvider());
   }
 
-  @Nullable
-  public PsiClassType getBoxedType(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
+  public @Nullable PsiClassType getBoxedType(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     String boxedQName = getBoxedTypeName();
     if (boxedQName == null) return null;
 

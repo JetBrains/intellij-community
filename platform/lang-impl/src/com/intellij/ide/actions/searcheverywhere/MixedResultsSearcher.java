@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,12 +25,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author msokolov
- */
-final class MixedResultsSearcher implements SESearcher {
+@ApiStatus.Internal
+public final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
+  private static final int MAX_SPELLING_CORRECTIONS = 2;
 
   private final @NotNull SearchListener myListener;
   private final @NotNull Executor myNotificationExecutor;
@@ -42,7 +42,7 @@ final class MixedResultsSearcher implements SESearcher {
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MixedResultsSearcher(@NotNull SearchListener listener,
+  public MixedResultsSearcher(@NotNull SearchListener listener,
                        @NotNull Executor notificationExecutor,
                        @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
@@ -64,11 +64,12 @@ final class MixedResultsSearcher implements SESearcher {
       }
     }
 
-    Map<? extends SearchEverywhereContributor<?>, Integer> map = contributorsAndLimits;
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = applySpellCheckIfNeeded(contributorsAndLimits, pattern);
+
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(map, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
+    return performSearch(map.keySet(), pattern, accumulatorSupplier);
   }
 
   @Override
@@ -78,7 +79,51 @@ final class MixedResultsSearcher implements SESearcher {
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(alreadyFound, contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = incrementSpellCheckLimits(contributorsAndLimits);
+
+    return performSearch(map.keySet(), pattern, accumulatorSupplier);
+  }
+
+  private static Map<? extends SearchEverywhereContributor<?>, Integer> applySpellCheckIfNeeded(
+    Map<? extends SearchEverywhereContributor<?>, Integer> original,
+    String pattern
+    ) {
+    // use spelling corrector only in the Action tab
+    if (original.size() != 1) return original;
+    SearchEverywhereContributor<?> base = original.keySet().iterator().next();
+    if (!(base instanceof ActionSearchEverywhereContributor)) return original;
+
+    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance();
+    if (spellingCorrector == null || !spellingCorrector.isAvailableInTab(base.getSearchProviderId())) return original;
+    List<SearchEverywhereSpellCheckResult.Correction> fixes = spellingCorrector.getAllCorrections(pattern, MAX_SPELLING_CORRECTIONS);
+    if (fixes.isEmpty()) return original;
+
+    Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();
+    var wrapperOrig = new CorrectionWrapper<>((ActionSearchEverywhereContributor) base, SearchEverywhereSpellCheckResult.NoCorrection.INSTANCE);
+    res.put(wrapperOrig, wrapperOrig.getLimit());
+
+    for (var f : fixes) {
+      var wrapper = new CorrectionWrapper<>((ActionSearchEverywhereContributor) base, f);
+      res.put(wrapper, wrapper.getLimit());
+    }
+    return res;
+  }
+  /**
+   * Increments and applies per-contributor limits for CorrectionWrapper instances.
+   * Needed to avoid using the default limit from the Actions tab.
+   */
+  private static Map<? extends SearchEverywhereContributor<?>, Integer> incrementSpellCheckLimits(
+    Map<? extends SearchEverywhereContributor<?>, Integer> original) {
+    boolean spellCheckTab =
+      ContainerUtil.and(original.keySet(), c -> c instanceof CorrectionWrapper);
+    if (!spellCheckTab) return original;
+
+    Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();
+    original.forEach((c, oldLimit) -> {
+      int newLimit = ((CorrectionWrapper<?>) c).increaseAndGetLimit();
+      res.put(c, newLimit);
+    });
+    return res;
   }
 
   private static @NotNull ProgressIndicator performSearch(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors,
@@ -171,30 +216,46 @@ final class MixedResultsSearcher implements SESearcher {
 
     @Override
     public void run() {
-      LOG.debug("Search task started for contributor ", myContributor);
+      LOG.debug("Search task started for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
       SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
         do {
           ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
           try {
-            if (myContributor instanceof WeightedSearchEverywhereContributor) {
-              ((WeightedSearchEverywhereContributor<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
-                                                                                               descriptor -> processFoundItem(
-                                                                                                 descriptor.getItem(),
-                                                                                                 descriptor.getWeight(),
-                                                                                                 wrapperIndicator));
+            if (myContributor instanceof CorrectionWrapper) {
+                ((CorrectionWrapper<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
+                                                                               descriptor -> processFoundItem(
+                                                                                 descriptor.getItem(),
+                                                                                 descriptor.getWeight(),
+                                                                                 ((CorrectionWrapper<Item>)myContributor).getCorrection(),
+                                                                                 wrapperIndicator));
+            }
+            else if (myContributor instanceof WeightedSearchEverywhereContributor) {
+                ((WeightedSearchEverywhereContributor<Item>)myContributor).fetchWeightedElements(myPattern, wrapperIndicator,
+                                                                                                 descriptor -> processFoundItem(
+                                                                                                   descriptor.getItem(),
+                                                                                                   descriptor.getWeight(),
+                                                                                                   SearchEverywhereSpellCheckResult.NoCorrection.INSTANCE,
+                                                                                                   wrapperIndicator));
             }
             else {
               myContributor.fetchElements(myPattern, wrapperIndicator,
                                           element -> {
                                             int priority = myContributor
                                               .getElementPriority(Objects.requireNonNull(element), myPattern);
-                                            return processFoundItem(element, priority, wrapperIndicator);
+                                            return processFoundItem(element, priority, SearchEverywhereSpellCheckResult.NoCorrection.INSTANCE, wrapperIndicator);
                                           });
             }
           }
           catch (ProcessCanceledException ignore) {}
+          catch (Throwable e) {
+            LOG.warn("Contributor " + myContributor.getSearchProviderId() +" threw an exception during search:", e);
+            break;
+          }
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
         }
         while (repeat);
@@ -207,10 +268,12 @@ final class MixedResultsSearcher implements SESearcher {
       finally {
         finishCallback.run();
       }
-      LOG.debug("Search task finished for contributor ", myContributor);
+      LOG.debug("Search task finished for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
     }
-
-    private boolean processFoundItem(Item element, int priority, ProgressIndicator wrapperIndicator) {
+    private boolean processFoundItem(Item element, int priority, SearchEverywhereSpellCheckResult correction, ProgressIndicator wrapperIndicator) {
       try {
         if (element == null) {
           LOG.debug("Skip null element");
@@ -219,7 +282,7 @@ final class MixedResultsSearcher implements SESearcher {
 
         reportElementOnce();
 
-        boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
+        boolean added = myAccumulator.addElement(element, myContributor, priority, correction, wrapperIndicator);
         if (!added) {
           myAccumulator.setContributorHasMore(myContributor, true);
         }
@@ -284,15 +347,15 @@ final class MixedResultsSearcher implements SESearcher {
       hasMoreMap.put(contributor, hasMore);
     }
 
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator)
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, SearchEverywhereSpellCheckResult correction, ProgressIndicator indicator)
       throws InterruptedException {
       final var mlService = SearchEverywhereMlService.getInstance();
       final SearchEverywhereFoundElementInfo newElementInfo;
       if (mlService == null) {
-        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor, correction);
       }
       else {
-        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority, correction);
       }
 
       Condition condition = conditionsMap.get(contributor);
@@ -319,7 +382,7 @@ final class MixedResultsSearcher implements SESearcher {
         List<SearchEverywhereFoundElementInfo> alreadyFoundItems = mySections.values().stream()
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
-        SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        SEEqualElementsActionType action = myEqualityProvider.compareItemsCollection(newElementInfo, alreadyFoundItems);
         if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
           action = fixReplaceAction(replaceAction);
         }

@@ -19,10 +19,10 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TextFieldWithHistory;
-import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.util.NameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +95,7 @@ public abstract class BaseIntroduceDialog extends DialogWrapper implements Refac
     }
 
     @Override
-    @NlsSafe
-    public String getName() {
+    public @NlsSafe String getName() {
         return getNameField().getText();
     }
 

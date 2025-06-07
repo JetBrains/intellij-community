@@ -5,17 +5,14 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -70,21 +67,9 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
 
-        configuration.name = "${function.containingKtFile.virtualFile.nameWithoutExtension} [${runTask.targetName}]"
-        configuration.isDebugAllEnabled = false
-        configuration.isDebugServerProcess = false
-
-        configuration.settings.apply {
-            externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
-            taskNames = listOf(runTask.taskName)
-            scriptParameters = "${mainClassScriptParameter(function)} --quiet"
-        }
+        configureKmpJvmRunConfigurationFromMainFunction(configuration, function, runTask, module)
 
         return true
-    }
-
-    private fun mainClassScriptParameter(function: KtFunction): String {
-        return "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
     }
 
     private fun Module?.asJvmModule(): Module? =

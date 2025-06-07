@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-swing" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2024.3.1">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2025.1.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.3.1/rd-swing-2024.3.1.jar">
-          <sha256sum>b34e047c1068849106fcacd47b320761d6c5a964c36821246103c91f99734d64</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2025.1.1/rd-swing-2025.1.1.jar">
+          <sha256sum>2f6ff47219254512cd7c4b5889678f702f71abee8a4315d8b1fcb5ca1c2a8a4e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.3.1/rd-swing-2024.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2025.1.1/rd-swing-2025.1.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.3.1/rd-swing-2024.3.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2025.1.1/rd-swing-2025.1.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2024.3.1/rd-swing-2024.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2025.1.1/rd-swing-2025.1.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

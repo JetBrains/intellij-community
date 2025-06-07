@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
@@ -205,24 +203,7 @@ fun ResolvedCall<out CallableDescriptor>.canBeReplacedWithInvokeCall(): Boolean 
 
 fun CallableDescriptor.receiverType(): KotlinType? = (dispatchReceiverParameter ?: extensionReceiverParameter)?.type
 
-fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
-    call: KtCallExpression,
-    newFunctionName: String
-) {
-    val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
-    if (callOrQualified is KtQualifiedExpression) {
-        appendExpression(callOrQualified.receiverExpression)
-        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
-        appendFixedText(".")
-    }
-    appendNonFormattedText(newFunctionName)
-    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let {
-        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
-        appendNonFormattedText(it.text)
-    }
-}
-
+@Deprecated("Use org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.singleLambdaArgumentExpression")
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
     return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
 }

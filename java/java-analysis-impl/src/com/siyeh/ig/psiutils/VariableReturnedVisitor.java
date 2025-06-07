@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("UnsafeReturnStatementVisitor")
 class VariableReturnedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  @NotNull private final PsiVariable variable;
+  private final @NotNull PsiVariable variable;
   private final boolean myBuilderPattern;
 
   private boolean returned = false;

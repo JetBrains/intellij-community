@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -112,7 +112,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       Application application = ApplicationManager.getApplication();
       boolean dispatchThread = application.isDispatchThread();
 
-      if (!dispatchThread && application.isReadAccessAllowed()) {
+      if (!dispatchThread && application.holdsReadLock()) {
         throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
       }
 
@@ -133,7 +133,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     private <E extends Throwable> E doRunWriteCommandAction(@NotNull ThrowableRunnable<E> action) {
-      if (myPsiElements.size() > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiElements)) {
+      if (!myPsiElements.isEmpty() && !FileModificationService.getInstance().preparePsiElementsForWrite(myPsiElements)) {
         return null;
       }
 

@@ -1,20 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
@@ -24,6 +29,15 @@ public final class JpsMavenSettings {
   private static final String M2_DIR = ".m2";
   private static final String CONF_DIR = "conf";
   private static final String SETTINGS_XML = "settings.xml";
+  /**
+   * [<a href="https://maven.apache.org/configure.html">https://maven.apache.org/configure.html</a>]
+   */
+  private static final String MAVEN_OPTS = "MAVEN_OPTS";
+
+  /**
+   * [<a href="https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs/constant-values.html#org.apache.maven.api.Constants.MAVEN_REPO_LOCAL">https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs</a>]
+   */
+  private static final String MAVEN_REPO_LOCAL = "maven.repo.local";
 
   @SuppressWarnings("HttpUrlsUsage")
   private static final List<Namespace> KNOWN_NAMESPACES = List.of(
@@ -32,14 +46,12 @@ public final class JpsMavenSettings {
     Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0")
   );
 
-  @NotNull
-  public static File getUserMavenSettingsXml() {
+  public static @NotNull File getUserMavenSettingsXml() {
     String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
     return new File(defaultMavenFolder, SETTINGS_XML);
   }
 
-  @Nullable
-  public static File getGlobalMavenSettingsXml() {
+  public static @Nullable File getGlobalMavenSettingsXml() {
     String mavenHome = resolveMavenHomeDirectory();
     if (mavenHome == null) {
       return null;
@@ -47,8 +59,7 @@ public final class JpsMavenSettings {
     return new File(mavenHome + File.separator + CONF_DIR, SETTINGS_XML);
   }
 
-  @Nullable
-  private static String resolveMavenHomeDirectory() {
+  private static @Nullable String resolveMavenHomeDirectory() {
     String m2home = System.getenv("M2_HOME");
     if (isValidMavenHome(m2home)) return m2home;
 
@@ -70,33 +81,47 @@ public final class JpsMavenSettings {
     return null;
   }
 
-  @Nullable
-  public static String getMavenRepositoryPath() {
-    String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
-    // Check user local settings
+  public static @NotNull String getMavenRepositoryPath() {
+    String property = findMavenRepositoryProperty(EnvironmentUtil.getValue(MAVEN_OPTS));
+    if (isNotEmpty(property)) {
+      return property;
+    }
+
     File userSettingsFile = getUserMavenSettingsXml();
-    if (userSettingsFile.exists()) {
-      String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
-      if (isNotEmpty(fromUserSettings) && new File(fromUserSettings).exists()) {
-        return fromUserSettings;
+    File settingsFile = userSettingsFile.exists() ? userSettingsFile : getGlobalMavenSettingsXml();
+
+    if (settingsFile != null && settingsFile.exists()) {
+      String fromSettings = getRepositoryFromSettings(settingsFile);
+      if (isNotEmpty(fromSettings)) {
+        return fromSettings;
       }
     }
 
-    // Check global maven local settings
-    File globalSettingsFile = getGlobalMavenSettingsXml();
-    if (globalSettingsFile != null && globalSettingsFile.exists()) {
-      String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
-      if (isNotEmpty(fromGlobalSettings) && new File(fromGlobalSettings).exists()) {
-        return fromGlobalSettings;
-      }
-    }
-
-    String defaultMavenRepository = defaultMavenFolder + File.separator + REPOSITORY_PATH;
-    if (FileUtil.exists(defaultMavenFolder)) {
-      return defaultMavenRepository;
-    }
-    return null;
+    return SystemProperties.getUserHome() + File.separator + M2_DIR + File.separator + REPOSITORY_PATH;
   }
+
+  private static String findMavenRepositoryProperty(String mavenOpts) {
+    if (mavenOpts == null) {
+      return null;
+    }
+
+    // -Dmaven.repo.local=/path/to/repo     -> [1]:"maven.repo.local" [2]:"" [3]:"/path/to/repo"
+    // -Dmaven.repo.local="/my custom/path" -> [1]:"maven.repo.local" [2]:"/my custom/path" [3]:""
+    Pattern propertyPattern = Pattern.compile("-D([^=\\s]+)(?:=(?:\"([^\"]+)\"|(\\S+)))?");
+    Matcher matcher = propertyPattern.matcher(mavenOpts);
+    Map<String, String> properties = new HashMap<>();
+
+    while (matcher.find()) {
+      String key = matcher.group(1);
+      String quotedValue = matcher.group(2);
+      String unquotedValue = matcher.group(3);
+      String value = quotedValue != null && !quotedValue.isEmpty() ? quotedValue : unquotedValue;
+      properties.put(key, value);
+    }
+
+    return properties.get(MAVEN_REPO_LOCAL);
+  }
+
 
   /**
    * Load remote repositories authentication settings from Maven's settings.xml.
@@ -106,8 +131,7 @@ public final class JpsMavenSettings {
    * @return Map of Remote Repository ID to Authentication Data elements.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Map<String, RemoteRepositoryAuthentication> loadAuthenticationSettings(
+  public static @NotNull Map<String, RemoteRepositoryAuthentication> loadAuthenticationSettings(
     @Nullable File globalMavenSettingsXml,
     @NotNull File userMavenSettingsXml
   ) {
@@ -125,8 +149,7 @@ public final class JpsMavenSettings {
     return result;
   }
 
-  @Nullable
-  private static String fromBrew() {
+  private static @Nullable String fromBrew() {
     final File brewDir = new File("/usr/local/Cellar/maven");
     final String[] list = brewDir.list();
     if (list == null || list.length == 0) return null;
@@ -136,8 +159,7 @@ public final class JpsMavenSettings {
     return brewDir + File.separator + list[0] + "/libexec";
   }
 
-  @Nullable
-  private static String getRepositoryFromSettings(final File file) {
+  private static @Nullable String getRepositoryFromSettings(final File file) {
     Element settingsXmlRoot;
     try {
       settingsXmlRoot = JDOMUtil.load(file);
@@ -154,7 +176,7 @@ public final class JpsMavenSettings {
   }
 
   private static boolean isValidMavenHome(@Nullable String path) {
-    return isNotEmpty(path) && FileUtil.exists(path);
+    return Strings.isNotEmpty(path) && Files.exists(Path.of(path));
   }
 
   private static void loadAuthenticationFromSettings(@NotNull File settingsXml,

@@ -1,14 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.TestDialog
-import com.intellij.openapi.ui.TestDialogManager
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
@@ -22,6 +19,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -64,18 +62,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
-    private fun VirtualFile.toIOFile(): File? {
-        val paths = mutableListOf<String>()
-        var vFile: VirtualFile? = this
-        while (vFile != null) {
-            vFile.sourceIOFile()?.let {
-                return File(it, paths.reversed().joinToString("/"))
-            }
-            paths.add(vFile.name)
-            vFile = vFile.parent
-        }
-        return null
-    }
+    protected open val actionPrefix: String? = null
 
     private fun doQuickFixTest(dirPath: String) {
         KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
@@ -92,7 +79,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         project.executeCommand("") {
             var expectedErrorMessage = ""
             try {
-                val actionHint = ActionHint.parse(actionFile, actionFileText)
+                val actionHint = ActionHint.parse(actionFile, actionFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                 val text = actionHint.expectedText
 
                 val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -102,16 +89,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     "// SHOULD_FAIL_WITH: "
                 ).joinToString(separator = "\n")
 
-                val dialogOption = when (InTextDirectivesUtils.findStringWithPrefixes(actionFileText, "// DIALOG_OPTION: ")) {
-                    "OK" -> TestDialog.OK
-                    "NO" -> TestDialog.NO
-                    "CANCEL" -> TestDialog { Messages.CANCEL }
-                    else -> TestDialog.DEFAULT
-                }
-
-                val oldDialogOption = TestDialogManager.setTestDialog(dialogOption)
-
-                TypeAccessibilityChecker.testLog = StringBuilder()
+                ExpectActualUtils.testLog = StringBuilder()
                 val log = try {
 
                     AbstractQuickFixMultiFileTest.doAction(
@@ -121,15 +99,16 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         editor,
                         actionShouldBeAvailable,
                         actionFileName,
+                        actionHint,
                         this::availableActions,
                         this::doHighlighting,
-                        InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
+                        pluginMode = pluginMode,
+                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
                     )
 
-                    TypeAccessibilityChecker.testLog.toString()
+                    ExpectActualUtils.testLog.toString()
                 } finally {
-                    TestDialogManager.setTestDialog(oldDialogOption)
-                    TypeAccessibilityChecker.testLog = null
+                    ExpectActualUtils.testLog = null
                 }
 
                 if (actionFile is KtFile) {
@@ -138,6 +117,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         KotlinPluginMode.K2 -> {} // TODO check diagnostics for K2
                     }
                 }
+
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
                 if (actionShouldBeAvailable) {
                     compareToExpected(dirPath)
@@ -178,7 +159,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: FileComparisonFailedError) {
+            } catch (_: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

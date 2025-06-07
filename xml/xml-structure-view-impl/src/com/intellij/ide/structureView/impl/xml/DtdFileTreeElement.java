@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -136,10 +136,11 @@ public final class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
      return super.getLocationString();
     }
 
+    @Override
     public String toString() {
       final String s = getLocationString();
       final String name = getElement().getName();
-      if (s == null || s.length() == 0) return name;
+      if (s == null || s.isEmpty()) return name;
       return name + " (" + s + ")";
     }
   }

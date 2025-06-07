@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -91,9 +92,9 @@ class ModuleDependencyIndexTest {
   @Test
   fun `test dependency on global library`() = runBlocking {
     try {
-      writeAction {
-        GlobalWorkspaceModel.getInstance().updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      edtWriteAction {
+        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -154,9 +155,9 @@ class ModuleDependencyIndexTest {
   @Disabled("Currently, the global libs are not disposed making this test broken. This is a bug")
   fun `test dependency on global library after rename`() = runBlocking {
     try {
-      writeAction {
-        GlobalWorkspaceModel.getInstance().updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      edtWriteAction {
+        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -166,8 +167,8 @@ class ModuleDependencyIndexTest {
         it addEntity ModuleEntity("MyModule", deps, MySource)
       }
 
-      writeAction {
-        GlobalWorkspaceModel.getInstance().updateModel("Test") {
+      edtWriteAction {
+        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
           val resolved = it.resolve(LibraryId("GlobalLib", LibraryTableId.GlobalLibraryTableId("application")))!!
           it.modifyLibraryEntity(resolved) {
             this.name = "NewGlobalName"

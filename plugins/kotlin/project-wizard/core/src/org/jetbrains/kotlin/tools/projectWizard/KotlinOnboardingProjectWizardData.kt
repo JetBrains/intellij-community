@@ -2,13 +2,18 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 
 interface KotlinOnboardingProjectWizardData {
     val addSampleCodeProperty: GraphProperty<Boolean>
 
     var addSampleCode: Boolean
 
-    val generateOnboardingTipsProperty: GraphProperty<Boolean>
+    @Deprecated("Use addSampleCodeProperty instead")
+    val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+        get() = addSampleCodeProperty
 
-    var generateOnboardingTips: Boolean
+    @Deprecated("Use addSampleCode instead")
+    val generateOnboardingTips: Boolean
+        get() = addSampleCode
 }

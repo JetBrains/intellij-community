@@ -2,7 +2,6 @@
 // "Import operator 'Some.set'" "true"
 // ERROR: Unresolved reference: foo()["other"]
 // ERROR: No set method providing array access
-/* IGNORE_K2 */
 
 package testing
 
@@ -28,7 +27,6 @@ operator fun Some.set(s: String) {}
 // "Import operator 'Some.set'" "true"
 // ERROR: Unresolved reference: foo()["other"]
 // ERROR: No set method providing array access
-/* IGNORE_K2 */
 
 package testing
 

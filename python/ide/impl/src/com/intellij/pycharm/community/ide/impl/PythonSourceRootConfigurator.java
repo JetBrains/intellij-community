@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator {
-  @NonNls private static final String SETUP_PY = "setup.py";
+  private static final @NonNls String SETUP_PY = "setup.py";
 
   @Override
   public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isProjectCreatedWithWizard) {
@@ -78,7 +78,7 @@ final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator
               if (keyExpr instanceof PyStringLiteralExpression && valueExpr instanceof PyStringLiteralExpression) {
                 String key = ((PyStringLiteralExpression) keyExpr).getStringValue();
                 String value = ((PyStringLiteralExpression)valueExpr).getStringValue();
-                if (key.length() == 0) {
+                if (key.isEmpty()) {
                   myRootPackageDir = value;
                 }
               }

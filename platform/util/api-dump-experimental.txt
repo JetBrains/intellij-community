@@ -2,6 +2,7 @@
 - kotlin.coroutines.CoroutineContext$Element
 - afterChildCompleted(kotlin.coroutines.CoroutineContext):V
 - beforeChildStarted(kotlin.coroutines.CoroutineContext):V
+- childCanceled(kotlin.coroutines.CoroutineContext):V
 - produceChildElement(kotlin.coroutines.CoroutineContext,Z):com.intellij.concurrency.IntelliJContextElement
 *f:com.intellij.concurrency.IntelliJContextElement$DefaultImpls
 - s:fold(com.intellij.concurrency.IntelliJContextElement,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
@@ -19,10 +20,26 @@
 c:com.intellij.openapi.util.UserDataHolderBase
 - java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx
-- *p:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
+- *:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
 f:com.intellij.openapi.util.io.NioFiles
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
+- *s:deleteQuietly(java.nio.file.Path):V
+- *s:deleteQuietly(java.nio.file.Path,java.util.function.Consumer):V
+c:com.intellij.openapi.util.registry.RegistryValue
+- *f:getSource():com.intellij.openapi.util.registry.RegistryValueSource
+- *f:setSelectedOption(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V
+- *:setValue(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V
+*e:com.intellij.openapi.util.registry.RegistryValueSource
+- java.lang.Enum
+- sf:MANAGER:com.intellij.openapi.util.registry.RegistryValueSource
+- sf:SYSTEM:com.intellij.openapi.util.registry.RegistryValueSource
+- sf:USER:com.intellij.openapi.util.registry.RegistryValueSource
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.util.registry.RegistryValueSource
+- s:values():com.intellij.openapi.util.registry.RegistryValueSource[]
+a:com.intellij.openapi.util.text.HtmlChunk
+- *:applyStyles(java.util.Map):com.intellij.openapi.util.text.HtmlChunk
 f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildChildren(com.intellij.openapi.util.text.HtmlChunk$Element,kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk$Element
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String
@@ -45,8 +62,8 @@ f:com.intellij.util.TimeoutUtil
 - <init>(java.lang.Throwable,java.lang.Class):V
 - getClassToBlame():java.lang.Class
 f:com.intellij.util.io.IoKt
-- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.util.io.KeyValueStore
 - com.intellij.openapi.Forceable
 - java.io.Closeable

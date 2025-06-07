@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -6,6 +6,7 @@ import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOp
 import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import static java.nio.file.StandardOpenOption.*;
  * without wrapping.
  */
 @ApiStatus.Internal
-final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+public final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   private final int myCapacity;
   private int myHitCount;
   private int myMissCount;
@@ -40,7 +41,8 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
 
   private final transient Object myCacheLock = new Object();
 
-  OpenChannelsCache(final int capacity) {
+  @VisibleForTesting
+  public OpenChannelsCache(final int capacity) {
     myCapacity = capacity;
     myCache = new LinkedHashMap<>(capacity, 0.5f, true);
   }
@@ -64,9 +66,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
    * description for details. But it comes with small performance cost, and als the {@link ResilientFileChannel}
    * does not implement some FileChannel operations, so be aware.
    */
-  <T> T executeOp(final @NotNull Path path,
-                  final @NotNull FileChannelOperation<T> operation,
-                  final boolean read) throws IOException {
+  @VisibleForTesting
+  public <T> T executeOp(final @NotNull Path path,
+                         final @NotNull FileChannelOperation<T> operation,
+                         final boolean read) throws IOException {
     ChannelDescriptor descriptor;
     synchronized (myCacheLock) {
       descriptor = myCache.get(path);
@@ -114,7 +117,8 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
    * Parameter {@param operation} should be idempotent because sometimes calculation might be restarted
    * when file channel was closed by thread interruption
    */
-  <T> T executeIdempotentOp(final @NotNull Path path,
+  @VisibleForTesting
+  public <T> T executeIdempotentOp(final @NotNull Path path,
                             final @NotNull FileChannelIdempotentOperation<T> operation,
                             final boolean read) throws IOException {
     ChannelDescriptor descriptor;
@@ -160,8 +164,8 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     }
   }
 
-
-  void closeChannel(Path path) throws IOException {
+  @VisibleForTesting
+  public void closeChannel(Path path) throws IOException {
     synchronized (myCacheLock) {
       final ChannelDescriptor descriptor = myCache.remove(path);
 

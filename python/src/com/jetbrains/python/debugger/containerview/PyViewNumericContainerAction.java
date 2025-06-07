@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.debugger.NodeTypes;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,19 +65,22 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     }
 
     String nodeType = debugValue.getType();
-    if ("ndarray".equals(nodeType) ||
-        "EagerTensor".equals(nodeType) ||
-        "ResourceVariable".equals(nodeType) ||
-        "SparseTensor".equals(nodeType) ||
-        "Tensor".equals(nodeType)) {
+    if (NodeTypes.NDARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RECARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.EAGER_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RESOURCE_VARIABLE_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.SPARSE_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.TENSOR_NODE_TYPE.equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
       e.getPresentation().setVisible(true);
     }
-    else if ("DataFrame".equals(nodeType) || "GeoDataFrame".equals(nodeType) || "Dataset".equals(nodeType)) {
+    else if (NodeTypes.DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+             NodeTypes.GEO_DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+             NodeTypes.DATASET_NODE_TYPE.equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
       e.getPresentation().setVisible(true);
     }
-    else if ("Series".equals(nodeType) || "GeoSeries".equals(nodeType)) {
+    else if (NodeTypes.SERIES_NODE_TYPE.equals(nodeType) || NodeTypes.GEO_SERIES_NODE_TYPE.equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
       e.getPresentation().setVisible(true);
     }

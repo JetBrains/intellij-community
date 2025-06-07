@@ -41,7 +41,7 @@ public class CachingExternalSystemAutoImportAware implements ExternalSystemAutoI
   }
 
   @Override
-  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+  public @NotNull List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return myDelegate.getAffectedExternalProjectFiles(projectPath, project);
   }
 

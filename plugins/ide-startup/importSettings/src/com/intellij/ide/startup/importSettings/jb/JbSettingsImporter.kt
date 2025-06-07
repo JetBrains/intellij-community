@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
 import com.intellij.util.io.copy
@@ -75,7 +76,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val storageManager = componentStore.storageManager
     val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(arrayOf(storageManager)) {
-      val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+      val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerImpl()
       val availableComponents = loadNotLoadedComponents(EmptyProgressIndicator(), componentManagerImpl, components, pluginIds)
       componentStore.reloadComponents(files, emptyList(), availableComponents)
       if (categories.contains(SettingsCategory.KEYMAP)) {
@@ -163,7 +164,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
     LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
     progressIndicator.checkCanceled()
-    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+    val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerImpl()
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
     val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
@@ -173,7 +174,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     val projectDefaultComponentNames = loadProjectDefaultComponentNames()
     if (projectDefaultComponentNames.isNotEmpty()) {
-      loadNotLoadedComponents(progressIndicator, defaultProject.actualComponentManager as ComponentManagerImpl,
+      loadNotLoadedComponents(progressIndicator, defaultProject.getComponentManagerImpl(),
                               projectDefaultComponentNames, null)
     }
 
@@ -339,7 +340,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
   // key: PSC, value - file
   private fun filterComponents(allFiles: Set<String>, categories: Set<SettingsCategory>): Map<String, String> {
-    val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+    val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
     val retval = hashMapOf<String, String>()
     val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
@@ -475,10 +476,12 @@ class JbSettingsImporter(private val configDirPath: Path,
     importOptions.isHeadless = true
     importOptions.headlessProgressIndicator = progressIndicator
     importOptions.importSettings = object : ConfigImportSettings {
-      override fun processPluginsToMigrate(newConfigDir: Path,
-                                           oldConfigDir: Path,
-                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
-                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
+      override fun processPluginsToMigrate(
+        newConfigDir: Path,
+        oldConfigDir: Path,
+        bundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
+        nonBundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
+      ) {
         nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
         bundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
       }

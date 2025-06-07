@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -24,8 +22,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
-
 /**
  * An implementation of identifier index where the key is an identifier hash,
  * and the value is an occurrence mask ({@link UsageSearchContext}).
@@ -34,9 +30,13 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFO
  */
 @ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
+  private static final Logger LOG = Logger.getInstance(IdIndex.class);
+
   public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
-  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<>() {
+  private static final FileBasedIndex.InputFilter INPUT_FILES_FILTER = new IdIndexFilter();
+
+  private static final KeyDescriptor<IdIndexEntry> KEY_DESCRIPTOR = new InlineKeyDescriptor<>() {
     @Override
     public IdIndexEntry fromInt(int n) {
       return new IdIndexEntry(n);
@@ -48,9 +48,26 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
 
+  private static final DataExternalizer<Integer> VALUE_EXTERNALIZER = new DataExternalizer<>() {
+    @Override
+    public void save(@NotNull DataOutput out, Integer value) throws IOException {
+      out.write(value.intValue() & UsageSearchContext.ANY);
+    }
+
+    @Override
+    public Integer read(@NotNull DataInput in) throws IOException {
+      return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
+    }
+  };
+
   @Override
   public int getVersion() {
     return 21 + IdIndexEntry.getUsedHashAlgorithmVersion();
+  }
+
+  @Override
+  public @NotNull ID<IdIndexEntry,Integer> getName() {
+    return NAME;
   }
 
   @Override
@@ -59,13 +76,8 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public int getCacheSize() {
-    return 64 * super.getCacheSize();
-  }
-
-  @Override
-  public @NotNull ID<IdIndexEntry,Integer> getName() {
-    return NAME;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return INPUT_FILES_FILTER;
   }
 
   @Override
@@ -95,7 +107,20 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
                                                      @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
         IdIndexer subIndexerType = indexer.getSubIndexerType();
         try {
-          return subIndexerType.map(inputData);
+          Map<IdIndexEntry, Integer> idsMap = subIndexerType.map(inputData);
+          if (!(idsMap instanceof IdEntryToScopeMapImpl)) {
+            //RC: it is strongly recommended for all the IdIndexer implementations to use IdDataConsumer helper to
+            //    collect IDs and occurrence masks. Such a helper class returns IdEntryToScopeMapImpl instance,
+            //    which is  optimized for memory consumption and serialization. All the implementations in intellij
+            //    follow that rule.
+            //    But if there are some implementations outside our control that doesn't follow, we 'correct' it by
+            //    wrapping the map into IdEntryToScopeMapImpl -- with the associated costs -- and log a warning so
+            //    devs could fix it later:
+            LOG.warn(subIndexerType.getClass() + " for [" + inputData.getFile().getPath() + "] " +
+                     "returned non-IdEntryToScopeMapImpl map: " + idsMap.getClass());
+            return new IdEntryToScopeMapImpl(idsMap);
+          }
+          return idsMap;
         }
         catch (Exception e) {
           if (e instanceof ControlFlowException) throw e;
@@ -106,33 +131,18 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
-    return new DataExternalizer<>() {
-      @Override
-      public void save(final @NotNull DataOutput out, final Integer value) throws IOException {
-        out.write(value.intValue() & UsageSearchContext.ANY);
-      }
-
-      @Override
-      public Integer read(final @NotNull DataInput in) throws IOException {
-        return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
-      }
-    };
-  }
-
-  @Override
   public @NotNull KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return KEY_DESCRIPTOR;
   }
 
   @Override
-  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+    return VALUE_EXTERNALIZER;
   }
 
-  public static boolean isIndexable(FileType fileType) {
-    return (fileType instanceof LanguageFileType && (fileType != PlainTextFileType.INSTANCE || !FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)) ||
-           IdTableBuilding.getFileTypeIndexer(fileType) != null;
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -27,9 +27,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public final class SimplifiableBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiPrefixExpression prefixExpression) {
       return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
@@ -42,18 +41,15 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
     }
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new SimplifiableBooleanExpressionFix();
   }
 
   private static class SimplifiableBooleanExpressionFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
@@ -78,8 +74,7 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
     }
   }
 
-  @NonNls
-  static String calculateReplacementExpression(PsiPrefixExpression expression, CommentTracker commentTracker) {
+  static @NonNls String calculateReplacementExpression(PsiPrefixExpression expression, CommentTracker commentTracker) {
     final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
     if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
       return null;
@@ -93,8 +88,7 @@ public final class SimplifiableBooleanExpressionInspection extends BaseInspectio
            ParenthesesUtils.getText(commentTracker.markUnchanged(rhs), ParenthesesUtils.EQUALITY_PRECEDENCE);
   }
 
-  @NonNls
-  static String calculateReplacementExpression(PsiBinaryExpression expression, CommentTracker commentTracker) {
+  static @NonNls String calculateReplacementExpression(PsiBinaryExpression expression, CommentTracker commentTracker) {
     PsiPolyadicExpression conjunction =
       tryCast(PsiUtil.skipParenthesizedExprDown(expression.getLOperand()), PsiPolyadicExpression.class);
     if (conjunction == null) return null;

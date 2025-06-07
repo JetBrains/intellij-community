@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.notification.Notification;
@@ -24,11 +25,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -41,6 +40,7 @@ import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -50,7 +50,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -70,10 +73,47 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
-  @NotNull
   @Override
-  public Key<ContentRootData> getTargetDataKey() {
+  public @NotNull Key<ContentRootData> getTargetDataKey() {
     return ProjectKeys.CONTENT_ROOT;
+  }
+
+  @Override
+  public @NotNull Computable<Collection<ContentEntry>> computeOrphanData(@NotNull Collection<? extends DataNode<ContentRootData>> toImport,
+                                                                         @NotNull ProjectData projectData,
+                                                                         @NotNull Project project,
+                                                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
+    return () -> {
+      List<ContentEntry> orphanIdeModules = new SmartList<>();
+      MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
+      List<Module> modulesWithContentRoots = ContainerUtil.map(byModule.keySet(), moduleData ->  modelsProvider.findIdeModule(moduleData.getData()));
+
+      Module[] modules = modelsProvider.getModules(projectData);
+      Arrays.stream(modules)
+        .filter(module -> !modulesWithContentRoots.contains(module))
+        .forEach(module -> {
+          ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+          orphanIdeModules.addAll(List.of(modifiableRootModel.getContentEntries()));
+        });
+
+      return orphanIdeModules;
+    };
+  }
+
+  @Override
+  public void removeData(Computable<? extends Collection<? extends ContentEntry>> toRemoveComputable,
+                         @NotNull Collection<? extends DataNode<ContentRootData>> toIgnore,
+                         @NotNull ProjectData projectData,
+                         @NotNull Project project,
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
+    Map<Module, List<ContentEntry>> byModule = toRemoveComputable.compute().stream()
+      .collect(Collectors.groupingBy(contentEntry -> contentEntry.getRootModel().getModule()));
+
+    for (Map.Entry<Module, List<ContentEntry>> entry : byModule.entrySet()) {
+      Collection<ContentEntry> toRemove = entry.getValue();
+      ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(entry.getKey());
+      toRemove.forEach(modifiableRootModel::removeContentEntry);
+    }
   }
 
   @Override
@@ -136,9 +176,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   private static void importData(@NotNull Project project,
-                                  @NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
-                                 @NotNull final Module module, boolean forceDirectoriesCreation,
+                                 @NotNull IdeModifiableModelsProvider modelsProvider,
+                                 final @NotNull Collection<? extends DataNode<ContentRootData>> data,
+                                 final @NotNull Module module, boolean forceDirectoriesCreation,
                                  @Nullable ProjectSystemId owner) {
     logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final SourceFolderManager sourceFolderManager = SourceFolderManager.getInstance(project);
@@ -227,8 +267,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
            && owner.getId().equals(importedEntitySource.getExternalSystemId());
   }
 
-  @Nullable
-  private static JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
+  private static @Nullable JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
     return switch (type) {
       case SOURCE, SOURCE_GENERATED -> JavaSourceRootType.SOURCE;
       case TEST, TEST_GENERATED -> JavaSourceRootType.TEST_SOURCE;
@@ -238,8 +277,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     };
   }
 
-  @NotNull
-  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData, @NotNull Map<String, ContentEntry> contentEntryMap) {
+  private static @NotNull ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData, @NotNull Map<String, ContentEntry> contentEntryMap) {
     String path = contentRootData.getRootPath();
     if (contentEntryMap.containsKey(path)) {
       return contentEntryMap.get(path);
@@ -275,7 +313,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void createOrReplaceSourceFolder(@NotNull SourceFolderManager sourceFolderManager,
                                                   @NotNull ContentEntry contentEntry,
-                                                  @NotNull final SourceRoot sourceRoot,
+                                                  final @NotNull SourceRoot sourceRoot,
                                                   @NotNull Module module,
                                                   @NotNull JpsModuleSourceRootType<?> sourceRootType,
                                                   boolean createEmptyContentRootDirectories,
@@ -354,8 +392,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     });
   }
 
-  @Nullable
-  private static SourceFolder findSourceFolder(@NotNull ContentEntry contentEntry, @NotNull SourceRoot sourceRoot) {
+  private static @Nullable SourceFolder findSourceFolder(@NotNull ContentEntry contentEntry, @NotNull SourceRoot sourceRoot) {
     for (SourceFolder folder : contentEntry.getSourceFolders()) {
       VirtualFile file = folder.getFile();
       if (file == null) continue;
@@ -405,6 +442,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
+
+    boolean duplicatesAreAllowed = CodeInsightContexts.isSharedSourceSupportEnabled(project);
+
     Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();
 
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
@@ -416,8 +456,10 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         DuplicateModuleReport report = filter.putIfAbsent(rootPath, new DuplicateModuleReport(moduleData));
         if (report != null) {
           report.addDuplicate(moduleData);
-          iterator.remove();
-          crDataNode.clear(true);
+          if (!duplicatesAreAllowed) {
+            iterator.remove();
+            crDataNode.clear(true);
+          }
         }
       }
     }
@@ -431,7 +473,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
     boolean hasDuplicates = !toReport.isEmpty();
     HasSharedSourcesUtil.setHasSharedSources(project, hasDuplicates);
-    if (hasDuplicates) {
+
+    if (hasDuplicates && !duplicatesAreAllowed) {
       String notificationMessage = prepareMessageAndLogWarnings(toReport);
       if (notificationMessage != null) {
         showNotificationsPopup(project, toReport.size(), notificationMessage);
@@ -439,8 +482,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
   }
 
-  @Nullable
-  private static @Nls String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
+  private static @Nullable @Nls String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
     String firstMessage = null;
     LOG.warn("Duplicating content roots detected.");
     for (Map.Entry<String, DuplicateModuleReport> entry : toReport.entrySet()) {

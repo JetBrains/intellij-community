@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,10 +31,8 @@ public class ConditionInstruction extends InstructionImpl implements Instruction
     return myNegated;
   }
 
-  @NonNls
-  @NotNull
   @Override
-  protected String getElementPresentation() {
+  protected @NonNls @NotNull String getElementPresentation() {
     @NonNls StringBuilder builder = new StringBuilder();
     builder.append("Condition ").append(getElement());
     if (myNegated) builder.append(", negated");

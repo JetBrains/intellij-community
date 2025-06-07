@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -29,9 +29,8 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
     return Set.of(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
@@ -103,10 +102,8 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
   }
 
   private static class PatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.deconstruction.can.be.used.fix.family.name");
     }
 
@@ -124,7 +121,20 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
         String s = StringUtil.substringAfter(firstRef.getText(), ".");
         VariableNameGenerator generator = new VariableNameGenerator(patternVariable, VariableKind.PARAMETER).byName(s);
         s = generator.generate(false);
-        deconstructionList.add((type != null ? type.getCanonicalText() : "var") + " " + s);
+        String stringType;
+        if (type != null) {
+          //example: if (obj instanceof Example<?> example)
+          if (type instanceof PsiCapturedWildcardType || type instanceof PsiWildcardType) {
+            stringType = "Object";
+          }
+          else {
+            stringType = type.getCanonicalText();
+          }
+        }
+        else {
+          stringType = "var";
+        }
+        deconstructionList.add(stringType + " " + s);
         for (PsiReferenceExpression expression : expressions) {
           PsiLocalVariable variable = getVariableFromInitializer(expression);
           if (variable != null) {

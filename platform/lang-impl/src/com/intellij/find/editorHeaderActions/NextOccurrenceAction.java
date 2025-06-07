@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public final class NextOccurrenceAction extends PrevNextOccurrenceAction {
   }
 
   @Override
-  protected @NotNull List<Shortcut> getSingleLineShortcuts() {
+  protected @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts() {
     if (mySearch) {
       return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN), CommonShortcuts.ENTER.getShortcuts());
     }

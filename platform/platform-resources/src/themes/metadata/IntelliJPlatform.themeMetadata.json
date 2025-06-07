@@ -837,6 +837,10 @@
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },
     {
+      "key": "GotItTooltip.borderSimplifiedColor",
+      "description": "GotIt tooltip border color if enabled power save mode or we are in RDP session"
+    },
+    {
       "key": "GotItTooltip.linkForeground",
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
@@ -1064,7 +1068,7 @@
     },
     {
       "key": "Label.warningForeground",
-      "description": "Orange text color for inline warning messages."
+      "description": "Text color for inline warning messages"
     },
     {
       "key": "Label.infoForeground",
@@ -1600,7 +1604,12 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
-      "key": "Shortcut.backgroundColor",
+      "key": "Settings.Spotlight.backgroundColor",
+      "description": "Color of the overlay area around highlighted items when searching in the Settings dialog",
+      "since": "2025.1"
+    },
+    {
+      "key": "Shortcut.background",
       "description": "Shortcut elements background",
       "since": "2024.2"
     },
@@ -1610,9 +1619,8 @@
       "since": "2024.2"
     },
     {
-      "key": "Shortcut.foregroundColor",
-      "description": "Shortcut elements foreground",
-      "since": "2024.2"
+      "key": "Shortcut.foreground",
+      "description": "Shortcut elements foreground"
     },
     {
       "key": "Shortcut.borderColor",
@@ -1628,6 +1636,18 @@
       "key": "Shortcut.borderRadius",
       "description": "Shortcut elements border radius in pixels",
       "since": "2024.2"
+    },
+    {
+      "key": "Abbreviation.background",
+      "description": "Abbreviation elements background"
+    },
+    {
+      "key": "Abbreviation.foreground",
+      "description": "Abbreviation elements foreground"
+    },
+    {
+      "key": "Abbreviation.borderColor",
+      "description": "Abbreviation elements border color"
     },
     {
       "key": "SidePanel.background",
@@ -2018,6 +2038,126 @@
       "key": "Tooltip.separatorColor",
       "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)",
       "since": "2019.3"
+    },
+    {
+      "key": "TrialWidget.Default.foreground",
+      "description": "Foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.background",
+      "description": "Background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.borderColor",
+      "description": "Border color of trial widget in default state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverForeground",
+      "description": "Hover foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBackground",
+      "description": "Hover background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBorderColor",
+      "description": "Hover border color of trial widget in default state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.foreground",
+      "description": "Foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.background",
+      "description": "Background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.borderColor",
+      "description": "Border color of trial widget in active state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverForeground",
+      "description": "Hover foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBackground",
+      "description": "Hover background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBorderColor",
+      "description": "Hover border color of trial widget in active state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.foreground",
+      "description": "Foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.background",
+      "description": "Background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.borderColor",
+      "description": "Border color of trial widget in alert state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverForeground",
+      "description": "Hover foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBackground",
+      "description": "Hover background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBorderColor",
+      "description": "Hover border color of trial widget in alert state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.foreground",
+      "description": "Foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.background",
+      "description": "Background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.borderColor",
+      "description": "Border color of trial widget in expiring state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverForeground",
+      "description": "Hover foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBackground",
+      "description": "Hover background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBorderColor",
+      "description": "Hover border color of trial widget in expiring state. Use transparent color if no border needed",
+      "since": "2025.1"
     },
     {
       "key": "UiDesigner.Panel.background",

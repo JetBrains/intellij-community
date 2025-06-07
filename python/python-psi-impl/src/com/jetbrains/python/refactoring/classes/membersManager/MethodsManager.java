@@ -46,33 +46,30 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
   @Override
-  public boolean hasConflict(@NotNull final PyFunction member, @NotNull final PyClass aClass) {
+  public boolean hasConflict(final @NotNull PyFunction member, final @NotNull PyClass aClass) {
     return NamePredicate.hasElementWithSameName(member, Arrays.asList(aClass.getMethods()));
   }
 
-  @NotNull
   @Override
-  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
+  protected @NotNull Collection<PyElement> getDependencies(final @NotNull MultiMap<PyClass, PyElement> usedElements) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
+  protected @NotNull MultiMap<PyClass, PyElement> getDependencies(final @NotNull PyElement member) {
     final MyPyRecursiveElementVisitor visitor = new MyPyRecursiveElementVisitor();
     member.accept(visitor);
     return visitor.myResult;
   }
 
-  @NotNull
   @Override
-  protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
+  protected @NotNull List<? extends PyElement> getMembersCouldBeMoved(final @NotNull PyClass pyClass) {
     return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<>()).filter(NO_PROPERTIES).toList();
   }
 
   @Override
-  protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
-                                              @NotNull final Collection<PyMemberInfo<PyFunction>> members,
+  protected Collection<PyElement> moveMembers(final @NotNull PyClass from,
+                                              final @NotNull Collection<PyMemberInfo<PyFunction>> members,
                                               final PyClass @NotNull ... to) {
     final Collection<PyFunction> methodsToMove = fetchElements(Collections2.filter(members, new AbstractFilter(false)));
     final Collection<PyFunction> methodsToAbstract = fetchElements(Collections2.filter(members, new AbstractFilter(true)));
@@ -146,9 +143,8 @@ class MethodsManager extends MembersManager<PyFunction> {
     return result;
   }
 
-  @NotNull
   @Override
-  public PyMemberInfo<PyFunction> apply(@NotNull final PyFunction pyFunction) {
+  public @NotNull PyMemberInfo<PyFunction> apply(final @NotNull PyFunction pyFunction) {
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(pyFunction);
     assert flags != null : "No flags return while element is function " + pyFunction;
     final boolean isStatic = flags.isStaticMethod() || flags.isClassMethod();
@@ -159,7 +155,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   /**
    * @return if method could be made abstract? (that means "create abstract version if method in parent class")
    */
-  private static boolean couldBeAbstract(@NotNull final PyFunction function) {
+  private static boolean couldBeAbstract(final @NotNull PyFunction function) {
     if (PyUtil.isInitMethod(function)) {
       return false; // Who wants to make __init__ abstract?!
     }
@@ -171,8 +167,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
 
-  @Nullable
-  private static Boolean isOverrides(final PyFunction pyFunction) {
+  private static @Nullable Boolean isOverrides(final PyFunction pyFunction) {
     final PyClass clazz = PyUtil.getContainingClassOrSelf(pyFunction);
     assert clazz != null : "Refactoring called on function, not method: " + pyFunction;
     for (final PyClass parentClass : clazz.getSuperClasses(null)) {
@@ -184,8 +179,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     return null;
   }
 
-  @NotNull
-  private static String buildDisplayMethodName(@NotNull final PyFunction pyFunction) {
+  private static @NotNull String buildDisplayMethodName(final @NotNull PyFunction pyFunction) {
     final StringBuilder builder = new StringBuilder(pyFunction.getName());
     builder.append('(');
     final PyParameter[] arguments = pyFunction.getParameterList().getParameters();
@@ -214,7 +208,7 @@ class MethodsManager extends MembersManager<PyFunction> {
     }
 
     @Override
-    protected boolean applyNotNull(@NotNull final PyMemberInfo<PyFunction> input) {
+    protected boolean applyNotNull(final @NotNull PyMemberInfo<PyFunction> input) {
       return input.isToAbstract() == myAllowAbstractOnly;
     }
   }

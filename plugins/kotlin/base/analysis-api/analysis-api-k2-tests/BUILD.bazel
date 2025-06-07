@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-base-analysis-analysis-api-k2-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-base-analysis-analysis-api-k2-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/plugin/k2",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-base-analysis-analysis-api-k2-tests_test",
+  runtime_deps = [":kotlin-base-analysis-analysis-api-k2-tests_test_lib"]
+)
+### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end

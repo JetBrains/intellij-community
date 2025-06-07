@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -17,9 +17,13 @@ import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,8 +58,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myGeneratedClassPatternMatcher = Pattern.compile(generatedClassPattern.replaceAll("\\*", ".*")).matcher("");
   }
 
-  @NonNls
-  protected abstract String getGeneratedClassesPackage();
+  protected abstract @NonNls String getGeneratedClassesPackage();
 
   protected String getGeneratedClassesNamePattern() {
     return "*";
@@ -97,8 +100,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   @Override
-  @NotNull
-  public List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
+  public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
     checkSourcePositionFileType(classPosition);
 
     final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
@@ -118,9 +120,8 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return result;
   }
 
-  @NotNull
   @Override
-  public Set<LanguageFileType> getAcceptedFileTypes() {
+  public @NotNull Set<LanguageFileType> getAcceptedFileTypes() {
     return myFileTypes;
   }
 
@@ -132,8 +133,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   @Override
-  @NotNull
-  public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull final SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(final @NotNull ReferenceType type, final @NotNull SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
     return locations != null ? locations : Collections.emptyList();
   }
@@ -172,7 +172,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     });
   }
 
-  protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
+  protected @Unmodifiable List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
     return ContainerUtil.map(type.sourcePaths(myStratumId), this::getRelativePath);
   }
 
@@ -182,7 +182,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+  public ClassPrepareRequest createPrepareRequest(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
     throws NoDataException {
     checkSourcePositionFileType(position);
 

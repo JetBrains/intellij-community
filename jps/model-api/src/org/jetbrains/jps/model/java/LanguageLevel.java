@@ -29,11 +29,12 @@ public enum LanguageLevel {
   JDK_21(21), JDK_21_PREVIEW(21),
   JDK_22(22), JDK_22_PREVIEW(22),
   JDK_23(23), JDK_23_PREVIEW(23),
+  JDK_24(24), JDK_24_PREVIEW(24),
   JDK_X(24),
   
   ;
 
-  public static final LanguageLevel HIGHEST = JDK_23;
+  public static final LanguageLevel HIGHEST = JDK_24;
 
   private final JavaVersion myVersion;
 
@@ -41,8 +42,7 @@ public enum LanguageLevel {
     myVersion = JavaVersion.compose(major);
   }
 
-  @NotNull
-  public JavaVersion toJavaVersion() {
+  public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
   }
 

@@ -1,21 +1,43 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.guiForms.compiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "java-guiForms-compiler",
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@libraries//:asm-all",
-    "@libraries//:forms",
-    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
-    "@libraries//:annotations",
+    "//platform/util/jdom",
+    "//platform/forms_rt:java-guiForms-rt",
+    "@lib//:asm",
+    "@lib//:jgoodies-forms",
+    "//java/compiler/instrumentation-util",
+    "@lib//:jetbrains-annotations",
   ],
-  exports = ["@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
+  exports = ["//java/compiler/instrumentation-util"]
 )
-### auto-generated section `build` end
+
+jvm_library(
+  name = "java-guiForms-compiler_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":java-guiForms-compiler"],
+  deps = [
+    "//platform/util/jdom",
+    "//platform/forms_rt:java-guiForms-rt",
+    "@lib//:asm",
+    "@lib//:jgoodies-forms",
+    "//java/compiler/instrumentation-util",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit4",
+  ]
+)
+
+jvm_test(
+  name = "java-guiForms-compiler_test",
+  runtime_deps = [":java-guiForms-compiler_test_lib"]
+)
+### auto-generated section `build intellij.java.guiForms.compiler` end

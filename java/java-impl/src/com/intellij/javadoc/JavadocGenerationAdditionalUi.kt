@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc
 
 import com.intellij.java.JavaBundle
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiKeyword
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import javax.swing.JCheckBox
@@ -54,7 +54,7 @@ class JavadocGenerationAdditionalUi {
       }
         .layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("javadoc.generate.scope.row")) {
-        myScopeCombo = comboBox(listOf(PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PACKAGE, PsiKeyword.PRIVATE))
+        myScopeCombo = comboBox(listOf(JavaKeywords.PUBLIC, JavaKeywords.PROTECTED, JavaKeywords.PACKAGE, JavaKeywords.PRIVATE))
           .component
       }
         .layout(RowLayout.INDEPENDENT)

@@ -10,14 +10,14 @@
 9(10) READ ACCESS: isinstance
 10(11) READ ACCESS: var
 11(12) READ ACCESS: A
-12(13,14) element: PyCallExpression: isinstance
-13(21) element: null. Condition: isinstance(var, A):false
-14(15) element: null. Condition: isinstance(var, A):true
-15(16) ASSERTTYPE ACCESS: var
-16(17,18) READ ACCESS: var
-17(21) element: null. Condition: var:false
-18(19) element: null. Condition: var:true
-19(20) element: PyStatementList. Condition: isinstance(var, A) and var:true
-20(22) ASSERTTYPE ACCESS: var
-21(22) ASSERTTYPE ACCESS: var
+12(13,15) element: PyCallExpression: isinstance
+13(14) element: null. Condition: isinstance(var, A):false
+14(22) ASSERTTYPE ACCESS: var
+15(16) element: null. Condition: isinstance(var, A):true
+16(17) ASSERTTYPE ACCESS: var
+17(18,19) READ ACCESS: var
+18(22) element: null. Condition: var:false
+19(20) element: null. Condition: var:true
+20(21) element: PyStatementList
+21(22) element: PyPassStatement
 22() element: null

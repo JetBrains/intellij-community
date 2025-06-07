@@ -64,9 +64,8 @@ public final class RegExResponseHandler extends ResponseHandler {
     return myTaskRegex.hashCode();
   }
 
-  @NotNull
   @Override
-  public JComponent getConfigurationComponent(@NotNull Project project) {
+  public @NotNull JComponent getConfigurationComponent(@NotNull Project project) {
     FormBuilder builder = FormBuilder.createFormBuilder();
     final EditorTextField taskPatternText;
     taskPatternText = new LanguageTextField(RegExpLanguage.INSTANCE, project, myTaskRegex, false);
@@ -103,9 +102,8 @@ public final class RegExResponseHandler extends ResponseHandler {
     return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public Task parseIssue(@NotNull String response) throws Exception {
+  public @Nullable Task parseIssue(@NotNull String response) throws Exception {
     return null;
   }
 
@@ -135,9 +133,8 @@ public final class RegExResponseHandler extends ResponseHandler {
     return !StringUtil.isEmpty(myTaskRegex);
   }
 
-  @NotNull
   @Override
-  public ResponseType getResponseType() {
+  public @NotNull ResponseType getResponseType() {
     return ResponseType.TEXT;
   }
 

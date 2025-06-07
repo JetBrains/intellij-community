@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
@@ -8,9 +9,9 @@ import io.opentelemetry.context.Scope;
 
 public final class PerformanceTestSpan {
   public static final String SPAN_NAME = "performance_test";
-  public final static IJTracer TRACER = TelemetryManager.getInstance().getTracer(
+  public static final IJTracer TRACER = TelemetryManager.getInstance().getTracer(
     new com.intellij.platform.diagnostic.telemetry.Scope("performance-plugin", null));
-  public final static IJTracer WARMUP_TRACER = new WarmupIJTracer(TRACER);
+  public static final IJTracer WARMUP_TRACER = new WarmupIJTracer(TRACER);
   private static Span performanceTestSpan;
   private static Scope performanceScope;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -144,6 +144,10 @@ class PsiViewerDebugPanel(
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       val runnerLayout = debugSession.ui
+      if (runnerLayout == null) {
+        // TODO [Debugger.RunnerLayoutUi]
+        return
+      }
       val content = runnerLayout.contentManager.getContent(this@PsiViewerDebugPanel)
       watchMode = state
       content.displayName = getTitle(expression, state)

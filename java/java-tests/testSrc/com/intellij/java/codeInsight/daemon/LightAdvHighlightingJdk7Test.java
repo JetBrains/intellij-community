@@ -4,7 +4,10 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.SafeVarargsHasNoEffectInspection;
+import com.intellij.codeInspection.SafeVarargsOnNonReifiableTypeInspection;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.intellij.codeInspection.deadCode.UnreachableCatchInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.defUse.DefUseInspection;
@@ -35,7 +38,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
+    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection(),
+                          new SafeVarargsHasNoEffectInspection(), new SafeVarargsOnNonReifiableTypeInspection(),
+                          new UnreachableCatchInspection());
     setLanguageLevel(LanguageLevel.JDK_1_7);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
   }
@@ -148,7 +153,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNoUncheckedWarningOnRawSubstitutor() { doTest(true, false); }
   public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
 
-  public void testJavaUtilCollections_NoVerify() {
+  public void testJavaUtilCollections_NoVerify_Stress() {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);
     collectionsClass = (PsiClass)collectionsClass.getNavigationElement();

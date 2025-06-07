@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.build;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.task.BuildTask;
-import com.intellij.task.ProjectModelBuildTask;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;

@@ -83,9 +83,8 @@ final class ServiceViewTreeUi implements ServiceViewUi {
         JBIterable.from(myDetailsComponents).append(myMessagePanel).filter(component -> myContentComponentPanel != component.getParent()).iterator());
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 
@@ -201,9 +200,8 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     myDetailsPanel.setVisible(visible);
   }
 
-  @Nullable
   @Override
-  public JComponent getDetailsComponent() {
+  public @Nullable JComponent getDetailsComponent() {
     int count = myContentComponentPanel.getComponentCount();
     if (count == 0) return null;
 

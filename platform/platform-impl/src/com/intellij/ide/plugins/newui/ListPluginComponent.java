@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.internal.inspector.PropertyBean;
@@ -17,7 +18,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -27,6 +27,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -53,6 +54,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
+
 @ApiStatus.Internal
 public final class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
@@ -62,20 +65,21 @@ public final class ListPluginComponent extends JPanel {
 
   private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = new Ref<>(Boolean.TRUE);
 
-  private final MyPluginModel myPluginModel;
+  private final PluginModelFacade myModelFacade;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private final boolean myIsEssential;
-  private @NotNull IdeaPluginDescriptor myPlugin;
-  private PluginNode myInstalledPluginMarketplaceNode;
+  private final boolean myIsNotFreeInFreeMode;
+  private @NotNull PluginUiModel myPlugin;
+  private PluginUiModel myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
-  public IdeaPluginDescriptor myUpdateDescriptor;
-  IdeaPluginDescriptor myInstalledDescriptorForMarketplace;
+  public @Nullable PluginUiModel myUpdateDescriptor;
+  PluginUiModel myInstalledDescriptorForMarketplace;
 
-  private final JLabel myNameComponent = new JLabel();
+  private final JBLabel myNameComponent = new JBLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
   JButton myRestartButton;
@@ -97,23 +101,22 @@ public final class ListPluginComponent extends JPanel {
   private EventHandler myEventHandler;
   private @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
-  public ListPluginComponent(@NotNull MyPluginModel pluginModel,
-                             @NotNull IdeaPluginDescriptor plugin,
+  public ListPluginComponent(@NotNull PluginModelFacade pluginModelFacade,
+                             @NotNull PluginUiModel pluginUiModel,
                              @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
-    myPlugin = plugin;
+    myPlugin = pluginUiModel;
     myGroup = group;
-    myPluginModel = pluginModel;
+    myModelFacade = pluginModelFacade;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
-    PluginId pluginId = plugin.getPluginId();
-    boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
-                         ? !"com.intellij.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
-                         : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
-    myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
+    PluginId pluginId = myPlugin.getPluginId();
+    boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
+    myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
-    pluginModel.addComponent(this);
+    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(pluginUiModel.getPluginId());
+    pluginModelFacade.addComponent(this);
 
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
@@ -123,7 +126,8 @@ public final class ListPluginComponent extends JPanel {
     myIconComponent.setOpaque(false);
     myLayout.setIconComponent(myIconComponent);
 
-    myNameComponent.setText(myPlugin.getName());
+    myNameComponent.setText(pluginUiModel.getName());
+    updateNameComponentIcon();
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
     createTag();
@@ -143,12 +147,12 @@ public final class ListPluginComponent extends JPanel {
     else {
       updateErrors();
     }
-    if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
+    if (myModelFacade.isPluginInstallingOrUpdating(pluginUiModel)) {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
 
-    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, plugin.getName());
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, pluginUiModel.getName());
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
 
@@ -219,7 +223,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void setupNotAllowedMarkerButton() {
-    if (myMarketplace || myPluginModel.getState(myPlugin).isDisabled()) {
+    if (myMarketplace || myModelFacade.getState(myPlugin).isDisabled()) {
       myInstallButton.setButtonColors(false);
       myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.not.allowed"));
       myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
@@ -232,7 +236,7 @@ public final class ListPluginComponent extends JPanel {
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
-        myPluginModel.disable(List.of(myPlugin));
+        myModelFacade.disable(myPlugin);
         setupNotAllowedMarkerButton();
       });
     }
@@ -243,51 +247,49 @@ public final class ListPluginComponent extends JPanel {
     PluginId pluginId = myPlugin.getPluginId();
     if (myMarketplace) {
       if (InstalledPluginsState.getInstance().wasInstalled(pluginId)) {
-        myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+        myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
       }
       else {
-        IdeaPluginDescriptor installedDescriptorForMarketplace = PluginManagerCore.findPlugin(pluginId);
+        PluginUiModel installedDescriptorForMarketplace = UiPluginManager.getInstance().getPlugin(pluginId);
 
         boolean showInstall = installedDescriptorForMarketplace == null;
 
         myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
         myInstallButton.addActionListener(
-          e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
+          e -> myModelFacade.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
         myInstallButton.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"));
 
         ColorButton.setWidth72(myInstallButton);
 
-        if (PluginDetailsPageComponent.isMultiTabs()) {
-          myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
-          myInstallButton.setVisible(showInstall);
+        myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
+        myInstallButton.setVisible(showInstall);
 
-          if (NewUiUtil.isDeleted(myInstalledDescriptorForMarketplace)) {
-            if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
-              myInstallButton.setVisible(true);
-              myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
-              myInstallButton.setPreferredSize(null);
-              myAfterUpdate = true;
-            }
-            else {
-              myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
-
-              myPluginModel.addUninstalled(myInstalledDescriptorForMarketplace);
-            }
+        if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
+          if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
+            myInstallButton.setVisible(true);
+            myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+            myInstallButton.setPreferredSize(null);
+            myAfterUpdate = true;
           }
           else {
-            createEnableDisableButton(this::getInstalledDescriptorForMarketplace);
-            myEnableDisableButton.setVisible(!showInstall);
+            myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
 
-            if (!showInstall) {
-              updateEnabledStateUI();
-            }
+            myModelFacade.addUninstalled(myInstalledDescriptorForMarketplace.getPluginId());
+          }
+        }
+        else {
+          createEnableDisableButton(this::getInstalledDescriptorForMarketplace);
+          myEnableDisableButton.setVisible(!showInstall);
+
+          if (!showInstall) {
+            updateEnabledStateUI();
           }
         }
       }
     }
     else {
-      if (NewUiUtil.isDeleted(myPlugin)) {
+      if (myPlugin.isDeleted()) {
         if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
           myLayout.addButtonComponent(myInstallButton = createInstallButton());
           myInstallButton.setVisible(true);
@@ -295,18 +297,18 @@ public final class ListPluginComponent extends JPanel {
           myAfterUpdate = true;
         }
         else {
-          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+          myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
 
-          myPluginModel.addUninstalled(myPlugin);
+          myModelFacade.addUninstalled(myPlugin.getPluginId());
         }
       }
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
         if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdatedWithRestart(pluginId)) {
-          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
+          myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade));
         }
         else {
-          createEnableDisableButton(this::getPluginDescriptor);
+          createEnableDisableButton(this::getPluginModel);
           updateEnabledStateUI();
         }
       }
@@ -331,24 +333,23 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private @NotNull InstallButton createInstallButton() {
-    boolean upgradeRequired = myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getSuggestedCommercialIde() != null;
-    return new InstallButton(false, upgradeRequired);
+    return new InstallButton(false, myPlugin.getRequiresUpgrade());
   }
 
-  private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
+  private void createEnableDisableButton(@NotNull Supplier<PluginUiModel> modelFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
-      List<IdeaPluginDescriptor> descriptors = List.of(descriptorFunction.get());
-      if (myPluginModel.getState(myPlugin).isDisabled()) {
-        myPluginModel.enable(descriptors);
+      PluginUiModel pluginToSwitch = modelFunction.get();
+      if (myModelFacade.getState(myPlugin).isDisabled()) {
+        myModelFacade.enable(pluginToSwitch);
       }
       else {
-        myPluginModel.disable(descriptors);
+        myModelFacade.disable(pluginToSwitch);
       }
     });
 
     myLayout.addButtonComponent(myEnableDisableButton);
     myEnableDisableButton.setOpaque(false);
-    myEnableDisableButton.setEnabled(!myIsEssential);
+    myEnableDisableButton.setEnabled(!myIsEssential && !myIsNotFreeInFreeMode);
     myEnableDisableButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"));
   }
@@ -393,25 +394,19 @@ public final class ListPluginComponent extends JPanel {
     myMetricsPanel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
     myMetricsPanel.setBorder(JBUI.Borders.emptyTop(5));
     myLayout.addLineComponent(myMetricsPanel);
-
     if (myMarketplace) {
-      assert myPlugin instanceof PluginNode;
-      PluginNode pluginNode = (PluginNode)myPlugin;
-
-      String downloads = pluginNode.getPresentableDownloads();
+      String downloads = PluginUiModelKt.presentableDownloads(myPlugin);
       if (downloads != null) {
         myDownloads = createRatingLabel(myMetricsPanel, downloads, AllIcons.Plugins.Downloads);
       }
 
-      String rating = pluginNode.getPresentableRating();
+      String rating = PluginUiModelKt.presentableRating(myPlugin);
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
-      if (PluginDetailsPageComponent.isMultiTabs()) {
-        String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
-        myVersion = createRatingLabel(myMetricsPanel, version, null);
-        myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
-      }
+      String version = myInstalledDescriptorForMarketplace == null ? "" : myInstalledDescriptorForMarketplace.getVersion();
+      myVersion = createRatingLabel(myMetricsPanel, version, null);
+      myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
       String version = myPlugin.isBundled() ? IdeBundle.message("plugin.status.bundled") : myPlugin.getVersion();
@@ -430,7 +425,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void createTag() {
-    List<String> tags = PluginManagerConfigurable.getTags(myPlugin);
+    List<String> tags = PluginUiModelKt.calculateTags(myPlugin);
     if (!tags.isEmpty()) {
       TagComponent tagComponent = createTagComponent(tags.get(0));
       myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent));
@@ -465,6 +460,11 @@ public final class ListPluginComponent extends JPanel {
         setTagTooltip(IdeBundle.message("label.text.plugin.eap.license.not.required"));
         return;
       }
+
+      if (myPlugin.isLicenseOptional()) {
+        return; // do not show "No License" for Freemium plugins
+      }
+
       licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
     }
     else {
@@ -490,8 +490,8 @@ public final class ListPluginComponent extends JPanel {
     myChooseUpdateButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.choose.update.checkbox.accessible.name"));
 
-    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
-    if (descriptor != null) {
+    IdeaPluginDescriptor installedPluginDescriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
+    if (installedPluginDescriptor != null) {
       if (myDownloads != null) {
         myMetricsPanel.remove(myDownloads);
       }
@@ -505,10 +505,8 @@ public final class ListPluginComponent extends JPanel {
         myMetricsPanel.remove(myVersion);
       }
 
-      String version = NewUiUtil.getVersion(descriptor, myPlugin);
-      String size = myPlugin instanceof PluginNode ?
-                    ((PluginNode)myPlugin).getPresentableSize() :
-                    null;
+      String version = NewUiUtil.getUpdateVersionText(installedPluginDescriptor.getVersion(), myPlugin.getVersion());
+      String size = PluginUiModelKt.presentableSize(myPlugin);
       myVersion = createRatingLabel(myMetricsPanel,
                                     null,
                                     size != null ? version + " | " + size : version,
@@ -524,7 +522,12 @@ public final class ListPluginComponent extends JPanel {
     return myChooseUpdateButton;
   }
 
+  @Deprecated
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    setUpdateDescriptor(descriptor == null ? null : new PluginUiModelAdapter(descriptor));
+  }
+
+  public void setUpdateDescriptor(@Nullable PluginUiModel descriptor) {
     if (myMarketplace && myInstalledDescriptorForMarketplace == null) {
       return;
     }
@@ -537,9 +540,9 @@ public final class ListPluginComponent extends JPanel {
 
     myUpdateDescriptor = descriptor;
 
-    IdeaPluginDescriptor plugin = getDescriptorForActions();
+    PluginUiModel plugin = getDescriptorForActions();
 
-    if (descriptor == null) {
+    if (myUpdateDescriptor == null) {
       if (myVersion != null) {
         myVersion.setText(plugin.getVersion());
       }
@@ -556,10 +559,11 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(NewUiUtil.getVersion(plugin, descriptor));
+        myVersion.setText(NewUiUtil.getUpdateVersionText(plugin.getVersion(), myUpdateDescriptor.getVersion()));
       }
-      if (plugin.getProductCode() == null && descriptor.getProductCode() != null &&
-          !plugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode())) {
+      if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
+          !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(myUpdateDescriptor)) {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
@@ -569,14 +573,14 @@ public final class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
-        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
-        myUpdateLicensePanel.setVisible(true);
+        myUpdateLicensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
+                                                   () -> myUpdateDescriptor, true,
+                                                   true);
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
         myUpdateButton.addActionListener(
-          e -> myPluginModel.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+          e -> myModelFacade.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
       }
       else {
         myUpdateButton.setEnabled(true);
@@ -622,8 +626,9 @@ public final class ListPluginComponent extends JPanel {
     }
 
     if (calcColor && (!myMarketplace || myInstalledDescriptorForMarketplace != null)) {
-      IdeaPluginDescriptor plugin = getDescriptorForActions();
-      boolean disabled = myPluginModel.isUninstalled(plugin) || !MyPluginModel.isInstallingOrUpdate(plugin) && !isEnabledState();
+      PluginUiModel plugin = getDescriptorForActions();
+      boolean disabled =
+        myModelFacade.isUninstalled(plugin.getPluginId()) || !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState();
       if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
@@ -647,16 +652,18 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void updateErrors() {
-    IdeaPluginDescriptor plugin = getDescriptorForActions();
-    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getErrors(plugin);
-    boolean hasErrors = !errors.isEmpty();
-    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable);
+    PluginUiModel plugin = getDescriptorForActions();
+    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
+    boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
+    updateIcon(hasErrors,
+               myModelFacade.isUninstalled(plugin.getPluginId()) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
+    updateNameComponentIcon();
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null || myAfterUpdate);
     }
 
-    if (hasErrors) {
+    if (hasErrors || myIsNotFreeInFreeMode) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
       if (myErrorPanel == null) {
@@ -669,8 +676,15 @@ public final class ListPluginComponent extends JPanel {
         myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
-      myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
-
+      if (!myIsNotFreeInFreeMode) {
+        myErrorComponent.setErrors(errors, () -> myModelFacade.enableRequiredPlugins(plugin));
+      }
+      else {
+        HelpTooltip helpTooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
+        if (helpTooltip != null) {
+          helpTooltip.installOn(this);
+        }
+      }
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);
       }
@@ -682,15 +696,20 @@ public final class ListPluginComponent extends JPanel {
     }
 
     if (myLicensePanel != null) {
-      myLicensePanel.setVisible(!hasErrors);
+      myLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
     if (myUpdateLicensePanel != null) {
-      myUpdateLicensePanel.setVisible(!hasErrors);
+      myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
   }
 
+  private void updateNameComponentIcon() {
+    Icon icon = myIsNotFreeInFreeMode ? AllIcons.Nodes.Padlock : null;
+    myNameComponent.setIcon(icon);
+  }
+
   private void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
+    myIconComponent.setIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled));
   }
 
   public void showProgress() {
@@ -698,31 +717,23 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void showProgress(boolean repaint) {
-    if (PluginDetailsPageComponent.isMultiTabs()) {
-      myIndicator = new AbstractProgressIndicatorExBase();
-      myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
-        @Override
-        public int getBaseline(int width, int height) {
-          return (int)(height * 0.85);
-        }
+    myIndicator = new AbstractProgressIndicatorExBase();
+    myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
+      @Override
+      public int getBaseline(int width, int height) {
+        return (int)(height * 0.85);
+      }
 
-        @Override
-        public void removeNotify() {
-          super.removeNotify();
-          if (!isDisposed()) {
-            dispose();
-          }
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        if (!isDisposed()) {
+          dispose();
         }
-      });
-    }
-    else {
-      OneLineProgressIndicator indicator = new OneLineProgressIndicator(false);
-      indicator.setCancelRunnable(() -> myPluginModel.finishInstall(getDescriptorForActions(), null, false, false, true));
-      myLayout.setProgressComponent(indicator.createBaselineWrapper());
-      myIndicator = indicator;
-    }
+      }
+    });
 
-    MyPluginModel.addProgress(getDescriptorForActions(), myIndicator);
+    PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator);
 
     if (repaint) {
       fullRepaint();
@@ -740,8 +751,9 @@ public final class ListPluginComponent extends JPanel {
       else {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
-          if (PluginDetailsPageComponent.isMultiTabs() && myInstallButton.isVisible()) {
-            myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+          if (myInstallButton.isVisible()) {
+            IdeaPluginDescriptor foundPlugin = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+            myInstalledDescriptorForMarketplace = foundPlugin != null ? new PluginUiModelAdapter(foundPlugin) : null;
             if (myInstalledDescriptorForMarketplace != null) {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);
@@ -801,7 +813,7 @@ public final class ListPluginComponent extends JPanel {
       myEnableDisableButton = null;
     }
     if (myIsAvailable && showRestart && myRestartButton == null) {
-      myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel), 0);
+      myLayout.addButtonComponent(myRestartButton = new RestartButton(myModelFacade), 0);
     }
     if (myAlignButton != null) {
       myAlignButton.setVisible(true);
@@ -838,7 +850,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void doUpdateEnabledState() {
-    if (!myPluginModel.isUninstalled(getDescriptorForActions())) {
+    if (!myModelFacade.isUninstalled(getDescriptorForActions().getPluginId())) {
       updateEnabledStateUI();
     }
     updateErrors();
@@ -850,12 +862,12 @@ public final class ListPluginComponent extends JPanel {
   private void updateEnabledStateUI() {
     if (myEnableDisableButton instanceof JCheckBox) {
       ((JCheckBox)myEnableDisableButton).setSelected(
-        myPluginModel.isEnabled(getDescriptorForActions()));
+        myModelFacade.isEnabled(getDescriptorForActions()));
     }
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myPluginModel.addUninstalled(getDescriptorForActions());
+    myModelFacade.addUninstalled(getDescriptorForActions().getPluginId());
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
@@ -874,11 +886,15 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isEnabledState() {
-    return myPluginModel.isEnabled(getDescriptorForActions());
+    return myModelFacade.isEnabled(getDescriptorForActions());
   }
 
   public boolean isMarketplace() {
     return myMarketplace;
+  }
+
+  boolean isNotFreeInFreeMode() {
+    return myIsNotFreeInFreeMode;
   }
 
   public boolean isEssential() {
@@ -899,10 +915,10 @@ public final class ListPluginComponent extends JPanel {
 
   public void close() {
     if (myIndicator != null) {
-      MyPluginModel.removeProgress(getDescriptorForActions(), myIndicator);
+      PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator);
       myIndicator = null;
     }
-    myPluginModel.removeComponent(this);
+    myModelFacade.removeComponent(this);
   }
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
@@ -920,7 +936,7 @@ public final class ListPluginComponent extends JPanel {
     }
 
     for (ListPluginComponent component : selection) {
-      if (MyPluginModel.isInstallingOrUpdate(component.myPlugin) || component.myAfterUpdate) {
+      if (myModelFacade.isPluginInstallingOrUpdating(component.myPlugin) || component.myAfterUpdate) {
         return;
       }
     }
@@ -989,8 +1005,8 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    Function<ListPluginComponent, IdeaPluginDescriptor> function =
-      getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplace;
+    Function<ListPluginComponent, PluginUiModel> function =
+      getDescriptorFunction ? ListPluginComponent::getPluginModel : ListPluginComponent::getInstalledDescriptorForMarketplace;
     SelectionBasedPluginModelAction.addActionsTo(group,
                                                  action -> createEnableDisableAction(action, selection, function),
                                                  () -> createUninstallAction(selection, function));
@@ -1018,7 +1034,7 @@ public final class ListPluginComponent extends JPanel {
     }
 
     for (ListPluginComponent component : selection) {
-      if (MyPluginModel.isInstallingOrUpdate(component.myPlugin) || component.myAfterUpdate) {
+      if (myModelFacade.isPluginInstallingOrUpdating(component.myPlugin) || component.myAfterUpdate) {
         return;
       }
     }
@@ -1107,8 +1123,8 @@ public final class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
-      Function<ListPluginComponent, IdeaPluginDescriptor> function =
-        getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplace;
+      Function<ListPluginComponent, PluginUiModel> function =
+        getDescriptorFunction ? ListPluginComponent::getPluginModel : ListPluginComponent::getInstalledDescriptorForMarketplace;
 
       DumbAwareAction action;
 
@@ -1133,34 +1149,43 @@ public final class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
+  @Deprecated
   public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+    return myPlugin.getDescriptor();
+  }
+
+  public PluginUiModel getPluginModel() {
     return myPlugin;
   }
 
-  public IdeaPluginDescriptor getInstalledDescriptorForMarketplace() {
+  public PluginUiModel getInstalledDescriptorForMarketplace() {
     return myInstalledDescriptorForMarketplace;
   }
 
-  public IdeaPluginDescriptor getDescriptorForActions() {
+  public PluginUiModel getUpdatePluginDescriptor() {
+    return myUpdateDescriptor != null ? myUpdateDescriptor : null;
+  }
+
+  public PluginUiModel getDescriptorForActions() {
     return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin : myInstalledDescriptorForMarketplace;
   }
 
-  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    myPlugin = plugin;
+  public void setPluginModel(@NotNull PluginUiModel pluginModel) {
+    myPlugin = pluginModel;
   }
 
-  public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+  public synchronized @Nullable PluginUiModel getInstalledPluginMarketplaceModel() {
     return myInstalledPluginMarketplaceNode;
   }
 
-  public synchronized void setInstalledPluginMarketplaceNode(@NotNull PluginNode installedPluginMarketplaceNode) {
-    myInstalledPluginMarketplaceNode = installedPluginMarketplaceNode;
+  public synchronized void setInstalledPluginMarketplaceModel(@NotNull PluginUiModel model) {
+    myInstalledPluginMarketplaceNode = model;
   }
 
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {
     Iterator<? extends ListPluginComponent> iterator = selection.iterator();
     BooleanSupplier isGloballyEnabledGenerator = () ->
-      myPluginModel.getState(iterator.next().getPluginDescriptor()) == PluginEnabledState.ENABLED;
+      myModelFacade.getState(iterator.next().getPluginModel()) == PluginEnabledState.ENABLED;
 
     boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
     while (iterator.hasNext()) {
@@ -1174,14 +1199,14 @@ public final class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
-                                                                                                                      @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, true, selection, function, () -> {
+                                                                                                                      @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myModelFacade, action, true, selection, function, () -> {
     });
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function, () -> {
+                                                                                                              @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(myModelFacade, true, this, selection, function, () -> {
     });
   }
 
@@ -1545,7 +1570,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isInstalledAndEnabled() {
-    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getState(myPlugin).isDisabled();
+    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myModelFacade.getState(myPlugin).isDisabled();
   }
 
   @Override
@@ -1591,7 +1616,7 @@ public final class ListPluginComponent extends JPanel {
           description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.install.available"));
         }
         else if (!myInstallButton.isEnabled() && !isDefaultText) {
-          // Install button contains status text when it's disabled and its text is not default.
+          // Install button contains status text when it is disabled and its text is not default.
           // Disabled buttons are not focusable, so this information can be missed by screen reader users.
           description.add(myInstallButton.getText());
         }

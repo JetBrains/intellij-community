@@ -24,6 +24,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -33,24 +34,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
-  @NotNull
-  private static final String LOMBOK_CONFIG_FILE_NAME = "lombok.config";
-  @NonNls
-  public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
+  private static final @NotNull String LOMBOK_CONFIG_FILE_NAME = "lombok.config";
+  public static final @NonNls ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
-  @NotNull
   @Override
-  public ID<ConfigKey, ConfigValue> getName() {
+  public @NotNull ID<ConfigKey, ConfigValue> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<ConfigKey, ConfigValue, FileContent> getIndexer() {
+  public @NotNull DataIndexer<ConfigKey, ConfigValue, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<ConfigKey, ConfigValue> map(@NotNull FileContent inputData) {
+      public @NotNull Map<ConfigKey, ConfigValue> map(@NotNull FileContent inputData) {
         final VirtualFile directoryFile = inputData.getFile().getParent();
         if (null != directoryFile) {
           final String canonicalPath = PathUtil.toSystemIndependentName(directoryFile.getCanonicalPath());
@@ -64,7 +60,7 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     };
   }
 
-  private static @NotNull Map<ConfigKey, ConfigValue> createConfigMapResult(@Nullable PsiFile psiFile) {
+  private static @Unmodifiable @NotNull Map<ConfigKey, ConfigValue> createConfigMapResult(@Nullable PsiFile psiFile) {
     if (!(psiFile instanceof LombokConfigFile)) {
       return Map.of();
     }
@@ -94,13 +90,13 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties(configFile);
     for (LombokConfigProperty configProperty : configProperties) {
       final String key = StringUtil.toLowerCase(configProperty.getKey());
-      final String value = configProperty.getValue();
+      final String value = StringUtil.notNullize(configProperty.getValue());
       final String sign = configProperty.getSign();
       if (null == sign) {
         result.put(key, value);
       }
       else {
-        final String previousValue = StringUtil.defaultIfEmpty(result.get(key), "");
+        final String previousValue = result.getOrDefault(key, "");
         final String combinedValue = previousValue + sign + value + ";";
         result.put(key, combinedValue);
       }
@@ -109,15 +105,13 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     return result;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<ConfigKey> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<ConfigKey> getKeyDescriptor() {
     return new EnumDataDescriptor<>(ConfigKey.class);
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<ConfigValue> getValueExternalizer() {
+  public @NotNull DataExternalizer<ConfigValue> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, ConfigValue configValue) throws IOException {
@@ -137,9 +131,8 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     };
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(LombokConfigFileType.INSTANCE);
   }
 
@@ -150,7 +143,7 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
 
   @Override
   public int getVersion() {
-    return 14;
+    return 15;
   }
 
   static @Nullable ConfigValue readPropertyWithAlternativeResolver(@NotNull ConfigKey key,

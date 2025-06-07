@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -23,9 +23,8 @@ public final class SlowListContainsAllInspection extends AbstractBaseJavaLocalIn
   private static final CallMatcher LIST_CONTAINS_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "containsAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -53,17 +52,13 @@ public final class SlowListContainsAllInspection extends AbstractBaseJavaLocalIn
       myCollectionText = collectionText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.slow.list.contains.all.fix.name", myCollectionText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.slow.list.contains.all.fix.family.name");
     }
 

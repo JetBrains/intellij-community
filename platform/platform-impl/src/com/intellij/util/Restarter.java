@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -44,9 +44,9 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isMac) {
-      var appDir = Path.of(PathManager.getHomePath()).getParent();
-      if (appDir != null && appDir.getFileName().toString().endsWith(".app") && Files.isDirectory(appDir)) {
-        return appDir;
+      var starter = Path.of(PathManager.getHomePath(), "MacOS", ApplicationNamesInfo.getInstance().getScriptName());
+      if (Files.exists(starter)) {
+        return starter;
       }
     }
     else if (SystemInfo.isLinux) {
@@ -180,25 +180,12 @@ public final class Restarter {
   }
 
   private static void restartOnMac(List<String> beforeRestart, List<String> args) throws IOException {
-    var appDir = ourStarter.getValue();
-    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
+    var starter = ourStarter.getValue();
+    if (starter == null) throw new IOException("Starter executable not found in: " + PathManager.getHomePath());
     var command = prepareCommand(beforeRestart);
-    
-    var runProcessCommand = new ArrayList<String>();
-    runProcessCommand.add("/usr/bin/open");
-
-    /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
-       process from that bundle instead of focusing on the existing application if it's running */
-    runProcessCommand.add("-n");
-    
-    runProcessCommand.add(appDir.toString());
-    if (!args.isEmpty()) {
-      runProcessCommand.add("--args");
-      runProcessCommand.addAll(args);
-    }
-
-    command.add(String.valueOf(runProcessCommand.size()));
-    command.addAll(runProcessCommand);
+    command.add(String.valueOf(args.size() + 1));
+    command.add(starter.toString());
+    command.addAll(args);
     runRestarter(command);
   }
 
@@ -248,12 +235,14 @@ public final class Restarter {
     Logger.getInstance(Restarter.class).info("run restarter: " + command);
 
     var processBuilder = new ProcessBuilder(command);
-    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile());
+    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile())
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.DISCARD);
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) setDesktopStartupId(processBuilder);
 
-    if (SystemInfo.isWindows) processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
+    processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
 
     processBuilder.start();
   }

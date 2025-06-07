@@ -2,9 +2,9 @@
 package com.intellij.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiElement;
 import com.intellij.commandInterface.command.Option;
 import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +15,13 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineOptionReference extends CommandLineElementReference<CommandLineOption> {
-  CommandLineOptionReference(@NotNull final CommandLineOption element) {
+final class CommandLineOptionReference extends CommandLineElementReference<CommandLineOption> {
+  CommandLineOptionReference(final @NotNull CommandLineOption element) {
     super(element);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return null;
   }
 

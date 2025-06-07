@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,8 +8,11 @@ import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +65,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11, 22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
@@ -90,6 +79,244 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
     compareWithExpected(outputStream.toString(), "json");
+  }
+
+  public void testNotFirstImportModule() throws IOException {
+    CodeStyleScheme testScheme = new CodeStyleScheme() {
+
+      @NotNull
+      @Override
+      public String getName() {
+        return "Test";
+      }
+
+      @Override
+      public boolean isDefault() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public CodeStyleSettings getCodeStyleSettings() {
+        try {
+          return importSettings();
+        }
+        catch (SchemeImportException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
+    compareWithExpected(outputStream.toString(), "json");
+  }
+
+  public void testFirstNotImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(true, "org.foo", true));
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+              <package name="org.foo" withSubpackages="true" static="true" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedFirstNotImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(moduleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry moduleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(moduleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testMovedNotFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntry notModuleEntry = settings.IMPORT_LAYOUT_TABLE.getEntryAt(0);
+    assertNotSame(PackageEntry.ALL_MODULE_IMPORTS, notModuleEntry);
+    settings.IMPORT_LAYOUT_TABLE.removeEntryAt(0);
+    settings.IMPORT_LAYOUT_TABLE.insertEntryAt(notModuleEntry, 1);
+
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
+  }
+
+  public void testFirstImportedImportModule() throws IOException, JDOMException {
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    String text = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>
+      """;
+    settings.readExternal(JDOMUtil.load(text));
+
+    Element root = new Element("root");
+    PackageEntryTable table = settings.IMPORT_LAYOUT_TABLE;
+    assertSize(4,table.getEntries());
+    PackageEntry moduleEntry = table.getEntryAt(0);
+    assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
+    table.addEntry(new PackageEntry(true, "org.foo", true));
+    settings.writeExternal(root, new JavaCodeStyleSettings(originalRoot));
+    String actual = """
+      <root>
+        <JavaCodeStyleSettings>
+          <option name="IMPORT_LAYOUT_TABLE">
+            <value>
+              <package name="" withSubpackages="true" static="false" module="true" />
+              <package name="" withSubpackages="true" static="true" />
+              <package name="" withSubpackages="true" static="false" />
+              <package name="com" withSubpackages="true" static="false" />
+              <package name="org.foo" withSubpackages="true" static="true" />
+            </value>
+          </option>
+        </JavaCodeStyleSettings>
+      </root>""";
+    assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
   public void testSetProperties() {
@@ -112,17 +339,18 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(2, commonJavaSettings.getIndentOptions().INDENT_SIZE);
     assertTrue(javaSettings.JD_ALIGN_PARAM_COMMENTS);
     PackageEntryTable importsTable = javaSettings.getImportLayoutTable();
-    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(0));
-    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(1));
-    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
-    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
-    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, importsTable.getEntryAt(0));
+    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(2));
+    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(3));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(4));
+    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(5));
     List<String> repeatAnno = javaSettings.getRepeatAnnotations();
     assertEquals(2, repeatAnno.size());
     assertEquals("com.jetbrains.First", repeatAnno.get(0));
     assertEquals("com.jetbrains.Second", repeatAnno.get(1));
   }
-  
+
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
@@ -152,6 +380,139 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
     assertEquals(7, commonSettings.BLANK_LINES_AROUND_FIELD);
     assertEquals(7, customSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+  }
+
+  public void testWithoutModulesAndOtherImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModulesAndOtherImportAndStaticImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(4));
+    assertEquals("javax", table.getEntryAt(5).getPackageName());
+    assertEquals("java", table.getEntryAt(6).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModules() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testOnlyModules() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(3, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
+  }
+
+  public void testWithoutOtherImportWithModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutStaticImportWithoutModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutStaticImportWithoutModuleAndStaticNotSeparate() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(6));
+  }
+
+  public void testEmptyConfigImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(6));
   }
 
   private static boolean isPrimitiveOrString(Class type) {

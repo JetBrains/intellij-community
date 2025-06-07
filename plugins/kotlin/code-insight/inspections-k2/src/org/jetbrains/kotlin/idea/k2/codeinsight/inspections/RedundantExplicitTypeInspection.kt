@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -16,13 +16,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeDeclarationTypeReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 
 internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.Simple<KtProperty, Unit>() {
 
-    private fun KaSession.isCompanionObject(type: KaType): Boolean {
+    private fun isCompanionObject(type: KaType): Boolean {
         val symbol = type.symbol as? KaClassSymbol ?: return false
         return symbol.classKind == KaClassKind.COMPANION_OBJECT
     }
@@ -39,7 +39,7 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
 
         when (initializer) {
             is KtConstantExpression -> {
-                val fqName = initializer.getClassId()?.asSingleFqName() ?: return false
+                val fqName = initializer.inferClassIdByPsi()?.asSingleFqName() ?: return false
                 val classType = type as? KaClassType ?: return false
                 val typeFqName = classType.symbol.classId?.asSingleFqName() ?: return false
                 if (typeFqName != fqName || type.isMarkedNullable) return false
@@ -95,8 +95,7 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
         return element.typeReference != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         return hasRedundantType(element).asUnit
     }
 }

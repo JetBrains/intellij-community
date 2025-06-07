@@ -9,6 +9,7 @@ import com.intellij.refactoring.classMembers.MemberInfoChange
 import com.intellij.refactoring.extractSuperclass.JavaExtractSuperBaseDialog
 import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import org.jetbrains.annotations.Nls
@@ -89,7 +90,7 @@ abstract class KotlinExtractSuperDialogBase(
 
     override fun checkConflicts() = conflictChecker(this)
 
-    override fun createActionComponent() = Box.createHorizontalBox()!!
+    override fun createActionComponent() = JBBox.createHorizontalBox()!!
 
     override fun createExtractedSuperNameField(): JTextField {
         return super.createExtractedSuperNameField().apply {

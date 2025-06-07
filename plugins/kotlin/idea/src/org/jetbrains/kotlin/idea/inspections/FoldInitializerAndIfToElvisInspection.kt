@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -81,7 +81,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
                     if (element.condition is KtBinaryExpression) {
                         val ifEndOffset = element.endOffset
                         val context = element.analyze()
-                        val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).any {
+                        val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).asIterable().any {
                             if (it.element.startOffset <= ifEndOffset) return@any false
                             val type = it.element.safeAs<KtExpression>()?.getType(context) ?: return@any false
                             !type.isNullable()

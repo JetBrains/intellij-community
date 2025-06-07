@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -117,7 +117,7 @@ public class SetupTaskDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     if (myCurrentCard.equals(CARD_OPTIONS)) {
-      if (myOptionComponents.size() > 0) {
+      if (!myOptionComponents.isEmpty()) {
         final JComponent component = myOptionComponents.values().iterator().next();
         return component instanceof LabeledComponent ? ((LabeledComponent<?>)component).getComponent() : component;
       }
@@ -142,7 +142,7 @@ public class SetupTaskDialog extends DialogWrapper {
       else {
         LabeledComponent<JTextField> textField = (LabeledComponent<JTextField>)entry.getValue();
         String text = textField.getComponent().getText();
-        if (text.length() > 0) {
+        if (!text.isEmpty()) {
           result.add("--" + option.name + text);
         }
       }

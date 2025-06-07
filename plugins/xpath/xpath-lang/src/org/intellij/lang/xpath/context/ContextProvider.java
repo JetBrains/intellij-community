@@ -50,20 +50,15 @@ public abstract class ContextProvider {
     protected ContextProvider() {
     }
 
-    @NotNull
-    public abstract ContextType getContextType();
+    public abstract @NotNull ContextType getContextType();
 
-    @Nullable
-    public abstract XmlElement getContextElement();
+    public abstract @Nullable XmlElement getContextElement();
 
-    @Nullable
-    public abstract NamespaceContext getNamespaceContext();
+    public abstract @Nullable NamespaceContext getNamespaceContext();
 
-    @Nullable
-    public abstract VariableContext getVariableContext();
+    public abstract @Nullable VariableContext getVariableContext();
 
-    @NotNull
-    public FunctionContext getFunctionContext() {
+    public @NotNull FunctionContext getFunctionContext() {
       FunctionContext context = myFunctionContext;
       if (context == null) {
         context = createFunctionContext();
@@ -75,16 +70,13 @@ public abstract class ContextProvider {
       return DefaultFunctionContext.getInstance(getContextType());
     }
 
-    @NotNull
-    public XPathQuickFixFactory getQuickFixFactory() {
+    public @NotNull XPathQuickFixFactory getQuickFixFactory() {
         return XPathQuickFixFactoryImpl.INSTANCE;
     }
 
-    @Nullable
-    public abstract Set<QName> getAttributes(boolean forValidation);
+    public abstract @Nullable Set<QName> getAttributes(boolean forValidation);
 
-    @Nullable
-    public abstract Set<QName> getElements(boolean forValidation);
+    public abstract @Nullable Set<QName> getElements(boolean forValidation);
 
     public void attachTo(PsiFile file) {
         assert file instanceof XPathFile;
@@ -103,8 +95,7 @@ public abstract class ContextProvider {
         }
     }
 
-    @NotNull
-    public static ContextProvider getContextProvider(PsiFile psiFile) {
+    public static @NotNull ContextProvider getContextProvider(PsiFile psiFile) {
         ContextProvider provider = psiFile.getCopyableUserData(KEY);
         if (provider != null && provider.isValid()) {
             return provider;
@@ -135,8 +126,7 @@ public abstract class ContextProvider {
         return new DefaultProvider(PsiTreeUtil.getContextOfType(psiFile, XmlElement.class, true), psiFile.getLanguage());
     }
 
-    @NotNull
-    public static ContextProvider getContextProvider(PsiElement element) {
+    public static @NotNull ContextProvider getContextProvider(PsiElement element) {
         return element instanceof XPathElement ?
                 getContextProvider(element instanceof XPathFile ?
                         (PsiFile)element :
@@ -148,26 +138,23 @@ public abstract class ContextProvider {
         return PsiFile.EMPTY_ARRAY;
     }
 
-    @NotNull
-    public XPathType getExpectedType(XPathExpression expr) {
+    public @NotNull XPathType getExpectedType(XPathExpression expr) {
         return XPathType.UNKNOWN;
     }
 
-    @Nullable
-    public QName getQName(QNameElement element) {
+    public @Nullable QName getQName(QNameElement element) {
         final PrefixedName qname = element.getQName();
         return qname != null ? getQName(qname, element) : null;
     }
 
-    @Nullable
-    public QName getQName(@NotNull PrefixedName qName, XPathElement context) {
+    public @Nullable QName getQName(@NotNull PrefixedName qName, XPathElement context) {
         final String prefix = qName.getPrefix();
         final NamespaceContext namespaceContext = getNamespaceContext();
         if (namespaceContext != null) {
             if (prefix != null) {
                 final XmlElement element = PsiTreeUtil.getContextOfType(context, XmlElement.class, true);
                 final String namespaceURI = namespaceContext.getNamespaceURI(prefix, element);
-                return namespaceURI != null && namespaceURI.length() > 0 ? new QName(namespaceURI, qName.getLocalName(), prefix) : null;
+                return namespaceURI != null && !namespaceURI.isEmpty() ? new QName(namespaceURI, qName.getLocalName(), prefix) : null;
             } else if (context.getXPathVersion() == XPathVersion.V2){
               if (isDefaultCapableElement(context)) {
                 final String namespace = namespaceContext.getDefaultNamespace(getContextElement());
@@ -247,38 +234,32 @@ public abstract class ContextProvider {
         }
 
         @Override
-        @NotNull
-        public ContextType getContextType() {
+        public @NotNull ContextType getContextType() {
             return myContextType;
         }
 
         @Override
-        @Nullable
-        public XmlElement getContextElement() {
+        public @Nullable XmlElement getContextElement() {
             return myContextElement;
         }
 
         @Override
-        @Nullable
-        public NamespaceContext getNamespaceContext() {
+        public @Nullable NamespaceContext getNamespaceContext() {
           return myNamespaceContext;
         }
 
         @Override
-        @Nullable
-        public VariableContext getVariableContext() {
+        public @Nullable VariableContext getVariableContext() {
             return null;
         }
 
         @Override
-        @Nullable
-        public Set<QName> getAttributes(boolean forValidation) {
+        public @Nullable Set<QName> getAttributes(boolean forValidation) {
             return null;
         }
 
         @Override
-        @Nullable
-        public Set<QName> getElements(boolean forValidation) {
+        public @Nullable Set<QName> getElements(boolean forValidation) {
             return null;
         }
     }

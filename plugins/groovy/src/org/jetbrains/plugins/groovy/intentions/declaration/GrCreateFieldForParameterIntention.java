@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.java.JavaBundle;
@@ -51,8 +51,7 @@ public final class GrCreateFieldForParameterIntention extends PsiUpdateModComman
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.create.field.from.parameter.family");
   }
 
@@ -142,8 +141,7 @@ public final class GrCreateFieldForParameterIntention extends PsiUpdateModComman
     return (GrAssignmentExpression)factory.createStatementFromText(builder.toString());
   }
 
-  @Nullable
-  private static GrStatement getAnchor(GrOpenBlock block) {
+  private static @Nullable GrStatement getAnchor(GrOpenBlock block) {
     GrStatement[] statements = block.getStatements();
     GrStatement fist = ArrayUtil.getFirstElement(statements);
     if (fist instanceof GrConstructorInvocation) {

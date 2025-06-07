@@ -1,4 +1,4 @@
-// "Add Javadoc" "true"
+// "Add Javadoc" "true-preview"
 
 class A {
 

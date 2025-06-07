@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
@@ -19,6 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -36,7 +36,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -72,8 +75,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -85,9 +88,9 @@ import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
   public static final @NonNls String SHOW_HINTS = "ShowHints";
 
-  // Popup size stored with DimensionService is null first time
-  // In this case you can put Dimension in content client properties to adjust size
-  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
+  // Popup size stored with DimensionService is null first time.
+  // In this case, you can put Dimension in content client properties to adjust size
+  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from the preferred size).
   public static final @NonNls String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
@@ -225,6 +228,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
+  private @NlsContexts.StatusText String mySpeedSearchEmptyText;
   protected SearchTextField mySpeedSearchPatternField;
   private PopupComponentFactory.PopupType myPopupType;
   private boolean myNativePopup;
@@ -301,7 +305,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                         Color borderColor,
                                         boolean cancelOnWindowDeactivation,
                                         @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
-    assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
+    if (requestFocus && !focusable) {
+      requestFocus = false;
+      LOG.error("Incorrect argument combination: requestFocus=true focusable=false");
+    }
 
     all.add(this);
 
@@ -358,7 +365,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
       if (pinCallback != null) {
         Icon icon = ToolWindowManager.getInstance(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
-          .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
+          .getShowInFindToolWindowIcon();
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton(IdeBundle.message("show.in.find.window.button.name"), icon),
           e -> pinCallback.process(this)
@@ -545,8 +552,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  @Nullable
-  public static Window getCurrentWindow(@NotNull Project project) {
+  public static @Nullable Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -616,19 +622,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static @NotNull RelativePoint pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
-    if (!(comp instanceof JComponent jcomp)) return defaultPointUnderneathOf(comp);
-    Point offset = new Point(calcHorizontalAlignment(jcomp), 0);
+    if (!(comp instanceof JComponent jComponent)) return defaultPointUnderneathOf(comp);
+    Point offset = new Point(calcHorizontalAlignment(jComponent), 0);
     return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, comp, offset);
   }
 
-  private static int calcHorizontalAlignment(JComponent jcomp) {
+  private static int calcHorizontalAlignment(JComponent jComponent) {
     int componentLeftInset;
-    if (jcomp instanceof PopupAlignableComponent pac) {
+    if (jComponent instanceof PopupAlignableComponent pac) {
       componentLeftInset = pac.getLeftGap();
     }
     else {
-      componentLeftInset = jcomp.getInsets().left;
-      if (jcomp instanceof AbstractButton button) {
+      componentLeftInset = jComponent.getInsets().left;
+      if (jComponent instanceof AbstractButton button) {
         Insets margin = button.getMargin();
         if (margin != null) {
           componentLeftInset += margin.left;
@@ -659,11 +665,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
+
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     fitXToComponentScreen(screenPoint, aPoint.getComponent());
 
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
+
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 
@@ -769,7 +777,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
-    // inside the component (e.g. editor) it appears on top of.
+    // inside the component (e.g., editor) it appears on top of.
     AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
     show(getBestPositionFor(editor));
   }
@@ -906,6 +914,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myRequestFocus = requestFocus;
   }
 
+  public boolean shouldRequestFocus() {
+    return myRequestFocus;
+  }
+
   @Override
   public void cancel(InputEvent e) {
     if (myState == State.CANCEL || myState == State.DISPOSE) {
@@ -1026,7 +1038,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    var builder = new PopupShowOptionsBuilder();
+    showImpl(
+      builder
+        .withOwner(owner)
+        .withScreenXY(aScreenX, aScreenY)
+        .withForcedXY(considerForcedXY)
+    );
+  }
+
+  @Override
+  public void show(@NotNull PopupShowOptions showOptions) {
+    showImpl((PopupShowOptionsBuilder)showOptions);
+  }
+
+  @ApiStatus.Internal
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
     if (UiInterceptors.tryIntercept(this)) return;
+
+    var options = showOptions.build();
+    var owner = options.getOwner();
+    var aScreenX = options.getScreenX();
+    var aScreenY = options.getScreenY();
+    var considerForcedXY = options.getConsiderForcedXY();
     if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -1062,7 +1096,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
           roundedCornerParams = new Object[]{cornerType,
             myPopupBorderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
-          // must set the border before calculating size below
+          // must set the border before calculating the size below
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
@@ -1072,7 +1106,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("START calculating bounds for a popup at (" + aScreenX + "," + aScreenY + "," + (considerForcedXY ? "forced" : "not forced") + ") for " + owner);
+      LOG.debug("START calculating bounds for a popup with options = " + options);
     }
     Dimension sizeToSet = getStoredSize();
     if (LOG.isDebugEnabled()) {
@@ -1183,6 +1217,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Target bounds " + targetBounds);
     }
+    @Nullable AppliedAdjustments adjustments = null;
+    if (options.getPopupAnchor() != AnchoredPoint.Anchor.TOP_LEFT) {
+      adjustments = adjustForAnchor(targetBounds, options, screen);
+    }
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
       StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
       sb.append(targetBounds.width).append("x").append(targetBounds.height);
@@ -1219,7 +1257,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       AutoPopupSupportingListener.installOn(this);
     }
 
-    myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
+    myOwner = getFrameOrDialog(owner); // use the correct popup owner for non-modal dialogs too
     if (myOwner == null) {
       myOwner = owner;
     }
@@ -1235,19 +1273,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.debug("popup owner fixed for JDK cache");
     }
     if (StartupUiUtil.isWaylandToolkit()) {
-      // targetBounds are "screen" coordinates, which in Wayland means that they
-      // are relative to the nearest toplevel (Window).
-      // But popups in Wayland are expected to be relative to popup's "owner";
-      // let's re-set the owner to be that window.
-      popupOwner = popupOwner instanceof Window
-                   ? popupOwner
-                   : SwingUtilities.getWindowAncestor(popupOwner);
-      // The Wayland server may refuse to show a popup whose top-left corner
-      // is located outside of parent window's bounds
-      Rectangle okBounds = new Rectangle();
-      okBounds.width = popupOwner.getWidth() + targetBounds.width;
-      okBounds.height = popupOwner.getHeight() + targetBounds.height;
-      ScreenUtil.moveToFit(targetBounds, okBounds, new Insets(0, 0, 1, 1));
+      // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
+      popupOwner = SwingUtilities.getRoot(popupOwner);
+      targetBounds.setLocation(getLocationRelativeToParent(targetBounds, (Window) popupOwner));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -1271,6 +1299,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       else {
         LOG.debug("cannot fix size for non-heavy-weight popup because its window is null");
       }
+    }
+    if (adjustments != null && adjustments.adjustedHeight()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Settings the size to " + targetBounds.getSize() + " because the height of the popup was adjusted");
+      }
+      setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
 
     if (myResizable) {
@@ -1370,18 +1404,37 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (bounds.width > screen.width || bounds.height > screen.height) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Bounds won't fit into the screen, adjusting");
+    if (myLocateWithinScreen) {
+      if (
+        bounds.x < screen.x ||
+        bounds.y < screen.y ||
+        bounds.x + bounds.width > screen.x + screen.width ||
+        bounds.y + bounds.height > screen.y + screen.height
+      ) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds won't fit into the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
       }
-      ScreenUtil.fitToScreen(bounds);
-      window.setBounds(bounds);
+    }
+    else {
+      if (bounds.width > screen.width || bounds.height > screen.height) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds are larger than the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
+      }
     }
 
     if (LOG.isDebugEnabled()) {
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       StringBuilder sb = new StringBuilder("Popup is shown with bounds " + bounds);
-      if (device != null) sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"");
+      if (device != null) {
+        sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"")
+          .append(" and bounds ").append(device.getDefaultConfiguration().getBounds());
+      }
       LOG.debug(sb.toString());
     }
 
@@ -1392,7 +1445,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     if (myWindow != null) {
       // dialog wrapper-based popups do this internally through peer,
-      // for other popups like jdialog-based we should exclude them manually, but
+      // for other popups like JDialog-based we should exclude them manually, but
       // we still have to be able to use IdeFrame as parent
       if (!myMayBeParent && !(myWindow instanceof Frame)) {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
@@ -1418,7 +1471,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     if (myRequestFocus) {
       if (myPreferredFocusedComponent != null) {
-        // `resetThreadContext` here is needed because `setVisible` runs eventloop
+        // `resetThreadContext` here is needed because `setVisible` runs event loop
         // IJPL-161712
         try (AccessToken ignored = ThreadContext.resetThreadContext()) {
           myPreferredFocusedComponent.requestFocus();
@@ -1449,6 +1502,136 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myOpeningTime = System.currentTimeMillis();
 
     afterShowSync();
+  }
+
+  private static Point getLocationRelativeToParent(Rectangle bounds, Window popupParent) {
+    // The "bounds" are "screen" coordinates, which in Wayland means that they
+    // are relative to the nearest toplevel (Window) in the hierarchy.
+    // But popups in Wayland are expected to be located relative to popup's "parent" (a toplevel or another popup).
+    // We need to adjust "bounds" to be relative to the parent.
+    Rectangle newBounds = new Rectangle(bounds);
+    Point parentLocation = popupParent.getLocationOnScreen();
+    newBounds.x -= parentLocation.x;
+    newBounds.y -= parentLocation.y;
+    // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
+    // TODO: Need to fit into the nearest toplevel, not popupParent that may be another popup.
+    Rectangle okBounds = new Rectangle(0, 0,
+                                       popupParent.getWidth() + newBounds.width, popupParent.getHeight() + newBounds.height);
+    ScreenUtil.moveToFit(newBounds, okBounds, new Insets(0, 0, 1, 1));
+    return newBounds.getLocation();
+  }
+
+  private record AppliedAdjustments(
+    boolean adjustedHeight
+  ) { }
+
+  private AppliedAdjustments adjustForAnchor(
+    @NotNull Rectangle bounds,
+    @NotNull PopupShowOptionsImpl options,
+    @NotNull Rectangle screen
+  ) {
+    var adjustedHeight = false;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Adjusting the bounds " + bounds + " for the screen " + screen + " with the options = " + options);
+    }
+    var anchorPoint = options.getPopupAnchor().getPointOnRectangle(bounds);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Anchor point " + anchorPoint);
+    }
+    var originalY = bounds.y;
+    var offsetX = bounds.x - anchorPoint.x;
+    var offsetY = bounds.y - anchorPoint.y;
+    bounds.x += offsetX;
+    bounds.y += offsetY;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The bounds after moving the anchor point " + bounds);
+    }
+    if (options.getPopupComponentUnscaledGap() != 0 && options.getRelativePosition() != null) {
+      var gap = JBUI.scale(options.getPopupComponentUnscaledGap());
+      switch (options.getRelativePosition()) {
+        case LEFT -> {
+          bounds.x -= gap;
+        }
+        case RIGHT -> {
+          bounds.x += gap;
+        }
+        case TOP -> {
+          bounds.y -= gap;
+        }
+        case BOTTOM -> {
+          bounds.y += gap;
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The bounds after adjusting for the gap " + bounds);
+      }
+    }
+    if (myLocateWithinScreen && !screen.contains(bounds)) {
+      LOG.debug("The bounds won't fit into the screen");
+      // If the popup is to the left of the screen, move it to the left edge.
+      if (bounds.x < screen.x) {
+        var shift = screen.x - bounds.x;
+        bounds.x += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the left side " + bounds);
+        }
+      }
+      // If the popup is above the screen, move it to the top edge.
+      if (bounds.y < screen.y) {
+        var shift = screen.y - bounds.y;
+        bounds.y += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the top side " + bounds);
+        }
+        // Now, if it's above the owner, try to decrease its height to compensate for the shift
+        // if this popup can reduce it height at all.
+        if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          if (reducedHeight >= options.getMinimumHeight()) {
+            bounds.height = reducedHeight;
+            adjustedHeight = true;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+            }
+          }
+          else {
+            // Can't fit even with the reduced height, revert to its original position,
+            // then let the code below do its job and try to fit it there.
+            bounds.y = originalY;
+          }
+        }
+      }
+      // If the popup is to the right of the screen, move it to the right edge.
+      if (bounds.x + bounds.width > screen.x + screen.width) {
+        var shift = (bounds.x + bounds.width) - (screen.x + screen.width);
+        bounds.x -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the right side " + bounds);
+        }
+      }
+      // If the popup is below the screen, try to decrease its height first: this is not symmetrical to the "above the screen" case,
+      // because if it's below the owner, then we'd like to keep its Y coordinate intact if possible.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        if (options.getRelativePosition() == PopupRelativePosition.BOTTOM && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          adjustedHeight = true;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The bounds after adjusting height to fit below the owner " + bounds);
+          }
+        }
+      }
+      // And only failing that, we shift it upwards.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        bounds.height -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the bottom side " + bounds);
+        }
+      }
+    }
+    return new AppliedAdjustments(adjustedHeight);
   }
 
   public void notifyListeners() {
@@ -1552,6 +1735,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    if (mySpeedSearchEmptyText != null) {
+      mySpeedSearchPatternField.getTextEditor().getEmptyText().setText(mySpeedSearchEmptyText);
+    }
     customizeSearchFieldLook(mySpeedSearchPatternField, mySpeedSearchAlwaysShown);
 
     if (mySpeedSearchAlwaysShown) {
@@ -1702,13 +1888,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     setLocation(p, myPopup);
   }
 
-  private static void setLocation(@NotNull RelativePoint p, @Nullable PopupComponent popup) {
+  private void setLocation(@NotNull RelativePoint p, @Nullable PopupComponent popup) {
     if (popup == null) return;
 
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    wnd.setLocation(p.getScreenPoint());
+    if (StartupUiUtil.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
+      Rectangle newBounds = wnd.getBounds();
+      newBounds.setLocation(p.getScreenPoint());
+      Component parent = SwingUtilities.getRoot(myOwner);
+      wnd.setLocation(getLocationRelativeToParent(newBounds, (Window) parent));
+    } else {
+      wnd.setLocation(p.getScreenPoint());
+    }
   }
 
   @Override
@@ -1722,8 +1915,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  @Nullable
-  protected Dimension calculateSizeForPack(boolean width, boolean height) {
+  protected @Nullable Dimension calculateSizeForPack(boolean width, boolean height) {
     if (!isVisible() || !width && !height || isBusy()) return null;
 
     Dimension size = getSize();
@@ -1876,7 +2068,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public static class MyContentPanel extends JPanel implements UiCompatibleDataProvider {
-    private @Nullable DataProvider myDataProvider;
+    private @Nullable UiDataProvider myDataProvider;
 
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
@@ -1901,7 +2093,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 
-    public void setDataProvider(@Nullable DataProvider dataProvider) {
+    public void setDataProvider(@Nullable UiDataProvider dataProvider) {
       myDataProvider = dataProvider;
     }
   }
@@ -2152,7 +2344,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       Window window = getContentWindow(content);
       if (window == null) return;
       Insets insets = content.getInsets();
+      boolean useScreenLocation = true;
       if (location == null) {
+        useScreenLocation = false;
         location = window.getLocation(); // use current window location
       }
       else {
@@ -2172,6 +2366,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
         content.setPreferredSize(size);
         size = window.getPreferredSize();
+      }
+
+      if (StartupUiUtil.isWaylandToolkit() && useScreenLocation
+          && myPopup.getWindow().getType() == Window.Type.POPUP
+          && myOwner != null) {
+        // The location is in the screen coordinates, but popups need to be positioned relative to their parent
+        Component parent = SwingUtilities.getRoot(myOwner);
+        Rectangle targetBounds = new Rectangle(location, size);
+        location.setLocation(getLocationRelativeToParent(targetBounds, (Window) parent));
       }
 
       if (LOG.isDebugEnabled()) {
@@ -2201,13 +2404,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setCaptionIconPosition(boolean left) {
     if (myCaption instanceof TitlePanel titlePanel) {
-      titlePanel.setHorizontalTextPosition(left ? SwingUtilities.RIGHT : SwingUtilities.LEFT);
+      titlePanel.setHorizontalTextPosition(left ? SwingConstants.RIGHT : SwingConstants.LEFT);
     }
   }
 
-  protected void setSpeedSearchAlwaysShown() {
-    assert myState == State.INIT;
+  public void setSpeedSearchAlwaysShown() {
+    assert myState.ordinal() <= State.INIT.ordinal();
     mySpeedSearchAlwaysShown = true;
+  }
+
+  public void setSpeedSearchEmptyText(@Nullable @NlsContexts.StatusText String text) {
+    mySpeedSearchEmptyText = text;
   }
 
   private final class MyWindowListener extends WindowAdapter {
@@ -2363,7 +2570,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void addListener(@NotNull JBPopupListener listener) {
-    myListeners.add(0, listener); // last added first notified
+    myListeners.add(0, listener); // last added then first notified
   }
 
   @Override
@@ -2408,7 +2615,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    * Use this method if you need the popup to have the same width as the owner
    * @see JBPopup#show(Component) for the meaning of the owner
    *
-   * Note that setting owner.getWidth() to popup beforehand won't work in remote development scenario
+   * Note that setting owner.getWidth() to popup beforehand won't work in the remote development scenario
    */
   public void setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
     myStretchToOwnerWidth = stretchToOwnerWidth;
@@ -2418,7 +2625,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    * Use this method if you need the popup to have the same height as the owner
    * @see JBPopup#show(Component) for the meaning of the owner
    *
-   * Note that setting owner.getHeight() to popup beforehand won't work in remote development scenario
+   * Note that setting owner.getHeight() to popup beforehand won't work in the remote development scenario
    */
   public void setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
     myStretchToOwnerHeight = stretchToOwnerHeight;
@@ -2453,6 +2660,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setDataProvider(@NotNull DataProvider dataProvider) {
+    setUiDataProvider(Utils.wrapToUiDataProvider(dataProvider));
+  }
+
+  @Override
+  public void setUiDataProvider(@NotNull UiDataProvider dataProvider) {
     if (myContent != null) {
       myContent.setDataProvider(dataProvider);
     }
@@ -2518,7 +2730,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    * Returns the first frame (or dialog) ancestor of the component.
    * Note that this method returns the component itself if it is a frame (or dialog).
    *
-   * @param component the component used to find corresponding frame (or dialog)
+   * @param component the component used to find the corresponding frame (or dialog)
    * @return the first frame (or dialog) ancestor of the component; or {@code null}
    *         if the component is not a frame (or dialog) and is not contained inside a frame (or dialog)
    *
@@ -2541,7 +2753,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return point == null ? null : new Rectangle(point, component.getSize());
   }
 
-  public static @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
+  public static @Unmodifiable @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
     return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {
@@ -2578,7 +2790,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   /**
-   * Tells whether popup should be closed when some window becomes activated/focused
+   * Tells whether the popup should be closed when some window becomes activated/focused
    */
   private boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
     Window window = event.getWindow(); // the activated or focused window
@@ -2641,7 +2853,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Override
-  public final boolean dispatchInputMethodEvent(InputMethodEvent event) {
+  public final boolean dispatchInputMethodEvent(@NotNull InputMethodEvent event) {
     if (anyModalWindowsAbovePopup()) {
       return false;
     }

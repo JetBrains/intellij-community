@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -34,6 +34,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.util.*
@@ -131,6 +132,13 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
       val iconSize = icon.preferredSize
       icon.setBounds((width - iconSize.width) / 2, (height - iconSize.height) / 2, iconSize.width, iconSize.height)
     }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  fun addFallbackBackgroundPainter(fallbackBackgroundPainter : Painter) {
+    installPainters()
+    IdeBackgroundUtil.addFallbackBackgroundPainter(this, fallbackBackgroundPainter)
   }
 
   internal fun installPainters() {
@@ -571,11 +579,9 @@ internal interface FrameLoadingState {
 }
 
 internal fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
-  coroutineScope.launch {
-    awaitCancellationAndInvoke {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        task()
-      }
+  coroutineScope.awaitCancellationAndInvoke {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      task()
     }
   }
 }

@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;
@@ -17,8 +19,8 @@ public class ResolveAssertionsTest extends GroovyLatestTest implements ResolveTe
                                                          group<caret>By({2})
                                                        }
                                                        """);
-    assert result instanceof MethodResolveResult;
-    assert !((MethodResolveResult)result).getFullSubstitutorDelegate().isInitialized();
+    UsefulTestCase.assertInstanceOf(result, MethodResolveResult.class);
+    TestCase.assertFalse(((MethodResolveResult)result).getFullSubstitutorDelegate().isInitialized());
   }
 
   @Test
@@ -36,7 +38,7 @@ public class ResolveAssertionsTest extends GroovyLatestTest implements ResolveTe
                                                                            def c = new Container()
                                                                            c.<caret>foo += new Plus()
                                                                            """);
-    assert results.size() == 2;
+    UsefulTestCase.assertSize(2, results);
   }
 
   @Test
@@ -49,6 +51,6 @@ public class ResolveAssertionsTest extends GroovyLatestTest implements ResolveTe
                                                                            def <T> T bar(String s){}
                                                                            <caret>foo(bar())
                                                                            """);
-    assert results.size() == 2;
+    UsefulTestCase.assertSize(2, results);
   }
 }

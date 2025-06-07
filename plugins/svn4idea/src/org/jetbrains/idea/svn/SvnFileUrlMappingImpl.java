@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -56,7 +56,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   private boolean myInitedReloaded;
 
   private final @NotNull MergingUpdateQueue refreshQueue;
-  @NotNull private final CoroutineScope coroutineScope;
+  private final @NotNull CoroutineScope coroutineScope;
 
   @SuppressWarnings("UnusedDeclaration")
   private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
@@ -173,7 +173,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   @TestOnly
-  void waitForRefresh() throws TimeoutException {
+  public void waitForRefresh() throws TimeoutException {
     refreshQueue.waitForAllExecuted(5, TimeUnit.MINUTES);
   }
 

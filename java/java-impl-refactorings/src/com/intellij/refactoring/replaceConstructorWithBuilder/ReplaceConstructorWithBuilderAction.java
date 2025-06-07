@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -21,15 +21,13 @@ import java.util.Objects;
 
 public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaRefactoringBundle.message("replace.constructor.with.builder.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -54,8 +52,7 @@ public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseInt
     return ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RefactoringBulb;
   }
 
-  @Nullable
-  private static PsiMethod getConstructor(@Nullable PsiElement element) {
+  private static @Nullable PsiMethod getConstructor(@Nullable PsiElement element) {
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null && method.isConstructor()) {
       PsiClass aClass = method.getContainingClass();

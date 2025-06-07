@@ -559,7 +559,19 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     EditorEx editor = createEditor();
     editor.getContentComponent().setEnabled(isEnabled());
     if (myCaretPosition >= 0) {
-      editor.getCaretModel().moveToOffset(myCaretPosition);
+      //  at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1009)
+      //	at com.intellij.openapi.editor.impl.CaretImpl.getOffset(CaretImpl.java:661)
+      //	at com.intellij.openapi.editor.impl.CaretImpl.doMoveToLogicalPosition(CaretImpl.java:419)
+      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToLogicalPosition(CaretImpl.java:610)
+      //	at com.intellij.openapi.editor.impl.CaretImpl.lambda$moveToOffset$0(CaretImpl.java:105)
+      //	at com.intellij.openapi.editor.impl.CaretModelImpl.doWithCaretMerging(CaretModelImpl.java:413)
+      //	at com.intellij.openapi.editor.impl.CaretImpl.moveToOffset(CaretImpl.java:103)
+      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:91)
+      //	at com.intellij.openapi.editor.CaretModel.moveToOffset(CaretModel.java:77)
+      //	at com.intellij.ui.EditorTextField.initEditorInner(EditorTextField.java:562)
+      ReadAction.run(() -> {
+        editor.getCaretModel().moveToOffset(myCaretPosition);
+      });
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     String tooltip = getToolTipText();
@@ -715,7 +727,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    ReadAction.run(() -> {
+    WriteIntentReadAction.run((Runnable)() -> {
       editor.getSettings().setCaretRowShown(false);
 
       editor.setOneLineMode(myOneLineMode);
@@ -1117,7 +1129,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (editor != null && editor.isRendererMode()) {
       sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
     }
-    sink.set(CommonDataKeys.EDITOR, editor);
+    if (editor == null) {
+      sink.setNull(CommonDataKeys.EDITOR);
+    }
+    else {
+      sink.set(CommonDataKeys.EDITOR, editor);
+    }
   }
 
   public void setFileType(@NotNull FileType fileType) {

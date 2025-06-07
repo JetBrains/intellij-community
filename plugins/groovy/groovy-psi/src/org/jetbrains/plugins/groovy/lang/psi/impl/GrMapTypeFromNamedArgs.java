@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -65,16 +65,14 @@ public final class GrMapTypeFromNamedArgs extends GrMapType {
     });
   }
 
-  @Nullable
   @Override
-  public PsiType getTypeByStringKey(String key) {
+  public @Nullable PsiType getTypeByStringKey(String key) {
     GrExpression expression = myStringEntries.get(key);
     return expression != null ? inferTypePreventingRecursion(expression) : null;
   }
 
-  @NotNull
   @Override
-  public Set<String> getStringKeys() {
+  public @NotNull Set<String> getStringKeys() {
     return myStringEntries.keySet();
   }
 
@@ -83,21 +81,18 @@ public final class GrMapTypeFromNamedArgs extends GrMapType {
     return myStringEntries.isEmpty() && myOtherEntries.isEmpty();
   }
 
-  @Nullable
-  private PsiType inferTypePreventingRecursion(final GrExpression expression) {
+  private @Nullable PsiType inferTypePreventingRecursion(final GrExpression expression) {
     return RecursionManager.doPreventingRecursion(expression, false,
                                                   () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope));
   }
 
-  @NotNull
   @Override
-  protected List<Couple<PsiType>> getOtherEntries() {
+  protected @NotNull List<Couple<PsiType>> getOtherEntries() {
     return myTypesOfOtherEntries.getValue();
   }
 
-  @NotNull
   @Override
-  protected LinkedHashMap<String, PsiType> getStringEntries() {
+  protected @NotNull LinkedHashMap<String, PsiType> getStringEntries() {
     return myTypesOfStringEntries.getValue();
   }
 

@@ -1,5 +1,5 @@
 // "Add constructor parameter 'y'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 abstract class A(val x: Int, val y: String, val z: Long)
 class B(a: Int, b: String, c: Long, y: String) : A(a, y)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix

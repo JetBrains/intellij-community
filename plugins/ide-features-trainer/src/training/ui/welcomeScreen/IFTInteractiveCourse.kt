@@ -5,8 +5,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -23,7 +21,6 @@ import training.util.learningPanelWasOpenedInCurrentVersion
 import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.*
-import javax.swing.event.HyperlinkEvent
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
 

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActio
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase.assertEquals
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
@@ -81,9 +80,9 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
-        ActionUtil.performDumbAwareUpdate(action, event, false)
+        ActionUtil.updateAction(action, event)
         if (event.presentation.isEnabled) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+            ActionUtil.performAction(action, event)
             return true
         }
         return false

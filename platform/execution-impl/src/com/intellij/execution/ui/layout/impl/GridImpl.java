@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -17,11 +17,12 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {
@@ -217,7 +218,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   }
 
   @ApiStatus.Internal
-  static final class Placeholder extends Wrapper implements NullableComponent {
+  public static final class Placeholder extends Wrapper implements NullableComponent {
     private ContentProvider myContentProvider;
     private JComponent myComponent;
 
@@ -257,7 +258,8 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
       });
     }
 
-    void setContentProvider(@NotNull ContentProvider provider) {
+    @VisibleForTesting
+    public void setContentProvider(@NotNull ContentProvider provider) {
       myContentProvider = provider;
     }
 

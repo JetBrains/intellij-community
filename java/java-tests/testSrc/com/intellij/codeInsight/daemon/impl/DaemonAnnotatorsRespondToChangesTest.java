@@ -151,7 +151,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     final int SLEEP = 2_000;
     ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<>() {
       @Override
-      public Integer collectInformation(@NotNull PsiFile file) {
+      public Integer collectInformation(@NotNull PsiFile psiFile) {
         return 0;
       }
 
@@ -162,7 +162,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       }
 
       @Override
-      public void apply(@NotNull PsiFile file, Integer annotationResult, @NotNull AnnotationHolder holder) {
+      public void apply(@NotNull PsiFile psiFile, Integer annotationResult, @NotNull AnnotationHolder holder) {
         run.set(true);
       }
     };
@@ -558,7 +558,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
         @Override
         public void daemonAnnotatorStatisticsGenerated(@NotNull AnnotationSession session,
                                                        @NotNull Collection<? extends AnnotatorStatistics> statistics,
-                                                       @NotNull PsiFile file) {
+                                                       @NotNull PsiFile psiFile) {
           AnnotatorStatistics stat = assertOneElement(ContainerUtil.filter(statistics, stat1 -> stat1.annotator instanceof MyInfoAnnotator));
           firstStatistics.compareAndExchange(null, stat);
         }
@@ -576,7 +576,8 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
 
     DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics stat = firstStatistics.get();
     assertNotNull(stat);
-    assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')", stat.firstAnnotation.toString());
+    assertEquals("comment", stat.firstAnnotation.getMessage());
+    assertEquals(HighlightSeverity.INFORMATION, stat.firstAnnotation.getSeverity());
     assertSame(stat.firstAnnotation, stat.lastAnnotation);
     assertTrue(stat.annotatorStartStamp > 0);
     assertTrue(stat.firstAnnotationStamp >= stat.annotatorStartStamp);
@@ -737,20 +738,16 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     MyFieldSlowAnnotator.finished.set(false);
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
     useAnnotatorsIn(annotatorsByLanguage, () -> {
-      // now when the highlighting is restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-      long deadline = System.currentTimeMillis() + 10_000;
+      // now when the highlighting is restarted, we should get back our anno result very fast, despite very slow processing of every other element
+      TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
       while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        if (System.currentTimeMillis() > deadline) {
-          fail("Too long waiting for daemon to start");
-        }
+        t.assertNoTimeout("daemon to start");
       }
       try {
         boolean fastToolFinishedFaster = false;
         while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-          if (System.currentTimeMillis() > deadline) {
-            fail("Too long waiting for daemon to finish\n" + ThreadDumper.dumpThreadsToString());
-          }
+          t.assertNoTimeout("daemon to finish");
           PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           if (MyCommentFastAnnotator.finished.get() && !MyFieldSlowAnnotator.finished.get()) {
             boolean fastToolWarningFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
@@ -763,7 +760,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
             }
           }
         }
-        assertTrue("Fast inspection must have finished faster than the slow one, but it didn't", fastToolFinishedFaster);
+        assertTrue("Fast annotator must have finished faster than the slow one, but it didn't", fastToolFinishedFaster);
       }
       finally {
         MyFieldSlowAnnotator.stallMs.set(0);
@@ -834,19 +831,16 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     myDaemonCodeAnalyzer.restart(getTestName(false));
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
     useAnnotatorsIn(annotatorsByLanguage, () -> {
-      long deadline = System.currentTimeMillis() + 20_000;
+      TestTimeOut t = TestTimeOut.setTimeout(20_000, TimeUnit.MILLISECONDS);
+      TestTimeOut t2 = TestTimeOut.setTimeout(20_000+10_000, TimeUnit.MILLISECONDS);
       while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        if (System.currentTimeMillis() > deadline) {
-          fail("Too long waiting for daemon to start");
-        }
+        t.assertNoTimeout("daemon to start");
       }
       boolean tool1AnnoFound = false;
       boolean tool2AnnoFound = false;
       while (!tool1AnnoFound || !tool2AnnoFound) {
-        if (System.currentTimeMillis() > deadline) {
-          fail("Too long waiting for daemon to finish\n" + ThreadDumper.dumpThreadsToString());
-        }
+        t.assertNoTimeout("daemon to finish");
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         tool1AnnoFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0,
                                                                  myEditor.getDocument().getTextLength(),
@@ -859,10 +853,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       MyComment2Annotator.stall2.set(false);
       while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        if (System.currentTimeMillis() > deadline+1_000) {
-          fail("Too long waiting for daemon to finish; stall1="+MyComment1Annotator.stall1+"; stall2="+MyComment2Annotator.stall2 +
-               "\n" + ThreadDumper.dumpThreadsToString());
-        }
+        t2.assertNoTimeout("daemon finish after annotators completed: "+"; stall1="+MyComment1Annotator.stall1+"; stall2="+MyComment2Annotator.stall2);
         Thread.yield();
       }
     });

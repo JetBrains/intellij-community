@@ -16,8 +16,7 @@ import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
-import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
-import java.io.File
+import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -29,7 +28,6 @@ internal enum class ApiSourceArchive(
   val archiveName: String,
 ) {
   CSS("com.intellij.css", "attachSources.api.action.displayName.css", "src_css-api.zip"),
-  DATABASE("com.intellij.database", "attachSources.api.action.displayName.database", "src_database-openapi.zip"),
   JAM("com.intellij.java", "attachSources.api.action.displayName.jam", "src_jam-openapi.zip"),
   JAVAEE("com.intellij.javaee", "attachSources.api.action.displayName.javaee", "src_javaee-openapi.zip"),
   PERSISTENCE("com.intellij.persistence", "attachSources.api.action.displayName.persistence", "src_persistence-openapi.zip"),
@@ -46,7 +44,7 @@ internal enum class ApiSourceArchive(
  */
 internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
-  override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile) =
+  override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile) =
     orderEntries
       .mapNotNull { it.library?.getMavenCoordinates() }
       .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }
@@ -57,14 +55,17 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
                   ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
 
     return when {
-      // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7` or `idea:ideaIC:2023.2.7`
+      // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`, `idea:ideaIC:aarch64:2024.3`, or `idea:ideaIC:2023.2.7`
       product != null -> resolveIntelliJPlatformAction(psiFile, coordinates.version)
 
       // IntelliJ Platform bundled plugin, such as `localIde:IC:2023.2.7+445`
       coordinates.groupId == "localIde" -> createAttachLocalPlatformSourcesAction(psiFile, coordinates)
 
-      // IntelliJ Platform bundled plugin, such as `bundledPlugin:Git4Idea:2023.2.7+445`
+      // IntelliJ Platform bundled plugin, such as `bundledPlugin:org.intellij.groovy:IC-243.21565.193`, `bundledPlugin:Git4Idea:2023.2.7+445`
       coordinates.groupId == "bundledPlugin" -> createAttachBundledPluginSourcesAction(psiFile, coordinates)
+
+      // IntelliJ Platform bundled module, such as `bundledModule:intellij.platform.coverage:IC-243.21565.193`
+      coordinates.groupId == "bundledModule" -> createAttachBundledModuleSourcesAction(psiFile, coordinates)
 
       else -> null
     }
@@ -74,7 +75,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   /**
    * Resolve and attach IntelliJ Platform sources to the currently handled dependency in a requested version.
    *
-   * Requests PyCharm Community sources if PyCharm Community or PyCharm Professional.
+   * Requests PyCharm Community sources if PyCharm Community or PyCharm.
    * Requests IntelliJ IDEA Ultimate sources if IntelliJ IDEA Ultimate 2024.2+.
    * In all other cases, requests IntelliJ IDEA Community sources.
    *
@@ -108,7 +109,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param coordinates The Maven coordinates of the IntelliJ Platform whose sources need to be attached.
    */
   private fun createAttachLocalPlatformSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
-    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
 
   /**
    * Creates an action to attach sources of bundled plugins for the IntelliJ Platform.
@@ -118,7 +119,16 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    */
   private fun createAttachBundledPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
     createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.entries.firstOrNull { it.id == coordinates.artifactId })
-    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
+
+  /**
+   * Creates an action to attach sources of bundled modules for the IntelliJ Platform.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the bundled module whose sources need to be attached.
+   */
+  private fun createAttachBundledModuleSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
+    createAttachBundledPluginSourcesAction(psiFile, coordinates)
 
   /**
    * Attach the provided sources archive.
@@ -145,7 +155,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
           val executionResult = ActionCallback()
 
-          attachSources(it.toFile(), orderEntries) {
+          attachSources(it, orderEntries) {
             executionResult.setDone()
           }
 
@@ -176,8 +186,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:$version:sources"
 
-        GradleDependencySourceDownloader
-          .downloadSources(project, name, sourceArtifactNotation, externalProjectPath)
+        GradleArtifactDownloader.downloadArtifact(project, name, sourceArtifactNotation, externalProjectPath)
           .whenComplete { path, error ->
             if (error != null) {
               executionResult.setRejected()
@@ -196,7 +205,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   /**
    * Attaches sources jar to the specified libraries and executes the provided block of code.
    */
-  private fun attachSources(path: File, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
+  private fun attachSources(path: Path, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
     ApplicationManager.getApplication().invokeLater {
       InternetAttachSourceProvider.attachSourceJar(path, orderEntries.mapNotNull { it.library })
       block()
@@ -253,7 +262,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
   private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =
     when (product) {
-      // For PyCharm Community and PyCharm Professional, we use PC sources.
+      // For PyCharm Community and PyCharm, we use PC sources.
       IntelliJPlatformProduct.PYCHARM, IntelliJPlatformProduct.PYCHARM_PC -> IntelliJPlatformProduct.PYCHARM_PC
 
       // IntelliJ IDEA Ultimate has sources published since 242; otherwise we use IC.

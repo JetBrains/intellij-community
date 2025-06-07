@@ -238,7 +238,7 @@ class ProjectStoreTest {
 
     runBlocking {
       val newProjectPath = tempDirManager.newPath()
-      val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true; isRefreshVfsNeeded = false })!!
+      val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true })!!
       newProject.useProjectAsync {
         newProject.stateStore.save(forceSavingAllSettings = true)
         val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()

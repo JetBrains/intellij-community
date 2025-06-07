@@ -6,7 +6,7 @@ import com.intellij.platform.feedback.impl.isSuitableToShow
 import com.intellij.platform.feedback.impl.showNotification
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
-sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
+sealed class FeedbackSurveyType<T : NotificationBasedFeedbackSurveyConfig> {
 
   internal abstract val feedbackSurveyConfig: T
 

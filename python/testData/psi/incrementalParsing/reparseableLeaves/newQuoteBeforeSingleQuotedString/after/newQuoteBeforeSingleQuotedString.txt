@@ -1,0 +1,10 @@
+Original text:
+---------------
+def foo():
+    s = 'singleQuotedString'
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>s = ''singleQuotedString'</reparse>
+---------------

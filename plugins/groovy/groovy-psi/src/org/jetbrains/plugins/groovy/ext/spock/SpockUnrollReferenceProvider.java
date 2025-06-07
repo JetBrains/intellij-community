@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -22,8 +22,8 @@ import java.util.regex.Pattern;
 public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
-  @NlsSafe private static final String UNROLL = "Unroll";
-  @NlsSafe private static final String SPOCK_LANG_UNROLL = "spock.lang.Unroll";
+  private static final @NlsSafe String UNROLL = "Unroll";
+  private static final @NlsSafe String SPOCK_LANG_UNROLL = "spock.lang.Unroll";
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {

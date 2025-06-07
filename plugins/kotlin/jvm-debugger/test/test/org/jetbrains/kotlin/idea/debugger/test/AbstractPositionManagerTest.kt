@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.codegen.GenerationUtils
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.JvmAnalysisFlags.suppressMissingBuiltinsError
-import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation
@@ -78,11 +77,10 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
 
         val configuration = KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB, TestJdkKind.MOCK_JDK)
         // TODO: delete this once IDEVirtualFileFinder supports loading .kotlin_builtins files
-        configuration.languageVersionSettings = CompilerTestLanguageVersionSettings(
-            emptyMap(),
-            ApiVersion.LATEST_STABLE,
+        configuration.languageVersionSettings = LanguageVersionSettingsImpl(
             LanguageVersion.LATEST_STABLE,
-            Collections.singletonMap(suppressMissingBuiltinsError, true)
+            ApiVersion.LATEST_STABLE,
+            mapOf(suppressMissingBuiltinsError to true),
         )
 
         val state = getCompileFiles(files, configuration)
@@ -102,7 +100,7 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun getCompileFiles(files: List<KtFile>, configuration: CompilerConfiguration): GenerationState {
-        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, { PackagePartProvider.Empty })
+        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, { PackagePartProvider.Empty }).first
     }
 
     public override fun tearDown() {

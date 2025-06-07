@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
@@ -17,9 +18,8 @@ public class ModuleTypeCategory extends ProjectCategory {
     myModuleType = moduleType;
   }
 
-  @NotNull
   @Override
-  public ModuleBuilder createModuleBuilder() {
+  public @NotNull ModuleBuilder createModuleBuilder() {
     return myModuleType.createModuleBuilder();
   }
 

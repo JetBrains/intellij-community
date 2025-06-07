@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-//import org.jetbrains.plugins.gradle.service.resolve.static.getStaticallyHandledExtensions
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
+import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
@@ -17,8 +17,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
+import javax.swing.Icon
 
-class GradlePropertyExtensionsContributor : NonCodeMembersContributor() {
+internal class GradlePropertyExtensionsContributor : NonCodeMembersContributor() {
 
   override fun getClassNames(): Collection<String> {
     return listOf(GradleCommonClassNames.GRADLE_API_EXTRA_PROPERTIES_EXTENSION, GRADLE_API_PROJECT)
@@ -98,10 +99,17 @@ class GradlePropertyExtensionsContributor : NonCodeMembersContributor() {
       override fun getPropertyType(): PsiType {
         return PsiElementFactory.getInstance(project).createType(clazz, PsiSubstitutor.EMPTY)
       }
+
+      override fun getIcon(flags: Int): Icon? {
+        return GradleIcons.Gradle
+      }
     }
 
     fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
       val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
+      //TODO Handle process of all catalog entries.
+      // this case is possible when only a part of a catalog name is written and autocomplete is triggered
+
       val names = if (name == null) staticExtensions else listOf(name).filter { it in staticExtensions }
       val properties = mutableSetOf<String>()
       for (extName in names) {
@@ -121,5 +129,15 @@ class GradlePropertyExtensionsContributor : NonCodeMembersContributor() {
     }
 
     internal const val PROPERTIES_FILE_ORIGINAL_INFO : String = "by gradle.properties"
+
+    private fun processAllCatalogsOfBuild(place: PsiElement, processor: PsiScopeProcessor, state: ResolveState): Set<String>? {
+      val catalogNameToAccessor: Map<String, PsiClass> = getAccessorsForAllCatalogs(place)
+      catalogNameToAccessor.forEach { (catalogName, accessor) ->
+        if (!processor.execute(StaticVersionCatalogProperty(place, catalogName, accessor), state)) {
+          return null // to stop processing
+        }
+      }
+      return catalogNameToAccessor.keys
+    }
   }
 }

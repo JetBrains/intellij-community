@@ -92,6 +92,25 @@ __jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  if [[ -z "${__jetbrains_intellij_initialized-}" ]]; then
+    # As `precmd` is executed before each prompt, for the first time it is called after
+    # all rc files have been processed and before the first prompt is displayed.
+    # So, here it finishes the initialization block, not a user command.
+    __jetbrains_intellij_initialized=1
+
+    # `HISTFILE` is already initialized at this point.
+    # Get all commands from history from the first command
+    builtin local hist="$(builtin history 1)"
+    builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
+
+    builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
+    builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
+    builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+
+    __jetbrains_intellij_report_prompt_state
+
+    builtin return
+  fi
   builtin local LAST_EXIT_CODE="$?"
   if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
   then
@@ -202,14 +221,6 @@ add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
 
-# `HISTFILE` is already initialized at this point.
-# Get all commands from history from the first command
-builtin local hist="$(builtin history 1)"
-builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
-
-builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
-builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
-
-__jetbrains_intellij_report_prompt_state
+# IJPL-101617 Disable p10k Instant Prompt feature: https://github.com/romkatv/powerlevel10k#instant-prompt
+# because it breaks our command blocks integration by showing the prompt immediately before '.zshrc' is fully sourced
+builtin typeset -g POWERLEVEL9K_INSTANT_PROMPT=off

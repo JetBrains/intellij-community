@@ -18,6 +18,7 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlTokenType.XML_REAL_WHITE_SPACE;
 
 public class XmlASTFactory extends ASTFactory {
   @Override
@@ -92,7 +93,8 @@ public class XmlASTFactory extends ASTFactory {
       return new XmlEnumeratedTypeImpl();
     }
     if (type == XML_CDATA) {
-      return new CompositePsiElement(XML_CDATA) {};
+      return new CompositePsiElement(XML_CDATA) {
+      };
     }
     if (type instanceof ITemplateDataElementType) {
       return new XmlFileElement(type, null);
@@ -134,6 +136,6 @@ public class XmlASTFactory extends ASTFactory {
   }
 
   static {
-    PsiBuilderImpl.registerWhitespaceToken(XML_REAL_WHITE_SPACE);    
+    PsiBuilderImpl.registerWhitespaceToken(XML_REAL_WHITE_SPACE);
   }
 }

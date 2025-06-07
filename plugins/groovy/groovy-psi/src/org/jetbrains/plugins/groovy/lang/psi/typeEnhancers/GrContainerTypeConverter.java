@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.CommonClassNames;
@@ -23,12 +23,11 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCom
  * @author Maxim.Medvedev
  */
 public final class GrContainerTypeConverter extends GrTypeConverter {
-  @Nullable
   @Override
-  public ConversionResult isConvertible(@NotNull PsiType targetType,
-                                        @NotNull PsiType actualType,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                  @NotNull PsiType actualType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (position == ASSIGNMENT && resolvesTo(targetType, JAVA_UTIL_SET) && actualType instanceof EmptyListLiteralType) {
       return ConversionResult.OK;
     }
@@ -46,10 +45,9 @@ public final class GrContainerTypeConverter extends GrTypeConverter {
     return null;
   }
 
-  @Nullable
-  private static ConversionResult isCSConvertible(@NotNull PsiType targetType,
-                                                  @NotNull PsiType actualType,
-                                                  @NotNull GroovyPsiElement context) {
+  private static @Nullable ConversionResult isCSConvertible(@NotNull PsiType targetType,
+                                                            @NotNull PsiType actualType,
+                                                            @NotNull GroovyPsiElement context) {
     if (targetType instanceof PsiArrayType && actualType instanceof PsiArrayType) {
       if (((PsiArrayType)targetType).getComponentType() instanceof PsiPrimitiveType != ((PsiArrayType)actualType).getComponentType() instanceof PsiPrimitiveType) {
         // groovy 3.0.13 disallows boxing in array components
@@ -66,8 +64,7 @@ public final class GrContainerTypeConverter extends GrTypeConverter {
     return position != Position.METHOD_PARAMETER;
   }
 
-  @Nullable
-  private static PsiType extractComponentType(PsiType type) {
+  private static @Nullable PsiType extractComponentType(PsiType type) {
     if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
     return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_COLLECTION, 0, false);
   }

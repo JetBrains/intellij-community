@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -56,9 +56,7 @@ private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.upda
 private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
 @ApiStatus.Internal
-class EditorNotificationsImpl(private val project: Project,
-                              coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
-
+class EditorNotificationsImpl(private val project: Project, coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
   /**
    * The scope passed in constructor can be a project scope,
    * for example, in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
@@ -160,7 +158,9 @@ class EditorNotificationsImpl(private val project: Project,
     check(fileToUpdateNotificationJob.isEmpty())
   }
 
+  @Deprecated("Deprecated in Java")
   override fun updateNotifications(provider: EditorNotificationProvider) {
+    // TODO: run [updateEditors] instead to check for the new notifications
     for (file in FileEditorManager.getInstance(project).openFilesWithRemotes) {
       for (editor in getEditors(file).toList()) {
         updateNotification(fileEditor = editor, provider = provider, component = null)
@@ -211,6 +211,8 @@ class EditorNotificationsImpl(private val project: Project,
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
+    if (fileEditors.isEmpty()) return
+
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
       // delay for debouncing
       delay(100)
@@ -235,7 +237,8 @@ class EditorNotificationsImpl(private val project: Project,
           if (project.isDisposed) {
             return@launch
           }
-          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          // we use read action here to prevent project cancellation during instantiation
+          val provider = readAction { adapter.createInstance<EditorNotificationProvider>(project) } ?: continue
 
           coroutineContext.ensureActive()
 

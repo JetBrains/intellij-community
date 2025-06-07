@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
@@ -138,7 +139,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     (relevantFunction is KtNamedFunction && relevantFunction.bodyBlockExpression == null)
                 ) {
                     val lastStatements = mutableSetOf<PsiElement>(relevantFunction)
-                    relevantFunction.acceptChildren(object : KtVisitorVoid() {
+                    relevantFunction.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
                         override fun visitKtElement(element: KtElement) {
                             ProgressIndicatorProvider.checkCanceled()
                             element.acceptChildren(this)
@@ -201,7 +202,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     emptySet()
                 }
 
-            relevantFunction?.accept(object : KtVisitorVoid() {
+            relevantFunction?.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
@@ -257,7 +258,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     when (expression.returnedExpression) {
                         is KtIfExpression, is KtWhenExpression, is KtTryExpression -> {
                             addOccurrence(expression.returnKeyword)
-                            expression.acceptChildren(object : KtVisitorVoid() {
+                            expression.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
                                 override fun visitKtElement(element: KtElement) {
                                     ProgressIndicatorProvider.checkCanceled()
                                     element.acceptChildren(this)
@@ -341,7 +342,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
 
 
-            relevantLoop.accept(object : KtVisitorVoid() {
+            relevantLoop.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
                 var nestedLoopExpressions = Stack<KtLoopExpression>()
 
                 override fun visitKtElement(element: KtElement) {

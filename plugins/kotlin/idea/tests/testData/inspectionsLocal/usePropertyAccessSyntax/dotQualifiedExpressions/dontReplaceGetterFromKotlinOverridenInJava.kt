@@ -1,4 +1,6 @@
 // PROBLEM: none
+// ERROR: Unresolved reference: getX
+// K2_ERROR:
 
 fun main() {
     val j = J()

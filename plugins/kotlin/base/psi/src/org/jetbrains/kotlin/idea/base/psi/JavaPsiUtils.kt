@@ -17,7 +17,7 @@ val PsiClass.classIdIfNonLocal: ClassId?
         if (this is KtLightClass) {
             return this.kotlinOrigin?.getClassId()
         }
-        val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
+        val packageName = (containingFile as? PsiClassOwner)?.packageName ?: return null
         val packageFqName = FqName(packageName)
 
         val classesNames = parentsOfType<PsiClass>().map { it.name }.toList().asReversed()

@@ -1,3 +1,3 @@
 // "Create class 'Unknown'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 enum class A : Unknown<caret>

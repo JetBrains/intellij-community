@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UAnnotationUtils")
 
 package org.jetbrains.uast
@@ -106,4 +106,4 @@ fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, Strin
 private fun isResolvedToAnnotation(reference: UReferenceExpression?) = (reference?.resolve() as? PsiClass)?.isAnnotationType == true
 
 private val UElement.parentAnyway
-  get() = uastParent ?: generateSequence(sourcePsi?.parent, { it.parent }).mapNotNull { it.toUElement() }.firstOrNull()
+  get() = uastParent ?: generateSequence(sourcePsi?.parent) { it.parent }.mapNotNull { it.toUElement() }.firstOrNull()

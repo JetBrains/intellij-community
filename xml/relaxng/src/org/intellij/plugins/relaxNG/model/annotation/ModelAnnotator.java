@@ -83,7 +83,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
 
             grammar.acceptChildren(searcher);
 
-            return result.size() == 0 || super.execute(file);
+            return result.isEmpty() || super.execute(file);
           }
         };
         
@@ -114,7 +114,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
         if (map == null) continue;
 
         final Set<Define> set = map.get(define.getName());
-        if (set == null || set.size() == 0) {
+        if (set == null || set.isEmpty()) {
           //noinspection unchecked
           myHolder.createAnnotation(HighlightSeverity.ERROR, (T)define,
                                     RelaxngBundle.message("relaxng.annotator.definition-doesnt-override-anything-from", file.getName()),

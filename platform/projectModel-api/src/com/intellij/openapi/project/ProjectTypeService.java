@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ReadAction;
@@ -11,10 +11,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,47 +22,43 @@ import static java.util.Collections.emptyList;
 @Service(Service.Level.PROJECT)
 @State(name = "ProjectType")
 public final class ProjectTypeService implements PersistentStateComponent<ProjectType> {
-
   private static final Key<CachedValue<Collection<ProjectType>>> PROJECT_TYPES_KEY = Key.create("PROJECT_TYPES");
 
   private ProjectType myProjectType;
 
-  ProjectTypeService() {
-  }
+  ProjectTypeService() { }
 
-  /**
-   * @deprecated Use {@link #getProjectTypes(Project)} instead
-   */
+  /** @deprecated Use {@link #getProjectTypes(Project)} instead */
   @Deprecated
   public static @Nullable ProjectType getProjectType(@Nullable Project project) {
     if (project != null) {
-      ProjectType projectType = getInstance(project).myProjectType;
+      var projectType = getInstance(project).myProjectType;
       if (projectType != null) return projectType;
     }
 
-    Collection<ProjectType> projectTypes = getProjectTypes(project);
+    var projectTypes = getProjectTypes(project);
     if (!projectTypes.isEmpty()) return projectTypes.iterator().next();
 
     return null;
   }
 
-  public static Set<String> getProjectTypeIds(@Nullable Project project) {
+  public static @Unmodifiable @NotNull Set<String> getProjectTypeIds(@Nullable Project project) {
     return ContainerUtil.map2Set(getProjectTypes(project), ProjectType::getId);
   }
 
-  public static Collection<ProjectType> getProjectTypes(@Nullable Project project) {
+  public static @Unmodifiable @NotNull Collection<ProjectType> getProjectTypes(@Nullable Project project) {
     if (project == null) return emptyList();
     if (project.isDefault()) return emptyList();
-
-    return CachedValuesManager.getManager(project).getCachedValue(project, PROJECT_TYPES_KEY, () -> {
-      return Result.create(findProjectTypes(project),
-                           ProjectRootManager.getInstance(project),
-                           DumbService.getInstance(project));
-    }, false);
+    return CachedValuesManager.getManager(project).getCachedValue(
+      project,
+      PROJECT_TYPES_KEY,
+      () -> Result.create(findProjectTypes(project), ProjectRootManager.getInstance(project), DumbService.getInstance(project)),
+      false
+    );
   }
 
-  private static @NotNull List<ProjectType> findProjectTypes(@NotNull Project project) {
-    List<ProjectTypesProvider> providers = ProjectTypesProvider.EP_NAME.getExtensionList();
+  private static List<ProjectType> findProjectTypes(Project project) {
+    var providers = ProjectTypesProvider.EP_NAME.getExtensionList();
     if (providers.isEmpty()) return emptyList();
 
     return ReadAction.<List<ProjectType>>nonBlocking(() -> {
@@ -77,9 +70,7 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     }).executeSynchronously();
   }
 
-  /**
-   * @deprecated Use {@link #getProjectTypes(Project)} instead.
-   */
+  /** @deprecated use {@link #getProjectTypes(Project)} instead */
   @Deprecated
   public static void setProjectType(@NotNull Project project, @NotNull ProjectType projectType) {
     getInstance(project).loadState(projectType);

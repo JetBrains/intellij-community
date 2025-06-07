@@ -18,6 +18,7 @@ object ApplicationActivationStateManager {
   private val LOG = logger<ApplicationActivationStateManager>()
 
   private var state = ApplicationActivationStateManagerState.DEACTIVATED
+  private var delayedDeactivatedJob: Job? = null
 
   val isActive: Boolean
     get() = state.isActive
@@ -53,7 +54,8 @@ object ApplicationActivationStateManager {
       // So let's postpone the application deactivation for a while
       state = ApplicationActivationStateManagerState.DEACTIVATING
       LOG.debug("The app is in the deactivating state")
-      app.getCoroutineScope().launch(CoroutineName("ApplicationDeactivation")) {
+      delayedDeactivatedJob?.cancel()
+      delayedDeactivatedJob = app.getCoroutineScope().launch(CoroutineName("ApplicationDeactivation")) {
         delay(Registry.intValue("application.deactivation.timeout", 1_500).milliseconds)
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (state != ApplicationActivationStateManagerState.DEACTIVATING) {
@@ -77,6 +79,8 @@ object ApplicationActivationStateManager {
   private fun setActive(app: Application, window: Window?): Boolean {
     state = ApplicationActivationStateManagerState.ACTIVE
     LOG.debug("The app is in the active state")
+    delayedDeactivatedJob?.cancel()
+    delayedDeactivatedJob = null
     if (!app.isDisposed()) {
       val ideFrame = getIdeFrameFromWindow(window)
       if (ideFrame != null) {

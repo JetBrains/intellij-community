@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import java.io.File
@@ -56,7 +57,9 @@ abstract class ExternalSystemProjectTestCase : HeavyPlatformTestCase() {
       val externalModulePaths = ExternalSystemApiUtil.findAll(node, ProjectKeys.MODULE).map { it.data.linkedExternalProjectPath }.toSet()
       settings.getLinkedProjectSettings(projectPath)!!.setModules(externalModulePaths)
 
-      ProjectDataManager.getInstance().importData(node, project)
+      runWithModalProgressBlocking(project, "Import project data from data nodes") {
+        ProjectDataManager.getInstance().importData(node, project)
+      }
       val projectInfo = InternalExternalProjectInfo(projectSystemId, projectPath, node)
       projectManager.updateExternalProjectData(projectInfo)
     }

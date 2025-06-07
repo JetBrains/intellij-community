@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -27,14 +27,12 @@ import org.jetbrains.annotations.Nullable;
 public final class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.problem.descriptor", infos[1]);
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiReferenceExpression expression = (PsiReferenceExpression)infos[0];
     return new CollectionsFieldAccessReplaceableByMethodCallFix(expression.getReferenceName());
   }
@@ -47,20 +45,17 @@ public final class CollectionsFieldAccessReplaceableByMethodCallInspection exten
       replacementText = getCollectionsMethodCallName(referenceName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.fix.family.name");
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
-    @NonNls
-    private static String getCollectionsMethodCallText(PsiReferenceExpression referenceExpression) {
+    private static @NonNls String getCollectionsMethodCallText(PsiReferenceExpression referenceExpression) {
       final String referenceName = referenceExpression.getReferenceName();
       final PsiElement parent = referenceExpression.getParent();
       if (!(parent instanceof PsiExpressionList)) {
@@ -99,13 +94,11 @@ public final class CollectionsFieldAccessReplaceableByMethodCallInspection exten
              : getUntypedCollectionsMethodCallText(referenceName);
     }
 
-    @NonNls
-    private static String getUntypedCollectionsMethodCallText(String referenceName) {
+    private static @NonNls String getUntypedCollectionsMethodCallText(String referenceName) {
       return "Collections." + getCollectionsMethodCallName(referenceName);
     }
 
-    @NonNls
-    private static String getCollectionsMethodCallName(@NonNls String referenceName) {
+    private static @NonNls String getCollectionsMethodCallName(@NonNls String referenceName) {
       if ("EMPTY_LIST".equals(referenceName)) {
         return "emptyList()";
       }
@@ -145,8 +138,8 @@ public final class CollectionsFieldAccessReplaceableByMethodCallInspection exten
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      @NonNls final String name = expression.getReferenceName();
-      @NonNls final String replacement;
+      final @NonNls String name = expression.getReferenceName();
+      final @NonNls String replacement;
       if ("EMPTY_LIST".equals(name)) {
         replacement = "emptyList()";
       }

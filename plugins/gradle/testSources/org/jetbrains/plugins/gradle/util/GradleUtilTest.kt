@@ -79,7 +79,7 @@ class GradleUtilTest: UsefulTestCase() {
       .toPath()
     NioFiles.createParentDirectories(gradlePropertiesRoot).createFile()
 
-    GradleUtil.writeWrapperConfiguration(gradlePropertiesRoot, expected)
+    GradleUtil.writeWrapperConfiguration(expected, gradlePropertiesRoot)
     val actual = GradleUtil.getWrapperConfiguration(rootDir.path)
     assertWrapperConfigurationsEquals(expected, actual!!)
   }
@@ -89,7 +89,7 @@ class GradleUtilTest: UsefulTestCase() {
     val wrapperPropertiesFile = rootDir.resolve("gradle-wrapper.properties")
     wrapperPropertiesFile.createNewFile()
     val wrapperPropertiesPath = wrapperPropertiesFile.toPath()
-    GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath, expected)
+    GradleUtil.writeWrapperConfiguration(expected, wrapperPropertiesPath)
     val actual = GradleUtil.readWrapperConfiguration(wrapperPropertiesPath)
     assertWrapperConfigurationsEquals(expected, actual!!)
   }

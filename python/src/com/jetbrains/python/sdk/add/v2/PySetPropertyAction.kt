@@ -10,7 +10,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 
-class PySetPropertyAction : DumbAwareAction() {
+internal class PySetPropertyAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val key = AtomicProperty("")

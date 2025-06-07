@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.stepping;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,25 +9,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class XSmartStepIntoVariant {
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @NlsSafe
-  public abstract String getText();
+  public abstract @NlsSafe String getText();
 
   /**
    * Returns a range to highlight in the editor when this variant is selected.
    */
-  @Nullable
-  public TextRange getHighlightRange() {
+  public @Nullable TextRange getHighlightRange() {
     return null;
   }
 
-  @Nullable
-  @Nls
-  public String getDescription() {
+  public @Nullable @Nls String getDescription() {
     return null;
   }
 }

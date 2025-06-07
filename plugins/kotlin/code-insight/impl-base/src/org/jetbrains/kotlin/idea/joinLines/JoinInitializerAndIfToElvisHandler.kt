@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import kotlin.sequences.firstOrNull
 
 class JoinInitializerAndIfToElvisHandler : JoinRawLinesHandlerDelegate {
 
@@ -36,9 +35,17 @@ class JoinInitializerAndIfToElvisHandler : JoinRawLinesHandlerDelegate {
                 }
             }
         }
-        return joinLines(ifExpression, data.variableDeclaration, data.initializer, data.ifNullExpression, data.typeChecked,
-                         data.variableTypeString).textRange.startOffset
+
+        val variableDeclaration = data.variableDeclaration.element ?: return CANNOT_JOIN
+        val initializer = data.initializer.element ?: return CANNOT_JOIN
+        val ifNullExpr = data.ifNullExpression.element ?: return CANNOT_JOIN
+        val typeChecked = data.typeChecked?.element
+
+        return joinLines(
+            ifExpression, variableDeclaration, initializer, ifNullExpr, typeChecked,
+            data.variableTypeString
+        ).textRange.startOffset
     }
 
-    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int) = CANNOT_JOIN
+    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = CANNOT_JOIN
 }

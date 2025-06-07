@@ -20,6 +20,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.Map;
 public interface FacetConfigurationImporter<F extends Facet> {
   ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.facetConfigurationImporter");
 
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<F> process(@NotNull Module module,
                                 @NotNull String name,
                                 @NotNull Map<String, Object> cfg,

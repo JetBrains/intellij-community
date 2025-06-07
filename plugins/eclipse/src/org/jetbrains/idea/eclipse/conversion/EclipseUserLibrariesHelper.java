@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -49,7 +49,7 @@ public final class EclipseUserLibrariesHelper {
     }
   }
 
-  public static void appendProjectLibraries(final Project project, @Nullable final File userLibrariesFile) throws IOException {
+  public static void appendProjectLibraries(final Project project, final @Nullable File userLibrariesFile) throws IOException {
     if (userLibrariesFile == null) return;
     if (userLibrariesFile.exists() && !userLibrariesFile.isFile()) return;
     final File parentFile = userLibrariesFile.getParentFile();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -85,13 +85,14 @@ public final class GitBranchUtil {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
     h.addParameters("-l");
     h.setSilent(true);
+    h.setEnableInteractiveCallbacks(false);
 
     List<String> tags = new ArrayList<>();
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
-        if (line.length() != 0) tags.add(line);
+        if (!line.isEmpty()) tags.add(line);
       }
     });
 
@@ -109,16 +110,7 @@ public final class GitBranchUtil {
   }
 
   public static @NlsSafe @NotNull String stripRefsPrefix(@NotNull @NonNls String branchName) {
-    if (branchName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-      return branchName.substring(GitBranch.REFS_HEADS_PREFIX.length());
-    }
-    else if (branchName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
-      return branchName.substring(GitBranch.REFS_REMOTES_PREFIX.length());
-    }
-    else if (branchName.startsWith(GitTag.REFS_TAGS_PREFIX)) {
-      return branchName.substring(GitTag.REFS_TAGS_PREFIX.length());
-    }
-    return branchName;
+    return com.intellij.vcs.git.shared.ref.GitRefUtil.stripRefsPrefix(branchName);
   }
 
   /**
@@ -195,9 +187,8 @@ public final class GitBranchUtil {
     }
   }
 
-  @Nls
-  private static String getDetachedStatePresentableText(@NotNull GitRepository repository,
-                                                        @NotNull Function<@NotNull @NlsSafe String,
+  private static @Nls String getDetachedStatePresentableText(@NotNull GitRepository repository,
+                                                             @NotNull Function<@NotNull @NlsSafe String,
                                                         @NotNull @NlsSafe String> branchNameTruncator) {
     GitReference currentReference = GitRefUtil.getCurrentReference(repository);
     if (currentReference instanceof GitTag) {
@@ -330,7 +321,7 @@ public final class GitBranchUtil {
     }
     final String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    if (output.trim().length() == 0) {
+    if (output.trim().isEmpty()) {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {

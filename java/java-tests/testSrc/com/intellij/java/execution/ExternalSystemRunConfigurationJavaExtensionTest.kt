@@ -20,7 +20,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.junit.Assert.assertThat
-import java.util.*
 
 class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExtensionManagerTestCase() {
   override fun getTestAppPath(): String = ""

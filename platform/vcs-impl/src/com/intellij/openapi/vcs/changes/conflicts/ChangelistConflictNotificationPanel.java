@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.icons.AllIcons;
@@ -22,10 +22,9 @@ import java.awt.event.ActionListener;
  * @author Dmitry Avdeev
  */
 public final class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
-  @Nullable
-  public static ChangelistConflictNotificationPanel create(@NotNull Project project,
-                                                           @NotNull VirtualFile file,
-                                                           @NotNull FileEditor fileEditor) {
+  public static @Nullable ChangelistConflictNotificationPanel create(@NotNull Project project,
+                                                                     @NotNull VirtualFile file,
+                                                                     @NotNull FileEditor fileEditor) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final Change change = manager.getChange(file);
     if (change == null) return null;

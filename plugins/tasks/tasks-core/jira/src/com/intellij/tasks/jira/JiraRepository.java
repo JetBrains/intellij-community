@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -42,10 +42,10 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 @Tag("JIRA")
-public class JiraRepository extends BaseRepositoryImpl {
+public final class JiraRepository extends BaseRepositoryImpl {
 
   public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
-  private final static Logger LOG = Logger.getInstance(JiraRepository.class);
+  private static final Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
   private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
@@ -104,8 +104,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
 
   @Override
-  @NotNull
-  public JiraRepository clone() {
+  public @NotNull JiraRepository clone() {
     return new JiraRepository(this);
   }
 
@@ -138,9 +137,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     return tasksFound.toArray(Task.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     ensureApiVersionDiscovered();
     return myApiVersion.findTask(id);
   }
@@ -150,9 +148,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     myApiVersion.updateTimeSpend(task, timeSpent, comment);
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     clearCookies();
     // TODO cancellable connection for XML_RPC?
     return new CancellableConnection() {
@@ -169,8 +166,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
-  public JiraRemoteApi discoverApiVersion() throws Exception {
+  public @NotNull JiraRemoteApi discoverApiVersion() throws Exception {
     if (LEGACY_API_ONLY) {
       LOG.info("Intentionally using only legacy JIRA API");
       return createLegacyApi();
@@ -261,8 +257,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  public String executeMethod(@NotNull HttpMethod method) throws Exception {
+  public @NotNull String executeMethod(@NotNull HttpMethod method) throws Exception {
     LOG.debug("URI: " + method.getURI());
 
     HttpClient client = getHttpClient();
@@ -423,9 +418,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     myApiVersion.setTaskState(task, state);
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return myApiVersion.getAvailableTaskStates(task);
   }
 
@@ -449,8 +443,7 @@ public class JiraRepository extends BaseRepositoryImpl {
    * Used to preserve discovered API version for the next initialization.
    */
   @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public JiraRemoteApi.ApiType getApiType() {
+  public @Nullable JiraRemoteApi.ApiType getApiType() {
     return myApiVersion == null ? null : myApiVersion.getType();
   }
 
@@ -461,8 +454,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
   }
 
-  @Nullable
-  public String getJiraVersion() {
+  public @Nullable String getJiraVersion() {
     return myJiraVersion;
   }
 

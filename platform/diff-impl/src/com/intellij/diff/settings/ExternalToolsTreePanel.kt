@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -276,7 +277,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       addActionListener { showTestMerge() }
     }
 
-    private val toolOutputEditor: EditorEx = ConsoleViewUtil.setupConsoleEditor(null, false, false).also {
+    private val toolOutputEditor: EditorEx = ConsoleViewUtil.setupConsoleEditor(null as Project?, false, false).also {
       it.settings.additionalLinesCount = 3
     }
     private var toolOutputConsole: MyTestOutputConsole? = null

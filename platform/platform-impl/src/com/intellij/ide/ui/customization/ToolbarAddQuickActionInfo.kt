@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.ide.ui.customization
@@ -13,7 +13,7 @@ import javax.swing.Icon
 open class ToolbarAddQuickActionInfo(
   val actionIDs: List<String>,
   @NlsActions.ActionText val name: String,
-  val icon: Icon,
+  val icon: Icon?,
   val insertStrategy: ToolbarQuickActionInsertStrategy,
 )
 

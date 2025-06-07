@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +60,8 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
 
   /** If a single IO operation still not succeeds after that many retries -- fail */
   @VisibleForTesting
-  static final int MAX_RETRIES = getIntProperty("idea.vfs.FileChannelInterruptsRetryer.MAX_RETRIES", 64);
+  @ApiStatus.Internal
+  public static final int MAX_RETRIES = getIntProperty("idea.vfs.FileChannelInterruptsRetryer.MAX_RETRIES", 64);
 
   /**
    * If value > 0: add stacktrace to each Nth in a row retry warning log message
@@ -79,7 +80,7 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
    * Total number of retries across all instances of this class. Only retries count -- a first
    * successful attempt doesn't.
    */
-  private final static AtomicLong totalRetriedAttempts = new AtomicLong();
+  private static final AtomicLong totalRetriedAttempts = new AtomicLong();
 
   public static long totalRetriedAttempts(){
     return totalRetriedAttempts.get();

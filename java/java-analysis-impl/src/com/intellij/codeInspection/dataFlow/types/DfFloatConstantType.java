@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -28,9 +28,8 @@ public final class DfFloatConstantType extends DfConstantType<Float> implements 
     return shouldWiden ? DfTypes.FLOAT : super.widen();
   }
 
-  @NotNull
   @Override
-  public DfType join(@NotNull DfType other) {
+  public @NotNull DfType join(@NotNull DfType other) {
     return Objects.requireNonNull(join(other, false));
   }
 
@@ -70,9 +69,8 @@ public final class DfFloatConstantType extends DfConstantType<Float> implements 
     return DfFloatRangeType.fromRelation(relationType, value, value);
   }
 
-  @NotNull
   @Override
-  public DfType tryNegate() {
+  public @NotNull DfType tryNegate() {
     float value = getValue();
     if (Float.isNaN(value)) {
       return DfFloatRangeType.create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, false);

@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -43,7 +43,7 @@ class SteppingUnderReadActionManualTest : HeavyPlatformTestCase() {
         val writeJob = launch(Dispatchers.Default) {
           var counter = 0
           while (true) {
-            writeAction {
+            edtWriteAction {
               println("Write action ${counter++}")
             }
             channel.send(Unit)

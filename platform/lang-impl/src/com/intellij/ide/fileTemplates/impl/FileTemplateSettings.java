@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(FileTemplateSettings.class);
   static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 

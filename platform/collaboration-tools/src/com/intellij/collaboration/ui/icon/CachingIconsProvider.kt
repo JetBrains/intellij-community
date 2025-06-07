@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.icon
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -33,7 +33,7 @@ class CachingIconsProvider<T : Any>(private val delegate: IconsProvider<T>, cust
   companion object {
     private const val DEFAULT_MAX_SIZE = 500
 
-    private fun <K, V> Caffeine<K, V>.customize(customizeCache: CacheCustomizer.() -> Unit): Caffeine<K, V> {
+    private fun <K : Any, V : Any> Caffeine<K, V>.customize(customizeCache: CacheCustomizer.() -> Unit): Caffeine<K, V> {
       with(CacheCustomizer()) {
         customizeCache()
 

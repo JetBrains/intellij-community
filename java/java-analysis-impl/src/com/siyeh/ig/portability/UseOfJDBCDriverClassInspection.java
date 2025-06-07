@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UseOfJDBCDriverClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.of.concrete.jdbc.driver.class.problem.descriptor");
   }

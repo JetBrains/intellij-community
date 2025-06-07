@@ -1,0 +1,10 @@
+LineBreakpoint created at stepOverRunBlockingInsideCoroutine.kt:22
+Run Java
+Connected to the target VM
+stepOverRunBlockingInsideCoroutine.kt:22
+stepOverRunBlockingInsideCoroutine.kt:24
+stepOverRunBlockingInsideCoroutine.kt:29
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

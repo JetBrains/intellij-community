@@ -41,6 +41,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     myToolTip = toolTip;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

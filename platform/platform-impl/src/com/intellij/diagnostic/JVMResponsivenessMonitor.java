@@ -1,16 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.diagnostic.UILatencyLogger.SLOW_OPERATIONS_ISSUES;
 import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**
@@ -62,7 +65,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
 
   private final Thread samplingThread = new Thread(this::samplingLoop, MONITOR_THREAD_NAME);
 
-  JVMResponsivenessMonitor() {
+  public JVMResponsivenessMonitor() {
     samplingThread.setDaemon(true);
     samplingThread.start();
   }
@@ -83,14 +86,20 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
 
   @Override
   public void close() throws InterruptedException {
-    samplingThread.interrupt();
-    samplingThread.join();
+    //RC: there is a race between samplingThread.start() in ctor and .interrupt() here -- if thread is not yet
+    //    started, .interrupt() could be just wasted, and join() will wait forever.
+    //    The loop below fixes the race:
+    while(samplingThread.getState() != Thread.State.TERMINATED) {
+      samplingThread.interrupt();
+      samplingThread.join(1000);
+    }
   }
 
   /** task durations, in nanoseconds */
   private final Histogram taskDurationHisto = new Histogram(3);
 
   private void samplingLoop() {
+    UILatencyLogger.MemoryStatsSampler memorySampler = new UILatencyLogger.MemoryStatsSampler();
     try {
       for (int sampleNo = 0;
            !Thread.currentThread().isInterrupted();
@@ -98,6 +107,8 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
         long timeTakenNs = runCpuAndMemoryTask();
 
         taskDurationHisto.recordValue(MathUtil.clamp(timeTakenNs, 0, Long.MAX_VALUE));
+
+        memorySampler.sample();
 
         try {
           //noinspection BusyWait
@@ -111,6 +122,9 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
         if (sampleNo % REPORTING_EACH_N_SAMPLES == REPORTING_EACH_N_SAMPLES - 1) {
           reportAccumulatedStats(taskDurationHisto);
           taskDurationHisto.reset();
+          memorySampler.logToFus();
+
+          logSlowOperations();
         }
       }
     }
@@ -118,8 +132,14 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
       LOG.error("Sampling thread exiting because of error", e);
     }
     finally {
+      memorySampler.close();
       LOG.info("Sampling thread exiting normally");
     }
+  }
+
+  private static void logSlowOperations() {
+    var knownIssues = SlowOperations.reportKnownIssues();
+    SLOW_OPERATIONS_ISSUES.log(new ArrayList<>(knownIssues));
   }
 
   private static void reportAccumulatedStats(@NotNull Histogram taskDurationHisto) {

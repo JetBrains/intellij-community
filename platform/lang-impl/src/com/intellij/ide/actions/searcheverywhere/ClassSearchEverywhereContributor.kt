@@ -32,6 +32,11 @@ open class ClassSearchEverywhereContributor(event: AnActionEvent)
   : AbstractGotoSEContributor(event), EssentialContributor, SearchEverywherePreviewProvider {
   private val filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT))
 
+  @Internal
+  constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
+    this.contributorModules = contributorModules
+  }
+
   companion object {
     @JvmStatic
     fun createLanguageFilter(project: Project): PersistentSearchEverywhereContributorFilter<LanguageRef> {
@@ -76,7 +81,9 @@ open class ClassSearchEverywhereContributor(event: AnActionEvent)
     return super.getElementPriority(element, searchPattern) + 5
   }
 
-  override fun createExtendedInfo(): ExtendedInfo? = createPsiExtendedInfo()
+  override fun createExtendedInfo(): ExtendedInfo? = createPsiExtendedInfo().let {
+    contributorModules?.firstNotNullOfOrNull { mod -> mod.mixinExtendedInfo(it) } ?: it
+  }
 
   override suspend fun createSourceNavigationRequest(element: PsiElement, file: VirtualFile, searchText: String): NavigationRequest? {
     val memberName = getMemberName(searchText)

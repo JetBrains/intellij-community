@@ -27,14 +27,14 @@ fun main(rawArgs: Array<String>) {
   val testAdditionalModules = System.getProperty("idea.dev.build.test.additional.modules")
   @Suppress("SSBasedInspection")
   val pluginSet = runBlocking(Dispatchers.Default) {
-    val zipFilePoolDeferred = async {
+    val zipPoolDeferred = async {
       val result = ZipFilePoolImpl()
-      ZipFilePool.POOL = result
+      ZipFilePool.PATH_CLASSLOADER_POOL = result
       result
     }
     scheduleDescriptorLoading(
       coroutineScope = this@runBlocking,
-      zipFilePoolDeferred = zipFilePoolDeferred,
+      zipPoolDeferred = zipPoolDeferred,
       mainClassLoaderDeferred = CompletableDeferred(PluginManagerCore::class.java.classLoader),
       logDeferred = null,
     ).await()

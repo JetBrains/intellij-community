@@ -16,12 +16,17 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import kotlinx.coroutines.cancel
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
-import org.jetbrains.plugins.terminal.block.output.TerminalEventDispatcher.MyKeyEventsListener
+import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.awt.AWTEvent
 import java.awt.event.*
 import javax.swing.KeyStroke
@@ -58,7 +63,9 @@ internal abstract class TerminalEventDispatcher(
     if (!skipAction(e)) {
       if (e.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
-        handleKeyEvent(e)
+        application.runReadAction {
+          handleKeyEvent(e)
+        }
       }
     }
     else {
@@ -118,6 +125,7 @@ internal abstract class TerminalEventDispatcher(
   }
 
   companion object {
+    @Language("devkit-action-id")
     @NonNls
     private val ACTIONS_TO_SKIP = listOf(
       "ActivateTerminalToolWindow",
@@ -167,7 +175,6 @@ internal abstract class TerminalEventDispatcher(
       "ResizeToolWindowUp",
       "ResizeToolWindowDown",
       "MaximizeToolWindow",
-      "MaintenanceAction",
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
@@ -261,4 +268,23 @@ internal fun setupMouseListener(editor: EditorEx,
   Disposer.register(disposable, Disposable {
     editor.scrollPane.removeMouseWheelListener(mouseWheelListener)
   })
+}
+
+internal fun setupInputMethodSupport(
+  editor: EditorEx,
+  session: BlockTerminalSession,
+  caretModel: TerminalCaretModel,
+  parentDisposable: Disposable
+) {
+  val coroutineScope = terminalApplicationScope().childScope(TerminalOutputEditorInputMethodSupport::class.java.simpleName)
+  Disposer.register(parentDisposable) {
+    coroutineScope.cancel("Terminal is disposed (Experimental 2024)")
+  }
+  TerminalOutputEditorInputMethodSupport(
+    editor,
+    coroutineScope,
+    getCaretPosition = { caretModel.getCaretPosition() },
+    cursorOffsetFlow = null,
+    sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
+  )
 }

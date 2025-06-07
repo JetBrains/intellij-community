@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.uiDesigner.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +24,8 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
     return myState;
   }
 
-  @NotNull
   @Override
-  public JpsUiDesignerConfigurationImpl createCopy() {
+  public @NotNull JpsUiDesignerConfigurationImpl createCopy() {
     return new JpsUiDesignerConfigurationImpl(myState);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.lang.DependentLanguage;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class YouTrackLanguage extends Language implements DependentLanguage {
 
-  public final static YouTrackLanguage INSTANCE = new YouTrackLanguage();
+  public static final YouTrackLanguage INSTANCE = new YouTrackLanguage();
 
   private YouTrackLanguage() {
     super("YouTrack");
@@ -22,9 +22,8 @@ public final class YouTrackLanguage extends Language implements DependentLanguag
     return false;
   }
 
-  @NotNull
   @Override
-  public LanguageFileType getAssociatedFileType() {
+  public @NotNull LanguageFileType getAssociatedFileType() {
     return YouTrackFileType.INSTANCE;
   }
 }

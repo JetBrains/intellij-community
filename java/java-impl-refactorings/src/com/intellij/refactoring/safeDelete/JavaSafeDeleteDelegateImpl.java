@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -15,7 +15,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,7 +25,8 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
                                           @NotNull List<? super UsageInfo> usages,
                                           @NotNull PsiNamedElement parameter,
-                                          int paramIdx, boolean isVararg) {
+                                          int paramIdx,
+                                          boolean isVararg) {
     final PsiElement element = reference.getElement();
     PsiCall call = null;
     if (element instanceof PsiCall) {
@@ -36,7 +36,8 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiCall) {
         call = (PsiCall)parent;
-      } else if (parent instanceof PsiAnonymousClass) {
+      }
+      else if (parent instanceof PsiAnonymousClass) {
         call = (PsiNewExpression)parent.getParent();
       }
     }
@@ -60,7 +61,7 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
       String[] signature = ((PsiDocMethodOrFieldRef)element).getSignature();
       PsiElement nameElement = ((PsiDocMethodOrFieldRef)element).getNameElement();
       if (signature != null && nameElement != null) {
-        @NonNls final StringBuffer newText = new StringBuffer();
+        final @NonNls StringBuffer newText = new StringBuffer();
         newText.append("/** @see #").append(nameElement.getText()).append('(');
         boolean hasParams = false;
         for (int i = 0; i < signature.length; i++) {
@@ -105,7 +106,9 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
   }
 
   @Override
-  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, @NotNull List<? super UsageInfo> usages, @NotNull PsiElement typeParameter,
+  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference,
+                                               @NotNull List<? super UsageInfo> usages,
+                                               @NotNull PsiElement typeParameter,
                                                int paramsCount,
                                                int index)  {
     if (reference instanceof PsiJavaCodeReferenceElement) {
@@ -123,18 +126,21 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
   }
 
   @Override
-  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) {
-    if (overriddenFunction instanceof PsiMethod &&
-      JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
-      result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));
-    } else {
-      result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete,
+                                      @NotNull List<? super UsageInfo> result) {
+    if (overriddenFunction instanceof PsiMethod method) {
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null || method.findSuperMethods().length > 1) return;
+
+      if (JavaSafeDeleteProcessor.canBePrivate(method, elements2Delete)) {
+        result.add(new SafeDeletePrivatizeMethod(method, method));
+        return;
+      }
     }
+    result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
   }
 
   @Override
-  public UsageInfo createExtendsListUsageInfo(PsiElement refElement,
-                                              PsiReference reference) {
+  public UsageInfo createExtendsListUsageInfo(PsiElement refElement, PsiReference reference) {
     PsiElement element = reference.getElement();
     PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceList && refElement instanceof PsiClass psiClass) {
@@ -144,11 +150,11 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
           return new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true);
         }
         //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly
-        if (CachedValuesManager.getCachedValue(psiClass, () -> new CachedValueProvider.Result<>(containsOnlyPrivates(psiClass),
-                                                                                                PsiModificationTracker.getInstance(psiClass.getProject())))) {
-          if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
-            return new SafeDeleteExtendsClassUsageInfo(classRef, psiClass, inheritor);
-          }
+        CachedValueProvider<Boolean> provider =
+          () -> new CachedValueProvider.Result<>(containsOnlyPrivates(psiClass), PsiModificationTracker.getInstance(psiClass.getProject()));
+        if (CachedValuesManager.getCachedValue(psiClass, provider)
+            && (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList()))) {
+          return new SafeDeleteExtendsClassUsageInfo(classRef, psiClass, inheritor);
         }
       }
     }
@@ -156,13 +162,11 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
   }
 
   private static boolean containsOnlyPrivates(final PsiClass aClass) {
-    final PsiField[] fields = aClass.getFields();
-    for (PsiField field : fields) {
+    for (PsiField field : aClass.getFields()) {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     }
 
-    final PsiMethod[] methods = aClass.getMethods();
-    for (PsiMethod method : methods) {
+    for (PsiMethod method : aClass.getMethods()) {
       if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
         if (method.isConstructor()) { //skip non-private constructors with call to super only
           final PsiCodeBlock body = method.getBody();
@@ -179,8 +183,7 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
       }
     }
 
-    final PsiClass[] inners = aClass.getInnerClasses();
-    for (PsiClass inner : inners) {
+    for (PsiClass inner : aClass.getInnerClasses()) {
       if (!inner.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     }
 

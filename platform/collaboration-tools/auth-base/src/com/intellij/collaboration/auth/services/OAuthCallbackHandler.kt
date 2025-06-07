@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.services
 
 import com.intellij.openapi.diagnostic.logger
@@ -16,14 +16,15 @@ import org.jetbrains.io.responseStatus
 import org.jetbrains.io.send
 import java.util.concurrent.CompletableFuture
 
+private val LOG = logger<OAuthCallbackHandler>()
+
 /**
  * The base class of the callback handler for authorization services
  */
 abstract class OAuthCallbackHandler {
+  protected val service: OAuthService<*>
+    get() = oauthService()
 
-  @JvmField
-  protected val LOG = logger<OAuthCallbackHandler>()
-  protected final val service: OAuthService<*> get() = oauthService()
   fun getServiceName(): String = service.name
 
   protected abstract fun oauthService(): OAuthService<*>
@@ -70,7 +71,6 @@ abstract class OAuthCallbackHandler {
     }
     return null
   }
-
 
   protected open fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
     return handleAcceptCode(oAuthResult.isAccepted)

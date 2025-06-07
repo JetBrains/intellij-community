@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
@@ -154,10 +154,10 @@ class ExtractSuperRefactoring(
                 runReadAction {
                     val usages = LinkedHashSet<UsageInfo>()
                     for (element in elementsToMove) {
-                        ReferencesSearch.search(element).mapTo(usages) { MoveRenameUsageInfo(it, element) }
+                        ReferencesSearch.search(element).asIterable().mapTo(usages) { MoveRenameUsageInfo(it, element) }
                         if (element is KtCallableDeclaration) {
                             element.toLightMethods().flatMapTo(usages) {
-                                MethodReferencesSearch.search(it).map { reference -> MoveRenameUsageInfo(reference, element) }
+                                MethodReferencesSearch.search(it).asIterable().map { reference -> MoveRenameUsageInfo(reference, element) }
                             }
                         }
                     }

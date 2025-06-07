@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.checkers;
 
@@ -67,14 +67,14 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
             runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementationComplex.kt");
         }
 
-        @TestMetadata("ExtendClassWithDefaultImplementation_1_6.kt")
-        public void testExtendClassWithDefaultImplementation_1_6() throws Exception {
-            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_1_6.kt");
+        @TestMetadata("ExtendClassWithDefaultImplementation_JvmDefaultDisable.kt")
+        public void testExtendClassWithDefaultImplementation_JvmDefaultDisable() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_JvmDefaultDisable.kt");
         }
 
-        @TestMetadata("ExtendClassWithDefaultImplementation_1_8.kt")
-        public void testExtendClassWithDefaultImplementation_1_8() throws Exception {
-            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_1_8.kt");
+        @TestMetadata("ExtendClassWithDefaultImplementation_JvmDefaultEnable.kt")
+        public void testExtendClassWithDefaultImplementation_JvmDefaultEnable() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_JvmDefaultEnable.kt");
         }
 
         @TestMetadata("ExtendInterfaceWithAJvmStaticMethodInCompanion.kt")

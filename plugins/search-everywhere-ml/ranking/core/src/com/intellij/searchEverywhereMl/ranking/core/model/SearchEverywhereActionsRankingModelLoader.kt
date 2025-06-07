@@ -5,17 +5,17 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 import com.intellij.searchEverywhere.model.actions.PredictionModel
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 
 internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
   private val standardResourceDirectory = "actions_features"
   private val expResourceDirectory = "actions_features_exp"
   private val expModelDirectory = "actions_model_exp"
 
-  override val supportedTab = SearchEverywhereTabWithMlRanking.ACTION
+  override val supportedTab = SearchEverywhereTab.Actions
 
   override fun getBundledModel(): DecisionFunction {
-    return if (shouldProvideExperimentalModel()) {
+    return if (useExperimentalModel) {
       getExperimentalModel()
     }
     else {
@@ -23,9 +23,9 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
     }
   }
 
-  private fun getStandardModel(): SearchEverywhereMLRankingDecisionFunction {
+  private fun getStandardModel(): SearchEverywhereMlModel {
     val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
-    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+    return object : SearchEverywhereMlModel(metadata) {
       override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
     }
   }

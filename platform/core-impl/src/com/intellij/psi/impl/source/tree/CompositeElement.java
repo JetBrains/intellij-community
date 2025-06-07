@@ -118,7 +118,9 @@ public class CompositeElement extends TreeElement {
   @Override
   public LeafElement findLeafElementAt(int offset) {
     TreeElement element = this;
-    if (element.getTreeParent() == null && offset >= element.getTextLength()) return null;
+    if (element.getTreeParent() == null && offset >= element.getTextLength()) {
+      return null;
+    }
     startFind:
     while (true) {
       TreeElement child = element.getFirstChildNode();
@@ -167,7 +169,9 @@ public class CompositeElement extends TreeElement {
     }
 
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (element.getElementType() == type) return element;
+      if (element.getElementType() == type) {
+        return element;
+      }
     }
     return null;
   }
@@ -187,7 +191,9 @@ public class CompositeElement extends TreeElement {
       assertReadAccessAllowed();
     }
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
-      if (types.contains(element.getElementType())) return element;
+      if (types.contains(element.getElementType())) {
+        return element;
+      }
     }
     return null;
   }
@@ -308,7 +314,9 @@ public class CompositeElement extends TreeElement {
   @Override
   public boolean textContains(char c) {
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.textContains(c)) return true;
+      if (child.textContains(c)) {
+        return true;
+      }
     }
     return false;
   }
@@ -344,14 +352,18 @@ public class CompositeElement extends TreeElement {
 
   public final @Nullable PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
-    if (element == null) return null;
+    if (element == null) {
+      return null;
+    }
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
   public @Nullable ASTNode findChildByRole(int role) {
     // assert ChildRole.isUnique(role);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (getChildRole(child) == role) return child;
+      if (getChildRole(child) == role) {
+        return child;
+      }
     }
     return null;
   }
@@ -469,7 +481,9 @@ public class CompositeElement extends TreeElement {
   @Override
   public int getTextLength() {
     int cachedLength = myCachedLength;
-    if (cachedLength >= 0) return cachedLength;
+    if (cachedLength >= 0) {
+      return cachedLength;
+    }
 
     assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
     try {
@@ -631,7 +645,9 @@ public class CompositeElement extends TreeElement {
     TreeElement newChildNext = ((TreeElement)newChild).getTreeNext();
     TreeElement newChild1 = (TreeElement)newChild;
 
-    if(oldChild1 == newChild1) return;
+    if(oldChild1 == newChild1) {
+      return;
+    }
 
     removeChildrenInner(newChild1, newChildNext);
 
@@ -699,7 +715,9 @@ public class CompositeElement extends TreeElement {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     PsiElement wrapper = myWrapper;
-    if (wrapper != null) return wrapper;
+    if (wrapper != null) {
+      return wrapper;
+    }
 
     wrapper = createPsiNoLock();
     return myWrapperUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
@@ -794,7 +812,9 @@ public class CompositeElement extends TreeElement {
     while (true) {
       child.setTreeParent(parent);
       TreeElement treeNext = child.getTreeNext();
-      if (treeNext == null) return child;
+      if (treeNext == null) {
+        return child;
+      }
       child = treeNext;
     }
   }
@@ -807,7 +827,9 @@ public class CompositeElement extends TreeElement {
   }
 
   private static void repairRemovedElement(@NotNull CompositeElement oldParent, TreeElement oldChild) {
-    if(oldChild == null) return;
+    if (oldChild == null) {
+      return;
+    }
     FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
     treeElement.rawAddChildren(oldChild);
   }

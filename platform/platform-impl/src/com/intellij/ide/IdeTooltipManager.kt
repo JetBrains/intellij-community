@@ -699,6 +699,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.")
   fun getBorderColor(@Suppress("unused") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
 
@@ -845,7 +846,7 @@ private class LimitedWidthJBHtmlPane(
         setSize(Dimension(fitWidth, Int.MAX_VALUE))
         val fixedWidthSize = super.getPreferredSize()
         val minSize = super.getMinimumSize()
-        prefSize = Dimension(max(fitWidth.toDouble(), minSize.width.toDouble()).toInt(), fixedWidthSize.height)
+        prefSize = Dimension(max(fitWidth, minSize.width), fixedWidthSize.height)
       }
       else {
         prefSize = Dimension(prefSizeOriginal)

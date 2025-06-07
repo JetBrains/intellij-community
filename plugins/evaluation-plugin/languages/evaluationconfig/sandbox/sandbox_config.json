@@ -1,0 +1,39 @@
+{
+  "projectPath": "../ml-eval/jackson-core",
+  "repository": "https://github.com/fasterxml/jackson-core",
+  "revision": "fb695545312cc2340604e61642f36138152fba93",
+  "outputDir": "bin/ml-eval-sandbox",
+  "strategy": {
+    "prompt": "Describe this code in 1 word",
+    "sessionHardLimit": 3
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": [
+      "Sessions",
+      "Precision",
+      "SessionsWithoutSyntaxErrorsRatio",
+      "WithoutHighlightErrors",
+      "PreservedAPI",
+      "MeanLatency"
+    ],
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  },
+  "language": "Java",
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+    "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 1,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  }
+}

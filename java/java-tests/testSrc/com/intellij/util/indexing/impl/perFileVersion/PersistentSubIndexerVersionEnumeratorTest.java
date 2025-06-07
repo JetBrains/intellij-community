@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Key;
@@ -8,7 +8,10 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.CompositeDataIndexer;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.IndexedFileImpl;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +102,8 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
   }
 
   private static final Key<MyIndexFileAttribute> ATTRIBUTE_KEY = Key.create("my.index.attr.key");
-  private static class MyPerFileIndexExtension implements CompositeDataIndexer<String, String, MyIndexFileAttribute, String> {
+
+  private static final class MyPerFileIndexExtension implements CompositeDataIndexer<String, String, MyIndexFileAttribute, String> {
     @Nullable
     @Override
     public MyIndexFileAttribute calculateSubIndexer(@NotNull IndexedFile file) {
@@ -169,7 +173,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())) == FileIndexingState.UP_TO_DATE;
+      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())).isUpToDate();
     }
     catch (IOException e) {
       LOG.error(e);

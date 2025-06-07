@@ -32,7 +32,7 @@ public final class LiteralFormatUtil {
       groupSize = 4;  // hex, bin
     }
 
-    if (text.length() == 0) return original;
+    if (text.isEmpty()) return original;
 
     final char last = text.charAt(text.length() - 1);
     if (StringUtil.containsChar("Ll", last) ||
@@ -42,7 +42,7 @@ public final class LiteralFormatUtil {
       text = text.substring(0, pos);
     }
 
-    if (text.length() == 0) return original;
+    if (text.isEmpty()) return original;
 
     boolean hasPoint = false;
     String fractional = "";

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class DiffTaskQueue {
-  @Nullable private ProgressIndicator myProgressIndicator;
+  private @Nullable ProgressIndicator myProgressIndicator;
 
   @RequiresEdt
   public void abort() {

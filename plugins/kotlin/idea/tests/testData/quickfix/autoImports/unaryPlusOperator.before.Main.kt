@@ -12,4 +12,3 @@ fun f(h: H?) {
 class A()
 
 operator fun A.unaryPlus(): Int = 3
-/* IGNORE_K2 */

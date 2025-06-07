@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
@@ -21,10 +22,12 @@ import java.util.List;
 
 public class GitSimplePathsBrowser extends JPanel {
 
+  private final ChangesTree browser;
+
   public GitSimplePathsBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     super(new BorderLayout());
 
-    ChangesTree browser = createBrowser(project, absolutePaths);
+    browser = createBrowser(project, absolutePaths);
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
@@ -33,6 +36,10 @@ public class GitSimplePathsBrowser extends JPanel {
 
     add(toolbarPanel, BorderLayout.NORTH);
     add(ScrollPaneFactory.createScrollPane(browser));
+  }
+
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text) {
+    browser.setEmptyText(text);
   }
 
   private static @NotNull ChangesTree createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {

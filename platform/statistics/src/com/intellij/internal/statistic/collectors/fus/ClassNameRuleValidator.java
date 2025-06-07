@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link EventFields#Class(String)} instead.
  */
 public class ClassNameRuleValidator extends CustomValidationRule {
-  @NotNull
   @Override
-  public String getRuleId() {
+  public @NotNull String getRuleId() {
     return "class_name";
   }
 
@@ -28,9 +27,8 @@ public class ClassNameRuleValidator extends CustomValidationRule {
     return "dialog_class".equals(ruleId) || "quick_fix_class_name".equals(ruleId) || getRuleId().equals(ruleId);
   }
 
-  @NotNull
   @Override
-  protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(getClassName(data));

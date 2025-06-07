@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtElement
 import javax.swing.Icon
 
@@ -40,15 +42,23 @@ object KotlinIconProvider {
     private fun getBaseIcon(symbol: KaSymbol): Icon? {
         if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == KaSymbolModality.ABSTRACT
-
+            val suspend =
+                // TODO: suspend icon is still under consideration by the design/dev team
+                (isUnitTestMode() || ApplicationManager.getApplication().isInternal) &&
+                        symbol.isSuspend
             return when {
                 symbol.isExtension -> {
                     if (isAbstract) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 }
                 symbol.location == KaSymbolLocation.CLASS -> {
-                    IconManager.getInstance().getPlatformIcon(if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method)
+                    if (suspend) {
+                        KotlinIcons.SUSPEND_METHOD
+                    } else {
+                        val platformIcon = if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method
+                        IconManager.getInstance().getPlatformIcon(platformIcon)
+                    }
                 }
-                else -> KotlinIcons.FUNCTION
+                else -> if (suspend) KotlinIcons.SUSPEND_FUNCTION else KotlinIcons.FUNCTION
             }
         }
 
@@ -78,7 +88,10 @@ object KotlinIconProvider {
     }
 
     private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
-        val visibility = (symbol as? KaDeclarationSymbol)?.visibility ?: return null
+        val visibility: KaSymbolVisibility =
+            (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty?.visibility
+                ?: (symbol as? KaDeclarationSymbol)?.visibility
+                ?: return null
         val id = when (visibility) {
             KaSymbolVisibility.PUBLIC -> PlatformIcons.Public
             KaSymbolVisibility.PROTECTED -> PlatformIcons.Protected

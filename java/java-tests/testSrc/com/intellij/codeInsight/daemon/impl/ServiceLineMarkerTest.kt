@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.JavaServiceUtil.ServiceNavigationHandler
+import com.intellij.codeInsight.daemon.impl.JavaServiceLineMarkerUtil.ServiceNavigationHandler
 import com.intellij.icons.AllIcons
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil

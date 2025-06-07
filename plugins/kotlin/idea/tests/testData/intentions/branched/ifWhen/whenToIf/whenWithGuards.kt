@@ -1,6 +1,6 @@
-// IS_APPLICABLE: false
 // WITH_STDLIB
-// Issue: KTIJ-31745
+// IGNORE_K1
+// COMPILER_ARGUMENTS: -Xwhen-guards
 
 private sealed class MySealed {
     object A : MySealed()
@@ -14,6 +14,3 @@ private fun mySealed(s: MySealed) {
         else -> { println("3") }
     }
 }
-
-// Not enabled to have the test work for K1: -Xwhen-guards doesn't fix the error because of a low language version
-// ERROR: The feature "when guards" is experimental and should be enabled explicitly. This can be done by supplying the compiler argument '-Xwhen-guards', but note that no stability guarantees are provided.

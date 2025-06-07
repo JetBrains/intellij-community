@@ -30,8 +30,7 @@ public class Modifier {
     myCommandQueue = new ArrayList<>();
   }
 
-  @NotNull
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
     LocalChangeList newList = command.getNewListCopy();
@@ -65,8 +64,7 @@ public class Modifier {
     return command.isResult();
   }
 
-  @Nullable
-  public String editComment(@NotNull String fromName, @NotNull String newComment) {
+  public @Nullable String editComment(@NotNull String fromName, @NotNull String newComment) {
     EditComment command = new EditComment(fromName, newComment);
     impl(command);
     return command.getOldComment();

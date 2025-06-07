@@ -27,14 +27,14 @@ public class IgnoreExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(final @NotNull PsiFile psiFile, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
     ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList(uri), null);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    final String uri = findUri(file, offset);
+    final String uri = findUri(psiFile, offset);
     if (uri == null) {
       return IntentionPreviewInfo.EMPTY;
     }

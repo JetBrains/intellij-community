@@ -25,10 +25,12 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl> {
     return new StaticDescriptorImpl(myRefType);
   }
 
+  @Override
   public boolean equals(Object object) {
     return object instanceof StaticData;
   }
 
+  @Override
   public int hashCode() {
     return STATIC.hashCode();
   }

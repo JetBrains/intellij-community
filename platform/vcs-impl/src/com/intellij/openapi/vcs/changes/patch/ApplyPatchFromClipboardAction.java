@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.client.ClientAppSession;
-import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -35,7 +36,7 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
 
-    ClientAppSession appSession = ClientSessionsManager.getAppSession();
+    ClientAppSession appSession = ClientSessionsUtil.getCurrentSessionOrNull(ApplicationManager.getApplication());
     // In a remote development case we cannot receive clipboard content immediately (we need to fetch it from client),
     // so we make the action enabled unconditionally.
     String text = (appSession != null && appSession.isRemote()) ? "" : ClipboardUtil.getTextInClipboard();
@@ -73,14 +74,12 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
             null, null, null, false);
     }
 
-    @Nullable
     @Override
-    protected JComponent createDoNotAskCheckbox() {
+    protected @Nullable JComponent createDoNotAskCheckbox() {
       return createAnalyzeOnTheFlyOptionPanel();
     }
 
-    @NotNull
-    private static JCheckBox createAnalyzeOnTheFlyOptionPanel() {
+    private static @NotNull JCheckBox createAnalyzeOnTheFlyOptionPanel() {
       final JCheckBox removeOptionCheckBox = new JCheckBox(VcsBundle.message("patch.apply.analyze.from.clipboard.on.the.fly.checkbox"));
       removeOptionCheckBox.setMnemonic(KeyEvent.VK_L);
       removeOptionCheckBox.setSelected(VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY);

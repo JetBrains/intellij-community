@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
@@ -128,9 +128,8 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     return ActionUpdateThread.EDT;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JPanel panel = new JPanel(new BorderLayout(1, 0));
     final ComboBoxButton button = createComboBoxButton(presentation);
     final String text = SSRBundle.message("search.dialog.file.type.label");

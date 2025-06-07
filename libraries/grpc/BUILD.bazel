@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.grpc` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "grpc_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "grpc",
+  visibility = ["//visibility:public"],
+  exports = [
+    "@lib//:grpc-core",
+    "@lib//:grpc-stub",
+    "@lib//:grpc-kotlin-stub",
+    "@lib//:grpc-protobuf",
+  ],
+  runtime_deps = [
+    ":grpc_resources",
+    "@lib//:grpc-core",
+    "@lib//:grpc-stub",
+    "@lib//:grpc-kotlin-stub",
+    "@lib//:grpc-protobuf",
+  ]
+)
+### auto-generated section `build intellij.libraries.grpc` end

@@ -4,11 +4,11 @@ package com.intellij.ide.trustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsStateStorage.State
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.prefix.map.PrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 abstract class TrustedProjectsStateStorage<S: State>(state: S) : SerializablePersistentStateComponent<S>(state) {
 
   interface State {

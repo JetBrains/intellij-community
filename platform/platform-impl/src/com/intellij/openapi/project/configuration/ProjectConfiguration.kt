@@ -71,17 +71,21 @@ private fun CoroutineScope.getConfigurationDeferred(project: Project, callback: 
   // we perform several phases of awaiting here,
   // because we need to be prepared for idempotent side effects from saving
   return async {
-    while (true) {
+    // Ideally, we should do `while (true)` here to converge the process of configuration.
+    // However, some clients (maven) schedule MergingUpdateQueue updates during save, which leads to infinite configuration,
+    // as we think that MUQ updates may modify the state.
+    // So instead we just invoke the save process at least 3 times, hoping that everyone manages to finalize their state by this moment
+    repeat(3) { phaseNum ->
       val wasModified = Observation.awaitConfiguration(project, callback)
       if (wasModified) {
         saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = true)
         saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = project)
-        callback?.invoke("Configuration phase is completed. Initiating another phase to cover possible side effects...") // NON-NLS
+        callback?.invoke("Configuration phase $phaseNum is completed. Initiating another phase to cover possible side effects...") // NON-NLS
       }
       else {
-        callback?.invoke("All configuration phases are completed.") // NON-NLS
-        break
+        return@repeat
       }
+      callback?.invoke("All configuration phases are completed.") // NON-NLS
     }
   }
 }

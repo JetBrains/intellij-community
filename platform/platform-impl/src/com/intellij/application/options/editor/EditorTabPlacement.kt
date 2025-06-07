@@ -9,16 +9,15 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.NotABooleanOptionDescription
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.Nls
-import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
 
-internal val TAB_PLACEMENTS: Array<Int> = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
+private val TAB_PLACEMENTS = listOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
 
 internal val TAB_PLACEMENT: @Nls String = ApplicationBundle.message("combobox.editor.tab.placement")
 
@@ -26,10 +25,8 @@ internal val tabPlacementsOptionDescriptors: List<BooleanOptionDescription> = TA
 
 internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
   val ui = UISettings.getInstance().state
-  return comboBox(DefaultComboBoxModel(TAB_PLACEMENTS),
-                  renderer = SimpleListCellRenderer.create { label, value, _ ->
-                    label.text = value.asTabPlacement()
-                  }).bindItem(ui::editorTabPlacement.toNullableProperty())
+  return comboBox(TAB_PLACEMENTS, textListCellRenderer { it?.asTabPlacement() })
+    .bindItem(ui::editorTabPlacement.toNullableProperty())
 }
 
 private fun asOptionDescriptor(i: Int): BooleanOptionDescription {

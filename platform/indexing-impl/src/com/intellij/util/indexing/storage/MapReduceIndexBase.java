@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -51,50 +50,58 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   @Override
   public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () ->
-      ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter)
-    );
+    return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
   }
 
   @Override
   public @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
-      try {
-        // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
-        //noinspection RedundantUnmodifiable
-        return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-    });
+    try {
+      // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
+      //noinspection RedundantUnmodifiable
+      return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (isDisposed()) {
-      return null;
+      return null;//TODO RC: better throw CancellationException?
     }
+
     if (mySingleEntryIndex) {
       // there is no forward index for SingleEntryFileBasedIndexExtension, so get an entry from inverted index
       // (it _must_ be <=1 entry there, with Key=(Integer)fileId)
       @SuppressWarnings("unchecked")
       Key key = (Key)(Object)fileId;
       Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
-      ValueContainer<Value> container = getData(key);
-      container.forEach((id, value) -> {
-        boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
-        if (value != null || acceptNullValues) {
-          result.set(Collections.singletonMap(key, value));
-        }
-        return false;
+      boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
+      withData(key, container -> {
+        container.forEach((id, value) -> {
+          if (value != null || acceptNullValues) {
+            result.set(Collections.singletonMap(key, value));
+          }
+          return false;
+        });
+        return !result.get().isEmpty();
       });
       return result.get();
     }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
-      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
+
+    ForwardIndexAccessor<Key, Value> indexAccessor = getForwardIndexAccessor();
+    if (indexAccessor instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
+      ForwardIndex forwardIndex = getForwardIndex();
+      assert forwardIndex != null : "forwardIndex must NOT be null if forwardIndexAccessor(" + forwardIndexAccessor + ") != null";
+      ByteArraySequence serializedInputData = forwardIndex.get(fileId);
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
-    getLogger().error("Can't fetch indexed data for index " + indexId().getName());
+
+    //We expect only 2 valid index configurations:
+    // 1. Both forwardIndex and forwardIndexAccessors are NOT null: regular index configuration
+    // 2. Both forwardIndex and forwardIndexAccessors ARE null: single-entry index (=inverted index is used instead of forward)
+    // Both are processed above -> all other combinations are invalid:
+    getLogger().error("Can't fetch indexed data for index=" + indexId() + ", (accessor: " + indexAccessor + ")");
     return null;
   }
 

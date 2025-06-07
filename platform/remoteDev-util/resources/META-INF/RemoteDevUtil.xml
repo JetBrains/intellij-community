@@ -15,6 +15,8 @@
     <registryKey key="rdct.always.use.embedded.client" defaultValue="false"
                  description="Enable to run embedded client unconditionally
                               (may have compatibility problems if the backend and client protocols do not match)"/>
+    <registryKey key="rdct.path.to.custom.snapshot.frontend.installation" defaultValue=""
+                 description="Specifies path to a standalone frontend installation (JetBrains Client) which will be used while connecting to backends with *.snapshot build numbers"/>
     <registryKey key="rdct.embedded.client.debug.port" defaultValue="-1" 
                  description="Specify a positive value to make a client process started from an IDE listen for debug connections on that port."/>
     <registryKey key="rdct.embedded.client.debug.suspend" defaultValue="false" 

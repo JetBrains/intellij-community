@@ -1,0 +1,80 @@
+import kotlin.Metadata;
+import kotlin.jvm.internal.DefaultConstructorMarker;
+
+@Metadata(
+   mv = {2, 0, 0},
+   k = 1,
+   xi = 48,
+   d1 = {"\u0000\u0012\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\b\n\u0002\b\u0005\u0018\u00002\u00020\u0001B\u0011\u0012\b\b\u0002\u0010\u0002\u001a\u00020\u0003¢\u0006\u0004\b\u0004\u0010\u0005R\u0011\u0010\u0002\u001a\u00020\u0003¢\u0006\b\n\u0000\u001a\u0004\b\u0006\u0010\u0007¨\u0006\b"},
+   d2 = {"LKotlinDefaultValue;", "", "age", "", "<init>", "(I)V", "getAge", "()I", "Demo3"}
+)
+public final class KotlinDefaultValue {
+   private final int age;
+
+   public KotlinDefaultValue(int age) {
+      this.age = age;
+   }
+
+   // $FF: synthetic method
+   public KotlinDefaultValue(int var1, int var2, DefaultConstructorMarker var3) {
+      if ((var2 & 1) != 0) {
+         var1 = 1;
+      }
+
+      this(var1);
+   }
+
+   public final int getAge() {
+      return this.age;// 1
+   }
+
+   public KotlinDefaultValue() {
+      this(0, 1, (DefaultConstructorMarker)null);
+   }
+}
+
+class 'KotlinDefaultValue' {
+   method '<init> (I)V' {
+      4      14
+      5      14
+      6      14
+      7      14
+      8      14
+      9      15
+   }
+
+   method '<init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V' {
+      0      19
+      1      19
+      2      19
+      3      19
+      6      20
+      7      20
+      9      23
+      a      23
+      b      23
+      c      23
+      d      24
+   }
+
+   method 'getAge ()I' {
+      0      27
+      1      27
+      2      27
+      3      27
+      4      27
+   }
+
+   method '<init> ()V' {
+      1      31
+      2      31
+      3      31
+      4      31
+      5      31
+      6      31
+      7      32
+   }
+}
+
+Lines mapping:
+1 <-> 28

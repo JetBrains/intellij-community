@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -50,17 +50,13 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     super(dynamicText, dynamicDescription, icon);
   }
 
-  @Nullable
-  protected abstract AbstractVcs getVcs(@NotNull AnActionEvent e);
+  protected abstract @Nullable AbstractVcs getVcs(@NotNull AnActionEvent e);
 
-  @Nullable
-  protected abstract VirtualFile getFile(@NotNull AnActionEvent e);
+  protected abstract @Nullable VirtualFile getFile(@NotNull AnActionEvent e);
 
-  @Nullable
-  protected abstract VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
+  protected abstract @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
 
-  @Nullable
-  protected Editor getEditor(@NotNull AnActionEvent e) {
+  protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
     return null;
   }
 
@@ -93,7 +89,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final VcsFileRevision fileRevision = getFileRevision(e);
     final VirtualFile file = getFile(e);
     final AbstractVcs vcs = getVcs(e);

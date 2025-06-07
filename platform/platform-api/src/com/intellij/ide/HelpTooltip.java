@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -725,7 +725,8 @@ public class HelpTooltip {
     }
   }
 
-  boolean fromSameWindowAs(@NotNull Component component) {
+  @ApiStatus.Internal
+  public boolean fromSameWindowAs(@NotNull Component component) {
     if (myPopup != null && !myPopup.isDisposed()) {
       Window popupWindow = SwingUtilities.getWindowAncestor(myPopup.getContent());
       return component == popupWindow || SwingUtilities.getWindowAncestor(component) == popupWindow;

@@ -7,7 +7,6 @@ const LC_KEYS = {
 };
 const EXTERNAL_VARIABLES = {}
 
-
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
     updateMultilinePopup(e)
@@ -46,7 +45,6 @@ function updateBackgrounds(e, elementClasses, bgClass) {
   addClassForElements(selected, bgClass, true)
 }
 
-document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
 document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e, ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
 
 function removeClassForElements(elementsClassName, classToAdd) {
@@ -156,45 +154,12 @@ function updatePopup(sessionDiv) {
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
-  const lineDiff = new Diff();
-
   sessionDiv.classList.add("diffView")
   sessionDiv.classList.remove("features", "contexts","suggestions")
-  const diffDiv = document.createElement("DIV");
+
+  const suggestionsText = lookup["suggestions"][lookup["suggestions"].length - 1].presentationText;
+  const diffDiv = renderDiff(originalText, suggestionsText);
   diffDiv.setAttribute("class", "diffView");
-
-  const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
-
-  const unifiedDiff = lineDiff.unifiedSlideDiff(originalText, suggestionsText, 1);
-
-  unifiedDiff.forEach(line => {
-    const lineDiv = document.createElement("DIV");
-    lineDiv.textContent = line.content;
-    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
-
-    const oldLineNumberSpan = document.createElement("span");
-    oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
-    oldLineNumberSpan.style.width = '30px';
-    oldLineNumberSpan.style.display = 'inline-block';
-
-    const newLineNumberSpan = document.createElement("span");
-    newLineNumberSpan.textContent = line.newLineNumber !== '' ? line.newLineNumber : ' ';
-    newLineNumberSpan.style.width = '30px';
-    newLineNumberSpan.style.display = 'inline-block';
-
-    if (line.type === "added") {
-      lineDiv.style.color = "green";
-    } else if (line.type === "removed") {
-      lineDiv.style.color = "red";
-    } else {
-      lineDiv.style.color = "black";
-    }
-
-    lineDiv.prepend(newLineNumberSpan);
-    lineDiv.prepend(oldLineNumberSpan);
-    diffDiv.appendChild(lineDiv);
-  });
-
   popup.appendChild(diffDiv);
 }
 
@@ -220,13 +185,21 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
+  else popup.appendChild(document.createElement("DIV"))
+
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
+  addAiaDiagnosticsBlock("Failed file validations:", "aia_failed_file_validations", popup, lookup)
   addAiaDiagnosticsBlock("Response", "aia_response", popup, lookup)
   addAiaDiagnosticsBlock("Context", "aia_context", popup, lookup)
   addAiaDiagnosticsBlock("Code snippets from response", "extracted_code_snippets", popup, lookup)
   addAiaDiagnosticsBlock("Internal api calls from original code snippet", "ground_truth_internal_api_calls", popup, lookup)
   addAiaDiagnosticsBlock("Extracted api calls from generated code snippet", "predicted_api_calls", popup, lookup)
+  addAiaDiagnosticsBlock("Expected Function Calls", "expected_function_calls", popup, lookup)
+  addAiaDiagnosticsBlock("Actual Function Calls", "actual_function_calls", popup, lookup)
+  // TODO better to add a separate popup view?
+  addAiaDiagnosticsBlock("Appeared highlights", "appeared_highlights", popup, lookup)
+  addAiaDiagnosticsBlock("Erased APIs", "erased_apis", popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -318,10 +291,7 @@ function addAiaDiagnosticsBlock(description, field, popup, lookup) {
   if (!(field in lookup["additionalInfo"])) return
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
-  let code = document.createElement("code")
-  code.textContent = `${description}:\n\n${lookup["additionalInfo"][field]}`
-  contextBlock.appendChild(code)
-  code.style.whiteSpace = "inherit"
+  contextBlock.appendChild(highlightedTextIfExists(`${description}:\n\n${lookup["additionalInfo"][field]}`))
   popup.appendChild(contextBlock)
 }
 
@@ -539,7 +509,7 @@ function invertRows(event, key) {
 
 function updateMultilinePopup(event) {
   if (event.altKey) {
-    showMultilinePrefixAndSuffix(event)
+    showMultilineIsolatedSession(event)
     return
   }
   const target = event.target
@@ -563,8 +533,7 @@ function updateMultilinePopup(event) {
   popup.setAttribute("class", "autocomplete-items")
 
   addMultilineHeaders(popup, showSuggestion)
-  let context = getMultilineContext(sessionDiv)
-  let indent = "prefix" in context ? context.prefix.match(/ *$/)[0].length : 0
+  let indent = 0
   let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"].replace(new RegExp(`^ {${indent}}`, 'gm'), '')
   if (showSuggestion) {
     addMultilineSuggestion(sessionDiv, popup, lookup)
@@ -606,11 +575,9 @@ function addMultilineSuggestion(sessionDiv, popup, lookup) {
 }
 
 function addMultilineAttachments(sessionDiv, popup, expectedText) {
-  const context = getMultilineContext(sessionDiv)
   let attachmentsDiv = document.createElement("DIV")
   attachmentsDiv.setAttribute("class", "attachments")
   let p = document.createElement("pre")
-  p.innerHTML = context.attachments
   attachmentsDiv.appendChild(p)
   popup.appendChild(attachmentsDiv)
 
@@ -619,23 +586,9 @@ function addMultilineAttachments(sessionDiv, popup, expectedText) {
   const pExp = document.createElement("pre")
   pExp.innerHTML = expectedText
 
-  let contextTokens = (context.attachments + "\n" + context.prefix + "\n" + context.suffix).split((/\W+/))
   let expectedTokens = expectedText.split((/\W+/))
-  expectedTokens.forEach((token) => {
-    if (contextTokens.indexOf(token) === -1) {
-      pExp.innerHTML = pExp.innerHTML.replace(new RegExp('\\b' + token + '\\b'), '<span class="missing-context">$&</span>')
-    }
-  })
   expected.appendChild(pExp)
   popup.appendChild(expected)
-}
-
-function getMultilineContext(sessionDiv) {
-  const parts = sessionDiv.id.split(" ")
-  const sessionId = parts[0]
-  const lookupOrder = parts[1]
-  const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
-  return featuresJson[lookupOrder]["common"].context
 }
 
 function addMultilineExpectedText(popup, expectedText) {
@@ -647,16 +600,13 @@ function addMultilineExpectedText(popup, expectedText) {
   popup.appendChild(expected)
 }
 
-function showMultilinePrefixAndSuffix(event) {
+function showMultilineIsolatedSession(event) {
   if (event.target.classList.contains("session")) {
     const sessionDiv = event.target
     sessionDiv.parentNode.style.display = "none"
     const newCode = document.createElement("pre")
     newCode.setAttribute("class", "code context multiline")
     newCode.style.backgroundColor = "bisque"
-    let context = getMultilineContext(sessionDiv)
-    let prefix = context.prefix
-    let suffix = context.suffix
 
     let prev = sessionDiv.previousSibling
     let offset = ""
@@ -664,9 +614,9 @@ function showMultilinePrefixAndSuffix(event) {
       offset = prev.textContent + offset
       prev = prev.previousSibling
     }
-    let begin = "\n".repeat(offset.split('\n').length - prefix.split('\n').length)
+    let begin = "\n".repeat(offset.split('\n').length)
     let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"]
-    newCode.innerHTML = begin + prefix + "<span style='background-color: white'>" + expectedText +"</span>" + suffix
+    newCode.innerHTML = begin + "<span style='background-color: white'>" + expectedText +"</span>"
     sessionDiv.parentNode.parentNode.prepend(newCode)
   }
   else if (event.target.closest(".code.context") != null) {
@@ -679,6 +629,16 @@ function showMultilinePrefixAndSuffix(event) {
 function showMetrics() {
   let metricsDiv = document.getElementById("metrics-column")
   metricsDiv.style.display = metricsDiv.style.display === "none" ? "" : "none"
+}
+
+function highlightedTextIfExists(text) {
+  if (typeof highlightedText !== 'undefined') {
+    return highlightedText(text);
+  }
+
+  const pre = document.createElement("pre");
+  pre.innerText = text;
+  return pre;
 }
 
 document.getElementById("defaultTabOpen")?.click()

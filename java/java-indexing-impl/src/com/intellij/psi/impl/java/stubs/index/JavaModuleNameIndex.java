@@ -1,33 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.CachedValueImpl;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.stream.Stream;
 
 public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
+  private static final int MIN_JAVA_VERSION = JavaFeature.MODULES.getMinimumLevel().feature();
   private static final JavaModuleNameIndex ourInstance = new JavaModuleNameIndex();
 
   public static JavaModuleNameIndex getInstance() {
@@ -39,9 +30,8 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     return super.getVersion() + 2;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiJavaModule> getKey() {
+  public @NotNull StubIndexKey<String, PsiJavaModule> getKey() {
     return JavaStubIndexKeys.MODULE_NAMES;
   }
 
@@ -57,29 +47,44 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
   public Collection<PsiJavaModule> getModules(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiJavaModule.class);
     if (modules.size() > 1) {
-      modules = filterVersions(project, modules);
+      modules = filterHighestVersions(project, modules);
     }
     return modules;
   }
 
-  private static Collection<PsiJavaModule> filterVersions(Project project, Collection<PsiJavaModule> modules) {
-    Set<VirtualFile> filter = new HashSet<>();
-
+  /**
+   * Filters the given collection of Java modules to exclude redundant versions of modules,
+   * preserving only the highest versions available in the project scope.
+   *
+   * @param project the project in which the module filtering is performed
+   * @param modules a collection of Java modules to be filtered
+   * @return a collection of Java modules with only the highest versions retained
+   */
+  @NotNull
+  private static Collection<PsiJavaModule> filterHighestVersions(@NotNull Project project, @NotNull Collection<PsiJavaModule> modules) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-    for (PsiJavaModule module : modules) {
-      VirtualFile root = index.getClassRootForFile(module.getContainingFile().getVirtualFile());
-      if (root != null) {
-        List<VirtualFile> files = descriptorFiles(root, false, false);
-        VirtualFile main = ContainerUtil.getFirstItem(files);
-        if (main != null && !(root.equals(main.getParent()) || version(main.getParent()) >= 9)) {
-          filter.add(main);
-        }
-        for (int i = 1; i < files.size(); i++) {
-          filter.add(files.get(i));
+
+    Set<VirtualFile> roots = new HashSet<>();
+    for (PsiJavaModule javaModule : modules) {
+      VirtualFile file = index.getClassRootForFile(javaModule.getContainingFile().getVirtualFile());
+      ContainerUtil.addIfNotNull(roots, file);
+    }
+
+    Set<VirtualFile> filter = new HashSet<>();
+    for (VirtualFile root : roots) {
+      Collection<VirtualFile> descriptors = getSortedFileDescriptors(root);
+      boolean found = false;
+      // find the highest correct module.
+      for (VirtualFile descriptor : descriptors) {
+        if (!found && isCorrectModulePath(root, descriptor)) {
+          found = true;
+        } else {
+          filter.add(descriptor);
         }
       }
     }
 
+    // remove the same modules but with a smaller version.
     if (!filter.isEmpty()) {
       modules = ContainerUtil.filter(modules, m -> !filter.contains(m.getContainingFile().getVirtualFile()));
     }
@@ -87,57 +92,50 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     return modules;
   }
 
+  /**
+   * Checks if the descriptor is in the root directory or a valid versioned subdirectory.
+   *
+   * @param root the root directory.
+   * @param descriptor the module descriptor to check.
+   * @return true if the descriptor is correctly located, false otherwise.
+   */
+  private static boolean isCorrectModulePath(@NotNull VirtualFile root, @Nullable VirtualFile descriptor) {
+    if (descriptor == null) return false;
+    return root.equals(descriptor.getParent()) || version(descriptor.getParent()) >= MIN_JAVA_VERSION;
+  }
+
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
     return true;
   }
 
-  public static @Nullable VirtualFile descriptorFile(@NotNull VirtualFile root) {
-    VirtualFile result = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-    if (result == null) {
-      result = ContainerUtil.getFirstItem(descriptorFiles(root, true, true));
+  /**
+   * Collects module descriptor files (e.g., `module-info.class`) from the root and "META-INF/versions",
+   * sorted by Java version (highest to lowest).
+   *
+   * @param root the root virtual file
+   * @return a sorted collection of module descriptor files
+   */
+  @NotNull
+  private static Collection<VirtualFile> getSortedFileDescriptors(@NotNull VirtualFile root) {
+    NavigableMap<Integer, VirtualFile> results = new TreeMap<>((i1,i2) -> Integer.compare(i2, i1));
+    VirtualFile rootModuleInfo = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+    if (rootModuleInfo != null) {
+      results.put(MIN_JAVA_VERSION, rootModuleInfo);
     }
-    return result;
-  }
-
-  private static List<VirtualFile> descriptorFiles(VirtualFile root, boolean checkAttribute, boolean filter) {
-    List<VirtualFile> results = new SmartList<>();
-
-    ContainerUtil.addIfNotNull(results, root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE));
 
     VirtualFile versionsDir = root.findFileByRelativePath("META-INF/versions");
-    if (versionsDir != null && (!checkAttribute || isMultiReleaseJar(root))) {
+    if (versionsDir != null) {
       VirtualFile[] versions = versionsDir.getChildren();
-      if (filter) {
-        versions = Stream.of(versions).filter(d -> version(d) >= 9).toArray(VirtualFile[]::new);
-      }
-      Arrays.sort(versions, JavaModuleNameIndex::compareVersions);
       for (VirtualFile version : versions) {
-        ContainerUtil.addIfNotNull(results, version.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE));
+        VirtualFile moduleInfo = version.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (moduleInfo != null) {
+          results.put(version(version), moduleInfo);
+        }
       }
     }
 
-    return results;
-  }
-
-  private static final Key<CachedValue<Boolean>> MULTI_RELEASE_KEY = Key.create("jar.multi.release.key");
-
-  private static boolean isMultiReleaseJar(VirtualFile root) {
-    VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-    if (manifest == null) return false;
-
-    CachedValue<Boolean> value = manifest.getUserData(MULTI_RELEASE_KEY);
-    if (value == null) {
-      manifest.putUserData(MULTI_RELEASE_KEY, value = new CachedValueImpl<>(() -> {
-        Boolean result = Boolean.FALSE;
-        try (InputStream stream = manifest.getInputStream()) {
-          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(Attributes.Name.MULTI_RELEASE));
-        }
-        catch (IOException ignored) { }
-        return CachedValueProvider.Result.create(result, manifest);
-      }));
-    }
-    return value.getValue();
+    return results.values();
   }
 
   private static int version(VirtualFile dir) {
@@ -147,13 +145,5 @@ public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaM
     catch (RuntimeException ignore) {
       return Integer.MIN_VALUE;
     }
-  }
-
-  private static int compareVersions(VirtualFile dir1, VirtualFile dir2) {
-    int v1 = version(dir1), v2 = version(dir2);
-    if (v1 < 9 && v2 < 9) return 0;
-    if (v1 < 9) return 1;
-    if (v2 < 9) return -1;
-    return v1 - v2;
   }
 }

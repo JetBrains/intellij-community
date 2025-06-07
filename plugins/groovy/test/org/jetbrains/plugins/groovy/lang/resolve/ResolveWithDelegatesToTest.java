@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.PsiClass;
@@ -600,7 +600,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
           deleg<caret>ate
       }
       """, GrReferenceExpression.class);
-    assert ref.getType().equalsToText("X");
+    assertTrue(ref.getType().equalsToText("X"));
   }
 
   public void testDelegateWithinImplicitCall() {
@@ -700,7 +700,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
         Methods.m1 { s<caret>2 + toUpperCase() }
       }
       """, GrVariable.class);
-    assert !(grVar instanceof GrField) && !(grVar instanceof GrParameter);
+    assertTrue(!(grVar instanceof GrField) && !(grVar instanceof GrParameter));
 
     // resolve to outer method parameter
     resolveByText("""
@@ -716,7 +716,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
         Methods.m1 { s1 + s<caret>2 + toUpperCase() }
       }
       """, GrVariable.class);
-    assert !(grVar2 instanceof GrField) && !(grVar2 instanceof GrParameter);
+    assertTrue(!(grVar2 instanceof GrField) && !(grVar2 instanceof GrParameter));
   }
 
   public void testDelegateOnlyClasses() {
@@ -731,7 +731,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
         <caret>String
       }
       """);
-    assert grClass instanceof PsiClass;
+    assertInstanceOf(grClass, PsiClass.class);
   }
 
   public void testImplicitCall() {

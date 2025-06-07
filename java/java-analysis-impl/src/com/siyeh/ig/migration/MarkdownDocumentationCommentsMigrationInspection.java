@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -7,27 +7,32 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.javadoc.PsiDocToken.isDocToken;
+
 /**
  * @author Bas Leijdekkers
  */
-final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection implements DumbAware {
+@ApiStatus.Internal
+public final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection implements DumbAware {
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("markdown.documentation.comments.migration.display.name");
@@ -56,7 +61,9 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
 
   private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix implements DumbAware {
 
-    private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START, JavaDocTokenType.DOC_COMMENT_END);
+    private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START,
+                                                                JavaDocTokenType.DOC_COMMENT_END,
+                                                                JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
     private static final Pattern HEADING = Pattern.compile("[hH]([1-6])");
 
     @Override
@@ -68,11 +75,10 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiDocToken) element = element.getParent();
       if (!(element instanceof PsiDocComment)) return;
-      StringBuilder text = appendCommentText(element, new StringBuilder());
-      String markdown = convertToMarkdown(text.toString());
+      String markdown = convertToMarkdown(appendElementText(element, new StringBuilder()).toString());
       String indent = getElementIndent(element);
       String[] lines = markdown.split("\n");
-      StringBuilder result = new StringBuilder(text.length() + (indent.length() + 4) * lines.length);
+      StringBuilder result = new StringBuilder(markdown.length() + (indent.length() + 4) * lines.length);
       for (String line : lines) {
         if (!result.isEmpty()) {
           result.append(indent);
@@ -89,60 +95,45 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
       document.replaceString(startOffset, endOffset, result);
     }
 
-    private static StringBuilder appendCommentText(@NotNull PsiElement element, StringBuilder result) {
+    private static StringBuilder appendElementText(@NotNull PsiElement element, StringBuilder result) {
       for (@NotNull PsiElement child : element.getChildren()) {
-        if (isDocToken(child, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
-          continue;
-        }
-        else if (child instanceof PsiDocToken token && SKIP_TOKENS.contains(token.getTokenType())) {
-          continue;
-        }
-        else if (child instanceof PsiInlineDocTag inlineDocTag) {
-          PsiElement nameElement = inlineDocTag.getNameElement();
-          PsiElement next = nameElement.getNextSibling();
-          if (next instanceof PsiWhiteSpace && next.getText().contains("\n")) {
-            result.append("\n ");
-          }
+        if (isDocToken(child, SKIP_TOKENS)) continue;
+
+        if (child instanceof PsiInlineDocTag inlineDocTag) {
+          PsiElement next = inlineDocTag.getNameElement().getNextSibling();
+          if (next instanceof PsiWhiteSpace && next.getText().contains("\n")) result.append("\n ");
           String name = inlineDocTag.getName();
-          if ("code".equals(name)) {
-            handleCodeInlineDocTag(inlineDocTag, result);
-          }
-          else if ("link".equals(name)) {
-            handleLinkInlineDocTag(inlineDocTag, result);
-          }
-          else {
-            handleGenericInlineDocTag(inlineDocTag, result);
-          }
-          continue;
+          if ("code".equals(name)) handleCode(inlineDocTag, result);
+          else if ("link".equals(name)) handleLink(inlineDocTag, result);
+          else handleInlineDocTag(inlineDocTag, result);
         }
-        if (child instanceof PsiDocTag || child instanceof PsiDocTagValue) {
-          appendCommentText(child, result);
-          continue;
+        else if (child instanceof PsiDocParamRef) {
+          result.append('\u0000').append(child.getText()).append('\u0000');
+        }
+        else if (child instanceof PsiDocTag || child instanceof PsiDocTagValue) {
+          appendElementText(child, result);
         }
         else if (child instanceof PsiWhiteSpace) {
           if (!isDocToken(child.getNextSibling(), JavaDocTokenType.DOC_COMMENT_END)) {
             String text = child.getText();
             if (text.contains("\n")) {
-              if (!result.isEmpty()) {
-                result.append("\n");
-              }
+              if (!result.isEmpty()) result.append("\n");
             }
-            else {
-              result.append(text);
-            }
+            else result.append(text);
           }
-          continue;
         }
-        result.append(child.getText());
+        else result.append(child.getText());
       }
       return result;
     }
+
+    private enum Context { PLAIN, LIST, PRE }
 
     private static String convertToMarkdown(String html) {
       int tag = -1;
       boolean endTag = false;
       boolean newLine = false;
-      boolean inList = false;
+      Context context = Context.PLAIN;
       StringBuilder result = new StringBuilder();
       for (int i = 0, length = html.length(); i < length; i++) {
         char c = html.charAt(i);
@@ -161,14 +152,14 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             Matcher matcher; 
             if ("li".equals(name)) {
               if (endTag) {
-                inList = false;
+                context = Context.PLAIN;
               }
               else {
                 if (result.length() > 4 && "    ".equals(result.substring(result.length() - 4))) {
                   result.delete(result.length() - 4, result.length());
                 }
                 result.append("  - ");
-                inList = true;
+                context = Context.LIST;
               }
             }
             else if ("em".equals(name) || "i".equals(name)) {
@@ -188,7 +179,11 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
               if (i + 1 < length && html.charAt(i + 1) != '\n') result.append('\n');
             }
             else if ("ul".equals(name)) {
-              if (endTag) inList = false;
+              if (endTag) context = Context.PLAIN;
+            }
+            else if ("pre".equals(name)) {
+              context = endTag ? Context.PLAIN : Context.PRE;
+              result.append(html, tag, i + 1);
             }
             else if ((matcher = HEADING.matcher(name)).matches()) {
               if (!endTag) {
@@ -208,26 +203,40 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
           endTag = false;
         }
         else {
-          if (c == '\n') {
+          if (context == Context.PRE) {
+            if (c == '<' && match(html, "</pre>", i)) tag = i;
+            else result.append(c);
+          }
+          else if (c == '\u0000') { // NUL marks part where text should be taken raw
+            int end = html.indexOf('\u0000', i + 1);
+            result.append(html, i + 1, end);
+            i = end;
+          }
+          else if (c == '\n') {
             if (newLine && !(i + 2 < length && html.charAt(i + 2) == '@')) {
               continue;
             }
-            result.append(inList ? "\n     " : "\n");
+            result.append(context == Context.LIST ? "\n     " : "\n");
             newLine = true;
           }
           else {
-            if (newLine && inList && c == ' ') continue;
+            if (newLine && context == Context.LIST && c == ' ') continue;
             newLine = false;
-            if (c == '<') {
-              tag = i;
-            }
-            else {
-              result.append(c);
-            }
+            if (c == '<') tag = i;
+            else result.append(c);
           }
         }
       }
       return result.toString();
+    }
+
+    private static boolean match(String s, String pattern, int offset) {
+      int length = pattern.length();
+      if (s.length() < offset + length) return false;
+      for (int i = 0; i < length; i++) {
+        if (!StringUtil.charsEqualIgnoreCase(s.charAt(offset + i), pattern.charAt(i))) return false;
+      }
+      return true;
     }
 
     private static boolean isLetterOrDigitAscii(char cur) {
@@ -244,41 +253,32 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
       return text.substring(lineBreak + 1);
     }
 
-    private static void handleGenericInlineDocTag(PsiElement element, StringBuilder result) {
+    private static void handleInlineDocTag(PsiElement element, StringBuilder result) {
       PsiElement[] children = element.getChildren();
       if (children.length > 0) {
         for (@NotNull PsiElement child : children) {
-          handleGenericInlineDocTag(child, result);
+          handleInlineDocTag(child, result);
         }
-        return;
       }
-      if (element instanceof PsiWhiteSpace) {
+      else if (element instanceof PsiWhiteSpace) {
         String text = element.getText();
-        if (text.contains("\n")) {
-          result.append("\n ");
-        }
-        else {
-          result.append(text);
-        }
-        return;
+        if (text.contains("\n")) result.append("\n ");
+        else result.append(text);
       }
-      else if (isDocToken(element, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
-        return;
+      else if (!isDocToken(element, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+        result.append(element.getText());
       }
-      result.append(element.getText());
     }
 
-    private static void handleCodeInlineDocTag(PsiInlineDocTag inlineDocTag, StringBuilder result) {
-      result.append('`');
+    private static void handleCode(PsiInlineDocTag inlineDocTag, StringBuilder result) {
+      result.append("`\u0000");
       for (PsiElement dataElement : inlineDocTag.getDataElements()) {
-        if (dataElement instanceof PsiDocToken) {
-          result.append(dataElement.getText().trim());
-        }
+        if (dataElement instanceof PsiDocToken) result.append(dataElement.getText().trim());
       }
-      result.append('`');
+      result.append("\u0000`");
     }
 
-    private static void handleLinkInlineDocTag(PsiInlineDocTag inlineDocTag, StringBuilder result) {
+    private static void handleLink(PsiInlineDocTag inlineDocTag, StringBuilder result) {
       result.append('[');
       PsiElement[] dataElements = inlineDocTag.getDataElements();
       boolean dataFound = false;
@@ -301,9 +301,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             else if (refChild instanceof PsiDocTagValue) {
               for (@NotNull PsiElement valueChild : refChild.getChildren()) {
                 if (valueChild instanceof PsiWhiteSpace) {
-                  if (valueChild.getText().contains("\n")) {
-                    result.append("\n ");
-                  }
+                  if (valueChild.getText().contains("\n")) result.append("\n ");
                   continue;
                 }
                 if (isDocToken(valueChild, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
@@ -317,10 +315,6 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
         }
       }
       result.append(']');
-    }
-
-    private static boolean isDocToken(PsiElement element, IElementType tokenType) {
-      return element instanceof PsiDocToken token && tokenType == token.getTokenType();
     }
   }
 }

@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -53,10 +56,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
   }
 
-  public boolean isDumbAware() {
-    return getTool().isDumbAware();
-  }
-
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
                                                                           @Nullable PsiElement element,
                                                                           @NotNull String name) {
@@ -71,10 +70,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
                                                                           @Nullable PsiElement element,
                                                                           @NotNull InspectionProfile inspectionProfile,
                                                                           @Nullable InspectionToolWrapper<?, ?> toolWrapper) {
-    if (toolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-      LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-      if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
-        String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
+    if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isUnfair()) {
+      LocalInspectionTool inspectionTool = local.getTool();
+      if (inspectionTool instanceof PairedUnfairLocalInspectionTool unfair) {
+        String oppositeShortName = unfair.getInspectionForBatchShortName();
         return element == null ? inspectionProfile.getInspectionTool(oppositeShortName, project)
                                : inspectionProfile.getInspectionTool(oppositeShortName, element);
       }

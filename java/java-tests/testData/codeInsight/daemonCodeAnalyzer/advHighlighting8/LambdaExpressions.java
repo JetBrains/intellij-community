@@ -11,9 +11,9 @@ class Test {
 
   private final IntFunction multiply = i -> i * Test.this.idx;
 
-  private final int idx3 = <error descr="Variable 'this.idx' might not have been initialized">this.idx</error> + 1;
+  private final int idx3 = <error descr="Variable 'idx' might not have been initialized">this.idx</error> + 1;
 
-  private final IntFunction multiply2 = i -> i * <error descr="Variable 'this.idx' might not have been initialized">this.idx</error>;
+  private final IntFunction multiply2 = i -> i * <error descr="Variable 'idx' might not have been initialized">this.idx</error>;
 
   public Test(int idx) {
     this.idx = idx;

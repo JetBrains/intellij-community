@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
@@ -47,7 +46,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val javaFile = File(javaPath)
         val fileContents = javaFile.getFileTextWithoutDirectives()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), getDisableTestDirective()) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), getDisableTestDirective(pluginMode)) {
             withCustomCompilerOptions(fileContents, project, module) {
                 doTest(javaFile, fileContents)
             }
@@ -63,55 +62,15 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings, directives)
-        val expectedFile = getExpectedFile(javaFile)
+        val expectedFile = getExpectedFile(javaFile, isCopyPaste = false, pluginMode)
 
         val actualText = if (prefix == "file") {
-            createKotlinFile(convertedText).getFileTextWithErrors()
+            createKotlinFile(convertedText).getFileTextWithErrors(pluginMode)
         } else {
             convertedText
         }
 
-        val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
-    }
-
-    // 1. ".k1.kt" testdata is for trivial differences between K1 and K2 (for example, different wording of error messages).
-    // Such files will be deleted along with the whole K1 plugin.
-    // In such tests, the K2 testdata with the default ".kt" suffix is considered completely correct.
-    //
-    // 2. ".k2.kt" testdata is for tests that are mostly good on K2, but there are differences due to minor missing post-processings
-    // that we may support later in "idiomatic" mode.
-    // Still, we don't want to completely ignore such tests in K2.
-    //
-    // 3. If the test only has a default version of testdata ".kt", then:
-    //   - it may have "IGNORE_K2" directive, in this case the test is completely ignored in K2
-    //   - or, if no IGNORE directives are present, the K1 and K2 results are identical for such a test
-    private fun getExpectedFile(javaFile: File): File {
-        val defaultFile = File(javaFile.path.replace(".java", ".kt"))
-        if (!defaultFile.exists()) {
-            throw AssertionError("Expected file doesn't exist: ${defaultFile.path}.")
-        }
-
-        val customFileExtension = getCustomExpectedFileExtension()
-        val customFile = File(javaFile.path.replace(".java", customFileExtension)).takeIf(File::exists)
-        if (customFile == null) return defaultFile
-
-        val defaultText = defaultFile.readText().trimTrailingWhitespacesAndAddNewlineAtEOF()
-        val customText = customFile.readText().trimTrailingWhitespacesAndAddNewlineAtEOF()
-        if (defaultText != customText) return customFile
-
-        customFile.delete()
-        throw AssertionError("""
-            Custom expected file text is the same as the default one.
-            Deleting custom file: ${customFile.path}.
-            Please rerun the test now.""".trimIndent()
-        )
-    }
-
-    private fun getCustomExpectedFileExtension(): String = when (pluginMode) {
-        KotlinPluginMode.K1 -> ".k1.kt"
-        KotlinPluginMode.K2 -> ".k2.kt"
-        else -> error("Can't determine the plugin mode")
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 
     private fun addDependencies(directives: Directives) {
@@ -164,10 +123,16 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         }
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String {
-        val preprocessorExtensions =
-            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList) else J2kPreprocessorExtension.EP_NAME.extensionList
-        val postprocessorExtensions =
-            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList) else J2kPostprocessorExtension.EP_NAME.extensionList
+        val preprocessorExtensions = if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList
+        } else {
+            J2kPreprocessorExtension.EP_NAME.extensionList
+        }
+        val postprocessorExtensions = if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList
+        } else {
+            J2kPostprocessorExtension.EP_NAME.extensionList
+        }
 
         return when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
@@ -185,7 +150,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ): String {
         val file = createJavaFile(text)
-        val j2kKind = if (isFirPlugin) K2 else K1_NEW
+        val j2kKind = if (pluginMode === KotlinPluginMode.K2) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
         val converter = extension.createJavaToKotlinConverter(project, module, settings)
         val postProcessor = extension.createPostProcessor()

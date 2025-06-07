@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performanceScripts.lang.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -13,9 +14,8 @@ public class IJPerfFile extends PsiFileBase {
     super(viewProvider, IJPerfLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return IJPerfFileType.INSTANCE;
   }
 

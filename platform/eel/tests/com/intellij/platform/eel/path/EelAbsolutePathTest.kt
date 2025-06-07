@@ -1,9 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
 class EelAbsolutePathTest {
@@ -16,7 +21,7 @@ class EelAbsolutePathTest {
       "/foo/bar/.",
       "/foo/bar/./baz",
       "/foo/bar/./baz/..",
-    )
+    ).map { it to EelPlatform.Linux(EelPlatform.Arch.Unknown) }
 
     val windowsPaths = listOf(
       """C:\""",  // Keep in mind that "C:" is not an absolute path, it actually points to a current directory.
@@ -29,13 +34,46 @@ class EelAbsolutePathTest {
       """\\wsl${'$'}\Ubuntu-22.04""",
       """\\wsl${'$'}\Ubuntu-22.04\home""",
       """\\wsl${'$'}\Ubuntu-22.04\home\user""",
-    )
+    ).map { it to EelPlatform.Windows(EelPlatform.Arch.Unknown) }
 
-    for (rawPath in (unixPaths + windowsPaths)) {
+    for ((rawPath, os) in (unixPaths + windowsPaths)) {
       add(dynamicTest(rawPath) {
-        val eelPath = EelPath.Absolute.parse(null, rawPath)
+        val eelPath = EelPath.parse(rawPath, DummyEelDescriptor(os))
         eelPath.toString() shouldBe rawPath
       })
+    }
+  }
+
+  @TestFactory
+  fun `os-dependent separators`(): List<DynamicTest> = buildList {
+    val unixPath = EelPath.parse("/", DummyEelDescriptor(EelPlatform.Linux(EelPlatform.Arch.Unknown)))
+    val windowsPath = EelPath.parse("C:\\", DummyEelDescriptor(EelPlatform.Windows(EelPlatform.Arch.Unknown)))
+    val parts = listOf(Triple("a/b/c/d", listOf("a", "b", "c", "d"), listOf("a", "b", "c", "d")),
+                       Triple("a\\b\\c\\d", listOf("a\\b\\c\\d"), listOf("a", "b", "c", "d")),
+                       Triple("a\\b/c\\d", listOf("a\\b", "c\\d"), listOf("a", "b", "c", "d")))
+    for ((resolvable, unixAnswer, windowsAnswer) in parts) {
+      add(dynamicTest("unix: $resolvable") {
+        unixPath.resolve(resolvable).parts shouldBe unixAnswer
+      })
+      add(dynamicTest("windows: $resolvable") {
+        windowsPath.resolve(resolvable).parts shouldBe windowsAnswer
+      })
+    }
+  }
+
+  @Test
+  fun endsWith() {
+    val path = EelPath.parse("C:\\foo\\bar\\baz", DummyEelDescriptor(EelPlatform.Windows(EelPlatform.Arch.Unknown)))
+    path.endsWith(listOf("bar", "baz")) shouldBe true
+    path.endsWith(listOf("bar", "baz", "qux")) shouldBe false
+    path.endsWith(listOf("C:", "foo", "bar", "bax")) shouldBe false
+  }
+
+  class DummyEelDescriptor(override val platform: EelPlatform) : EelDescriptor {
+    override val userReadableDescription: String = "mock"
+
+    override suspend fun toEelApi(): EelApi {
+      return Assertions.fail<Nothing>()
     }
   }
 }

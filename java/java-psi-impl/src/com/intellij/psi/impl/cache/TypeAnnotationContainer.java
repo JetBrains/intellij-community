@@ -2,8 +2,6 @@
 package com.intellij.psi.impl.cache;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.TypeAnnotationProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,14 +42,7 @@ public interface TypeAnnotationContainer {
     }
 
     @Override
-    public @NotNull PsiType applyTo(@NotNull PsiType type, @NotNull PsiElement context) {
-      return type;
-    }
-
-    @Override
-    public @NotNull PsiJavaCodeReferenceElement annotateReference(@NotNull PsiJavaCodeReferenceElement reference,
-                                                                  @NotNull PsiElement context) {
-      return reference;
+    public void appendImmediateText(@NotNull StringBuilder sb) {
     }
   };
 
@@ -90,8 +81,8 @@ public interface TypeAnnotationContainer {
    */
   @NotNull TypeAnnotationProvider getProvider(PsiElement parent);
 
-  @NotNull PsiType applyTo(@NotNull PsiType type, @NotNull PsiElement context);
-
-  @NotNull PsiJavaCodeReferenceElement annotateReference(@NotNull PsiJavaCodeReferenceElement reference,
-                                                         @NotNull PsiElement context);
+  /**
+   * Appends to StringBuilder annotation text that applicable to this element immediately (not to sub-elements)
+   */
+  void appendImmediateText(@NotNull StringBuilder sb);
 }

@@ -65,12 +65,12 @@ internal class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtPa
         val parameterIndex = function.valueParameters.indexOf(element)
 
         val superMethods = checkSuperMethods(function, emptyList(), RefactoringBundle.message("to.refactor"))
-        val superFunction = superMethods.firstOrNull() as? KtNamedFunction ?: return
+        val superFunction = superMethods.lastOrNull() as? KtNamedFunction ?: return
 
         val methodDescriptor = KotlinMethodDescriptor(superFunction)
 
         val changeInfo = KotlinChangeInfo(methodDescriptor)
-        changeInfo.receiverParameterInfo = changeInfo.newParameters[parameterIndex]
+        changeInfo.receiverParameterInfo = changeInfo.newParameters.filterNot { it.isContextParameter  }[parameterIndex]
 
         KotlinChangeSignatureProcessor(element.project, changeInfo).run()
     }

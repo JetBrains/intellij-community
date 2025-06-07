@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,11 +18,11 @@ import java.util.List;
  * Use extension point `com.intellij.gotoRelatedProvider`.
  */
 public abstract class GotoRelatedProvider {
-  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement psiElement) {
+  public @Unmodifiable @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement psiElement) {
     return Collections.emptyList();
   }
 
-  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
+  public @Unmodifiable @NotNull List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     return Collections.emptyList();
   }
 }

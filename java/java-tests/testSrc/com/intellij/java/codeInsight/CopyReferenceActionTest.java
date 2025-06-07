@@ -10,11 +10,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase {
-  private int oldSetting;
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -27,25 +26,12 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    oldSetting = settings.ADD_IMPORTS_ON_PASTE;
-    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      settings.ADD_IMPORTS_ON_PASTE = oldSetting;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   public void testConstructor() { doTest(); }

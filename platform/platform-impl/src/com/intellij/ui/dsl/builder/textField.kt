@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
-import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JTextField

@@ -3,7 +3,7 @@ import java.util.Random;
 public class TestEmptyBlocks {
    public static void foo() {
       try {
-         boolean i = false;// 22
+         boolean var0 = false;// 22
       } catch (Exception var1) {// 23
       }
 
@@ -30,8 +30,6 @@ class 'TestEmptyBlocks' {
       9      9
       a      9
       d      9
-      e      9
-      f      9
       1a      12
       1b      12
       1c      12

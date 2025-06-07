@@ -17,3 +17,9 @@ fun <T : Any> DataNode<*>.findAll(key: Key<T>): List<NodeWithData<T>> {
         NodeWithData(node, data)
     }
 }
+
+fun <T : Any> DataNode<*>.find(key: Key<T>): NodeWithData<T>? {
+    val node = ExternalSystemApiUtil.find(this, key) ?: return null
+    val data = node.getData(key) ?: return null
+    return NodeWithData(node, data)
+}

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 
 class SpeedSearchActionPromoter : ActionPromoter {
-  override fun promote(actions: List<out AnAction>, context: DataContext): List<AnAction> {
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     return actions.sortedBy { it is SpeedSearchAction }
   }
 }

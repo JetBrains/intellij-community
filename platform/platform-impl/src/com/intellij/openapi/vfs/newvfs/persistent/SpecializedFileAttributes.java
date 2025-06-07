@@ -415,7 +415,7 @@ public final class SpecializedFileAttributes {
     void flush() throws IOException;
   }
 
-  private static abstract class FastAttributeAccessorHelper implements FileAttributeAccessorEx, Closeable, Unmappable, CleanableStorage {
+  private abstract static class FastAttributeAccessorHelper implements FileAttributeAccessorEx, Closeable, Unmappable, CleanableStorage {
     protected final @NotNull MappedFileStorageHelper helper;
 
 

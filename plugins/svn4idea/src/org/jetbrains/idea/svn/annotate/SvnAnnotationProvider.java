@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,15 +48,14 @@ import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   private static final Object MERGED_KEY = new Object();
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
 
   public SvnAnnotationProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     SvnDiffProvider provider = (SvnDiffProvider)myVcs.getDiffProvider();
     SvnRevisionNumber currentRevision = ((SvnRevisionNumber)provider.getCurrentRevision(file));
     VcsRevisionDescription lastChangedRevision = provider.getCurrentRevisionDescription(file);
@@ -74,19 +73,17 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file, @NotNull VcsFileRevision revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file, @NotNull VcsFileRevision revision) throws VcsException {
     return annotate(file, ((SvnFileRevision)revision).getRevisionNumber(), revision.getRevisionNumber(), () -> {
       byte[] bytes = VcsHistoryUtil.loadRevisionContent(revision);
       return getTextByBinaryPresentation(bytes, file, false, false).toString();
     });
   }
 
-  @NotNull
-  private FileAnnotation annotate(@NotNull VirtualFile file,
-                                  @NotNull SvnRevisionNumber revisionNumber,
-                                  @NotNull VcsRevisionNumber lastChangedRevision,
-                                  @NotNull Throwable2Computable<String, VcsException, IOException> contentLoader) throws VcsException {
+  private @NotNull FileAnnotation annotate(@NotNull VirtualFile file,
+                                           @NotNull SvnRevisionNumber revisionNumber,
+                                           @NotNull VcsRevisionNumber lastChangedRevision,
+                                           @NotNull Throwable2Computable<String, VcsException, IOException> contentLoader) throws VcsException {
     if (file.isDirectory()) {
       throw new VcsException(message("exception.text.cannot.annotate.directory"));
     }
@@ -218,12 +215,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
   }
 
-  @NotNull
-  private SvnRemoteFileAnnotation annotateNonExisting(@NotNull Pair<SvnChangeList, FilePath> pair,
-                                                      @NotNull SvnRevisionNumber revisionNumber,
-                                                      @NotNull Info info,
-                                                      @NotNull Charset charset,
-                                                      @NotNull VirtualFile current) throws VcsException, IOException {
+  private @NotNull SvnRemoteFileAnnotation annotateNonExisting(@NotNull Pair<SvnChangeList, FilePath> pair,
+                                                               @NotNull SvnRevisionNumber revisionNumber,
+                                                               @NotNull Info info,
+                                                               @NotNull Charset charset,
+                                                               @NotNull VirtualFile current) throws VcsException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
 
@@ -263,9 +259,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return result;
   }
 
-  @NotNull
-  private static AnnotationConsumer createAnnotationHandler(@Nullable final ProgressIndicator progress,
-                                                            @NotNull final BaseSvnFileAnnotation result) {
+  private static @NotNull AnnotationConsumer createAnnotationHandler(final @Nullable ProgressIndicator progress,
+                                                                     final @NotNull BaseSvnFileAnnotation result) {
     return (lineNumber, info, mergeInfo) -> {
       if (progress != null) {
         progress.checkCanceled();
@@ -315,13 +310,12 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return vcsAnnotation;
   }
 
-  @Nullable
   @Override
-  public FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
-                                @NotNull VcsAbstractHistorySession session,
-                                @NotNull String annotatedContent,
-                                boolean forCurrentRevision,
-                                VcsRevisionNumber revisionNumber) {
+  public @Nullable FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
+                                          @NotNull VcsAbstractHistorySession session,
+                                          @NotNull String annotatedContent,
+                                          boolean forCurrentRevision,
+                                          VcsRevisionNumber revisionNumber) {
     final SvnFileAnnotation annotation =
       new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent, revisionNumber);
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
@@ -448,8 +442,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
   }
 
-  @Nullable
-  private static DiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
+  private static @Nullable DiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
     return vcs.getSvnConfiguration().isIgnoreSpacesInAnnotate() ? new DiffOptions(true, true, true) : null;
   }
 }

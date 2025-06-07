@@ -18,13 +18,12 @@ import java.util.ArrayList;
 public class PyMoveExceptQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.move.except.up");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyExceptPart part = PsiTreeUtil.getParentOfType(element, PyExceptPart.class);
     if (part == null) return;
     final PyExpression exceptClassExpression = part.getExceptClass();

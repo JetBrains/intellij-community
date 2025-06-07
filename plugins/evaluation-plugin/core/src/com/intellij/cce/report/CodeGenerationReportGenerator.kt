@@ -12,10 +12,14 @@ class CodeGenerationReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
-  dirs: GeneratorDirectories
+  dirs: GeneratorDirectories,
+  private val positionBasedColors: Boolean = true
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
 
-  override val scripts: List<Resource> = listOf(Resource("/diff.js", "../res/diff.js")) + super.scripts
+  override val scripts: List<Resource> = listOf(
+    Resource("/diff.js", "../res/diff.js"),
+    Resource("/highlight.js", "../res/highlight.js")
+  ) + super.scripts
 
   override fun textToInsert(session: Session) = session.expectedText.lines().first()
 
@@ -31,7 +35,12 @@ class CodeGenerationReportGenerator(
     if (session == null || session.lookups.size <= lookupOrder) return HtmlColorClasses.notFoundColor
     val lookup = session.lookups[lookupOrder]
 
-    return if (lookup.additionalInfo.getOrDefault(AIA_HAS_SYNTAX_ERRORS, true) as Boolean) HtmlColorClasses.notFoundColor
-    else HtmlColorClasses.perfectSortingColor
+    if (positionBasedColors) {
+      return if (lookup.selectedPosition == -1) HtmlColorClasses.notFoundColor else HtmlColorClasses.perfectSortingColor
+    }
+    else {
+      return if (lookup.additionalInfo.getOrDefault(AIA_HAS_SYNTAX_ERRORS, true) as Boolean) HtmlColorClasses.notFoundColor
+      else HtmlColorClasses.perfectSortingColor
+    }
   }
 }

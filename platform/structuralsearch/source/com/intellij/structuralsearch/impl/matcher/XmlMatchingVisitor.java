@@ -129,8 +129,7 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     }
   }
 
-  @Nullable
-  private static XmlToken getTagNameToken(XmlTag tag) {
+  private static @Nullable XmlToken getTagNameToken(XmlTag tag) {
     PsiElement child = tag.getFirstChild();
     while (child != null) {
       if (child instanceof XmlToken token) {

@@ -4,5 +4,5 @@ open class A {
 }
 
 class B : A() {
-    override fun plu<caret>s(a: A) = A()
+    override fun plu<caret>s(a: A) = B()
 }

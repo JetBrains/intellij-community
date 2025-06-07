@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -295,14 +295,15 @@ public final class ScopeEditorPanel implements Disposable {
       LOG.warn("ScopeEditorPanel.updateSelectedSets called before tree initialization", new Throwable());
       return;
     }
-    int[] rows = myPackageTree.getSelectionRows();
-    if (rows == null) return;
+    var paths = myPackageTree.getSelectionPaths();
+    if (paths == null) return;
     PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
     if (provider == null) return;
-    final var nodes = new ArrayList<PackageDependenciesNode>(rows.length);
-    for (int row : rows) {
-      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
-      nodes.add(node);
+    final var nodes = new ArrayList<PackageDependenciesNode>(paths.length);
+    for (var path : paths) {
+      if (path.getLastPathComponent() instanceof PackageDependenciesNode node) {
+        nodes.add(node);
+      }
     }
     computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
       myInclude.setSelection(result);
@@ -340,7 +341,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @VisibleForTesting
+  public static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = new ComplementPackageSet(set);
     }
@@ -377,7 +379,8 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   @ApiStatus.Internal
-  static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+  @VisibleForTesting
+  public static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
     if (current == null) {
       current = set;
     }

@@ -67,7 +67,7 @@ KaSourceModule:
 
 KaSourceModule:
   description: Sources of native
-  targetPlatform: JVM (1.8)
+  targetPlatform: Native (general)
   name: native
   sourceModuleKind: PRODUCTION
   stableModuleName: <native>
@@ -80,7 +80,7 @@ KaSourceModule:
 
 KaSourceModule:
   description: Sources of native
-  targetPlatform: JVM (1.8)
+  targetPlatform: Native (general)
   name: native
   sourceModuleKind: TEST
   stableModuleName: <native>

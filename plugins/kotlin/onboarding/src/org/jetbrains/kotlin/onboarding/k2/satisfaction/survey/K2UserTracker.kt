@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import java.time.Duration
 import java.time.Instant
 
 internal const val K2_SINCE_NOT_DEFINED = -1L
@@ -99,30 +98,6 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         }
         if (!projectContainsNonScriptKotlinFile) return false
 
-        if (switchedToK1) {
-            return true
-        } else {
-            val k2Chosen = if (forUnitTests) {
-                k2PluginModeForTests
-            } else {
-                KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K2
-            }
-            if (!k2Chosen) {
-                LOG.debug("Not showing the K2 feedback dialog because the user doesn't use K2")
-                return false
-            } else {
-                // The following condition is needed if a user had always been on K2 even before the survey started
-                if (state.k2UserSince == K2_SINCE_NOT_DEFINED) {
-                    state.k2UserSince = Instant.now().epochSecond
-                }
-                val k2UserSince = Instant.ofEpochSecond(state.k2UserSince) // k2UserSince might be initialized here on the first access
-                val durationSinceK2User = Duration.between(k2UserSince, Instant.now())
-
-                LOG.debug("Duration since user became a K2 Kotlin user: ${durationSinceK2User.toDays()} day(s)")
-                return durationSinceK2User > Duration.ofSeconds(
-                    Registry.intValue("minimum.usage.time.before.showing.k2.survey").toLong()
-                )
-            }
-        }
+        return switchedToK1
     }
 }

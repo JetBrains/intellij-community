@@ -49,9 +49,8 @@ class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
   }
 
 
-  @NotNull
   @Override
-  public String getDisplayText() {
+  public @NotNull String getDisplayText() {
     if (getBefore() != null && getAfter() != null) {
       String after = DateFormatUtil.formatDate(getAfter());
       String before = DateFormatUtil.formatDate(getBefore());
@@ -66,9 +65,7 @@ class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
     return "";
   }
 
-  @Nls
-  @NotNull
-  static String getDisplayTextWithPrefix(@NotNull VcsLogDateFilter filter) {
+  static @Nls @NotNull String getDisplayTextWithPrefix(@NotNull VcsLogDateFilter filter) {
     if (filter.getBefore() != null && filter.getAfter() != null) {
       String after = DateFormatUtil.formatDate(filter.getAfter());
       String before = DateFormatUtil.formatDate(filter.getBefore());

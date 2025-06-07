@@ -79,6 +79,29 @@ public interface BasicFileAttributesHolder2 extends BasicFileAttributesHolder {
    */
   @FunctionalInterface
   interface FetchAttributesFilter extends DirectoryStream.Filter<Path> {
+
+    /**
+     * In production, we have two coexisting app class loaders: {@link jdk.internal.loader.ClassLoaders.AppClassLoader} and {@link com.intellij.util.lang.PathClassLoader}.
+     * The code executing here sometimes runs under {@link com.intellij.util.lang.PathClassLoader}, but the classes of routing FS are loaded with {@link jdk.internal.loader.ClassLoaders.AppClassLoader}.
+     * These two class loaders are not related to each other, hence checks for {@code instanceof} between objects loaded with them will fail.
+     * Here we forcefully use the classloader that corresponds to a filter with the purpose of having a match between the class and the instance.
+     */
+    static boolean isFetchAttributesFilter(DirectoryStream.Filter<? super Path> filter) {
+      try {
+        ClassLoader classLoader = filter.getClass().getClassLoader();
+        if (classLoader == null) {
+          return filter instanceof BasicFileAttributesHolder2.FetchAttributesFilter;
+        }
+        else {
+          return classLoader.loadClass("com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2$FetchAttributesFilter")
+            .isInstance(filter);
+        }
+      }
+      catch (ClassNotFoundException e) {
+        return filter instanceof BasicFileAttributesHolder2.FetchAttributesFilter;
+      }
+    }
+
     FetchAttributesFilter ACCEPT_ALL = path -> true;
   }
 }

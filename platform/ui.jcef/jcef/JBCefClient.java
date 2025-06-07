@@ -213,6 +213,17 @@ public final class JBCefClient implements JBCefDisposable {
         }
 
         @Override
+        public boolean runContextMenu(CefBrowser browser,
+                                      CefFrame frame,
+                                      CefContextMenuParams params,
+                                      CefMenuModel model,
+                                      CefRunContextMenuCallback callback) {
+          return myContextMenuHandler.handleBooleanFirst(browser, handler -> {
+            return handler.runContextMenu(browser, frame, params, model, callback);
+          });
+        }
+
+        @Override
         public boolean onContextMenuCommand(CefBrowser browser,
                                             CefFrame frame,
                                             CefContextMenuParams params,
@@ -245,7 +256,7 @@ public final class JBCefClient implements JBCefDisposable {
                                     FileDialogMode mode,
                                     String title,
                                     String defaultFilePath,
-                                    Vector<String> acceptFilters,
+                                    @SuppressWarnings("UseOfObsoleteCollectionType") Vector<String> acceptFilters,
                                     CefFileDialogCallback callback) {
           return myDialogHandler.handleBooleanFirst(browser, handler -> {
             return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, callback);

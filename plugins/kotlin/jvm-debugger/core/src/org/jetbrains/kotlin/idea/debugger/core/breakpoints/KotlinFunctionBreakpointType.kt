@@ -54,14 +54,10 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
                     ApplicabilityResult.DEFINITELY_YES
 
                 is KtFunction ->
-                    maybe(
-                        !KtPsiUtil.isLocal(element)
-                                && !element.isInlineOnly()
-                                && !element.isComposable()
-                    )
+                    maybe(!element.isInlineOnly() && !element.isComposable())
 
                 is KtPropertyAccessor ->
-                    maybe(element.hasBody() && !KtPsiUtil.isLocal(element.property))
+                    maybe(element.hasBody())
 
                 is KtClass ->
                     maybe(
@@ -70,6 +66,9 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
                                 && !element.isInterface()
                                 && element.hasPrimaryConstructor()
                     )
+
+                is KtObjectDeclaration ->
+                    ApplicabilityResult.MAYBE_YES
 
                 else ->
                     ApplicabilityResult.UNKNOWN

@@ -1,6 +1,7 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.ui.playback.PlaybackContext
 
@@ -20,7 +21,7 @@ class RenameModuleCommand(text: String, line: Int) : PerformanceCommandCoroutine
       throw IllegalArgumentException("No module with name: $oldName")
     }
     modifiableModel.renameModule(module, newName)
-    writeAction { modifiableModel.commit() }
+    edtWriteAction { modifiableModel.commit() }
   }
 
   override fun getName(): String {

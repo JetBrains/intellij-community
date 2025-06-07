@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters.repositories;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -42,8 +28,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
 
   public static class Id extends MavenRepositoryConverter {
     @Override
-    @NotNull
-    public Collection<String> getVariants(final @NotNull ConvertContext context) {
+    public @NotNull Collection<String> getVariants(final @NotNull ConvertContext context) {
       Module module = context.getModule();
       if (module != null) {
         return MavenRepositoriesProvider.getInstance().getRepositoryIds();
@@ -61,8 +46,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
 
   public static class Name extends MavenRepositoryConverter {
     @Override
-    @NotNull
-    public Collection<String> getVariants(final @NotNull ConvertContext context) {
+    public @NotNull Collection<String> getVariants(final @NotNull ConvertContext context) {
       Module module = context.getModule();
 
       if (module != null) {
@@ -92,8 +76,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     }
   }
 
-  @Nullable
-  private static String getRepositoryId(ConvertContext context) {
+  private static @Nullable String getRepositoryId(ConvertContext context) {
     MavenDomRepositoryBase repository = context.getInvocationElement().getParentOfType(MavenDomRepositoryBase.class, false);
     if (repository != null) return repository.getId().getStringValue();
 
@@ -101,7 +84,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
   }
 
   @Override
-  public String fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
+  public String fromString(final @Nullable @NonNls String s, final @NotNull ConvertContext context) {
     return s;
   }
 

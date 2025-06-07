@@ -22,6 +22,10 @@ interface CodeReviewEditorGutterControlsModel : CodeReviewCommentableEditorModel
     @get:RequiresEdt
     val linesWithComments: Set<Int>
 
+    @get:RequiresEdt
+    val linesWithNewComments: Set<Int>
+      get() = setOf()
+
     @RequiresEdt
     fun isLineCommentable(lineIdx: Int): Boolean
   }

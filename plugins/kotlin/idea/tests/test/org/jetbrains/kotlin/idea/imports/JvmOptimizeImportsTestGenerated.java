@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports;
 
@@ -219,6 +219,16 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/FromCompanionObjectGeneric.kt");
             }
 
+            @TestMetadata("JavaLangDeprecated_annotationPosition.kt")
+            public void testJavaLangDeprecated_annotationPosition() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/JavaLangDeprecated_annotationPosition.kt");
+            }
+
+            @TestMetadata("JavaLangDeprecated_expressionPosition.kt")
+            public void testJavaLangDeprecated_expressionPosition() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/JavaLangDeprecated_expressionPosition.kt");
+            }
+
             @TestMetadata("JavaStaticField.kt")
             public void testJavaStaticField() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/JavaStaticField.kt");
@@ -360,6 +370,26 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunction.kt")
+            public void testTypealiasedObject_InvokeFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunctionOnCompanion.kt")
+            public void testTypealiasedObject_InvokeFunctionOnCompanion() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunctionOnCompanion.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunction_AliasWithSameName.kt")
+            public void testTypealiasedObject_InvokeFunction_AliasWithSameName() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction_AliasWithSameName.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunction_CurlyBraces.kt")
+            public void testTypealiasedObject_InvokeFunction_CurlyBraces() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction_CurlyBraces.kt");
             }
 
             @TestMetadata("UnusedClass.kt")
@@ -964,9 +994,19 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_samConstructor.kt");
             }
 
+            @TestMetadata("TypeAliasedConstructor_samConstructor_withGenerics.kt")
+            public void testTypeAliasedConstructor_samConstructor_withGenerics() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_samConstructor_withGenerics.kt");
+            }
+
             @TestMetadata("TypeAliasedConstructor_sameName.kt")
             public void testTypeAliasedConstructor_sameName() throws Exception {
                 runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_sameName.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_withGenerics.kt")
+            public void testTypeAliasedConstructor_withGenerics() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_withGenerics.kt");
             }
 
             @TestMetadata("UnresolvedImport.kt")

@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -176,8 +178,7 @@ public final class ProtocolParser {
     return new PyIo(s, ctx);
   }
 
-  @NotNull
-  public static PyThreadInfo parseThread(final String text, final PyPositionConverter positionConverter) throws PyDebuggerException {
+  public static @NotNull PyThreadInfo parseThread(final String text, final PyPositionConverter positionConverter) throws PyDebuggerException {
     final XppReader reader = openReader(text, true);
     reader.moveDown();
     if (!"thread".equals(reader.getNodeName())) {
@@ -202,8 +203,7 @@ public final class ProtocolParser {
     return new PyThreadInfo(id, name, frames, stopReason, message);
   }
 
-  @NotNull
-  public static String getThreadId(@NotNull String payload) {
+  public static @NotNull String getThreadId(@NotNull String payload) {
     return payload.split("\t")[0];
   }
 
@@ -221,15 +221,13 @@ public final class ProtocolParser {
     return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
   }
 
-  @NotNull
-  public static PyDebugValue parseValue(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull PyDebugValue parseValue(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, true);
     reader.moveDown();
     return parseValue(reader, frameAccessor);
   }
 
-  @NotNull
-  public static List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);
@@ -254,8 +252,7 @@ public final class ProtocolParser {
   }
 
 
-  @NotNull
-  public static List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);
@@ -276,8 +273,8 @@ public final class ProtocolParser {
     final String name = readString(reader, "name", null);
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
     if (HIDDEN_TYPES.contains(name)) {
-      return new PyDebugValue(name, null, "", "", false, null, false,
-                              false, "True".equals(isErrorOnEval), null, frameAccessor);
+      return new PyDebugValue(name, null, "", "", false, null, null, false,
+                              false, "True".equals(isErrorOnEval), null, null, frameAccessor);
     }
 
     final String type = readString(reader, "type", null);
@@ -289,17 +286,19 @@ public final class ProtocolParser {
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     String typeRendererId = readString(reader, "typeRendererId", "");
     String shape = readString(reader, "shape", "");
+    String arrayElementType = readString(reader, "arrayElementType", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
     if (shape.isEmpty()) shape = null;
+    if (arrayElementType.isEmpty()) arrayElementType = null;
     if (typeRendererId.isEmpty()) typeRendererId = null;
-    if (type.equals("DataFrame")) {
+    if (type.equals(DataFrameDebugValue.pyDataFrameType)) {
       return new DataFrameDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                                      "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
     }
-    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
+    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, arrayElementType, "True".equals(isReturnedValue),
                             "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
   }
 
@@ -319,7 +318,7 @@ public final class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, null, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, null,false, false, false, null, null, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {

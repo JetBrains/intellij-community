@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.net.ssl.CertificateProvider
 import com.intellij.util.net.ssl.CertificateWarningDialogProvider
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import java.security.KeyStoreException
 import java.security.cert.X509Certificate
-import kotlin.Throws
 
 @Suppress("HardCodedStringLiteral")
 class ShowCertificateInfoAction : AnAction() {
@@ -27,7 +27,7 @@ class ShowCertificateInfoAction : AnAction() {
         val certificate = certificates[0]
         val certHierarchy = mutableListOf<X509Certificate>(certificate)
         getRootCertificate(certificate, manager.customTrustManager, certHierarchy)
-        val dialog = CertificateWarningDialogProvider.getInstance()?.createCertificateWarningDialog(certHierarchy, manager.customTrustManager, "test.com", "RSA", mutableSetOf<X509Certificate>())
+        val dialog = CertificateWarningDialogProvider.getInstance()?.createCertificateWarningDialog(certHierarchy, manager.customTrustManager, "test.com", "RSA", CertificateProvider())
         if (dialog == null) {
           LOG.error("Dialog cannot be shown now, dialog provider returns null")
           return

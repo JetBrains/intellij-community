@@ -13,7 +13,6 @@ import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.io.File
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {
@@ -247,7 +246,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(File(projectPath, "lib.jar"))
+    }.generate(projectPath.resolve("lib.jar"))
     updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
     importProjectAsync()
 
@@ -268,7 +267,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty() = runBlocking {
-    if (ignore()) return@runBlocking
     val parentPomTemplate =
 
       """
@@ -327,7 +325,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty2() = runBlocking {
-    needFixForMaven4()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -340,15 +337,14 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     val m1pomTemplate = """
       <parent>
-        <groupId>${'$'}{my.parent.groupId}</groupId>
+        <groupId>test</groupId>
         <artifactId>project</artifactId>
-        <version>${'$'}{my.parent.version}</version>
+        <version>1</version>
       </parent>
       <artifactId>m1</artifactId>
       <version>${'$'}{my.parent.version}</version>
       <properties>
         <my.parent.version>1</my.parent.version>
-        <my.parent.groupId>test</my.parent.groupId>
       </properties>
       <build>
         <plugins>
@@ -357,13 +353,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
             <version>3.1</version>
             <configuration>
               <source>%s</source>
-              <target>%<s</target>
+              <target>%s</target>
             </configuration>
           </plugin>
         </plugins>
       </build>
       """.trimIndent()
-    updateModulePom("m1", String.format(m1pomTemplate, "1.8"))
+    updateModulePom("m1", String.format(m1pomTemplate, "1.8", "1.8"))
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
 
@@ -371,11 +367,11 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
 
-    updateModulePom("m1", String.format(m1pomTemplate, "1.7"))
+    updateModulePom("m1", String.format(m1pomTemplate, "17", "17"))
 
     updateAllProjects()
-    assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
+    assertEquals(LanguageLevel.JDK_17, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
+    assertEquals("17", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }
 
   private suspend fun getEffectiveLanguageLevel(module: Module): LanguageLevel {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev.dataviewer;
 
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class DataViewerCommandBuilder {
-  @Nullable private RemoteDebugger myDebugger;
-  @Nullable private String myThreadId;
-  @Nullable private String myFrameId;
+  private @Nullable RemoteDebugger myDebugger;
+  private @Nullable String myThreadId;
+  private @Nullable String myFrameId;
 
-  @NotNull private final PyDebugValue myVar;
-  @NotNull private final DataViewerCommandAction myAction;
+  private final @NotNull PyDebugValue myVar;
+  private final @NotNull DataViewerCommandAction myAction;
   private final String @Nullable[] myArgs;
 
   public DataViewerCommandBuilder(@NotNull PyDebugValue var, @NotNull DataViewerCommandAction action, String @Nullable[] args) {
@@ -67,8 +67,7 @@ public class DataViewerCommandBuilder {
     return new DataViewerCommand(myDebugger, myThreadId, myFrameId, myVar, myAction, myArgs);
   }
 
-  @NotNull
-  public static DataViewerCommandBuilder initExportCommand(@NotNull PyDebugValue var, @NotNull File target) {
+  public static @NotNull DataViewerCommandBuilder initExportCommand(@NotNull PyDebugValue var, @NotNull File target) {
     String[] args = { target.getAbsolutePath() };
     return new DataViewerCommandBuilder(var, DataViewerCommandAction.EXPORT, args);
   }

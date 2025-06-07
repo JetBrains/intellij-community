@@ -2,7 +2,6 @@
 package com.intellij.execution.target
 
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 /**
  * Might be implemented by specific [TargetEnvironment] to describe the environment with externally synchronized volumes.

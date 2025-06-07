@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
+import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -18,8 +22,8 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -29,13 +33,12 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ * {@link com.jetbrains.env.python.api.EnvTagsKt#loadEnvTags(Path)}
  *
  * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
-
-  private static final String TAGS_FILE = "tags.txt";
 
   @NotNull
   protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
@@ -66,7 +69,8 @@ public abstract class PyEnvTestCase {
 
   @Rule public TestName myTestName = new TestName();
 
-  @Rule public final TestWatcher myWatcher = new TestWatcher(){};
+  @Rule public final TestWatcher myWatcher = new TestWatcher() {
+  };
 
   static {
     LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
@@ -89,6 +93,7 @@ public abstract class PyEnvTestCase {
    */
   protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+    TestApplicationManager.getInstance(); // init app explicitly
   }
 
   public static String norm(String testDataPath) {
@@ -120,12 +125,8 @@ public abstract class PyEnvTestCase {
   @BeforeClass
   public static void collectTagsForEnvs() {
     for (final String pythonRoot : getDefaultPythonRoots()) {
-      envTags.put(pythonRoot, loadEnvTags(pythonRoot));
+      envTags.put(pythonRoot, EnvTagsKt.loadEnvTags(Path.of(pythonRoot)).stream().toList());
     }
-  }
-
-  protected boolean runInDispatchThread() {
-    return false;
   }
 
   /**
@@ -186,7 +187,7 @@ public abstract class PyEnvTestCase {
     PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-    EnvTestTagsRequired methodAnnotation = null;
+    EnvTestTagsRequired methodAnnotation;
     try {
       String methodName = myTestName.getMethodName();
       if (methodName.contains("[")) {
@@ -228,32 +229,18 @@ public abstract class PyEnvTestCase {
   }
 
   public static List<String> getDefaultPythonRoots() {
-    return ContainerUtil.map(SETTINGS.getPythons$intellij_python_community_tests(), File::getAbsolutePath);
+    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
   }
 
   /**
    * @return list of pythons to run tests against
    */
   @NotNull
-  protected List<String> getPythonRoots() {
-    return getDefaultPythonRoots();
-  }
-
-
-  public static List<String> loadEnvTags(String env) {
-    List<String> envTags;
-
-    try {
-      File parent = new File(env);
-      if (parent.isFile()) {
-        parent = parent.getParentFile();
-      }
-      envTags = com.intellij.openapi.util.io.FileUtil.loadLines(new File(parent, TAGS_FILE));
-    }
-    catch (IOException e) {
-      envTags = new ArrayList<>();
-    }
-    return envTags;
+  protected List<@NotNull String> getPythonRoots() {
+    var roots = getDefaultPythonRoots();
+    // It is ok to access these pythons
+    VfsRootAccess.allowRootAccess(myDisposable, ArrayUtil.toStringArray(roots));
+    return roots;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();

@@ -1,17 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
@@ -19,7 +13,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.resolveToDescriptorWrapperAware
@@ -30,47 +24,20 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
-fun checkConflicts(
-    project: Project,
-    sourceClass: KtClassOrObject,
-    targetClass: PsiNamedElement,
-    memberInfos: List<KotlinMemberInfo>,
-    onShowConflicts: () -> Unit = {},
-    onAccept: () -> Unit
-) {
-    val conflicts = MultiMap<PsiElement, String>()
-
-    val conflictsCollected = runProcessWithProgressSynchronously(RefactoringBundle.message("detecting.possible.conflicts"), project) {
-        runReadAction { collectConflicts(sourceClass, targetClass, memberInfos, conflicts) }
-    }
-
-    if (conflictsCollected) {
-        project.checkConflictsInteractively(conflicts, onShowConflicts, onAccept)
-    } else {
-        onShowConflicts()
-    }
-}
-
-private fun runProcessWithProgressSynchronously(
-    progressTitle: @NlsContexts.ProgressTitle String,
-    project: Project?,
-    process: Runnable,
-): Boolean = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
-
-private fun collectConflicts(
+internal fun collectConflicts(
     sourceClass: KtClassOrObject,
     targetClass: PsiNamedElement,
     memberInfos: List<KotlinMemberInfo>,
@@ -111,7 +78,7 @@ internal fun checkVisibilityInAbstractedMembers(
         val memberDescriptor = member.resolveToDescriptorWrapperAware(resolutionFacade)
         member.forEachDescendantOfType<KtSimpleNameExpression> {
             val target = it.mainReference.resolve() as? KtNamedDeclaration ?: return@forEachDescendantOfType
-            if (!willBeMoved(target, membersToMove)) return@forEachDescendantOfType
+            if (!target.willBeMoved(membersToMove)) return@forEachDescendantOfType
             if (target.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 val targetDescriptor = target.resolveToDescriptorWrapperAware(resolutionFacade)
                 val memberText = memberDescriptor.renderForConflicts()
@@ -121,19 +88,6 @@ internal fun checkVisibilityInAbstractedMembers(
             }
         }
     }
-}
-
-internal fun willBeMoved(element: PsiElement, membersToMove: Collection<KtNamedDeclaration>) =
-    element.parentsWithSelf.any { it in membersToMove }
-
-internal fun willBeUsedInSourceClass(
-    member: PsiElement,
-    sourceClass: KtClassOrObject,
-    membersToMove: Collection<KtNamedDeclaration>
-): Boolean {
-    return !ReferencesSearch
-        .search(member, LocalSearchScope(sourceClass), false)
-        .all { willBeMoved(it.element, membersToMove) }
 }
 
 private val CALLABLE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
@@ -218,6 +172,7 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
         if (memberDescriptorInTargetClass != null) {
             val sequence = HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope())
                 .searchInheritors()
+                .asIterable()
                 .asSequence()
                 .filterNot { it.isSourceOrTarget(this) }
                 .mapNotNull { it.unwrapped as? KtClassOrObject }

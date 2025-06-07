@@ -40,8 +40,6 @@ c:com.intellij.configurationStore.JbXmlOutputter
 - <init>(java.lang.String,com.intellij.openapi.util.JDOMUtil$ElementOutputFilter,com.intellij.application.options.ReplacePathToMacroMap,com.intellij.openapi.application.PathMacroFilter,Z,java.lang.String):V
 - b:<init>(java.lang.String,com.intellij.openapi.util.JDOMUtil$ElementOutputFilter,com.intellij.application.options.ReplacePathToMacroMap,com.intellij.openapi.application.PathMacroFilter,Z,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager):java.lang.String
-- f:output(org.jdom.DocType,java.io.Writer):V
-- f:output(org.jdom.Document,java.io.Writer):V
 - f:output(org.jdom.Element,java.io.Writer):V
 - f:printElement(java.io.Writer,org.jdom.Element,I):V
 - p:writeContent(java.io.Writer,org.jdom.Element,I,Z):Z
@@ -118,6 +116,7 @@ c:com.intellij.openapi.components.PathMacroManager
 - expandPaths(org.jdom.Element):V
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
 - s:getInstance(com.intellij.openapi.components.ComponentManager):com.intellij.openapi.components.PathMacroManager
+- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.components.PathMacroManager
 - getMacroFilter():com.intellij.openapi.application.PathMacroFilter
 - f:getReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - ps:pathsEqual(java.lang.String,java.lang.String):Z
@@ -169,8 +168,6 @@ a:com.intellij.openapi.module.ConfigurationErrorType
 - getFeatureType():java.lang.String
 f:com.intellij.openapi.module.impl.ModuleGroupersKt
 - sf:splitStringByDotsJoiningIncorrectIdentifiers(java.lang.String):kotlin.Pair
-f:com.intellij.openapi.module.impl.ModulePathKt
-- sf:getModuleNameByFilePath(java.lang.String):java.lang.String
 a:com.intellij.openapi.options.BaseSchemeProcessor
 - com.intellij.openapi.options.NonLazySchemeProcessor
 - <init>():V
@@ -218,6 +215,8 @@ a:com.intellij.openapi.options.SchemeManager
 a:com.intellij.openapi.options.SchemeManagerFactory
 - sf:Companion:com.intellij.openapi.options.SchemeManagerFactory$Companion
 - <init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,java.nio.file.Path):com.intellij.openapi.options.SchemeManager
@@ -226,6 +225,7 @@ a:com.intellij.openapi.options.SchemeManagerFactory
 - dispose(com.intellij.openapi.options.SchemeManager):V
 - sf:getInstance():com.intellij.openapi.options.SchemeManagerFactory
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.SchemeManagerFactory
+- p:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.options.SchemeManagerFactory$Companion
 - f:getInstance():com.intellij.openapi.options.SchemeManagerFactory
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.SchemeManagerFactory
@@ -397,7 +397,6 @@ c:com.intellij.openapi.roots.libraries.DummyLibraryProperties
 - hashCode():I
 - loadState(java.lang.Object):V
 f:com.intellij.project.ProjectKt
-- sf:getProjectStoreDirectory(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:getStateStore(com.intellij.openapi.project.Project):com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:isDirectoryBased(com.intellij.openapi.project.Project):Z
 - sf:isEqualToProjectFileStorePath(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):Z
@@ -433,3 +432,4 @@ f:com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt
 f:com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges
 - sf:findModule(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.openapi.module.Module
 - sf:findModuleEntity(com.intellij.openapi.module.Module,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:findSnapshotModuleEntity(com.intellij.openapi.module.Module):com.intellij.platform.workspace.jps.entities.ModuleEntity

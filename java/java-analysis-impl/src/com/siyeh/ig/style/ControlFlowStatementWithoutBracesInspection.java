@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,18 +35,13 @@ import org.jetbrains.annotations.Nullable;
 public class ControlFlowStatementWithoutBracesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "control.flow.statement.without.braces.problem.descriptor", infos);
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("control.flow.statement.without.braces.problem.descriptor", infos);
   }
 
   @Override
   public LocalQuickFix buildFix(Object... infos) {
-    if (infos.length == 1 && infos[0] instanceof String) {
-      return new ControlFlowStatementFix((String)infos[0]);
-    }
-    return null;
+    return new ControlFlowStatementFix((String)infos[0]);
   }
 
   private static class ControlFlowStatementFix extends PsiUpdateModCommandQuickFix {
@@ -57,38 +52,24 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "control.flow.statement.without.braces.message", myKeywordText);
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("control.flow.statement.without.braces.message", myKeywordText);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "control.flow.statement.without.braces.add.quickfix");
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("control.flow.statement.without.braces.add.quickfix");
     }
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiElement parent = element.getParent();
-      final PsiStatement statement;
-      if (element instanceof PsiStatement) {
-        statement = (PsiStatement)element;
-      }
-      else if (parent instanceof PsiStatement) {
-        statement = (PsiStatement)parent;
-      }
-      else {
-        return;
-      }
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
       final PsiStatement statementWithoutBraces;
       if (statement instanceof PsiLoopStatement loopStatement) {
         statementWithoutBraces = loopStatement.getBody();
       }
       else if (statement instanceof PsiIfStatement ifStatement) {
-        statementWithoutBraces = (element == ifStatement.getElseElement()) ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
+        statementWithoutBraces = myKeywordText.equals(JavaKeywords.ELSE) ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
       }
       else {
         return;
@@ -110,24 +91,19 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     @Contract("null->false")
     @Override
     protected boolean isApplicable(PsiStatement body) {
-      if (body instanceof PsiIfStatement && isVisibleHighlight(body)) {
-        final PsiElement parent = body.getParent();
-        if (parent instanceof PsiIfStatement ifStatement) {
-          if (ifStatement.getElseBranch() == body) {
-            return false;
-          }
-        }
+      if (body instanceof PsiIfStatement
+          && isVisibleHighlight(body)
+          && body.getParent() instanceof PsiIfStatement ifStatement
+          && ifStatement.getElseBranch() == body) {
+        return false;
       }
       return body != null && !(body instanceof PsiBlockStatement);
     }
 
-    @Nullable
     @Override
-    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
-      if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
-        final PsiElement lastChild = body.getLastChild();
-        return Pair.create(PsiTreeUtil.skipWhitespacesAndCommentsBackward(body),
-                           PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON) ? lastChild : null);
+    protected @Nullable Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+      if ((body instanceof PsiLoopStatement || body instanceof PsiIfStatement) && body.textContains('\n')) {
+        return new Pair<>(body, body);
       }
       return null;
     }

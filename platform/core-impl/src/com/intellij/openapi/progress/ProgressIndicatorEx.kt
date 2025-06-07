@@ -139,6 +139,7 @@ inline fun <Y> runUnderNestedProgressAndRelayMessages(parentProgress: ProgressIn
  * A best effort way to bind a cancellation of one progress with the other.
  */
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use coroutines")
 inline fun <Y> runUnderBoundCancellation(cancelOf: ProgressIndicator,
                                          cancels: ProgressIndicator,

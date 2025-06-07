@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.sun.jdi.ObjectReference;
@@ -14,13 +14,11 @@ public class MemoryAgentTruncatedReferringObject extends MemoryAgentSimpleReferr
     this.myLengthToStartObject = lengthToStartObject;
   }
 
-  @NotNull
   @Override
-  public String getNodeName(int order) {
+  public @NotNull String getNodeName(int order) {
     return String.format("... (%d referrers more)", myLengthToStartObject);
   }
 
-  @NotNull
   @Override
-  public String getSeparator() { return " from "; }
+  public @NotNull String getSeparator() { return " from "; }
 }

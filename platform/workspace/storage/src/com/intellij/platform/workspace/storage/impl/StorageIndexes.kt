@@ -3,43 +3,19 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.ImmutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
-import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
-import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
-import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
-import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
+import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
-internal open class StorageIndexes(
+internal sealed class AbstractStorageIndexes() {
   // List of IDs of entities that use this particular persistent id
-  internal open val softLinks: MultimapStorageIndex,
-  internal open val virtualFileIndex: VirtualFileIndex,
-  internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
-  internal open val symbolicIdIndex: SymbolicIdInternalIndex,
-  internal open val externalMappings: Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>
-) {
-
-  constructor(softLinks: MultimapStorageIndex,
-              virtualFileIndex: VirtualFileIndex,
-              entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
-              symbolicIdIndex: SymbolicIdInternalIndex
-  ) : this(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex, emptyMap())
-
-  companion object {
-    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), SymbolicIdInternalIndex(),
-                               HashMap())
-  }
-
-  fun toMutable(): MutableStorageIndexes {
-    val copiedSoftLinks = MultimapStorageIndex.MutableMultimapStorageIndex.from(softLinks)
-    val copiedVirtualFileIndex = VirtualFileIndex.MutableVirtualFileIndex.from(virtualFileIndex)
-    val copiedEntitySourceIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(entitySourceIndex)
-    val copiedSymbolicIdIndex = SymbolicIdInternalIndex.MutableSymbolicIdInternalIndex.from(symbolicIdIndex)
-    val copiedExternalMappings = MutableExternalEntityMappingImpl.fromMap(externalMappings)
-    return MutableStorageIndexes(copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex, copiedSymbolicIdIndex,
-                                 copiedExternalMappings)
-  }
+  internal abstract val softLinks: AbstractMultimapStorageIndex
+  internal abstract val virtualFileIndex: VirtualFileIndex
+  internal abstract val entitySourceIndex: EntityStorageInternalIndex<EntitySource>
+  internal abstract val symbolicIdIndex: SymbolicIdInternalIndex
+  internal abstract val externalMappings: Map<ExternalMappingKey<*>, AbstractExternalEntityMappingImpl<*>>
 
   fun assertConsistency(storage: AbstractEntityStorage) {
     assertEntitySourceIndex(storage)
@@ -146,14 +122,43 @@ internal open class StorageIndexes(
     assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
   }
 }
+internal class ImmutableStorageIndexes(
+  // List of IDs of entities that use this particular persistent id
+  override val softLinks: ImmutableMultimapStorageIndex,
+  override val virtualFileIndex: VirtualFileIndex,
+  override val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
+  override val symbolicIdIndex: SymbolicIdInternalIndex,
+  override val externalMappings: Map<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>>
+) : AbstractStorageIndexes() {
+  companion object {
+    val EMPTY = ImmutableStorageIndexes(ImmutableMultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), SymbolicIdInternalIndex(),
+                                        HashMap())
+  }
+
+  constructor(softLinks: ImmutableMultimapStorageIndex,
+              virtualFileIndex: VirtualFileIndex,
+              entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
+              symbolicIdIndex: SymbolicIdInternalIndex
+  ) : this(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex, emptyMap())
+
+  fun toMutable(): MutableStorageIndexes {
+    val copiedSoftLinks = MutableMultimapStorageIndex.from(softLinks)
+    val copiedVirtualFileIndex = VirtualFileIndex.MutableVirtualFileIndex.from(virtualFileIndex)
+    val copiedEntitySourceIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(entitySourceIndex)
+    val copiedSymbolicIdIndex = SymbolicIdInternalIndex.MutableSymbolicIdInternalIndex.from(symbolicIdIndex)
+    val copiedExternalMappings = MutableExternalEntityMappingImpl.fromMap(externalMappings)
+    return MutableStorageIndexes(copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex, copiedSymbolicIdIndex,
+                                 copiedExternalMappings)
+  }
+}
 
 internal class MutableStorageIndexes(
-  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
+  override val softLinks: MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val symbolicIdIndex: SymbolicIdInternalIndex.MutableSymbolicIdInternalIndex,
-  override val externalMappings: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>
-) : StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex, externalMappings) {
+  override val externalMappings: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>,
+) : AbstractStorageIndexes() {
 
   fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, symbolicId: SymbolicEntityId<*>?) {
     val pid = entityData.createEntityId()
@@ -228,7 +233,7 @@ internal class MutableStorageIndexes(
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun updateExternalMappingForEntityId(replaceWithEntityId: EntityId, targetEntityId: EntityId, replaceWithIndexes: StorageIndexes) {
+  fun updateExternalMappingForEntityId(replaceWithEntityId: EntityId, targetEntityId: EntityId, replaceWithIndexes: AbstractStorageIndexes) {
     replaceWithIndexes.externalMappings.forEach { (mappingId, mapping) ->
       val data = mapping.index[replaceWithEntityId] ?: return@forEach
       val externalMapping = externalMappings[mappingId]
@@ -276,12 +281,12 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun toImmutable(): StorageIndexes {
+  fun toImmutable(): ImmutableStorageIndexes {
     val copiedLinks = this.softLinks.toImmutable()
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
     val newEntitySourceIndex = entitySourceIndex.toImmutable()
     val newSymbolicIdIndex = symbolicIdIndex.toImmutable()
     val newExternalMappings = MutableExternalEntityMappingImpl.toImmutable(externalMappings)
-    return StorageIndexes(copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newSymbolicIdIndex, newExternalMappings)
+    return ImmutableStorageIndexes(copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newSymbolicIdIndex, newExternalMappings)
   }
 }

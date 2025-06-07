@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -43,9 +43,8 @@ public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspe
       checkbox("suggestFloatingCompare", JavaAnalysisBundle.message("inspection.use.compare.method.option.double")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_1_4)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -134,8 +133,7 @@ public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspe
     return tryCast(next, PsiStatement.class);
   }
 
-  @Nullable
-  private static Map<Integer, PsiExpression> extractConditions(PsiConditionalExpression ternary) {
+  private static @Nullable Map<Integer, PsiExpression> extractConditions(PsiConditionalExpression ternary) {
     Map<Integer, PsiExpression> result = new HashMap<>(3);
     if (!storeCondition(result, ternary.getCondition(), ternary.getThenExpression())) return null;
     PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
@@ -247,8 +245,7 @@ public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspe
     return new CompareInfo(call, call, left, right, boxedType, false);
   }
 
-  @Nullable
-  static PsiClassType getBoxedType(PsiMethodCallExpression call) {
+  static @Nullable PsiClassType getBoxedType(PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiClass aClass = method.getContainingClass();
@@ -256,8 +253,7 @@ public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspe
     return JavaPsiFacade.getElementFactory(call.getProject()).createType(aClass);
   }
 
-  @Nullable
-  static PsiExpression extractPrimitive(PsiClassType type, PsiPrimitiveType primitiveType, PsiExpression expression) {
+  static @Nullable PsiExpression extractPrimitive(PsiClassType type, PsiPrimitiveType primitiveType, PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return null;
     if (primitiveType.equals(expression.getType())) {
@@ -349,17 +345,13 @@ public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspe
       myReplacementText = replacementText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.use.compare.method.fix.family.name");
     }
 

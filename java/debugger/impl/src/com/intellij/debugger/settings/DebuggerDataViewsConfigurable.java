@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
@@ -301,7 +300,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final boolean isToStringRendererModified =
       (toStringRenderer.isOnDemand() == myCbEnableToString.isSelected()) ||
       (toStringRenderer.isUseClassFilters() != myRbFromList.isSelected()) ||
-      (!DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
+      (!DebuggerSettingsUtils.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
     if (isToStringRendererModified) {
       return true;
     }
@@ -319,14 +318,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "Debugger_Data_Views_Java";
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

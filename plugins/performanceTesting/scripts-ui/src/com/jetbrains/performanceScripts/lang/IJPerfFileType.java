@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performanceScripts.lang;
 
 import com.intellij.icons.AllIcons;
@@ -14,27 +15,23 @@ public final class IJPerfFileType extends LanguageFileType {
 
   private IJPerfFileType() {super(IJPerfLanguage.INSTANCE);}
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "IntegrationPerformanceTest";
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return PerformanceScriptsBundle.message("filetype.ijperformance.test.display.name");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return PerformanceScriptsBundle.message("filetype.ijperformance.test.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

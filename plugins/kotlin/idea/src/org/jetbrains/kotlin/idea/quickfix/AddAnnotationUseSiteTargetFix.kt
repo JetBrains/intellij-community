@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addOrChooseUseSiteTarget
 import org.jetbrains.kotlin.idea.intentions.getApplicableUseSiteTargets
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,7 +30,7 @@ class AddAnnotationUseSiteTargetFix(
     override fun getFamilyName() = text
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        element?.addUseSiteTarget(useSiteTargets, editor)
+        element?.addOrChooseUseSiteTarget(useSiteTargets, editor)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

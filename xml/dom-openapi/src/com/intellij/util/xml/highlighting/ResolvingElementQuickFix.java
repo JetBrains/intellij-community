@@ -65,12 +65,12 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     applyFix();
   }
 
@@ -124,7 +124,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public static @Nullable <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
 
-    if (contexts.size() == 0) {
+    if (contexts.isEmpty()) {
         return null;
     }
     final DomElement context = contexts.get(0);
@@ -146,7 +146,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public static @Nullable ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
     final DomCollectionChildDescription childDescription = getChildDescription(parents, clazz);
-    if (newName.length() > 0 && childDescription != null) {
+    if (!newName.isEmpty() && childDescription != null) {
       return new ResolvingElementQuickFix(clazz, newName, parents, childDescription);
     }
     return null;

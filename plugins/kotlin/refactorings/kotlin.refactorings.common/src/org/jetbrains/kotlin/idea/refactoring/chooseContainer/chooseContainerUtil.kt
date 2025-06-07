@@ -26,7 +26,6 @@ import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import java.util.*
@@ -168,7 +167,7 @@ private fun <T : PsiElement> getPsiElementPopup(
         .createPopup(project, title)
 }
 
-private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
+fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object : PsiTargetPresentationRenderer<PsiElement>() {
 
     @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
@@ -190,11 +189,11 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
         is KtNamedFunction -> {
             val list = mutableListOf<String>()
             for (child in allChildren) {
-                if (child is PsiComment || child is PsiWhiteSpace) continue
+                if (child is PsiComment) continue
                 if (child is KtBlockExpression) break
                 list.add(child.text)
             }
-            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
+            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = "").trim(), 53, 0)
         }
         else -> {
             val text = text ?: "<invalid text>"

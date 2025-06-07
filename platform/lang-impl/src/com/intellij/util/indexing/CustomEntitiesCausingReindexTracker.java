@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,7 +76,8 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
     return LibraryEntity.class.isAssignableFrom(entityClass) ||
-           LibraryPropertiesEntity.class.isAssignableFrom(entityClass);
+           LibraryPropertiesEntity.class.isAssignableFrom(entityClass) ||
+           SdkEntity.class.isAssignableFrom(entityClass);
   }
 
   /**
@@ -127,6 +129,8 @@ final class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
+    } else if (Registry.is("ide.workspace.model.sdk.remove.custom.processing") && entity instanceof SdkEntity) {
+      return hasDependencyOn((SdkEntity) entity, project);
     }
     return isEntityToRescan(entity);
   }
@@ -138,5 +142,9 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean hasDependencyOn(LibraryEntity library, Project project) {
     return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.getSymbolicId());
+  }
+
+  private static boolean hasDependencyOn(SdkEntity sdkEntity, Project project) {
+    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(sdkEntity.getSymbolicId());
   }
 }

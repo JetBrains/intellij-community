@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -81,8 +82,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .reportMessage(project);
   }
 
-  @NotNull
-  private static List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
     List<File> taskArtifacts = new ArrayList<>();
     GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
 
@@ -455,10 +455,10 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
     Collection<SourceSet> result = new ArrayList<>();
     if (testingExtensionClass.isInstance(testingExtension)) {
-      Collection<?> suites = GradleReflectionUtil.reflectiveCall(testingExtension, "getSuites", Collection.class);
+      Collection<?> suites = GradleReflectionUtil.getValue(testingExtension, "getSuites", Collection.class);
       for (Object suite : suites) {
         if (jvmTestSuiteClass.isInstance(suite)) {
-          SourceSet sourceSet = GradleReflectionUtil.reflectiveCall(suite, "getSources", SourceSet.class);
+          SourceSet sourceSet = GradleReflectionUtil.getValue(suite, "getSources", SourceSet.class);
           if (sourceSet != null) {
             result.add(sourceSet);
           }
@@ -491,8 +491,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       JavaCompile javaCompile = (JavaCompile)javaCompileTask;
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
-      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
+      externalSourceSet.setCompilerArguments(GradleCollections.mapToString(javaCompile.getOptions().getAllCompilerArgs()));
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.usageView.UsageViewBundle;
@@ -14,17 +14,15 @@ import java.util.Enumeration;
 @ApiStatus.Internal
 public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;
-  @NotNull
-  private final UsageViewSettings myUsageViewSettings;
+  private final @NotNull UsageViewSettings myUsageViewSettings;
 
   public ExporterToTextFile(@NotNull UsageViewImpl usageView, @NotNull UsageViewSettings usageViewSettings) {
     myUsageView = usageView;
     myUsageViewSettings = usageViewSettings;
   }
 
-  @NotNull
   @Override
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuilder buf = new StringBuilder();
     appendNode(buf, myUsageView.getModelRoot(), System.lineSeparator(), "");
     return buf.toString();
@@ -82,9 +80,8 @@ public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     }
   }
 
-  @NotNull
   @Override
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     return myUsageViewSettings.getExportFileName();
   }
 

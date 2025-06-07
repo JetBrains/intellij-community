@@ -60,8 +60,7 @@ public class InvocationExprent extends Exprent {
   private List<Exprent> parameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
   private List<VarType> genericArgs = new ArrayList<>();
-  @Nullable
-  private VarType inferredType;
+  private @Nullable VarType inferredType;
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
   }
@@ -160,8 +159,15 @@ public class InvocationExprent extends Exprent {
   }
 
   @Override
-  public VarType getExprType() {
-    return inferredType == null ? descriptor.ret : inferredType;
+  public @NotNull VarType getExprType() {
+    if (inferredType == null) {
+      VarType ret = descriptor.ret;
+      if (ret == null) {
+        return VarType.VARTYPE_UNKNOWN;
+      }
+      return ret;
+    }
+    return inferredType;
   }
 
 

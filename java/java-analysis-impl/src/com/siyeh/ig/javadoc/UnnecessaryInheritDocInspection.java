@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class UnnecessaryInheritDocInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return switch ((WarningType)infos[0]) {
       case MODULE -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.module.invalid.problem.descriptor");
       case CLASS -> InspectionGadgetsBundle.message("unnecessary.inherit.doc.class.invalid.problem.descriptor");
@@ -46,8 +45,7 @@ public final class UnnecessaryInheritDocInspection extends BaseInspection implem
   private static class UnnecessaryInheritDocFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.inherit.doc.quickfix");
     }
@@ -88,7 +86,7 @@ public final class UnnecessaryInheritDocInspection extends BaseInspection implem
 
     @Override
     public void visitInlineDocTag(@NotNull PsiInlineDocTag tag) {
-      @NonNls final String name = tag.getName();
+      final @NonNls String name = tag.getName();
       if (!"inheritDoc".equals(name)) {
         return;
       }
@@ -124,7 +122,7 @@ public final class UnnecessaryInheritDocInspection extends BaseInspection implem
       }
       final PsiElement parent = tag.getParent();
       if (parent instanceof PsiDocTag docTag) {
-        @NonNls final String docTagName = docTag.getName();
+        final @NonNls String docTagName = docTag.getName();
         if ((docTagName.equals("throws") || docTagName.equals("exception")) &&
             !isCheckExceptionAndPresentInThrowsList((PsiMethod)owner, docTag)) {
           return;

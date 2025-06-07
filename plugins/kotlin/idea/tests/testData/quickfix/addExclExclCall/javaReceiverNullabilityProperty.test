@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Add non-null asserted (x.value!!) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type String?
 package p;
 
 fun test(x: Foo) {
@@ -42,6 +43,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Add non-null asserted (x.value!!) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type String?
 package p;
 
 fun test(x: Foo) {

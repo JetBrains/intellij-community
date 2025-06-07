@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -57,14 +56,13 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
         val symbol = element.symbol as? KaPropertySymbol ?: return null
 
-        val isApplicable = symbol.backingFieldSymbol?.annotations?.contains(JVM_FIELD_CLASS_ID) != true
+        val isApplicable = symbol.backingFieldSymbol?.annotations?.contains(JvmStandardClassIds.Annotations.JvmField) != true
         return isApplicable.asUnit
     }
 
@@ -86,8 +84,6 @@ internal abstract class AbstractAddAccessorIntention(
         addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
 }
-
-private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
 
 internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true) {
     override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {

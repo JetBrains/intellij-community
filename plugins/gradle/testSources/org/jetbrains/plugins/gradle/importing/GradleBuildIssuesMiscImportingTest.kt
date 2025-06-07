@@ -46,7 +46,7 @@ class GradleBuildIssuesMiscImportingTest : BuildViewMessagesImportingTestCase() 
       )
     }
 
-    assertSyncViewSelectedNode(oomMessage, true) { text ->
+    assertSyncViewSelectedNode(oomMessage) { text ->
       assertThat(text).satisfiesAnyOf(
         Consumer {
           assertThat(it).startsWith("""

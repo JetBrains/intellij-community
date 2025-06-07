@@ -17,13 +17,13 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import icons.XpathIcons;
+import com.intellij.icons.AllIcons;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class FunctionLookup extends AbstractLookup {
+public final class FunctionLookup extends AbstractLookup {
   private final String type;
   private final boolean hasParameters;
 
@@ -41,7 +41,7 @@ public class FunctionLookup extends AbstractLookup {
   public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setTypeText(type);
-    presentation.setIcon(XpathIcons.Function);
+    presentation.setIcon(AllIcons.Nodes.Function);
     presentation.setItemTextBold(type == null);
   }
 

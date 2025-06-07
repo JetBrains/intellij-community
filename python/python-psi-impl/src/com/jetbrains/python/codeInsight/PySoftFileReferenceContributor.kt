@@ -12,7 +12,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.Locale
 
 /**
  * Contributes file path references for Python string literals where it seems appropriate based on heuristics.
@@ -72,7 +73,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           parameterNames.any(::matchesPathNamePattern)
         }
         .any {
-          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          val mapping = callExpr.mapArguments( it, typeEvalContext)
           val parameterName = mapping.mappedParameters[expr]?.name ?: return@any false
           matchesPathNamePattern(parameterName)
         }
@@ -104,7 +105,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       return callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
         .mapNotNull {
-          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          val mapping = callExpr.mapArguments( it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
         .mapNotNull(PyUnionType::toNonWeakType)
@@ -175,7 +176,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
     private fun matchesPathNamePattern(name: String): Boolean {
       val nameParts = name.split("_")
-      return nameParts.any { it.toLowerCase() in FILE_NAME_PATTERNS }
+      return nameParts.any { it.lowercase(Locale.getDefault()) in FILE_NAME_PATTERNS }
     }
   }
 

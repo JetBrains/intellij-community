@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -115,8 +115,7 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     return new EventGroupRemoteDescriptors();
   }
 
-  @NotNull
-  public static EventGroupRemoteDescriptor createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
+  public static @NotNull EventGroupRemoteDescriptor createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
     final EventGroupRemoteDescriptor group = new EventGroupRemoteDescriptor();
     group.id = groupId;
     if (group.versions != null) {

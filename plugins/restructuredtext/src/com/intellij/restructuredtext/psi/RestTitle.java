@@ -16,7 +16,7 @@ import java.text.StringCharacterIterator;
 public class RestTitle extends RestElement {
   private static final String ourAdornmentSymbols = "=-`:.'\\~^_*+#>";
 
-  public RestTitle(@NotNull final ASTNode node) {
+  public RestTitle(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -26,8 +26,7 @@ public class RestTitle extends RestElement {
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return null;
     final char adorn = text.charAt(text.length()-2);
@@ -53,8 +52,7 @@ public class RestTitle extends RestElement {
     return text.substring(start, finish).trim();
   }
 
-  @Nullable
-  public String getOverline() {
+  public @Nullable String getOverline() {
     final String text = getNode().getText().trim();
     final Pair<Character, Character> adornments = getAdornments();
     final Character overlineChar = adornments.getFirst();
@@ -69,8 +67,7 @@ public class RestTitle extends RestElement {
     return text.substring(0, end);
   }
 
-  @Nullable
-  public String getUnderline() {
+  public @Nullable String getUnderline() {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return null;
     final char adorn = text.charAt(text.length()-1);

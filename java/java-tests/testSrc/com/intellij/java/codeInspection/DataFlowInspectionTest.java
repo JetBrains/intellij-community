@@ -467,8 +467,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     assertNotEmpty(myFixture.filterAvailableIntentions("Introduce variable"));
   }
 
-  public void _testNullCheckBeforeInstanceof() { doTest(); } // https://youtrack.jetbrains.com/issue/IDEA-113220
-
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
   public void testBitwiseNegatedBoxed() { doTest(); }
@@ -762,4 +760,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldAliasing() { doTest();}
   public void testFieldLocalNoAliasing() { doTest();}
   public void testIoContracts() { doTest(); }
+  public void testGetTernary() { doTest(); }
+  public void testClosureInConstructor() { doTest(); }
 }

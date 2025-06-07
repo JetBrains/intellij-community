@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -6,9 +6,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,21 +19,19 @@ public final class FormatUtils {
 
   /**
    */
-  @NonNls
-  public static final Set<String> formatMethodNames = new HashSet<>(2);
+  private static final @NonNls @Unmodifiable Set<String> formatMethodNames;
   /**
    */
-  public static final Set<String> formatClassNames = new HashSet<>(4);
+  private static final @Unmodifiable Set<String> formatClassNames;
 
   static {
-    formatMethodNames.add("format");
-    formatMethodNames.add("printf");
+    formatMethodNames = Set.of("format", "printf");
 
-    formatClassNames.add("java.io.Console");
-    formatClassNames.add("java.io.PrintWriter");
-    formatClassNames.add("java.io.PrintStream");
-    formatClassNames.add("java.util.Formatter");
-    formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
+    formatClassNames = Set.of("java.io.Console",
+    "java.io.PrintWriter",
+    "java.io.PrintStream",
+    "java.util.Formatter",
+    CommonClassNames.JAVA_LANG_STRING);
   }
 
   private FormatUtils() {}
@@ -42,10 +40,10 @@ public final class FormatUtils {
     return isFormatCall(expression, Collections.emptyList(), Collections.emptyList());
   }
 
-  public static boolean isFormatCall(PsiMethodCallExpression expression, List<String> optionalMethods, List<String> optionalClasses) {
+  public static boolean isFormatCall(PsiMethodCallExpression expression, @Unmodifiable List<String> optionalMethods,@Unmodifiable  List<String> optionalClasses) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
-    if (!formatMethodNames.contains(name) && !optionalMethods.contains(name)) {
+    if ((name == null || !formatMethodNames.contains(name)) && !optionalMethods.contains(name)) {
       return false;
     }
     final PsiMethod method = expression.resolveMethod();
@@ -57,7 +55,7 @@ public final class FormatUtils {
       return false;
     }
     final String className = containingClass.getQualifiedName();
-    return formatClassNames.contains(className) || optionalClasses.contains(className);
+    return className != null && formatClassNames.contains(className) || optionalClasses.contains(className);
   }
 
   public static boolean isFormatCallArgument(PsiElement element) {
@@ -70,8 +68,7 @@ public final class FormatUtils {
     return parent instanceof PsiMethodCallExpression && isFormatCall((PsiMethodCallExpression)parent);
   }
 
-  @Nullable
-  public static PsiExpression getFormatArgument(PsiExpressionList argumentList) {
+  public static @Nullable PsiExpression getFormatArgument(PsiExpressionList argumentList) {
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length == 0) {
       return null;

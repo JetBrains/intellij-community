@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
@@ -72,10 +71,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
-    if (Registry.is("psi.element.list.cell.renderer.background")) {
-      return new PSIPresentationBgRendererWrapper(delegate);
-    }
-    return delegate;
+    return new PSIPresentationBgRendererWrapper(delegate);
   }
 
   @Override
@@ -109,6 +105,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
     PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
     return new WrapperRenderer((list, o) -> renderer.getItemMatchers(list, o));
+  }
+
+  @ApiStatus.Internal
+  public PsiElementListCellRenderer.ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, PsiElementListCellRenderer.ItemMatchers> matcherProvider, @NotNull Object value) {
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
+    return renderer.getNonComponentItemMatchers(matcherProvider, value);
   }
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
@@ -186,6 +188,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     public TargetPresentation getPresentation() {
       return second;
     }
+
+    @Override public String toString() {
+      return "An item with precalculated presentation, breakdown:\n" +
+             "Text: " + getPresentation().getPresentableText() + "\n" +
+             "Original item, class: " + getItem().getClass().getSimpleName() + "\n";
+    }
   }
 
   public static final class PsiItemWithPresentation extends ItemWithPresentation<PsiElement> {
@@ -253,7 +261,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     - getPreferredSize().width;
             if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
 
-            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
+            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, this);
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;

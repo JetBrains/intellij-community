@@ -27,7 +27,10 @@ public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiers
   @NotNull PsiElement getDeclarationScope();
 
   /**
-   * Checks if the parameter accepts a variable number of arguments.
+   * Checks if the parameter is declared as a variable arity parameter (using ellipsis).
+   * If a malformed method is declared where ellipsis is used on non-last parameter (e.g. {@code void test(int... a, int[] b) {}}),
+   * then the parameter is still considered as a variable arity parameter, despite the method is not considered to be 
+   * a variable arity method.
    *
    * @return true if the parameter is a vararg, false otherwise
    */

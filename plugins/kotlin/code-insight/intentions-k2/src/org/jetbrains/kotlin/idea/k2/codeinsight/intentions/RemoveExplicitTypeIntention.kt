@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeRefere
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveExplicitTypeIntention :
@@ -41,35 +42,15 @@ internal class RemoveExplicitTypeIntention :
         return listOf(textRange)
     }
 
-    override fun isApplicableByPsi(element: KtDeclaration): Boolean {
-        val typeReference = element.typeReference ?: return false
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean = canExplicitTypeBeRemoved(element)
 
-        return when {
-            !isApplicableByTypeReference(element, typeReference) -> false
-            element is KtParameter -> element.isLoopParameter || element.isSetterParameter
-            element is KtNamedFunction -> true
-            element is KtProperty || element is KtPropertyAccessor -> element.getInitializerOrGetterInitializer() != null
-            else -> false
-        }
-    }
-
-    context(KaSession)
-    override fun prepareContext(element: KtDeclaration): Unit? = when {
+    override fun KaSession.prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnitType
+        element is KtNamedFunction && element.isRecursive() -> false
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }.asUnit
-
-    private val KtDeclaration.typeReference: KtTypeReference?
-        get() = when (this) {
-            is KtCallableDeclaration -> typeReference
-            is KtPropertyAccessor -> returnTypeReference
-            else -> null
-        }
-
-    private fun isApplicableByTypeReference(element: KtDeclaration, typeReference: KtTypeReference): Boolean =
-        !typeReference.isAnnotatedDeep() && !element.isExplicitTypeReferenceNeededForTypeInferenceByPsi(typeReference)
 
     context(KaSession)
     private fun publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
@@ -120,7 +101,7 @@ internal class RemoveExplicitTypeIntention :
         // `val n: Int = 1` - type of `1` is context-independent
         // `val n: Long = 1` - type of `1` is context-dependent
         is KtConstantExpression -> {
-            val classId = initializer.getClassId()
+            val classId = initializer.inferClassIdByPsi()
             val let = classId?.let { buildClassType(it) }
             val superType = typeReference.type
             val subTypeOf = let?.isSubtypeOf(superType)

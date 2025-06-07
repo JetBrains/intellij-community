@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.execution.Executor;
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -115,6 +116,10 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
   private static String getAgentJarPath() {
     final File ourJar = new File(PathUtil.getJarPathForClass(GroovyHotSwapper.class));
     if (ourJar.isDirectory()) { //development mode
+      return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
+    }
+    final String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+    if (relevantJarsRoot != null && ourJar.toPath().startsWith(relevantJarsRoot)) {
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
     }
 

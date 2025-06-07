@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// IGNORE_K2
+
+context(c2: Int)
+fun foo(c1: String) {
+}
+
+fun bar() {
+    with("baz") label@{
+        with(42) {
+            foo(this@label)
+        }
+    }
+}

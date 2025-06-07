@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,9 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +20,7 @@ import java.util.regex.Pattern;
  * {@link com.intellij.openapi.project.IndexNotReadyException IndexNotReadyException}.
  * In this case, the inspection shall just silently catch it and not report any warnings.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections-and-intentions.html">Code Inspections and Intentions (IntelliJ Platform Docs)</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
  */
@@ -30,7 +29,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   private static final Logger LOG = Logger.getInstance(LocalInspectionTool.class);
 
-  interface LocalDefaultNameProvider extends DefaultNameProvider {
+  @ApiStatus.Internal
+  public interface LocalDefaultNameProvider extends DefaultNameProvider {
     @Nullable
     String getDefaultID();
 
@@ -58,8 +58,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
    * @return inspection tool ID.
    */
   public @NonNls @NotNull String getID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider local) {
+      String id = local.getDefaultID();
       if (id != null) {
         return id;
       }
@@ -74,8 +75,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   @Override
   public @NonNls @Nullable String getAlternativeID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider local) {
+      return local.getDefaultAlternativeID();
     }
     return null;
   }
@@ -98,7 +100,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   /**
    * Override to report problems at file level.
-   *
+   * Please use {@link #buildVisitor} instead, and do the analysis from there in a more fine-grained and latency-friendly way,
+   * as opposed to this {@code checkFile}, which should finish the analysis of the whole file before displaying result.
    * @param file       to check.
    * @param manager    InspectionManager to ask for ProblemDescriptor's from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
@@ -140,7 +143,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
    * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
-   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
+   * If the inspection should not run in the given context, return {@link PsiElementVisitor#EMPTY_VISITOR}.
+   * Please make sure the builder returned from this method is creating problems with the text range lying within the current PSI element passed to the visitor,
+   * to minimize annoying flickering and inconsistencies.
    *
    * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode
@@ -161,8 +166,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      addDescriptors(checkFile(file, myHolder.getManager(), myIsOnTheFly));
+    public void visitFile(@NotNull PsiFile psiFile) {
+      addDescriptors(checkFile(psiFile, myHolder.getManager(), myIsOnTheFly));
     }
 
     private void addDescriptors(ProblemDescriptor @Nullable [] descriptors) {
@@ -214,7 +219,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
-  public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
+  public @Unmodifiable @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }
 }

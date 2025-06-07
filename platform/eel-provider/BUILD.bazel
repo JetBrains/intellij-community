@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.eel.provider` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "eel-provider",
+  module_name = "intellij.platform.eel.provider",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/eel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/coroutines",
+  ],
+  exports = ["//platform/eel"]
+)
+### auto-generated section `build intellij.platform.eel.provider` end

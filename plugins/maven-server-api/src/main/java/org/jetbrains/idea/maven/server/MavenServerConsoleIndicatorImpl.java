@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -49,15 +49,13 @@ public class MavenServerConsoleIndicatorImpl implements MavenServerConsoleIndica
     myCancelled = true;
   }
 
-  @NotNull
   @Override
-  public List<MavenArtifactEvent> pullDownloadEvents() {
+  public @NotNull List<MavenArtifactEvent> pullDownloadEvents() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }
 
-  @NotNull
   @Override
-  public List<MavenServerConsoleEvent> pullConsoleEvents() {
+  public @NotNull List<MavenServerConsoleEvent> pullConsoleEvents() {
     return MavenRemotePullUtil.pull(myConsoleEventsQueue);
   }
 

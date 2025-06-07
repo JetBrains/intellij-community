@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.RatesPanel;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -88,7 +89,7 @@ public final class ReviewCommentComponent extends JPanel {
     DefaultActionGroup group = new DefaultActionGroup();
     group.getTemplatePresentation().setPopupGroup(true);
     group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
-    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+    group.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
     group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

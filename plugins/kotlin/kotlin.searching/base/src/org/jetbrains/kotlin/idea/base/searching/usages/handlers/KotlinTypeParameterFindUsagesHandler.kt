@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
@@ -34,7 +34,7 @@ class KotlinTypeParameterFindUsagesHandler(
             addTask {
                 runReadAction {
                     val searchScope = element.useScope().intersectWith(options.searchScope)
-                    ReferencesSearch.search(element, searchScope).all { processUsage(processor, it) }
+                    ReferencesSearch.search(element, searchScope).asIterable().all { processUsage(processor, it) }
                 }
             }
 
@@ -42,5 +42,9 @@ class KotlinTypeParameterFindUsagesHandler(
         }
     }
 
-    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.defaultOptions
+    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions {
+        val usagesOptions = factory.defaultOptions.clone()
+        usagesOptions.isSearchForTextOccurrences = false
+        return usagesOptions
+    }
 }

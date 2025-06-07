@@ -33,8 +33,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jdom.Element
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
@@ -216,14 +218,13 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun hasOpenedFile(): Boolean = false
 
-  override val currentFile: VirtualFile?
-    get() {
-      if (!isCurrentlyUnderLocalId) {
-        val clientManager = clientFileEditorManager ?: return null
-        return clientManager.getSelectedFile()
-      }
-      return activeFile
+  override fun getCurrentFile(): VirtualFile? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return null
+      return clientManager.getSelectedFile()
     }
+    return activeFile
+  }
 
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
@@ -261,8 +262,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
   }
 
-  override val currentFileEditorFlow: StateFlow<FileEditor?>
-    get() = MutableStateFlow(null)
+  override fun getSelectedEditorFlow(): StateFlow<FileEditor?> = MutableStateFlow(null).asStateFlow()
 
   override var currentWindow: EditorWindow?
     get() = null
@@ -394,6 +394,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return null)
   }
 
+  @RequiresEdt
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
     val result = ArrayList<Editor>()
     for (e in selectedEditorWithRemotes) {

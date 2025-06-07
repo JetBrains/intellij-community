@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal object TypeVarianceConflictErrorFixFactories {
 
-    val addUnsafeVarianceAnnotationFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TypeVarianceConflictError ->
-        val typeReference = diagnostic.psi as? KtTypeReference ?: return@IntentionBased emptyList()
+    val addUnsafeVarianceAnnotationFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.TypeVarianceConflictError ->
+        val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
 
         listOf(
             AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self)

@@ -360,3 +360,27 @@ final class LookupWithIndentsBuilder {
   ///   - two
   void x() {}
 }
+/// `test<b>`
+/// @param <T> The _M_ type.
+/// @param <B> The B type.
+/// @param <P> The P type.
+/// @param <I> The I type.
+interface Foo<T, B, P, I>
+{
+}
+///    <prE>
+/// This has some formatted text with blank lines.
+///
+/// This has some formatted text with blank lines.
+///
+/// This has some formatted text with blank lines.
+///
+///     An indented line.
+///
+///
+/// Multiple blank lines above and more below.
+///
+///
+/// </Pre>
+/// end
+class Preformatted {}

@@ -13,9 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class StaticMethodImportLombokInspection extends LombokJavaInspectionBase {
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokElementVisitor(holder);
   }
 

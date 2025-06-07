@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -24,7 +25,6 @@ import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Desktop
-import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
@@ -47,7 +47,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       browse(url, browser = null, project = null)
     }
     else {
-      val file = File(url)
+      val file = java.io.File(url)
       if (isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
           showError(IdeBundle.message("error.file.does.not.exist", file.path), project = null)
@@ -61,7 +61,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  private fun openWithDesktopApi(url: String, file: File) {
+  private fun openWithDesktopApi(url: String, file: java.io.File) {
     getScope(null).launch {
       try {
         LOG.debug { "trying Desktop#open on [${url}]" }
@@ -74,7 +74,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  override fun browse(file: File) {
+  @Suppress("UsagesOfObsoleteApi")
+  override fun browse(file: java.io.File) {
     val path = file.absolutePath
     val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
     browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
@@ -95,8 +96,14 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
 
     val signedUrl = signUrl(url.trim { it <= ' ' })
-    LOG.debug { "opening [$signedUrl]" }
+    LOG.debug { "opening [${signedUrl}]" }
 
+    if (canBrowse(project, signedUrl)) {
+      doBrowse(url, browser, project)
+    }
+  }
+
+  private fun doBrowse(signedUrl: String, browser: WebBrowser?, project: Project?) {
     if (processWithUrlOpener(browser, signedUrl, project)) {
       return
     }
@@ -105,17 +112,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
+    val uri = VfsUtil.toUri(signedUrl)
+    if (uri == null) {
+      showError(IdeBundle.message("error.malformed.url", signedUrl), project)
+      return
+    }
+    if (uri.scheme.equals(StandardFileSystems.FILE_PROTOCOL, ignoreCase = true) && uri.host != null) {
+      showError(IdeBundle.message("error.unc.not.supported", signedUrl), project)
+      return
+    }
+
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
-      if (!canBrowse(project, signedUrl)) {
-        return
-      }
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-        val uri = VfsUtil.toUri(signedUrl)
-        if (uri == null) {
-          showError(IdeBundle.message("error.malformed.url", signedUrl), project)
-          return
-        }
         openWithDesktopApi(uri, project)
       }
       else {
@@ -129,7 +138,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
         openWithBrowser(signedUrl, substitutedBrowser, project)
       }
       else {
-        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project)
+        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project, retry = {
+          doBrowse(signedUrl, browser = null, project)
+        })
       }
     }
   }
@@ -188,12 +199,15 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDefaultBrowserCommand(url: String, project: Project?) {
+    val retry = { browse(url, browser = null, project) }
+
     val command = defaultBrowserCommand
     if (command == null) {
-      showError(IdeBundle.message("browser.default.not.supported"), project)
+      showError(IdeBundle.message("browser.default.not.supported"), project, browser = null, retry)
       return
     }
-    spawn(GeneralCommandLine(command).withParameters(url), project)
+
+    spawn(GeneralCommandLine(command).withParameters(url), project, browser = null, retry)
   }
 
   private fun openWithBrowser(url: String, browser: WebBrowser, project: Project?) {
@@ -246,7 +260,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private val defaultBrowserCommand: List<String>?
     get() = when {
-      SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+      SystemInfo.isWindows -> listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
       SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
       SystemInfo.hasXdgOpen() -> listOf("xdg-open")
       else -> null

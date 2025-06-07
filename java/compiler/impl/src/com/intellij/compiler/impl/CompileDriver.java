@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -44,6 +46,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.tracing.Tracer;
@@ -81,6 +84,11 @@ public final class CompileDriver {
   @ApiStatus.Experimental
   public static final Key<Boolean> SKIP_SAVE = Key.create("SKIP_SAVE");
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @TestOnly
+  public static final Key<Long> TIMEOUT = Key.create("TIMEOUT");
+
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
@@ -110,6 +118,13 @@ public final class CompileDriver {
   public boolean isUpToDate(@NotNull CompileScope scope, final @Nullable ProgressIndicator progress) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
+    }
+    if (Registry.is("compiler.build.can.use.eel") &&
+        ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
+        !EelPathUtils.isProjectLocal(myProject)) {
+      // BuildManager tries to use the internal JDK if the project jdk is not set
+      // We cannot allow fallback to the internal jdk
+      return true;
     }
 
     final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false,
@@ -187,7 +202,7 @@ public final class CompileDriver {
     if (explicitScopes != null) {
       scopes.addAll(explicitScopes);
     }
-    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext))) {
+    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext) || !allSourceTypesAffected(scope))) {
       CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
@@ -212,6 +227,21 @@ public final class CompileDriver {
     return scopes;
   }
 
+  private static boolean allSourceTypesAffected(CompileScope scope) {
+    Map<Module, Set<ModuleSourceSet.Type>> affectedSourceTypes = new HashMap<>();
+    for (ModuleSourceSet set : scope.getAffectedSourceSets()) {
+      affectedSourceTypes.computeIfAbsent(set.getModule(), m -> EnumSet.noneOf(ModuleSourceSet.Type.class)).add(set.getType());
+    }
+    for (Set<ModuleSourceSet.Type> moduleSourceTypes : affectedSourceTypes.values()) {
+      for (ModuleSourceSet.Type value : ModuleSourceSet.Type.values()) {
+        if (!moduleSourceTypes.contains(value)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
                                                               List<TargetTypeBuildScope> scopes,
                                                               boolean forceBuild) {
@@ -224,8 +254,7 @@ public final class CompileDriver {
     return scopes;
   }
 
-  @NotNull
-  private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
+  private @NotNull TaskFuture<?> compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = ReadAction.compute(() -> CompileScopeUtil.fetchFiles(compileContext));
     List<TargetTypeBuildScope> scopes = ReadAction.compute(() -> getBuildScopes(compileContext, scope, paths));
@@ -479,9 +508,16 @@ public final class CompileDriver {
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
+        long currentTimeMillis = System.currentTimeMillis();
+        @SuppressWarnings("TestOnlyProblems") Long timeout = myProject.getUserData(TIMEOUT);
         while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
           if (indicator.isCanceled()) {
             future.cancel(false);
+          }
+
+          if (isUnitTestMode && timeout != null && System.currentTimeMillis() > currentTimeMillis + timeout) {
+            LOG.error("CANCELLED BY TIMEOUT IN TESTS");
+            future.cancel(true);
           }
         }
         compileInExternalProcessSpan.complete();
@@ -541,9 +577,8 @@ public final class CompileDriver {
     });
   }
 
-  @Nullable
   @TestOnly
-  public static ExitStatus getExternalBuildExitStatus(CompileContext context) {
+  public static @Nullable ExitStatus getExternalBuildExitStatus(CompileContext context) {
     return context.getUserData(COMPILE_SERVER_BUILD_STATUS);
   }
 
@@ -664,7 +699,7 @@ public final class CompileDriver {
     }, null);
   }
 
-  private boolean executeCompileTasks(@NotNull final CompileContext context, final boolean beforeTasks) {
+  private boolean executeCompileTasks(final @NotNull CompileContext context, final boolean beforeTasks) {
     if (myProject.isDisposed()) {
       return false;
     }
@@ -709,7 +744,7 @@ public final class CompileDriver {
     return true;
   }
 
-  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope, @NotNull final ProgressIndicator progress) {
+  private boolean validateCompilerConfiguration(final @NotNull CompileScope scope, final @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       final Pair<List<Module>, List<Module>> scopeModules = runWithReadAccess(progress, () -> {
@@ -745,7 +780,7 @@ public final class CompileDriver {
     }
   }
 
-  private <T> T runWithReadAccess(@NotNull final ProgressIndicator progress, Callable<? extends T> task) {
+  private <T> T runWithReadAccess(final @NotNull ProgressIndicator progress, Callable<? extends T> task) {
     return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).wrapProgress(progress).executeSynchronously();
   }
 
@@ -889,8 +924,7 @@ public final class CompileDriver {
       .showNotification();
   }
 
-  @NotNull
-  private static String formatModulesList(@NotNull List<String> modules) {
+  private static @NotNull String formatModulesList(@NotNull List<String> modules) {
     final int maxModulesToShow = 10;
     List<String> actualNamesToInclude = new ArrayList<>(ContainerUtil.getFirstItems(modules, maxModulesToShow));
     if (modules.size() > maxModulesToShow) {

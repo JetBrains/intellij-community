@@ -475,7 +475,7 @@ class ManyExitsFromTry {
     outer:
     {
       while (true) {
-        <error descr="Variable 'i' might be assigned in loop">i</error> = 1;
+        <error descr="Variable 'i' might be assigned in a loop">i</error> = 1;
         try {
           if (i > 1) continue;
           if (i > 2) break;

@@ -57,8 +57,7 @@ internal class AddNameToArgumentIntention :
                 element == argumentList.arguments.last { !it.isNamed() }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtValueArgument): Context? {
+    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
         return getStableNameFor(element)?.let { Context(it) }
     }
 

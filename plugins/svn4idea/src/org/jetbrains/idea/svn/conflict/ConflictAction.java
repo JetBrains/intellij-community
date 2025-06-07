@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ public enum ConflictAction {
   @XmlEnumValue("delete") DELETE("delete", "deleted"),
   @XmlEnumValue("replace") REPLACE("replace", "replaced");
 
-  @NotNull private static final Map<String, ConflictAction> ourAllActions = new HashMap<>();
+  private static final @NotNull Map<String, ConflictAction> ourAllActions = new HashMap<>();
 
   static {
     for (ConflictAction action : ConflictAction.values()) {
@@ -22,7 +22,7 @@ public enum ConflictAction {
     }
   }
 
-  @NotNull private final String myKey;
+  private final @NotNull String myKey;
   private final String @NotNull [] myOtherKeys;
 
   ConflictAction(@NotNull String key, String @NotNull ... otherKeys) {
@@ -43,8 +43,7 @@ public enum ConflictAction {
     }
   }
 
-  @NotNull
-  public static ConflictAction from(@NotNull String actionName) {
+  public static @NotNull ConflictAction from(@NotNull String actionName) {
     ConflictAction result = ourAllActions.get(actionName);
 
     if (result == null) {

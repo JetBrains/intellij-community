@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +73,7 @@ public abstract class ExecutionTargetManager {
 
   public abstract void setActiveTarget(@NotNull ExecutionTarget target);
 
-  public abstract @NotNull List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration);
+  public abstract @NotNull @Unmodifiable List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration);
 
   public abstract void update();
 

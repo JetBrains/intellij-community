@@ -9,15 +9,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
+import java.util.Collection;
+
 @ApiStatus.Internal
 public class GradleBuildScriptClasspathModelProvider implements ProjectImportModelProvider {
 
   @Override
-  public void populateBuildModels(
+  public void populateModels(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
+    @NotNull Collection<? extends @NotNull GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleBuildScriptClasspathModel.class, modelConsumer);
+    GradleModelProviderUtil.buildModelsRecursively(controller, buildModels, GradleBuildScriptClasspathModel.class, modelConsumer);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
@@ -24,6 +24,7 @@ import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,9 @@ import java.util.Map;
 public class HgMqUnAppliedPatchesPanel extends JPanel implements UiDataProvider, HgUpdater, Disposable {
 
   public static final DataKey<HgMqUnAppliedPatchesPanel> MQ_PATCHES = DataKey.create("Mq.Patches");
+  @Language("devkit-action-id")
   private static final String POPUP_ACTION_GROUP = "Mq.Patches.ContextMenu";
+  @Language("devkit-action-id")
   private static final String TOOLBAR_ACTION_GROUP = "Mq.Patches.Toolbar";
   private static final Logger LOG = Logger.getInstance(HgMqUnAppliedPatchesPanel.class);
   private static final String START_EDITING = "startEditing";

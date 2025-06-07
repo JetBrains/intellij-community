@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.*;
@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class JavaDocLexer extends MergingLexerAdapter {
   public JavaDocLexer(@NotNull LanguageLevel level) {
     this(JavaDocTokenTypes.INSTANCE, level.isAtLeast(LanguageLevel.JDK_1_5));
@@ -55,9 +60,8 @@ public class JavaDocLexer extends MergingLexerAdapter {
       return myState;
     }
 
-    @NotNull
     @Override
-    public CharSequence getBufferSequence() {
+    public @NotNull CharSequence getBufferSequence() {
       return myBuffer;
     }
 

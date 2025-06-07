@@ -1,15 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.util.ThrowableNotNullFunction
+import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -54,7 +53,7 @@ suspend inline fun <T> SpanBuilder.useWithScope(
 ): T {
   return startSpan().useWithoutActiveScope { span ->
     // inner withContext to ensure that we report the end of the span only when all child tasks are completed
-    withContext(Context.current().with(span).asContextElement() + context) {
+    withContext(context + Context.current().with(span).asContextElement()) {
       operation(span)
     }
   }
@@ -89,15 +88,23 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }
   finally {
     end()
   }
+}
+
+/**
+ * Workaround issue with [operation] lifetime being longer than [io.opentelemetry.sdk.trace.SpanProcessor]s, making the span existence never logged.
+ * [Span] is not passed to the [operation] as argument to avoid registering the similarly ignored events.
+ */
+@Internal
+inline fun <T> IJTracer.spanWithExplicitStart(spanName: String, operation: () -> T): T {
+  this.spanBuilder("$spanName: started").startSpan().end()
+  return this.spanBuilder(spanName).use { operation() }
 }

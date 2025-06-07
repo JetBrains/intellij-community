@@ -3,15 +3,29 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
+import org.jetbrains.kotlin.idea.highlighter.binaryExpressionForOperationReference
+import org.jetbrains.kotlin.idea.highlighter.restoreKaDiagnosticsForUnresolvedReference
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.createRenameUnresolvedReferenceFix
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 
+/**
+ * A provider for quick-fixes related to unresolved references in Kotlin for K2 Mode.
+ *
+ * Used as a lazy alternative to registering factories in [KotlinK2QuickFixRegistrar] to
+ * postpone some work during the highlighting (see KTIJ-26874).
+ * 
+ * Triggered from [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor].
+ */
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val ktElement = reference.element as? KtElement ?: return
@@ -23,8 +37,27 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
         }
 
         analyze(ktElement) {
-            for (quickFix in ImportQuickFixProvider.getFixes(ktElement)) {
+            val savedDiagnostics = ktElement.restoreKaDiagnosticsForUnresolvedReference()
+                .ifEmpty {
+                    // if no diagnostics on the original element, 
+                    // try to backtrack to the binary expression parent (see KT-75331)
+                    ktElement.binaryExpressionForOperationReference?.restoreKaDiagnosticsForUnresolvedReference() 
+                }
+                .orEmpty()
+            
+            for (quickFix in ImportQuickFixProvider.getFixes(savedDiagnostics)) {
                 registrar.register(quickFix)
+            }
+
+            if (ktElement is KtNameReferenceExpression) {
+                try {
+                    createRenameUnresolvedReferenceFix(ktElement)?.let { action -> registrar.register(action) }
+                } catch (e: Exception) {
+                    if (e is ControlFlowException) throw e
+                    throw KotlinExceptionWithAttachments("Unable to create rename unresolved reference fix", e)
+                        .withPsiAttachment("element.kt", ktElement)
+                        .withPsiAttachment("file.kt", ktElement.containingFile)
+                }
             }
         }
     }

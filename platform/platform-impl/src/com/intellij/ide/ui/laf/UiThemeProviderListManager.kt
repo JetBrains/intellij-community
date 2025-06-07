@@ -56,7 +56,7 @@ class UiThemeProviderListManager {
                 )
               }
             }
-            theme?.let { UIThemeLookAndFeelInfoImpl(/* theme = */ it) }
+            theme?.let { UIThemeLookAndFeelInfoImpl(/* theme = */ it).also { it.setRestartRequired(provider.isRestartRequired) } }
           }
 
           LafEntry(
@@ -129,7 +129,7 @@ class UiThemeProviderListManager {
         defaultLightParent = { themeDescriptors.single { it.id == DEFAULT_LIGHT_PARENT_THEME }.theme.get()?.theme },
         pluginDescriptor = pluginDescriptor,
       ) ?: return@SynchronizedClearableLazy null
-      UIThemeLookAndFeelInfoImpl(theme)
+      UIThemeLookAndFeelInfoImpl(theme).also { it.setRestartRequired(provider.isRestartRequired) }
     }, bean = provider, pluginDescriptor = pluginDescriptor)
     themeDescriptors = themeDescriptors + lafEntry
     return lafEntry

@@ -33,7 +33,7 @@ public class Incompatible {
       case PrimitiveRecord(int x) when true -> {}
       case IntegerRecord(Integer x) when true -> {}
       case IntegerRecord(<error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">int x</error>) when true -> {}
-      case <error descr="'Object' cannot be safely cast to 'T'">T(Integer x)</error> -> {}
+      case <error descr="'Object' cannot be safely cast to 'T'"><error descr="Deconstruction pattern can only be applied to a record, 'T' is not a record">T</error>(Integer x)</error> -> {}
 
     }
     switch (integer){

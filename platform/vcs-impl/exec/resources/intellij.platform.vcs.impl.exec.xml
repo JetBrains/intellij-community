@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
+                    serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
+                    overrides="true"/>
+  </extensions>
+</idea-plugin>

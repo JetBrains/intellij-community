@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -57,14 +57,12 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     });
   }
 
-  @Nullable
-  protected ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
+  protected @Nullable ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
     return e.getData(ExternalSystemDataKeys.UI_AWARE);
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  protected <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
+  protected @Nullable <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(e.getData(ExternalSystemDataKeys.SELECTED_NODES));
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
@@ -74,8 +72,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();
   }
 
-  @Nullable
-  protected VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
+  protected @Nullable VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
     String path = data.getLinkedExternalProjectPath();
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     VirtualFile externalSystemConfigPath = fileSystem.refreshAndFindFileByPath(path);

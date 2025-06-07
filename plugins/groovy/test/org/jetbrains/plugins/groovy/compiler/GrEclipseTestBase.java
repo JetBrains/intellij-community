@@ -28,6 +28,7 @@ public abstract class GrEclipseTestBase extends GroovyCompilerTest {
       JarFileSystem.getInstance().getVirtualFileForJar(jarRoot).getPath();
   }
 
+  @Override
   protected List<String> chunkRebuildMessage(String builder) {
     return new ArrayList<>();
   }

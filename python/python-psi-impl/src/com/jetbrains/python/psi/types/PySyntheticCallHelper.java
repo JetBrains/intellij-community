@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.*;
  * This class allows inferring types of function calls based on types without using real PSI
  * Use it in cases when a real PSI call does not exist in code
  */
+@ApiStatus.Internal
 public final class PySyntheticCallHelper {
 
   private PySyntheticCallHelper() { }
@@ -186,10 +188,10 @@ public final class PySyntheticCallHelper {
   }
 
   private static class SyntheticCallArgumentsMapping {
-    @Nullable private final PyCallableType myReceiverType;
-    @NotNull private final List<PyCallableParameter> myImplicitParameters;
-    @NotNull private final List<PyType> myUnmappedArguments;
-    @NotNull private final Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
+    private final @Nullable PyCallableType myReceiverType;
+    private final @NotNull List<PyCallableParameter> myImplicitParameters;
+    private final @NotNull List<PyType> myUnmappedArguments;
+    private final @NotNull Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
 
     SyntheticCallArgumentsMapping(@Nullable PyCallableType receiverType,
                                   @NotNull List<PyCallableParameter> implicitParameters,
@@ -217,8 +219,7 @@ public final class PySyntheticCallHelper {
       return myReceiverType;
     }
 
-    @NotNull
-    public static SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
+    public static @NotNull SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
       return new SyntheticCallArgumentsMapping(receiverType, Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared;
 
@@ -82,6 +82,25 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
             @TestMetadata("propertyCallWithArguments.kt")
             public void testPropertyCallWithArguments() throws Exception {
                 runTest("../testData/quickfix/unresolvedInvocation/propertyCallWithArguments.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/quickfix/unusedImport")
+        public static class UnusedImport extends AbstractK2SharedQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("import.kt")
+            public void testImport() throws Exception {
+                runTest("../testData/quickfix/unusedImport/import.kt");
             }
         }
     }

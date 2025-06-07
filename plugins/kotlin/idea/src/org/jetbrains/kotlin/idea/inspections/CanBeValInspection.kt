@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -46,7 +46,7 @@ class CanBeValInspection : AbstractKotlinInspection() {
                     KotlinBundle.message("variable.is.never.modified.and.can.be.declared.immutable.using.val"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
-                    IntentionWrapper(ChangeVariableMutabilityFix(declaration, false))
+                    ChangeVariableMutabilityFix(declaration, false).asQuickFix(),
                 )
                 holder.registerProblem(problemDescriptor)
             }
@@ -91,13 +91,13 @@ class CanBeValInspection : AbstractKotlinInspection() {
             ignoreNotUsedVals: Boolean,
             pseudocodeCache: MutableMap<KtDeclaration, Pseudocode>
         ): Boolean {
-            if (ignoreNotUsedVals && allDeclarations.all { ReferencesSearch.search(it, it.useScope).none() }) {
+            if (ignoreNotUsedVals && allDeclarations.all { ReferencesSearch.search(it, it.useScope).asIterable().none() }) {
                 // do not report for unused var's (otherwise we'll get it highlighted immediately after typing the declaration
                 return false
             }
 
             return if (hasInitializerOrDelegate) {
-                val hasWriteUsages = ReferencesSearch.search(declaration, declaration.useScope).any {
+                val hasWriteUsages = ReferencesSearch.search(declaration, declaration.useScope).asIterable().any {
                     (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
                 }
                 !hasWriteUsages
