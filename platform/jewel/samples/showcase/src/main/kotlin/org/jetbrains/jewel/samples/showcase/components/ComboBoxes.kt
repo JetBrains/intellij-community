@@ -60,7 +60,7 @@ private val languageOptions =
     )
 
 @Composable
-public fun ComboBoxes() {
+fun ComboBoxes() {
     GroupHeader("List combo box (aka dropdown)")
     ListComboBoxes()
 
@@ -233,8 +233,8 @@ private fun CustomComboBoxes() {
                     SimpleListItem(
                         text = languageOptions[selectedIndex].name,
                         icon = languageOptions[selectedIndex].icon,
-                        isSelected = false,
-                        isActive = true,
+                        selected = false,
+                        active = true,
                     )
                 },
             )
