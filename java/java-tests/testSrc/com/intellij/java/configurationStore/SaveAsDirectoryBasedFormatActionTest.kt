@@ -27,7 +27,7 @@ class SaveAsDirectoryBasedFormatActionTest : BareTestFixtureTestCase() {
     val projectDir = Path.of(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     loadProjectAndCheckResults(listOf(projectFile), tempDirectory) { project ->
       val store = project.stateStore
-      val baseDir = store.getProjectFilePath().parent
+      val baseDir = store.projectFilePath.parent
       val ideaDir = baseDir.resolve(DIRECTORY_STORE_FOLDER)
       convertToDirectoryBasedFormat(project = project, store = store, baseDir = baseDir, ideaDir = ideaDir)
       project.stateStore.save()

@@ -1,57 +1,56 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.components.impl.stores;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
-import java.nio.file.Path;
+interface IProjectStore : IComponentStore {
+  val projectBasePath: Path
 
-public interface IProjectStore extends IComponentStore {
-  @TestOnly
-  Key<Boolean> COMPONENT_STORE_LOADING_ENABLED = Key.create("COMPONENT_STORE_LOADING_ENABLED");
+  @get:ApiStatus.Internal
+  val locationHash: String
 
-  @NotNull Path getProjectBasePath();
+  val projectName: String
 
-  @ApiStatus.Internal
-  @NotNull String getLocationHash();
+  val storageScheme: StorageScheme
 
-  @NotNull String getProjectName();
-
-  @NotNull StorageScheme getStorageScheme();
-  
-  @NotNull String getPresentableUrl();
+  val presentableUrl: String
 
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
    */
-  @NotNull Path getProjectFilePath();
+  val projectFilePath: Path
 
-  @NotNull Path getWorkspacePath();
-
-  @ApiStatus.Internal
-  void clearStorages();
+  val workspacePath: Path
 
   @ApiStatus.Internal
-  boolean isOptimiseTestLoadSpeed();
+  fun clearStorages()
 
-  @ApiStatus.Internal
-  void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var isOptimiseTestLoadSpeed: Boolean
 
-  boolean isProjectFile(@NotNull VirtualFile file);
+  fun isProjectFile(file: VirtualFile): Boolean
 
   /**
    * The directory of project configuration files for a directory-based project or null for file-based.
    */
-  @Nullable Path getDirectoryStorePath();
+  val directoryStorePath: Path?
 
   @ApiStatus.Internal
-  void setPath(@NotNull Path path, @Nullable Project template);
+  fun setPath(file: Path, template: Project?)
 
-  @Nullable String getProjectWorkspaceId();
+  val projectWorkspaceId: String?
+
+  @ApiStatus.Internal
+  companion object {
+    @TestOnly
+    @JvmField
+    val COMPONENT_STORE_LOADING_ENABLED: Key<Boolean> = Key.create<Boolean>("COMPONENT_STORE_LOADING_ENABLED")
+  }
 }

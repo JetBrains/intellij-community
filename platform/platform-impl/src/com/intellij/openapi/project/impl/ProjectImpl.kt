@@ -368,8 +368,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return projectManager != null && projectManager.isProjectOpened(this)
   }
 
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor =
-    pluginDescriptor.projectContainerDescriptor
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
+    return pluginDescriptor.projectContainerDescriptor
+  }
 
   override fun scheduleSave() {
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))

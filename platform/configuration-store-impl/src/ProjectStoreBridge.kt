@@ -72,7 +72,8 @@ private fun shouldWriteExternalFilesDirectly(): Boolean {
 }
 
 @ApiStatus.Internal
-open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+open
+class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
   private val persistentModules = CachedValue<List<Module>> { storage ->
     val moduleMap = storage.moduleMap
     storage.entities(ModuleEntity::class.java)

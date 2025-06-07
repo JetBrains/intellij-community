@@ -291,7 +291,7 @@ inline fun statement(crossinline runnable: () -> Unit): Statement = object : Sta
 
 /**
  * Do not optimize test load speed.
- * @see IProjectStore.setOptimiseTestLoadSpeed
+ * @see IProjectStore.isOptimiseTestLoadSpeed
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 annotation class RunsInActiveStoreMode

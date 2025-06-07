@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
@@ -57,7 +57,7 @@ object HeavyTestHelper {
 
   @JvmStatic
   fun getOrCreateProjectBaseDir(project: Project): VirtualFile {
-    val basePath = project.stateStore.getProjectBasePath()
+    val basePath = project.stateStore.projectBasePath
     val fs = LocalFileSystem.getInstance()
     val baseDir = fs.findFileByNioFile(basePath)
     if (baseDir == null) {
