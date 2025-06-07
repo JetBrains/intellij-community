@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.takeOrElse
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
-import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
 import org.jetbrains.jewel.ui.component.styling.PopupContainerColors
 import org.jetbrains.jewel.ui.component.styling.PopupContainerMetrics
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
@@ -36,7 +36,7 @@ internal fun readPopupContainerStyle(): PopupContainerStyle {
                 contentPadding = PaddingValues(),
                 offset = DpOffset(0.dp, 2.dp),
                 shadowSize = 12.dp,
-                borderWidth = retrieveIntAsDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
+                borderWidth = retrieveIntAsNonNegativeDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
             ),
     )
 }

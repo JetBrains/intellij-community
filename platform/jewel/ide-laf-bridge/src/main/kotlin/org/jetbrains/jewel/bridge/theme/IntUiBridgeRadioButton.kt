@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import org.jetbrains.jewel.bridge.isNewUiTheme
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
-import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
 import org.jetbrains.jewel.ui.component.styling.RadioButtonColors
 import org.jetbrains.jewel.ui.component.styling.RadioButtonIcons
 import org.jetbrains.jewel.ui.component.styling.RadioButtonMetrics
@@ -34,11 +34,9 @@ internal fun readRadioButtonStyle(): RadioButtonStyle {
     // com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI.getDefaultIcon()
     // is not correct though, the SVG is 19x19 and is missing 1px on the right
     val radioButtonSize =
-        retrieveIntAsDpOrUnspecified("RadioButton.iconSize")
+        retrieveIntAsNonNegativeDpOrUnspecified("RadioButton.iconSize")
             .takeOrElse { metrics.radioButtonSize }
             .let { DpSize(it, it) }
-
-    // val outlineSize = if (isNewUiButNotDarcula() DpSize(17.dp, 17.dp) else
 
     return RadioButtonStyle(
         colors = colors,
@@ -50,7 +48,9 @@ internal fun readRadioButtonStyle(): RadioButtonStyle {
                 outlineSelectedSize = metrics.outlineSelectedSize,
                 outlineSelectedFocusedSize = metrics.outlineSelectedFocusedSize,
                 iconContentGap =
-                    retrieveIntAsDpOrUnspecified("RadioButton.textIconGap").takeOrElse { metrics.iconContentGap },
+                    retrieveIntAsNonNegativeDpOrUnspecified("RadioButton.textIconGap").takeOrElse {
+                        metrics.iconContentGap
+                    },
             ),
         icons = RadioButtonIcons(radioButton = PathIconKey("${iconsBasePath}radio.svg", RadioButtonIcons::class.java)),
     )
