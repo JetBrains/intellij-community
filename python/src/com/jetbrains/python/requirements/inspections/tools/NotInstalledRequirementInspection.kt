@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.requirements.RequirementsFile
@@ -39,11 +40,14 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
 
       val packageManager = PythonPackageManager.forSdk(psiFile.project, sdk)
 
-      val packages = packageManager.listInstalledPackagesSnapshot().map { it.name }
+      val packages = packageManager.listInstalledPackagesSnapshot()
+      val pyPackages = packages.map { PyPackage(it.name, it.version) }
+
 
       val notInstalledRequirementsWithPsi = requirements.mapNotNull { requirement ->
         val pyRequirement = PyRequirementParser.fromLine(requirement.text) ?: return@mapNotNull null
-        if (pyRequirement.name in packages)
+        val isMatched = pyRequirement.match(pyPackages) != null
+        if (isMatched)
           return@mapNotNull null
         requirement to pyRequirement
       }
@@ -56,7 +60,7 @@ class NotInstalledRequirementInspection : LocalInspectionTool() {
           InstallRequirementQuickFix(pyRequirement),
           installAllRequirementsQuickFix,
         )
-        holder.registerProblem(psiRequirement, PyBundle.message("INSP.requirements.package.not.installed", psiRequirement.displayName),
+        holder.registerProblem(psiRequirement, PyBundle.message("INSP.requirements.package.not.installed", psiRequirement.requirement),
                                ProblemHighlightType.WARNING,
                                *fixes.toTypedArray())
       }

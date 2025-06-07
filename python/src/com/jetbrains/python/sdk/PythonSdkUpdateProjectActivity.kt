@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
@@ -30,6 +31,10 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
           refreshPaths(project, sdk)
         }.cancelOnDispose(messageBusConnection)
       }
+
+      override fun outdatedPackagesChanged(sdk: Sdk) {
+        DaemonCodeAnalyzer.getInstance(project).restart()
+      }
     })
 
 
@@ -50,6 +55,7 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
     if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
       VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
     }
+
     PythonSdkUpdater.scheduleUpdate(sdk, project)
   }
 }
