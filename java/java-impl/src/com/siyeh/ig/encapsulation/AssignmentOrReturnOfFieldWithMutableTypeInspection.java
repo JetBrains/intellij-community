@@ -161,6 +161,7 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
       boolean reportAssignment = !ContainerUtil.or(recordClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
       for (PsiRecordComponent component : recordHeader.getRecordComponents()) {
         final PsiType type = component.getType();
+        if (ClassUtils.isImmutable(type)) continue;
         final boolean mutable = type instanceof PsiArrayType ||
                                 ContainerUtil.exists(MUTABLE_TYPES, typeName -> InheritanceUtil.isInheritor(type, typeName));
         if (!mutable) continue;

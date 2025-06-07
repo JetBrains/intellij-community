@@ -227,3 +227,5 @@ record Data4(Collection<String> strings) {
     return <warning descr="Return of Collection<String> field 'strings'">strings</warning>;
   }
 }
+record Fooz(ImmutableList<Integer> ints) {
+}
