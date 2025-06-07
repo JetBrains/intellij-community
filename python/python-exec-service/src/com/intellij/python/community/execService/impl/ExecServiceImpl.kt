@@ -13,7 +13,7 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.WhatToExec
-import com.jetbrains.python.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason

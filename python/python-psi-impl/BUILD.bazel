@@ -48,6 +48,7 @@ jvm_library(
     "//python/python-parser:parser",
     "//python/python-syntax-core:syntax-core",
     "//platform/ml-api:ml",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   exports = ["//python/python-syntax-core:syntax-core"],
   runtime_deps = [":psi-impl_resources"]

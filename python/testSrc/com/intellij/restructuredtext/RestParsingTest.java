@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.restructuredtext;
 
-import com.intellij.testFramework.ParsingTestCase;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.restructuredtext.parsing.RestParserDefinition;
+import com.intellij.testFramework.ParsingTestCase;
 
 /**
  * User : catherine

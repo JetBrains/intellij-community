@@ -34,6 +34,7 @@
   - name: intellij.python.ast
   - name: intellij.python.syntax.core
   - name: intellij.python.syntax
+  - name: intellij.python.community.helpersLocator
 - name: lib/python-ce.jar
   modules:
   - name: intellij.python.community.plugin

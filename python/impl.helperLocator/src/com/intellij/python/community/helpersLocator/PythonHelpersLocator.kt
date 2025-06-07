@@ -1,20 +1,5 @@
-/*
- * Copyright 2000-2024 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.jetbrains.python
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.helpersLocator
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getPluginDistDirByClass
@@ -24,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -32,7 +17,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-@Internal
+@ApiStatus.Internal
 interface PythonHelpersLocator {
   companion object {
     val LOG: Logger = logger<PythonHelpersLocator>()
@@ -41,13 +26,13 @@ interface PythonHelpersLocator {
     private val EP_NAME: ExtensionPointName<PythonHelpersLocator> = ExtensionPointName("com.jetbrains.python.pythonHelpersLocator")
 
     @TestOnly
-    @Internal
+    @ApiStatus.Internal
     val epNameForTests: ExtensionPointName<PythonHelpersLocator> = EP_NAME
 
     /**
      * @return A list of Path objects representing the roots of the Python Helpers.
      */
-    @Internal
+    @ApiStatus.Internal
     @JvmStatic
     fun getHelpersRoots(): List<Path> = EP_NAME.extensionList.mapNotNull { it.getRoot() }
 
@@ -56,7 +41,7 @@ interface PythonHelpersLocator {
      *
      * @return The root Path of the Community Helpers extension.
      */
-    @Internal
+    @ApiStatus.Internal
     @JvmStatic
     fun getCommunityHelpersRoot(): Path = EP_NAME.extensionList.first().getCommunityHelpersRootPath()
 
@@ -84,7 +69,7 @@ interface PythonHelpersLocator {
     }
 
 
-    @Internal
+    @ApiStatus.Internal
     @TestOnly
     @JvmStatic
     @RequiresBackgroundThread
@@ -102,7 +87,7 @@ interface PythonHelpersLocator {
      * @param resourceName The name of the helper resource file (for example, `pydev` or `jupyter_debug`).
      * @return The absolute path of the helper file, or null if the file does not exist.
      */
-    @Internal
+    @ApiStatus.Internal
     @JvmStatic
     @RequiresBackgroundThread
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpersPossibleNull(resourceName)?.absolutePathString()
@@ -113,7 +98,7 @@ interface PythonHelpersLocator {
     fun getHelperPath(@NonNls resourceName: String): String = findPathStringInHelpers(resourceName)
   }
 
-  @Internal
+  @ApiStatus.Internal
   fun getRoot(): Path? = getCommunityHelpersRootPath().normalize()
 
   private fun getCommunityHelpersRootPath(): Path {
@@ -128,7 +113,7 @@ interface PythonHelpersLocator {
     }
   }
 
-  @Internal
+  @ApiStatus.Internal
   @RequiresBackgroundThread
   fun getHelpersRoot(moduleName: String, relativePath: String): Path {
     return findRootByJarPath(
@@ -138,7 +123,7 @@ interface PythonHelpersLocator {
     )
   }
 
-  @Internal
+  @ApiStatus.Internal
   fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path {
     if (PluginManagerCore.isRunningFromSources()) {
       return Path.of(PathManager.getCommunityHomePath(), relativePath)

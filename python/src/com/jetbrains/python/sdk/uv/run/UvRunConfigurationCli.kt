@@ -3,8 +3,8 @@ package com.jetbrains.python.sdk.uv.run
 
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.application.PathManager
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.PythonToolModuleExecution
 import com.jetbrains.python.run.PythonToolScriptExecution
@@ -13,7 +13,6 @@ import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.collections.plusAssign
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal

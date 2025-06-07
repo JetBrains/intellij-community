@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.community.helpersLocator` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "community-helpersLocator_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-helpersLocator",
+  module_name = "intellij.python.community.helpersLocator",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/diagnostic",
+  ],
+  runtime_deps = [":community-helpersLocator_resources"]
+)
+### auto-generated section `build intellij.python.community.helpersLocator` end

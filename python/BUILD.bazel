@@ -143,6 +143,9 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator",
   ]
 )
 
@@ -278,6 +281,7 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "@lib//:http-client",
     "@lib//:commons-lang3",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   exports = [
     "//python/openapi:community",
@@ -427,6 +431,7 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [
     ":python-community-tests_test_resources",

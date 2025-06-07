@@ -7,7 +7,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.PythonHelpersLocator.Companion.findPathInHelpers
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage

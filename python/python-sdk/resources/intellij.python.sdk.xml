@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.community.helpersLocator"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.pythonSdkFlavor" interface="com.jetbrains.python.sdk.flavors.PythonSdkFlavor" dynamic="true"/>

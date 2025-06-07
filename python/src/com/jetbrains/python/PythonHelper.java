@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.*;
 import static com.intellij.python.community.impl.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
 import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
-import static com.jetbrains.python.PythonHelpersLocator.*;
 
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),

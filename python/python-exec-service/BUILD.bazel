@@ -16,8 +16,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
-    "//python/python-sdk:sdk",
-    "//python/python-psi-impl:psi-impl",
     "//platform/eel-provider",
     "//platform/util",
     "@lib//:kotlinx-coroutines-core",
@@ -25,6 +23,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/eel",
     "//platform/util/progress",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [":community-execService_resources"]
 )
@@ -39,9 +38,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
-    "//python/python-sdk:sdk",
-    "//python/python-sdk:sdk_test_lib",
-    "//python/python-psi-impl:psi-impl",
     "//platform/eel-provider",
     "//platform/util",
     "@lib//:kotlinx-coroutines-core",
@@ -58,6 +54,7 @@ jvm_library(
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
     "//platform/util/progress",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [":community-execService_resources"]
 )
