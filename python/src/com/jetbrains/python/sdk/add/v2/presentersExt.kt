@@ -14,6 +14,7 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.isConda
@@ -34,10 +35,10 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
                               is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> baseSdk.homePath
                             }!!)
 
-  val systemPython = SystemPythonService().registerSystemPython(baseSdkPath).getOr { return it }
+  val systemPython = SystemPythonService().registerSystemPython(baseSdkPath).getOr(message("sdk.create.error.base.broken", baseSdkPath)) { return it }
 
 
-  val venvPython = createVenvFromSystemPython(systemPython, venvPath, inheritSitePackages = state.inheritSitePackages.get()).getOr { return it }
+  val venvPython = createVenvFromSystemPython(systemPython, venvPath, inheritSitePackages = state.inheritSitePackages.get()).getOr(message("project.error.cant.venv")) { return it }
 
   if (targetEnvironmentConfiguration != null) {
     error("Remote targets aren't supported")

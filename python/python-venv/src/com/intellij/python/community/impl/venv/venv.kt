@@ -10,6 +10,7 @@ import com.intellij.python.community.execService.python.validatePythonAndGetVers
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -43,9 +44,9 @@ suspend fun createVenv(
     }
     add(venvDir.pathString)
   }
-  val version = python.validatePythonAndGetVersion().getOr { return it }
+  val version = python.validatePythonAndGetVersion().getOr(PyVenvBundle.message("py.venv.error.cant.base.version")) { return it }
   val helper = if (version.isAtLeast(LanguageLevel.PYTHON38)) VIRTUALENV_ZIPAPP_NAME else LEGACY_VIRTUALENV_ZIPAPP_NAME
-  execService.executeHelper(python, helper, args, ExecOptions(timeout = 3.minutes)).getOr { return it }
+  execService.executeHelper(python, helper, args, ExecOptions(timeout = 3.minutes)).getOr(PyVenvBundle.message("py.venv.error.executing.script", helper)) { return it }
 
 
   val venvPython = withContext(Dispatchers.IO) {

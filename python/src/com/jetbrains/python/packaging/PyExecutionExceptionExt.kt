@@ -19,14 +19,14 @@ internal fun PyExecutionException.copyWith(newCommand: String, newArgs: List<Str
     is ExecError -> {
       when (val reason = err.errorReason) {
         is ExecErrorReason.CantStart -> {
-          PyExecutionException(IOException(reason.cantExecProcessError), err.additionalMessageToUser, newCommand, newArgs, fixes)
+          PyExecutionException(IOException(reason.cantExecProcessError), err.message, newCommand, newArgs, fixes)
         }
         ExecErrorReason.Timeout -> {
-          PyExecutionException(ExecError(Path(newCommand).asEelPath(), newArgs.toTypedArray(), ExecErrorReason.Timeout, err.additionalMessageToUser))
+          PyExecutionException(ExecError(Path(newCommand).asEelPath(), newArgs.toTypedArray(), ExecErrorReason.Timeout, err.message))
         }
         is ExecErrorReason.UnexpectedProcessTermination -> {
           val output = ProcessOutput(reason.stdoutString, reason.stderrString, reason.exitCode, false, false)
-          PyExecutionException(err.additionalMessageToUser, newCommand, newArgs, output, fixes)
+          PyExecutionException(err.message, newCommand, newArgs, output, fixes)
         }
       }
     }

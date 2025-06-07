@@ -24,9 +24,11 @@ import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import kotlinx.coroutines.*
@@ -133,7 +135,7 @@ private suspend fun createProjectAndSdk(
 ): PyResult<Pair<Project, Sdk>> {
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
   val project = openProject(projectPath)
-  val sdk = createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath).getOr { return it }
+  val sdk = createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath).getOr(PyBundle.message("project.error.cant.venv")) { return it }
   return Result.success(Pair(project, sdk))
 }
 

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 import kotlin.time.Duration
 
 
@@ -36,7 +37,7 @@ internal object ExecServiceImpl : ExecService {
   override suspend fun <T> executeAdvanced(binary: Path, argsBuilder: suspend ArgsBuilder.() -> Unit, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyExecResult<T> {
     val args = ArgsBuilderImpl(binary.getEelDescriptor().toEelApi()).apply { argsBuilder() }.args
     val description = options.processDescription
-                      ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(toString()) + args).joinToString(" "))
+                      ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(binary.pathString) + args).joinToString(" "))
 
     val executableProcess = EelExecutableProcess(binary.asEelPath(), args, options.env, options.workingDirectory, description)
     val eelProcess = executableProcess.run().getOr { return it }

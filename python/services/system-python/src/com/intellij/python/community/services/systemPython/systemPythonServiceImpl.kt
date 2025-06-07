@@ -18,6 +18,7 @@ import com.intellij.python.community.services.systemPython.impl.CoreSystemPython
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
@@ -61,7 +62,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
   }
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
-    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
+    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr("Python {$pythonPath} is broken") { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
     cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)

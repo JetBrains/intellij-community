@@ -175,7 +175,7 @@ class ExecServiceShowCaseTest {
     when (result) {
       is Result.Failure -> {
         assertFalse(sunny, "Unexpected failure ${result.error}")
-        assertEquals(messageToUser, result.error.additionalMessageToUser, "Wrong message to user")
+        assertThat("Wrong message to user", result.error.message, CoreMatchers.containsString(messageToUser))
         assertEquals(shell, result.error.exe.asNioPath(), "Wrong exe")
       }
       is Result.Success -> {

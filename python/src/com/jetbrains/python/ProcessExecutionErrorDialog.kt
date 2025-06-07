@@ -57,7 +57,7 @@ fun showProcessExecutionErrorDialog(
 ) {
   check(project == null || !project.isDisposed)
 
-  val errorMessageText = PyBundle.message("dialog.message.command.could.not.complete")
+  val errorMessageText = execError.message + PyBundle.message("dialog.message.command.could.not.complete")
   // HTML format for text in `JBLabel` enables text wrapping
   val errorMessageLabel = JBLabel(UIUtil.toHtml(errorMessageText), Messages.getErrorIcon(), SwingConstants.LEFT)
 
@@ -94,7 +94,7 @@ fun showProcessExecutionErrorDialog(
   object : DialogWrapper(project) {
     init {
       init()
-      title = execError.additionalMessageToUser ?: errorMessageText
+      title = errorMessageText
     }
 
     override fun createActions(): Array<Action> = arrayOf(okAction)

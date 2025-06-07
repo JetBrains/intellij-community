@@ -21,6 +21,7 @@ import com.intellij.python.community.services.systemPython.createVenvFromSystemP
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -68,7 +69,7 @@ suspend fun createVenvAndSdk(
     val systemPythonBinary = getSystemPython(confirmInstallation = confirmInstallation, systemPythonService).getOr { return it }
     logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
     // create venv using this system python
-    venvPython = createVenvFromSystemPython(systemPythonBinary, venvDir = venvDirPath).getOr {
+    venvPython = createVenvFromSystemPython(systemPythonBinary, venvDir = venvDirPath).getOr(PyBundle.message("action.AnActionButton.text.show.early.releases")) {
       return it
     }
   }
