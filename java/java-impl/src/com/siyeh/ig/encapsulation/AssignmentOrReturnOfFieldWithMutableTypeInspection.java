@@ -10,7 +10,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -101,7 +100,7 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
         return;
       }
       final PsiExpression lhs = PsiUtil.deparenthesizeExpression(expression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression lRef)) {
         return;
       }
       final String type = TypeUtils.expressionHasTypeOrSubtype(lhs, MUTABLE_TYPES);
@@ -109,13 +108,13 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
         return;
       }
       final PsiExpression rhs = PsiUtil.deparenthesizeExpression(expression.getRExpression());
-      if (!(rhs instanceof PsiReferenceExpression)) {
+      if (!(rhs instanceof PsiReferenceExpression rRef)) {
         return;
       }
-      final PsiField field = ObjectUtils.tryCast(((PsiReference)lhs).resolve(), PsiField.class);
-      if (field == null) return;
-      final PsiParameter parameter = ObjectUtils.tryCast(((PsiReference)rhs).resolve(), PsiParameter.class);
-      if (parameter == null || !(parameter.getDeclarationScope() instanceof PsiMethod) || ClassUtils.isImmutable(parameter.getType())) {
+      if (!(lRef.resolve() instanceof PsiField field)) return;
+      if (!(rRef.resolve() instanceof PsiParameter parameter)
+          || !(parameter.getDeclarationScope() instanceof PsiMethod)
+          || ClassUtils.isImmutable(parameter.getType())) {
         return;
       }
       if (ignorePrivateMethods) {
@@ -137,15 +136,14 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
-      if (!(returnValue instanceof PsiReferenceExpression)) {
+      if (!(returnValue instanceof PsiReferenceExpression ref)) {
         return;
       }
       final PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
-      if (ignorePrivateMethods && element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (ignorePrivateMethods && element instanceof PsiMethod m && m.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)returnValue).resolve(), PsiField.class);
-      if (field == null) return;
+      if (!(ref.resolve() instanceof PsiField field)) return;
       final String type = TypeUtils.expressionHasTypeOrSubtype(returnValue, MUTABLE_TYPES);
       if (type == null && !(returnValue.getType() instanceof PsiArrayType)) return;
       if (CollectionUtils.isConstantEmptyArray(field) ||
