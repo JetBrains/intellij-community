@@ -82,6 +82,12 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
         else -> coordinates
       }
     }
+    mavenArtifacts.patchDependencies = { module, dependencies ->
+      when {
+        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.patchDependencies(module, dependencies)
+        else -> dependencies
+      }
+    }
     mavenArtifacts.addPomMetadata = { module, model ->
       when {
         JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
