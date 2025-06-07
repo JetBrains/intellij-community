@@ -120,7 +120,7 @@ class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineSco
 
     fun isConfigurationLoadingInProgress(file: KtFile): Boolean =
         plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
-            ?: default.isConfigurationLoadingInProgress(file)
+            ?: (default.getCachedConfigurationState(file.originalFile.virtualFile)?.applied == null)
 
     fun getLightScriptInfo(file: String): LightScriptInfo? =
         updater.classpathRoots.getLightScriptInfo(file)

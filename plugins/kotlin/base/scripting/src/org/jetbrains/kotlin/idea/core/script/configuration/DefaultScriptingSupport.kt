@@ -38,8 +38,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  *
  * [getOrLoadConfiguration] will be called when we need to show or analyze some script file.
  *
- * As described in [DefaultScriptingSupportBase], configuration may be loaded from [cache]
- * or [reloadOutOfDateConfiguration] will be called on [cache] miss.
+ * Configuration may be loaded from [cache] or [reloadOutOfDateConfiguration] will be called on [cache] miss.
  *
  * There are 2 tiers [cache]: memory and FS. For now FS cache implemented by [ScriptConfigurationLoader]
  * because we are not storing classpath roots yet. As a workaround cache.all() will return only memory
@@ -83,8 +82,13 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  *
  * [reloadOutOfDateConfiguration] guard this states. See it's docs for more details.
  */
-class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScriptingSupportBase(manager) {
-    // TODO public for tests
+class DefaultScriptingSupport(val manager: ScriptConfigurationManager) {
+    val project: Project
+        get() = manager.myProject
+
+    @Suppress("LeakingThis")
+    private val cache: ScriptConfigurationCache = createCache()
+
     internal val backgroundExecutor: BackgroundExecutor = when {
         isUnitTestMode() -> @Suppress("TestOnlyProblems") TestingBackgroundExecutor(manager)
         else -> DefaultBackgroundExecutor(project, manager)
@@ -103,11 +107,16 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
 
     private val saveLock = ReentrantLock()
 
-    override fun createCache(): ScriptConfigurationCache = object : ScriptConfigurationMemoryCache(project) {
+    private fun createCache(): ScriptConfigurationCache = object : ScriptConfigurationMemoryCache(project) {
         override fun setLoaded(file: VirtualFile, configurationSnapshot: ScriptConfigurationSnapshot) {
             super.setLoaded(file, configurationSnapshot)
             fileAttributeCache.save(file, configurationSnapshot)
         }
+    }
+
+    fun getCachedConfigurationState(file: VirtualFile?): ScriptConfigurationState? {
+        if (file == null) return null
+        return cache[file]
     }
 
     /**
@@ -148,12 +157,12 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
      *   everything will be computed just in place, possible concurrently.
      *   [suggestOrSaveConfiguration] calls will be serialized by the [saveLock]
      */
-    override fun reloadOutOfDateConfiguration(
+    private fun reloadOutOfDateConfiguration(
         file: KtFile,
-        isFirstLoad: Boolean,
-        forceSync: Boolean,
-        fromCacheOnly: Boolean,
-        skipNotification: Boolean
+        isFirstLoad: Boolean = getCachedConfigurationState(file.originalFile.virtualFile)?.applied == null,
+        forceSync: Boolean = false,
+        fromCacheOnly: Boolean = false,
+        skipNotification: Boolean = false
     ): Boolean {
         val virtualFile = file.originalFile.virtualFile ?: return false
 
@@ -227,7 +236,7 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
             loader.loadDependencies(false, file, scriptDefinition, loadingContext)
         }
 
-        return getAppliedConfiguration(virtualFile)?.configuration
+        return getCachedConfigurationState(virtualFile)?.applied?.configuration
     }
 
     private val loadingContext = object : ScriptConfigurationLoadingContext {
@@ -235,7 +244,7 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
          * Used from [ScriptOutsiderFileConfigurationLoader] only.
          */
         override fun getCachedConfiguration(file: VirtualFile): ScriptConfigurationSnapshot? =
-            getAppliedConfiguration(file) ?: getFromGlobalCache(file)
+            getCachedConfigurationState(file)?.applied ?: getFromGlobalCache(file)
 
         private fun getFromGlobalCache(file: VirtualFile): ScriptConfigurationSnapshot? {
             val info = manager.getLightScriptInfo(file.path) ?: return null
@@ -259,7 +268,7 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
         saveLock.withLock {
             scriptingDebugLog(file) { "configuration received = $newResult" }
 
-            setLoadedConfiguration(file, newResult)
+            cache.setLoaded(file, newResult)
 
             hideInterceptedNotification(file)
 
@@ -292,9 +301,7 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
             }
 
             // restore reports for applied configuration in case of previous error
-            old?.applied?.reports?.let {
-                saveReports(file, it)
-            }
+            saveReports(file, old.applied.reports)
 
             file.addScriptDependenciesNotificationPanel(
                 newConfiguration, project,
@@ -342,78 +349,11 @@ class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScri
         cache.clear()
     }
 
-    private fun hideInterceptedNotification(file: VirtualFile) {
-        loaders.forEach {
-            it.hideInterceptedNotification(file)
-        }
-    }
-
-    companion object {
-        fun getInstance(project: Project) = ScriptConfigurationManager.getInstance(project).default
-    }
-}
-
-/**
- * Abstraction for [DefaultScriptingSupportBase] based [cache] and [reloadOutOfDateConfiguration].
- * Among this two methods concrete implementation should provide script changes listening.
- *
- * Basically all requests routed to [cache]. If there is no entry in [cache] or it is considered out-of-date,
- * then [reloadOutOfDateConfiguration] will be called, which, in turn, should call [setAppliedConfiguration]
- * immediately or in some future  (e.g. after user will click "apply context" or/and configuration will
- * be calculated by some background thread).
- *
- * [ScriptClassRootsCache] will be calculated based on [cache]d configurations.
- * Every change in [cache] will invalidate [ScriptClassRootsCache] cache.
- */
-abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManager) {
-    val project: Project
-        get() = manager.myProject
-
-    @Suppress("LeakingThis")
-    protected val cache: ScriptConfigurationCache = createCache()
-
-    protected abstract fun createCache(): ScriptConfigurationCache
-
-    /**
-     * Will be called on [cache] miss or when [file] is changed.
-     * Implementation should initiate loading of [file]'s script configuration and call [setAppliedConfiguration]
-     * immediately or in some future
-     * (e.g. after user will click "apply context" or/and configuration will be calculated by some background thread).
-     *
-     * @param isFirstLoad may be set explicitly for optimization reasons (to avoid expensive fs cache access)
-     * @param forceSync should be used in tests only
-     * @param isPostponedLoad is used to postspone loading: show a notification for out of date script and start loading when user request
-     * @param fromCacheOnly load only when builtin fast synchronous loaders are available
-     * @return true, if configuration loaded in sync
-     */
-    protected abstract fun reloadOutOfDateConfiguration(
-        file: KtFile,
-        isFirstLoad: Boolean = getAppliedConfiguration(file.originalFile.virtualFile) == null,
-        forceSync: Boolean = false,
-        fromCacheOnly: Boolean = false,
-        skipNotification: Boolean = false
-    ): Boolean
-
-    internal fun getCachedConfigurationState(file: VirtualFile?): ScriptConfigurationState? {
-        if (file == null) return null
-        return cache[file]
-    }
-
-    fun getAppliedConfiguration(file: VirtualFile?): ScriptConfigurationSnapshot? =
-        getCachedConfigurationState(file)?.applied
-
-    private fun hasCachedConfiguration(file: KtFile): Boolean =
-        getAppliedConfiguration(file.originalFile.virtualFile) != null
-
-    fun isConfigurationLoadingInProgress(file: KtFile): Boolean {
-        return !hasCachedConfiguration(file)
-    }
-
     fun getOrLoadConfiguration(
         virtualFile: VirtualFile,
         preloadedKtFile: KtFile?
     ): ScriptCompilationConfigurationWrapper? {
-        val cached = getAppliedConfiguration(virtualFile)
+        val cached = getCachedConfigurationState(virtualFile)?.applied
         if (cached != null) return cached.configuration
 
         // It is known that write access results to the
@@ -425,17 +365,13 @@ abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManag
             reloadOutOfDateConfiguration(ktFile, isFirstLoad = true)
         }
 
-        return getAppliedConfiguration(virtualFile)?.configuration
+        return getCachedConfigurationState(virtualFile)?.applied?.configuration
     }
 
     /**
      * Load new configuration and suggest applying it (only if it is changed)
      */
     fun ensureUpToDatedConfigurationSuggested(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
-        reloadIfOutOfDate(file, skipNotification, forceSync)
-    }
-
-    private fun reloadIfOutOfDate(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
         manager.updater.update {
             file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
@@ -480,7 +416,7 @@ abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManag
         return allLoaded
     }
 
-    protected open fun setAppliedConfiguration(
+    private fun setAppliedConfiguration(
         file: VirtualFile,
         newConfigurationSnapshot: ScriptConfigurationSnapshot?,
         syncUpdate: Boolean = false
@@ -492,13 +428,6 @@ abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManag
             cache.setApplied(file, newConfigurationSnapshot)
             manager.updater.invalidate(file, synchronous = syncUpdate)
         }
-    }
-
-    protected fun setLoadedConfiguration(
-        file: VirtualFile,
-        configurationSnapshot: ScriptConfigurationSnapshot
-    ) {
-        cache.setLoaded(file, configurationSnapshot)
     }
 
     @TestOnly
@@ -541,6 +470,16 @@ abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManag
         } else {
             cache.allApplied().forEach { (vFile, configuration) -> builder.add(vFile, configuration) }
         }
+    }
+
+    private fun hideInterceptedNotification(file: VirtualFile) {
+        loaders.forEach {
+            it.hideInterceptedNotification(file)
+        }
+    }
+
+    companion object {
+        fun getInstance(project: Project) = ScriptConfigurationManager.getInstance(project).default
     }
 }
 

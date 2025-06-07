@@ -10,7 +10,7 @@ class DefaultIdeScriptingConfigurationFacade : IdeScriptConfigurationControlFaca
     override fun reloadScriptConfiguration(scriptFile: PsiFile, updateEditorWithoutNotification: Boolean) {
       (scriptFile as? KtFile) ?: error("Should be called with script KtFile, but called with $scriptFile")
         val project = scriptFile.project.takeIf { !it.isDisposed } ?: return
-        DefaultScriptingSupport.Companion.getInstance(project)
+        DefaultScriptingSupport.getInstance(project)
             .ensureUpToDatedConfigurationSuggested(
                 scriptFile,
                 skipNotification = updateEditorWithoutNotification,

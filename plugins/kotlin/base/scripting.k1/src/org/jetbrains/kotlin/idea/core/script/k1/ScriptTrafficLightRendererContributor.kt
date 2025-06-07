@@ -25,7 +25,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
-            if (ScriptConfigurationManager.Companion.getInstance(project).isConfigurationLoadingInProgress(file)) {
+            if (ScriptConfigurationManager.getInstance(project).isConfigurationLoadingInProgress(file)) {
                 status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                 status.errorAnalyzingFinished = false
             }
