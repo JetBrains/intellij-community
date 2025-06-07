@@ -19,6 +19,7 @@ interface EelIjentTestProvider<T : Annotation> {
   suspend fun start(scope: CoroutineScope, annotation: T?): StartResult
 
   fun annotationToUserVisibleString(annotation: T): String
+  fun isMandatory(annotation: T): Boolean
 
   sealed interface StartResult {
     data class Skipped(val skippedReason: String) : StartResult

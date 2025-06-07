@@ -166,7 +166,7 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, Before
       }
       is Skipped -> {
         val skippedReason = r.skippedReason
-        if (annotation != null) {
+        if (annotation != null && provider.isMandatory(annotation)) {
           throw IllegalStateException(
             "Test is marked with mandatory annotation $annotation but $this is not available: $skippedReason")
         }

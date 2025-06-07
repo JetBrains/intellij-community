@@ -8,8 +8,8 @@ import org.jetbrains.annotations.TestOnly
 const val USE_DEFAULT_WSL_DISTRO = "default distro"
 
 /**
- * Test marked with this annotation requires WSL to run and will fail without it.
- * You can provide [distroName] (default distro will be used otherwise).
+ * Test marked with [mandatory] requires WSL to run and will fail without it.
+ * You can provide [distroNamePart] i.e "ubuntu" (default distro will be used otherwise).
  *
  * This annotation is repeatable, so you can run a test on several distros.
  */
@@ -17,4 +17,4 @@ const val USE_DEFAULT_WSL_DISTRO = "default distro"
 @Repeatable
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @TestApplicationWithEel
-annotation class WslMandatoryTest(val distroName: String = USE_DEFAULT_WSL_DISTRO)
+annotation class WslTest(val distroNamePart: String = USE_DEFAULT_WSL_DISTRO, val mandatory: Boolean = true)
