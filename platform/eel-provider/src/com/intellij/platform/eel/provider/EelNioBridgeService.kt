@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.NonNls
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -23,9 +24,11 @@ interface EelNioBridgeService {
 
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceSync(): EelNioBridgeService = ApplicationManager.getApplication().service()
 
     @JvmStatic
+    @RequiresBlockingContext
     suspend fun getInstance(): EelNioBridgeService = ApplicationManager.getApplication().serviceAsync()
   }
 
