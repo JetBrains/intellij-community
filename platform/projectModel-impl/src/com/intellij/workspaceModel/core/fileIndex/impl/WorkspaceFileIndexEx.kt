@@ -114,11 +114,13 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
    * Initialize the index data. The index must not be accessed before this function is called.
    */
+  @ApiStatus.Internal
   suspend fun initialize()
 
   /**
    * A blocking variant of [initialize]. It's temporary extracted to be used in CodeServer until suspending read actions are supported in it.
    */
+  @ApiStatus.Internal
   fun initializeBlocking()
 
   /**
