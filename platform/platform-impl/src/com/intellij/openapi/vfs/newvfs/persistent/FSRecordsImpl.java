@@ -592,7 +592,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int findOrCreateRootRecord(@NotNull String rootUrl) {
+  @VisibleForTesting
+  public int findOrCreateRootRecord(@NotNull String rootUrl) {
     checkNotClosed();
 
     //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
@@ -611,7 +612,8 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
+  @VisibleForTesting
+  public void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
     forEachRoot((rootId, rootUrlId) -> {
       String rootUrl = getNameByNameId(rootUrlId);
       rootConsumer.accept(rootUrl, rootId);
@@ -619,7 +621,8 @@ public final class FSRecordsImpl implements Closeable {
     });
   }
 
-  void forEachRoot(@NotNull PersistentFSTreeAccessor.RootsConsumer rootConsumer) {
+  @VisibleForTesting
+  public void forEachRoot(@NotNull PersistentFSTreeAccessor.RootsConsumer rootConsumer) {
     checkNotClosed();
 
     try {
