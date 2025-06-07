@@ -105,20 +105,18 @@ internal class GradlePropertyExtensionsContributor : NonCodeMembersContributor()
       }
     }
 
-    fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
-      val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
-      //TODO Handle process of all catalog entries.
-      // this case is possible when only a part of a catalog name is written and autocomplete is triggered
 
-      val names = if (name == null) staticExtensions else listOf(name).filter { it in staticExtensions }
-      val properties = mutableSetOf<String>()
-      for (extName in names) {
-        val accessor = getVersionCatalogAccessor(place, extName) ?: continue
-        if (!processor.execute(StaticVersionCatalogProperty(place, extName, accessor), state)) {
-          return null
-        }
+    fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
+      if (name == null) {
+        // this case is possible when only a part of a catalog name is written and autocomplete is triggered
+        return processAllCatalogsOfBuild(place, processor, state)
       }
-      return properties
+      val accessor = getVersionCatalogAccessor(place, name) ?: return emptySet()
+      val element = StaticVersionCatalogProperty(place, name, accessor)
+      if (!processor.execute(element, state)) {
+        return null // to stop processing
+      }
+      return setOf(name)
     }
 
     fun getExtensionsFor(psiElement: PsiElement): GradleExtensionsData? {
