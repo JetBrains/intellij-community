@@ -7,7 +7,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.concurrentLimit
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.createByPythonBinary
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -83,6 +82,4 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
     return "$pythonString ($languageLevel)"
   }
 
-  // Backward: first python is the highest
-  override fun compareTo(other: PythonWithLanguageLevel): Int = languageLevel.compareTo(other.languageLevel) * -1
 }

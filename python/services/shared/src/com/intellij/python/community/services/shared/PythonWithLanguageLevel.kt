@@ -3,12 +3,11 @@ package com.intellij.python.community.services.shared
 
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.jetbrains.python.psi.LanguageLevel
-import org.jetbrains.annotations.Nls
 
 /**
  * Python (vanilla, conda, whatever) with known language level.
  */
-interface PythonWithLanguageLevel : Comparable<PythonWithLanguageLevel> {
+interface PythonWithLanguageLevel : Comparable<PythonWithLanguageLevel>, PythonWithName {
   val languageLevel: LanguageLevel
 
   /**
@@ -16,9 +15,8 @@ interface PythonWithLanguageLevel : Comparable<PythonWithLanguageLevel> {
    */
   val asExecutablePython: ExecutablePython
 
-  /**
-   * Name can be displayed to the end user
-   */
-  suspend fun getReadableName(): @Nls String
+
+  // Backward: first python is the highest
+  override fun compareTo(other: PythonWithLanguageLevel): Int = languageLevel.compareTo(other.languageLevel) * -1
 
 }

@@ -10,6 +10,6 @@ import com.jetbrains.python.PythonBinary
  */
 interface VanillaPythonWithLanguageLevel : PythonWithLanguageLevel {
   val pythonBinary: PythonBinary
-  override val asExecutablePython: ExecutablePython get() = ExecutablePython.Companion.VanillaExecutablePython(pythonBinary)
+  override val asExecutablePython: ExecutablePython get() = ExecutablePython.vanillaExecutablePython(pythonBinary)
 
 }

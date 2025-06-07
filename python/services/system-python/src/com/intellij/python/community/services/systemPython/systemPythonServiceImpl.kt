@@ -12,6 +12,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.CoreSystemPythonProvider

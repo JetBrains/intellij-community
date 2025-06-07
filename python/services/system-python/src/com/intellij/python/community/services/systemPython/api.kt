@@ -6,6 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.community.services.shared.PythonWithUi
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -15,8 +17,6 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
-import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 /**
  * Service to register and obtain [SystemPython]s
@@ -55,7 +55,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython internal constructor(private val impl: VanillaPythonWithLanguageLevel, val ui: UICustomization?) : VanillaPythonWithLanguageLevel by impl {
+class SystemPython internal constructor(private val impl: VanillaPythonWithLanguageLevel, override val ui: UICustomization?) : VanillaPythonWithLanguageLevel by impl, PythonWithUi {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -93,14 +93,6 @@ sealed interface PythonInstallerService {
   @ApiStatus.Experimental
   suspend fun installLatestPython(): Result<Unit, String>
 }
-
-data class UICustomization(
-  /**
-   * i.e: "UV" for pythons found by UV
-   */
-  val title: @Nls String,
-  val icon: Icon? = null,
-)
 
 /**
  * See [createVenv]

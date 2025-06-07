@@ -15,10 +15,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.intellij.python.community.services.systemPython.UICustomization
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService

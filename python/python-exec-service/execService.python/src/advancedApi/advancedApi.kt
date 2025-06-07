@@ -25,7 +25,8 @@ suspend fun <T> ExecService.executePythonAdvanced(
   executeAdvanced(python.binary, {
     addArgs(*python.args.toTypedArray())
     argsBuilder()
-  }, options, processInteractiveHandler)
+    // TODO: Merge PATH
+  }, options.copy(env = options.env + python.env), processInteractiveHandler)
 
 
 /**

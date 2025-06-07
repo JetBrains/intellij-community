@@ -5,7 +5,7 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.community.execService.python.advancedApi.ExecutablePython.Companion.VanillaExecutablePython
+import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
 import com.jetbrains.python.PythonBinary
@@ -25,8 +25,7 @@ suspend fun ExecService.executeHelper(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyExecResult<String> =
-  executeHelperAdvanced(VanillaExecutablePython(python), helper, args, options, procListener, ZeroCodeStdoutTransformer)
-
+  executeHelperAdvanced(ExecutablePython.vanillaExecutablePython(python), helper, args, options, procListener, ZeroCodeStdoutTransformer)
 
 /**
  * Ensures that this python is executable and returns its version. Error if python is broken.
@@ -36,6 +35,6 @@ suspend fun ExecService.executeHelper(
  */
 @ApiStatus.Internal
 suspend fun ExecService.validatePythonAndGetVersion(python: PythonBinary): PyResult<LanguageLevel> =
-  validatePythonAndGetVersion(VanillaExecutablePython(python))
+  validatePythonAndGetVersion(ExecutablePython.vanillaExecutablePython(python))
 
 suspend fun PythonBinary.validatePythonAndGetVersion(): PyResult<LanguageLevel> = ExecService().validatePythonAndGetVersion(this)
