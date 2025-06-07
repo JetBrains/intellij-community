@@ -208,8 +208,9 @@ public sealed interface MarkdownBlock {
 
     @ExperimentalJewelApi
     @GenerateDataFunctions
-    public class ListItem(override val children: List<MarkdownBlock>) : MarkdownBlock, WithChildBlocks {
-        public constructor(vararg children: MarkdownBlock) : this(children.toList())
+    public class ListItem(override val children: List<MarkdownBlock>, public val level: Int) :
+        MarkdownBlock, WithChildBlocks {
+        public constructor(vararg children: MarkdownBlock, level: Int) : this(children.toList(), level)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -217,12 +218,19 @@ public sealed interface MarkdownBlock {
 
             other as ListItem
 
-            return children == other.children
+            if (level != other.level) return false
+            if (children != other.children) return false
+
+            return true
         }
 
-        override fun hashCode(): Int = children.hashCode()
+        override fun hashCode(): Int {
+            var result = level
+            result = 31 * result + children.hashCode()
+            return result
+        }
 
-        override fun toString(): String = "ListItem(children=$children)"
+        override fun toString(): String = "ListItem(children=$children, level=$level)"
     }
 
     @ExperimentalJewelApi public data object ThematicBreak : MarkdownBlock
