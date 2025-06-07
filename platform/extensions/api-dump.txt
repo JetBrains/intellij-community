@@ -59,6 +59,7 @@ com.intellij.openapi.extensions.ExtensionPoint
 - a:addChangeListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
 - a:addChangeListener(kotlinx.coroutines.CoroutineScope,java.lang.Runnable):V
 - a:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,Z,com.intellij.openapi.Disposable):V
+- a:addExtensionPointListener(kotlinx.coroutines.CoroutineScope,Z,com.intellij.openapi.extensions.ExtensionPointListener):V
 - a:getExtensionList():java.util.List
 - a:getExtensions():java.lang.Object[]
 - a:registerExtension(java.lang.Object):V
