@@ -18,6 +18,23 @@ public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
 	public static final fun bridgePainterProvider (Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
 }
 
+public final class org/jetbrains/jewel/bridge/BridgeTypography : org/jetbrains/jewel/ui/Typography {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/BridgeTypography;
+	public fun getConsoleTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getEditorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH0TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH1TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH2TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH3TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH4TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getLabelTextSize (Landroidx/compose/runtime/Composer;I)J
+	public fun getLabelTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getMedium (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getRegular (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getSmall (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun createVerticalBrush-8A-3gB4 (Ljava/util/List;FFI)Landroidx/compose/ui/graphics/Brush;
 	public static synthetic fun createVerticalBrush-8A-3gB4$default (Ljava/util/List;FFIILjava/lang/Object;)Landroidx/compose/ui/graphics/Brush;

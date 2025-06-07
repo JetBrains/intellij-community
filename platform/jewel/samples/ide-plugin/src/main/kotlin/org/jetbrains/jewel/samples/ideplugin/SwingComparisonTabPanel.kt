@@ -47,19 +47,16 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.JewelComposePanel
-import org.jetbrains.jewel.bridge.medium
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
-import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.Icon
-import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.jewel.ui.typography
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
@@ -120,7 +117,11 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         row("Comments:") {
                 comment("Swing comment").align(AlignY.CENTER)
                 compose {
-                    Text("Compose comment", style = Typography.medium(), color = JewelTheme.globalColors.text.info)
+                    Text(
+                        "Compose comment",
+                        style = JewelTheme.typography.medium,
+                        color = JewelTheme.globalColors.text.info,
+                    )
                 }
             }
             .layout(RowLayout.PARENT_GRID)
@@ -175,7 +176,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         row("Titles (Compose)") {
             compose {
                 Box {
-                    val style = Typography.h1TextStyle()
+                    val style = JewelTheme.typography.h1TextStyle
                     Text(
                         "This will wrap over a couple rows",
                         modifier =
@@ -304,12 +305,12 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Not editable")
                             Text(text = "Selected item: $selectedText")
 
-                            ListComboBox(
-                                items = comboBoxItems,
-                                selectedIndex = selectedIndex,
-                                onSelectedItemChange = { selectedIndex = it },
-                                modifier = Modifier.width(200.dp),
-                            )
+                            //                            ListComboBox(
+                            //                                items = comboBoxItems,
+                            //                                selectedIndex = selectedIndex,
+                            //                                onSelectedItemChange = { selectedIndex = it },
+                            //                                modifier = Modifier.width(200.dp),
+                            //                            )
                         }
 
                         Column {
@@ -319,13 +320,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Not editable + disabled")
                             Text(text = "Selected item: $selectedText")
 
-                            ListComboBox(
-                                items = comboBoxItems,
-                                selectedIndex = selectedIndex,
-                                onSelectedItemChange = { selectedIndex = it },
-                                modifier = Modifier.width(200.dp),
-                                enabled = false,
-                            )
+                            //                            ListComboBox(
+                            //                                items = comboBoxItems,
+                            //                                selectedIndex = selectedIndex,
+                            //                                onSelectedItemChange = { selectedIndex = it },
+                            //                                modifier = Modifier.width(200.dp),
+                            //                                enabled = false,
+                            //                            )
                         }
 
                         Column {
@@ -335,13 +336,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Editable")
                             Text(text = "Selected item: $selectedText")
 
-                            EditableListComboBox(
-                                items = comboBoxItems,
-                                selectedIndex = selectedIndex,
-                                onSelectedItemChange = { selectedIndex = it },
-                                modifier = Modifier.width(200.dp),
-                                maxPopupHeight = 150.dp,
-                            )
+                            //                            EditableListComboBox(
+                            //                                items = comboBoxItems,
+                            //                                selectedIndex = selectedIndex,
+                            //                                onSelectedItemChange = { selectedIndex = it },
+                            //                                modifier = Modifier.width(200.dp),
+                            //                                maxPopupHeight = 150.dp,
+                            //                            )
                         }
 
                         Column {
@@ -351,13 +352,13 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             Text("Editable + disabled")
                             Text(text = "Selected item: $selectedText")
 
-                            EditableListComboBox(
-                                items = comboBoxItems,
-                                selectedIndex = selectedIndex,
-                                onSelectedItemChange = { selectedIndex = it },
-                                modifier = Modifier.width(200.dp),
-                                enabled = false,
-                            )
+                            //                            EditableListComboBox(
+                            //                                items = comboBoxItems,
+                            //                                selectedIndex = selectedIndex,
+                            //                                onSelectedItemChange = { selectedIndex = it },
+                            //                                modifier = Modifier.width(200.dp),
+                            //                                enabled = false,
+                            //                            )
                         }
                     }
                 }

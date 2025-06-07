@@ -23,9 +23,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.typography
 
 internal class JewelWizardDialogAction : DumbAwareAction() {
     override fun actionPerformed(event: AnActionEvent) {
@@ -52,7 +53,7 @@ private class FirstPage(private val project: Project) : WizardPage {
     @Composable
     override fun PageContent() {
         Column {
-            Text("This is the first page!", style = Typography.h1TextStyle())
+            Text("This is the first page!", style = JewelTheme.typography.h1TextStyle)
 
             Spacer(Modifier.height(16.dp))
 
@@ -73,7 +74,7 @@ private class SecondPage : WizardPage {
     @Composable
     override fun PageContent() {
         Column {
-            Text("This is the second page!", style = Typography.h1TextStyle())
+            Text("This is the second page!", style = JewelTheme.typography.h1TextStyle)
 
             Spacer(Modifier.height(16.dp))
 
