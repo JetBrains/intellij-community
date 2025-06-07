@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.util.containers.map2Array
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
+import org.jetbrains.plugins.gradle.service.resolve.GradlePropertyExtensionsContributor
 import org.jetbrains.plugins.groovy.intentions.GrReplaceMethodCallQuickFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -19,7 +19,7 @@ class GroovyDeprecatedConfigurationInspectionVisitor(val holder: ProblemsHolder)
     val resolved = referenceExpression.resolve() ?: return
     val alternatives = resolved.getUserData(DECLARATION_ALTERNATIVES)?.takeIf { it.isNotEmpty() } ?: return
 
-    val knownConfigurations = GradleExtensionsContributor.getExtensionsFor(referenceExpression)?.configurations?.keys ?: emptyList()
+    val knownConfigurations = GradlePropertyExtensionsContributor.getExtensionsFor(referenceExpression)?.configurations?.keys ?: emptyList()
 
     val descriptor = InspectionManager.getInstance(referenceExpression.project)
       .createProblemDescriptor(
