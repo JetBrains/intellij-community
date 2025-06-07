@@ -6,8 +6,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -28,8 +28,9 @@ import com.intellij.workspaceModel.core.fileIndex.*
 
 internal class WorkspaceFileIndexDataImpl(
   private val contributorList: List<WorkspaceFileIndexContributor<*>>,
-  private val project: Project, parentDisposable: Disposable
-): WorkspaceFileIndexData, Disposable {
+  private val project: Project,
+  parentDisposable: Disposable,
+): WorkspaceFileIndexData {
   private val contributors = contributorList.filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
   private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
@@ -57,13 +58,19 @@ internal class WorkspaceFileIndexDataImpl(
   private var hasDirtyEntities = false
 
   init {
-    Disposer.register(parentDisposable, this)
-    //do not move before registration to parentDisposable
     librariesAndSdkContributors = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
       null
-    } else {
-      LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
     }
+    else {
+      LibrariesAndSdkContributors(
+        project = project,
+        fileSets = fileSets,
+        fileSetsByPackagePrefix = fileSetsByPackagePrefix,
+        projectRootManager = ProjectRootManagerEx.getInstanceEx(project),
+        parentDisposable = parentDisposable,
+      )
+    }
+
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
 
@@ -341,7 +348,7 @@ internal class WorkspaceFileIndexDataImpl(
 
   private fun fillPackageFilesAndDirectories(packageName: String, result: MutableList<in VirtualFile>) {
     val addedRoots = HashSet<VirtualFile>()
-    fileSetsByPackagePrefix[packageName]?.values()?.forEach { fileSet ->
+    fileSetsByPackagePrefix.get(packageName)?.values()?.forEach { fileSet ->
       val root = fileSet.root
       if (root.isValid) {
         // single file source roots could be added here as well
@@ -398,9 +405,6 @@ internal class WorkspaceFileIndexDataImpl(
       packageName.isEmpty() -> packagePrefix
       else -> "$packagePrefix.$packageName"
     }
-  }
-
-  override fun dispose() {
   }
 
   override fun getDirectoriesByPackageName(packageName: String,

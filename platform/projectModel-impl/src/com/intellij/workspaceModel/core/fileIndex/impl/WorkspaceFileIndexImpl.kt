@@ -289,8 +289,12 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
 
   override fun initializeBlocking() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, this)
+      indexData = doInitializeBlocking()
     }
+  }
+
+  private fun doInitializeBlocking(): WorkspaceFileIndexDataImpl {
+    return WorkspaceFileIndexDataImpl(contributorList = EP_NAME.extensionList, project = project, parentDisposable = this)
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(
@@ -389,18 +393,20 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
   }
 
   private fun getMainIndexData(): WorkspaceFileIndexData {
+    val indexData = indexData
     when (indexData) {
       EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
         if (project.isDefault) {
           throttledLogger.warn("WorkspaceFileIndex must not be queried for the default project", Throwable())
         }
         else {
-          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded." +
+          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. " +
+                             "Activities which use the project configuration must be postponed until the project is fully loaded." +
                              "It is possible to check Project.isInitialized to verify that the project is fully loaded.")
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
-        indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, this)
+        return doInitializeBlocking().also { this.indexData = it }
       }
     }
     return indexData

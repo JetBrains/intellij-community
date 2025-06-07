@@ -29,10 +29,12 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
 
-internal class LibrariesAndSdkContributors(private val project: Project,
-                                           private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
-                                           private val fileSetsByPackagePrefix: PackagePrefixStorage,
-                                           parentDisposable: Disposable,
+internal class LibrariesAndSdkContributors(
+  private val project: Project,
+  private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+  private val fileSetsByPackagePrefix: PackagePrefixStorage,
+  private val projectRootManager: ProjectRootManagerEx,
+  parentDisposable: Disposable,
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
@@ -42,10 +44,10 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   
   init {
     moduleDependencyIndex.addListener(this)
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(this)
+    projectRootManager.addProjectJdkListener(this)
     Disposer.register(parentDisposable) {
       moduleDependencyIndex.removeListener(this)
-      ProjectRootManagerEx.getInstanceEx(project).removeProjectJdkListener(this)
+      projectRootManager.removeProjectJdkListener(this)
     }
   }
 
@@ -60,11 +62,11 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     if (noSdkIsUsed) {
       registerProjectSdkRoots()
     }
-    (LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable).forEach { 
-      it.libraries.forEach { library ->
+    for (libraryTable in LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable) {
+      for (library in libraryTable.libraries) {
         if (moduleDependencyIndex.hasDependencyOn(library)) {
           registerLibraryRoots(library)
-        }  
+        }
       }
     }
   }
