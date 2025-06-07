@@ -49,6 +49,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -113,7 +114,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
 
   private final Project project;
 
-  public AntConfigurationImpl(@NotNull Project project) {
+  public AntConfigurationImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     this.project = project;
 
     getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
@@ -147,10 +148,9 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
       }
     });
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-
+    VirtualFileManager.getInstance().addAsyncFileListener(coroutineScope, new AsyncFileListener() {
       @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toDelete = null;
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
@@ -174,13 +174,12 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
         }
         return antFiles == null? NO_OP : new FileDeletionChangeApplier(toDelete, antFiles);
       }
-    }, this);
+    });
   }
 
   @Override
   public void dispose() {
   }
-
   @Override
   public Element getState() {
     final Element state = new Element("state");

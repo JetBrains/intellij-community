@@ -9716,16 +9716,6 @@ f:com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer
 - javax.swing.ListCellRenderer
 - <init>():V
 - getListCellRendererComponent(javax.swing.JList,com.intellij.openapi.vfs.VirtualFile,I,Z,Z):java.awt.Component
-c:com.intellij.openapi.vfs.PlatformVirtualFileManager
-- com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
-- <init>():V
-- p:doRefresh(Z,java.lang.Runnable):J
-- findFileById(I):com.intellij.openapi.vfs.VirtualFile
-- getModificationCount():J
-- getStructureModificationCount():J
-- getVFileName(I):java.lang.CharSequence
-- listAllChildIds(I):I[]
-- storeName(java.lang.String):I
 a:com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter
 - com.intellij.openapi.vfs.VirtualFileListener
 - <init>():V

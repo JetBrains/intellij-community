@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -26,6 +26,7 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +38,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
-  // do not use extension point name to avoid map lookup on each event publishing
+  // do not use an extension point name to avoid map lookup on each event publishing
   private static final ExtensionPointImpl<VirtualFileManagerListener> MANAGER_LISTENER_EP =
     ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
 
@@ -189,6 +191,12 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
     Disposer.register(parentDisposable, () -> asyncFileListeners.remove(listener));
     asyncFileListeners.add(listener);
+  }
+
+  @Override
+  public void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener) {
+    asyncFileListeners.add(listener);
+    HelperKt.removeOnCompletion(asyncFileListeners, listener, coroutineScope);
   }
 
   @ApiStatus.Internal

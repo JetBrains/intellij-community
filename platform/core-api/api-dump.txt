@@ -879,6 +879,8 @@ com.intellij.openapi.vfs.VirtualFileListener
 - fileDeleted(com.intellij.openapi.vfs.VirtualFileEvent):V
 - fileMoved(com.intellij.openapi.vfs.VirtualFileMoveEvent):V
 - propertyChanged(com.intellij.openapi.vfs.VirtualFilePropertyEvent):V
+a:com.intellij.openapi.vfs.VirtualFileManager
+- a:addAsyncFileListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
 com.intellij.openapi.vfs.VirtualFileManagerListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
