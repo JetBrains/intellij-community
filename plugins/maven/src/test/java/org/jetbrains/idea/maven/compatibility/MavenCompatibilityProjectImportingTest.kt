@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 private val MAVEN_VERSIONS = listOf(
-  arrayOf("4.0.0-rc-3"),
+  arrayOf("4.0.0-rc-4-SNAPSHOT"),
   arrayOf("3.9.9"),
   arrayOf("3.8.8"),
   arrayOf("3.6.3"),
