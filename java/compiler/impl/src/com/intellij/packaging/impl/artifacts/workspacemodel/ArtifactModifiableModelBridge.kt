@@ -33,7 +33,7 @@ import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
 import io.opentelemetry.api.metrics.Meter
 
-internal class ArtifactModifiableModelBridge(
+class ArtifactModifiableModelBridge(
   private val project: Project,
   internal val diff: MutableEntityStorage,
   private val manager: ArtifactManagerBridge,

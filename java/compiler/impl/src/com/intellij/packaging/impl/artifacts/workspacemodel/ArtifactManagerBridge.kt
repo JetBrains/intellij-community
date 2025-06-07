@@ -40,7 +40,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 
-internal class ArtifactManagerBridge(private val project: Project, coroutineScope: CoroutineScope) : ArtifactManager() {
+class ArtifactManagerBridge(private val project: Project, coroutineScope: CoroutineScope) : ArtifactManager() {
   private val modificationTracker = SimpleModificationTracker()
 
   private val resolvingContext = DefaultPackagingElementResolvingContext(project)
