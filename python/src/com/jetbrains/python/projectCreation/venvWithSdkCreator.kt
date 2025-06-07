@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.*

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -41,7 +42,7 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
     val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
     sdk.configureBuilderToRunPythonOnTarget(cmdBuilder)
     sdk.sdkFlavor
-    cmdBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+    cmdBuilder.addParameter(PYTHON_VERSION_ARG)
     val cmd = cmdBuilder.build()
 
     val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))

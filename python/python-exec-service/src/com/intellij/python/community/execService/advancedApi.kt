@@ -11,6 +11,7 @@ import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 
 
 // This is an advanced API, consider using basic api.kt
@@ -25,16 +26,19 @@ import org.jetbrains.annotations.Nls
 interface ExecService {
 
   /**
+   * TL;TR: Use extension functions from `api.kt`, do not use it directly!
+   *
    * Execute code in a so-called "interactive" mode.
    * This is a quite advanced mode where *you* are responsible for converting a process to output.
    * You must listen for process stdout/stderr e.t.c.
    * Use it if you need to get some info from a process before it ends or to interact (i.e. write into stdin).
-   * See [ProcessInteractiveHandler] and [processSemiInteractiveHandler]
+   * See [ProcessInteractiveHandler] and [processSemiInteractiveHandler].
+   * [argsBuilder] is a lambda to build args, see [ArgsBuilder]
    */
   @CheckReturnValue
-  suspend fun <T> execute(
-    whatToExec: WhatToExec,
-    args: List<String> = emptyList(),
+  suspend fun <T> executeAdvanced(
+    binary: Path,
+    argsBuilder: suspend ArgsBuilder.() -> Unit = {},
     options: ExecOptions = ExecOptions(),
     processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): PyExecResult<T>
@@ -56,7 +60,7 @@ fun interface ProcessInteractiveHandler<T> {
    * In latter case returns [EelProcessExecutionResult] (created out of collected output) and optional error message.
    * If no message returned -- the default one is used.
    */
-  suspend fun getResultFromProcess(whatToExec: WhatToExec, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
+  suspend fun getResultFromProcess(binary: Path, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
 }
 
 
@@ -71,3 +75,18 @@ typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelPr
  * So, you can only *write* something to process.
  */
 fun <T> processSemiInteractiveHandler(pyProcessListener: PyProcessListener? = null, code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(pyProcessListener, code)
+
+/**
+ * ```kotlin
+ *   addLocalFile(helper)
+ *   addTextArgs("-v")
+ * ```
+ */
+interface ArgsBuilder {
+  fun addArgs(vararg args: String)
+
+  /**
+   * This file will be copied to eel and its remote name will be added to the list of arguments
+   */
+  suspend fun addLocalFile(localFile: Path)
+}

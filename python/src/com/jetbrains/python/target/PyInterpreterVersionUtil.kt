@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PyInterpreterVersionUtil")
 
 package com.jetbrains.python.target
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
@@ -39,7 +40,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
           try {
             val targetedCommandLineBuilder = TargetedCommandLineBuilder(targetEnvironmentRequest)
             targetedCommandLineBuilder.setExePath(interpreterPath)
-            targetedCommandLineBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+            targetedCommandLineBuilder.addParameter(PYTHON_VERSION_ARG)
             val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
             val targetedCommandLine = targetedCommandLineBuilder.build()
             val process = targetEnvironment.createProcess(targetedCommandLine, indicator)

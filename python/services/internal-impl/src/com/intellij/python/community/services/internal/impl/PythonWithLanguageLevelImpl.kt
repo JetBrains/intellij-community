@@ -4,6 +4,7 @@ package com.intellij.python.community.services.internal.impl
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.concurrentLimit
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.createByPythonBinary
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
@@ -11,7 +12,6 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.validatePythonAndGetVersion
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope

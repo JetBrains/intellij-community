@@ -23,7 +23,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/eel",
     "//platform/util/progress",
-    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [":community-execService_resources"]
 )
@@ -54,7 +53,6 @@ jvm_library(
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
     "//platform/util/progress",
-    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [":community-execService_resources"]
 )

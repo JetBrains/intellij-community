@@ -282,6 +282,7 @@ jvm_library(
     "@lib//:http-client",
     "@lib//:commons-lang3",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-exec-service/execService.python",
   ],
   exports = [
     "//python/openapi:community",

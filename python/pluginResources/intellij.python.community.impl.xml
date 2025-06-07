@@ -4,6 +4,8 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>

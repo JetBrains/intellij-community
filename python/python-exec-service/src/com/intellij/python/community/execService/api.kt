@@ -9,7 +9,7 @@ import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle
-import com.jetbrains.python.PythonBinary
+import com.intellij.python.community.execService.impl.transformerToHandler
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyExecResult
@@ -35,7 +35,14 @@ suspend fun ExecService.execGetStdout(
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyExecResult<String> = execGetStdout(WhatToExec.Binary(binary), args, options, procListener)
+): PyExecResult<String> = execute(
+  binary = binary,
+  args = args,
+  options = options,
+  processOutputTransformer = ZeroCodeStdoutTransformer,
+  procListener = procListener
+)
+
 
 /**
  * Execute [binaryName] on [eelApi].
@@ -48,9 +55,9 @@ suspend fun ExecService.execGetStdout(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
-  val whatToExec = WhatToExec.Binary.fromRelativeName(eelApi, binaryName)
-                   ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.userReadableDescription))
-  return execGetStdout(whatToExec, args, options, procListener)
+  val binary = eelApi.exec.findExeFilesInPath(binaryName).firstOrNull()?.asNioPath()
+               ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.userReadableDescription))
+  return execGetStdout(binary, args, options, procListener)
 }
 
 
@@ -66,11 +73,11 @@ suspend fun ExecService.execGetStdoutInShell(
   procListener: PyProcessListener? = null,
 ): PyExecResult<String> {
   val (shell, arg) = eelApi.exec.getShell()
-  return execGetStdout(WhatToExec.Binary(shell.asNioPath()), listOf(arg, commandForShell) + args, options, procListener)
+  return execGetStdout(shell.asNioPath(), listOf(arg, commandForShell) + args, options, procListener)
 }
 
 /**
- * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, returns error otherwise.
+ * Execute [binary] with [args] and get both stdout/stderr outputs if `errorCode != 0`, returns error otherwise.
  * Function collects output lines and reports them to [procListener] if set
  *
  * @param[args] command line arguments
@@ -79,31 +86,13 @@ suspend fun ExecService.execGetStdoutInShell(
  */
 @CheckReturnValue
 suspend fun <T> ExecService.execute(
-  whatToExec: WhatToExec,
+  binary: Path,
   args: List<String> = emptyList(),
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyExecResult<T> = execute(whatToExec, args, options, processSemiInteractiveHandler(procListener) { _, result ->
-  processOutputTransformer(result.await())
-})
+): PyExecResult<T> = executeAdvanced(binary, { addArgs(*args.toTypedArray()) }, options, transformerToHandler(procListener, processOutputTransformer))
 
-/**
- * See [ExecService.execute]
- */
-@CheckReturnValue
-suspend fun ExecService.execGetStdout(
-  whatToExec: WhatToExec,
-  args: List<String> = emptyList(),
-  options: ExecOptions = ExecOptions(),
-  procListener: PyProcessListener? = null,
-): PyExecResult<String> = execute(
-  whatToExec = whatToExec,
-  args = args,
-  options = options,
-  processOutputTransformer = ZeroCodeStdoutTransformer,
-  procListener = procListener
-)
 
 /**
  * Error is an optional additionalMessage, that will be used instead of a default one for the [ExecError]
@@ -128,24 +117,3 @@ data class ExecOptions(
   val processDescription: @Nls String? = null,
   val timeout: Duration = 1.minutes,
 )
-
-sealed interface WhatToExec {
-  /**
-   * [binary] (can reside on local or remote Eel, [EelApi] is calculated out of it)
-   */
-  data class Binary(val binary: Path) : WhatToExec {
-    companion object {
-      /**
-       * Resolves relative name to the full name or `null` if [relativeBinName] can't be found in the path.
-       */
-      suspend fun fromRelativeName(eel: EelApi, relativeBinName: String): Binary? =
-        eel.exec.findExeFilesInPath(relativeBinName).firstOrNull()?.let { Binary(it.asNioPath()) }
-    }
-  }
-
-  /**
-   * Execute [helper] on [python]. If [python] resides on remote Eel -- helper is copied there.
-   * Note, that only **one** helper file is copied, not all helpers.
-   */
-  data class Helper(val python: PythonBinary, val helper: HelperName) : WhatToExec
-}

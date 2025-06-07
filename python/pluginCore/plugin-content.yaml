@@ -48,6 +48,7 @@
   - name: intellij.python.community
   - name: intellij.python.community.impl
   - name: intellij.python.community.execService
+  - name: intellij.python.community.execService.python
   - name: intellij.python.community.impl.installer
   - name: intellij.python.pydev
   - name: intellij.python.community.impl.venv
