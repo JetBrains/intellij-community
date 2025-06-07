@@ -45,6 +45,14 @@ val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPa
   }
 }
 
+val CHECK_SYSTEM_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPathErrorFor { path ->
+  when {
+    !path.exists() -> null
+    !path.isDirectory() -> UIBundle.message("label.project.wizard.new.project.file.not.directory.error", path.name)
+    else -> null
+  }
+}
+
 private val firstSymbolGroupIdPattern = "[a-zA-Z_].*".toRegex()
 private val CHECK_GROUP_ID_FORMAT = validationErrorFor<String> { text ->
   if (text.startsWith('.') || text.endsWith('.')) {
