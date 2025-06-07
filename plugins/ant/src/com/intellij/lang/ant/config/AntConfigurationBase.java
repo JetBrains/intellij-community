@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.AntInstallation;
@@ -13,12 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AntConfigurationBase extends AntConfiguration {
-
   private final ExternalizablePropertyContainer myProperties = new ExternalizablePropertyContainer();
-
-  protected AntConfigurationBase(final Project project) {
-    super(project);
-  }
 
   public static AntConfigurationBase getInstance(@NotNull Project project) {
     return (AntConfigurationBase)AntConfiguration.getInstance(project);
