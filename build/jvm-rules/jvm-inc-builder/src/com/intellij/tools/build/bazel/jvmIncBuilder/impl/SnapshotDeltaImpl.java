@@ -55,7 +55,7 @@ public final class SnapshotDeltaImpl extends ElementSnapshotDeltaImpl<NodeSource
 
   @Override
   public void markRecompile(@NotNull NodeSource src) {
-    if (!myIsWholeTargetRecompile) {
+    if (!myIsWholeTargetRecompile && contains(getBaseSnapshot().getElements(), src)) {
       myRecompileMarked.add(src);
     }
   }
