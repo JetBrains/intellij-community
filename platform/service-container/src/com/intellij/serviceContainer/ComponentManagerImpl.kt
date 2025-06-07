@@ -304,14 +304,10 @@ abstract class ComponentManagerImpl(
       throw AlreadyDisposedException("Already disposed: $this")
     }
 
-    val messageBus = messageBus
-    if (!isMessageBusSupported) {
-      LOG.error("Do not use module level message bus")
+    require(isMessageBusSupported) {
+      "Do not use module level message bus"
     }
-    if (messageBus == null) {
-      return getOrCreateMessageBusUnderLock()
-    }
-    return messageBus
+    return messageBus ?: getOrCreateMessageBusUnderLock()
   }
 
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
