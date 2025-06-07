@@ -71,7 +71,13 @@ public fun SelectableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         BaseSelectableIconActionButton(
             key = key,
             modifier = modifier,
@@ -143,7 +149,13 @@ public fun SelectableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         CoreSelectableIconActionButton(
             key = key,
             modifier = modifier,

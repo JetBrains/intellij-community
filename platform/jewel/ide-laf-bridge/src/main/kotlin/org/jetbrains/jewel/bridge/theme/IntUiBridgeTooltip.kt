@@ -8,6 +8,7 @@ import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.bridge.toPaddingValues
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipColors
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
@@ -29,5 +30,6 @@ internal fun readTooltipStyle(): TooltipStyle {
                 border = JBUI.CurrentTheme.Tooltip.borderColor().toComposeColor(),
                 shadow = retrieveColorOrUnspecified("Notification.Shadow.bottom1Color"),
             ),
+        autoHideBehavior = TooltipAutoHideBehavior.Normal,
     )
 }

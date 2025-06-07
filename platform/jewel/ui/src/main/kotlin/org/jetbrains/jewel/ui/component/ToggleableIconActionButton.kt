@@ -71,7 +71,13 @@ public fun ToggleableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         BaseToggleableIconActionButton(
             key = key,
             modifier = modifier,
@@ -143,7 +149,13 @@ public fun ToggleableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         CoreToggleableIconActionButton(
             key = key,
             modifier = modifier,

@@ -21,6 +21,7 @@ import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
@@ -69,7 +70,7 @@ internal fun DecoratedWindowScope.TitleBarView() {
         Text(title)
 
         Row(Modifier.align(Alignment.End)) {
-            Tooltip({ Text("Open Jewel Github repository") }) {
+            Tooltip({ Text("Open Jewel Github repository") }, autoHideBehavior = TooltipAutoHideBehavior.Normal) {
                 IconButton(
                     { Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel")) },
                     Modifier.size(40.dp).padding(5.dp),
@@ -78,14 +79,17 @@ internal fun DecoratedWindowScope.TitleBarView() {
                 }
             }
 
-            Tooltip({
-                when (MainViewModel.theme) {
-                    IntUiThemes.Light -> Text("Switch to light theme with light header")
-                    IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
-                    IntUiThemes.Dark,
-                    IntUiThemes.System -> Text("Switch to light theme")
-                }
-            }) {
+            Tooltip(
+                tooltip = {
+                    when (MainViewModel.theme) {
+                        IntUiThemes.Light -> Text("Switch to light theme with light header")
+                        IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
+                        IntUiThemes.Dark,
+                        IntUiThemes.System -> Text("Switch to light theme")
+                    }
+                },
+                autoHideBehavior = TooltipAutoHideBehavior.Normal,
+            ) {
                 IconButton(
                     {
                         MainViewModel.theme =

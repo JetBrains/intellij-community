@@ -82,7 +82,13 @@ public fun IconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         BaseIconActionButton(
             key = key,
             contentDescription = contentDescription,
@@ -150,7 +156,13 @@ public fun IconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         CoreIconActionButton(
             key = key,
             modifier = modifier,
@@ -311,7 +323,13 @@ public fun IconActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        modifier = tooltipModifier,
+        tooltipPlacement = tooltipPlacement,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         CoreIconActionButton(
             painter = painter,
             modifier = modifier,
