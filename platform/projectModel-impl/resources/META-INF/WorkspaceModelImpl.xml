@@ -33,8 +33,7 @@
                     serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <projectServiceInitializer.essential id="workspaceFileIndexInitializer"
-                                         implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
+    <projectPreInit id="workspaceFileIndexInitializer" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
 
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
                  description="Enable additional checks after replaceBySource and applyChangesFrom"/>

@@ -1913,9 +1913,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration" headlessImplementation=""
                         preload="notHeadless" os="linux"/>
 
-    <projectServiceInitializer.essential
-      implementation="com.intellij.execution.eel.EelProjectServiceInitializer"
-      order="before moduleBridgeLoaderService"/>
+    <projectPreInit implementation="com.intellij.execution.eel.EelProjectPreInit" order="before moduleBridgeLoaderService"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
     <registryKey key="rhizome.progress"
                  defaultValue="true"

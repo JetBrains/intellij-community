@@ -8,7 +8,7 @@
                     serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
                     overrides="true"/>
 
-    <projectServiceInitializer.essential
+    <projectPreInit
       id="moduleBridgeLoaderService"
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"
       order="before workspaceFileIndexInitializer"/>

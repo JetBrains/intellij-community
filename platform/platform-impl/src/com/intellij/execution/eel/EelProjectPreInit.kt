@@ -2,8 +2,7 @@
 package com.intellij.execution.eel
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
-import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.platform.eel.provider.EelInitialization
 
 /**
@@ -17,10 +16,8 @@ import com.intellij.platform.eel.provider.EelInitialization
  * It means that the suitable way to initialize Eel is right before the initialization of a project (when we can decide if we should access the environment),
  * and not earlier.
  */
-private class EelProjectServiceInitializer : ProjectServiceInitializer {
-  override suspend fun execute(project: Project) {
-    span("eel initialization") {
-      EelInitialization.runEelInitialization(project)
-    }
+private class EelProjectPreInit : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    EelInitialization.runEelInitialization(project)
   }
 }

@@ -457,9 +457,9 @@
 
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler" dynamic="true"/>
 
-    <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer" dynamic="true"/>
-    <extensionPoint name="projectServiceInitializer" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
-    <extensionPoint name="projectServiceInitializer.essential" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
+    <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer" dynamic="false"/>
+    <extensionPoint name="projectServiceInitializer" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>
+    <extensionPoint name="projectPreInit" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>
 
     <extensionPoint name="actionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer" dynamic="false"/>
     <extensionPoint name="dynamicActionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer" dynamic="true"/>
