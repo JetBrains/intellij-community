@@ -76,6 +76,9 @@ interface InitProjectActivity {
   val isParallelExecution: Boolean
     get() = false
 
+  val isEssential: Boolean
+    get() = true
+
   suspend fun run(project: Project)
 }
 

@@ -55,7 +55,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
-import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.initEssentialProjectPreInit
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -123,7 +122,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     suspend fun initEssentialProjectPreInit(project: Project) {
-      runApprovedExtensions(project, "com.intellij.projectPreInit")
+      runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = true)
     }
   }
 
@@ -1332,19 +1331,16 @@ private suspend fun initProject(
     coroutineScope {
       val preInitJob = projectInitHelper?.launchPreInit(project)
 
-      initEssentialProjectPreInit(project)
+      runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = false)
+
       projectInitHelper?.notifyInit(project)
 
       if (preloadServices) {
         schedulePreloadServices(project)
       }
 
-      runApprovedExtensions(project, "com.intellij.projectServiceInitializer")
-
-      launch {
-        preInitJob?.join()
-        project.createComponentsNonBlocking()
-      }
+      preInitJob?.join()
+      project.createComponentsNonBlocking()
     }
   }
   catch (initThrowable: Throwable) {
@@ -1424,7 +1420,7 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
          id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
-private suspend fun runApprovedExtensions(project: Project, epName: String) {
+private suspend fun runApprovedExtensions(project: Project, epName: String, essentialOnly: Boolean) {
   val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(epName)
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
@@ -1434,7 +1430,10 @@ private suspend fun runApprovedExtensions(project: Project, epName: String) {
     }
 
     span("run $epName ${adapter.assignableToClassName.substringAfterLast('.')}") {
-      adapter.createInstance<InitProjectActivity>(ep.componentManager)?.run(project)
+      val activity = adapter.createInstance<InitProjectActivity>(ep.componentManager) ?: return@span
+      if (activity.isEssential || !essentialOnly) {
+        activity.run(project)
+      }
     }
   }
 }

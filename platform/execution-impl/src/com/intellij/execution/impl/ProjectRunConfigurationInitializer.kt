@@ -13,6 +13,9 @@ import com.intellij.openapi.startup.InitProjectActivity
 import kotlinx.coroutines.launch
 
 private class ProjectRunConfigurationInitializer : InitProjectActivity {
+  override val isEssential: Boolean
+    get() = false
+
   override suspend fun run(project: Project) {
     val coroutineTracer = CoroutineTracerShim.coroutineTracer
     @Suppress("UsagesOfObsoleteApi")
