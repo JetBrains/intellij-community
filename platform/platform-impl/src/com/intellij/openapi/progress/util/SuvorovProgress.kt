@@ -265,6 +265,8 @@ private class EternalEventStealer(disposable: Disposable) {
   }
 
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
+    val initialMark = System.nanoTime()
+
     deferred.invokeOnCompletion {
       synchronized(this@EternalEventStealer) {
         (this@EternalEventStealer as Object).notifyAll()
@@ -272,39 +274,32 @@ private class EternalEventStealer(disposable: Disposable) {
     }
 
     synchronized(this) {
-      doDispatchAllEventsForTimeout(timeoutMillis, deferred)
-    }
-  }
-
-  fun doDispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
-    val initialMark = System.nanoTime()
-
-    while (true) {
-      val currentMark = System.nanoTime()
-      val elapsedSinceStartNanos = currentMark - initialMark
-      val toSleepMillis = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
-      if (toSleepMillis <= 0) {
-        return
-      }
-      if (deferred.isCompleted) {
-        return
-      }
-      try {
-        (this as Object).wait(toSleepMillis)
-      }
-      catch (_: InterruptedException) {
-        // we still return locking result regardless of interruption
-        Thread.currentThread().interrupt()
-      }
-      var eventIndex = 0
-      while (eventIndex < invocationEventList.size) {
-        val event = invocationEventList[eventIndex]
-        eventIndex++
-        event.dispatch()
-      }
-      invocationEventList.clear()
-      if (!deferred.isActive) {
-        return
+      while (true) {
+        val currentMark = System.nanoTime()
+        val elapsedSinceStartNanos = currentMark - initialMark
+        val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
+        if (toSleep <= 0) {
+          return
+        }
+        if (deferred.isCompleted) {
+          return
+        }
+        try {
+          (this as Object).wait(toSleep)
+        } catch (_ : InterruptedException) {
+          // we still return locking result regardless of interruption
+          Thread.currentThread().interrupt()
+        }
+        var eventIndex = 0
+        while (eventIndex < invocationEventList.size) {
+          val event = invocationEventList[eventIndex]
+          eventIndex++
+          event.dispatch()
+        }
+        invocationEventList.clear()
+        if (!deferred.isActive) {
+          return
+        }
       }
     }
   }
