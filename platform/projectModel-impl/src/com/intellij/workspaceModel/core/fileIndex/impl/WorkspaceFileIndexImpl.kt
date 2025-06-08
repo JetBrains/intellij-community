@@ -283,13 +283,11 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
   override suspend fun initialize() {
     if (indexData is EmptyWorkspaceFileIndexData) {
       val contributors = EP_NAME.extensionList
-      indexData = WorkspaceFileIndexDataImpl(
+      indexData = initWorkspaceFileIndexData(
         contributorList = contributors,
         project = project,
         parentDisposable = this,
-      ).also {
-        it.init()
-      }
+      )
     }
   }
 
@@ -300,13 +298,11 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
   }
 
   private fun doInitializeBlocking(): WorkspaceFileIndexDataImpl {
-    return WorkspaceFileIndexDataImpl(
+    return blockingInitWorkspaceFileIndexData(
       contributorList = EP_NAME.extensionList,
       project = project,
       parentDisposable = this
-    ).also {
-      it.blockingInit()
-    }
+    )
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(
