@@ -52,7 +52,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.statsCollector",
   "intellij.sh",
   "intellij.markdown",
-  "intellij.mcpServer",
+  "intellij.mcpserver",
   "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
