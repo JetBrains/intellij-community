@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle.modifier;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,18 +94,32 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     applyIndentOptionsFromProviders(file.getProject(), file.getVirtualFile());
   }
 
+  private static final Key<Boolean> INDENT_OPTIONS_APPLY_PROGRESS = Key.create("INDENT_OPTIONS_APPLY_PROGRESS");  
+  
   @ApiStatus.Internal
   public void applyIndentOptionsFromProviders(@NotNull Project project, @NotNull VirtualFile file) {
-    for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
-      if (provider.useOnFullReformat()) {
-        IndentOptions indentOptions = provider.getIndentOptions(project, this, file);
-        if (indentOptions != null) {
-          IndentOptions targetOptions = getIndentOptions(file.getFileType());
-          if (targetOptions != indentOptions) {
-            targetOptions.copyFrom(indentOptions);
+    if (file.getUserData(INDENT_OPTIONS_APPLY_PROGRESS) != null) {
+      return;
+    }
+
+    // ClsElementImpl.getIndentSize is called inside document generation procedure,
+    // which can trigger code style computation based on the document => Stack Overflow.
+    file.putUserData(INDENT_OPTIONS_APPLY_PROGRESS, Boolean.TRUE);
+    try {
+      for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
+        if (provider.useOnFullReformat()) {
+          IndentOptions indentOptions = provider.getIndentOptions(project, this, file);
+          if (indentOptions != null) {
+            IndentOptions targetOptions = getIndentOptions(file.getFileType());
+            if (targetOptions != indentOptions) {
+              targetOptions.copyFrom(indentOptions);
+            }
           }
         }
       }
+    }
+    finally {
+      file.putUserData(INDENT_OPTIONS_APPLY_PROGRESS, null);
     }
   }
 
