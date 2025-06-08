@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -34,8 +35,8 @@ internal class WorkspaceFileIndexDataImpl(
   private val project: Project,
   parentDisposable: Disposable,
 ): WorkspaceFileIndexData {
-  private val contributors = contributorList.filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
-  private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
+  private val contributors = contributorList.asSequence().filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
+  private val contributorsForUnloaded = contributorList.asSequence().filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
   
   /** These maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded]
@@ -86,8 +87,9 @@ internal class WorkspaceFileIndexDataImpl(
 
     if (librariesAndSdkContributors != null) {
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+        val libraryTablesRegistrar = serviceAsync<LibraryTablesRegistrar>()
         readActionBlocking {
-          librariesAndSdkContributors.registerFileSets()
+          librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
         }
       }
     }
@@ -105,8 +107,9 @@ internal class WorkspaceFileIndexDataImpl(
 
     if (librariesAndSdkContributors != null) {
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+        val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
         ApplicationManager.getApplication().runReadAction {
-          librariesAndSdkContributors.registerFileSets()
+          librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
         }
       }
     }

@@ -51,9 +51,9 @@ internal class LibrariesAndSdkContributors(
     }
   }
 
-  fun registerFileSets() {
+  fun registerFileSets(libraryTablesRegistrar: LibraryTablesRegistrar) {
     var noSdkIsUsed = true
-    ProjectJdkTable.getInstance().allJdks.forEach { sdk ->
+    for (sdk in ProjectJdkTable.getInstance().allJdks) {
       if (moduleDependencyIndex.hasDependencyOn(sdk)) {
         registerSdkRoots(sdk)
         noSdkIsUsed = false
@@ -62,7 +62,7 @@ internal class LibrariesAndSdkContributors(
     if (noSdkIsUsed) {
       registerProjectSdkRoots()
     }
-    for (libraryTable in LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable) {
+    for (libraryTable in libraryTablesRegistrar.customLibraryTables.asSequence() + libraryTablesRegistrar.libraryTable) {
       for (library in libraryTable.libraries) {
         if (moduleDependencyIndex.hasDependencyOn(library)) {
           registerLibraryRoots(library)
@@ -82,15 +82,21 @@ internal class LibrariesAndSdkContributors(
   }
 
   private fun registerLibraryRoots(library: Library) {
-    fun registerLibraryRoots(rootType: OrderRootType,
-                             kind: WorkspaceFileKind,
-                             pointer: GlobalLibraryPointer,
-                             data: WorkspaceFileSetData) {
-      library.getFiles(rootType).forEach { root ->
+    fun registerLibraryRoots(
+      rootType: OrderRootType,
+      kind: WorkspaceFileKind,
+      pointer: GlobalLibraryPointer,
+      data: WorkspaceFileSetData,
+    ) {
+      val entityRefToFileSet by lazy(LazyThreadSafetyMode.NONE) {
+        fileSetsByPackagePrefix.computeIfAbsent("") { MultiMap(LinkedHashMap()) }
+      }
+
+      for (root in library.getFiles(rootType)) {
         if (RootFileValidityChecker.ensureValid(root, library, null)) {
           val fileSet = WorkspaceFileSetImpl(root, kind, pointer, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
-          fileSetsByPackagePrefix.addFileSet("", fileSet)
+          entityRefToFileSet.putValue(fileSet.entityPointer, fileSet)
           libraryRoots.putValue(library, root)
         }
       }
@@ -108,9 +114,11 @@ internal class LibrariesAndSdkContributors(
   }
 
   private fun registerSdkRoots(sdk: Sdk) {
+    val virtualFileManager = VirtualFileManager.getInstance()
+
     fun registerSdkRoots(rootType: OrderRootType, kind: WorkspaceFileKind, pointer: SdkPointer, data: WorkspaceFileSetData) {
-      sdk.rootProvider.getUrls(rootType).forEach { url ->
-        val root = VirtualFileManager.getInstance().findFileByUrl(url)
+      for (url in sdk.rootProvider.getUrls(rootType)) {
+        val root = virtualFileManager.findFileByUrl(url)
         if (root != null && RootFileValidityChecker.ensureValid(root, sdk, null)) {
           val fileSet = WorkspaceFileSetImpl(root, kind, pointer, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
@@ -126,17 +134,17 @@ internal class LibrariesAndSdkContributors(
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {
-    val roots = sdkRoots.remove(sdk)
-    roots?.forEach { root ->
-      fileSets.removeValueIf(root) { fileSet: StoredFileSet -> (fileSet.entityPointer as? SdkPointer)?.sdk == sdk }
+    val roots = sdkRoots.remove(sdk) ?: return
+    for (root in roots) {
+      fileSets.removeValueIf(root) { fileSet -> (fileSet.entityPointer as? SdkPointer)?.sdk == sdk }
       fileSetsByPackagePrefix.removeByPrefixAndPointer("", SdkPointer(sdk))
     }
   }
 
   private fun unregisterLibraryRoots(library: Library) {
-    val roots = libraryRoots.remove(library)
-    roots?.forEach { root ->
-      fileSets.removeValueIf(root) { fileSet: StoredFileSet -> (fileSet.entityPointer as? GlobalLibraryPointer)?.library === library }
+    val roots = libraryRoots.remove(library) ?: return
+    for (root in roots) {
+      fileSets.removeValueIf(root) { fileSet -> (fileSet.entityPointer as? GlobalLibraryPointer)?.library === library }
       fileSetsByPackagePrefix.removeByPrefixAndPointer("", GlobalLibraryPointer(library))
     }
   }
