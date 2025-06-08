@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
@@ -384,8 +384,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
 
 private fun Int.unsetAcceptedKinds(excludedKinds: Int) = this and (excludedKinds shl ACCEPTED_KINDS_MASK_SHIFT).inv() 
 
-internal fun <K> MutableMap<K, StoredFileSetCollection>.putValue(key: K, fileSet: StoredFileSet) {
-  this[key] = this[key]?.add(fileSet) ?: fileSet
+internal fun <K : Any> MutableMap<K, StoredFileSetCollection>.putValue(key: K, fileSet: StoredFileSet) {
+  merge(key, fileSet) { oldValue, newValue -> oldValue.add(newValue as StoredFileSet) }
 }
 
 internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, valuePredicate: (StoredFileSet) -> Boolean) {
@@ -402,7 +402,7 @@ internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, va
 internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityPointer<WorkspaceEntity>, WorkspaceFileSetImpl>>
 
 internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: WorkspaceFileSetImpl) {
-  val entityRef2FileSet = getOrPut(packagePrefix) { MultiMap(LinkedHashMap()) }
+  val entityRef2FileSet = computeIfAbsent(packagePrefix) { MultiMap(LinkedHashMap()) }
   entityRef2FileSet.putValue(fileSet.entityPointer, fileSet)
 }
 
