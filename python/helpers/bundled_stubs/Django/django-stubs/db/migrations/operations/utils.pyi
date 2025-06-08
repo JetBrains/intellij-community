@@ -1,6 +1,5 @@
-from collections import namedtuple
 from collections.abc import Iterator
-from typing import Literal
+from typing import Any, Literal, NamedTuple
 
 from django.db.migrations.state import ModelState, ProjectState
 from django.db.models import Field, Model
@@ -9,7 +8,9 @@ def resolve_relation(
     model: str | type[Model], app_label: str | None = ..., model_name: str | None = ...
 ) -> tuple[str, str]: ...
 
-FieldReference = namedtuple("FieldReference", ["to", "through"])
+class FieldReference(NamedTuple):
+    to: Any
+    through: Any
 
 def field_references(
     model_tuple: tuple[str, str],

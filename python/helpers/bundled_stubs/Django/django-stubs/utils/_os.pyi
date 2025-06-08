@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
-
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _PathCompatible: TypeAlias = str | os.PathLike[str]
 

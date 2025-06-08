@@ -1,11 +1,11 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeAlias
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Expression, Field, FloatField, TextField
 from django.db.models.expressions import Combinable, CombinedExpression, Func
 from django.db.models.lookups import Lookup
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 _Expression: TypeAlias = str | Combinable | SearchQueryCombinable
 

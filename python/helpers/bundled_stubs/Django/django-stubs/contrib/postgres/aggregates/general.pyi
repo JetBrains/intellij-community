@@ -34,9 +34,6 @@ class BoolOr(Aggregate):
 
 class JSONBAgg(OrderableAggMixin, Aggregate):
     output_field: ClassVar[JSONField]
-    def __init__(
-        self, *expressions: BaseExpression | Combinable | str, default: Any | None = ..., **extra: Any
-    ) -> None: ...
     def resolve_expression(
         self,
         query: Any = ...,
@@ -59,3 +56,5 @@ class StringAgg(OrderableAggMixin, Aggregate):
         for_save: bool = ...,
     ) -> Self: ...
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
+
+__all__ = ["ArrayAgg", "BitAnd", "BitOr", "BitXor", "BoolAnd", "BoolOr", "JSONBAgg", "StringAgg"]

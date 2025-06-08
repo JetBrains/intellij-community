@@ -1,4 +1,4 @@
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 # noinspection PyUnresolvedReferences
 from .base import clear_script_prefix as clear_script_prefix
@@ -38,3 +38,31 @@ from .utils import get_callable as get_callable
 from .utils import get_mod_func as get_mod_func
 
 _AnyURL: TypeAlias = URLPattern | URLResolver  # noqa: PYI047
+
+__all__ = [
+    "LocalePrefixPattern",
+    "NoReverseMatch",
+    "URLPattern",
+    "URLResolver",
+    "Resolver404",
+    "ResolverMatch",
+    "clear_script_prefix",
+    "clear_url_caches",
+    "get_callable",
+    "get_mod_func",
+    "get_ns_resolver",
+    "get_resolver",
+    "get_script_prefix",
+    "get_urlconf",
+    "include",
+    "is_valid_path",
+    "path",
+    "re_path",
+    "register_converter",
+    "resolve",
+    "reverse",
+    "reverse_lazy",
+    "set_script_prefix",
+    "set_urlconf",
+    "translate_url",
+]

@@ -1,5 +1,5 @@
-from collections.abc import Callable, Collection, Container, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Generic, Literal, TypeVar, overload
+from collections.abc import Callable, Collection, Container, Iterator, Mapping, MutableMapping, Sequence
+from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar, overload
 from uuid import UUID
 
 from django.db import models
@@ -14,10 +14,9 @@ from django.forms.formsets import BaseFormSet
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList, _DataT, _FilesT
 from django.forms.widgets import Widget
-from django.utils.choices import BaseChoiceIterator, CallableChoiceIterator, _Choices, _ChoicesCallable
+from django.utils.choices import BaseChoiceIterator, CallableChoiceIterator, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import _PropertyDescriptor
 from django.utils.functional import _StrOrPromise
-from typing_extensions import TypeAlias
 
 ALL_FIELDS: Literal["__all__"]
 
@@ -77,7 +76,7 @@ class BaseModelForm(Generic[_M], BaseForm):
         files: _FilesT | None = None,
         auto_id: bool | str = "id_%s",
         prefix: str | None = None,
-        initial: Mapping[str, Any] | None = None,
+        initial: MutableMapping[str, Any] | None = None,
         error_class: type[ErrorList] = ...,
         label_suffix: str | None = None,
         empty_permitted: bool = False,
@@ -91,6 +90,7 @@ class BaseModelForm(Generic[_M], BaseForm):
 
 class ModelForm(BaseModelForm[_M], metaclass=ModelFormMetaclass):
     base_fields: ClassVar[dict[str, Field]]
+    declared_fields: ClassVar[dict[str, Field]]
 
 def modelform_factory(
     model: type[_M],
@@ -279,11 +279,12 @@ class ModelChoiceField(ChoiceField, Generic[_M]):
         blank: bool = False,
         **kwargs: Any,
     ) -> None: ...
+    def validate_no_null_characters(self, value: Any) -> None: ...
     def get_limit_choices_to(self) -> _LimitChoicesTo: ...
     def label_from_instance(self, obj: _M) -> str: ...
     choices: _PropertyDescriptor[
-        _Choices | _ChoicesCallable | CallableChoiceIterator,
-        _Choices | CallableChoiceIterator | ModelChoiceIterator,
+        _ChoicesInput | _ChoicesCallable | CallableChoiceIterator,
+        _ChoicesInput | CallableChoiceIterator | ModelChoiceIterator,
     ]
     def prepare_value(self, value: Any) -> Any: ...
     def to_python(self, value: Any | None) -> _M | None: ...
@@ -313,3 +314,18 @@ def _get_foreign_key(
 def _get_foreign_key(
     parent_model: type[Model], model: type[Model], fk_name: str | None = None, can_fail: Literal[False] = False
 ) -> ForeignKey: ...
+
+__all__ = (
+    "ModelForm",
+    "BaseModelForm",
+    "model_to_dict",
+    "fields_for_model",
+    "ModelChoiceField",
+    "ModelMultipleChoiceField",
+    "ALL_FIELDS",
+    "BaseModelFormSet",
+    "modelformset_factory",
+    "BaseInlineFormSet",
+    "inlineformset_factory",
+    "modelform_factory",
+)

@@ -99,6 +99,7 @@ class BaseDatabaseFeatures:
     supports_index_on_text_field: bool
     supports_over_clause: bool
     supports_frame_range_fixed_distance: bool
+    supports_frame_exclusion: bool
     only_supports_unbounded_with_preceding_and_following: bool
     supports_cast_with_precision: bool
     time_cast_precision: int

@@ -1,11 +1,11 @@
 import decimal
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from contextlib import AbstractContextManager, contextmanager
+from contextlib import AbstractContextManager
 from decimal import Decimal
 from io import StringIO
 from logging import Logger
 from types import TracebackType
-from typing import Any, Protocol, SupportsIndex, TypeVar, type_check_only
+from typing import Any, Protocol, SupportsIndex, TypeAlias, TypeVar, type_check_only
 
 from django.apps.registry import Apps
 from django.conf import LazySettings, Settings
@@ -15,7 +15,7 @@ from django.db.models.lookups import Lookup, Transform
 from django.db.models.query_utils import RegisterLookupMixin
 from django.test.runner import DiscoverRunner
 from django.test.testcases import SimpleTestCase
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 _TestClass: TypeAlias = type[SimpleTestCase]
 
@@ -109,8 +109,7 @@ class ignore_warnings(TestContextDecorator):
 
 requires_tz_support: Any
 
-@contextmanager
-def isolate_lru_cache(lru_cache_object: Callable) -> Iterator[None]: ...
+def isolate_lru_cache(lru_cache_object: Callable) -> AbstractContextManager[None]: ...
 
 class override_script_prefix(TestContextDecorator):
     prefix: str
@@ -129,15 +128,12 @@ class isolate_apps(TestContextDecorator):
     def __init__(self, *installed_apps: Any, **kwargs: Any) -> None: ...
     old_apps: Apps
 
-@contextmanager
-def extend_sys_path(*paths: str) -> Iterator[None]: ...
-@contextmanager
-def captured_output(stream_name: str) -> Iterator[StringIO]: ...
-def captured_stdin() -> AbstractContextManager: ...
-def captured_stdout() -> AbstractContextManager: ...
-def captured_stderr() -> AbstractContextManager: ...
-@contextmanager
-def freeze_time(t: float) -> Iterator[None]: ...
+def extend_sys_path(*paths: str) -> AbstractContextManager[None]: ...
+def captured_output(stream_name: str) -> AbstractContextManager[StringIO]: ...
+def captured_stdin() -> AbstractContextManager[StringIO]: ...
+def captured_stdout() -> AbstractContextManager[StringIO]: ...
+def captured_stderr() -> AbstractContextManager[StringIO]: ...
+def freeze_time(t: float) -> AbstractContextManager[None]: ...
 def tag(*tags: str) -> Callable[[_C], _C]: ...
 
 _Signature: TypeAlias = str
@@ -145,8 +141,7 @@ _TestDatabase: TypeAlias = tuple[str, list[str]]
 
 @type_check_only
 class TimeKeeperProtocol(Protocol):
-    @contextmanager
-    def timed(self, name: Any) -> Iterator[None]: ...
+    def timed(self, name: Any) -> AbstractContextManager[None]: ...
     def print_results(self) -> None: ...
 
 def dependency_ordered(
@@ -171,7 +166,26 @@ def teardown_databases(
     old_config: Iterable[tuple[Any, str, bool]], verbosity: int, parallel: int = ..., keepdb: bool = ...
 ) -> None: ...
 def require_jinja2(test_func: _C) -> _C: ...
-@contextmanager
 def register_lookup(
     field: type[RegisterLookupMixin], *lookups: type[Lookup | Transform], lookup_name: str | None = ...
-) -> Iterator[None]: ...
+) -> AbstractContextManager[None]: ...
+def garbage_collect() -> None: ...
+
+__all__ = (
+    "Approximate",
+    "ContextList",
+    "isolate_lru_cache",
+    "garbage_collect",
+    "get_runner",
+    "CaptureQueriesContext",
+    "ignore_warnings",
+    "isolate_apps",
+    "modify_settings",
+    "override_settings",
+    "override_system_checks",
+    "tag",
+    "requires_tz_support",
+    "setup_databases",
+    "setup_test_environment",
+    "teardown_test_environment",
+)

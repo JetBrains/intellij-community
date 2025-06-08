@@ -1,24 +1,20 @@
-from collections import namedtuple
-from typing import Any
+from typing import Any, NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
 from django.db.backends.mysql.base import DatabaseWrapper
 
 FieldInfo: Any
-InfoLine = namedtuple(
-    "InfoLine",
-    [
-        "col_name",
-        "data_type",
-        "max_len",
-        "num_prec",
-        "num_scale",
-        "extra",
-        "column_default",
-        "collation",
-        "is_unsigned",
-    ],
-)
+
+class InfoLine(NamedTuple):
+    col_name: str
+    data_type: str
+    max_len: int
+    num_prec: int
+    num_scale: int
+    extra: str
+    column_default: str
+    collation: str | None
+    is_unsigned: bool
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     connection: DatabaseWrapper

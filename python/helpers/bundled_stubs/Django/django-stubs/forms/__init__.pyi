@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError as ValidationError
 
 from .boundfield import BoundField as BoundField
-from .boundfield import BoundWidget as BoundWidget
 from .fields import BooleanField as BooleanField
 from .fields import CharField as CharField
 from .fields import ChoiceField as ChoiceField
@@ -38,12 +37,8 @@ from .formsets import formset_factory as formset_factory
 from .models import BaseInlineFormSet as BaseInlineFormSet
 from .models import BaseModelForm as BaseModelForm
 from .models import BaseModelFormSet as BaseModelFormSet
-from .models import InlineForeignKeyField as InlineForeignKeyField
 from .models import ModelChoiceField as ModelChoiceField
-from .models import ModelChoiceIterator as ModelChoiceIterator
 from .models import ModelForm as ModelForm
-from .models import ModelFormMetaclass as ModelFormMetaclass
-from .models import ModelFormOptions as ModelFormOptions
 from .models import ModelMultipleChoiceField as ModelMultipleChoiceField
 from .models import fields_for_model as fields_for_model
 from .models import inlineformset_factory as inlineformset_factory
@@ -54,12 +49,10 @@ from .widgets import CheckboxInput as CheckboxInput
 from .widgets import CheckboxSelectMultiple as CheckboxSelectMultiple
 from .widgets import ClearableFileInput as ClearableFileInput
 from .widgets import DateInput as DateInput
-from .widgets import DateTimeBaseInput as DateTimeBaseInput
 from .widgets import DateTimeInput as DateTimeInput
 from .widgets import EmailInput as EmailInput
 from .widgets import FileInput as FileInput
 from .widgets import HiddenInput as HiddenInput
-from .widgets import Input as Input
 from .widgets import Media as Media
 from .widgets import MultipleHiddenInput as MultipleHiddenInput
 from .widgets import MultiWidget as MultiWidget

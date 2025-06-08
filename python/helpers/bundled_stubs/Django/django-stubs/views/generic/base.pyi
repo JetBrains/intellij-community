@@ -1,6 +1,6 @@
 import logging
-from collections.abc import Callable, Sequence
-from typing import Any, Mapping
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase

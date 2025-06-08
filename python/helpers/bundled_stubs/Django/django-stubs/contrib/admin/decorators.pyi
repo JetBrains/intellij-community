@@ -13,11 +13,13 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 @overload
 def action(
     function: _F,
+    *,
     permissions: Sequence[str] | None = ...,
     description: _StrOrPromise | None = ...,
 ) -> _F: ...
 @overload
 def action(
+    function: None = None,
     *,
     permissions: Sequence[str] | None = ...,
     description: _StrOrPromise | None = ...,
@@ -25,6 +27,7 @@ def action(
 @overload
 def display(
     function: _F,
+    *,
     boolean: bool | None = ...,
     ordering: str | Combinable | BaseExpression | None = ...,
     description: _StrOrPromise | None = ...,
@@ -32,6 +35,7 @@ def display(
 ) -> _F: ...
 @overload
 def display(
+    function: None = None,
     *,
     boolean: bool | None = ...,
     ordering: str | Combinable | BaseExpression | None = ...,

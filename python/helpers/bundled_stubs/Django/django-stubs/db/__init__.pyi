@@ -21,3 +21,22 @@ connection: BaseDatabaseWrapper
 
 def close_old_connections(**kwargs: Any) -> None: ...
 def reset_queries(**kwargs: Any) -> None: ...
+
+__all__ = [
+    "close_old_connections",
+    "connection",
+    "connections",
+    "reset_queries",
+    "router",
+    "DatabaseError",
+    "IntegrityError",
+    "InternalError",
+    "ProgrammingError",
+    "DataError",
+    "NotSupportedError",
+    "Error",
+    "InterfaceError",
+    "OperationalError",
+    "DEFAULT_DB_ALIAS",
+    "DJANGO_VERSION_PICKLE_KEY",
+]

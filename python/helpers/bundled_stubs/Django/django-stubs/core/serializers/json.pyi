@@ -1,16 +1,17 @@
 import json
-from collections.abc import Iterator
-from typing import IO, Any
+from typing import Any, TypeAlias
 
-from django.core.serializers.base import DeserializedObject
+import _typeshed
+from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.core.serializers.python import Serializer as PythonSerializer
+
+_DeserializerInput: TypeAlias = _typeshed.SupportsRead[bytes | str] | bytes | str
 
 class Serializer(PythonSerializer):
     json_kwargs: dict[str, Any]
 
-def Deserializer(
-    stream_or_string: IO[bytes] | IO[str] | bytes | str, **options: Any
-) -> Iterator[DeserializedObject]: ...
+class Deserializer(PythonDeserializer):
+    def __init__(self, stream_or_string: _DeserializerInput, **options: Any) -> None: ...
 
 class DjangoJSONEncoder(json.JSONEncoder):
     allow_nan: bool

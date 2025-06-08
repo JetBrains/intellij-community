@@ -1,11 +1,7 @@
-from typing import Any
-
 from django.db.models.sql import compiler
 from django.db.models.sql.compiler import _AsSqlType
 
-class SQLCompiler(compiler.SQLCompiler):
-    def as_subquery_condition(self, alias: Any, columns: Any, compiler: Any) -> _AsSqlType: ...
-
+class SQLCompiler(compiler.SQLCompiler): ...
 class SQLInsertCompiler(compiler.SQLInsertCompiler, SQLCompiler): ...
 
 class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
@@ -14,3 +10,5 @@ class SQLDeleteCompiler(compiler.SQLDeleteCompiler, SQLCompiler):
 
 class SQLUpdateCompiler(compiler.SQLUpdateCompiler, SQLCompiler): ...
 class SQLAggregateCompiler(compiler.SQLAggregateCompiler, SQLCompiler): ...
+
+__all__ = ["SQLAggregateCompiler", "SQLCompiler", "SQLDeleteCompiler", "SQLInsertCompiler", "SQLUpdateCompiler"]

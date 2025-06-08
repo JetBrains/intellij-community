@@ -1,8 +1,8 @@
-from collections import namedtuple
 from collections.abc import Iterator, Sequence
 from datetime import date as real_date
-from typing import Any
+from typing import Any, NamedTuple
 
+from django.http.request import QueryDict
 from django.template.base import FilterExpression, Parser, Token
 from django.template.context import Context
 from django.utils.safestring import SafeString
@@ -64,22 +64,6 @@ class IfChangedNode(Node):
     child_nodelists: Any
     def __init__(self, nodelist_true: NodeList, nodelist_false: NodeList, *varlist: Any) -> None: ...
 
-class IfEqualNode(Node):
-    nodelist_false: list[Any] | NodeList
-    nodelist_true: list[Any] | NodeList
-    var1: FilterExpression | str
-    var2: FilterExpression | str
-    child_nodelists: Any
-    negate: bool
-    def __init__(
-        self,
-        var1: FilterExpression | str,
-        var2: FilterExpression | str,
-        nodelist_true: list[Any] | NodeList,
-        nodelist_false: list[Any] | NodeList,
-        negate: bool,
-    ) -> None: ...
-
 class IfNode(Node):
     conditions_nodelists: list[tuple[TemplateLiteral | None, NodeList]]
     def __init__(self, conditions_nodelists: list[tuple[TemplateLiteral | None, NodeList]]) -> None: ...
@@ -93,7 +77,9 @@ class LoremNode(Node):
     method: str
     def __init__(self, count: FilterExpression, method: str, common: bool) -> None: ...
 
-GroupedResult = namedtuple("GroupedResult", ["grouper", "list"])
+class GroupedResult(NamedTuple):
+    grouper: Any
+    list: list[Any]
 
 class RegroupNode(Node):
     expression: FilterExpression
@@ -171,9 +157,6 @@ def debug(parser: Parser, token: Token) -> DebugNode: ...
 def do_filter(parser: Parser, token: Token) -> FilterNode: ...
 def firstof(parser: Parser, token: Token) -> FirstOfNode: ...
 def do_for(parser: Parser, token: Token) -> ForNode: ...
-def do_ifequal(parser: Parser, token: Token, negate: bool) -> IfEqualNode: ...
-def ifequal(parser: Parser, token: Token) -> IfEqualNode: ...
-def ifnotequal(parser: Parser, token: Token) -> IfEqualNode: ...
 
 class TemplateLiteral(Literal):
     text: str
@@ -195,6 +178,7 @@ def load_from_library(library: Library, label: str, names: list[str]) -> Library
 def load(parser: Parser, token: Token) -> LoadNode: ...
 def lorem(parser: Parser, token: Token) -> LoremNode: ...
 def now(parser: Parser, token: Token) -> NowNode: ...
+def querystring(context: Context, query_dict: QueryDict | None = None, **kwargs: Any) -> str: ...
 def regroup(parser: Parser, token: Token) -> RegroupNode: ...
 def resetcycle(parser: Parser, token: Token) -> ResetCycleNode: ...
 def spaceless(parser: Parser, token: Token) -> SpacelessNode: ...

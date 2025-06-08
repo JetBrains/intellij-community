@@ -24,3 +24,5 @@ class KeysTransform(Transform):
 
 class ValuesTransform(Transform):
     output_field: ClassVar[ArrayField]
+
+__all__ = ["HStoreField"]

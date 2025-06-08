@@ -1,6 +1,6 @@
-import sys
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
+from weakref import WeakSet
 
 from django.apps.config import AppConfig
 from django.contrib.admin.models import LogEntry
@@ -14,16 +14,8 @@ from django.http.response import HttpResponse, HttpResponseBase
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, URLResolver
 from django.utils.functional import LazyObject, _StrOrPromise
-from typing_extensions import TypeAlias
 
-if sys.version_info >= (3, 9):
-    from weakref import WeakSet
-
-    all_sites: WeakSet[AdminSite]
-else:
-    from collections.abc import MutableSet
-
-    all_sites: MutableSet[AdminSite]
+all_sites: WeakSet[AdminSite]
 
 _ViewType = TypeVar("_ViewType", bound=Callable[..., HttpResponseBase])
 _ModelT = TypeVar("_ModelT", bound=Model)

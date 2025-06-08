@@ -1,15 +1,14 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Coroutine, Sequence
 from types import ModuleType
-from typing import Any, Coroutine, overload
+from typing import Any, TypeAlias, overload
 
 from django.urls import URLPattern, URLResolver, _AnyURL
 from django.utils.functional import _StrOrPromise
-from typing_extensions import TypeAlias
 
-from ..conf.urls import _IncludedURLConf
 from ..http.response import HttpResponseBase
 
 _URLConf: TypeAlias = str | ModuleType | Sequence[_AnyURL]
+_IncludedURLConf: TypeAlias = tuple[Sequence[URLResolver | URLPattern], str | None, str | None]
 
 def include(arg: _URLConf | tuple[_URLConf, str], namespace: str | None = ...) -> _IncludedURLConf: ...
 

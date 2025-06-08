@@ -1,10 +1,9 @@
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 from django.http.response import HttpResponseBase
 from django.utils.deprecation import MiddlewareMixin
 from django.views.generic.base import View
-from typing_extensions import TypeAlias
 
 _ViewType = TypeVar("_ViewType", bound=View | Callable[..., Any])  # Any callable
 _CallableType = TypeVar("_CallableType", bound=Callable[..., Any])

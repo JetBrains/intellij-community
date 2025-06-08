@@ -5,12 +5,14 @@ from django.contrib.gis.db.models.sql.conversion import AreaField, DistanceField
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import BinaryField, BooleanField, FloatField, Func, IntegerField, TextField
 from django.db.models import Transform as StandardTransform
+from django.db.models.expressions import BaseExpression
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from django.utils.functional import cached_property
 
 NUMERIC_TYPES: Any
 
 class GeoFuncMixin:
+    function: str | None = None
     geom_param_pos: Any
     @property
     def geo_field(self) -> Any: ...
@@ -104,12 +106,11 @@ class ForcePolygonCW(GeomOutputGeoFunc):
     arity: int
 
 class FromWKB(GeoFunc):
-    output_field: ClassVar[GeometryField]
     arity: int
+    def __init__(self, expression: BaseExpression, srid: int = 0, **extra: Any) -> None: ...
+    def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
-class FromWKT(GeoFunc):
-    output_field: ClassVar[GeometryField]
-    arity: int
+class FromWKT(FromWKB): ...
 
 class GeoHash(GeoFunc):
     output_field: ClassVar[TextField]

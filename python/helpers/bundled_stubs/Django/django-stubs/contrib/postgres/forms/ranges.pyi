@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django import forms
 from django.db.models.fields import _ErrorMessagesDict
@@ -13,7 +13,7 @@ class HiddenRangeWidget(RangeWidget):
     def __init__(self, attrs: _OptAttrs | None = None) -> None: ...
 
 class BaseRangeField(forms.MultiValueField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: type[forms.Field]
     range_type: type[Range]
     hidden_widget: type[forms.Widget]
@@ -22,21 +22,31 @@ class BaseRangeField(forms.MultiValueField):
     def compress(self, values: tuple[Any | None, Any | None]) -> Range | None: ...
 
 class IntegerRangeField(BaseRangeField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: type[forms.Field]
     range_type: type[Range]
 
 class DecimalRangeField(BaseRangeField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: type[forms.Field]
     range_type: type[Range]
 
 class DateTimeRangeField(BaseRangeField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: type[forms.Field]
     range_type: type[Range]
 
 class DateRangeField(BaseRangeField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: type[forms.Field]
     range_type: type[Range]
+
+__all__ = [
+    "BaseRangeField",
+    "IntegerRangeField",
+    "DecimalRangeField",
+    "DateTimeRangeField",
+    "DateRangeField",
+    "HiddenRangeWidget",
+    "RangeWidget",
+]

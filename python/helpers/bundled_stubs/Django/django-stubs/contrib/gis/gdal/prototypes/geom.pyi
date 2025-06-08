@@ -10,6 +10,7 @@ to_kml: Any
 getx: Any
 gety: Any
 getz: Any
+getm: Any
 from_wkb: Any
 from_wkt: Any
 from_gml: Any
@@ -22,11 +23,17 @@ geom_diff: Any
 geom_intersection: Any
 geom_sym_diff: Any
 geom_union: Any
+is_3d: Any
+set_3d: Any
+is_measured: Any
+set_measured: Any
 add_geom: Any
 import_wkt: Any
 destroy_geom: Any
 to_wkb: Any
+to_iso_wkb: Any
 to_wkt: Any
+to_iso_wkt: Any
 to_gml: Any
 get_wkbsize: Any
 assign_srs: Any

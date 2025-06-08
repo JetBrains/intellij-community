@@ -1,12 +1,11 @@
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.template.base import Origin
 from django.template.library import Library
 from django.template.loaders.base import Loader
 from django.utils.functional import cached_property
 from django.utils.safestring import SafeString
-from typing_extensions import TypeAlias
 
 from .base import Template
 

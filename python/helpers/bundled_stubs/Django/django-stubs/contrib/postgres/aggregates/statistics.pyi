@@ -27,3 +27,18 @@ class RegrSlope(StatAggregate): ...
 class RegrSXX(StatAggregate): ...
 class RegrSXY(StatAggregate): ...
 class RegrSYY(StatAggregate): ...
+
+__all__ = [
+    "CovarPop",
+    "Corr",
+    "RegrAvgX",
+    "RegrAvgY",
+    "RegrCount",
+    "RegrIntercept",
+    "RegrR2",
+    "RegrSlope",
+    "RegrSXX",
+    "RegrSXY",
+    "RegrSYY",
+    "StatAggregate",
+]

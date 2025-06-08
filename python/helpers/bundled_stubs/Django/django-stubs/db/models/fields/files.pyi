@@ -89,6 +89,7 @@ class FileField(Field):
     # non-Model instances
     @overload
     def __get__(self, instance: Any, owner: Any) -> Self: ...
+    def contribute_to_class(self, cls: type[Model], name: str, **kwargs: Any) -> None: ...  # type: ignore[override]
     def generate_filename(self, instance: Model | None, filename: _PathCompatible) -> str: ...
 
 class ImageFileDescriptor(FileDescriptor):

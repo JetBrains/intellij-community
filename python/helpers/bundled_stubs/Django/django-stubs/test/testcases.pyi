@@ -1,7 +1,7 @@
 import threading
 import unittest
-from collections.abc import Callable, Collection, Generator, Iterable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
+from contextlib import AbstractContextManager
 from types import TracebackType
 from typing import Any, overload
 
@@ -12,7 +12,7 @@ from django.db import connections as connections
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models.base import Model
 from django.db.models.query import QuerySet, RawQuerySet
-from django.forms import BaseFormSet, Form
+from django.forms import BaseForm, BaseFormSet
 from django.forms.fields import EmailField
 from django.http import HttpRequest
 from django.http.response import FileResponse, HttpResponseBase
@@ -39,7 +39,6 @@ class _AssertTemplateUsedContext:
     def __init__(self, test_case: Any, template_name: Any) -> None: ...
     def on_template_render(self, sender: Any, signal: Any, template: Any, context: Any, **kwargs: Any) -> None: ...
     def test(self) -> None: ...
-    def message(self) -> str: ...
     def __enter__(self) -> Self: ...
     def __exit__(
         self,
@@ -63,6 +62,8 @@ class SimpleTestCase(unittest.TestCase):
     async_client: AsyncClient
     # TODO: str -> Literal['__all__']
     databases: set[str] | str
+    @classmethod
+    def ensure_connection_patch_method(cls) -> None: ...
     def __call__(self, result: unittest.TestResult | None = ...) -> None: ...
     def settings(self, **kwargs: Any) -> Any: ...
     def modify_settings(self, **kwargs: Any) -> Any: ...
@@ -100,16 +101,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertFormError(
         self,
-        form: Form,
-        field: str | None,
-        errors: list[str] | str,
-        msg_prefix: str = ...,
-    ) -> None: ...
-    # assertFormsetError (lowercase "set") deprecated in Django 4.2
-    def assertFormsetError(
-        self,
-        formset: BaseFormSet,
-        form_index: int | None,
+        form: BaseForm,
         field: str | None,
         errors: list[str] | str,
         msg_prefix: str = ...,
@@ -150,15 +142,16 @@ class SimpleTestCase(unittest.TestCase):
     def assertHTMLEqual(self, html1: str, html2: str, msg: str | None = ...) -> None: ...
     def assertHTMLNotEqual(self, html1: str, html2: str, msg: str | None = ...) -> None: ...
     def assertInHTML(self, needle: str, haystack: str, count: int | None = ..., msg_prefix: str = ...) -> None: ...
+    def assertNotInHTML(self, needle: str, haystack: str, msg_prefix: str = ...) -> None: ...
     def assertJSONEqual(
         self,
-        raw: str,
+        raw: str | bytes | bytearray,
         expected_data: dict[str, Any] | list[Any] | str | int | float | bool | None,
         msg: str | None = ...,
     ) -> None: ...
     def assertJSONNotEqual(
         self,
-        raw: str,
+        raw: str | bytes | bytearray,
         expected_data: dict[str, Any] | list[Any] | str | int | float | bool | None,
         msg: str | None = ...,
     ) -> None: ...
@@ -171,15 +164,6 @@ class TransactionTestCase(SimpleTestCase):
     fixtures: Any
     multi_db: bool
     serialized_rollback: bool
-    # assertQuerysetEqual (lowercase "set") deprecated in Django 4.2
-    def assertQuerysetEqual(
-        self,
-        qs: Iterator[Any] | list[Model] | QuerySet | RawQuerySet,
-        values: Collection[Any],
-        transform: Callable[[Model], Any] | type[str] = ...,
-        ordered: bool = ...,
-        msg: str | None = ...,
-    ) -> None: ...
     def assertQuerySetEqual(
         self,
         qs: Iterator[Any] | list[Model] | QuerySet | RawQuerySet,
@@ -199,10 +183,9 @@ class TestCase(TransactionTestCase):
     @classmethod
     def setUpTestData(cls) -> None: ...
     @classmethod
-    @contextmanager
     def captureOnCommitCallbacks(
         cls, *, using: str = ..., execute: bool = ...
-    ) -> Generator[list[Callable[[], Any]], None, None]: ...
+    ) -> AbstractContextManager[list[Callable[[], Any]]]: ...
 
 class CheckCondition:
     conditions: Sequence[tuple[Callable, str]]
@@ -263,7 +246,7 @@ class SerializeMixin:
     lockfile: Any
     @classmethod
     def setUpClass(cls) -> None: ...
-    @classmethod
-    def tearDownClass(cls) -> None: ...
 
 def connections_support_transactions(aliases: Iterable[str] | None = ...) -> bool: ...
+
+__all__ = ("TestCase", "TransactionTestCase", "SimpleTestCase", "skipIfDBFeature", "skipUnlessDBFeature")

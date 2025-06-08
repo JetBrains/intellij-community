@@ -1,6 +1,5 @@
-from collections import namedtuple
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Literal, TypeVar
+from typing import Any, ClassVar, Literal, NamedTuple, TypeVar
 
 from _typeshed import Incomplete
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -9,17 +8,21 @@ from django.db.models.expressions import BaseExpression
 from django.db.models.fields import Field
 from django.db.models.fields.mixins import FieldCacheMixin
 from django.db.models.lookups import Lookup, Transform
+from django.db.models.options import Options
 from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from django.db.models.sql.query import Query
 from django.db.models.sql.where import WhereNode
 from django.utils import tree
 from django.utils.functional import cached_property
 
-PathInfo = namedtuple(
-    "PathInfo", ["from_opts", "to_opts", "target_fields", "join_field", "m2m", "direct", "filtered_relation"]
-)
-
-class InvalidQuery(Exception): ...
+class PathInfo(NamedTuple):
+    from_opts: Options
+    to_opts: Options
+    target_fields: tuple[Field, ...]
+    join_field: Field
+    m2m: bool
+    direct: bool
+    filtered_relation: FilteredRelation | None
 
 def subclasses(cls: type[RegisterLookupMixin]) -> Iterator[type[RegisterLookupMixin]]: ...
 
@@ -29,7 +32,7 @@ class Q(tree.Node):
     conditional: bool
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     # Fake signature, the real is
-    # def __init__(self, *args: Any, _connector: Optional[Any] = ..., _negated: bool = ..., **kwargs: Any) -> None: ...
+    # def __init__(self, *args: Any, _connector: Any | None = ..., _negated: bool = ..., **kwargs: Any) -> None: ...
     def __or__(self, other: Q) -> Q: ...
     def __and__(self, other: Q) -> Q: ...
     def __xor__(self, other: Q) -> Q: ...

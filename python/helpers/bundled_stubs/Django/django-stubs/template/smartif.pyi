@@ -1,7 +1,6 @@
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.template.defaulttags import TemplateLiteral
-from typing_extensions import TypeAlias
 
 _Token: TypeAlias = list[int] | int | str
 

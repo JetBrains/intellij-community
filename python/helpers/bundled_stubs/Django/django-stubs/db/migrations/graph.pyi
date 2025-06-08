@@ -4,8 +4,6 @@ from typing import Any
 from django.db.migrations.migration import Migration
 from django.db.migrations.state import ProjectState
 
-RECURSION_DEPTH_WARNING: str
-
 class Node:
     key: tuple[str, str]
     children: set[Any]

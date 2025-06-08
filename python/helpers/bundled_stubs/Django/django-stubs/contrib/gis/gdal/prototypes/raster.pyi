@@ -1,10 +1,5 @@
 from typing import Any
 
-register_all: Any
-get_driver: Any
-get_driver_by_name: Any
-get_driver_count: Any
-get_driver_description: Any
 create_ds: Any
 open_ds: Any
 close_ds: Any
