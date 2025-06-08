@@ -93,7 +93,7 @@ internal object TerminalSessionTestUtil {
     try {
       initializedFuture.get(5000, TimeUnit.MILLISECONDS)
     }
-    catch (ex: TimeoutException) {
+    catch (_: TimeoutException) {
       BasePlatformTestCase.fail(
         "Session failed to initialize, size: ${model.height}x${model.width}, text buffer:\n${model.withContentLock { model.getAllText() }}")
     }
