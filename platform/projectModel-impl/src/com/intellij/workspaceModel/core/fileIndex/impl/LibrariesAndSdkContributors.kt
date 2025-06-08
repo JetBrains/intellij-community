@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.SmartList
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
@@ -89,14 +90,14 @@ internal class LibrariesAndSdkContributors(
       data: WorkspaceFileSetData,
     ) {
       val entityRefToFileSet by lazy(LazyThreadSafetyMode.NONE) {
-        fileSetsByPackagePrefix.computeIfAbsent("") { MultiMap(LinkedHashMap()) }
+        fileSetsByPackagePrefix.computeIfAbsent("") { LinkedHashMap() }
       }
 
       for (root in library.getFiles(rootType)) {
         if (RootFileValidityChecker.ensureValid(root, library, null)) {
           val fileSet = WorkspaceFileSetImpl(root, kind, pointer, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
-          entityRefToFileSet.putValue(fileSet.entityPointer, fileSet)
+          entityRefToFileSet.computeIfAbsent(fileSet.entityPointer) { SmartList() }.add(fileSet)
           libraryRoots.putValue(library, root)
         }
       }

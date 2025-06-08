@@ -352,13 +352,18 @@ internal class WorkspaceFileIndexDataImpl(
 
   private fun fillPackageFilesAndDirectories(packageName: String, result: MutableList<in VirtualFile>) {
     val addedRoots = HashSet<VirtualFile>()
-    fileSetsByPackagePrefix.get(packageName)?.values()?.forEach { fileSet ->
-      val root = fileSet.root
-      if (root.isValid) {
+    val map = fileSetsByPackagePrefix.get(packageName) ?: return
+    for (list in map.values) {
+      for (fileSet in list) {
+        val root = fileSet.root
+        if (!root.isValid) {
+          continue
+        }
+
         // single file source roots could be added here as well
         if (addedRoots.add(root)) result.add(root)
         if (root.fileSystem.protocol == StandardFileSystems.JAR_PROTOCOL) {
-          root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot -> 
+          root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot ->
             val version = versionRoot.name.toIntOrNull()
             if (version != null && version >= 9) {
               if (addedRoots.add(versionRoot)) result.add(versionRoot)

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.SmartList
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -399,17 +399,17 @@ internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, va
   }
 }
 
-internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityPointer<WorkspaceEntity>, WorkspaceFileSetImpl>>
+internal typealias PackagePrefixStorage = HashMap<String, LinkedHashMap<EntityPointer<WorkspaceEntity>, MutableList<WorkspaceFileSetImpl>>>
 
 internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: WorkspaceFileSetImpl) {
-  val entityRef2FileSet = computeIfAbsent(packagePrefix) { MultiMap(LinkedHashMap()) }
-  entityRef2FileSet.putValue(fileSet.entityPointer, fileSet)
+  val entityRef2FileSet = computeIfAbsent(packagePrefix) { LinkedHashMap() }
+  entityRef2FileSet.computeIfAbsent(fileSet.entityPointer) { SmartList() }.add(fileSet)
 }
 
 internal fun PackagePrefixStorage.removeByPrefixAndPointer(packagePrefix: String, entityPointer: EntityPointer<WorkspaceEntity>) {
   val entityRef2FileSet = get(packagePrefix) ?: return
   entityRef2FileSet.remove(entityPointer)
-  if (entityRef2FileSet.isEmpty) {
+  if (entityRef2FileSet.isEmpty()) {
     remove(packagePrefix)
   }
 }
