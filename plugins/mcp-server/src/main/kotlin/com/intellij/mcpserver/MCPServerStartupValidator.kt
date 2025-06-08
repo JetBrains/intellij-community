@@ -12,6 +12,7 @@ import com.intellij.mcpserver.settings.PluginSettings
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -171,6 +172,10 @@ internal class MCPServerStartupValidator : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    val settings = service<PluginSettings>()
+    if (!settings.state.enableMcpServer) {
+      return
+    }
     if (SystemInfoRt.isLinux) {
       LOG.info("No Claude Client on Linux, skipping validation")
       return
