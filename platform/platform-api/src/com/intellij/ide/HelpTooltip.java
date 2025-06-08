@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -313,6 +313,26 @@ public class HelpTooltip {
     link.setHorizontalTextPosition(SwingConstants.LEFT);
     linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Supplier<@NotNull String> getTitle() {
+    return title;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getDescription() {
+    return description;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ActionLink getLink() {
+    return link;
+  }
+
+  @ApiStatus.Internal
+  public int getHideDelay() {
+    return myHideDelay;
   }
 
   @Override
