@@ -15,6 +15,9 @@ import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TerminalCustomCommandListener
+import com.pty4j.windows.conpty.WinConPtyProcess
+import com.pty4j.windows.cygwin.CygwinPtyProcess
+import com.pty4j.windows.winpty.WinPtyProcess
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEngine
@@ -66,6 +69,12 @@ internal object TerminalSessionTestUtil {
       if (!process.waitFor(60, TimeUnit.SECONDS)) {
         fail("Shell hasn't been terminated within timeout, pid:${process.pid()}")
       }
+    }
+    if (process is WinPtyProcess || process is CygwinPtyProcess) {
+      Assert.fail("Shell integration on Windows requires ConPTY, but " + process::class.java)
+    }
+    if (process is WinConPtyProcess) {
+      Assume.assumeTrue("Shell integration on Windows requires latest version of ConPTY", process.isBundledConPtyLibrary)
     }
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
