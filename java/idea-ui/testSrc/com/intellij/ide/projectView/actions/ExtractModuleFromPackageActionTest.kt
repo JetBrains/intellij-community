@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -98,7 +99,7 @@ class ExtractModuleFromPackageActionTest {
       VfsTestUtil.createFile(it, "other/Other.java", "package other;\npublic class Other { main.MyClass myClass; xxx.Main main; }")
     }
 
-    val otherModuleWithReferenceOnExtractedOnly = projectModel.createModule("otherWithReferenceOnExtracedOnly")
+    val otherModuleWithReferenceOnExtractedOnly = projectModel.createModule("otherWithReferenceOnExtractedOnly")
     projectModel.addSourceRoot(otherModuleWithReferenceOnExtractedOnly, "src", JavaSourceRootType.SOURCE).let {
       VfsTestUtil.createFile(it, "other2/Other2.java", "package other2;\npublic class Other2 { xxx.Main other2; }")
     }
@@ -114,6 +115,55 @@ class ExtractModuleFromPackageActionTest {
       assertThat(ModuleRootManager.getInstance(otherModuleWithReference).dependencies).containsExactly(main, extracted)
       assertThat(ModuleRootManager.getInstance(otherModuleWithoutReference).dependencies).containsExactly(main)
       assertThat(ModuleRootManager.getInstance(otherModuleWithReferenceOnExtractedOnly).dependencies).containsExactly(extracted)
+      assertAll()
+    }
+  }
+
+  @Test
+  fun `extract module with test roots`() {
+    val (main, directory) = prepareProject()
+    val referencesNone = projectModel.createModule("none")
+
+    val referencesBothInTests = projectModel.createModule("bothInTests")
+    projectModel.addSourceRoot(referencesBothInTests, "test", JavaSourceRootType.TEST_SOURCE).let {
+      VfsTestUtil.createFile(it, "other1/OtherTest.java", "package other1;\npublic class OtherTest { main.MyClass myClass; xxx.Main main; }")
+    }
+
+    val referencesModuleInProdExtractedInTests = projectModel.createModule("moduleInProdExtractedInTests")
+    projectModel.addSourceRoot(referencesModuleInProdExtractedInTests, "src", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "other2/Other2.java", "package other2;\npublic class Other2 { main.MyClass myClass; }")
+    }
+    projectModel.addSourceRoot(referencesModuleInProdExtractedInTests, "test", JavaSourceRootType.TEST_SOURCE).let {
+      VfsTestUtil.createFile(it, "other2/Other2Test.java", "package other2;\npublic class Other2Test { xxx.Main main; }")
+    }
+    
+    val referencesExtractedInProdModuleInTests = projectModel.createModule("extractedInProdModuleInTests")
+    projectModel.addSourceRoot(referencesExtractedInProdModuleInTests, "src", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "other3/Other3.java", "package other3;\npublic class Other3 { xxx.Main other3; }")
+    }
+    projectModel.addSourceRoot(referencesExtractedInProdModuleInTests, "test", JavaSourceRootType.TEST_SOURCE).let {
+      VfsTestUtil.createFile(it, "other3/Other3Test.java", "package other3;\npublic class Other3Test { main.MyClass myClass; }")
+    }
+
+    ModuleRootModificationUtil.addDependency(referencesNone, main)
+    ModuleRootModificationUtil.addDependency(referencesBothInTests, main)
+    ModuleRootModificationUtil.addDependency(referencesModuleInProdExtractedInTests, main)
+    ModuleRootModificationUtil.addDependency(referencesExtractedInProdModuleInTests, main)
+
+    extractModule(directory, main, null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    
+    with(SoftAssertions()) {
+      assertThat(ModuleRootManager.getInstance(referencesNone).dependencies).containsExactly(main)
+      
+      assertThat(ModuleRootManager.getInstance(referencesBothInTests).getDependencies(false)).isEmpty()
+      assertThat(ModuleRootManager.getInstance(referencesBothInTests).getDependencies(true)).containsExactly(main, extracted)
+
+      assertThat(ModuleRootManager.getInstance(referencesModuleInProdExtractedInTests).getDependencies(false)).containsExactly(main)
+      assertThat(ModuleRootManager.getInstance(referencesModuleInProdExtractedInTests).getDependencies(true)).containsExactly(main, extracted)
+
+      assertThat(ModuleRootManager.getInstance(referencesExtractedInProdModuleInTests).getDependencies(false)).containsExactly(extracted)
+      assertThat(ModuleRootManager.getInstance(referencesExtractedInProdModuleInTests).getDependencies(true)).containsExactly(main, extracted)
       assertAll()
     }
   }
