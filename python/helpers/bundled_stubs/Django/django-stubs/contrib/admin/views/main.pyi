@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from django import forms
 from django.contrib.admin.filters import ListFilter
-from django.contrib.admin.options import ModelAdmin, _DisplayT, _ListFilterT
+from django.contrib.admin.options import ModelAdmin, _ListDisplayT, _ListFilterT
 from django.db.models.base import Model
 from django.db.models.expressions import Expression
 from django.db.models.options import Options
@@ -26,8 +26,8 @@ class ChangeList:
     opts: Options
     lookup_opts: Options
     root_queryset: QuerySet
-    list_display: _DisplayT
-    list_display_links: _DisplayT
+    list_display: _ListDisplayT
+    list_display_links: _ListDisplayT
     list_filter: Sequence[_ListFilterT]
     date_hierarchy: Any
     search_fields: Sequence[str]
@@ -58,8 +58,8 @@ class ChangeList:
         self,
         request: HttpRequest,
         model: type[Model],
-        list_display: _DisplayT,
-        list_display_links: _DisplayT,
+        list_display: _ListDisplayT,
+        list_display_links: _ListDisplayT,
         list_filter: Sequence[_ListFilterT],
         date_hierarchy: str | None,
         search_fields: Sequence[str],

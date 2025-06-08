@@ -8,6 +8,7 @@ RFC850_DATE: Pattern[str]
 ASCTIME_DATE: Pattern[str]
 RFC3986_GENDELIMS: str
 RFC3986_SUBDELIMS: str
+MAX_URL_LENGTH: int
 
 def urlencode(
     query: (

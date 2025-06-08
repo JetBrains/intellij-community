@@ -1,12 +1,12 @@
 from collections.abc import Callable, Iterable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any
+from typing import Any, TypeAlias
 
 from django.http.request import HttpRequest
 from django.template.base import Node, Origin, Template
 from django.template.loader_tags import IncludeNode
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 _ContextKeys: TypeAlias = int | str | Node
 
@@ -56,15 +56,13 @@ class Context(BaseContext):
         use_l10n: bool | None = None,
         use_tz: bool | None = None,
     ) -> None: ...
-    @contextmanager
-    def bind_template(self, template: Template) -> Iterator[None]: ...
+    def bind_template(self, template: Template) -> AbstractContextManager[None]: ...
     def update(self, other_dict: dict[str, Any] | Context) -> ContextDict: ...
 
 class RenderContext(BaseContext):
     dicts: list[dict[IncludeNode | str, str]]
     template: Template | None
-    @contextmanager
-    def push_state(self, template: Template, isolated_context: bool = True) -> Iterator[None]: ...
+    def push_state(self, template: Template, isolated_context: bool = True) -> AbstractContextManager[None]: ...
 
 class RequestContext(Context):
     autoescape: bool
@@ -84,8 +82,7 @@ class RequestContext(Context):
         autoescape: bool = True,
     ) -> None: ...
     template: Template | None
-    @contextmanager
-    def bind_template(self, template: Template) -> Iterator[None]: ...
+    def bind_template(self, template: Template) -> AbstractContextManager[None]: ...
     def new(self, values: _ContextValues | None = None) -> RequestContext: ...
 
 def make_context(context: dict[str, Any] | None, request: HttpRequest | None = None, **kwargs: Any) -> Context: ...

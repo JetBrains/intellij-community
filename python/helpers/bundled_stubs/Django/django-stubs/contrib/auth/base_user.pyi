@@ -1,18 +1,18 @@
-from typing import Any, ClassVar, Iterable, Literal, TypeVar, overload
+from collections.abc import Iterable
+from typing import Any, ClassVar, Literal, TypeVar, overload
 
 from django.db import models
 from django.db.models.base import Model
 from django.db.models.expressions import Combinable
 from django.db.models.fields import BooleanField
-from typing_extensions import TypeAlias
 
 _T = TypeVar("_T", bound=Model)
 
 class BaseUserManager(models.Manager[_T]):
     @classmethod
     def normalize_email(cls, email: str | None) -> str: ...
-    def make_random_password(self, length: int = ..., allowed_chars: str = ...) -> str: ...
     def get_by_natural_key(self, username: str | None) -> _T: ...
+    async def aget_by_natural_key(self, username: str | None) -> _T: ...
 
 class AbstractBaseUser(models.Model):
     REQUIRED_FIELDS: ClassVar[list[str]]
@@ -42,8 +42,3 @@ class AbstractBaseUser(models.Model):
     @classmethod
     @overload
     def normalize_username(cls, username: Any) -> Any: ...
-
-# This is our "placeholder" type the mypy plugin refines to configured 'AUTH_USER_MODEL'
-# wherever it is used as a type. The most recognised example of this is (probably)
-# `HttpRequest.user`
-_UserModel: TypeAlias = AbstractBaseUser  # noqa: PYI047

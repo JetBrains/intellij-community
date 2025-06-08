@@ -1,9 +1,8 @@
 import datetime
 from decimal import Decimal
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, Literal, TypeGuard, TypeVar, overload
 
 from django.utils.functional import Promise
-from typing_extensions import TypeGuard
 
 class DjangoUnicodeDecodeError(UnicodeDecodeError):
     obj: bytes

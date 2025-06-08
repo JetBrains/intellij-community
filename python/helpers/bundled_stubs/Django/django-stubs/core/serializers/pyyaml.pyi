@@ -1,7 +1,6 @@
-from collections.abc import Iterator
 from typing import IO, Any
 
-from django.core.serializers.base import DeserializedObject
+from django.core.serializers.base import Deserializer as PythonDeserializer
 from django.core.serializers.python import Serializer as PythonSerializer
 from django.db.models.fields import Field
 from yaml import CSafeDumper as SafeDumper
@@ -17,6 +16,5 @@ class Serializer(PythonSerializer):
     def end_serialization(self) -> None: ...
     def getvalue(self) -> Any: ...
 
-def Deserializer(
-    stream_or_string: bytes | str | IO[bytes] | IO[str], **options: Any
-) -> Iterator[DeserializedObject]: ...
+class Deserializer(PythonDeserializer):
+    def __init__(self, stream_or_string: bytes | str | IO[bytes] | IO[str], **options: Any) -> None: ...

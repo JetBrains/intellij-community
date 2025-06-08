@@ -47,3 +47,27 @@ def get_supported_language_variant(lang_code: str, *, strict: bool = False) -> s
 def get_language_info(lang_code: str) -> Any: ...
 def trim_whitespace(s: str) -> str: ...
 def round_away_from_one(value: int) -> int: ...
+
+__all__ = [
+    "activate",
+    "deactivate",
+    "override",
+    "deactivate_all",
+    "get_language",
+    "get_language_from_request",
+    "get_language_info",
+    "get_language_bidi",
+    "check_for_language",
+    "to_language",
+    "to_locale",
+    "templatize",
+    "gettext",
+    "gettext_lazy",
+    "gettext_noop",
+    "ngettext",
+    "ngettext_lazy",
+    "pgettext",
+    "pgettext_lazy",
+    "npgettext",
+    "npgettext_lazy",
+]

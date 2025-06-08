@@ -1,4 +1,5 @@
-from typing import Any, Literal, MutableMapping
+from collections.abc import MutableMapping
+from typing import Any, Literal
 
 from django.contrib.gis.db.backends.base.operations import BaseSpatialOperations
 from django.contrib.gis.db.backends.utils import SpatialOperator

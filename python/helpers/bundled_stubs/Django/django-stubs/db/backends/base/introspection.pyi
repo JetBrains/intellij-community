@@ -1,17 +1,24 @@
-from collections import namedtuple
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, NamedTuple
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.utils import CursorWrapper
 from django.db.models.base import Model
 
-TableInfo = namedtuple("TableInfo", ["name", "type"])
+class TableInfo(NamedTuple):
+    name: str
+    type: str
 
-FieldInfo = namedtuple(
-    "FieldInfo",
-    ["name", "type_code", "display_size", "internal_size", "precision", "scale", "null_ok", "default", "collation"],
-)
+class FieldInfo(NamedTuple):
+    name: str
+    type_code: int
+    display_size: int
+    internal_size: int
+    precision: int
+    scale: int
+    null_ok: bool
+    default: str
+    collation: str
 
 class BaseDatabaseIntrospection:
     data_types_reverse: Any

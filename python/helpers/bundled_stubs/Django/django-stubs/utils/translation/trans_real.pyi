@@ -4,10 +4,9 @@ from gettext import NullTranslations
 from re import Pattern
 
 # switch to tuple once https://github.com/python/mypy/issues/11098 is fixed
-from typing import Any, Literal, Protocol, TypeVar, type_check_only
+from typing import Any, Literal, Protocol, TypeAlias, TypeVar, type_check_only
 
 from django.http.request import HttpRequest
-from typing_extensions import TypeAlias
 
 CONTEXT_SEPARATOR: Literal["\x04"]
 LANGUAGE_CODE_MAX_LENGTH: int

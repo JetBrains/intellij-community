@@ -40,3 +40,5 @@ class AggregateQuery(Query):
     sub_params: tuple
     where: WhereNode
     where_class: type[WhereNode]
+
+__all__ = ["DeleteQuery", "UpdateQuery", "InsertQuery", "AggregateQuery"]

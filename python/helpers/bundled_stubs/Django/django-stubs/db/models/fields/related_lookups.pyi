@@ -1,30 +1,7 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from typing import Any
 
-from django.db.models.fields import Field
-from django.db.models.lookups import (
-    Exact,
-    GreaterThan,
-    GreaterThanOrEqual,
-    In,
-    IsNull,
-    LessThan,
-    LessThanOrEqual,
-    Lookup,
-)
-
-class MultiColSource:
-    alias: str
-    field: Field
-    sources: tuple[Field, Field]
-    targets: tuple[Field, Field]
-    contains_aggregate: bool
-    output_field: Field
-    def __init__(
-        self, alias: str, targets: tuple[Field, Field], sources: tuple[Field, Field], field: Field
-    ) -> None: ...
-    def relabeled_clone(self, relabels: Mapping[str, str]) -> MultiColSource: ...
-    def get_lookup(self, lookup: str) -> type[Lookup] | None: ...
+from django.db.models.lookups import Exact, GreaterThan, GreaterThanOrEqual, In, IsNull, LessThan, LessThanOrEqual
 
 def get_normalized_value(value: Any, lhs: Any) -> tuple[Any, ...]: ...
 

@@ -51,6 +51,7 @@ class BTreeIndex(PostgresIndex):
         self,
         *expressions: BaseExpression | Combinable | str,
         fillfactor: int | None = None,
+        deduplicate_items: bool | None = None,
         fields: Sequence[str] = ...,
         name: str | None = ...,
         db_tablespace: str | None = ...,
@@ -119,3 +120,5 @@ class OpClass(Func):
         expression: BaseExpression | Combinable | str,
         name: str,
     ) -> None: ...
+
+__all__ = ["BloomIndex", "BrinIndex", "BTreeIndex", "GinIndex", "GistIndex", "HashIndex", "SpGistIndex"]

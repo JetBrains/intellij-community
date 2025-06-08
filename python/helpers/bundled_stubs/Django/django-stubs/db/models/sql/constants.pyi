@@ -4,8 +4,9 @@ GET_ITERATOR_CHUNK_SIZE: Final[int]
 
 MULTI: Literal["multi"]
 SINGLE: Literal["single"]
-CURSOR: Literal["cursor"]
 NO_RESULTS: Literal["no results"]
+CURSOR: Literal["cursor"]
+ROW_COUNT: Literal["row count"]
 
 ORDER_DIR: dict[str, tuple[str, str]]
 

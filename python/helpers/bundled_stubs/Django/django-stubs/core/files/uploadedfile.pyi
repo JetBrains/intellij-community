@@ -48,3 +48,10 @@ class SimpleUploadedFile(InMemoryUploadedFile):
     def __init__(self, name: str, content: bytes | None, content_type: str = "text/plain") -> None: ...
     @classmethod
     def from_dict(cls, file_dict: dict[str, str | bytes]) -> Self: ...
+
+__all__ = (
+    "UploadedFile",
+    "TemporaryUploadedFile",
+    "InMemoryUploadedFile",
+    "SimpleUploadedFile",
+)
