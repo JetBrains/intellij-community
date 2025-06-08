@@ -119,7 +119,7 @@ internal class WorkspaceFileIndexDataImpl(
       EntityStorageKind.MAIN -> workspaceModel.currentSnapshot to contributors
       EntityStorageKind.UNLOADED -> workspaceModel.currentSnapshotOfUnloadedEntities to contributorsForUnloaded
     }
-    val registrar = StoreFileSetsRegistrarImpl(storageKind)
+    val registrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (entityClass in contributors.keys) {
         for (entity in storage.entities(entityClass)) {
@@ -284,7 +284,7 @@ internal class WorkspaceFileIndexDataImpl(
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
     }
-    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for (added in addedEntities) {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
@@ -351,7 +351,7 @@ internal class WorkspaceFileIndexDataImpl(
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN)
-    val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN)
+    val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
@@ -464,109 +464,6 @@ internal class WorkspaceFileIndexDataImpl(
     return nonExistingFilesRegistry.analyzeVfsChanges(events)
   }
 
-  private inner class StoreFileSetsRegistrarImpl(private val storageKind: EntityStorageKind) : WorkspaceFileSetRegistrar {
-    override fun registerFileSet(root: VirtualFileUrl,
-                                 kind: WorkspaceFileKind,
-                                 entity: WorkspaceEntity,
-                                 customData: WorkspaceFileSetData?) {
-      registerFileSet(root, kind, entity, customData, recursive = true)
-    }
-
-    private fun registerFileSet(
-      root: VirtualFileUrl,
-      kind: WorkspaceFileKind,
-      entity: WorkspaceEntity,
-      customData: WorkspaceFileSetData?,
-      recursive: Boolean,
-    ) {
-      val rootFile = if (root is VirtualFilePointer) root.file else VirtualFileManager.getInstance().findFileByUrl(root.url)
-      if (rootFile != null) {
-        registerFileSet(rootFile, kind, entity, customData, recursive)
-      }
-      else {
-        nonExistingFilesRegistry.registerUrl(
-          root = root,
-          entity = entity,
-          storageKind = storageKind,
-          fileSetKind = if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER,
-        )
-      }
-    }
-
-    override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-      registerFileSet(root, kind, entity, customData, recursive = true)
-    }
-
-    private fun registerFileSet(
-      root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
-      recursive: Boolean,
-    ) {
-      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createPointer(), storageKind, customData ?: DummyWorkspaceFileSetData,
-                                         recursive)
-      fileSets.putValue(root, fileSet)
-      if (customData is JvmPackageRootDataInternal) {
-        fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
-      }
-    }
-
-    override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
-                                             kind: WorkspaceFileKind,
-                                             entity: WorkspaceEntity,
-                                             customData: WorkspaceFileSetData?) {
-      registerFileSet(file, kind, entity, customData, recursive = false)
-    }
-
-    override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
-      val excludedRootFile = excludedRoot.virtualFile
-      if (excludedRootFile != null) {
-        fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createPointer(), storageKind))
-      }
-      else {
-        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, NonExistingFileSetKind.EXCLUDED_FROM_CONTENT)
-      }
-    }
-
-    override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
-      val file = excludedRoot.virtualFile
-      if (file != null) {
-        val mask = when (excludedFrom) {
-          WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL
-          WorkspaceFileKind.CONTENT ->  WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
-          else -> excludedFrom.toMask()
-        }
-
-        fileSets.putValue(file, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
-      }
-      else {
-        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, if (excludedFrom.isContent) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT else NonExistingFileSetKind.EXCLUDED_OTHER)
-      }
-    }
-
-    override fun registerExclusionPatterns(root: VirtualFileUrl,
-                                           patterns: List<String>,
-                                           entity: WorkspaceEntity) {
-      val rootFile = root.virtualFile
-      if (!patterns.isEmpty()) {
-        if (rootFile != null) {
-          fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createPointer(), storageKind))
-        }
-        else {
-          nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
-        }
-      }
-    }
-
-    override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
-      val rootFile = root.virtualFile
-      if (rootFile != null) {
-        fileSets.putValue(rootFile, ExcludedFileSet.ByCondition(rootFile, condition, entity.createPointer(), storageKind))
-      }
-      else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
-      }
-    }
-  }
-
   private inner class RemoveFileSetsRegistrarImpl(private val storageKind: EntityStorageKind) : WorkspaceFileSetRegistrar {
     override fun registerFileSet(root: VirtualFileUrl,
                                  kind: WorkspaceFileKind,
@@ -658,4 +555,128 @@ internal fun WorkspaceFileKind.toMask(): Int {
     WorkspaceFileKind.CONTENT_NON_INDEXABLE -> WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
   }
   return mask
+}
+
+private class StoreFileSetsRegistrarImpl(
+  private val storageKind: EntityStorageKind,
+  private val nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry,
+  private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
+  private val fileSetsByPackagePrefix: PackagePrefixStorage,
+) : WorkspaceFileSetRegistrar {
+  override fun registerFileSet(
+    root: VirtualFileUrl,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+  ) {
+    registerFileSet(root = root, kind = kind, entity = entity, customData = customData, recursive = true)
+  }
+
+  private fun registerFileSet(
+    root: VirtualFileUrl,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+    recursive: Boolean,
+  ) {
+    val rootFile = if (root is VirtualFilePointer) root.file else VirtualFileManager.getInstance().findFileByUrl(root.url)
+    if (rootFile != null) {
+      registerFileSet(rootFile, kind, entity, customData, recursive)
+    }
+    else {
+      nonExistingFilesRegistry.registerUrl(
+        root = root,
+        entity = entity,
+        storageKind = storageKind,
+        fileSetKind = if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER,
+      )
+    }
+  }
+
+  override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+    registerFileSet(root = root, kind = kind, entity = entity, customData = customData, recursive = true)
+  }
+
+  private fun registerFileSet(
+    root: VirtualFile,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+    recursive: Boolean,
+  ) {
+    val fileSet = WorkspaceFileSetImpl(
+      root = root,
+      kind = kind,
+      entityPointer = entity.createPointer(),
+      entityStorageKind = storageKind,
+      data = customData ?: DummyWorkspaceFileSetData,
+      recursive = recursive,
+    )
+    fileSets.putValue(root, fileSet)
+    if (customData is JvmPackageRootDataInternal) {
+      fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
+    }
+  }
+
+  override fun registerNonRecursiveFileSet(
+    file: VirtualFileUrl,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+  ) {
+    registerFileSet(root = file, kind = kind, entity = entity, customData = customData, recursive = false)
+  }
+
+  override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
+    val excludedRootFile = excludedRoot.virtualFile
+    if (excludedRootFile == null) {
+      nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, NonExistingFileSetKind.EXCLUDED_FROM_CONTENT)
+    }
+    else {
+      fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createPointer(), storageKind))
+    }
+  }
+
+  override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
+    val file = excludedRoot.virtualFile
+    if (file == null) {
+      nonExistingFilesRegistry.registerUrl(
+        root = excludedRoot,
+        entity = entity,
+        storageKind = storageKind,
+        fileSetKind = if (excludedFrom.isContent) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT else NonExistingFileSetKind.EXCLUDED_OTHER,
+      )
+    }
+    else {
+      val mask = when (excludedFrom) {
+        WorkspaceFileKind.EXTERNAL -> WorkspaceFileKindMask.EXTERNAL
+        WorkspaceFileKind.CONTENT ->  WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
+        else -> excludedFrom.toMask()
+      }
+
+      fileSets.putValue(file, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
+    }
+  }
+
+  override fun registerExclusionPatterns(root: VirtualFileUrl, patterns: List<String>, entity: WorkspaceEntity) {
+    val rootFile = root.virtualFile
+    if (!patterns.isEmpty()) {
+      if (rootFile == null) {
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
+      }
+      else {
+        fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createPointer(), storageKind))
+      }
+    }
+  }
+
+  override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+    val rootFile = root.virtualFile
+    if (rootFile == null) {
+      nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
+    }
+    else {
+      fileSets.putValue(rootFile, ExcludedFileSet.ByCondition(rootFile, condition, entity.createPointer(), storageKind))
+    }
+  }
 }
