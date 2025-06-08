@@ -25,13 +25,11 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
@@ -56,6 +54,8 @@ import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBScrollBar
@@ -72,6 +72,12 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.JBValue.UIInteger
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -137,9 +143,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private val statusUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable)
 
   // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
-  private val trafficLightIconUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT,
-                                                           resourcesDisposable, null,
-                                                           Alarm.ThreadToUse.POOLED_THREAD)
+  private val trafficLightIconUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   @JvmField
   internal val errorStripeMarkersModel: ErrorStripeMarkersModel
 
@@ -177,6 +182,124 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private val statusTimer = Alarm(resourcesDisposable)
   private val extraActions: DefaultActionGroup
   private val extensionActions = HashMap<InspectionWidgetActionProvider, AnAction>()
+
+  init {
+    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
+
+    trafficLightPopup = TrafficLightPopup(editor, CompactViewAction())
+
+    val nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall)
+    val prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall)
+
+    extraActions = ExtraActionGroup()
+    populateInspectionWidgetActionsFromExtensions()
+
+    val actions: DefaultActionGroup = StatusToolbarGroup(
+      extraActions,
+      InspectionsGroup({ analyzerStatus }, editor),
+      TrafficLightAction(),
+      NavigationGroup(prevErrorAction, nextErrorAction))
+
+    val service = InternalUICustomization.getInstance()
+    var editorButtonLook: ActionButtonLook? = null
+    if (service != null) {
+      editorButtonLook = service.getEditorToolbarButtonLook()
+    }
+    if (editorButtonLook == null) {
+      editorButtonLook = EditorToolbarButtonLook(editor)
+    }
+
+    val statusToolbar = EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction)
+    this.statusToolbar = statusToolbar
+
+    statusToolbar.setMiniMode(true)
+    statusToolbar.setOrientation(SwingConstants.HORIZONTAL)
+    statusToolbar.setCustomButtonLook(editorButtonLook)
+    toolbarComponentListener = object : ComponentAdapter() {
+      override fun componentResized(event: ComponentEvent) {
+        val toolbar = event.component
+        if (toolbar.getWidth() > 0 && toolbar.getHeight() > 0) {
+          updateTrafficLightVisibility()
+        }
+      }
+    }
+
+    val toolbar = statusToolbar.getComponent()
+    toolbar.setLayout(StatusComponentLayout())
+    toolbar.addComponentListener(toolbarComponentListener)
+    toolbar.setBorder(JBUI.Borders.empty(2))
+
+    /*    if(RedesignedInspectionsManager.isAvailable()) {
+      GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
+                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
+      tooltip.withShowCount(1);
+      tooltip.withHeader("Paw Patrol");
+      tooltip.withIcon(AllIcons.General.BalloonInformation);
+      tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
+    }*/
+    smallIconLabel.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(event: MouseEvent?) {
+        trafficLightPopup.hidePopup()
+        analyzerStatus.controller.toggleProblemsView()
+      }
+
+      override fun mouseEntered(event: MouseEvent) {
+        trafficLightPopup.scheduleShow(event, analyzerStatus)
+      }
+
+      override fun mouseExited(event: MouseEvent?) {
+        trafficLightPopup.scheduleHide()
+      }
+    })
+    smallIconLabel.setOpaque(false)
+    smallIconLabel.setBackground(JBColor.lazy(Supplier { editor.colorsScheme.getDefaultBackground() }))
+    smallIconLabel.isVisible = false
+
+    val statusPanel = NonOpaquePanel()
+    statusPanel.isVisible = !editor.isOneLineMode
+    statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
+    statusPanel.add(toolbar)
+    statusPanel.add(smallIconLabel)
+
+    (editor.scrollPane as JBScrollPane).setStatusComponent(statusPanel)
+
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable)
+    connection.subscribe<AnActionListener>(AnActionListener.TOPIC, object : AnActionListener {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+        if (HintManagerImpl.isActionToIgnore(action)) {
+          return
+        }
+        trafficLightPopup.hidePopup()
+      }
+    })
+
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener { trafficLightPopup.updateUI() })
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
+
+        updateTrafficLightVisibility()
+      }
+    })
+
+    this.errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
+
+    editor.project?.let { project ->
+      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        trafficLightIconUpdateRequests
+          .throttle(50)
+          .collectLatest {
+            val errorStripeRenderer = myErrorStripeRenderer ?: return@collectLatest
+            val newStatus = readAction { errorStripeRenderer.getStatus() }
+            if (!newStatus.equalsTo(analyzerStatus)) {
+              withContext(Dispatchers.EDT) {
+                changeStatus(newStatus)
+              }
+            }
+          }
+      }
+    }
+  }
 
   companion object {
     @JvmStatic
@@ -358,17 +481,9 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   fun repaintTrafficLightIcon() {
-    if (myErrorStripeRenderer == null) {
-      return
+    if (myErrorStripeRenderer != null) {
+      trafficLightIconUpdateRequests.tryEmit(Unit)
     }
-
-    trafficLightIconUpdates.queue(Update.create("traffic light icon") {
-      val errorStripeRenderer = myErrorStripeRenderer ?: return@create
-      val newStatus = ReadAction.compute<AnalyzerStatus, RuntimeException?> { errorStripeRenderer.getStatus() }
-      if (!newStatus.equalsTo(analyzerStatus)) {
-        ApplicationManager.getApplication().invokeLater { changeStatus(newStatus) }
-      }
-    })
   }
 
   private fun changeStatus(newStatus: AnalyzerStatus) {
@@ -1273,108 +1388,6 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       val startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset)
       return if (startCollapsed == null) offset else max(offset, startCollapsed.getEndOffset())
     }
-  }
-
-  init {
-    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
-
-    trafficLightPopup = TrafficLightPopup(editor, CompactViewAction())
-
-    val nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall)
-    val prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall)
-
-    extraActions = ExtraActionGroup()
-    populateInspectionWidgetActionsFromExtensions()
-
-    val actions: DefaultActionGroup = StatusToolbarGroup(
-      extraActions,
-      InspectionsGroup({ analyzerStatus }, editor),
-      TrafficLightAction(),
-      NavigationGroup(prevErrorAction, nextErrorAction))
-
-    val service = InternalUICustomization.getInstance()
-    var editorButtonLook: ActionButtonLook? = null
-    if (service != null) {
-      editorButtonLook = service.getEditorToolbarButtonLook()
-    }
-    if (editorButtonLook == null) {
-      editorButtonLook = EditorToolbarButtonLook(editor)
-    }
-
-    val statusToolbar = EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction)
-    this.statusToolbar = statusToolbar
-
-    statusToolbar.setMiniMode(true)
-    statusToolbar.setOrientation(SwingConstants.HORIZONTAL)
-    statusToolbar.setCustomButtonLook(editorButtonLook)
-    toolbarComponentListener = object : ComponentAdapter() {
-      override fun componentResized(event: ComponentEvent) {
-        val toolbar = event.component
-        if (toolbar.getWidth() > 0 && toolbar.getHeight() > 0) {
-          updateTrafficLightVisibility()
-        }
-      }
-    }
-
-    val toolbar = statusToolbar.getComponent()
-    toolbar.setLayout(StatusComponentLayout())
-    toolbar.addComponentListener(toolbarComponentListener)
-    toolbar.setBorder(JBUI.Borders.empty(2))
-
-    /*    if(RedesignedInspectionsManager.isAvailable()) {
-      GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
-                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
-      tooltip.withShowCount(1);
-      tooltip.withHeader("Paw Patrol");
-      tooltip.withIcon(AllIcons.General.BalloonInformation);
-      tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
-    }*/
-    smallIconLabel.addMouseListener(object : MouseAdapter() {
-      override fun mouseClicked(event: MouseEvent?) {
-        trafficLightPopup.hidePopup()
-        analyzerStatus.controller.toggleProblemsView()
-      }
-
-      override fun mouseEntered(event: MouseEvent) {
-        trafficLightPopup.scheduleShow(event, analyzerStatus)
-      }
-
-      override fun mouseExited(event: MouseEvent?) {
-        trafficLightPopup.scheduleHide()
-      }
-    })
-    smallIconLabel.setOpaque(false)
-    smallIconLabel.setBackground(JBColor.lazy(Supplier { editor.colorsScheme.getDefaultBackground() }))
-    smallIconLabel.isVisible = false
-
-    val statusPanel: JPanel = NonOpaquePanel()
-    statusPanel.isVisible = !editor.isOneLineMode
-    statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
-    statusPanel.add(toolbar)
-    statusPanel.add(smallIconLabel)
-
-    (editor.scrollPane as JBScrollPane).setStatusComponent(statusPanel)
-
-    val connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable)
-    connection.subscribe<AnActionListener>(AnActionListener.TOPIC, object : AnActionListener {
-      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-        if (HintManagerImpl.isActionToIgnore(action)) {
-          return
-        }
-        trafficLightPopup.hidePopup()
-      }
-    })
-
-    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener { trafficLightPopup.updateUI() })
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
-
-        updateTrafficLightVisibility()
-      }
-    })
-
-    this.errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
   }
 
   private inner class TrafficLightAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
