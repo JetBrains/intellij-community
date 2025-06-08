@@ -33,6 +33,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
@@ -116,6 +117,8 @@ jvm_library(
   associates = [":vcs-git"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/observable",

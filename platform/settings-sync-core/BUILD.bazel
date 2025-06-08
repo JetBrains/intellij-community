@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/configuration-store-impl:configurationStore-impl",
@@ -56,6 +57,8 @@ jvm_library(
   associates = [":settingsSync-core"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/configuration-store-impl:configurationStore-impl",

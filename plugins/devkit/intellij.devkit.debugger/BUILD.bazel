@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/debugger/openapi:java-debugger",
+    "//platform/util/concurrency",
     "//platform/xdebugger-api:debugger",
     "//java/debugger/impl",
     "//platform/xdebugger-impl:debugger-impl",
@@ -35,6 +36,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/debugger/openapi:java-debugger",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/xdebugger-api:debugger",
     "//java/debugger/impl",
     "//platform/xdebugger-impl:debugger-impl",

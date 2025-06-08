@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common-provided",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:workspace-model-codegen",
+    "//platform/util/concurrency",
     "//platform/ide-core",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",

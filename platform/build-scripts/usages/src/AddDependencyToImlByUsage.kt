@@ -82,8 +82,8 @@ internal class AddDependencyToImlByUsage {
         //"intellij.platform.credentialStore.impl",
         //"intellij.platform.macro",
         //"intellij.platform.lvcs",
-        "intellij.grid.csv.core.impl",
-        "intellij.grid.types",
+        //"intellij.grid.csv.core.impl",
+        "intellij.platform.concurrency",
         //"intellij.c",
         //"intellij.cidr.core",
       )

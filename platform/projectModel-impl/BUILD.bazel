@@ -42,7 +42,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//jps/model-serialization",
     "//platform/util-ex",
-    "//platform/util/concurrency",
   ],
   runtime_deps = [":projectModel-impl_resources"]
 )

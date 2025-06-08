@@ -25,10 +25,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
   ],
-  exports = [
-    "//platform/lang-api:lang",
-    "//platform/util/concurrency",
-  ],
+  exports = ["//platform/lang-api:lang"],
   runtime_deps = [":debugger_resources"]
 )
 ### auto-generated section `build intellij.platform.debugger` end
