@@ -6,6 +6,7 @@
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.community.interpreters"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>

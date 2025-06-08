@@ -64,6 +64,7 @@
   - name: intellij.python.community.services.shared
   - name: intellij.python.community.services.internal.impl
   - name: intellij.python.community.services.systemPython
+  - name: intellij.python.community.interpreters
   - name: intellij.python.community.plugin.minor
   - name: intellij.python.community.plugin.minorRider
   - name: intellij.python.community.communityOnly
