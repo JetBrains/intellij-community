@@ -55,6 +55,11 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
         runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinFile2ToTest.main.kt")
+    public void testFromKotlinFile2ToTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFile2ToTest.main.kt");
+    }
+
     @TestMetadata("fromKotlinFileToJavaFacade.main.kt")
     public void testFromKotlinFileToJavaFacade() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToJavaFacade.main.kt");

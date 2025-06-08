@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiUtilCore
@@ -22,6 +24,7 @@ import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
@@ -89,6 +92,7 @@ abstract class AbstractKotlinTestFinder : TestFinder {
 
         val frameworks = TestFrameworks.getInstance()
         val classesWithWeights = ArrayList<Pair<out PsiNamedElement, Int>>()
+        val psiManager = PsiManager.getInstance(project)
         val collectPossibleNamesWithWeights = TestFinderHelper.collectPossibleClassNamesWithWeights(potentialName)
 
         fun addElementWithWeight(element: PsiNamedElement, proximity: Int) {
@@ -144,6 +148,15 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             addKotlinTopLevelFunction(name, weight)
             if (name.first().isUpperCase()) {
                 addKotlinTopLevelFunction(name.replaceFirstChar {  it.lowercase() }, weight + 10)
+            }
+
+            FilenameIndex.processFilesByName(name + KotlinFileType.DOT_DEFAULT_EXTENSION, false, scope) { virtualFile ->
+                if (virtualFile == containingFile.virtualFile) return@processFilesByName true
+                val ktFile = psiManager.findFile(virtualFile) as? KtFile
+                ktFile?.let {
+                    addElementWithWeight(it, weight + 10)
+                }
+                true
             }
         }
 
@@ -224,7 +237,7 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                 listOfNotNull(element.name)
             }
             is KtFile -> {
-                setOf(element.javaFileFacadeFqName.shortName().asString())
+                setOf(element.javaFileFacadeFqName.shortName().asString(), element.name.substringBefore('.'))
             }
             is PsiNamedElement -> {
                 listOfNotNull(element.name)
