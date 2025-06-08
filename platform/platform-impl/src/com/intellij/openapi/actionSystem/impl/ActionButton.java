@@ -61,7 +61,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
-  private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   private Icon myIcon;
   protected final Presentation myPresentation;
@@ -115,6 +114,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
               .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, AccessibleState.CHECKED, null);
           }
         }
+
+        presentationPropertyChanged(evt);
       }
     });
     myPlace = place;
@@ -296,10 +297,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myRollover) {
       onMousePresenceChanged(false);
     }
-    if (myPresentationListener != null) {
-      myPresentation.removePropertyChangeListener(myPresentationListener);
-      myPresentationListener = null;
-    }
     if (myMouseDown) {
       ourGlobalMouseDown = false;
     }
@@ -312,9 +309,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   @Override
   public void addNotify() {
     super.addNotify();
-    if (myPresentationListener == null) {
-      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
-    }
     if (ActionToolbar.findToolbarBy(this) == null) {
       ActionManagerEx.withLazyActionManager(null, __ -> { update(); return Unit.INSTANCE; });
     }
