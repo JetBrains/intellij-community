@@ -65,6 +65,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
@@ -89,7 +90,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.Queue
 import java.util.function.BooleanSupplier
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.Border
@@ -138,7 +138,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   // null renderer means we should not show a traffic light icon
-  private var myErrorStripeRenderer: ErrorStripeRenderer? = null
+  private var errorStripeRenderer: ErrorStripeRenderer? = null
   private val resourcesDisposable = Disposer.newCheckedDisposable()
   private val statusUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable)
 
@@ -194,21 +194,14 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     extraActions = ExtraActionGroup()
     populateInspectionWidgetActionsFromExtensions()
 
-    val actions: DefaultActionGroup = StatusToolbarGroup(
+    val actions = StatusToolbarGroup(
       extraActions,
       InspectionsGroup({ analyzerStatus }, editor),
       TrafficLightAction(),
-      NavigationGroup(prevErrorAction, nextErrorAction))
+      NavigationGroup(prevErrorAction, nextErrorAction),
+    )
 
-    val service = InternalUICustomization.getInstance()
-    var editorButtonLook: ActionButtonLook? = null
-    if (service != null) {
-      editorButtonLook = service.getEditorToolbarButtonLook()
-    }
-    if (editorButtonLook == null) {
-      editorButtonLook = EditorToolbarButtonLook(editor)
-    }
-
+    var editorButtonLook = InternalUICustomization.getInstance()?.getEditorToolbarButtonLook() ?: EditorToolbarButtonLook(editor)
     val statusToolbar = EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction)
     this.statusToolbar = statusToolbar
 
@@ -252,7 +245,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       }
     })
     smallIconLabel.setOpaque(false)
-    smallIconLabel.setBackground(JBColor.lazy(Supplier { editor.colorsScheme.getDefaultBackground() }))
+    smallIconLabel.setBackground(JBColor.lazy { editor.colorsScheme.getDefaultBackground() })
     smallIconLabel.isVisible = false
 
     val statusPanel = NonOpaquePanel()
@@ -282,14 +275,16 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
       }
     })
 
-    this.errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
+    errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
 
-    editor.project?.let { project ->
+    val project = editor.project
+    @Suppress("IfThenToSafeAccess")
+    if (project != null) {
       project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         trafficLightIconUpdateRequests
           .throttle(50)
           .collectLatest {
-            val errorStripeRenderer = myErrorStripeRenderer ?: return@collectLatest
+            val errorStripeRenderer = errorStripeRenderer ?: return@collectLatest
             val newStatus = readAction { errorStripeRenderer.getStatus() }
             if (!newStatus.equalsTo(analyzerStatus)) {
               withContext(Dispatchers.EDT) {
@@ -297,7 +292,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
               }
             }
           }
-      }
+      }.cancelOnDispose(resourcesDisposable)
     }
   }
 
@@ -333,7 +328,17 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   private fun updateTrafficLightVisibility() {
-    statusUpdates.queue(Update.create("visibility") { WriteIntentReadAction.run { doUpdateTrafficLightVisibility() } })
+    statusUpdates.queue(object : Update("visibility") {
+      override suspend fun execute() {
+        writeIntentReadAction {
+          doUpdateTrafficLightVisibility()
+        }
+      }
+
+      override fun run() {
+        WriteIntentReadAction.run { doUpdateTrafficLightVisibility() }
+      }
+    })
   }
 
   private fun doUpdateTrafficLightVisibility() {
@@ -376,52 +381,50 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   private fun populateInspectionWidgetActionsFromExtensions() {
     for (extension in InspectionWidgetActionProvider.EP_NAME.extensionList) {
-      val action = extension.createAction(editor)
-      if (action != null) {
-        extensionActions.put(extension, action)
-        addInspectionWidgetAction(action, null)
-      }
+      val action = extension.createAction(editor) ?: continue
+      extensionActions.put(extension, action)
+      addInspectionWidgetAction(action, null)
     }
 
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionWidgetActionProvider> {
       override fun extensionAdded(extension: InspectionWidgetActionProvider, pluginDescriptor: PluginDescriptor) {
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        ApplicationManager.getApplication().invokeLater {
           val action = extension.createAction(editor)
           if (action != null) {
             extensionActions.put(extension, action)
             addInspectionWidgetAction(action, null)
           }
-        })
+        }
       }
 
       override fun extensionRemoved(extension: InspectionWidgetActionProvider, pluginDescriptor: PluginDescriptor) {
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        ApplicationManager.getApplication().invokeLater {
           val action = extensionActions.remove(extension)
           if (action != null) {
             removeInspectionWidgetAction(action)
           }
-        })
+        }
       }
     }, resourcesDisposable)
   }
 
   override fun addInspectionWidgetAction(action: AnAction, constraints: Constraints?) {
-    if (constraints != null) {
-      extraActions.add(action, constraints)
+    if (constraints == null) {
+      extraActions.add(action)
     }
     else {
-      extraActions.add(action)
+      extraActions.add(action, constraints)
     }
 
     if (action is Disposable) {
-      Disposer.register(resourcesDisposable, action as Disposable)
+      Disposer.register(resourcesDisposable, action)
     }
   }
 
   override fun removeInspectionWidgetAction(action: AnAction) {
     extraActions.remove(action)
     if (action is Disposable) {
-      Disposer.dispose(action as Disposable)
+      Disposer.dispose(action)
     }
   }
 
@@ -481,7 +484,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   fun repaintTrafficLightIcon() {
-    if (myErrorStripeRenderer != null) {
+    if (errorStripeRenderer != null) {
       trafficLightIconUpdateRequests.tryEmit(Unit)
     }
   }
@@ -523,19 +526,20 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   // Used in Rider please do not drop it
   fun forcingUpdateStatusToolbar() {
-    statusUpdates.queue(Update.create("forcingUpdate", Runnable {
-      @Suppress("DEPRECATION")
-      statusToolbar.updateActionsImmediately()
-    }))
+    statusUpdates.queue(object : Update("forcingUpdate") {
+      override fun run() {
+        @Suppress("DEPRECATION")
+        statusToolbar.updateActionsImmediately()
+      }
+    })
   }
 
   private val currentHint: LightweightHint?
     get() {
-      if (myCurrentHint == null) return null
-      var hint = myCurrentHint!!.get()
+      val hint = (myCurrentHint ?: return null).get()
       if (hint == null || !hint.isVisible()) {
         myCurrentHint = null
-        hint = null
+        return null
       }
       return hint
     }
@@ -588,7 +592,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
     ReadAction.nonBlocking<TooltipRenderer?> { tooltipRendererProvider.calcTooltipRenderer(highlighters) }
       .expireWhen(BooleanSupplier { editor.isDisposed })
-      .finishOnUiThread(ModalityState.nonModal(), Consumer { bigRenderer: TooltipRenderer? ->
+      .finishOnUiThread(ModalityState.nonModal()) { bigRenderer ->
         if (bigRenderer != null) {
           val hint = showTooltip(bigRenderer, createHint(e.component, Point(0, y + 1)).setForcePopup(true))
           myCurrentHint = WeakReference<LightweightHint?>(hint)
@@ -596,7 +600,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
           myKeepHint = false
           mouseMovementTracker.reset()
         }
-      })
+      }
       .submit(AppExecutorUtil.getAppExecutorService())
     return true
   }
@@ -661,8 +665,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   ) {
     val startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true)
     val endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false)
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, Processor { highlighter: RangeHighlighterEx? ->
-      if (highlighter!!.getErrorStripeMarkColor(editor.colorsScheme) != null) {
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, Processor { highlighter ->
+      if (highlighter.getErrorStripeMarkColor(editor.colorsScheme) != null) {
         val range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset())
         if (scrollBarY >= range.startOffset - getMinMarkHeight() * 2 &&
             scrollBarY <= range.endOffset + getMinMarkHeight() * 2
@@ -702,7 +706,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     editor.caretModel.removeSecondaryCarets()
     editor.caretModel.moveToOffset(offset)
     editor.selectionModel.removeSelection()
-    val scrollingModel: ScrollingModel = editor.scrollingModel
+    val scrollingModel = editor.scrollingModel
     scrollingModel.disableAnimation()
     if (logicalPositionToScroll != null) {
       val lineY = editor.logicalPositionToXY(logicalPositionToScroll).y
@@ -748,18 +752,18 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
 
   override fun setErrorStripeRenderer(renderer: ErrorStripeRenderer?) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (myErrorStripeRenderer is Disposable) {
-      Disposer.dispose(myErrorStripeRenderer as Disposable)
+    (errorStripeRenderer as Disposable?)?.let {
+      Disposer.dispose(it)
     }
-    myErrorStripeRenderer = renderer
+    errorStripeRenderer = renderer
     if (renderer is Disposable) {
-      Disposer.register(resourcesDisposable, renderer as Disposable)
+      Disposer.register(resourcesDisposable, renderer)
     }
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
   }
 
-  override fun getErrorStripeRenderer(): ErrorStripeRenderer? = myErrorStripeRenderer
+  override fun getErrorStripeRenderer(): ErrorStripeRenderer? = errorStripeRenderer
 
   override fun dispose() {
     Disposer.dispose(resourcesDisposable)
@@ -769,7 +773,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     statusToolbar.getComponent().removeComponentListener(toolbarComponentListener)
     (editor.scrollPane as JBScrollPane).setStatusComponent(null)
 
-    myErrorStripeRenderer = null
+    errorStripeRenderer = null
     tooltipRendererProvider = BasicTooltipRendererProvider()
     editorFragmentRenderer.clearHint()
 
