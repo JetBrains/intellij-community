@@ -37,6 +37,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/eel-provider",
     "//platform/util/coroutines",
+    "//platform/diagnostic/telemetry-impl",
   ],
   exports = [
     "//platform/projectModel-api:projectModel",

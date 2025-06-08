@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.ide.highlighter.ArchiveFileType
@@ -19,6 +21,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
@@ -46,7 +49,7 @@ internal class WorkspaceFileIndexDataImpl(
    * lead to memory leak. Maybe it is possible to implement lightweight [VirtualFileUrl] but it's not clear how to then implement efficient
    * equals and hashCode.
    */
-  private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection> = CollectionFactory.createSmallMemoryFootprintMap()
+  private val fileSets = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, StoredFileSetCollection>()
   private val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   private val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, this)
@@ -82,8 +85,14 @@ internal class WorkspaceFileIndexDataImpl(
     val start = Nanoseconds.now()
 
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal
-    registerAllEntities(EntityStorageKind.MAIN, workspaceModel)
-    registerAllEntities(EntityStorageKind.UNLOADED, workspaceModel)
+    span("register main entities") {
+      val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+      registerAllEntities(registrar, workspaceModel.currentSnapshot, contributors)
+    }
+    span("register unloaded entities") {
+      val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+      registerAllEntities(registrar, workspaceModel.currentSnapshotOfUnloadedEntities, contributorsForUnloaded)
+    }
 
     if (librariesAndSdkContributors != null) {
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
@@ -102,8 +111,10 @@ internal class WorkspaceFileIndexDataImpl(
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
 
-    registerAllEntities(EntityStorageKind.MAIN, workspaceModel)
-    registerAllEntities(EntityStorageKind.UNLOADED, workspaceModel)
+    val mainRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    registerAllEntities(mainRegistrar, workspaceModel.currentSnapshot, contributors)
+    val unloadedRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    registerAllEntities(unloadedRegistrar, workspaceModel.currentSnapshotOfUnloadedEntities, contributorsForUnloaded)
 
     if (librariesAndSdkContributors != null) {
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
@@ -115,21 +126,6 @@ internal class WorkspaceFileIndexDataImpl(
     }
 
     WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
-  }
-
-  private fun registerAllEntities(storageKind: EntityStorageKind, workspaceModel: WorkspaceModelInternal) {
-    val (storage, contributors) = when (storageKind) {
-      EntityStorageKind.MAIN -> workspaceModel.currentSnapshot to contributors
-      EntityStorageKind.UNLOADED -> workspaceModel.currentSnapshotOfUnloadedEntities to contributorsForUnloaded
-    }
-    val registrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      for (entityClass in contributors.keys) {
-        for (entity in storage.entities(entityClass)) {
-          registerFileSets(entity = entity, entityClass = entityClass, storage = storage, storageKind = storageKind, registrar = registrar)
-        }
-      }
-    }
   }
 
   override fun getFileInfo(
@@ -236,31 +232,6 @@ internal class WorkspaceFileIndexDataImpl(
   fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeNanosec.addMeasuredTime {
     fileSets[virtualFile]?.forEach(action)
   }
-  
-  private fun <E : WorkspaceEntity> getContributors(entityClass: Class<out E>, storageKind: EntityStorageKind): List<WorkspaceFileIndexContributor<E>> {
-    val map = when (storageKind) {
-      EntityStorageKind.MAIN -> contributors
-      EntityStorageKind.UNLOADED -> contributorsForUnloaded
-    }
-    val value = map[entityClass] ?: emptyList()
-    @Suppress("UNCHECKED_CAST")
-    return value as List<WorkspaceFileIndexContributor<E>>
-  }
-
-  private fun <E : WorkspaceEntity> registerFileSets(
-    entity: E,
-    entityClass: Class<out E>,
-    storage: EntityStorage,
-    storageKind: EntityStorageKind,
-    registrar: WorkspaceFileSetRegistrar,
-  ) {
-    val contributors = getContributors(entityClass, storageKind)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      for (contributor in contributors) {
-        contributor.registerFileSets(entity, registrar, storage)
-      }
-    }
-  }
 
   private fun <E : WorkspaceEntity> processChangesByContributor(contributor: WorkspaceFileIndexContributor<E>,
                                                                 storageKind: EntityStorageKind,
@@ -357,9 +328,11 @@ internal class WorkspaceFileIndexDataImpl(
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
+      @Suppress("UNCHECKED_CAST")
+      val contributors = contributors.get(entity.getEntityInterface()) as List<WorkspaceFileIndexContributor<WorkspaceEntity>>? ?: continue
       WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-        registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, removeRegistrar)
-        registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, storeRegistrar)
+        registerFileSets(entity = entity, storage = storage, contributors = contributors, registrar = removeRegistrar)
+        registerFileSets(entity = entity, storage = storage, contributors = contributors, registrar = storeRegistrar)
       }
     }
     dirtyFiles.clear()
@@ -465,6 +438,35 @@ internal class WorkspaceFileIndexDataImpl(
 
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
     return nonExistingFilesRegistry.analyzeVfsChanges(events)
+  }
+}
+
+private fun registerAllEntities(
+  registrar: StoreFileSetsRegistrarImpl,
+  storage: ImmutableEntityStorage,
+  contributorMap: Map<Class<out WorkspaceEntity>, List<WorkspaceFileIndexContributor<*>>>,
+) {
+  WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+    for ((entityClass, contributors) in contributorMap) {
+      @Suppress("UNCHECKED_CAST")
+      contributors as List<WorkspaceFileIndexContributor<WorkspaceEntity>>
+      for (entity in storage.entities(entityClass)) {
+        registerFileSets(entity = entity, storage = storage, contributors = contributors, registrar = registrar)
+      }
+    }
+  }
+}
+
+private fun <E : WorkspaceEntity> registerFileSets(
+  entity: E,
+  storage: EntityStorage,
+  registrar: WorkspaceFileSetRegistrar,
+  contributors: List<WorkspaceFileIndexContributor<WorkspaceEntity>>,
+) {
+  WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+    for (contributor in contributors) {
+      contributor.registerFileSets(entity, registrar, storage)
+    }
   }
 }
 
