@@ -1,224 +1,1327 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "ReplaceGetOrSet")
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.hint.*;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
-import com.intellij.openapi.application.impl.InternalUICustomization;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
-import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.editor.impl
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.LabelUI;
-import javax.swing.plaf.ScrollBarUI;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.List;
-import java.util.Queue;
-import java.util.function.Supplier;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.hint.*
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ActivityTracker
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.ActionsCollector
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.ex.*
+import com.intellij.openapi.editor.impl.inspector.InspectionsGroup
+import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager.isAvailable
+import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.AnalyzerStatus.Companion.EMPTY
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader.getDarkIcon
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.*
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.Alarm
+import com.intellij.util.Processor
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.*
+import com.intellij.util.ui.JBValue.UIInteger
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.*
+import java.awt.event.*
+import java.awt.geom.AffineTransform
+import java.awt.image.BufferedImage
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
+import java.util.*
+import java.util.Queue
+import java.util.function.BooleanSupplier
+import java.util.function.Consumer
+import java.util.function.Supplier
+import javax.swing.*
+import javax.swing.border.Border
+import javax.swing.plaf.FontUIResource
+import javax.swing.plaf.LabelUI
+import kotlin.concurrent.Volatile
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+
+private const val LEFT_RIGHT_INDENT = 5
+private const val INTER_GROUP_OFFSET = 6
+
+private val LOG = logger<EditorMarkupModelImpl>()
+
+private val ERROR_STRIPE_TOOLTIP_GROUP = TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0)
+
+private val SCROLLBAR_WIDTH: JBValue = UIInteger("Editor.scrollBarWidth", 14)
+
+private val ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground", UIUtil.getContextHelpForeground())
+
+private const val QUICK_ANALYSIS_TIMEOUT_MS = 3000
+
+private val thinGap: Int
+  get() = scale(2)
+
+private val maxStripeSize: Int
+  get() = scale(4)
+
+private val maxMacThumbWidth: Int
+  get() = scale(10)
+
+private val statusIconSize: Int
+  get() = scale(18)
+
+private val WHOLE_DOCUMENT = ProperTextRange(0, 0)
+
+private val EXPANDED_STATUS = Key<List<StatusItem>>("EXPANDED_STATUS")
+private val TRANSLUCENT_STATE = Key<Boolean>("TRANSLUCENT_STATE")
 
 @ApiStatus.Internal
-public final class EditorMarkupModelImpl extends MarkupModelImpl
-  implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
-  private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
-
-  private static final JBValue SCROLLBAR_WIDTH = new JBValue.UIInteger("Editor.scrollBarWidth", 14);
-
-  private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
-                                                                          UIUtil.getContextHelpForeground());
-
-  private static final int QUICK_ANALYSIS_TIMEOUT_MS = 3000;
-
-  private static final Logger LOG = Logger.getInstance(EditorMarkupModelImpl.class);
-
-  private int getMinMarkHeight() {
-    return JBUIScale.scale(myMinMarkHeight);
+class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl) :
+  MarkupModelImpl(editor.document), EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
+  private fun getMinMarkHeight(): Int {
+    return scale(minMarkHeight)
   }
 
-  private static int getThinGap() {
-    return JBUIScale.scale(2);
-  }
-
-  private static int getMaxStripeSize() {
-    return JBUIScale.scale(4);
-  }
-
-  private static int getMaxMacThumbWidth() {
-    return JBUIScale.scale(10);
-  }
-
-  private static int getStatusIconSize() {
-    return JBUIScale.scale(18);
-  }
-
-  private final @NotNull EditorImpl myEditor;
   // null renderer means we should not show a traffic light icon
-  private @Nullable ErrorStripeRenderer myErrorStripeRenderer;
-  private final CheckedDisposable resourcesDisposable = Disposer.newCheckedDisposable();
-  private final MergingUpdateQueue myStatusUpdates =
-    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
+  private var myErrorStripeRenderer: ErrorStripeRenderer? = null
+  private val resourcesDisposable = Disposer.newCheckedDisposable()
+  private val statusUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable)
+
   // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
-  private final MergingUpdateQueue myTrafficLightIconUpdates =
-    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable, null,
-                           Alarm.ThreadToUse.POOLED_THREAD);
-  private final ErrorStripeMarkersModel myErrorStripeMarkersModel;
+  private val trafficLightIconUpdates = MergingUpdateQueue(javaClass.getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT,
+                                                           resourcesDisposable, null,
+                                                           Alarm.ThreadToUse.POOLED_THREAD)
+  @JvmField
+  internal val errorStripeMarkersModel: ErrorStripeMarkersModel
 
-  private boolean dimensionsAreValid;
-  private int myEditorScrollbarTop = -1;
-  private int myEditorTargetHeight = -1;
-  private int myEditorSourceHeight = -1;
-  private @Nullable ProperTextRange myDirtyYPositions;
-  private static final ProperTextRange WHOLE_DOCUMENT = new ProperTextRange(0, 0);
+  private var dimensionsAreValid = false
+  private var myEditorScrollbarTop = -1
+  private var myEditorTargetHeight = -1
+  private var myEditorSourceHeight = -1
+  private var myDirtyYPositions: ProperTextRange? = null
+  private var tooltipRendererProvider: ErrorStripTooltipRendererProvider = BasicTooltipRendererProvider()
 
-  private @NotNull ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
+  private var minMarkHeight = 0 // height for horizontal, width for vertical stripes
+  private val editorFragmentRenderer = EditorFragmentRenderer(editor)
+  private val mouseMovementTracker = MouseMovementTracker()
+  private var myRowAdjuster = 0
+  private var myWheelAccumulator = 0
+  private var myLastVisualLine = 0
+  private var myCurrentHint: Reference<LightweightHint?>? = null
+  private var myCurrentHintAnchorY = 0
+  private var myKeepHint = false
 
-  private int myMinMarkHeight;// height for horizontal, width for vertical stripes
-  private final @NotNull EditorFragmentRenderer myEditorFragmentRenderer;
-  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
-  private int myRowAdjuster;
-  private int myWheelAccumulator;
-  private int myLastVisualLine;
-  private Reference<LightweightHint> myCurrentHint;
-  private int myCurrentHintAnchorY;
-  private boolean myKeepHint;
+  val statusToolbar: ActionToolbarImpl
+  private var showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget
+  private var trafficLightVisible = true
+  private val toolbarComponentListener: ComponentListener
+  private var cachedToolbarBounds = Rectangle()
+  private val smallIconLabel = JLabel()
 
-  private final ActionToolbarImpl statusToolbar;
-  private boolean showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
-  private boolean trafficLightVisible = true;
-  private final ComponentListener toolbarComponentListener;
-  private Rectangle cachedToolbarBounds = new Rectangle();
-  private final JLabel smallIconLabel = new JLabel();
-  private volatile @NotNull AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
-  private boolean hasAnalyzed;
-  private boolean isAnalyzing;
-  private boolean showNavigation;
-  private boolean reportErrorStripeInconsistency = true;
-  private final @NotNull TrafficLightPopup myTrafficLightPopup;
-  private final Alarm statusTimer = new Alarm(resourcesDisposable);
-  private final DefaultActionGroup myExtraActions;
-  private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
+  @Volatile
+  private var analyzerStatus = EMPTY
+  private var hasAnalyzed = false
+  private var isAnalyzing = false
+  private var showNavigation = false
+  private var reportErrorStripeInconsistency = true
+  private val trafficLightPopup: TrafficLightPopup
+  private val statusTimer = Alarm(resourcesDisposable)
+  private val extraActions: DefaultActionGroup
+  private val extensionActions = HashMap<InspectionWidgetActionProvider, AnAction>()
 
-  EditorMarkupModelImpl(@NotNull EditorImpl editor) {
-    super(editor.getDocument());
-    myEditor = editor;
-    myEditorFragmentRenderer = new EditorFragmentRenderer(editor);
-    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-
-    myTrafficLightPopup = new TrafficLightPopup(editor, new CompactViewAction());
-
-    AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
-    AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
-
-    myExtraActions = new ExtraActionGroup();
-    populateInspectionWidgetActionsFromExtensions();
-
-    DefaultActionGroup actions = new StatusToolbarGroup(
-      myExtraActions,
-      new InspectionsGroup(() -> analyzerStatus, editor),
-      new TrafficLightAction(),
-      new NavigationGroup(prevErrorAction, nextErrorAction));
-
-    InternalUICustomization service = InternalUICustomization.getInstance();
-    ActionButtonLook editorButtonLook = null;
-    if(service != null) {
-      editorButtonLook = service.getEditorToolbarButtonLook();
-    }
-    if(editorButtonLook == null) {
-      editorButtonLook = new EditorToolbarButtonLook(myEditor);
+  companion object {
+    @JvmStatic
+    fun fitLineToEditor(editor: EditorImpl, visualLine: Int): Int {
+      val lineCount = editor.visibleLineCount
+      var shift = 0
+      if (visualLine >= lineCount - 1) {
+        val sequence = editor.document.charsSequence
+        shift = if (sequence.isEmpty()) 0 else if (sequence.get(sequence.length - 1) == '\n') 1 else 0
+      }
+      return max(0, min(lineCount - shift, visualLine))
     }
 
-    statusToolbar = new EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction);
+    @JvmField
+    val DISABLE_CODE_LENS: Key<Boolean> = Key<Boolean>("DISABLE_CODE_LENS")
+  }
 
-    statusToolbar.setMiniMode(true);
-    statusToolbar.setOrientation(SwingConstants.HORIZONTAL);
-    statusToolbar.setCustomButtonLook(editorButtonLook);
-    toolbarComponentListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent event) {
-        Component toolbar = event.getComponent();
-        if (toolbar.getWidth() > 0 && toolbar.getHeight() > 0) {
-          updateTrafficLightVisibility();
+  override fun toString(): String = "EditorMarkupModel for $editor"
+
+  override fun caretPositionChanged(event: CaretEvent) {
+    updateTrafficLightVisibility()
+  }
+
+  override fun afterDocumentChange(document: Document) {
+    trafficLightPopup.hidePopup()
+    updateTrafficLightVisibility()
+  }
+
+  override fun visibleAreaChanged(e: VisibleAreaEvent) {
+    updateTrafficLightVisibility()
+  }
+
+  private fun updateTrafficLightVisibility() {
+    statusUpdates.queue(Update.create("visibility") { WriteIntentReadAction.run { doUpdateTrafficLightVisibility() } })
+  }
+
+  private fun doUpdateTrafficLightVisibility() {
+    if (trafficLightVisible) {
+      if (isAvailable()) {
+        statusToolbar.updateActionsAsync()
+      }
+
+      if (showToolbar && editor.myView != null) {
+        statusToolbar.setTargetComponent(editor.contentComponent)
+        val pos = editor.caretModel.primaryCaret.getVisualPosition()
+        var point = editor.visualPositionToXY(pos)
+        point = SwingUtilities.convertPoint(editor.contentComponent, point, editor.scrollPane)
+
+        val stComponent = statusToolbar.getComponent()
+        if (stComponent.isVisible) {
+          val bounds = SwingUtilities.convertRectangle(stComponent, stComponent.bounds, editor.scrollPane)
+
+          if (!bounds.isEmpty && bounds.contains(point)) {
+            cachedToolbarBounds = bounds
+            stComponent.isVisible = false
+            smallIconLabel.isVisible = true
+          }
+        }
+        else if (!cachedToolbarBounds.contains(point)) {
+          stComponent.isVisible = true
+          smallIconLabel.isVisible = false
         }
       }
-    };
+      else {
+        statusToolbar.getComponent().isVisible = false
+        smallIconLabel.isVisible = true
+      }
+    }
+    else {
+      statusToolbar.getComponent().isVisible = false
+      smallIconLabel.isVisible = false
+    }
+  }
 
-    JComponent toolbar = statusToolbar.getComponent();
-    toolbar.setLayout(new StatusComponentLayout());
-    toolbar.addComponentListener(toolbarComponentListener);
-    toolbar.setBorder(JBUI.Borders.empty(2));
+  private fun populateInspectionWidgetActionsFromExtensions() {
+    for (extension in InspectionWidgetActionProvider.EP_NAME.extensionList) {
+      val action = extension.createAction(editor)
+      if (action != null) {
+        extensionActions.put(extension, action)
+        addInspectionWidgetAction(action, null)
+      }
+    }
 
-/*    if(RedesignedInspectionsManager.isAvailable()) {
+    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionWidgetActionProvider> {
+      override fun extensionAdded(extension: InspectionWidgetActionProvider, pluginDescriptor: PluginDescriptor) {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          val action = extension.createAction(editor)
+          if (action != null) {
+            extensionActions.put(extension, action)
+            addInspectionWidgetAction(action, null)
+          }
+        })
+      }
+
+      override fun extensionRemoved(extension: InspectionWidgetActionProvider, pluginDescriptor: PluginDescriptor) {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          val action = extensionActions.remove(extension)
+          if (action != null) {
+            removeInspectionWidgetAction(action)
+          }
+        })
+      }
+    }, resourcesDisposable)
+  }
+
+  override fun addInspectionWidgetAction(action: AnAction, constraints: Constraints?) {
+    if (constraints != null) {
+      extraActions.add(action, constraints)
+    }
+    else {
+      extraActions.add(action)
+    }
+
+    if (action is Disposable) {
+      Disposer.register(resourcesDisposable, action as Disposable)
+    }
+  }
+
+  override fun removeInspectionWidgetAction(action: AnAction) {
+    extraActions.remove(action)
+    if (action is Disposable) {
+      Disposer.dispose(action as Disposable)
+    }
+  }
+
+  private fun createAction(id: String, icon: Icon): AnAction {
+    val delegate = ActionManager.getInstance().getAction(id)
+    val result = object : MarkupModelDelegateAction(delegate) {
+      override fun update(e: AnActionEvent) {
+        if (isAvailable()) {
+          e.presentation.setEnabledAndVisible(false)
+          return
+        }
+        e.presentation.setEnabledAndVisible(true)
+        super.update(e)
+      }
+    }
+    result.getTemplatePresentation().setIcon(icon)
+    return result
+  }
+
+  private fun offsetToLine(offset: Int, document: Document): Int {
+    if (offset < 0) {
+      return 0
+    }
+    if (offset > document.textLength) {
+      return editor.visibleLineCount
+    }
+    return editor.offsetToVisualLine(offset)
+  }
+
+  private fun repaintVerticalScrollBar() {
+    editor.verticalScrollBar.repaint()
+  }
+
+  fun recalcEditorDimensions() {
+    val scrollBar = editor.verticalScrollBar
+    val scrollBarHeight = max(0, scrollBar.size.height)
+
+    myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight() /* + 1*/
+    assert(myEditorScrollbarTop >= 0)
+    val editorScrollbarBottom = scrollBar.getIncScrollButtonHeight()
+    myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom
+    myEditorSourceHeight = editor.preferredHeight
+
+    dimensionsAreValid = scrollBarHeight != 0
+  }
+
+  override fun setTrafficLightIconVisible(value: Boolean) {
+    if (errorPanel == null) {
+      return
+    }
+
+    if (value != trafficLightVisible) {
+      trafficLightVisible = value
+      updateTrafficLightVisibility()
+    }
+    repaint()
+  }
+
+  fun repaintTrafficLightIcon() {
+    if (myErrorStripeRenderer == null) {
+      return
+    }
+
+    trafficLightIconUpdates.queue(Update.create("traffic light icon") {
+      val errorStripeRenderer = myErrorStripeRenderer ?: return@create
+      val newStatus = ReadAction.compute<AnalyzerStatus, RuntimeException?> { errorStripeRenderer.getStatus() }
+      if (!newStatus.equalsTo(analyzerStatus)) {
+        ApplicationManager.getApplication().invokeLater { changeStatus(newStatus) }
+      }
+    })
+  }
+
+  private fun changeStatus(newStatus: AnalyzerStatus) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (!isErrorStripeVisible || resourcesDisposable.isDisposed()) {
+      return
+    }
+    statusTimer.cancelAllRequests()
+
+    val analyzingType = newStatus.analyzingType
+    val resetAnalyzingStatus = analyzerStatus.isTextStatus() && analyzerStatus.analyzingType == AnalyzingType.COMPLETE
+    analyzerStatus = newStatus
+    smallIconLabel.setIcon(analyzerStatus.icon)
+
+    if (showToolbar != analyzerStatus.controller.isToolbarEnabled) {
+      showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
+      updateTrafficLightVisibility()
+    }
+
+    val analyzing = analyzingType != AnalyzingType.COMPLETE
+    hasAnalyzed = !resetAnalyzingStatus && (hasAnalyzed || (isAnalyzing && !analyzing))
+    isAnalyzing = analyzing
+
+    if (analyzingType != AnalyzingType.EMPTY) {
+      showNavigation = analyzerStatus.showNavigation
+    }
+    else {
+      statusTimer.addRequest(Runnable {
+        hasAnalyzed = false
+        ActivityTracker.getInstance().inc()
+      }, QUICK_ANALYSIS_TIMEOUT_MS)
+    }
+
+    trafficLightPopup.updateVisiblePopup(analyzerStatus)
+    ActivityTracker.getInstance().inc()
+  }
+
+  // Used in Rider please do not drop it
+  fun forcingUpdateStatusToolbar() {
+    statusUpdates.queue(Update.create("forcingUpdate", Runnable {
+      @Suppress("DEPRECATION")
+      statusToolbar.updateActionsImmediately()
+    }))
+  }
+
+  private val currentHint: LightweightHint?
+    get() {
+      if (myCurrentHint == null) return null
+      var hint = myCurrentHint!!.get()
+      if (hint == null || !hint.isVisible()) {
+        myCurrentHint = null
+        hint = null
+      }
+      return hint
+    }
+
+  // true if tooltip shown
+  private fun showToolTipByMouseMove(e: MouseEvent): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+    val currentHint = this.currentHint
+    if (currentHint != null && (myKeepHint || mouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
+      return true
+    }
+    val visualLine = getVisualLineByEvent(e)
+    myLastVisualLine = visualLine
+    val area = editor.scrollingModel.getVisibleArea()
+    val visualY = editor.visualLineToY(visualLine)
+    val isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY)
+
+    if (!isVisible &&
+        UISettings.getInstance().showEditorToolTip &&
+        (true != editor.getUserData(DISABLE_CODE_LENS)) &&
+        !UIUtil.uiParents(editor.component, false).filter(EditorWindowHolder::class.java).isEmpty()) {
+      val rowRatio = visualLine.toFloat() / (editor.visibleLineCount - 1)
+      val y = if (myRowAdjuster != 0) (rowRatio * editor.verticalScrollBar.getHeight()).toInt() else e.getY() + 1
+      val highlighters = ArrayList<RangeHighlighterEx>()
+      collectRangeHighlighters(this, visualLine, highlighters)
+      collectRangeHighlighters(editor.filteredDocumentMarkupModel, visualLine, highlighters)
+      editorFragmentRenderer.show(visualLine, highlighters, e.isAltDown, createHint(e.component, Point(0, y)))
+      return true
+    }
+
+    val highlighters = getNearestHighlighters(e.getY() + 1)
+    if (highlighters.isEmpty()) {
+      return false
+    }
+
+    val y: Int
+    val nearest = getNearestRangeHighlighter(e)
+    if (nearest == null) {
+      y = e.getY()
+    }
+    else {
+      val range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset())
+      val eachStartY = range.startOffset
+      val eachEndY = range.endOffset
+      y = eachStartY + (eachEndY - eachStartY) / 2
+    }
+    if (currentHint != null && y == myCurrentHintAnchorY) {
+      return true
+    }
+
+    ReadAction.nonBlocking<TooltipRenderer?> { tooltipRendererProvider.calcTooltipRenderer(highlighters) }
+      .expireWhen(BooleanSupplier { editor.isDisposed })
+      .finishOnUiThread(ModalityState.nonModal(), Consumer { bigRenderer: TooltipRenderer? ->
+        if (bigRenderer != null) {
+          val hint = showTooltip(bigRenderer, createHint(e.component, Point(0, y + 1)).setForcePopup(true))
+          myCurrentHint = WeakReference<LightweightHint?>(hint)
+          myCurrentHintAnchorY = y
+          myKeepHint = false
+          mouseMovementTracker.reset()
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService())
+    return true
+  }
+
+  private fun getVisualLineByEvent(e: MouseEvent): Int {
+    var y = e.getY()
+    if (e.getSource() === editor.verticalScrollBar && y == editor.verticalScrollBar.getHeight() - 1) {
+      y++
+    }
+    return fitLineToEditor(editor, editor.offsetToVisualLine(yPositionToOffset(y + myWheelAccumulator, true)))
+  }
+
+  private fun getOffset(visualLine: Int, startLine: Boolean): Int {
+    return editor.visualPositionToOffset(VisualPosition(visualLine, if (startLine) 0 else Int.MAX_VALUE))
+  }
+
+  private fun collectRangeHighlighters(
+    markupModel: MarkupModelEx,
+    visualLine: Int,
+    highlighters: MutableList<RangeHighlighterEx>
+  ) {
+    val startOffset = getOffset(fitLineToEditor(editor, visualLine - EditorFragmentRenderer.PREVIEW_LINES), true)
+    val endOffset = getOffset(fitLineToEditor(editor, visualLine + EditorFragmentRenderer.PREVIEW_LINES), false)
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, Processor { highlighter ->
+      val tooltip = highlighter.getErrorStripeTooltip()
+      if (tooltip != null &&
+          !(tooltip is HighlightInfo && tooltip.type === HighlightInfoType.TODO) &&
+          highlighter.getStartOffset() < endOffset &&
+          highlighter.getEndOffset() > startOffset &&
+          highlighter.getErrorStripeMarkColor(editor.colorsScheme) != null) {
+        highlighters.add(highlighter)
+      }
+      true
+    })
+  }
+
+  private fun getNearestRangeHighlighter(e: MouseEvent): RangeHighlighter? {
+    val highlighters = getNearestHighlighters(e.getY())
+    var nearestMarker: RangeHighlighter? = null
+    var yPos = 0
+    for (highlighter in highlighters) {
+      val newYPos = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset()).startOffset
+      if (nearestMarker == null || abs(yPos - e.getY()) > abs(newYPos - e.getY())) {
+        nearestMarker = highlighter
+        yPos = newYPos
+      }
+    }
+    return nearestMarker
+  }
+
+  private fun getNearestHighlighters(y: Int): MutableSet<RangeHighlighter> {
+    val highlighters = HashSet<RangeHighlighter>()
+    addNearestHighlighters(this, y, highlighters)
+    addNearestHighlighters(editor.filteredDocumentMarkupModel, y, highlighters)
+    return highlighters
+  }
+
+  private fun addNearestHighlighters(
+    markupModel: MarkupModelEx,
+    scrollBarY: Int,
+    result: MutableCollection<in RangeHighlighter>
+  ) {
+    val startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true)
+    val endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false)
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, Processor { highlighter: RangeHighlighterEx? ->
+      if (highlighter!!.getErrorStripeMarkColor(editor.colorsScheme) != null) {
+        val range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset())
+        if (scrollBarY >= range.startOffset - getMinMarkHeight() * 2 &&
+            scrollBarY <= range.endOffset + getMinMarkHeight() * 2
+        ) {
+          result.add(highlighter)
+        }
+      }
+      true
+    })
+  }
+
+  private fun doClick(e: MouseEvent) {
+    val marker = getNearestRangeHighlighter(e)
+    val offset: Int
+    var logicalPositionToScroll: LogicalPosition? = null
+    val editorPreviewHint = editorFragmentRenderer.editorPreviewHint
+    if (marker == null) {
+      if (editorPreviewHint != null) {
+        logicalPositionToScroll = editor.visualToLogicalPosition(VisualPosition(editorFragmentRenderer.startVisualLine, 0))
+        offset = editor.document.getLineStartOffset(logicalPositionToScroll.line)
+      }
+      else {
+        return
+      }
+    }
+    else {
+      offset = marker.getStartOffset()
+    }
+
+    val doc: Document = editor.document
+    if (doc.getLineCount() > 0 && editorPreviewHint == null) {
+      // Necessary to expand folded block even if navigating just before one
+      // Very useful when navigating to the first unused import statement.
+      val lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset))
+      editor.caretModel.moveToOffset(lineEnd)
+    }
+    editor.caretModel.removeSecondaryCarets()
+    editor.caretModel.moveToOffset(offset)
+    editor.selectionModel.removeSelection()
+    val scrollingModel: ScrollingModel = editor.scrollingModel
+    scrollingModel.disableAnimation()
+    if (logicalPositionToScroll != null) {
+      val lineY = editor.logicalPositionToXY(logicalPositionToScroll).y
+      val relativePopupOffset = editorFragmentRenderer.relativeY
+      scrollingModel.scrollVertically(lineY - relativePopupOffset)
+    }
+    else {
+      scrollingModel.scrollToCaret(ScrollType.CENTER)
+    }
+    scrollingModel.enableAnimation()
+    if (marker != null) {
+      errorStripeMarkersModel.fireErrorMarkerClicked(marker, e)
+    }
+  }
+
+  override fun setErrorStripeVisible(value: Boolean) {
+    if (value) {
+      disposeErrorPanel()
+      val panel = MyErrorPanel()
+      editor.verticalScrollBar.setPersistentUI(panel)
+    }
+    else {
+      editor.verticalScrollBar.setPersistentUI(JBScrollBar.createUI(null))
+    }
+    errorStripeMarkersModel.setActive(value)
+  }
+
+  private val errorPanel: MyErrorPanel?
+    get() = editor.verticalScrollBar.getUI() as? MyErrorPanel
+
+  override fun setErrorPanelPopupHandler(handler: PopupHandler) {
+    ThreadingAssertions.assertEventDispatchThread()
+    errorPanel?.setPopupHandler(handler)
+  }
+
+  override fun setErrorStripTooltipRendererProvider(provider: ErrorStripTooltipRendererProvider) {
+    tooltipRendererProvider = provider
+  }
+
+  override fun getErrorStripTooltipRendererProvider(): ErrorStripTooltipRendererProvider = tooltipRendererProvider
+
+  override fun getEditor(): Editor = editor
+
+  override fun setErrorStripeRenderer(renderer: ErrorStripeRenderer?) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (myErrorStripeRenderer is Disposable) {
+      Disposer.dispose(myErrorStripeRenderer as Disposable)
+    }
+    myErrorStripeRenderer = renderer
+    if (renderer is Disposable) {
+      Disposer.register(resourcesDisposable, renderer as Disposable)
+    }
+    //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
+    //HintManager.getInstance().getTooltipController().cancelTooltips();
+  }
+
+  override fun getErrorStripeRenderer(): ErrorStripeRenderer? = myErrorStripeRenderer
+
+  override fun dispose() {
+    Disposer.dispose(resourcesDisposable)
+
+    disposeErrorPanel()
+
+    statusToolbar.getComponent().removeComponentListener(toolbarComponentListener)
+    (editor.scrollPane as JBScrollPane).setStatusComponent(null)
+
+    myErrorStripeRenderer = null
+    tooltipRendererProvider = BasicTooltipRendererProvider()
+    editorFragmentRenderer.clearHint()
+
+    trafficLightPopup.hidePopup()
+    extensionActions.clear()
+
+    analyzerStatus = EMPTY
+
+    super.dispose()
+  }
+
+  private fun disposeErrorPanel() {
+    errorPanel?.uninstallListeners()
+  }
+
+  fun rebuild() {
+    errorStripeMarkersModel.rebuild()
+  }
+
+  // startOffset == -1 || endOffset == -1 means whole document
+  @JvmOverloads
+  fun repaint(startOffset: Int = -1, endOffset: Int = -1) {
+    val range = offsetsToYPositions(startOffset, endOffset)
+    markDirtied(range)
+    if (startOffset == -1 || endOffset == -1) {
+      myDirtyYPositions = WHOLE_DOCUMENT
+    }
+
+    val bar = editor.verticalScrollBar
+    bar.repaint(0, range.startOffset, bar.getWidth(), range.length + getMinMarkHeight())
+  }
+
+  private val isMirrored: Boolean
+    get() = editor.isMirrored
+
+  private fun transparent(): Boolean = !editor.shouldScrollBarBeOpaque()
+
+  @DirtyUI
+  private inner class MyErrorPanel : ButtonlessScrollBarUI(), MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
+    private var handler: PopupHandler? = null
+    private var cachedTrack: BufferedImage? = null
+    private var cachedHeight = -1
+
+    fun dropCache() {
+      cachedTrack = null
+      cachedHeight = -1
+    }
+
+    override fun alwaysShowTrack(): Boolean {
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) {
+        return !transparent()
+      }
+      return super.alwaysShowTrack()
+    }
+
+    override fun installUI(c: JComponent?) {
+      super.installUI(c)
+      dropCache()
+    }
+
+    override fun uninstallUI(c: JComponent) {
+      super.uninstallUI(c)
+      dropCache()
+    }
+
+    override fun installListeners() {
+      super.installListeners()
+      scrollbar.addMouseMotionListener(this)
+      scrollbar.addMouseListener(this)
+      scrollbar.addMouseWheelListener(this)
+    }
+
+    @Suppress("RedundantVisibilityModifier")
+    public override fun uninstallListeners() {
+      scrollbar.removeMouseMotionListener(this)
+      scrollbar.removeMouseListener(this)
+      super.uninstallListeners()
+    }
+
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      if (!uiSettings.showEditorToolTip) {
+        hideMyEditorPreviewHint()
+      }
+      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
+      repaintTrafficLightIcon()
+      repaintVerticalScrollBar()
+
+      trafficLightPopup.updateVisiblePopup(analyzerStatus)
+    }
+
+    override fun paintThumb(g: Graphics, c: JComponent, thumbBounds: Rectangle?) {
+      if (isMacOverlayScrollbar) {
+        if (!isMirrored) {
+          super.paintThumb(g, c, thumbBounds)
+        }
+        else {
+          val g2d = g as Graphics2D
+          val old = g2d.transform
+          val tx = AffineTransform.getScaleInstance(-1.0, 1.0)
+          tx.translate(-c.getWidth().toDouble(), 0.0)
+          g2d.transform(tx)
+          super.paintThumb(g, c, thumbBounds)
+          g2d.transform = old
+        }
+      }
+      else {
+        super.paintThumb(g, c, thumbBounds)
+      }
+    }
+
+    override fun isThumbTranslucent(): Boolean = true
+
+    override fun getThumbOffset(value: Int): Int {
+      if (SystemInfoRt.isMac || `is`("editor.full.width.scrollbar")) {
+        return getMinMarkHeight() + scale(2)
+      }
+      @Suppress("DEPRECATION")
+      return super.getThumbOffset(value)
+    }
+
+    override fun isDark(): Boolean = editor.isDarkEnough
+
+    override fun alwaysPaintThumb(): Boolean = true
+
+    override fun getMacScrollBarBounds(baseBounds: Rectangle, thumb: Boolean): Rectangle {
+      val bounds = super.getMacScrollBarBounds(baseBounds, thumb)
+      bounds.width = min(bounds.width, maxMacThumbWidth)
+      val b2 = bounds.width / 2
+      bounds.x = thinGap + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2 - b2
+      return bounds
+    }
+
+    override fun getThickness(): Int = SCROLLBAR_WIDTH.get() + thinGap + getMinMarkHeight()
+
+    override fun paintTrack(g: Graphics, c: JComponent, trackBounds: Rectangle) {
+      if (editor.isDisposed) {
+        return
+      }
+      if (transparent()) {
+        ReadAction.run<RuntimeException?>(ThrowableRunnable { doPaintTrack(g, c, trackBounds) })
+      }
+      else {
+        super.paintTrack(g, c, trackBounds)
+      }
+    }
+
+    override fun doPaintTrack(g: Graphics, c: JComponent, bounds: Rectangle) {
+      val clip = g.clipBounds.intersection(bounds)
+      if (clip.height == 0) {
+        return
+      }
+
+      val componentBounds = c.bounds
+      val docRange = ProperTextRange.create(0, componentBounds.height)
+      if (cachedTrack == null || cachedHeight != componentBounds.height) {
+        cachedTrack = UIUtil.createImage(c, componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB)
+        cachedHeight = componentBounds.height
+        myDirtyYPositions = docRange
+        dimensionsAreValid = false
+        paintTrackBasement(cachedTrack!!.graphics, Rectangle(0, 0, componentBounds.width, componentBounds.height))
+      }
+      if (myDirtyYPositions === WHOLE_DOCUMENT) {
+        myDirtyYPositions = docRange
+      }
+      if (myDirtyYPositions != null) {
+        val imageGraphics = cachedTrack!!.createGraphics()
+
+        myDirtyYPositions = myDirtyYPositions!!.intersection(docRange)
+        if (myDirtyYPositions == null) myDirtyYPositions = docRange
+        repaint(imageGraphics, componentBounds.width, myDirtyYPositions!!)
+        myDirtyYPositions = null
+      }
+
+      StartupUiUtil.drawImage(g, cachedTrack!!)
+    }
+
+    fun paintTrackBasement(g: Graphics, bounds: Rectangle) {
+      if (transparent()) {
+        val g2 = g as Graphics2D
+        g2.composite = AlphaComposite.getInstance(AlphaComposite.CLEAR)
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+        g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER)
+      }
+      else {
+        g.color = editor.backgroundColor
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+      }
+    }
+
+    override fun adjustColor(c: Color?): Color {
+      return if (isMacOverlayScrollbar) super.adjustColor(c) else EditorImpl.adjustThumbColor(super.adjustColor(c), isDark)
+    }
+
+    fun repaint(g: Graphics, gutterWidth: Int, yRange: ProperTextRange) {
+      val clip = Rectangle(0, yRange.startOffset, gutterWidth, yRange.length + getMinMarkHeight())
+      paintTrackBasement(g, clip)
+
+      val startOffset = yPositionToOffset(clip.y - getMinMarkHeight(), true)
+      val endOffset = yPositionToOffset(clip.y + clip.height, false)
+
+      val oldClip = g.clip
+      g.clipRect(clip.x, clip.y, clip.width, clip.height)
+
+      drawErrorStripeMarkers(g, startOffset, endOffset)
+
+      @Suppress("GraphicsSetClipInspection")
+      g.clip = oldClip
+    }
+
+    fun drawErrorStripeMarkers(g: Graphics, startOffset: Int, endOffset: Int) {
+      val thinEnds: Queue<PositionedStripe> = PriorityQueue(5, Comparator.comparingInt { o -> o.yEnd })
+      val wideEnds: Queue<PositionedStripe> = PriorityQueue(5, Comparator.comparingInt { o -> o.yEnd })
+      // sorted by layer
+      val thinStripes = ArrayList<PositionedStripe>() // layer desc
+      val wideStripes = ArrayList<PositionedStripe>() // layer desc
+      val thinYStart = IntArray(1) // in range 0...yStart all spots are drawn
+      val wideYStart = IntArray(1) // in range 0...yStart all spots are drawn
+
+      val iterator = errorStripeMarkersModel.highlighterIterator(startOffset, endOffset)
+      try {
+        ContainerUtil.process(iterator, Processor { highlighter ->
+          val isThin = highlighter.isThinErrorStripeMark()
+          val yStart = if (isThin) thinYStart else wideYStart
+          val stripes = if (isThin) thinStripes else wideStripes
+          val ends = if (isThin) thinEnds else wideEnds
+
+          val range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset())
+          val ys = range.startOffset
+          var ye = range.endOffset
+          if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight()
+
+          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0])
+
+          val layer = highlighter.getLayer()
+
+          var stripe: PositionedStripe? = null
+          var i = 0
+          while (i < stripes.size) {
+            val s = stripes.get(i)
+            if (s.layer == layer) {
+              stripe = s
+              break
+            }
+            if (s.layer < layer) {
+              break
+            }
+            i++
+          }
+          val colorsScheme = editor.colorsScheme
+          val color = highlighter.getErrorStripeMarkColor(colorsScheme)
+          if (color == null) {
+            if (reportErrorStripeInconsistency) {
+              reportErrorStripeInconsistency = false
+              LOG.error("Error stripe marker has no color. highlighter: $highlighter, color scheme: $colorsScheme (${colorsScheme.javaClass})")
+            }
+            return@Processor true
+          }
+
+          if (stripe == null) {
+            // started new stripe, draw previous above
+            if (i == 0 && yStart[0] != ys) {
+              if (!stripes.isEmpty()) {
+                val top = stripes.get(0)
+                drawSpot(g, top.thin, yStart[0], ys, top.color)
+              }
+              yStart[0] = ys
+            }
+            stripe = PositionedStripe(color, ye, isThin, layer)
+            stripes.add(i, stripe)
+            ends.offer(stripe)
+          }
+          else {
+            if (stripe.yEnd < ye) {
+              if (color != stripe.color) {
+                // paint previous stripe on this layer
+                if (i == 0 && yStart[0] != ys) {
+                  drawSpot(g, stripe.thin, yStart[0], ys, stripe.color)
+                  yStart[0] = ys
+                }
+                stripe.color = color
+              }
+
+              // key changed, reinsert into queue
+              ends.remove(stripe)
+              stripe.yEnd = ye
+              ends.offer(stripe)
+            }
+          }
+          true
+        })
+      }
+      finally {
+        iterator.dispose()
+      }
+
+      drawStripesEndingBefore(Int.MAX_VALUE, thinEnds, thinStripes, g, thinYStart[0])
+      drawStripesEndingBefore(Int.MAX_VALUE, wideEnds, wideStripes, g, wideYStart[0])
+    }
+
+    fun drawStripesEndingBefore(
+      ys: Int,
+      ends: Queue<out PositionedStripe?>,
+      stripes: MutableList<PositionedStripe>,
+      g: Graphics, yStart: Int
+    ): Int {
+      var yStart = yStart
+      while (!ends.isEmpty()) {
+        val endingStripe: PositionedStripe? = ends.peek()
+        if (endingStripe == null || endingStripe.yEnd > ys) break
+        ends.remove()
+
+        // check whether endingStripe got obscured in the range yStart...endingStripe.yEnd
+        val i = stripes.indexOf(endingStripe)
+        stripes.removeAt(i)
+        if (i == 0) {
+          // visible
+          drawSpot(g, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color)
+          yStart = endingStripe.yEnd
+        }
+      }
+      return yStart
+    }
+
+    fun drawSpot(g: Graphics, thinErrorStripeMark: Boolean, yStart: Int, yEnd: Int, color: Color) {
+      var yStart = yStart
+      var yEnd = yEnd
+      val paintWidth: Int
+      val x: Int
+      if (thinErrorStripeMark) {
+        paintWidth = getMinMarkHeight()
+        x = if (isMirrored) thickness - paintWidth else 0
+        if (yEnd - yStart < 6) {
+          yStart -= 1
+          yEnd += yEnd - yStart - 1
+        }
+      }
+      else {
+        x = if (isMirrored) 0 else getMinMarkHeight() + thinGap
+        paintWidth = SCROLLBAR_WIDTH.get()
+      }
+      g.color = color
+      g.fillRect(x, yStart, paintWidth, yEnd - yStart)
+    }
+
+    // mouse events
+    override fun mouseClicked(e: MouseEvent) {
+      CommandProcessor.getInstance().executeCommand(
+        editor.project,
+        Runnable { doMouseClicked(e) },
+        EditorBundle.message("move.caret.command.name"),
+        DocCommandGroupId.noneGroupId(document),
+        UndoConfirmationPolicy.DEFAULT,
+        document,
+      )
+    }
+
+    override fun mousePressed(e: MouseEvent) {
+    }
+
+    override fun mouseReleased(e: MouseEvent) {
+    }
+
+    val width: Int
+      get() = scrollbar.getWidth()
+
+    fun doMouseClicked(e: MouseEvent) {
+      @Suppress("DEPRECATION")
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+        IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
+      }
+      val lineCount = document.getLineCount() + editor.settings.getAdditionalLinesCount()
+      if (lineCount == 0) {
+        return
+      }
+      if (e.getX() > 0 && e.getX() <= this.width) {
+        doClick(e)
+      }
+    }
+
+    override fun mouseMoved(e: MouseEvent) {
+      val lineCount = document.getLineCount() + editor.settings.getAdditionalLinesCount()
+      if (lineCount == 0) {
+        return
+      }
+
+      if (e.getX() > 0 && e.getX() <= this.width && showToolTipByMouseMove(e)) {
+        UIUtil.setCursor(scrollbar, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+        return
+      }
+
+      cancelMyToolTips(e, false)
+
+      if (scrollbar.getCursor() == Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)) {
+        scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
+      }
+    }
+
+    override fun mouseWheelMoved(e: MouseWheelEvent) {
+      if (editorFragmentRenderer.editorPreviewHint == null) {
+        // process wheel event by the parent scroll pane if no code lens
+        MouseEventAdapter.redispatch(e, e.component.getParent())
+        return
+      }
+      val units = e.unitsToScroll
+      if (units == 0) return
+      // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
+      if (myLastVisualLine < editor.visibleLineCount - 1 && units > 0 || myLastVisualLine > 0 && units < 0) {
+        myWheelAccumulator += units
+      }
+      myRowAdjuster = myWheelAccumulator / editor.lineHeight
+      showToolTipByMouseMove(e)
+    }
+
+    fun cancelMyToolTips(e: MouseEvent, checkIfShouldSurvive: Boolean) {
+      hideMyEditorPreviewHint()
+      val tooltipController = TooltipController.getInstance()
+      if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
+        tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP, e, true)
+      }
+    }
+
+    override fun mouseEntered(e: MouseEvent) {
+    }
+
+    override fun mouseExited(e: MouseEvent) {
+      hideMyEditorPreviewHint()
+      val currentHint = currentHint
+      if (currentHint != null && !myKeepHint) {
+        closeHintOnMovingMouseAway(currentHint)
+      }
+    }
+
+    fun closeHintOnMovingMouseAway(hint: LightweightHint) {
+      val disposable = Disposer.newDisposable()
+      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e: AWTEvent? ->
+        if (e!!.getID() == MouseEvent.MOUSE_PRESSED) {
+          myKeepHint = true
+          Disposer.dispose(disposable)
+        }
+        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(RelativePoint(e as MouseEvent))) {
+          hint.hide()
+          Disposer.dispose(disposable)
+        }
+        false
+      }, disposable)
+    }
+
+    override fun mouseDragged(e: MouseEvent) {
+      cancelMyToolTips(e, true)
+    }
+
+    fun setPopupHandler(handler: PopupHandler) {
+      if (this@MyErrorPanel.handler != null) {
+        scrollbar.removeMouseListener(this@MyErrorPanel.handler)
+      }
+
+      this@MyErrorPanel.handler = handler
+      scrollbar.addMouseListener(handler)
+    }
+  }
+
+  private fun hideMyEditorPreviewHint() {
+    editorFragmentRenderer.hideHint()
+    myRowAdjuster = 0
+    myWheelAccumulator = 0
+    myLastVisualLine = 0
+  }
+
+  private fun showTooltip(tooltipObject: TooltipRenderer, hintHint: HintHint): LightweightHint? {
+    hideMyEditorPreviewHint()
+    return TooltipController.getInstance().showTooltipByMouseMove(
+      editor,
+      hintHint.targetPoint,
+      tooltipObject,
+      editor.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
+      ERROR_STRIPE_TOOLTIP_GROUP,
+      hintHint,
+    )
+  }
+
+  override fun addErrorMarkerListener(listener: ErrorStripeListener, parent: Disposable) {
+    errorStripeMarkersModel.addErrorMarkerListener(listener, parent)
+  }
+
+  private fun markDirtied(yPositions: ProperTextRange) {
+    if (myDirtyYPositions !== WHOLE_DOCUMENT) {
+      val start = max(0, yPositions.startOffset - editor.lineHeight)
+      val end = if (myEditorScrollbarTop + myEditorTargetHeight == 0)
+        yPositions.endOffset + editor.lineHeight
+      else min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.endOffset + editor.lineHeight)
+      val adj = ProperTextRange(start, max(end, start))
+
+      myDirtyYPositions = if (myDirtyYPositions == null) adj else myDirtyYPositions!!.union(adj)
+    }
+
+    myEditorScrollbarTop = 0
+    myEditorSourceHeight = 0
+    myEditorTargetHeight = 0
+    dimensionsAreValid = false
+  }
+
+  override fun setMinMarkHeight(minMarkHeight: Int) {
+    this.minMarkHeight = min(minMarkHeight, maxStripeSize)
+  }
+
+  override fun isErrorStripeVisible(): Boolean = errorPanel != null
+
+  private class BasicTooltipRendererProvider : ErrorStripTooltipRendererProvider {
+    override fun calcTooltipRenderer(highlighters: MutableCollection<out RangeHighlighter>): TooltipRenderer? {
+      ThreadingAssertions.assertBackgroundThread()
+      var bigRenderer: LineTooltipRenderer? = null
+      //do not show the same tooltip twice
+      var tooltips: MutableSet<String?>? = null
+
+      for (highlighter in highlighters) {
+        val tooltipObject = highlighter.getErrorStripeTooltip()
+        if (tooltipObject == null) continue
+
+        @Suppress("HardCodedStringLiteral")
+        val text = if (tooltipObject is HighlightInfo) tooltipObject.getToolTip() else tooltipObject.toString()
+        if (text == null) {
+          continue
+        }
+
+        if (tooltips == null) {
+          tooltips = HashSet<String?>()
+        }
+        if (tooltips.add(text)) {
+          if (bigRenderer == null) {
+            bigRenderer = LineTooltipRenderer(text, arrayOf<Any>(highlighters))
+          }
+          else {
+            bigRenderer.addBelow(text)
+          }
+        }
+      }
+
+      return bigRenderer
+    }
+
+    override fun calcTooltipRenderer(text: String): TooltipRenderer {
+      return LineTooltipRenderer(text, arrayOf<Any>(text))
+    }
+
+    override fun calcTooltipRenderer(text: String, width: Int): TooltipRenderer {
+      return LineTooltipRenderer(text, width, arrayOf<Any>(text))
+    }
+  }
+
+  private fun offsetsToYPositions(start: Int, end: Int): ProperTextRange {
+    if (!dimensionsAreValid) {
+      recalcEditorDimensions()
+    }
+    val document: Document = editor.document
+    val startLineNumber = if (end == -1) 0 else offsetToLine(start, document)
+    val editorStartY = editor.visualLineToY(startLineNumber)
+    val startY: Int
+    val editorTargetHeight = max(0, myEditorTargetHeight)
+    if (myEditorSourceHeight < editorTargetHeight) {
+      startY = myEditorScrollbarTop + editorStartY
+    }
+    else {
+      startY = myEditorScrollbarTop + (editorStartY.toFloat() / myEditorSourceHeight * editorTargetHeight).toInt()
+    }
+
+    var endY: Int
+    val endLineNumber = offsetToLine(end, document)
+    if (end == -1 || start == -1) {
+      endY = min(myEditorSourceHeight, editorTargetHeight)
+    }
+    else if (startLineNumber == endLineNumber) {
+      endY = startY // both offsets are on the same line, no need to re-calc Y position
+    }
+    else if (myEditorSourceHeight < editorTargetHeight) {
+      endY = myEditorScrollbarTop + editor.visualLineToY(endLineNumber)
+    }
+    else {
+      val editorEndY = editor.visualLineToY(endLineNumber)
+      endY = myEditorScrollbarTop + (editorEndY.toFloat() / myEditorSourceHeight * editorTargetHeight).toInt()
+    }
+    if (endY < startY) endY = startY
+    return ProperTextRange(startY, endY)
+  }
+
+  private fun yPositionToOffset(y: Int, beginLine: Boolean): Int {
+    if (!dimensionsAreValid) {
+      recalcEditorDimensions()
+    }
+    val safeY = max(0, y - myEditorScrollbarTop)
+    val editorY: Int
+    if (myEditorSourceHeight < myEditorTargetHeight) {
+      editorY = safeY
+    }
+    else {
+      val fraction = max(0f, min(1f, safeY / myEditorTargetHeight.toFloat()))
+      editorY = (fraction * myEditorSourceHeight).toInt()
+    }
+    val visual = editor.xyToVisualPosition(Point(0, editorY))
+    val line = editor.visualToLogicalPosition(visual).line
+    val document: Document = editor.document
+    if (line < 0) {
+      return 0
+    }
+    if (line >= document.getLineCount()) {
+      return document.textLength
+    }
+
+    val foldingModel: FoldingModelEx = editor.foldingModel
+    if (beginLine) {
+      val offset = document.getLineStartOffset(line)
+      val startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset)
+      return if (startCollapsed == null) offset else min(offset, startCollapsed.getStartOffset())
+    }
+    else {
+      val offset = document.getLineEndOffset(line)
+      val startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset)
+      return if (startCollapsed == null) offset else max(offset, startCollapsed.getEndOffset())
+    }
+  }
+
+  init {
+    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
+
+    trafficLightPopup = TrafficLightPopup(editor, CompactViewAction())
+
+    val nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall)
+    val prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall)
+
+    extraActions = ExtraActionGroup()
+    populateInspectionWidgetActionsFromExtensions()
+
+    val actions: DefaultActionGroup = StatusToolbarGroup(
+      extraActions,
+      InspectionsGroup({ analyzerStatus }, editor),
+      TrafficLightAction(),
+      NavigationGroup(prevErrorAction, nextErrorAction))
+
+    val service = InternalUICustomization.getInstance()
+    var editorButtonLook: ActionButtonLook? = null
+    if (service != null) {
+      editorButtonLook = service.getEditorToolbarButtonLook()
+    }
+    if (editorButtonLook == null) {
+      editorButtonLook = EditorToolbarButtonLook(editor)
+    }
+
+    val statusToolbar = EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction)
+    this.statusToolbar = statusToolbar
+
+    statusToolbar.setMiniMode(true)
+    statusToolbar.setOrientation(SwingConstants.HORIZONTAL)
+    statusToolbar.setCustomButtonLook(editorButtonLook)
+    toolbarComponentListener = object : ComponentAdapter() {
+      override fun componentResized(event: ComponentEvent) {
+        val toolbar = event.component
+        if (toolbar.getWidth() > 0 && toolbar.getHeight() > 0) {
+          updateTrafficLightVisibility()
+        }
+      }
+    }
+
+    val toolbar = statusToolbar.getComponent()
+    toolbar.setLayout(StatusComponentLayout())
+    toolbar.addComponentListener(toolbarComponentListener)
+    toolbar.setBorder(JBUI.Borders.empty(2))
+
+    /*    if(RedesignedInspectionsManager.isAvailable()) {
       GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
                                               "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
       tooltip.withShowCount(1);
@@ -226,1591 +1329,362 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       tooltip.withIcon(AllIcons.General.BalloonInformation);
       tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
     }*/
-
-    smallIconLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent event) {
-        myTrafficLightPopup.hidePopup();
-        analyzerStatus.getController().toggleProblemsView();
+    smallIconLabel.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(event: MouseEvent?) {
+        trafficLightPopup.hidePopup()
+        analyzerStatus.controller.toggleProblemsView()
       }
 
-      @Override
-      public void mouseEntered(MouseEvent event) {
-        myTrafficLightPopup.scheduleShow(event, analyzerStatus);
+      override fun mouseEntered(event: MouseEvent) {
+        trafficLightPopup.scheduleShow(event, analyzerStatus)
       }
 
-      @Override
-      public void mouseExited(MouseEvent event) {
-        myTrafficLightPopup.scheduleHide();
+      override fun mouseExited(event: MouseEvent?) {
+        trafficLightPopup.scheduleHide()
       }
-    });
-    smallIconLabel.setOpaque(false);
-    smallIconLabel.setBackground(JBColor.lazy(() -> myEditor.getColorsScheme().getDefaultBackground()));
-    smallIconLabel.setVisible(false);
+    })
+    smallIconLabel.setOpaque(false)
+    smallIconLabel.setBackground(JBColor.lazy(Supplier { editor.colorsScheme.getDefaultBackground() }))
+    smallIconLabel.isVisible = false
 
-    JPanel statusPanel = new NonOpaquePanel();
-    statusPanel.setVisible(!myEditor.isOneLineMode());
-    statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
-    statusPanel.add(toolbar);
-    statusPanel.add(smallIconLabel);
+    val statusPanel: JPanel = NonOpaquePanel()
+    statusPanel.isVisible = !editor.isOneLineMode
+    statusPanel.setLayout(BoxLayout(statusPanel, BoxLayout.X_AXIS))
+    statusPanel.add(toolbar)
+    statusPanel.add(smallIconLabel)
 
-    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
+    (editor.scrollPane as JBScrollPane).setStatusComponent(statusPanel)
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable);
-    connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable)
+    connection.subscribe<AnActionListener>(AnActionListener.TOPIC, object : AnActionListener {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         if (HintManagerImpl.isActionToIgnore(action)) {
-          return;
+          return
         }
-        myTrafficLightPopup.hidePopup();
+        trafficLightPopup.hidePopup()
       }
-    });
+    })
 
-    connection.subscribe(LafManagerListener.TOPIC, __ -> myTrafficLightPopup.updateUI());
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        showToolbar =
-          EditorSettingsExternalizable.getInstance().isShowInspectionWidget() && analyzerStatus.getController().isToolbarEnabled();
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener { trafficLightPopup.updateUI() })
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
 
-        updateTrafficLightVisibility();
+        updateTrafficLightVisibility()
       }
-    });
+    })
 
-    myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor, resourcesDisposable);
+    this.errorStripeMarkersModel = ErrorStripeMarkersModel(editor, resourcesDisposable)
   }
 
-  @Override
-  public String toString() {
-    return "EditorMarkupModel for " + myEditor;
-  }
+  private inner class TrafficLightAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  @Override
-  public void caretPositionChanged(@NotNull CaretEvent event) {
-    updateTrafficLightVisibility();
-  }
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      return TrafficLightButton(this, presentation, EditorToolbarButtonLook(editor), place, editor.colorsScheme)
+    }
 
-  @Override
-  public void afterDocumentChange(@NotNull Document document) {
-    myTrafficLightPopup.hidePopup();
-    updateTrafficLightVisibility();
-  }
+    override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+      (component as TrafficLightButton).updateFromPresentation(presentation)
+    }
 
-  @Override
-  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-    updateTrafficLightVisibility();
-  }
+    override fun actionPerformed(e: AnActionEvent) {
+      trafficLightPopup.hidePopup()
+      analyzerStatus.controller.toggleProblemsView()
+    }
 
-  private void updateTrafficLightVisibility() {
-    myStatusUpdates.queue(Update.create("visibility", () -> WriteIntentReadAction.run((Runnable)() -> doUpdateTrafficLightVisibility())));
-  }
+    override fun update(e: AnActionEvent) {
+      val presentation = e.presentation
 
-  private void doUpdateTrafficLightVisibility() {
-    if (trafficLightVisible) {
-      if (RedesignedInspectionsManager.isAvailable()) {
-        statusToolbar.updateActionsAsync();
+      if (isAvailable()) {
+        presentation.setEnabledAndVisible(false)
+        return
       }
 
-      if (showToolbar && myEditor.myView != null) {
-        statusToolbar.setTargetComponent(myEditor.getContentComponent());
-        VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
-        Point point = myEditor.visualPositionToXY(pos);
-        point = SwingUtilities.convertPoint(myEditor.getContentComponent(), point, myEditor.getScrollPane());
+      val newStatus = analyzerStatus.expandedStatus
+      val newIcon = analyzerStatus.icon
 
-        JComponent stComponent = statusToolbar.getComponent();
-        if (stComponent.isVisible()) {
-          Rectangle bounds = SwingUtilities.convertRectangle(stComponent, stComponent.getBounds(), myEditor.getScrollPane());
+      presentation.setVisible(!analyzerStatus.isEmpty())
 
-          if (!bounds.isEmpty() && bounds.contains(point)) {
-            cachedToolbarBounds = bounds;
-            stComponent.setVisible(false);
-            smallIconLabel.setVisible(true);
-          }
-        }
-        else if (!cachedToolbarBounds.contains(point)) {
-          stComponent.setVisible(true);
-          smallIconLabel.setVisible(false);
-        }
+      if (!hasAnalyzed || analyzerStatus.analyzingType != AnalyzingType.EMPTY) {
+        presentation.putClientProperty(EXPANDED_STATUS, newStatus.ifEmpty { listOf(StatusItem("", newIcon)) })
+        presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.analyzingType != AnalyzingType.COMPLETE)
       }
       else {
-        statusToolbar.getComponent().setVisible(false);
-        smallIconLabel.setVisible(true);
-      }
-    }
-    else {
-      statusToolbar.getComponent().setVisible(false);
-      smallIconLabel.setVisible(false);
-    }
-  }
-
-  private void populateInspectionWidgetActionsFromExtensions() {
-    InspectionWidgetActionProvider.EP_NAME.getExtensionList().
-      forEach(extension -> {
-        AnAction action = extension.createAction(myEditor);
-        if (action != null) {
-          extensionActions.put(extension, action);
-          addInspectionWidgetAction(action, null);
-        }
-      });
-
-    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          AnAction action = extension.createAction(myEditor);
-          if (action != null) {
-            extensionActions.put(extension, action);
-            addInspectionWidgetAction(action, null);
-          }
-        });
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          AnAction action = extensionActions.remove(extension);
-          if (action != null) {
-            removeInspectionWidgetAction(action);
-          }
-        });
-      }
-    }, resourcesDisposable);
-  }
-
-  @Override
-  public void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints) {
-    if (constraints != null) {
-      myExtraActions.add(action, constraints);
-    }
-    else {
-      myExtraActions.add(action);
-    }
-
-    if (action instanceof Disposable) {
-      Disposer.register(resourcesDisposable, (Disposable)action);
-    }
-  }
-
-  @Override
-  public void removeInspectionWidgetAction(@NotNull AnAction action) {
-    myExtraActions.remove(action);
-    if (action instanceof Disposable) {
-      Disposer.dispose((Disposable)action);
-    }
-  }
-
-  private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
-    AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new MarkupModelDelegateAction(delegate) {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        if (RedesignedInspectionsManager.isAvailable()) {
-          e.getPresentation().setEnabledAndVisible(false);
-          return;
-        }
-        e.getPresentation().setEnabledAndVisible(true);
-        super.update(e);
-      }
-    };
-    result.getTemplatePresentation().setIcon(icon);
-    return result;
-  }
-
-  private int offsetToLine(int offset, @NotNull Document document) {
-    if (offset < 0) {
-      return 0;
-    }
-    if (offset > document.getTextLength()) {
-      return myEditor.getVisibleLineCount();
-    }
-    return myEditor.offsetToVisualLine(offset);
-  }
-
-  private void repaintVerticalScrollBar() {
-    myEditor.getVerticalScrollBar().repaint();
-  }
-
-  void recalcEditorDimensions() {
-    EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-    int scrollBarHeight = Math.max(0, scrollBar.getSize().height);
-
-    myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight()/* + 1*/;
-    assert myEditorScrollbarTop >= 0;
-    int editorScrollbarBottom = scrollBar.getIncScrollButtonHeight();
-    myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom;
-    myEditorSourceHeight = myEditor.getPreferredHeight();
-
-    dimensionsAreValid = scrollBarHeight != 0;
-  }
-
-  @Override
-  public void setTrafficLightIconVisible(boolean value) {
-    MyErrorPanel errorPanel = getErrorPanel();
-    if (errorPanel != null) {
-
-      if (value != trafficLightVisible) {
-        trafficLightVisible = value;
-        updateTrafficLightVisibility();
-      }
-      repaint();
-    }
-  }
-
-  public void repaintTrafficLightIcon() {
-    if (myErrorStripeRenderer == null) return;
-
-    myTrafficLightIconUpdates.queue(Update.create("traffic light icon", () -> {
-      ErrorStripeRenderer errorStripeRenderer = myErrorStripeRenderer;
-      if (errorStripeRenderer != null) {
-        AnalyzerStatus newStatus = ReadAction.compute(() -> errorStripeRenderer.getStatus());
-        if (!newStatus.equalsTo(analyzerStatus)) {
-          ApplicationManager.getApplication().invokeLater(() -> changeStatus(newStatus));
-        }
-      }
-    }));
-  }
-
-  private void changeStatus(@NotNull AnalyzerStatus newStatus) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (!isErrorStripeVisible() || resourcesDisposable.isDisposed()) {
-      return;
-    }
-    statusTimer.cancelAllRequests();
-
-    AnalyzingType analyzingType = newStatus.getAnalyzingType();
-    boolean resetAnalyzingStatus = analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
-    analyzerStatus = newStatus;
-    smallIconLabel.setIcon(analyzerStatus.getIcon());
-
-    if (showToolbar != analyzerStatus.getController().isToolbarEnabled()) {
-      showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
-                    analyzerStatus.getController().isToolbarEnabled();
-      updateTrafficLightVisibility();
-    }
-
-    boolean analyzing = analyzingType != AnalyzingType.COMPLETE;
-    hasAnalyzed = !resetAnalyzingStatus && (hasAnalyzed || (isAnalyzing && !analyzing));
-    isAnalyzing = analyzing;
-
-    if (analyzingType != AnalyzingType.EMPTY) {
-      showNavigation = analyzerStatus.getShowNavigation();
-    }
-    else {
-      statusTimer.addRequest(() -> {
-        hasAnalyzed = false;
-        ActivityTracker.getInstance().inc();
-      }, QUICK_ANALYSIS_TIMEOUT_MS);
-    }
-
-    myTrafficLightPopup.updateVisiblePopup(analyzerStatus);
-    ActivityTracker.getInstance().inc();
-  }
-
-  // Used in Rider please do not drop it
-  public void forcingUpdateStatusToolbar() {
-    myStatusUpdates.queue(Update.create("forcingUpdate", () -> {
-      statusToolbar.updateActionsImmediately();
-    }));
-  }
-
-  private static final class PositionedStripe {
-    private @NotNull Color color;
-    private int yEnd;
-    private final boolean thin;
-    private final int layer;
-
-    private PositionedStripe(@NotNull Color color, int yEnd, boolean thin, int layer) {
-      this.color = color;
-      this.yEnd = yEnd;
-      this.thin = thin;
-      this.layer = layer;
-    }
-  }
-
-  private LightweightHint getCurrentHint() {
-    if (myCurrentHint == null) return null;
-    LightweightHint hint = myCurrentHint.get();
-    if (hint == null || !hint.isVisible()) {
-      myCurrentHint = null;
-      hint = null;
-    }
-    return hint;
-  }
-
-  private static @NotNull Rectangle getBoundsOnScreen(@NotNull LightweightHint hint) {
-    JComponent component = hint.getComponent();
-    Point location = hint.getLocationOn(component);
-    SwingUtilities.convertPointToScreen(location, component);
-    return new Rectangle(location, hint.getSize());
-  }
-
-  // true if tooltip shown
-  private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
-    ThreadingAssertions.assertEventDispatchThread();
-    LightweightHint currentHint = getCurrentHint();
-    if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
-      return true;
-    }
-    int visualLine = getVisualLineByEvent(e);
-    myLastVisualLine = visualLine;
-    Rectangle area = myEditor.getScrollingModel().getVisibleArea();
-    int visualY = myEditor.visualLineToY(visualLine);
-    boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
-
-    if (!isVisible &&
-        UISettings.getInstance().getShowEditorToolTip() &&
-        !Boolean.TRUE.equals(myEditor.getUserData(EditorMarkupModelImpl.DISABLE_CODE_LENS)) &&
-        !UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty()) {
-      float rowRatio = (float)visualLine / (myEditor.getVisibleLineCount() - 1);
-      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : e.getY() + 1;
-      List<RangeHighlighterEx> highlighters = new ArrayList<>();
-      collectRangeHighlighters(this, visualLine, highlighters);
-      collectRangeHighlighters(myEditor.getFilteredDocumentMarkupModel(), visualLine, highlighters);
-      myEditorFragmentRenderer.show(visualLine, highlighters, e.isAltDown(), createHint(e.getComponent(), new Point(0, y)));
-      return true;
-    }
-
-    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY() + 1);
-    if (highlighters.isEmpty()) {
-      return false;
-    }
-
-    int y;
-    RangeHighlighter nearest = getNearestRangeHighlighter(e);
-    if (nearest == null) {
-      y = e.getY();
-    }
-    else {
-      ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
-      int eachStartY = range.getStartOffset();
-      int eachEndY = range.getEndOffset();
-      y = eachStartY + (eachEndY - eachStartY) / 2;
-    }
-    if (currentHint != null && y == myCurrentHintAnchorY) {
-      return true;
-    }
-    ReadAction.nonBlocking(() -> myTooltipRendererProvider.calcTooltipRenderer(highlighters))
-      .expireWhen(() -> myEditor.isDisposed())
-      .finishOnUiThread(ModalityState.nonModal(), bigRenderer -> {
-        if (bigRenderer != null) {
-          LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y + 1)).setForcePopup(true));
-          myCurrentHint = new WeakReference<>(hint);
-          myCurrentHintAnchorY = y;
-          myKeepHint = false;
-          myMouseMovementTracker.reset();
-        }
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
-    return true;
-  }
-
-  private static @NotNull HintHint createHint(Component component, Point point) {
-    return new HintHint(component, point)
-      .setAwtTooltip(true)
-      .setPreferredPosition(Balloon.Position.atLeft)
-      .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
-      .setShowImmediately(true)
-      .setAnimationEnabled(false)
-      .setStatus(HintHint.Status.Info);
-  }
-
-  private int getVisualLineByEvent(@NotNull MouseEvent e) {
-    int y = e.getY();
-    if (e.getSource() == myEditor.getVerticalScrollBar() && y == myEditor.getVerticalScrollBar().getHeight() - 1) {
-      y++;
-    }
-    return fitLineToEditor(myEditor, myEditor.offsetToVisualLine(yPositionToOffset(y + myWheelAccumulator, true)));
-  }
-
-  static int fitLineToEditor(@NotNull EditorImpl editor, int visualLine) {
-    int lineCount = editor.getVisibleLineCount();
-    int shift = 0;
-    if (visualLine >= lineCount - 1) {
-      CharSequence sequence = editor.getDocument().getCharsSequence();
-      shift = sequence.isEmpty() ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
-    }
-    return Math.max(0, Math.min(lineCount - shift, visualLine));
-  }
-
-  private int getOffset(int visualLine, boolean startLine) {
-    return myEditor.visualPositionToOffset(new VisualPosition(visualLine, startLine ? 0 : Integer.MAX_VALUE));
-  }
-
-  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel,
-                                        int visualLine,
-                                        @NotNull Collection<? super RangeHighlighterEx> highlighters) {
-    int startOffset = getOffset(fitLineToEditor(myEditor, visualLine - EditorFragmentRenderer.PREVIEW_LINES), true);
-    int endOffset = getOffset(fitLineToEditor(myEditor, visualLine + EditorFragmentRenderer.PREVIEW_LINES), false);
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (tooltip != null &&
-          !(tooltip instanceof HighlightInfo && ((HighlightInfo)tooltip).type == HighlightInfoType.TODO) &&
-          highlighter.getStartOffset() < endOffset &&
-          highlighter.getEndOffset() > startOffset &&
-          highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-        highlighters.add(highlighter);
-      }
-      return true;
-    });
-  }
-
-  private @Nullable RangeHighlighter getNearestRangeHighlighter(@NotNull MouseEvent e) {
-    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY());
-    RangeHighlighter nearestMarker = null;
-    int yPos = 0;
-    for (RangeHighlighter highlighter : highlighters) {
-      int newYPos = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
-
-      if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
-        nearestMarker = highlighter;
-        yPos = newYPos;
-      }
-    }
-    return nearestMarker;
-  }
-
-  private @NotNull Set<RangeHighlighter> getNearestHighlighters(int y) {
-    Set<RangeHighlighter> highlighters = new HashSet<>();
-    addNearestHighlighters(this, y, highlighters);
-    addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), y, highlighters);
-    return highlighters;
-  }
-
-  private void addNearestHighlighters(@NotNull MarkupModelEx markupModel,
-                                      int scrollBarY,
-                                      @NotNull Collection<? super RangeHighlighter> result) {
-    int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
-    int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
-      if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-        ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-        if (scrollBarY >= range.getStartOffset() - getMinMarkHeight() * 2 &&
-            scrollBarY <= range.getEndOffset() + getMinMarkHeight() * 2) {
-          result.add(highlighter);
-        }
-      }
-      return true;
-    });
-  }
-
-  private void doClick(@NotNull MouseEvent e) {
-    RangeHighlighter marker = getNearestRangeHighlighter(e);
-    int offset;
-    LogicalPosition logicalPositionToScroll = null;
-    LightweightHint editorPreviewHint = myEditorFragmentRenderer.getEditorPreviewHint();
-    if (marker == null) {
-      if (editorPreviewHint != null) {
-        logicalPositionToScroll = myEditor.visualToLogicalPosition(new VisualPosition(myEditorFragmentRenderer.getStartVisualLine(), 0));
-        offset = myEditor.getDocument().getLineStartOffset(logicalPositionToScroll.line);
-      }
-      else {
-        return;
-      }
-    }
-    else {
-      offset = marker.getStartOffset();
-    }
-
-    Document doc = myEditor.getDocument();
-    if (doc.getLineCount() > 0 && editorPreviewHint == null) {
-      // Necessary to expand folded block even if navigating just before one
-      // Very useful when navigating to the first unused import statement.
-      int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
-      myEditor.getCaretModel().moveToOffset(lineEnd);
-    }
-    myEditor.getCaretModel().removeSecondaryCarets();
-    myEditor.getCaretModel().moveToOffset(offset);
-    myEditor.getSelectionModel().removeSelection();
-    ScrollingModel scrollingModel = myEditor.getScrollingModel();
-    scrollingModel.disableAnimation();
-    if (logicalPositionToScroll != null) {
-      int lineY = myEditor.logicalPositionToXY(logicalPositionToScroll).y;
-      int relativePopupOffset = myEditorFragmentRenderer.getRelativeY();
-      scrollingModel.scrollVertically(lineY - relativePopupOffset);
-    }
-    else {
-      scrollingModel.scrollToCaret(ScrollType.CENTER);
-    }
-    scrollingModel.enableAnimation();
-    if (marker != null) {
-      myErrorStripeMarkersModel.fireErrorMarkerClicked(marker, e);
-    }
-  }
-
-  @Override
-  public void setErrorStripeVisible(boolean val) {
-    if (val) {
-      disposeErrorPanel();
-      MyErrorPanel panel = new MyErrorPanel();
-      myEditor.getVerticalScrollBar().setPersistentUI(panel);
-    }
-    else {
-      myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
-    }
-    myErrorStripeMarkersModel.setActive(val);
-  }
-
-  private @Nullable MyErrorPanel getErrorPanel() {
-    ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
-    return ui instanceof MyErrorPanel ? (MyErrorPanel)ui : null;
-  }
-
-  @NotNull
-  ErrorStripeMarkersModel getErrorStripeMarkersModel() {
-    return myErrorStripeMarkersModel;
-  }
-
-  @Override
-  public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
-    ThreadingAssertions.assertEventDispatchThread();
-    MyErrorPanel errorPanel = getErrorPanel();
-    if (errorPanel != null) {
-      errorPanel.setPopupHandler(handler);
-    }
-  }
-
-  @Override
-  public void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider) {
-    myTooltipRendererProvider = provider;
-  }
-
-  @Override
-  public @NotNull ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider() {
-    return myTooltipRendererProvider;
-  }
-
-  @Override
-  public @NotNull Editor getEditor() {
-    return myEditor;
-  }
-
-  public @NotNull ActionToolbar getStatusToolbar() {
-    return statusToolbar;
-  }
-
-  @Override
-  public void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (myErrorStripeRenderer instanceof Disposable) {
-      Disposer.dispose((Disposable)myErrorStripeRenderer);
-    }
-    myErrorStripeRenderer = renderer;
-    if (renderer instanceof Disposable) {
-      Disposer.register(resourcesDisposable, (Disposable)renderer);
-    }
-    //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
-    //HintManager.getInstance().getTooltipController().cancelTooltips();
-  }
-
-  @Override
-  public @Nullable ErrorStripeRenderer getErrorStripeRenderer() {
-    return myErrorStripeRenderer;
-  }
-
-  @Override
-  public void dispose() {
-    Disposer.dispose(resourcesDisposable);
-
-    disposeErrorPanel();
-
-    statusToolbar.getComponent().removeComponentListener(toolbarComponentListener);
-    ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(null);
-
-    myErrorStripeRenderer = null;
-    myTooltipRendererProvider = new BasicTooltipRendererProvider();
-    myEditorFragmentRenderer.clearHint();
-
-    myTrafficLightPopup.hidePopup();
-    extensionActions.clear();
-
-    analyzerStatus = AnalyzerStatus.getEMPTY();
-
-    super.dispose();
-  }
-
-  private void disposeErrorPanel() {
-    MyErrorPanel panel = getErrorPanel();
-    if (panel != null) {
-      panel.uninstallListeners();
-    }
-  }
-
-  public void rebuild() {
-    myErrorStripeMarkersModel.rebuild();
-  }
-
-  void repaint() {
-    repaint(-1, -1);
-  }
-
-  // startOffset == -1 || endOffset == -1 means whole document
-  void repaint(int startOffset, int endOffset) {
-    ProperTextRange range = offsetsToYPositions(startOffset, endOffset);
-    markDirtied(range);
-    if (startOffset == -1 || endOffset == -1) {
-      myDirtyYPositions = WHOLE_DOCUMENT;
-    }
-
-    JScrollBar bar = myEditor.getVerticalScrollBar();
-    bar.repaint(0, range.getStartOffset(), bar.getWidth(), range.getLength() + getMinMarkHeight());
-  }
-
-  private boolean isMirrored() {
-    return myEditor.isMirrored();
-  }
-
-  private boolean transparent() {
-    return !myEditor.shouldScrollBarBeOpaque();
-  }
-
-  @DirtyUI
-  private final class MyErrorPanel extends ButtonlessScrollBarUI
-    implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
-    private PopupHandler myHandler;
-    private @Nullable BufferedImage myCachedTrack;
-    private int myCachedHeight = -1;
-
-    void dropCache() {
-      myCachedTrack = null;
-      myCachedHeight = -1;
-    }
-
-    @Override
-    public boolean alwaysShowTrack() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
-      return super.alwaysShowTrack();
-    }
-
-    @Override
-    public void installUI(JComponent c) {
-      super.installUI(c);
-      dropCache();
-    }
-
-    @Override
-    public void uninstallUI(@NotNull JComponent c) {
-      super.uninstallUI(c);
-      dropCache();
-    }
-
-    @Override
-    protected void installListeners() {
-      super.installListeners();
-      scrollbar.addMouseMotionListener(this);
-      scrollbar.addMouseListener(this);
-      scrollbar.addMouseWheelListener(this);
-    }
-
-    @Override
-    protected void uninstallListeners() {
-      scrollbar.removeMouseMotionListener(this);
-      scrollbar.removeMouseListener(this);
-      super.uninstallListeners();
-    }
-
-    @Override
-    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-      if (!uiSettings.getShowEditorToolTip()) {
-        hideMyEditorPreviewHint();
-      }
-      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-      repaintTrafficLightIcon();
-      repaintVerticalScrollBar();
-
-      myTrafficLightPopup.updateVisiblePopup(analyzerStatus);
-    }
-
-    @Override
-    protected void paintThumb(@NotNull Graphics g, @NotNull JComponent c, Rectangle thumbBounds) {
-      if (isMacOverlayScrollbar()) {
-        if (!isMirrored()) {
-          super.paintThumb(g, c, thumbBounds);
-        }
-        else {
-          Graphics2D g2d = (Graphics2D)g;
-          AffineTransform old = g2d.getTransform();
-          AffineTransform tx = AffineTransform.getScaleInstance(-1, 1);
-          tx.translate(-c.getWidth(), 0);
-          g2d.transform(tx);
-          super.paintThumb(g, c, thumbBounds);
-          g2d.setTransform(old);
-        }
-      }
-      else {
-        super.paintThumb(g, c, thumbBounds);
-      }
-    }
-
-    @Override
-    protected boolean isThumbTranslucent() {
-      return true;
-    }
-
-    @Override
-    protected int getThumbOffset(int value) {
-      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
-      return super.getThumbOffset(value);
-    }
-
-    @Override
-    protected boolean isDark() {
-      return myEditor.isDarkEnough();
-    }
-
-    @Override
-    protected boolean alwaysPaintThumb() {
-      return true;
-    }
-
-    @Override
-    protected Rectangle getMacScrollBarBounds(Rectangle baseBounds, boolean thumb) {
-      Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
-      bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
-      int b2 = bounds.width / 2;
-      bounds.x = getThinGap() + getMinMarkHeight() + SCROLLBAR_WIDTH.get() / 2 - b2;
-
-      return bounds;
-    }
-
-    @Override
-    protected int getThickness() {
-      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
-    }
-
-    @Override
-    protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
-      if (myEditor.isDisposed()) return;
-      if (transparent()) {
-        ReadAction.run(() -> doPaintTrack(g, c, trackBounds));
-      }
-      else {
-        super.paintTrack(g, c, trackBounds);
-      }
-    }
-
-    @Override
-    protected void doPaintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle bounds) {
-      Rectangle clip = g.getClipBounds().intersection(bounds);
-      if (clip.height == 0) return;
-
-      Rectangle componentBounds = c.getBounds();
-      ProperTextRange docRange = ProperTextRange.create(0, componentBounds.height);
-      if (myCachedTrack == null || myCachedHeight != componentBounds.height) {
-        myCachedTrack = UIUtil.createImage(c, componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
-        myCachedHeight = componentBounds.height;
-        myDirtyYPositions = docRange;
-        dimensionsAreValid = false;
-        paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
-      }
-      if (myDirtyYPositions == WHOLE_DOCUMENT) {
-        myDirtyYPositions = docRange;
-      }
-      if (myDirtyYPositions != null) {
-        Graphics2D imageGraphics = myCachedTrack.createGraphics();
-
-        myDirtyYPositions = myDirtyYPositions.intersection(docRange);
-        if (myDirtyYPositions == null) myDirtyYPositions = docRange;
-        repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
-        myDirtyYPositions = null;
-      }
-
-      StartupUiUtil.drawImage(g, myCachedTrack);
-    }
-
-    private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
-      if (transparent()) {
-        Graphics2D g2 = (Graphics2D)g;
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-      }
-      else {
-        g.setColor(myEditor.getBackgroundColor());
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-    }
-
-    @Override
-    protected @NotNull Color adjustColor(Color c) {
-      return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
-    }
-
-    private void repaint(@NotNull Graphics g, int gutterWidth, @NotNull ProperTextRange yRange) {
-      Rectangle clip = new Rectangle(0, yRange.getStartOffset(), gutterWidth, yRange.getLength() + getMinMarkHeight());
-      paintTrackBasement(g, clip);
-
-      int startOffset = yPositionToOffset(clip.y - getMinMarkHeight(), true);
-      int endOffset = yPositionToOffset(clip.y + clip.height, false);
-
-      Shape oldClip = g.getClip();
-      g.clipRect(clip.x, clip.y, clip.width, clip.height);
-
-      drawErrorStripeMarkers(g, startOffset, endOffset);
-
-      g.setClip(oldClip);
-    }
-
-    private void drawErrorStripeMarkers(@NotNull Graphics g, int startOffset, int endOffset) {
-      Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
-      Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
-      // sorted by layer
-      List<PositionedStripe> thinStripes = new ArrayList<>(); // layer desc
-      List<PositionedStripe> wideStripes = new ArrayList<>(); // layer desc
-      int[] thinYStart = new int[1];  // in range 0...yStart all spots are drawn
-      int[] wideYStart = new int[1];  // in range 0...yStart all spots are drawn
-
-      MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
-      try {
-        ContainerUtil.process(iterator, highlighter -> {
-          boolean isThin = highlighter.isThinErrorStripeMark();
-          int[] yStart = isThin ? thinYStart : wideYStart;
-          List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
-          Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
-
-          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          int ys = range.getStartOffset();
-          int ye = range.getEndOffset();
-          if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight();
-
-          yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
-
-          int layer = highlighter.getLayer();
-
-          PositionedStripe stripe = null;
-          int i;
-          for (i = 0; i < stripes.size(); i++) {
-            PositionedStripe s = stripes.get(i);
-            if (s.layer == layer) {
-              stripe = s;
-              break;
-            }
-            if (s.layer < layer) {
-              break;
-            }
-          }
-          EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-          Color color = highlighter.getErrorStripeMarkColor(colorsScheme);
-          if (color == null) {
-            if (reportErrorStripeInconsistency) {
-              reportErrorStripeInconsistency = false;
-              LOG.error("Error stripe marker has no color. highlighter: " + highlighter +
-                        ", color scheme: " + colorsScheme + " (" + colorsScheme.getClass() + ")");
-            }
-            return true;
-          }
-
-          if (stripe == null) {
-            // started new stripe, draw previous above
-            if (i == 0 && yStart[0] != ys) {
-              if (!stripes.isEmpty()) {
-                PositionedStripe top = stripes.get(0);
-                drawSpot(g, top.thin, yStart[0], ys, top.color);
-              }
-              yStart[0] = ys;
-            }
-            stripe = new PositionedStripe(color, ye, isThin, layer);
-            stripes.add(i, stripe);
-            ends.offer(stripe);
-          }
-          else {
-            if (stripe.yEnd < ye) {
-              if (!color.equals(stripe.color)) {
-                // paint previous stripe on this layer
-                if (i == 0 && yStart[0] != ys) {
-                  drawSpot(g, stripe.thin, yStart[0], ys, stripe.color);
-                  yStart[0] = ys;
-                }
-                stripe.color = color;
-              }
-
-              // key changed, reinsert into queue
-              ends.remove(stripe);
-              stripe.yEnd = ye;
-              ends.offer(stripe);
-            }
-          }
-
-          return true;
-        });
-      }
-      finally {
-        iterator.dispose();
-      }
-
-      drawStripesEndingBefore(Integer.MAX_VALUE, thinEnds, thinStripes, g, thinYStart[0]);
-      drawStripesEndingBefore(Integer.MAX_VALUE, wideEnds, wideStripes, g, wideYStart[0]);
-    }
-
-    private int drawStripesEndingBefore(int ys,
-                                        @NotNull Queue<? extends PositionedStripe> ends,
-                                        @NotNull List<PositionedStripe> stripes,
-                                        @NotNull Graphics g, int yStart) {
-      while (!ends.isEmpty()) {
-        PositionedStripe endingStripe = ends.peek();
-        if (endingStripe == null || endingStripe.yEnd > ys) break;
-        ends.remove();
-
-        // check whether endingStripe got obscured in the range yStart...endingStripe.yEnd
-        int i = stripes.indexOf(endingStripe);
-        stripes.remove(i);
-        if (i == 0) {
-          // visible
-          drawSpot(g, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color);
-          yStart = endingStripe.yEnd;
-        }
-      }
-      return yStart;
-    }
-
-    private void drawSpot(@NotNull Graphics g, boolean thinErrorStripeMark, int yStart, int yEnd, @NotNull Color color) {
-      int paintWidth;
-      int x;
-      if (thinErrorStripeMark) {
-        paintWidth = getMinMarkHeight();
-        x = isMirrored() ? getThickness() - paintWidth : 0;
-        if (yEnd - yStart < 6) {
-          yStart -= 1;
-          yEnd += yEnd - yStart - 1;
-        }
-      }
-      else {
-        x = isMirrored() ? 0 : getMinMarkHeight() + getThinGap();
-        paintWidth = SCROLLBAR_WIDTH.get();
-      }
-      g.setColor(color);
-      g.fillRect(x, yStart, paintWidth, yEnd - yStart);
-    }
-
-    // mouse events
-    @Override
-    public void mouseClicked(@NotNull MouseEvent e) {
-      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> doMouseClicked(e),
-                                                    EditorBundle.message("move.caret.command.name"),
-                                                    DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
-                                                    getDocument()
-      );
-    }
-
-    @Override
-    public void mousePressed(@NotNull MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(@NotNull MouseEvent e) {
-    }
-
-    private int getWidth() {
-      return scrollbar.getWidth();
-    }
-
-    private void doMouseClicked(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance()
-        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
-      int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
-      if (lineCount == 0) {
-        return;
-      }
-      if (e.getX() > 0 && e.getX() <= getWidth()) {
-        doClick(e);
-      }
-    }
-
-    @Override
-    public void mouseMoved(@NotNull MouseEvent e) {
-      int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
-      if (lineCount == 0) {
-        return;
-      }
-
-      if (e.getX() > 0 && e.getX() <= getWidth() && showToolTipByMouseMove(e)) {
-        UIUtil.setCursor(scrollbar, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return;
-      }
-
-      cancelMyToolTips(e, false);
-
-      if (scrollbar.getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
-        scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      }
-    }
-
-    @Override
-    public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
-      if (myEditorFragmentRenderer.getEditorPreviewHint() == null) {
-        // process wheel event by the parent scroll pane if no code lens
-        MouseEventAdapter.redispatch(e, e.getComponent().getParent());
-        return;
-      }
-      int units = e.getUnitsToScroll();
-      if (units == 0) return;
-      // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
-      if (myLastVisualLine < myEditor.getVisibleLineCount() - 1 && units > 0 || myLastVisualLine > 0 && units < 0) {
-        myWheelAccumulator += units;
-      }
-      myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
-      showToolTipByMouseMove(e);
-    }
-
-    private void cancelMyToolTips(@NotNull MouseEvent e, boolean checkIfShouldSurvive) {
-      hideMyEditorPreviewHint();
-      TooltipController tooltipController = TooltipController.getInstance();
-      if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
-        tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP, e, true);
-      }
-    }
-
-    @Override
-    public void mouseEntered(@NotNull MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(@NotNull MouseEvent e) {
-      hideMyEditorPreviewHint();
-      LightweightHint currentHint = getCurrentHint();
-      if (currentHint != null && !myKeepHint) {
-        closeHintOnMovingMouseAway(currentHint);
-      }
-    }
-
-    private void closeHintOnMovingMouseAway(LightweightHint hint) {
-      Disposable disposable = Disposer.newDisposable();
-      IdeEventQueue.getInstance().addDispatcher(e -> {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-          myKeepHint = true;
-          Disposer.dispose(disposable);
-        }
-        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(new RelativePoint((MouseEvent)e))) {
-          hint.hide();
-          Disposer.dispose(disposable);
-        }
-        return false;
-      }, disposable);
-    }
-
-    @Override
-    public void mouseDragged(@NotNull MouseEvent e) {
-      cancelMyToolTips(e, true);
-    }
-
-    private void setPopupHandler(@NotNull PopupHandler handler) {
-      if (myHandler != null) {
-        scrollbar.removeMouseListener(myHandler);
-      }
-
-      myHandler = handler;
-      scrollbar.addMouseListener(handler);
-    }
-  }
-
-  private void hideMyEditorPreviewHint() {
-    myEditorFragmentRenderer.hideHint();
-    myRowAdjuster = 0;
-    myWheelAccumulator = 0;
-    myLastVisualLine = 0;
-  }
-
-  private LightweightHint showTooltip(@NotNull TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
-    hideMyEditorPreviewHint();
-    return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
-                                                                  myEditor.getVerticalScrollbarOrientation() ==
-                                                                  EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
-  }
-
-  @Override
-  public void addErrorMarkerListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parent) {
-    myErrorStripeMarkersModel.addErrorMarkerListener(listener, parent);
-  }
-
-  private void markDirtied(@NotNull ProperTextRange yPositions) {
-    if (myDirtyYPositions != WHOLE_DOCUMENT) {
-      int start = Math.max(0, yPositions.getStartOffset() - myEditor.getLineHeight());
-      int end = myEditorScrollbarTop + myEditorTargetHeight == 0 ? yPositions.getEndOffset() + myEditor.getLineHeight()
-                                                                 : Math
-                  .min(myEditorScrollbarTop + myEditorTargetHeight, yPositions.getEndOffset() + myEditor.getLineHeight());
-      ProperTextRange adj = new ProperTextRange(start, Math.max(end, start));
-
-      myDirtyYPositions = myDirtyYPositions == null ? adj : myDirtyYPositions.union(adj);
-    }
-
-    myEditorScrollbarTop = 0;
-    myEditorSourceHeight = 0;
-    myEditorTargetHeight = 0;
-    dimensionsAreValid = false;
-  }
-
-  @Override
-  public void setMinMarkHeight(int minMarkHeight) {
-    myMinMarkHeight = Math.min(minMarkHeight, getMaxStripeSize());
-  }
-
-  @Override
-  public boolean isErrorStripeVisible() {
-    return getErrorPanel() != null;
-  }
-
-  private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
-    @Override
-    public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
-      LineTooltipRenderer bigRenderer = null;
-      //do not show the same tooltip twice
-      Set<String> tooltips = null;
-
-      for (RangeHighlighter highlighter : highlighters) {
-        Object tooltipObject = highlighter.getErrorStripeTooltip();
-        if (tooltipObject == null) continue;
-
-        //noinspection HardCodedStringLiteral
-        String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
-        if (text == null) continue;
-
-        if (tooltips == null) {
-          tooltips = new HashSet<>();
-        }
-        if (tooltips.add(text)) {
-          if (bigRenderer == null) {
-            bigRenderer = new LineTooltipRenderer(text, new Object[]{highlighters});
-          }
-          else {
-            bigRenderer.addBelow(text);
-          }
-        }
-      }
-
-      return bigRenderer;
-    }
-
-    @Override
-    public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text) {
-      return new LineTooltipRenderer(text, new Object[]{text});
-    }
-
-    @Override
-    public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text, int width) {
-      return new LineTooltipRenderer(text, width, new Object[]{text});
-    }
-  }
-
-  private @NotNull ProperTextRange offsetsToYPositions(int start, int end) {
-    if (!dimensionsAreValid) {
-      recalcEditorDimensions();
-    }
-    Document document = myEditor.getDocument();
-    int startLineNumber = end == -1 ? 0 : offsetToLine(start, document);
-    int editorStartY = myEditor.visualLineToY(startLineNumber);
-    int startY;
-    int editorTargetHeight = Math.max(0, myEditorTargetHeight);
-    if (myEditorSourceHeight < editorTargetHeight) {
-      startY = myEditorScrollbarTop + editorStartY;
-    }
-    else {
-      startY = myEditorScrollbarTop + (int)((float)editorStartY / myEditorSourceHeight * editorTargetHeight);
-    }
-
-    int endY;
-    int endLineNumber = offsetToLine(end, document);
-    if (end == -1 || start == -1) {
-      endY = Math.min(myEditorSourceHeight, editorTargetHeight);
-    }
-    else if (startLineNumber == endLineNumber) {
-      endY = startY; // both offsets are on the same line, no need to re-calc Y position
-    }
-    else if (myEditorSourceHeight < editorTargetHeight) {
-      endY = myEditorScrollbarTop + myEditor.visualLineToY(endLineNumber);
-    }
-    else {
-      int editorEndY = myEditor.visualLineToY(endLineNumber);
-      endY = myEditorScrollbarTop + (int)((float)editorEndY / myEditorSourceHeight * editorTargetHeight);
-    }
-    if (endY < startY) endY = startY;
-    return new ProperTextRange(startY, endY);
-  }
-
-  private int yPositionToOffset(int y, boolean beginLine) {
-    if (!dimensionsAreValid) {
-      recalcEditorDimensions();
-    }
-    int safeY = Math.max(0, y - myEditorScrollbarTop);
-    int editorY;
-    if (myEditorSourceHeight < myEditorTargetHeight) {
-      editorY = safeY;
-    }
-    else {
-      float fraction = Math.max(0, Math.min(1, safeY / (float)myEditorTargetHeight));
-      editorY = (int)(fraction * myEditorSourceHeight);
-    }
-    VisualPosition visual = myEditor.xyToVisualPosition(new Point(0, editorY));
-    int line = myEditor.visualToLogicalPosition(visual).line;
-    Document document = myEditor.getDocument();
-    if (line < 0) return 0;
-    if (line >= document.getLineCount()) return document.getTextLength();
-
-    FoldingModelEx foldingModel = myEditor.getFoldingModel();
-    if (beginLine) {
-      int offset = document.getLineStartOffset(line);
-      FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
-      return startCollapsed != null ? Math.min(offset, startCollapsed.getStartOffset()) : offset;
-    }
-    else {
-      int offset = document.getLineEndOffset(line);
-      FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
-      return startCollapsed != null ? Math.max(offset, startCollapsed.getEndOffset()) : offset;
-    }
-  }
-
-  public static final Key<Boolean> DISABLE_CODE_LENS = new Key<>("DISABLE_CODE_LENS");
-  private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
-  private static final Key<Boolean> TRANSLUCENT_STATE = new Key<>("TRANSLUCENT_STATE");
-
-  private final class TrafficLightAction extends DumbAwareAction
-    implements CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return new TrafficLightButton(this, presentation, new EditorToolbarButtonLook(myEditor), place, myEditor.getColorsScheme());
-    }
-
-    @Override
-    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
-      ((TrafficLightButton)component).updateFromPresentation(presentation);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myTrafficLightPopup.hidePopup();
-      analyzerStatus.getController().toggleProblemsView();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-
-      if (RedesignedInspectionsManager.isAvailable()) {
-        presentation.setEnabledAndVisible(false);
-        return;
-      }
-
-      List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
-      Icon newIcon = analyzerStatus.getIcon();
-
-      presentation.setVisible(!analyzerStatus.isEmpty());
-
-      if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
-        List<StatusItem> adjusted = newStatus.isEmpty() ? Collections.singletonList(new StatusItem("", newIcon)) : newStatus;
-        presentation.putClientProperty(EXPANDED_STATUS, adjusted);
-
-        presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
-      }
-      else {
-        presentation.putClientProperty(TRANSLUCENT_STATE, true);
+        presentation.putClientProperty(TRANSLUCENT_STATE, true)
       }
     }
   }
 
-  private final class TrafficLightButton extends JPanel {
-    private static final int LEFT_RIGHT_INDENT = 5;
-    private static final int INTER_GROUP_OFFSET = 6;
+  private inner class TrafficLightButton(
+    action: AnAction,
+    presentation: Presentation,
+    buttonLook: ActionButtonLook,
+    place: String,
+    colorsScheme: EditorColorsScheme
+  ) : JPanel() {
+    private var mousePressed = false
+    private var mouseHover = false
+    private val buttonLook: ActionButtonLook
+    private val mouseListener: MouseListener
+    private val colorsScheme: EditorColorsScheme
+    private var items: List<StatusItem?>? = null
+    private var translucent = false
 
-    private boolean mousePressed;
-    private boolean mouseHover;
-    private final ActionButtonLook buttonLook;
-    private final MouseListener mouseListener;
-    private final EditorColorsScheme colorsScheme;
-    private List<StatusItem> items;
-    private boolean translucent;
+    init {
+      setLayout(GridBagLayout())
+      setOpaque(false)
 
-    TrafficLightButton(@NotNull AnAction action,
-                       @NotNull Presentation presentation,
-                       @NotNull ActionButtonLook buttonLook,
-                       @NotNull String place,
-                       @NotNull EditorColorsScheme colorsScheme) {
-      setLayout(new GridBagLayout());
-      setOpaque(false);
+      this.buttonLook = buttonLook
+      this.colorsScheme = colorsScheme
 
-      this.buttonLook = buttonLook;
-      this.colorsScheme = colorsScheme;
-
-      mouseListener = new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent me) {
+      mouseListener = object : MouseAdapter() {
+        override fun mouseClicked(me: MouseEvent) {
           if (SwingUtilities.isLeftMouseButton(me)) {
-            showInspectionHint(me);
+            showInspectionHint(me)
           }
         }
 
-        private void showInspectionHint(MouseEvent me) {
-          DataContext context = ActionToolbar.getDataContextFor(TrafficLightButton.this);
-          AnActionEvent event = AnActionEvent.createEvent(context, presentation, place, ActionUiKind.TOOLBAR, me);
-          AnActionResult result = ActionUtil.performAction(action, event);
-          if (result.isPerformed()) {
-            ActionsCollector.getInstance().record(event.getProject(), action, event, null);
-            ActionToolbar toolbar = ActionToolbar.findToolbarBy(TrafficLightButton.this);
-            if (toolbar != null) {
-              toolbar.updateActionsImmediately();
-            }
+        fun showInspectionHint(me: MouseEvent?) {
+          val context = ActionToolbar.getDataContextFor(this@TrafficLightButton)
+          val event = AnActionEvent.createEvent(context, presentation, place, ActionUiKind.TOOLBAR, me)
+          val result = performAction(action, event)
+          if (result.isPerformed) {
+            ActionsCollector.getInstance().record(event.project, action, event, null)
+            @Suppress("DEPRECATION")
+            ActionToolbar.findToolbarBy(this@TrafficLightButton)?.updateActionsImmediately()
           }
         }
 
-        private static void showContextMenu(MouseEvent me) {
-          DefaultActionGroup group = new DefaultActionGroup();
+        fun showContextMenu(me: MouseEvent) {
+          val group = DefaultActionGroup()
           /*
           TODO: show context menu by right click
           group.addAll(analyzerStatus.getController().getActions());
           group.add(new CompactViewAction());
           */
-          if (0 < group.getChildrenCount()) {
-            JBPopupMenu.showByEvent(me, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group);
+          if (0 < group.childrenCount) {
+            JBPopupMenu.showByEvent(me, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
           }
         }
 
-        @Override
-        public void mousePressed(MouseEvent me) {
-          if (me.isPopupTrigger()) showContextMenu(me);
-          mousePressed = true;
-          repaint();
+        override fun mousePressed(me: MouseEvent) {
+          if (me.isPopupTrigger) showContextMenu(me)
+          mousePressed = true
+          repaint()
         }
 
-        @Override
-        public void mouseReleased(MouseEvent me) {
-          if (me.isPopupTrigger()) showContextMenu(me);
-          mousePressed = false;
-          repaint();
+        override fun mouseReleased(me: MouseEvent) {
+          if (me.isPopupTrigger) showContextMenu(me)
+          mousePressed = false
+          repaint()
         }
 
-        @Override
-        public void mouseEntered(MouseEvent me) {
-          mouseHover = true;
-          myTrafficLightPopup.scheduleShow(me, analyzerStatus);
-          repaint();
+        override fun mouseEntered(me: MouseEvent) {
+          mouseHover = true
+          trafficLightPopup.scheduleShow(me, analyzerStatus)
+          repaint()
         }
 
-        @Override
-        public void mouseExited(MouseEvent me) {
-          mouseHover = false;
-          myTrafficLightPopup.scheduleHide();
-          repaint();
+        override fun mouseExited(me: MouseEvent?) {
+          mouseHover = false
+          trafficLightPopup.scheduleHide()
+          repaint()
         }
-      };
-
-      setBorder(new Border() {
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) { }
-
-        @Override
-        public boolean isBorderOpaque() {
-          return false;
-        }
-
-        @Override
-        public Insets getBorderInsets(Component c) {
-          return showNavigation ? JBUI.insets(2, 2, 2, 0) : JBUI.insets(2);
-        }
-      });
-    }
-
-    private void updateFromPresentation(@NotNull Presentation presentation) {
-      boolean newTranslucent = Boolean.TRUE.equals(presentation.getClientProperty(TRANSLUCENT_STATE));
-      List<StatusItem> newItems = presentation.getClientProperty(EXPANDED_STATUS);
-      if (translucent == newTranslucent && Objects.equals(items, newItems)) {
-        return;
       }
-      translucent = newTranslucent;
-      items = newItems;
-      updateContents(ContainerUtil.notNullize(newItems));
-      revalidate();
-      repaint();
+
+      setBorder(object : Border {
+        override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {}
+
+        override fun isBorderOpaque(): Boolean = false
+
+        override fun getBorderInsets(c: Component?): Insets {
+          return if (showNavigation) JBUI.insets(2, 2, 2, 0) else JBUI.insets(2)
+        }
+      })
     }
 
+    fun updateFromPresentation(presentation: Presentation) {
+      val newTranslucent = true == presentation.getClientProperty(TRANSLUCENT_STATE)
+      val newItems = presentation.getClientProperty(EXPANDED_STATUS)
+      if (translucent == newTranslucent && items == newItems) {
+        return
+      }
 
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      addMouseListener(mouseListener);
+      translucent = newTranslucent
+      items = newItems
+      updateContents(newItems ?: emptyList())
+      revalidate()
+      repaint()
     }
 
-    @Override
-    public void removeNotify() {
-      removeMouseListener(mouseListener);
+    override fun addNotify() {
+      super.addNotify()
+      addMouseListener(mouseListener)
     }
 
-    private void updateContents(@NotNull List<StatusItem> status) {
-      removeAll();
+    override fun removeNotify() {
+      removeMouseListener(mouseListener)
+    }
 
-      setEnabled(!status.isEmpty());
-      setVisible(!status.isEmpty());
+    fun updateContents(status: List<StatusItem>) {
+      removeAll()
 
-      GridBag gc = new GridBag().nextLine();
-      if (status.size() == 1 && StringUtil.isEmpty(status.get(0).getText())) {
-        add(createStyledLabel(null, status.get(0).getIcon(), SwingConstants.CENTER),
-            gc.next().weightx(1).weighty(1).fillCell());
+      setEnabled(!status.isEmpty())
+      isVisible = !status.isEmpty()
+
+      val gc = GridBag().nextLine()
+      if (status.size == 1 && StringUtil.isEmpty(status.get(0).text)) {
+        add(createStyledLabel(null, status.get(0).icon, SwingConstants.CENTER),
+            gc.next().weightx(1.0).weighty(1.0).fillCell())
       }
       else if (!status.isEmpty()) {
-        int leftRightOffset = JBUIScale.scale(LEFT_RIGHT_INDENT);
-        add(Box.createHorizontalStrut(leftRightOffset), gc.next());
+        val leftRightOffset = scale(LEFT_RIGHT_INDENT)
+        add(Box.createHorizontalStrut(leftRightOffset), gc.next())
 
-        int counter = 0;
-        for (StatusItem item : status) {
-          add(createStyledLabel(item.getText(), item.getIcon(), SwingConstants.LEFT),
-              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0).fillCell().weighty(1));
+        var counter = 0
+        for (item in status) {
+          add(createStyledLabel(item.text, item.icon, SwingConstants.LEFT),
+              gc.next().insetLeft(if (counter++ > 0) INTER_GROUP_OFFSET else 0).fillCell().weighty(1.0))
         }
 
-        add(Box.createHorizontalStrut(leftRightOffset), gc.next());
+        add(Box.createHorizontalStrut(leftRightOffset), gc.next())
       }
     }
 
-    private @NotNull JLabel createStyledLabel(@Nullable @Nls String text, @Nullable Icon icon, int alignment) {
-      JLabel label = new JLabel(text, icon, alignment) {
-        @Override
-        protected void paintComponent(@NotNull Graphics graphics) {
-          Graphics2D g2 = (Graphics2D)graphics.create();
+    fun createStyledLabel(text: @Nls String?, icon: Icon?, alignment: Int): JLabel {
+      val label: JLabel = object : JLabel(text, icon, alignment) {
+        override fun paintComponent(graphics: Graphics) {
+          val g2 = graphics.create() as Graphics2D
           try {
-            float alpha = translucent ? 0.5f : 1.0f;
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            super.paintComponent(g2);
+            val alpha = if (translucent) 0.5f else 1.0f
+            g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
+            super.paintComponent(g2)
           }
           finally {
-            g2.dispose();
+            g2.dispose()
           }
         }
 
-        @Override
-        public void setUI(LabelUI ui) {
-          super.setUI(ui);
+        override fun setUI(ui: LabelUI?) {
+          super.setUI(ui)
 
           if (!SystemInfo.isWindows) {
-            Font font = getFont();
-            font =
-              new FontUIResource(font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2))); // Allow resetting the font by UI
-            setFont(font);
+            var font = getFont()
+            // allow resetting the font by UI
+            font = FontUIResource(font.deriveFont(font.getStyle(), (font.getSize() - scale(2)).toFloat()))
+            setFont(font)
           }
         }
-      };
-
-      label.setForeground(
-        JBColor.lazy(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
-      label.setIconTextGap(JBUIScale.scale(1));
-
-      return label;
-    }
-
-    @Override
-    protected void paintComponent(Graphics graphics) {
-      int state = mousePressed ? ActionButtonComponent.PUSHED :
-                  mouseHover ? ActionButtonComponent.POPPED :
-                  ActionButtonComponent.NORMAL;
-
-      buttonLook.paintBackground(graphics, this, state);
-    }
-
-    @Override
-    public @NotNull Dimension getPreferredSize() {
-      if (getComponentCount() == 0) {
-        return JBUI.emptySize();
       }
 
-      Dimension size = super.getPreferredSize();
-      Insets i = getInsets();
-      size.height = Math.max(getStatusIconSize() + i.top + i.bottom, size.height);
-      size.width = Math.max(getStatusIconSize() + i.left + i.right, size.width);
-      return size;
+      label.setForeground(JBColor.lazy { (colorsScheme.getColor(ICON_TEXT_COLOR)) ?: ICON_TEXT_COLOR.defaultColor })
+      label.setIconTextGap(scale(1))
+
+      return label
+    }
+
+    override fun paintComponent(graphics: Graphics?) {
+      val state = if (mousePressed) ActionButtonComponent.PUSHED else if (mouseHover) ActionButtonComponent.POPPED else ActionButtonComponent.NORMAL
+      buttonLook.paintBackground(graphics, this, state)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      if (componentCount == 0) {
+        return JBUI.emptySize()
+      }
+
+      val size = super.getPreferredSize()
+      val i = getInsets()
+      size.height = max(statusIconSize + i.top + i.bottom, size.height)
+      size.width = max(statusIconSize + i.left + i.right, size.width)
+      return size
     }
   }
 
   @ApiStatus.Internal
-  public static final class StatusComponentLayout implements LayoutManager {
-    private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
+  class StatusComponentLayout : LayoutManager {
+    private val actionButtons = ArrayList<Pair<Component?, String?>>()
 
-    @Override
-    public void addLayoutComponent(String s, Component component) {
-      actionButtons.add(Pair.pair(component, s));
+    override fun addLayoutComponent(s: String?, component: Component?) {
+      actionButtons.add(Pair(component, s))
     }
 
-    @Override
-    public void removeLayoutComponent(Component component) {
-      for (int i = 0; i < actionButtons.size(); i++) {
-        if (Comparing.equal(component, actionButtons.get(i).first)) {
-          actionButtons.remove(i);
-          break;
+    override fun removeLayoutComponent(component: Component?) {
+      for (i in actionButtons.indices) {
+        if (component == actionButtons.get(i).first) {
+          actionButtons.removeAt(i)
+          break
         }
       }
     }
 
-    @Override
-    public @NotNull Dimension preferredLayoutSize(Container container) {
-      Dimension size = JBUI.emptySize();
+    override fun preferredLayoutSize(container: Container): Dimension {
+      val size = JBUI.emptySize()
 
-      for (Pair<Component, String> c : actionButtons) {
-        if (c.first.isVisible()) {
-          Dimension prefSize = c.first.getPreferredSize();
-          size.height = Math.max(size.height, prefSize.height);
+      for (c in actionButtons) {
+        if (c.first!!.isVisible) {
+          val prefSize = c.first!!.preferredSize
+          size.height = max(size.height, prefSize.height)
         }
       }
 
-      for (Pair<Component, String> c : actionButtons) {
-        if (c.first.isVisible()) {
-          Dimension prefSize = c.first.getPreferredSize();
-          Insets i = ((JComponent)c.first).getInsets();
-          JBInsets.removeFrom(prefSize, i);
+      for (c in actionButtons) {
+        if (c.first!!.isVisible) {
+          val prefSize = c.first!!.preferredSize
+          val i = (c.first as JComponent).getInsets()
+          JBInsets.removeFrom(prefSize, i)
 
-          if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
-            size.width += prefSize.width + i.left + i.right;
+          if (ActionToolbar.SEPARATOR_CONSTRAINT == c.second) {
+            size.width += prefSize.width + i.left + i.right
           }
           else {
-            int maxBareHeight = size.height - i.top - i.bottom;
-            size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+            val maxBareHeight = size.height - i.top - i.bottom
+            size.width += max(prefSize.width, maxBareHeight) + i.left + i.right
           }
         }
       }
 
       if (size.width > 0 && size.height > 0) {
-        JBInsets.addTo(size, container.getInsets());
+        JBInsets.addTo(size, container.insets)
       }
-      return size;
+      return size
     }
 
-    @Override
-    public @NotNull Dimension minimumLayoutSize(Container container) {
-      return preferredLayoutSize(container);
-    }
+    override fun minimumLayoutSize(container: Container): Dimension = preferredLayoutSize(container)
 
-    @Override
-    public void layoutContainer(Container container) {
-      Dimension prefSize = preferredLayoutSize(container);
+    override fun layoutContainer(container: Container) {
+      val prefSize = preferredLayoutSize(container)
 
-      if (prefSize.width > 0 && prefSize.height > 0) {
-        Insets i = container.getInsets();
-        JBInsets.removeFrom(prefSize, i);
-        int offset = i.left;
+      if (prefSize.width <= 0 || prefSize.height <= 0) {
+        return
+      }
 
-        for (Pair<Component, String> c : actionButtons) {
-          if (c.first.isVisible()) {
-            Dimension cPrefSize = c.first.getPreferredSize();
+      val i = container.insets
+      JBInsets.removeFrom(prefSize, i)
+      var offset = i.left
 
-            if (c.first instanceof TrafficLightButton) {
-              c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
-              offset += cPrefSize.width;
+      for (c in actionButtons) {
+        if (c.first!!.isVisible) {
+          val cPrefSize = c.first!!.preferredSize
+
+          if (c.first is TrafficLightButton) {
+            c.first!!.setBounds(offset, i.top, cPrefSize.width, prefSize.height)
+            offset += cPrefSize.width
+          }
+          else {
+            val jcInsets = (c.first as JComponent).getInsets()
+            JBInsets.removeFrom(cPrefSize, jcInsets)
+
+            if (ActionToolbar.SEPARATOR_CONSTRAINT == c.second) {
+              c.first!!.setBounds(offset, i.top, cPrefSize.width, prefSize.height)
+              offset += cPrefSize.width
             }
             else {
-              Insets jcInsets = ((JComponent)c.first).getInsets();
-              JBInsets.removeFrom(cPrefSize, jcInsets);
-
-              if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
-                c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
-                offset += cPrefSize.width;
-              }
-              else {
-                int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
-                int width = Math.max(cPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
-
-                c.first.setBounds(offset, i.top, width, prefSize.height);
-                offset += width;
-              }
+              val maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom
+              val width = max(cPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right
+              c.first!!.setBounds(offset, i.top, width, prefSize.height)
+              offset += width
             }
           }
         }
@@ -1818,258 +1692,216 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  public final class CompactViewAction extends ToggleAction {
-    CompactViewAction() {
-      super(EditorBundle.message("iw.compact.view"));
+  inner class CompactViewAction internal constructor() : ToggleAction(EditorBundle.message("iw.compact.view")) {
+    override fun isSelected(e: AnActionEvent): Boolean = !showToolbar
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      showToolbar = !state
+      EditorSettingsExternalizable.getInstance().setShowInspectionWidget(showToolbar)
+      updateTrafficLightVisibility()
+      ActionsCollector.getInstance().record(e.project, this, e, null)
     }
 
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return !showToolbar;
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.setEnabled(analyzerStatus.controller.isToolbarEnabled)
     }
 
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      showToolbar = !state;
-      EditorSettingsExternalizable.getInstance().setShowInspectionWidget(showToolbar);
-      updateTrafficLightVisibility();
-      ActionsCollector.getInstance().record(e.getProject(), this, e, null);
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(analyzerStatus.getController().isToolbarEnabled());
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return true;
-    }
+    override fun isDumbAware(): Boolean = true
   }
 
-  private class MarkupModelDelegateAction extends AnActionWrapper {
+  private open inner class MarkupModelDelegateAction(delegate: AnAction) : AnActionWrapper(delegate) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val focusManager = IdeFocusManager.getInstance(editor.project)
 
-    MarkupModelDelegateAction(@NotNull AnAction delegate) {
-      super(delegate);
-    }
+      @Suppress("removal", "DEPRECATION")
+      val delegateEvent = AnActionEvent.createFromAnAction(delegate,
+                                                           e.inputEvent,
+                                                           ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                           editor.dataContext)
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
-
-      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(getDelegate(),
-                                                                     e.getInputEvent(),
-                                                                     ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                     myEditor.getDataContext());
-
-      if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
-        focusManager.requestFocus(myEditor.getContentComponent(), true).
-          doWhenDone(() -> getDelegate().actionPerformed(delegateEvent));
+      if (focusManager.getFocusOwner() !== editor.contentComponent) {
+        focusManager.requestFocus(editor.contentComponent, true).doWhenDone { delegate.actionPerformed(delegateEvent) }
       }
       else {
-        getDelegate().actionPerformed(delegateEvent);
+        delegate.actionPerformed(delegateEvent)
       }
     }
   }
 
-  private class NavigationGroup extends DefaultActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
+  private inner class NavigationGroup(vararg actions: AnAction) : DefaultActionGroup(*actions), ActionRemoteBehaviorSpecification.Frontend {
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
-    NavigationGroup(AnAction @NotNull ... actions) {
-      super(actions);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(showNavigation);
-    }
-  }
-
-  private static class ExtraActionGroup extends DefaultActionGroup implements ActionWithMergeId {
-  }
-
-  @ApiStatus.Internal
-  public static class StatusToolbarGroup extends DefaultActionGroup {
-
-    StatusToolbarGroup(AnAction @NotNull ... actions) {
-      super(actions);
+    override fun update(e: AnActionEvent) {
+      e.presentation.setEnabledAndVisible(showNavigation)
     }
   }
 
   @ApiStatus.Internal
-  public static final class EditorToolbarButtonLook extends ActionButtonLook {
-    private static final ColorKey HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
-                                                                             JBUI.CurrentTheme.ActionButton.hoverBackground());
+  class StatusToolbarGroup internal constructor(vararg actions: AnAction) : DefaultActionGroup(*actions)
+}
 
-    private static final ColorKey PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
-                                                                               JBUI.CurrentTheme.ActionButton.pressedBackground());
+private class ExtraActionGroup : DefaultActionGroup(), ActionWithMergeId
 
-    private final Editor myEditor;
+@ApiStatus.Internal
+class EditorToolbarButtonLook(private val editor: Editor) : ActionButtonLook() {
+  companion object {
+    private val HOVER_BACKGROUND = ColorKey.createColorKey("ActionButton.hoverBackground",
+                                                           JBUI.CurrentTheme.ActionButton.hoverBackground())
 
-    public EditorToolbarButtonLook(Editor editor) {
-      myEditor = editor;
+    private val PRESSED_BACKGROUND = ColorKey.createColorKey("ActionButton.pressedBackground",
+                                                             JBUI.CurrentTheme.ActionButton.pressedBackground())
+  }
+
+  override fun paintBorder(g: Graphics?, component: JComponent?, state: Int) {}
+
+  override fun paintBorder(g: Graphics?, component: JComponent?, color: Color?) {}
+
+  override fun paintBackground(g: Graphics, component: JComponent, @ActionButtonComponent.ButtonState state: Int) {
+    if (state == ActionButtonComponent.NORMAL) {
+      return
     }
 
-    @Override
-    public void paintBorder(Graphics g, JComponent component, int state) { }
+    val rect = Rectangle(component.size)
+    JBInsets.removeFrom(rect, component.getInsets())
 
-    @Override
-    public void paintBorder(Graphics g, JComponent component, Color color) { }
-
-    @Override
-    public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-      if (state == ActionButtonComponent.NORMAL) return;
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      EditorColorsScheme scheme = myEditor.getColorsScheme();
-      Color color = state == ActionButtonComponent.PUSHED ? scheme.getColor(PRESSED_BACKGROUND) : scheme.getColor(HOVER_BACKGROUND);
-
-      if (color != null) {
-        ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color);
-      }
-    }
-
-    @Override
-    public void paintBackground(Graphics g, JComponent component, Color color) {
-      ActionButtonLook.SYSTEM_LOOK.paintBackground(g, component, color);
-    }
-
-    @Override
-    public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
-      if (icon != null) {
-        boolean isDark = ColorUtil.isDark(myEditor.getColorsScheme().getDefaultBackground());
-        super.paintIcon(g, actionButton, IconLoader.getDarkIcon(icon, isDark), x, y);
-      }
+    val scheme = editor.getColorsScheme()
+    val color = if (state == ActionButtonComponent.PUSHED) scheme.getColor(PRESSED_BACKGROUND) else scheme.getColor(HOVER_BACKGROUND)
+    if (color != null) {
+      SYSTEM_LOOK.paintLookBackground(g, rect, color)
     }
   }
 
-  @ApiStatus.Internal
-  public static class EditorInspectionsActionToolbar extends ActionToolbarImpl {
-    private final @NotNull EditorImpl myEditor;
-    private final ActionButtonLook myEditorButtonLook;
-    private final @Nullable AnAction myNextErrorAction;
-    private final @Nullable AnAction myPrevErrorAction;
+  override fun paintBackground(g: Graphics?, component: JComponent, color: Color?) {
+    SYSTEM_LOOK.paintBackground(g, component, color)
+  }
 
-    public EditorInspectionsActionToolbar(DefaultActionGroup actions,
-                                          @NotNull EditorImpl editor,
-                                          ActionButtonLook editorButtonLook,
-                                          @Nullable AnAction nextErrorAction,
-                                          @Nullable AnAction prevErrorAction) {
-      super(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true);
-      putClientProperty(SUPPRESS_FAST_TRACK, true);
-      myEditor = editor;
-      myEditorButtonLook = editorButtonLook;
-      myNextErrorAction = nextErrorAction;
-      myPrevErrorAction = prevErrorAction;
+  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon?, x: Int, y: Int) {
+    if (icon != null) {
+      val isDark = ColorUtil.isDark(editor.getColorsScheme().getDefaultBackground())
+      super.paintIcon(g, actionButton, getDarkIcon(icon, isDark), x, y)
     }
-
-    @Override
-    public void addNotify() {
-      setTargetComponent(myEditor.getContentComponent());
-      super.addNotify();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      myEditorButtonLook.paintBackground(g, this, myEditor.getBackgroundColor());
-    }
-
-    @Override
-    protected int getSeparatorHeight() {
-      return getStatusIconSize();
-    }
-
-    @Override
-    protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
-                                                             @NotNull String place,
-                                                             @NotNull Presentation presentation,
-                                                             Supplier<? extends @NotNull Dimension> minimumSize) {
-      if (RedesignedInspectionsManager.isAvailable()) return super.createTextButton(action, place, presentation, minimumSize);
-
-      ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
-      JBColor color = JBColor.lazy(() -> {
-        return ObjectUtils.notNull(myEditor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
-      });
-      button.setForeground(color);
-      return button;
-    }
-
-    @Override
-    protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
-                                                     @NotNull String place,
-                                                     @NotNull Presentation presentation,
-                                                     Supplier<? extends @NotNull Dimension> minimumSize) {
-      if (RedesignedInspectionsManager.isAvailable()) return super.createIconButton(action, place, presentation, minimumSize);
-
-      return new ToolbarActionButton(action, presentation, place, minimumSize);
-    }
-
-    @Override
-    public void doLayout() {
-      LayoutManager layoutManager = getLayout();
-      if (layoutManager != null) {
-        layoutManager.layoutContainer(this);
-      }
-      else {
-        super.doLayout();
-      }
-    }
-
-    @ApiStatus.Internal
-    public class ToolbarActionButton extends ActionButton {
-      public ToolbarActionButton(@NotNull AnAction action,
-                                 @NotNull Presentation presentation,
-                                 @NotNull String place,
-                                 Supplier<? extends @NotNull Dimension> minimumSize) { super(action, presentation, place, minimumSize); }
-
-      @Override
-      public void updateIcon() {
-        super.updateIcon();
-        revalidate();
-        repaint();
-      }
-
-      @Override
-      public @NotNull Insets getInsets() {
-        if (myAction == myNextErrorAction) return JBUI.insets(2, 1);
-        if (myAction == myPrevErrorAction) return JBUI.insets(2, 1, 2, 2);
-        return JBUI.insets(2);
-      }
-
-      @Override
-      public @NotNull Dimension getPreferredSize() {
-
-        Icon icon = getIcon();
-        Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-
-        int minSize = getStatusIconSize();
-        size.width = Math.max(size.width, minSize);
-        size.height = Math.max(size.height, minSize);
-
-        JBInsets.addTo(size, getInsets());
-        return size;
-      }
-    }
-
-/*      @Override
-      protected Dimension updatePreferredSize(Dimension preferredSize) {
-        return preferredSize;
-      }
-
-      @Override
-      protected Dimension updateMinimumSize(Dimension minimumSize) {
-        return minimumSize;
-      }*/
   }
 }
+
+@ApiStatus.Internal
+open class EditorInspectionsActionToolbar(
+  actions: DefaultActionGroup,
+  private val editor: EditorImpl,
+  private val editorButtonLook: ActionButtonLook,
+  private val nextErrorAction: AnAction?,
+  private val prevErrorAction: AnAction?
+) : ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
+  init {
+    putClientProperty(SUPPRESS_FAST_TRACK, true)
+  }
+
+  override fun addNotify() {
+    setTargetComponent(editor.contentComponent)
+    super.addNotify()
+  }
+
+  override fun paintComponent(g: Graphics) {
+    editorButtonLook.paintBackground(g, this, editor.backgroundColor)
+  }
+
+  override fun getSeparatorHeight(): Int = statusIconSize
+
+  override fun createTextButton(
+    action: AnAction,
+    place: String,
+    presentation: Presentation,
+    minimumSize: Supplier<out Dimension>
+  ): ActionButtonWithText {
+    if (isAvailable()) {
+      return super.createTextButton(action, place, presentation, minimumSize)
+    }
+
+    val button = super.createTextButton(action, place, presentation, minimumSize)
+    val color = JBColor.lazy { (editor.colorsScheme.getColor(ICON_TEXT_COLOR)) ?: ICON_TEXT_COLOR.defaultColor }
+    button.setForeground(color)
+    return button
+  }
+
+  override fun createIconButton(
+    action: AnAction,
+    place: String,
+    presentation: Presentation,
+    minimumSize: Supplier<out Dimension>
+  ): ActionButton {
+    if (isAvailable()) {
+      return super.createIconButton(action, place, presentation, minimumSize)
+    }
+    return ToolbarActionButton(action, presentation, place, minimumSize)
+  }
+
+  override fun doLayout() {
+    val layoutManager = layout
+    if (layoutManager != null) {
+      layoutManager.layoutContainer(this)
+    }
+    else {
+      super.doLayout()
+    }
+  }
+
+  @ApiStatus.Internal
+  open inner class ToolbarActionButton(
+    action: AnAction,
+    presentation: Presentation,
+    place: String,
+    minimumSize: Supplier<out Dimension>
+  ) : ActionButton(action, presentation, place, minimumSize) {
+    override fun updateIcon() {
+      super.updateIcon()
+      revalidate()
+      repaint()
+    }
+
+    override fun getInsets(): Insets {
+      return when {
+        myAction === nextErrorAction -> JBUI.insets(2, 1)
+        myAction === prevErrorAction -> JBUI.insets(2, 1, 2, 2)
+        else -> JBUI.insets(2)
+      }
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val icon = getIcon()
+      val size = Dimension(icon.iconWidth, icon.iconHeight)
+
+      val minSize: Int = statusIconSize
+      size.width = max(size.width, minSize)
+      size.height = max(size.height, minSize)
+
+      JBInsets.addTo(size, insets)
+      return size
+    }
+  }
+}
+
+private fun getBoundsOnScreen(hint: LightweightHint): Rectangle {
+  val component = hint.component
+  val location = hint.getLocationOn(component)
+  SwingUtilities.convertPointToScreen(location, component)
+  return Rectangle(location, hint.size)
+}
+
+private fun createHint(component: Component?, point: Point?): HintHint {
+  return HintHint(component, point)
+    .setAwtTooltip(true)
+    .setPreferredPosition(Balloon.Position.atLeft)
+    .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
+    .setShowImmediately(true)
+    .setAnimationEnabled(false)
+    .setStatus(HintHint.Status.Info)
+}
+
+private class PositionedStripe(
+  @JvmField var color: Color,
+  @JvmField var yEnd: Int,
+  @JvmField val thin: Boolean,
+  @JvmField val layer: Int,
+)
