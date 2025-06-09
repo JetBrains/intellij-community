@@ -44,6 +44,7 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
 }
 
 private val COMPOSABLE_CLASS_ID: ClassId = ClassId.fromString("androidx/compose/runtime/Composable")
+private val COMPOSER_TYPE = "androidx.compose.runtime.Composer"
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
@@ -194,8 +195,9 @@ private fun toPsiMethodForDeserialized(
         }
         val isComposable = COMPOSABLE_CLASS_ID in functionSymbol.annotations
         if (isComposable) {
-            // Drop the last two parameters added by Compose compiler plugin
-            methodParameters = methodParameters.dropLast(2)
+            // Drop the synthetic parameters added by Compose compiler plugin
+            // $Composer, $changed[n], $default[n]
+            methodParameters = methodParameters.takeWhile { it.type.canonicalText != COMPOSER_TYPE }
         }
         val symbolParameters: List<KaParameterSymbol> =
             if (functionSymbol.isExtension) {
