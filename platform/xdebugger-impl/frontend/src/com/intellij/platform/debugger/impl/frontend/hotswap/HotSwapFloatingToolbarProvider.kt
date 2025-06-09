@@ -58,7 +58,7 @@ private fun createHelpTooltip(): HelpTooltip =
     .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
     .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
-private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar() } != false
+private fun showFloatingToolbar(project: Project): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar(project) } != false
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
 
@@ -157,7 +157,7 @@ private fun updateToolbarVisibility(project: Project) {
   val manager = FrontendHotSwapManager.getInstance(project)
   manager.coroutineScope.launch(Dispatchers.Default) {
     // Hide toolbar after setting disable
-    if (showFloatingToolbar()) return@launch
+    if (showFloatingToolbar(project)) return@launch
     manager.notifyHidden()
   }
 }
@@ -215,7 +215,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val manager = FrontendHotSwapManager.getInstance(project)
     val job = manager.coroutineScope.launch {
       manager.currentStatusFlow.collectLatest { status ->
-        onStatusChanged(component, status?.status, editorTag)
+        onStatusChanged(component, status?.status, editorTag, project)
       }
     }
     Disposer.register(parentDisposable, Disposable {
@@ -226,7 +226,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     })
   }
 
-  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?) =
+  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?, project: Project) =
     withContext(Dispatchers.EDT) {
       fun updateActions() {
         if (component is ActionToolbarImpl) {
@@ -234,7 +234,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         }
       }
 
-      if (!showFloatingToolbar()) {
+      if (!showFloatingToolbar(project)) {
         if (logger.isDebugEnabled) {
           logger.debug("Hide button because it is disabled ($editorTag)")
         }
