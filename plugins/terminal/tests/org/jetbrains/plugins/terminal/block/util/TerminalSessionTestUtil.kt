@@ -70,12 +70,6 @@ internal object TerminalSessionTestUtil {
         fail("Shell hasn't been terminated within timeout, pid:${process.pid()}")
       }
     }
-    if (process is WinPtyProcess || process is CygwinPtyProcess) {
-      Assert.fail("Shell integration on Windows requires ConPTY, but " + process::class.java)
-    }
-    if (process is WinConPtyProcess) {
-      Assume.assumeTrue("Shell integration on Windows requires latest version of ConPTY", process.isBundledConPtyLibrary)
-    }
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
     session.controller.addCustomCommandListener(terminalCustomCommandListener)
@@ -89,6 +83,13 @@ internal object TerminalSessionTestUtil {
     }, listenersDisposable)
 
     session.start(ttyConnector)
+
+    if (process is WinPtyProcess || process is CygwinPtyProcess) {
+      Assert.fail("Shell integration on Windows requires ConPTY, but " + process::class.java)
+    }
+    if (process is WinConPtyProcess) {
+      Assume.assumeTrue("Shell integration on Windows requires latest version of ConPTY", process.isBundledConPtyLibrary)
+    }
 
     try {
       initializedFuture.get(5000, TimeUnit.MILLISECONDS)
