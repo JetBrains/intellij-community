@@ -47,6 +47,10 @@ private val addHideAction: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddHideButton } != false
 }
 
+private val addMoreAction: Boolean by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddMoreButton } != false
+}
+
 @Suppress("DialogTitleCapitalization")
 private fun createHelpTooltip(): HelpTooltip =
   HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
@@ -187,6 +191,11 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy {
     val group = DefaultActionGroup(hotSwapAction)
+    if (addMoreAction) {
+      HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
+        group.add(it)
+      }
+    }
     if (addHideAction) {
       group.add(HideAction())
     }

@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -19,6 +21,8 @@ interface HotSwapUiExtension {
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null
   val shouldAddHideButton: Boolean get() = true
+  val shouldAddMoreButton: Boolean get() = false
+  fun moreAction(): AnAction? = null
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {
