@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import com.darkrockstudios.libraries.mpfilepicker.JvmFile
@@ -31,14 +31,18 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
 @Composable
-public fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
+public fun MarkdownEditor(
+    state: TextFieldValue,
+    modifier: Modifier = Modifier,
+    onValueChanged: (TextFieldValue) -> Unit,
+) {
     Column(modifier) {
         ControlsRow(
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
-            onLoadMarkdown = { state.edit { replace(0, length, it) } },
+            onLoadMarkdown = { onValueChanged(TextFieldValue(it)) },
         )
         Divider(orientation = Orientation.Horizontal, Modifier.fillMaxWidth())
-        Editor(state = state, modifier = Modifier.fillMaxWidth().weight(1f))
+        Editor(state = state, modifier = Modifier.fillMaxWidth().weight(1f)) { onValueChanged(it) }
     }
 }
 
@@ -83,10 +87,11 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
 }
 
 @Composable
-private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
+private fun Editor(state: TextFieldValue, modifier: Modifier = Modifier, onValueChanged: (TextFieldValue) -> Unit) {
     Box(modifier) {
         TextArea(
-            state = state,
+            value = state,
+            onValueChange = { onValueChanged(it) },
             modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
             undecorated = true,
             textStyle = JewelTheme.editorTextStyle,

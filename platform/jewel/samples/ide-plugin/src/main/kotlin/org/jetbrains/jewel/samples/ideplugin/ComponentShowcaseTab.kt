@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
@@ -151,9 +151,10 @@ private fun RowScope.ColumnOne() {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            val state = rememberTextFieldState("")
+            var state by remember { mutableStateOf(TextFieldValue("")) }
             TextField(
-                state = state,
+                value = state,
+                onValueChange = { state = it },
                 modifier =
                     Modifier.width(200.dp).provideData {
                         set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")

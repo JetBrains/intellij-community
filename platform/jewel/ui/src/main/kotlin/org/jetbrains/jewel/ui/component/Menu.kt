@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import kotlin.collections.forEach
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -76,6 +77,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
+import org.jetbrains.jewel.ui.LocalMenuItemShortcut
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
@@ -160,12 +162,29 @@ internal fun MenuContent(
     val selectableItems = remember { items.filterIsInstance<MenuSelectableItem>() }
 
     val anyItemHasIcon = remember { selectableItems.any { it.iconKey != null } }
-    val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null } }
+    val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null || it.actionType != null } }
 
     val localMenuManager = LocalMenuManager.current
+    val localInputModeManager = LocalInputModeManager.current
+    val localMenuItemShortcutProvider = LocalMenuItemShortcut.current
     val scrollState = rememberScrollState()
     val colors = style.colors
     val menuShape = RoundedCornerShape(style.metrics.cornerSize)
+
+    DisposableEffect(items, localMenuManager, localMenuItemShortcutProvider) {
+        localMenuManager.clearShortcutActions()
+        selectableItems.forEach { item ->
+            if (item.isEnabled && item.actionType != null) {
+                localMenuItemShortcutProvider.getShortcutKeyStroke(item.actionType)?.let { keyStroke ->
+                    localMenuManager.registerShortcutAction(keyStroke) {
+                        item.onClick()
+                        localMenuManager.closeAll(localInputModeManager.inputMode, true)
+                    }
+                }
+            }
+        }
+        onDispose { localMenuManager.clearShortcutActions() }
+    }
 
     Box(
         modifier =
@@ -205,6 +224,7 @@ private fun ShowMenuItem(item: MenuItem, canShowIcon: Boolean = false, canShowKe
                 canShowIcon = canShowIcon,
                 canShowKeybinding = canShowKeybinding,
                 iconKey = item.iconKey,
+                actionType = item.actionType,
                 keybinding = item.keybinding,
                 content = item.content,
             )
@@ -264,6 +284,7 @@ public interface MenuScope {
     public fun selectableItem(
         selected: Boolean,
         iconKey: IconKey? = null,
+        actionType: ContextMenuItemActionType? = null,
         keybinding: Set<String>? = null,
         onClick: () -> Unit,
         enabled: Boolean = true,
@@ -336,6 +357,7 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
             override fun selectableItem(
                 selected: Boolean,
                 iconKey: IconKey?,
+                actionType: ContextMenuItemActionType?,
                 keybinding: Set<String>?,
                 onClick: () -> Unit,
                 enabled: Boolean,
@@ -346,6 +368,7 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
                         isSelected = selected,
                         isEnabled = enabled,
                         iconKey = iconKey,
+                        actionType = actionType,
                         keybinding = keybinding,
                         onClick = onClick,
                         content = content,
@@ -377,6 +400,7 @@ private data class MenuSelectableItem(
     val isSelected: Boolean,
     val isEnabled: Boolean,
     val iconKey: IconKey?,
+    val actionType: ContextMenuItemActionType?,
     val keybinding: Set<String>?,
     val onClick: () -> Unit = {},
     override val content: @Composable () -> Unit,
@@ -414,6 +438,7 @@ internal fun MenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconKey: IconKey?,
+    actionType: ContextMenuItemActionType?,
     keybinding: Set<String>?,
     canShowIcon: Boolean,
     canShowKeybinding: Boolean,
@@ -506,11 +531,16 @@ internal fun MenuItem(
 
                 if (canShowKeybinding) {
                     val keybindingText =
-                        remember(keybinding) {
-                            if (hostOs.isMacOS) {
-                                keybinding?.joinToString(" ") { it }.orEmpty()
-                            } else {
-                                keybinding?.joinToString(" + ") { it }.orEmpty()
+                        if (actionType != null) {
+                            val shortcutProvider = LocalMenuItemShortcut.current
+                            shortcutProvider.getShortcutHint(actionType)
+                        } else {
+                            remember(keybinding) {
+                                if (hostOs.isMacOS) {
+                                    keybinding?.joinToString("") { it }.orEmpty()
+                                } else {
+                                    keybinding?.joinToString("+") { it }.orEmpty()
+                                }
                             }
                         }
                     Text(

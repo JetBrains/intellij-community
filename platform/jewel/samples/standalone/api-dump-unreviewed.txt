@@ -6,6 +6,5 @@ f:org.jetbrains.jewel.samples.standalone.markdown.ComposableSingletons$MarkdownE
 f:org.jetbrains.jewel.samples.standalone.markdown.JewelReadmeKt
 - sf:getJewelReadme():java.lang.String
 f:org.jetbrains.jewel.samples.standalone.markdown.MarkdownEditorKt
-- sf:MarkdownEditor(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.standalone.markdown.MarkdownPreviewKt
 - sf:MarkdownPreview(androidx.compose.ui.Modifier,java.lang.CharSequence,androidx.compose.runtime.Composer,I,I):V

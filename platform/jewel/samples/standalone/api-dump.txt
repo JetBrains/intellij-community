@@ -1,0 +1,2 @@
+f:org.jetbrains.jewel.samples.standalone.markdown.MarkdownEditorKt
+- sf:MarkdownEditor(androidx.compose.ui.text.input.TextFieldValue,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
