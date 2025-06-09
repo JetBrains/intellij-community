@@ -180,6 +180,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/overriddenYetDeprecated.kt");
     }
 
+    @TestMetadata("PropertyDelegate.kt")
+    public void testPropertyDelegate() throws Exception {
+        runTest("testData/declaration/PropertyDelegate.kt");
+    }
+
     @TestMetadata("reflectKclassExperimental.kt")
     public void testReflectKclassExperimental() throws Exception {
         runTest("testData/declaration/reflectKclassExperimental.kt");

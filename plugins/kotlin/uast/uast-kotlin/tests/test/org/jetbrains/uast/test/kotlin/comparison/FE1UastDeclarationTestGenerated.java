@@ -180,6 +180,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/overriddenYetDeprecated.kt");
     }
 
+    @TestMetadata("PropertyDelegate.kt")
+    public void testPropertyDelegate() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/PropertyDelegate.kt");
+    }
+
     @TestMetadata("reflectKclassExperimental.kt")
     public void testReflectKclassExperimental() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/reflectKclassExperimental.kt");
