@@ -495,7 +495,8 @@ public final class InspectionEngine {
     return dialectIds;
   }
 
-  private static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
+  @ApiStatus.Internal
+  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);
