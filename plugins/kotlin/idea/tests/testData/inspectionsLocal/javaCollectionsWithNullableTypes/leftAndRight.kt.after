@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// PROBLEM: Java collection 'ConcurrentHashMap' is parameterized with nullable types
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
