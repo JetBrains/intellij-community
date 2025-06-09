@@ -4,20 +4,20 @@ package com.intellij.polySymbols.webTypes.json
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_CLASSES
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_FUNCTIONS
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_PARTS
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_PROPERTIES
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_PSEUDO_CLASSES
-import com.intellij.polySymbols.PolySymbol.Companion.CSS_PSEUDO_ELEMENTS
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ELEMENTS
-import com.intellij.polySymbols.PolySymbol.Companion.JS_EVENTS
-import com.intellij.polySymbols.PolySymbol.Companion.JS_PROPERTIES
-import com.intellij.polySymbols.PolySymbol.Companion.JS_SYMBOLS
-import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_CSS
-import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_HTML
-import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_JS
+import com.intellij.polySymbols.css.CSS_CLASSES
+import com.intellij.polySymbols.css.CSS_FUNCTIONS
+import com.intellij.polySymbols.css.CSS_PARTS
+import com.intellij.polySymbols.css.CSS_PROPERTIES
+import com.intellij.polySymbols.css.CSS_PSEUDO_CLASSES
+import com.intellij.polySymbols.css.CSS_PSEUDO_ELEMENTS
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ELEMENTS
+import com.intellij.polySymbols.js.JS_EVENTS
+import com.intellij.polySymbols.js.JS_PROPERTIES
+import com.intellij.polySymbols.js.JS_SYMBOLS
+import com.intellij.polySymbols.css.NAMESPACE_CSS
+import com.intellij.polySymbols.html.NAMESPACE_HTML
+import com.intellij.polySymbols.js.NAMESPACE_JS
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_ARGUMENTS
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
@@ -31,7 +31,7 @@ import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFON
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.js.PolySymbolJsKind
+import com.intellij.polySymbols.js.JsSymbolSymbolKind
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
@@ -166,7 +166,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY, true)) else emptySequence()
-          is JsSymbol -> this.kind?.let { kind -> PolySymbolJsKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
+          is JsSymbol -> this.kind?.let { kind -> JsSymbolSymbolKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
                            ?.let { sequenceOf(Pair(PROP_KIND, it)) }
                          ?: emptySequence()
           else -> emptySequence()

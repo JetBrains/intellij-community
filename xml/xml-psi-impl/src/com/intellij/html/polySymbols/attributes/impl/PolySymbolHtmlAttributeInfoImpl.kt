@@ -3,6 +3,7 @@ package com.intellij.html.polySymbols.attributes.impl
 
 import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeInfo
 import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
@@ -106,7 +107,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
           PolySymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           PolySymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
+              HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           PolySymbolHtmlAttributeValue.Type.SYMBOL -> null
@@ -133,7 +134,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
         else if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             PolySymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0,
+              queryExecutor.runCodeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0,
                                                    additionalScope = listOf(symbol))
                 .filter { !it.completeAfterInsert }
             }

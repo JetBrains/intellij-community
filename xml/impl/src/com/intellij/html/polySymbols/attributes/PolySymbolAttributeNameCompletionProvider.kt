@@ -8,7 +8,7 @@ import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.polySymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor

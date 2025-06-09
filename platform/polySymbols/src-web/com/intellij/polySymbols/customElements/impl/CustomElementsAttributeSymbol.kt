@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements.impl
 
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.json.Attribute
@@ -14,7 +14,7 @@ class CustomElementsAttributeSymbol private constructor(
 ) : CustomElementsContributionSymbol<Attribute>(name, attribute, origin) {
 
   override val qualifiedKind: PolySymbolQualifiedKind
-    get() = PolySymbol.HTML_ATTRIBUTES
+    get() = HTML_ATTRIBUTES
 
   override val defaultValue: String?
     get() = contribution.default

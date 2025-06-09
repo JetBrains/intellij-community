@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements.impl
 
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.css.CSS_PROPERTIES
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.json.CssCustomProperty
@@ -13,7 +13,7 @@ class CustomElementsCssCustomPropertySymbol private constructor(
 ) : CustomElementsContributionSymbol<CssCustomProperty>(name, cssCustomProperty, origin) {
 
   override val qualifiedKind: PolySymbolQualifiedKind
-    get() = PolySymbol.CSS_PROPERTIES
+    get() = CSS_PROPERTIES
 
   companion object {
     fun create(cssCustomProperty: CssCustomProperty, origin: CustomElementsJsonOrigin): CustomElementsCssCustomPropertySymbol? {

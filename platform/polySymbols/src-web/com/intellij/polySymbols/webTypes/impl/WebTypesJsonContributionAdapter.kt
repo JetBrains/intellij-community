@@ -7,7 +7,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase

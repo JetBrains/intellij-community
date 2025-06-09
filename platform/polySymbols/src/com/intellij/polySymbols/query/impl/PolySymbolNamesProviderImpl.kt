@@ -4,7 +4,8 @@ package com.intellij.polySymbols.query.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.css.NAMESPACE_CSS
+import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.framework.PolySymbolsFramework
@@ -81,7 +82,7 @@ class PolySymbolNamesProviderImpl(
       ?.getNames(qualifiedName, target)
       ?.takeIf { it.isNotEmpty() }
     ?: if (target != CODE_COMPLETION_VARIANTS &&
-           (qualifiedName.namespace == PolySymbol.NAMESPACE_CSS || qualifiedName.namespace == PolySymbol.NAMESPACE_HTML))
+           (qualifiedName.namespace == NAMESPACE_CSS || qualifiedName.namespace == NAMESPACE_HTML))
       listOf(qualifiedName.name.lowercase(Locale.US))
     else
       listOf(qualifiedName.name)

@@ -7,6 +7,8 @@ import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
@@ -41,7 +43,7 @@ object PolySymbolsHtmlQueryHelper {
     }
 
     override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-      qualifiedKind == PolySymbol.HTML_ELEMENTS
+      qualifiedKind == HTML_ELEMENTS
 
     override fun createPointer(): Pointer<StandardHtmlElementSymbolsScope> =
       hardPointer(this)
@@ -63,7 +65,7 @@ object PolySymbolsHtmlQueryHelper {
     }
 
     override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-      qualifiedKind == PolySymbol.HTML_ATTRIBUTES
+      qualifiedKind == HTML_ATTRIBUTES
 
     override fun createPointer(): Pointer<StandardHtmlAttributeSymbolsScope> =
       hardPointer(this)

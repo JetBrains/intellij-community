@@ -4,7 +4,8 @@ package com.intellij.polySymbols.webTypes
 import com.intellij.model.Pointer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.js.JS_STRING_LITERALS
+import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_NO_DOC
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
@@ -85,7 +86,7 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
 
   companion object {
     internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-      PolySymbol.JS_PROPERTIES.kind, PolySymbol.JS_STRING_LITERALS.kind
+      JS_PROPERTIES.kind, JS_STRING_LITERALS.kind
     )
   }
 
