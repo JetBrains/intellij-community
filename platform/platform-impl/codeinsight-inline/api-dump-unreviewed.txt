@@ -110,7 +110,6 @@ Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - f:cancel(com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType):V
 - bs:cancel$default(com.intellij.codeInsight.inline.completion.InlineCompletionHandler,com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType,I,java.lang.Object):V
 - f:getEditor():com.intellij.openapi.editor.Editor
-- f:getTypingSessionTracker():com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
 - f:hide(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType):V
 - bs:hide$default(com.intellij.codeInsight.inline.completion.InlineCompletionHandler,com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType,I,java.lang.Object):V
 - f:insert():V
@@ -222,11 +221,6 @@ f:com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextEl
 - isVisible():Z
 - render(com.intellij.openapi.editor.Editor,I):V
 - startOffset():java.lang.Integer
-f:com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
-- <init>():V
-- f:collectCharIfSessionActive(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.event.DocumentEvent):V
-- f:endTypingSession(com.intellij.openapi.editor.Editor):V
-- f:startTypingSession(com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
 - com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.application.options.editor.EditorOptionsProvider
