@@ -37,6 +37,11 @@ internal suspend fun buildNsisInstaller(
   context: BuildContext,
   arch: JvmArchitecture,
 ): Path? {
+  if (OsFamily.currentOs == OsFamily.MACOS && !context.options.isInDevelopmentMode) {
+    Span.current().addEvent("Windows installers shouldn't be built on macOS in production mode")
+    return null
+  }
+
   val communityHome = context.paths.communityHomeDir
   val outFileName = context.productProperties.getBaseArtifactName(context) + suffix
   Span.current().setAttribute(outFileName, outFileName)
