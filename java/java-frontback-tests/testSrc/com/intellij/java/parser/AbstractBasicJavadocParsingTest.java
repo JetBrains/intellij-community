@@ -242,4 +242,6 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
     setLanguageLevel(LanguageLevel.JDK_23);
     doTest(true);
   }
+
+  public void testNoValueElementTagsMarkdown() { doTest(true); }
 }

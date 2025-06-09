@@ -1,7 +1,10 @@
-package com.intellij.java.syntax.lexer;
+package com.intellij.java.syntax.lexer
 
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
-import com.intellij.platform.syntax.SyntaxElementType;
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.util.lexer.FlexLexer
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 @Suppress("ALL")
 %%
@@ -216,6 +219,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 <CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
+<COMMENT_DATA_START> "@"("author"|"code"|"deprecated"|"docRoot"|"hidden"|"index"|"implNote"|"literal"|"return"|"serial"|"summary") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START> "@"{TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 
 <SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES> {

@@ -20,27 +20,23 @@ java.FILE
       DOC_COMMENT
         DOC_COMMENT_LEADING_ASTERISKS
         WHITE_SPACE
-        DOC_COMMENT_LEADING_ASTERISKS
-        DOC_COMMENT_DATA
         DOC_TAG
           DOC_TAG_NAME
           WHITE_SPACE
-          DOC_LPAREN
+          DOC_REFERENCE_LINK
+            DOC_LBRACKET
+            DOC_METHOD_OR_FIELD_REF
+              DOC_TAG_VALUE_SHARP_TOKEN
+              DOC_TAG_VALUE_TOKEN
+            DOC_RBRACKET
           DOC_COMMENT_DATA
-          DOC_RPAREN
-          DOC_COMMENT_DATA
-        WHITE_SPACE
-        DOC_COMMENT_LEADING_ASTERISKS
       WHITE_SPACE
       MODIFIER_LIST
         <empty list>
       TYPE_PARAMETER_LIST
         <empty list>
       TYPE
-        JAVA_CODE_REFERENCE
-          IDENTIFIER
-          REFERENCE_PARAMETER_LIST
-            <empty list>
+        INT_KEYWORD
       WHITE_SPACE
       IDENTIFIER
       PARAMETER_LIST
@@ -48,6 +44,17 @@ java.FILE
         RPARENTH
       THROWS_LIST
         <empty list>
-      SEMICOLON
+      WHITE_SPACE
+      CODE_BLOCK
+        LBRACE
+        WHITE_SPACE
+        RETURN_STATEMENT
+          RETURN_KEYWORD
+          WHITE_SPACE
+          LITERAL_EXPRESSION
+            INTEGER_LITERAL
+          SEMICOLON
+        WHITE_SPACE
+        RBRACE
     WHITE_SPACE
     RBRACE
