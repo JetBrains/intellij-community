@@ -178,6 +178,12 @@ class EelLocalExecApiTest {
         process.stderr.readAllBytesAsync(this)
       }
 
+      if (ptyManagement == PTYManagement.PTY_RESIZE_LATER &&
+          (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) &&
+          process.isWinConPtyProcess) {
+        delay(1.seconds) // workaround: wait a bit to let ConPTY apply the resize
+      }
+
       // Test kill api
       when (exitType) {
         ExitType.KILL -> process.kill()
@@ -277,4 +283,7 @@ class EelLocalExecApiTest {
   private suspend fun EelProcess.sendCommand(command: Command) {
     stdin.sendWholeText(command.name + "\r\n") // terminal needs \r\n
   }
+
+  private val EelProcess.isWinConPtyProcess: Boolean
+    get() = this is EelWindowsProcess && convertToJavaProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
 }
