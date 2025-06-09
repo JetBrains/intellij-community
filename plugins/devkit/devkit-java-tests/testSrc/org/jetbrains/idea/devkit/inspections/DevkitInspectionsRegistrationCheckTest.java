@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 82;
+
   /**
    * Inspections that are finished and intentionally disabled.
    */
@@ -42,8 +44,10 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)", 81,
-                 devkitInspections.size());
+    assertEquals(
+      "Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)",
+      EXPECTED_INSPECTIONS_NUMBER, devkitInspections.size()
+    );
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);
     List<String> disabledInspectionShortNames = new ArrayList<>(ContainerUtil.map(disabledInspections, ep -> ep.getShortName()));
