@@ -159,8 +159,8 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boo
 
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
-      icon = IconLoader.getTransparentIcon(interpreter.uiCustomization?.icon ?: PythonPsiApiIcons.Python)
-      val title = interpreter.uiCustomization?.title ?: message("sdk.rendering.detected.grey.text")
+      icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonPsiApiIcons.Python)
+      val title = interpreter.ui?.title ?: message("sdk.rendering.detected.grey.text")
       append(String.format("Python %-4s", interpreter.languageLevel))
       append(" (" + replaceHomePathToTilde(interpreter.homePath) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }

@@ -97,6 +97,7 @@ jvm_library(
     "//python/services/system-python:system-python_test_lib",
     "//platform/eel",
     "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
     "//python/poetry",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",

@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.shared
 
+import com.jetbrains.python.psi.LanguageLevel
+
 /**
- * Python that has both [languageLevel] and [ui]
+ * Something with language level
  */
-interface PythonWithUi : PythonWithLanguageLevel, UiHolder
+interface LanguageLevelHolder {
+  val languageLevel: LanguageLevel
+}

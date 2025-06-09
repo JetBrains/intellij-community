@@ -84,7 +84,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       else {
         cache.get(eelApi.descriptor)
       }.sorted()
-    } ?: searchPythonsPhysicallyNoCache(eelApi)
+    } ?: searchPythonsPhysicallyNoCache(eelApi).sorted()
 
 
   class MyServiceState : BaseState() {

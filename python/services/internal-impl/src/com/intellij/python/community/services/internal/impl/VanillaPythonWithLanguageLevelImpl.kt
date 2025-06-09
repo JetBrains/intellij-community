@@ -7,6 +7,8 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.concurrentLimit
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.createByPythonBinary
+import com.intellij.python.community.services.shared.LanguageLevelComparator
+import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -26,7 +28,7 @@ import kotlin.io.path.relativeTo
 class VanillaPythonWithLanguageLevelImpl internal constructor(
   override val pythonBinary: PythonBinary,
   override val languageLevel: LanguageLevel,
-) : VanillaPythonWithLanguageLevel {
+) : VanillaPythonWithLanguageLevel, Comparable<PythonWithLanguageLevel> {
 
   companion object {
 
@@ -82,4 +84,5 @@ class VanillaPythonWithLanguageLevelImpl internal constructor(
     return "$pythonString ($languageLevel)"
   }
 
+  override fun compareTo(other: PythonWithLanguageLevel): Int = LanguageLevelComparator.compare(this, other)
 }

@@ -61,6 +61,7 @@ jvm_library(
     "//python/testFramework",
     "@lib//:hamcrest",
     "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//platform/util",

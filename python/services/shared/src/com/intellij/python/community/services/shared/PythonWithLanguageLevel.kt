@@ -2,21 +2,15 @@
 package com.intellij.python.community.services.shared
 
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
-import com.jetbrains.python.psi.LanguageLevel
 
 /**
  * Python (vanilla, conda, whatever) with known language level.
  */
-interface PythonWithLanguageLevel : Comparable<PythonWithLanguageLevel>, PythonWithName {
-  val languageLevel: LanguageLevel
+interface PythonWithLanguageLevel : PythonWithName, LanguageLevelHolder {
 
   /**
    * Convert python to something that can be executed on [java.util.concurrent.ExecutorService]
    */
   val asExecutablePython: ExecutablePython
-
-
-  // Backward: first python is the highest
-  override fun compareTo(other: PythonWithLanguageLevel): Int = languageLevel.compareTo(other.languageLevel) * -1
 
 }

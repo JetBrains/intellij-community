@@ -10,4 +10,6 @@ data class UICustomization(
    */
   val title: @Nls String,
   val icon: Icon? = null,
-)
+) : Comparable<UICustomization> {
+  override fun compareTo(other: UICustomization): Int = title.compareTo(other.title)
+}

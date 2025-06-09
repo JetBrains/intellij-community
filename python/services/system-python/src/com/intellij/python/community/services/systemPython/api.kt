@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
@@ -55,7 +56,11 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython internal constructor(private val impl: VanillaPythonWithLanguageLevel, override val ui: UICustomization?) : VanillaPythonWithLanguageLevel by impl, PythonWithUi {
+class SystemPython internal constructor(private val delegate: VanillaPythonWithLanguageLevel, override val ui: UICustomization?) : VanillaPythonWithLanguageLevel by delegate, PythonWithUi, Comparable<SystemPython> {
+
+  private companion object {
+    val comparator = LanguageLevelWithUiComparator<SystemPython>()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -63,21 +68,23 @@ class SystemPython internal constructor(private val impl: VanillaPythonWithLangu
 
     other as SystemPython
 
-    if (impl != other.impl) return false
+    if (delegate != other.delegate) return false
     if (ui != other.ui) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = impl.hashCode()
+    var result = delegate.hashCode()
     result = 31 * result + (ui?.hashCode() ?: 0)
     return result
   }
 
   override fun toString(): String {
-    return "SystemPython(impl=$impl, ui=$ui)"
+    return "SystemPython(delegate=$delegate, ui=$ui)"
   }
+
+  override fun compareTo(other: SystemPython): Int = comparator.compare(this, other)
 }
 
 /**

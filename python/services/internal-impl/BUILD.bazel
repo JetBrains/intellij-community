@@ -35,6 +35,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
     "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",

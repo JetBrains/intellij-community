@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.python.community.services.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "shared_resources",
@@ -20,5 +20,32 @@ jvm_library(
     "//python/python-exec-service/execService.python",
   ],
   runtime_deps = [":shared_resources"]
+)
+
+jvm_library(
+  name = "shared_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":shared"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//platform/eel-provider",
+    "@lib//:junit5",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:hamcrest",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
+  ],
+  runtime_deps = [":shared_resources"]
+)
+
+jvm_test(
+  name = "shared_test",
+  runtime_deps = [":shared_test_lib"]
 )
 ### auto-generated section `build intellij.python.community.services.shared` end
