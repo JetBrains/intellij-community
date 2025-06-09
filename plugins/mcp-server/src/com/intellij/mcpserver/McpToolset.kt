@@ -12,7 +12,15 @@ import kotlin.coroutines.CoroutineContext
  *
  * Descriptions for tools, parameters, or type members may be provided with [com.intellij.mcpserver.annotations.McpDescription] annotation.
  *
- * Parameter and return types should be either primitive types or serializable by `kotlinx.serialization`
+ * Parameter should be either primitive types or serializable by `kotlinx.serialization`
+ *
+ * As a return value you can use one of the following:
+ * * null of any type - rendered as `[null]`
+ * * primitive type value (Int, Boolean, String, etc.) - rendered as is (by calling `.toString()`)
+ * * any serializable value - rendered as JSON by `.encodeToString()`
+ * * instance of [McpToolCallResult] - rendered as is
+ * * instance of [McpToolCallResultContent] - rendered as is
+ * * in the case of `Unit` return type - rendered as `[success]`
  *
  * Optional parameters are supported.
  *

@@ -1,17 +1,20 @@
 package com.intellij.mcpserver.impl.util
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializerOrNull
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 import kotlin.reflect.full.callSuspendBy
 
 class CallableBridge(private val callable: KCallable<*>, private val thisRef: Any? = null, private val json: Json = Json) {
-  class Result(val result: Any?, val resultSerializer: KSerializer<Any?>, private val json: Json) {
-    fun encodeToString(): String = json.encodeToString(resultSerializer, result)
+  class Result(val result: Any?, private val resultType: KType, private val json: Json) {
+    fun encodeToString(): String {
+      val serializer = serializerOrNull(resultType) ?: error("Result type ${result} is not serializable")
+      return json.encodeToString(serializer, result)
+    }
   }
 
   init {
@@ -24,7 +27,6 @@ class CallableBridge(private val callable: KCallable<*>, private val thisRef: An
         serializerOrNull(parameter.type) ?: throw SerializationException("Type ${parameter.type} of parameter '${parameter.name}' is not serializable")
       }
     }
-    serializerOrNull(callable.returnType) ?: throw SerializationException("Return type ${callable.returnType} is not serializable")
   }
 
   suspend fun call(args: JsonObject): Result {
@@ -43,7 +45,6 @@ class CallableBridge(private val callable: KCallable<*>, private val thisRef: An
     }
 
     val result = callable.callSuspendBy(argMap)
-    val resultSerializer = serializerOrNull(callable.returnType) ?: error("Return type ${callable.returnType} is not serializable")
-    return Result(result, resultSerializer, json)
+    return Result(result, callable.returnType, json)
   }
 }

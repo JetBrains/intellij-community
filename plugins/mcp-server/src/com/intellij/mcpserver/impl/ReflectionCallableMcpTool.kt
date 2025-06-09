@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCallResult
+import com.intellij.mcpserver.McpToolCallResultContent
 import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.impl.util.CallableBridge
 import kotlinx.serialization.json.JsonObject
@@ -10,8 +11,13 @@ import kotlinx.serialization.json.JsonObject
 class ReflectionCallableMcpTool(override val descriptor: McpToolDescriptor, private val callableBridge: CallableBridge) : McpTool {
   override suspend fun call(args: JsonObject): McpToolCallResult {
     val result = callableBridge.call(args)
-    if (result.result is String) return McpToolCallResult.text(result.result)
-    val text = result.encodeToString()
-    return McpToolCallResult.text(text)
+    return when {
+      result.result == null -> McpToolCallResult.text("[null]")
+      result.result is Unit -> McpToolCallResult.text("[success]")
+      result.result.javaClass.isPrimitive -> McpToolCallResult.text(result.result.toString())
+      result.result is McpToolCallResult -> result.result
+      result.result is McpToolCallResultContent -> McpToolCallResult(arrayOf(result.result), isError = false)
+      else -> McpToolCallResult.text(result.encodeToString())
+    }
   }
 }
