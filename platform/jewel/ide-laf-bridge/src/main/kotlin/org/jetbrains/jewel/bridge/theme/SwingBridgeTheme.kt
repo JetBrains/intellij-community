@@ -11,9 +11,13 @@ import org.jetbrains.jewel.bridge.BridgePainterHintsProvider
 import org.jetbrains.jewel.bridge.SwingBridgeReader
 import org.jetbrains.jewel.bridge.clipboard.JewelBridgeClipboard
 import org.jetbrains.jewel.bridge.icon.BridgeNewUiChecker
+import org.jetbrains.jewel.bridge.menuShortcut.BridgeMenuItemShortcutHintProvider
+import org.jetbrains.jewel.bridge.menuShortcut.BridgeMenuItemShortcutProvider
 import org.jetbrains.jewel.bridge.scaleDensityWithIdeScale
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
@@ -35,6 +39,8 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
             LocalNewUiChecker provides BridgeNewUiChecker,
             LocalDensity provides scaleDensityWithIdeScale(LocalDensity.current),
             LocalClipboard provides remember { JewelBridgeClipboard() },
+            LocalMenuItemShortcutProvider provides BridgeMenuItemShortcutProvider,
+            LocalMenuItemShortcutHintProvider provides BridgeMenuItemShortcutHintProvider,
         ) {
             content()
         }
