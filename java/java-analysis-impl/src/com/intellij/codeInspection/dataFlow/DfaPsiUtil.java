@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,6 +37,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -470,32 +472,41 @@ public final class DfaPsiUtil {
     return result;
   }
 
-  private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
+  public static List<PsiExpression> findAllConstructorInitializers(PsiRecordComponent component) {
+    PsiClass containingClass = component.getContainingClass();
+    return containingClass == null || containingClass instanceof PsiCompiledElement
+           ? Collections.emptyList()
+           : new ArrayList<>(getAllConstructorFieldInitializers(containingClass).get(component));
+  }
+
+  private static MultiMap<PsiVariable, PsiExpression> getAllConstructorFieldInitializers(PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
       return MultiMap.empty();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<>() {
       @Override
-      public @NotNull Result<MultiMap<PsiField, PsiExpression>> compute() {
+      public @NotNull Result<MultiMap<PsiVariable, PsiExpression>> compute() {
         final Set<String> fieldNames = new HashSet<>();
         for (PsiField field : psiClass.getFields()) {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
         }
 
-        final MultiMap<PsiField, PsiExpression> result = new MultiMap<>();
+        final MultiMap<PsiVariable, PsiExpression> result = new MultiMap<>();
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
             super.visitAssignmentExpression(assignment);
-            PsiExpression lExpression = assignment.getLExpression();
             PsiExpression rExpression = assignment.getRExpression();
             if (rExpression != null &&
-                lExpression instanceof PsiReferenceExpression &&
-                fieldNames.contains(((PsiReferenceExpression)lExpression).getReferenceName())) {
-              PsiElement target = ((PsiReferenceExpression)lExpression).resolve();
-              if (target instanceof PsiField && ((PsiField)target).getContainingClass() == psiClass) {
-                result.putValue((PsiField)target, rExpression);
+                assignment.getLExpression() instanceof PsiReferenceExpression ref &&
+                fieldNames.contains(ref.getReferenceName())) {
+              PsiElement target = ref.resolve();
+              if (target instanceof PsiField field && field.getContainingClass() == psiClass) {
+                result.putValue(field instanceof LightRecordField f ? f.getRecordComponent() : field, rExpression);
+              }
+              else if (target instanceof LightCompactConstructorParameter parameter) {
+                result.putValue(parameter.getRecordComponent(), rExpression);
               }
             }
           }

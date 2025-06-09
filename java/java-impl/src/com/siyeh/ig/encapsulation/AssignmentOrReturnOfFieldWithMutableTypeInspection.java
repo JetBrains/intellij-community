@@ -147,10 +147,19 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
       final String type = TypeUtils.expressionHasTypeOrSubtype(returnValue, MUTABLE_TYPES);
       if (type == null && !(returnValue.getType() instanceof PsiArrayType)) return;
       if (CollectionUtils.isConstantEmptyArray(field) ||
-          field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC) && field.getType() instanceof PsiArrayType && field.getInitializer() == null || 
           ClassUtils.isImmutable(field.getType()) ||
-          Mutability.getMutability(field).isUnmodifiable()) return;
-      registerError(returnValue, field, returnValue, type, Boolean.FALSE);
+          Mutability.getMutability(field).isUnmodifiable()) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.FINAL)
+          && field.hasModifierProperty(PsiModifier.STATIC)
+          && field.getType() instanceof PsiArrayType
+          && field.getInitializer() == null) {
+        return;
+      }
+      PsiElement nameElement = ref.getReferenceNameElement();
+      if (nameElement == null) return;
+      registerError(nameElement, field, returnValue, type, Boolean.FALSE);
     }
 
     @Override
@@ -161,7 +170,7 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
       boolean reportAssignment = !ContainerUtil.or(recordClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
       for (PsiRecordComponent component : recordHeader.getRecordComponents()) {
         final PsiType type = component.getType();
-        if (ClassUtils.isImmutable(type)) continue;
+        if (ClassUtils.isImmutable(type) || Mutability.getMutability(component).isUnmodifiable()) continue;
         final boolean mutable = type instanceof PsiArrayType ||
                                 ContainerUtil.exists(MUTABLE_TYPES, typeName -> InheritanceUtil.isInheritor(type, typeName));
         if (!mutable) continue;
