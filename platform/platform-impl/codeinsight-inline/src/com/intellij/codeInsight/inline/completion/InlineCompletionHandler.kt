@@ -252,7 +252,10 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   )
 
   @ApiStatus.Internal
-  val typingSessionTracker: InlineCompletionTypingSessionTracker = InlineCompletionTypingSessionTracker()
+  val typingSessionTracker: InlineCompletionTypingSessionTracker = InlineCompletionTypingSessionTracker(
+    sendEvent = ::invokeEvent,
+    invalidateOnUnknownChange = { sessionManager.invalidate(UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange) }
+  )
 
   @ApiStatus.Internal
   protected fun performHardHide(context: InlineCompletionContext, finishType: FinishType) {
