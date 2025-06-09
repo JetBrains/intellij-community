@@ -1209,8 +1209,8 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateAuthorAndVersionSections(StringBuilder buffer, PsiDocComment docComment) {
-    generateAuthorSection(buffer, docComment);
     generateSingleTagSection(buffer, docComment, "version", JavaBundle.messagePointer("javadoc.version"));
+    generateAuthorSection(buffer, docComment);
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
@@ -1571,10 +1571,10 @@ public class JavaDocInfoGenerator {
     generateThrowsSection(buffer, method, comment);
 
     if (comment != null) {
-      generateApiSection(buffer, comment);
       generateSinceSection(buffer, comment);
-      generateSeeAlsoSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
+      generateApiSection(buffer, comment);
+      generateSeeAlsoSection(buffer, comment);
       generateUnknownTagsSections(buffer, comment);
     }
 
