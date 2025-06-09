@@ -38,9 +38,6 @@ internal sealed interface InlineCompletionDocumentChangesTracker {
    * @see InlineCompletionDocumentChangesTrackerImpl.getDocumentChangeEvent
    */
   fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor)
-
-  @ApiStatus.Internal
-  fun lastEventIsPairedEnclosure(): Boolean
 }
 
 internal class InlineCompletionDocumentChangesTrackerImpl(
@@ -147,9 +144,5 @@ internal class InlineCompletionDocumentChangesTrackerImpl(
       check(property.get(), getLazyErrorMessage)
       property.set(currentIgnoreChanges)
     }
-  }
-
-  override fun lastEventIsPairedEnclosure(): Boolean {
-    return lastTypingEvent is TypingEvent.PairedEnclosureInsertion
   }
 }
