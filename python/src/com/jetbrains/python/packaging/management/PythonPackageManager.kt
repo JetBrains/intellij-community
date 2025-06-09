@@ -29,6 +29,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.util.concurrent.CompletableFuture
 
 
 /**
@@ -37,10 +38,16 @@ import org.jetbrains.annotations.CheckReturnValue
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  private val lazyInitialization by lazy {
+  private val lazyInitialization: CompletableFuture<Unit> by lazy {
     service<PythonSdkCoroutineService>().cs.launch {
-      repositoryManager.initCaches()
-      reloadPackages()
+      try {
+        repositoryManager.initCaches()
+        reloadPackages()
+        Unit
+      }
+      catch (t: Throwable) {
+        thisLogger().error("Failed to initialize PythonPackageManager for $sdk", t)
+      }
     }.asCompletableFuture()
   }
 

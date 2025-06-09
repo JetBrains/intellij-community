@@ -1,7 +1,7 @@
-import sys
-import traceback
 import getopt
 import os
+import sys
+import traceback
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
@@ -41,41 +41,18 @@ def error_no_pip():
 
 
 def do_list():
-    if sys.version_info < (3, 10):
-        try:
-            import pkg_resources
-        except ImportError:
-            error("Python packaging tool 'setuptools' not found", ERROR_NO_SETUPTOOLS)
-        for pkg in pkg_resources.working_set:
-            try:
-                requirements = pkg.requires()
-            except Exception:
-                requirements = []
-            requires = ':'.join([str(x) for x in requirements])
-            sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
-    else:
-        import importlib.metadata
-        for pkg in importlib.metadata.distributions():
-            try:
-                requirements = [] if (pkg.requires is None) else pkg.requires
-            except Exception:
-                requirements = []
-            requires = ':'.join([str(x) for x in requirements])
-            if pkg.name is None or pkg.version is None or pkg._path is None:
-                continue
-            sys.stdout.write('\t'.join([pkg.name, pkg.version, str(pkg._path.parent), requires])+chr(10))
-    sys.stdout.flush()
+    run_pip(['list', "--format=json", "--disable-pip-version-check"])
 
+
+def do_list_outdated():
+    run_pip(['list', "--outdated", "--format=json", "--disable-pip-version-check"])
 
 def do_install(pkgs):
     run_pip(['install'] + pkgs)
 
-def do_list_outdated():
-    run_pip(['list', "--outdated"])
-
 
 def do_uninstall(pkgs):
-    run_pip(['uninstall', '-y'] + pkgs)
+    run_pip(['uninstall', '-y', "--disable-pip-version-check"] + pkgs)
 
 
 def run_pip(args):

@@ -28,7 +28,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
@@ -59,17 +58,7 @@ internal class PipPackageManagerEngine(
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     val output = runPackagingTool("list_outdated", listOf(), PyBundle.message("python.packaging.list.outdated.progress"),
                                   withBackgroundProgress = false).getOr { return it }
-    val packages = output.lineSequence()
-      .drop(2) // skip header and separator line
-      .filter { it.isNotBlank() }
-      .mapNotNull { line ->
-        val blocks = line.split("\t", " ").filter { it.isNotBlank() }
-        blocks.takeIf { it.size >= 3 }?.let {
-          PythonOutdatedPackage(blocks[0], blocks[1], latestVersion = blocks[2])
-        }
-      }
-      .toList()
-
+    val packages = PipParseUtils.parseOutdatedOutputs(output)
     return PyResult.success(packages)
   }
 
@@ -101,15 +90,7 @@ internal class PipPackageManagerEngine(
       text = PyBundle.message("python.packaging.list.progress")
     ).getOr { return it }
 
-    val packages = output.lineSequence()
-      .filter { it.isNotBlank() }
-      .map {
-        val line = it.split("\t")
-        PythonPackage(line[0], line[1], isEditableMode = false)
-      }
-      .sortedWith(compareBy(PythonPackage::name))
-      .toList()
-
+    val packages = PipParseUtils.parseListResult(output)
     return PyResult.success(packages)
   }
 
