@@ -57,6 +57,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
+    if (parameters.editor.caretModel.caretCount != 1) return
     //not support injected fragment, it is not so obvious how to do it
     //it can work with errors
     if (parameters.editor is EditorWindow) return
