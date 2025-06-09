@@ -23,6 +23,7 @@ internal object LibrariesRequiredForWorkspace {
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
   private val riderModel = ModuleLibrary("intellij.rider.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
+  private val bazelCommons = ModuleLibrary("intellij.bazel.commons")
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
@@ -30,7 +31,7 @@ internal object LibrariesRequiredForWorkspace {
 
   fun getRelatedLibraries(moduleEntityName: String): List<RelatedLibrary> =
     when (moduleEntityName) {
-      "intellij.javaee.platform", "intellij.javaee.ejb", "intellij.javaee.web" -> {
+      "intellij.javaee.platform", "intellij.javaee.ejb", "intellij.javaee.web", "intellij.amper", "intellij.java.impl" -> {
         listOf(intellijJava)
       }
       "intellij.rider.plugins.unity" -> {
@@ -47,6 +48,9 @@ internal object LibrariesRequiredForWorkspace {
       }
       "kotlin.base.scripting" -> {
         listOf(kotlinBaseScripting)
+      }
+      "intellij.bazel.plugin" -> {
+        listOf(bazelCommons)
       }
       else -> {
         emptyList()
@@ -90,12 +94,6 @@ private fun removeLibraryByName(model: ModifiableRootModel, libraryName: String)
   modifiableModel.commit()
 }
 
-private fun addLibraryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
-  addDependencyFromCompilationOutput(model, libraryName, baseClass) {
-    addRoot(it, OrderRootType.CLASSES)
-  }
-}
-
 private fun addLibraryBaseOnPath(model: ModifiableRootModel, libraryName: String, classpath: String) {
   addDependencyFromCompilationOutput(model, libraryName, classpath) {
     addRoot(it, OrderRootType.CLASSES)
@@ -103,12 +101,10 @@ private fun addLibraryBaseOnPath(model: ModifiableRootModel, libraryName: String
 }
 
 private fun addJarDirectoryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
-  addDependencyFromCompilationOutput(model, libraryName, baseClass) {
-    addJarDirectory(it, true)
-  }
+  addDependencyFromCompilationOutput(model, libraryName, baseClass)
 }
 
-private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>, addDependency: ModifiableModel.(VirtualFile) -> Unit) {
+private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
   val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
@@ -118,10 +114,12 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
   if (classesRootVirtualFile!!.isFile && classesRootVirtualFile.extension == "jar") {
     classesRootVirtualFile = JarFileSystem.getInstance().getJarRootForLocalFile(classesRootVirtualFile)
     assertNotNull("Cannot convert $classesPathUrl to a jar VirtualFile", classesRootVirtualFile)
+    VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
+    modifiableModel.addRoot(classesRootVirtualFile!!, OrderRootType.CLASSES)
+  } else {
+    VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
+    modifiableModel.addJarDirectory(classesRootVirtualFile, true)
   }
-
-  VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
-  modifiableModel.addDependency(classesRootVirtualFile!!)
   modifiableModel.commit()
 }
 
@@ -140,8 +138,11 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
   else {
     val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
     val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
-    classpathRootVirtualFile = classesRootVirtualFile?.parent?.children?.find { it.name == classpathFolder }
-    assertNotNull("Cannot find $classpathFolder in $classesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
+    val sharedClassesRootVirtualFile = classesRootVirtualFile?.parent
+    assertNotNull("Cannot find $sharedClassesRootVirtualFile. Possibly, project was not compiled", sharedClassesRootVirtualFile)
+    VfsUtil.markDirtyAndRefresh(false, true, true, sharedClassesRootVirtualFile)
+    classpathRootVirtualFile = sharedClassesRootVirtualFile?.children?.find { it.name == classpathFolder }
+    assertNotNull("Cannot find $classpathFolder in $sharedClassesRootVirtualFile. Possibly, project was partially compiled", classpathRootVirtualFile)
   }
 
   if (classpathRootVirtualFile!!.isFile && classpathRootVirtualFile.extension == "jar") {
