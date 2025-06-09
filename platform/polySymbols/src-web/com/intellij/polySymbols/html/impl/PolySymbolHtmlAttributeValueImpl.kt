@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.html.impl
 
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
-import java.util.Objects
 
 internal class PolySymbolHtmlAttributeValueImpl(override val kind: PolySymbolHtmlAttributeValue.Kind? = null,
                                                 override val type: PolySymbolHtmlAttributeValue.Type? = null,
