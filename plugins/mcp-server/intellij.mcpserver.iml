@@ -74,7 +74,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
-    <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />
     <orderEntry type="library" name="jediterm-core" level="project" />
