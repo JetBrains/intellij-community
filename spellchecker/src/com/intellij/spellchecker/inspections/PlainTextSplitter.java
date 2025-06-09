@@ -28,6 +28,7 @@ public class PlainTextSplitter extends BaseSplitter {
 
   private static final Pattern MAIL =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
+  private static final Pattern JVM_KEY_PATTERN = Pattern.compile("(-[DJPX]\\w+(\\.\\w+)*.*|-[DJPX])");
 
   private static final int UUID_V4_HEX_STRING_LENGTH = 36;
   private static final Pattern UUID_PATTERN = Pattern.compile("[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}");
@@ -106,6 +107,9 @@ public class PlainTextSplitter extends BaseSplitter {
         else if (word.startsWith(JWT_COMMON_PREFIX) && JWT_PATTERN.matcher(word).matches()) {
           toCheck = emptyList();
         }
+        else if (startsWithAny(word, "-D", "-J", "-P", "-X")) {
+          toCheck = excludeByPattern(text, wRange, JVM_KEY_PATTERN, 0);
+        }
         else if (word.startsWith("f'")) {
           toCheck = List.of(new TextRange(wRange.getStartOffset() + 2, wRange.getEndOffset()));
         }
@@ -135,6 +139,13 @@ public class PlainTextSplitter extends BaseSplitter {
     }
     catch (TooLongBombedMatchingException ignored) {
     }
+  }
+
+  private static boolean startsWithAny(String word, String... prefixes) {
+    for (String prefix : prefixes) {
+      if (word.startsWith(prefix)) return true;
+    }
+    return false;
   }
 
   protected @NotNull Splitter getTextSplitter() {
