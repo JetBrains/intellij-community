@@ -1103,13 +1103,6 @@ public final class PyTypeChecker {
     if (type == null || (genericsAreUnknown && type instanceof PyTypeParameterType)) {
       return true;
     }
-    if (type instanceof PyFunctionType) {
-      final PyCallable callable = ((PyFunctionType)type).getCallable();
-      if (callable instanceof PyDecoratable &&
-          PyKnownDecoratorUtil.hasChangingReturnTypeDecorator((PyDecoratable)callable, context)) {
-        return true;
-      }
-    }
     if (type instanceof PyUnionType union) {
       if (!PyUnionType.isStrictSemanticsEnabled()) {
         return ContainerUtil.exists(union.getMembers(), member -> isUnknown(member, genericsAreUnknown, context));
