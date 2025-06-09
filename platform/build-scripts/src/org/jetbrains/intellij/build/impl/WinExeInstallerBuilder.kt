@@ -150,6 +150,8 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistr
     else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
   val appInfo = context.applicationInfo
   val installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(appInfo, context.buildNumber)
+  val fileVersionNum = amendVersionNumber(context.buildNumber.replace(".SNAPSHOT", ".0"))
+  val productVersionNum = amendVersionNumber(appInfo.majorVersion + '.' + appInfo.minorVersion)
   val versionString = if (appInfo.isEAP) context.buildNumber else "${appInfo.majorVersion}.${appInfo.minorVersion}"
 
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
@@ -174,8 +176,12 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistr
     !define MUI_VERSION_MAJOR "$${appInfo.majorVersion}"
     !define MUI_VERSION_MINOR "$${appInfo.minorVersion}"
     !define VER_BUILD $${context.buildNumber}
+    !define FILE_VERSION_NUM $${fileVersionNum}
+    !define PRODUCT_VERSION_NUM $${productVersionNum}
     !define INSTALL_DIR_AND_SHORTCUT_NAME "$${installDirAndShortcutName}"
     !define PRODUCT_WITH_VER "${MUI_PRODUCT} $${versionString}"
     !define PRODUCT_PATHS_SELECTOR "$${context.systemSelector}"
     """.trimIndent())
 }
+
+private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - base.count { it == '.' })

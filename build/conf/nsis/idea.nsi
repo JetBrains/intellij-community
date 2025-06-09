@@ -35,6 +35,15 @@ ${UnStrRep}
 
 Name "${MUI_PRODUCT}"
 
+!define /date CURRENT_YEAR "%Y"
+VIAddVersionKey /LANG=0 "CompanyName" "JetBrains s.r.o."
+VIAddVersionKey /LANG=0 "FileDescription" "${MUI_PRODUCT} Windows Installer"
+VIAddVersionKey /LANG=0 "LegalCopyright" "Copyright 2000-${CURRENT_YEAR} JetBrains s.r.o."
+VIAddVersionKey /LANG=0 "ProductName" "${MUI_PRODUCT}"
+VIAddVersionKey /LANG=0 "ProductVersion" "${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+VIFileVersion ${FILE_VERSION_NUM}
+VIProductVersion ${PRODUCT_VERSION_NUM}
+
 ; Product with version (IntelliJ IDEA #xxxx).
 ; Used in registry to put each build info into the separate subkey
 ; Add&Remove programs doesn't understand subkeys in the Uninstall key,
