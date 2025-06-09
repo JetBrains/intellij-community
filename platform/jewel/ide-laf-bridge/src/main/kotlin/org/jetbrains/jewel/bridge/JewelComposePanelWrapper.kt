@@ -22,6 +22,7 @@ public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable ()
     JewelComposePanel(config, content)
 
 @ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JBPanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(config, content)
 

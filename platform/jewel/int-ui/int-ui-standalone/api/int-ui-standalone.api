@@ -38,6 +38,12 @@ public final class org/jetbrains/jewel/intui/standalone/StandalonePainterHintsPr
 public final class org/jetbrains/jewel/intui/standalone/StandalonePainterHintsProvider$Companion {
 }
 
+public final class org/jetbrains/jewel/intui/standalone/menuShortcut/StandaloneShortcutProvider : org/jetbrains/jewel/ui/MenuItemShortcutProvider {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/menuShortcut/StandaloneShortcutProvider;
+	public fun getShortcutKeyStroke (Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;)Ljavax/swing/KeyStroke;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUIBannerStylingKt {
 	public static final fun default-3ABfNKs (Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics$Companion;F)Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;
 	public static synthetic fun default-3ABfNKs$default (Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics$Companion;FILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;
