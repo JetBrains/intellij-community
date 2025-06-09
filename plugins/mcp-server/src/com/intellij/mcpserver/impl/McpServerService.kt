@@ -47,7 +47,18 @@ class McpServerService(val cs: CoroutineScope) {
 
   private val server = MutableStateFlow(startServerIfEnabled())
 
-  val isRunning: Boolean = server.value != null
+  val isRunning: Boolean
+    get() = server.value != null
+
+  fun start() {
+    McpServerSettings.getInstance().state.enableMcpServer = true
+    settingsChanged()
+  }
+
+  fun stop() {
+    McpServerSettings.getInstance().state.enableMcpServer = false
+    settingsChanged()
+  }
 
   val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
