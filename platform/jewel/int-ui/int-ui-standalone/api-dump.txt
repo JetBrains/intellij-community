@@ -1,3 +1,8 @@
+f:org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
+- getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction):javax.swing.KeyStroke
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiGrayFilterValuesKt
 - sf:dark(org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion,I,I,I):org.jetbrains.jewel.foundation.DisabledAppearanceValues
 - bs:dark$default(org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion,I,I,I,I,java.lang.Object):org.jetbrains.jewel.foundation.DisabledAppearanceValues
